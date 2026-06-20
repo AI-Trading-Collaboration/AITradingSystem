@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.indicator_research import (
+    _matrix_based_horizon_recommendation,
     build_backtest_trace_bridge,
     build_component_level_historical_trace,
     build_daily_indicator_coverage_gap_report,
@@ -531,6 +532,106 @@ def test_masking_effectiveness_review_outputs_required_layers_and_recommendation
     assert payload["by_asset"]
     assert payload["by_regime"]
     assert payload["by_event_window"]
+
+
+def test_horizon_effectiveness_conclusion_matrix_schema_and_long_horizon_flag(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_many_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    gate_root = _write_many_gate_audit_root(tmp_path)
+
+    payload = build_valuation_crowding_masking_effectiveness_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+        start_date="2023-01-03",
+        end_date="2023-01-22",
+    )
+
+    assert payload["summary"]["promotion_gate_allowed"] is False
+    assert payload["summary"]["decision_recommendation"] == (
+        "preliminary_short_horizon_only"
+    )
+    assert payload["decision_recommendation"]["promotion_gate_allowed"] is False
+    matrix = payload["conclusion_matrix"]
+    assert len(matrix) == 12
+    rows = {(row["scenario_id"], row["horizon"]): row for row in matrix}
+    baseline_1d = rows[("baseline", "1d")]
+    required_fields = {
+        "avg_return",
+        "median_return",
+        "hit_rate",
+        "downside_capture",
+        "max_drawdown",
+        "drawdown_reduced_count",
+        "missed_upside_count",
+        "false_risk_off_count",
+        "turnover",
+        "constraint_hit_count",
+        "sample_count",
+        "full_advisory_sample_count",
+        "component_only_sample_count",
+        "backtest_bridge_sample_count",
+        "mature_date_count",
+        "mature_asset_count",
+        "mature_case_count",
+        "full_advisory_mature_case_count",
+        "unique_regime_count",
+        "correlated_asset_cluster_count",
+        "sample_quality",
+        "return_profile",
+        "risk_profile",
+        "recommendation_contribution",
+    }
+    assert required_fields <= set(baseline_1d)
+    assert baseline_1d["sample_count"] == 200
+    assert baseline_1d["full_advisory_sample_count"] == 100
+    assert baseline_1d["component_only_sample_count"] == 0
+    assert baseline_1d["backtest_bridge_sample_count"] == 100
+    assert baseline_1d["mature_date_count"] == 20
+    assert baseline_1d["mature_asset_count"] == 5
+    assert baseline_1d["correlated_asset_cluster_count"] == 3
+    assert rows[("baseline", "10d")]["full_advisory_sample_count"] >= 50
+    assert payload["decision_recommendation"]["horizon_contributions"][10] == (
+        "conflicting_horizon_signal"
+    )
+    twenty_day = rows[("baseline", "20d")]
+    assert twenty_day["evidence_status"] == "insufficient_long_horizon_evidence"
+    assert twenty_day["full_advisory_sample_count"] < 50
+    assert payload["by_horizon"][-1]["insufficient_long_horizon_evidence"] is True
+    assert payload["by_correlated_asset_cluster"]
+    assert payload["layers"]["full_advisory_only"]["sample_quality"]["case_count"] == 100
+
+
+def test_conflicting_horizon_contributions_remain_preliminary() -> None:
+    result = _matrix_based_horizon_recommendation(
+        [
+            {
+                "horizon_trading_days": 1,
+                "recommendation_contribution": (
+                    "supports_prefer_capped_masking_candidate"
+                ),
+            },
+            {
+                "horizon_trading_days": 5,
+                "recommendation_contribution": (
+                    "supports_keep_baseline_masking_candidate"
+                ),
+            },
+            {
+                "horizon_trading_days": 10,
+                "recommendation_contribution": (
+                    "supports_prefer_capped_masking_candidate"
+                ),
+            },
+        ]
+    )
+
+    assert result["decision_recommendation"] == "preliminary_short_horizon_only"
+    assert result["promotion_gate_allowed"] is False
 
 
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
@@ -1077,6 +1178,132 @@ def _write_casebook_trace(tmp_path: Path) -> Path:
     return path
 
 
+def _write_many_casebook_trace(tmp_path: Path, *, date_count: int = 20) -> Path:
+    path = tmp_path / "many_casebook_trace.json"
+    rows = []
+    lineage_manifests = []
+    start = date(2023, 1, 3)
+    for offset in range(date_count):
+        row_date = (start + timedelta(days=offset)).isoformat()
+        before = 0.80
+        after = 0.65
+        final = 0.325
+        intended = 0.20
+        suppressed = 0.15
+        rows.extend(
+            [
+                _complete_trace_row(
+                    row_date,
+                    row_type="indicator_component",
+                    module_id="trend_strength_indicator",
+                    daily_component_id="trend",
+                    mapping_version="scoring_rules_v1.trend",
+                    raw_indicator_value=[
+                        {
+                            "subject": "QQQ",
+                            "feature": "above_ma_200",
+                            "value": 1.0,
+                            "available": True,
+                        }
+                    ],
+                    normalized_indicator_score=80.0,
+                    mapped_signal_contribution=24.0,
+                    pre_constraint_signal_weight=before,
+                    post_constraint_signal_weight=after,
+                    final_advisory_portfolio_facing_weight=final,
+                    weight_before=before,
+                    weight_after=after,
+                    constraint_hit=False,
+                    upstream_indicator_id="trend_strength_indicator",
+                    downstream_indicator_id="",
+                    b_intended_change=None,
+                    a_suppressed_change=None,
+                    reason_code="component_score_contribution_trace",
+                ),
+                _complete_trace_row(
+                    row_date,
+                    row_type="indicator_component",
+                    module_id="valuation_crowding_indicator",
+                    daily_component_id="valuation",
+                    mapping_version=(
+                        "scoring_rules_v1.valuation+position_gate_valuation_v1"
+                    ),
+                    raw_indicator_value=[
+                        {
+                            "subject": "AI_CORE_MEDIAN",
+                            "feature": "valuation_percentile",
+                            "value": 0.92,
+                            "available": True,
+                        }
+                    ],
+                    normalized_indicator_score=35.0,
+                    mapped_signal_contribution=3.5,
+                    pre_constraint_signal_weight=before,
+                    post_constraint_signal_weight=after,
+                    final_advisory_portfolio_facing_weight=final,
+                    weight_before=before,
+                    weight_after=after,
+                    constraint_hit=False,
+                    upstream_indicator_id="valuation_crowding_indicator",
+                    downstream_indicator_id="",
+                    b_intended_change=None,
+                    a_suppressed_change=None,
+                    reason_code="component_score_contribution_trace",
+                ),
+                _complete_trace_row(
+                    row_date,
+                    row_type="constraint_gate",
+                    module_id="valuation_crowding_indicator",
+                    daily_component_id="valuation",
+                    mapping_version=(
+                        "scoring_rules_v1.valuation+position_gate_valuation_v1"
+                    ),
+                    raw_indicator_value={
+                        "gate_id": "valuation",
+                        "label": "估值拥挤",
+                        "reason": "fixture valuation/crowding cap",
+                        "gate_max_position": after,
+                    },
+                    normalized_indicator_score=None,
+                    mapped_signal_contribution=None,
+                    pre_constraint_signal_weight=before,
+                    post_constraint_signal_weight=after,
+                    final_advisory_portfolio_facing_weight=final,
+                    weight_before=before,
+                    weight_after=after,
+                    constraint_hit=True,
+                    upstream_indicator_id="valuation_crowding_indicator",
+                    downstream_indicator_id="trend_strength_indicator",
+                    b_intended_change=intended,
+                    a_suppressed_change=suppressed,
+                    reason_code="valuation_constraint_attribution",
+                ),
+            ]
+        )
+        lineage_manifests.append(
+            {
+                "source_artifact_path": (
+                    f"fixture/daily_indicator_weight_trace_{row_date}.json"
+                ),
+                "generated_at": f"{row_date}T21:30:00+00:00",
+                "as_of_date": row_date,
+                "decision_time": row_date,
+                "config_hash": f"config-{row_date}",
+                "input_snapshot_hash": f"inputs-{row_date}",
+                "trace_contract_version": "multi_stage_weight_trace_contract_v1",
+                "production_equivalent": True,
+            }
+        )
+    path.write_text(
+        json.dumps(
+            {"rows": rows, "lineage_manifests": lineage_manifests},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def _complete_trace_row(
     row_date: str,
     *,
@@ -1266,6 +1493,44 @@ def _write_gate_audit_root(
                     "| Severity | Code | Rule | Source | 说明 |",
                     "|---|---|---|---|---|",
                     *issue_rows,
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+    return root
+
+
+def _write_many_gate_audit_root(tmp_path: Path, *, date_count: int = 20) -> Path:
+    root = tmp_path / "many_gate_audit"
+    start = date(2023, 1, 3)
+    for offset in range(date_count):
+        row_date = (start + timedelta(days=offset)).isoformat()
+        date_root = root / row_date
+        date_root.mkdir(parents=True, exist_ok=True)
+        (date_root / "data_quality.md").write_text(
+            "\n".join(
+                [
+                    "# 数据质量报告",
+                    "",
+                    "- 状态：PASS",
+                    f"- 评估日期：{row_date}",
+                    "",
+                    "未发现数据质量阻断问题。",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (date_root / "feature_availability.md").write_text(
+            "\n".join(
+                [
+                    "# PIT 特征可见时间报告",
+                    "",
+                    "- 状态：PASS",
+                    f"- 评估日期：{row_date}",
+                    "",
+                    "未发现 feature availability 问题。",
                     "",
                 ]
             ),

@@ -1964,9 +1964,33 @@ def build_valuation_crowding_masking_effectiveness_review(
         )
         for horizon in MASKING_OUTCOME_HORIZONS
     ]
+    conclusion_matrix = _masking_effectiveness_conclusion_matrix(
+        full_cases=full_cases,
+        component_cases=component_cases,
+        bridge_cases=bridge_cases,
+        registry=registry,
+        capped_masking_ratio=capped_masking_ratio,
+    )
+    by_correlated_asset_cluster = [
+        {
+            "correlated_asset_cluster": group_key,
+            **_masking_effectiveness_layer(
+                group_key,
+                group_cases,
+                registry,
+                capped_masking_ratio=capped_masking_ratio,
+                trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+                confidence=TRACE_CONFIDENCE_COMPONENT,
+            ),
+        }
+        for group_key, group_cases in _group_cases_by_correlated_asset_cluster(
+            cases
+        ).items()
+    ]
     recommendation = _masking_effectiveness_recommendation(
         layers["full_advisory_only"],
         by_horizon=by_horizon,
+        conclusion_matrix=conclusion_matrix,
     )
     issues = list(casebook.get("issues", [])) if isinstance(casebook.get("issues"), list) else []
     if not cases:
@@ -2008,6 +2032,20 @@ def build_valuation_crowding_masking_effectiveness_review(
                 "message": recommendation["rationale"],
             }
         )
+    if any(
+        row.get("evidence_status") == "insufficient_long_horizon_evidence"
+        for row in conclusion_matrix
+    ):
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "insufficient_long_horizon_evidence",
+                "message": (
+                    "20d full-advisory mature sample is below the validation floor; "
+                    "20d rows remain diagnostic and do not drive the recommendation."
+                ),
+            }
+        )
     status = (
         "PASS"
         if cases
@@ -2024,6 +2062,7 @@ def build_valuation_crowding_masking_effectiveness_review(
             **_masking_effectiveness_sample_quality(cases, registry),
             "scenario_count": len(MASKING_ABLATION_SCENARIOS),
             "layer_count": len(layers),
+            "conclusion_matrix_row_count": len(conclusion_matrix),
             "capped_masking_ratio": capped_masking_ratio,
             "outcome_ticker": outcome_ticker,
             "decision_recommendation": recommendation["decision_recommendation"],
@@ -2063,6 +2102,8 @@ def build_valuation_crowding_masking_effectiveness_review(
         by_regime=by_regime,
         by_event_window=by_event_window,
         by_horizon=by_horizon,
+        by_correlated_asset_cluster=by_correlated_asset_cluster,
+        conclusion_matrix=conclusion_matrix,
         gate_availability_summary=gate_audit.get("summary", {}),
         backtest_bridge_summary=bridge.get("summary", {}),
         outcome_availability_summary=outcome_availability_summary,
@@ -5898,6 +5939,16 @@ def _masking_effectiveness_horizon_layer(
     confidence: str,
 ) -> dict[str, Any]:
     case_rows = [dict(case) for case in cases]
+    sample_quality = _masking_effectiveness_horizon_sample_quality(
+        case_rows,
+        horizon,
+        registry,
+    )
+    insufficient_long_horizon = (
+        horizon == 20
+        and int(sample_quality.get("mature_case_count") or 0)
+        < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+    )
     return {
         "horizon": f"{horizon}d",
         "horizon_trading_days": horizon,
@@ -5905,11 +5956,13 @@ def _masking_effectiveness_horizon_layer(
         "confidence": confidence,
         "promotion_gate_allowed": False,
         "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
-        "sample_quality": _masking_effectiveness_horizon_sample_quality(
-            case_rows,
-            horizon,
-            registry,
+        "evidence_status": (
+            "insufficient_long_horizon_evidence"
+            if insufficient_long_horizon
+            else "mature_horizon_evidence"
         ),
+        "insufficient_long_horizon_evidence": insufficient_long_horizon,
+        "sample_quality": sample_quality,
         "scenarios": {
             scenario_id: _ablation_scenario_horizon_metrics(
                 case_rows,
@@ -5950,7 +6003,10 @@ def _masking_effectiveness_horizon_sample_quality(
         "date_count": len(dates),
         "asset_count": len(assets),
         "case_count": len(cases),
+        "mature_date_count": len(dates),
+        "mature_asset_count": len(assets),
         "mature_case_count": len(mature_cases),
+        "full_advisory_mature_case_count": len(mature_cases),
         "not_mature_count": not_mature,
         "outcome_missing_count": hard_missing,
         "unique_regime_count": len(regimes) if mature_cases else 0,
@@ -6036,6 +6092,16 @@ def _group_cases_by_regime(
     for case in cases:
         regime = str(case.get("market_regime") or registry.market_regime.regime_id)
         grouped[regime].append(case)
+    return dict(sorted(grouped.items()))
+
+
+def _group_cases_by_correlated_asset_cluster(
+    cases: Sequence[Mapping[str, Any]],
+) -> dict[str, list[Mapping[str, Any]]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in cases:
+        asset = str(case.get("asset") or DEFAULT_TRACE_ASSET)
+        grouped[_asset_cluster_id(asset)].append(case)
     return dict(sorted(grouped.items()))
 
 
@@ -6126,6 +6192,7 @@ def _masking_effectiveness_recommendation(
     full_layer: Mapping[str, Any],
     *,
     by_horizon: Sequence[Mapping[str, Any]] | None = None,
+    conclusion_matrix: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     sample_quality = full_layer.get("sample_quality", {})
     if not isinstance(sample_quality, Mapping):
@@ -6144,10 +6211,10 @@ def _masking_effectiveness_recommendation(
         >= EFFECTIVENESS_MIN_SHORT_HORIZON_MATURE_CASES
         for horizon in (1, 5)
     )
-    long_horizon_ready = all(
+    primary_horizon_ready = all(
         int(mature_by_horizon.get(f"{horizon}d") or 0)
         >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
-        for horizon in (10, 20)
+        for horizon in (1, 5, 10)
     )
     if (
         not short_horizon_ready
@@ -6168,18 +6235,22 @@ def _masking_effectiveness_recommendation(
                 f"mature_case_count_by_horizon={dict(mature_by_horizon)}."
             ),
         }
-    if short_horizon_ready and not long_horizon_ready:
+    if short_horizon_ready and not primary_horizon_ready:
         return {
             "decision_recommendation": "preliminary_short_horizon_only",
             "recommendation_scope": "validation_only",
             "promotion_gate_allowed": False,
             "rationale": (
                 "1d/5d mature outcomes are sufficient for preliminary validation, "
-                "but 10d/20d horizons are not mature enough for a directional "
+                "but the 1d/5d/10d primary review horizon set is not mature enough "
+                "for a directional "
                 f"masking policy decision: mature_case_count_by_horizon="
                 f"{dict(mature_by_horizon)}."
             ),
         }
+    horizon_decision = _matrix_based_horizon_recommendation(conclusion_matrix)
+    if horizon_decision is not None:
+        return horizon_decision
     scenarios = full_layer.get("scenarios", {})
     if not isinstance(scenarios, Mapping):
         return {
@@ -6245,6 +6316,94 @@ def _masking_effectiveness_recommendation(
     }
 
 
+def _matrix_based_horizon_recommendation(
+    conclusion_matrix: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any] | None:
+    if not conclusion_matrix:
+        return None
+    contributions: dict[int, str] = {}
+    for horizon in (1, 5, 10):
+        rows = [
+            row
+            for row in conclusion_matrix
+            if int(row.get("horizon_trading_days") or 0) == horizon
+        ]
+        if not rows:
+            contributions[horizon] = "insufficient_evidence"
+            continue
+        scenario_contributions = {
+            str(row.get("recommendation_contribution") or "")
+            for row in rows
+            if row.get("recommendation_contribution")
+        }
+        if "conflicting_horizon_signal" in scenario_contributions:
+            contributions[horizon] = "conflicting_horizon_signal"
+            continue
+        preferred = sorted(
+            contribution
+            for contribution in scenario_contributions
+            if contribution.startswith("supports_")
+        )
+        if len(preferred) == 1:
+            contributions[horizon] = preferred[0].removeprefix("supports_")
+        elif len(preferred) > 1:
+            contributions[horizon] = "conflicting_horizon_signal"
+        else:
+            contributions[horizon] = "insufficient_evidence"
+    actionable = {
+        decision
+        for decision in contributions.values()
+        if decision not in {"insufficient_evidence", "conflicting_horizon_signal"}
+    }
+    if "conflicting_horizon_signal" in set(contributions.values()):
+        return {
+            "decision_recommendation": "preliminary_short_horizon_only",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "horizon_contributions": contributions,
+            "rationale": (
+                "At least one primary horizon has conflicting scenario signals, "
+                "so the review remains preliminary_short_horizon_only."
+            ),
+        }
+    if not actionable:
+        return {
+            "decision_recommendation": "insufficient_evidence",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "horizon_contributions": contributions,
+            "rationale": (
+                "1d/5d/10d scenario comparison does not produce a stable "
+                "validation recommendation."
+            ),
+        }
+    if len(actionable) == 1 and all(
+        decision in actionable for decision in contributions.values()
+    ):
+        decision = next(iter(actionable))
+        return {
+            "decision_recommendation": decision,
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "horizon_contributions": contributions,
+            "rationale": (
+                "1d/5d/10d horizon-specific conclusion matrix supports "
+                f"{decision}; 20d remains diagnostic if long-horizon evidence is "
+                "insufficient."
+            ),
+        }
+    return {
+        "decision_recommendation": "preliminary_short_horizon_only",
+        "recommendation_scope": "validation_only",
+        "promotion_gate_allowed": False,
+        "horizon_contributions": contributions,
+        "rationale": (
+            "1d/5d/10d horizon-specific conclusion matrix is mixed or incomplete, "
+            "so the review remains preliminary_short_horizon_only."
+        ),
+    }
+
+
 def _optional_float(value: Any) -> float | None:
     if value in (None, ""):
         return None
@@ -6283,6 +6442,373 @@ def _scenario_avg_return_for_horizons(
     if not usable:
         return None
     return sum(usable) / len(usable)
+
+
+def _masking_effectiveness_conclusion_matrix(
+    *,
+    full_cases: Sequence[Mapping[str, Any]],
+    component_cases: Sequence[Mapping[str, Any]],
+    bridge_cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+    capped_masking_ratio: float,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        scenario_metrics = {
+            scenario_id: _scenario_horizon_comparison_metrics(
+                full_cases=full_cases,
+                component_cases=component_cases,
+                bridge_cases=bridge_cases,
+                scenario_id=scenario_id,
+                capped_masking_ratio=capped_masking_ratio,
+                horizon=horizon,
+                registry=registry,
+            )
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+        contributions = _scenario_horizon_recommendation_contributions(
+            scenario_metrics,
+            horizon=horizon,
+        )
+        for scenario_id, metrics in scenario_metrics.items():
+            contribution = contributions.get(scenario_id, "neutral_or_mixed")
+            row = dict(metrics)
+            row["recommendation_contribution"] = contribution
+            row["sample_quality"]["recommendation_contribution"] = contribution
+            rows.append(row)
+    return rows
+
+
+def _scenario_horizon_comparison_metrics(
+    *,
+    full_cases: Sequence[Mapping[str, Any]],
+    component_cases: Sequence[Mapping[str, Any]],
+    bridge_cases: Sequence[Mapping[str, Any]],
+    scenario_id: str,
+    capped_masking_ratio: float,
+    horizon: int,
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    all_cases = [*full_cases, *component_cases, *bridge_cases]
+    full_metrics = _ablation_scenario_horizon_metrics(
+        full_cases,
+        scenario_id,
+        capped_masking_ratio,
+        horizon,
+    )
+    component_metrics = _ablation_scenario_horizon_metrics(
+        component_cases,
+        scenario_id,
+        capped_masking_ratio,
+        horizon,
+    )
+    bridge_metrics = _ablation_scenario_horizon_metrics(
+        bridge_cases,
+        scenario_id,
+        capped_masking_ratio,
+        horizon,
+    )
+    combined_metrics = _ablation_scenario_horizon_metrics(
+        all_cases,
+        scenario_id,
+        capped_masking_ratio,
+        horizon,
+    )
+    quality = _scenario_horizon_sample_quality(
+        all_cases,
+        full_cases=full_cases,
+        component_cases=component_cases,
+        bridge_cases=bridge_cases,
+        horizon=horizon,
+        registry=registry,
+    )
+    evidence_status = (
+        "insufficient_long_horizon_evidence"
+        if horizon == 20
+        and quality["full_advisory_mature_case_count"]
+        < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+        else "mature_horizon_evidence"
+    )
+    return {
+        "scenario_id": scenario_id,
+        "horizon": f"{horizon}d",
+        "horizon_trading_days": horizon,
+        "evidence_status": evidence_status,
+        "insufficient_long_horizon_evidence": (
+            evidence_status == "insufficient_long_horizon_evidence"
+        ),
+        "avg_return": combined_metrics["avg_return"],
+        "median_return": combined_metrics["median_return"],
+        "hit_rate": combined_metrics["hit_rate"],
+        "downside_capture": combined_metrics["downside_capture"],
+        "max_drawdown": combined_metrics["max_drawdown"],
+        "drawdown_reduced_count": combined_metrics["drawdown_reduced_count"],
+        "missed_upside_count": combined_metrics["missed_upside_count"],
+        "false_risk_off_count": combined_metrics["false_risk_off_count"],
+        "turnover": combined_metrics["turnover"],
+        "constraint_hit_count": combined_metrics["constraint_hit_count"],
+        "sample_count": combined_metrics["sample_count"],
+        "full_advisory_sample_count": full_metrics["sample_count"],
+        "component_only_sample_count": component_metrics["sample_count"],
+        "backtest_bridge_sample_count": bridge_metrics["sample_count"],
+        "mature_date_count": quality["mature_date_count"],
+        "mature_asset_count": quality["mature_asset_count"],
+        "mature_case_count": quality["mature_case_count"],
+        "full_advisory_mature_case_count": quality[
+            "full_advisory_mature_case_count"
+        ],
+        "unique_regime_count": quality["unique_regime_count"],
+        "correlated_asset_cluster_count": quality[
+            "correlated_asset_cluster_count"
+        ],
+        "sample_quality": quality,
+        "return_profile": {
+            "avg_return": combined_metrics["avg_return"],
+            "median_return": combined_metrics["median_return"],
+            "hit_rate": combined_metrics["hit_rate"],
+        },
+        "risk_profile": {
+            "downside_capture": combined_metrics["downside_capture"],
+            "max_drawdown": combined_metrics["max_drawdown"],
+            "drawdown_reduced_count": combined_metrics["drawdown_reduced_count"],
+            "constraint_hit_count": combined_metrics["constraint_hit_count"],
+        },
+        "false_risk_off": {
+            "count": combined_metrics["false_risk_off_count"],
+            "rate": _ratio(
+                combined_metrics["false_risk_off_count"],
+                combined_metrics["sample_count"],
+            ),
+        },
+        "missed_upside": {
+            "count": combined_metrics["missed_upside_count"],
+            "rate": _ratio(
+                combined_metrics["missed_upside_count"],
+                combined_metrics["sample_count"],
+            ),
+        },
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+    }
+
+
+def _scenario_horizon_sample_quality(
+    all_cases: Sequence[Mapping[str, Any]],
+    *,
+    full_cases: Sequence[Mapping[str, Any]],
+    component_cases: Sequence[Mapping[str, Any]],
+    bridge_cases: Sequence[Mapping[str, Any]],
+    horizon: int,
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    mature_cases = [case for case in all_cases if _case_horizon_available(case, horizon)]
+    full_mature = [case for case in full_cases if _case_horizon_available(case, horizon)]
+    component_mature = [
+        case for case in component_cases if _case_horizon_available(case, horizon)
+    ]
+    bridge_mature = [case for case in bridge_cases if _case_horizon_available(case, horizon)]
+    assets = {str(case.get("asset")).upper() for case in mature_cases if case.get("asset")}
+    regimes = {
+        str(case.get("market_regime") or registry.market_regime.regime_id)
+        for case in mature_cases
+    }
+    dates = {str(case.get("date")) for case in mature_cases if case.get("date")}
+    return {
+        "mature_date_count": len(dates),
+        "mature_asset_count": len(assets),
+        "mature_case_count": len(mature_cases),
+        "full_advisory_mature_case_count": len(full_mature),
+        "component_only_mature_case_count": len(component_mature),
+        "backtest_bridge_mature_case_count": len(bridge_mature),
+        "unique_regime_count": len(regimes) if mature_cases else 0,
+        "correlated_asset_cluster_count": len(
+            {_asset_cluster_id(asset) for asset in assets}
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _scenario_horizon_recommendation_contributions(
+    scenario_metrics: Mapping[str, Mapping[str, Any]],
+    *,
+    horizon: int,
+) -> dict[str, str]:
+    baseline = scenario_metrics.get("baseline", {})
+    no_mask = scenario_metrics.get("no_valuation_crowding_masking", {})
+    capped = scenario_metrics.get("capped_masking", {})
+    full_sample_count = int(baseline.get("full_advisory_sample_count") or 0)
+    if (
+        horizon == 20
+        and full_sample_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+    ):
+        return {
+            scenario_id: "insufficient_long_horizon_evidence"
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+    if full_sample_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+        return {
+            scenario_id: "insufficient_horizon_evidence"
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+    capped_supports = _capped_supports_preference(baseline, capped)
+    no_mask_supports = _no_mask_supports_preference(baseline, no_mask)
+    no_mask_dominates = _no_mask_supports_disable_candidate(baseline, no_mask)
+    baseline_supports = _baseline_supports_preference(baseline, no_mask)
+    supported = [
+        flag
+        for flag, active in (
+            ("prefer_capped_masking_candidate", capped_supports),
+            ("disable_masking_candidate", no_mask_dominates),
+            ("baseline_over_defensive_candidate", no_mask_supports),
+            ("keep_baseline_masking_candidate", baseline_supports),
+        )
+        if active
+    ]
+    if len(supported) > 1:
+        return {
+            scenario_id: "conflicting_horizon_signal"
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+    if not supported:
+        return {
+            scenario_id: "neutral_or_mixed"
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+    decision = supported[0]
+    return {
+        "baseline": (
+            "supports_keep_baseline_masking_candidate"
+            if decision == "keep_baseline_masking_candidate"
+            else "neutral_or_mixed"
+        ),
+        "no_valuation_crowding_masking": (
+            f"supports_{decision}"
+            if decision
+            in {"baseline_over_defensive_candidate", "disable_masking_candidate"}
+            else "neutral_or_mixed"
+        ),
+        "capped_masking": (
+            "supports_prefer_capped_masking_candidate"
+            if decision == "prefer_capped_masking_candidate"
+            else "neutral_or_mixed"
+        ),
+    }
+
+
+def _capped_supports_preference(
+    baseline: Mapping[str, Any],
+    capped: Mapping[str, Any],
+) -> bool:
+    baseline_return = _optional_float(baseline.get("avg_return"))
+    capped_return = _optional_float(capped.get("avg_return"))
+    if baseline_return is None or capped_return is None or capped_return < baseline_return:
+        return False
+    capped_missed = int(capped.get("missed_upside_count") or 0)
+    baseline_missed = int(baseline.get("missed_upside_count") or 0)
+    capped_false = int(capped.get("false_risk_off_count") or 0)
+    baseline_false = int(baseline.get("false_risk_off_count") or 0)
+    return (
+        capped_missed <= baseline_missed
+        and capped_false <= baseline_false
+        and (capped_missed < baseline_missed or capped_false < baseline_false)
+    )
+
+
+def _no_mask_supports_preference(
+    baseline: Mapping[str, Any],
+    no_mask: Mapping[str, Any],
+) -> bool:
+    baseline_return = _optional_float(baseline.get("avg_return"))
+    no_mask_return = _optional_float(no_mask.get("avg_return"))
+    if baseline_return is None or no_mask_return is None or no_mask_return <= baseline_return:
+        return False
+    baseline_drawdown = _optional_float(baseline.get("max_drawdown"))
+    no_mask_drawdown = _optional_float(no_mask.get("max_drawdown"))
+    return _drawdown_not_materially_worse(baseline_drawdown, no_mask_drawdown)
+
+
+def _no_mask_supports_disable_candidate(
+    baseline: Mapping[str, Any],
+    no_mask: Mapping[str, Any],
+) -> bool:
+    if not _no_mask_supports_preference(baseline, no_mask):
+        return False
+    baseline_drawdown = _optional_float(baseline.get("max_drawdown"))
+    no_mask_drawdown = _optional_float(no_mask.get("max_drawdown"))
+    if baseline_drawdown is None or no_mask_drawdown is None:
+        return False
+    no_mask_missed = int(no_mask.get("missed_upside_count") or 0)
+    baseline_missed = int(baseline.get("missed_upside_count") or 0)
+    no_mask_false = int(no_mask.get("false_risk_off_count") or 0)
+    baseline_false = int(baseline.get("false_risk_off_count") or 0)
+    return (
+        no_mask_drawdown >= baseline_drawdown
+        and no_mask_missed <= baseline_missed
+        and no_mask_false <= baseline_false
+    )
+
+
+def _baseline_supports_preference(
+    baseline: Mapping[str, Any],
+    no_mask: Mapping[str, Any],
+) -> bool:
+    baseline_drawdown = _optional_float(baseline.get("max_drawdown"))
+    no_mask_drawdown = _optional_float(no_mask.get("max_drawdown"))
+    if baseline_drawdown is None or no_mask_drawdown is None:
+        return False
+    sample_count = int(baseline.get("sample_count") or 0)
+    if sample_count <= 0:
+        return False
+    missed_rate = int(baseline.get("missed_upside_count") or 0) / sample_count
+    return (
+        baseline_drawdown > no_mask_drawdown
+        and missed_rate <= EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE
+    )
+
+
+def _drawdown_not_materially_worse(
+    baseline_drawdown: float | None,
+    challenger_drawdown: float | None,
+) -> bool:
+    if baseline_drawdown is None or challenger_drawdown is None:
+        return False
+    return challenger_drawdown >= (
+        baseline_drawdown
+        - abs(baseline_drawdown) * EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE
+    )
+
+
+def _median(values: Sequence[float]) -> float | None:
+    if not values:
+        return None
+    sorted_values = sorted(values)
+    middle = len(sorted_values) // 2
+    if len(sorted_values) % 2:
+        return sorted_values[middle]
+    return (sorted_values[middle - 1] + sorted_values[middle]) / 2
+
+
+def _ratio(numerator: int | float, denominator: int | float) -> float | None:
+    if denominator == 0:
+        return None
+    return float(numerator) / float(denominator)
+
+
+def _downside_capture(
+    raw_returns: Sequence[float],
+    weighted_returns: Sequence[float],
+) -> float | None:
+    raw_downside: list[float] = []
+    weighted_downside: list[float] = []
+    for raw_value, weighted_value in zip(raw_returns, weighted_returns, strict=False):
+        if raw_value < 0:
+            raw_downside.append(raw_value)
+            weighted_downside.append(weighted_value)
+    denominator = sum(abs(value) for value in raw_downside)
+    if denominator <= 0:
+        return None
+    numerator = sum(abs(value) for value in weighted_downside)
+    return numerator / denominator
 
 
 def _ablation_scenario_metrics(
@@ -6410,6 +6936,7 @@ def _ablation_scenario_horizon_metrics(
 ) -> dict[str, Any]:
     weighted_returns: list[float] = []
     raw_returns: list[float] = []
+    dated_weights: list[tuple[str, str, float]] = []
     drawdown_reduced_count = 0
     false_risk_off_count = 0
     missed_upside_count = 0
@@ -6430,6 +6957,9 @@ def _ablation_scenario_horizon_metrics(
         )
         weighted_returns.append(weight * value)
         raw_returns.append(value)
+        dated_weights.append(
+            (str(case.get("date") or ""), str(case.get("asset") or ""), weight)
+        )
         if applied_suppression > 0:
             constraint_hit_count += 1
             drawdown_reduced = value < 0
@@ -6440,6 +6970,11 @@ def _ablation_scenario_horizon_metrics(
                 missed_upside_count += 1
             if missed_upside and not drawdown_reduced:
                 false_risk_off_count += 1
+    dated_weights.sort()
+    turnover = sum(
+        abs(dated_weights[index][2] - dated_weights[index - 1][2])
+        for index in range(1, len(dated_weights))
+    )
     return {
         "horizon": f"{horizon}d",
         "horizon_trading_days": horizon,
@@ -6448,15 +6983,20 @@ def _ablation_scenario_horizon_metrics(
             if weighted_returns
             else None
         ),
+        "median_return": _median(weighted_returns),
         "hit_rate": (
             sum(1 for value in raw_returns if value > 0) / len(raw_returns)
             if raw_returns
             else None
         ),
+        "downside_capture": _downside_capture(raw_returns, weighted_returns),
+        "max_drawdown": min(weighted_returns) if weighted_returns else None,
         "mature_case_count": len(raw_returns),
+        "sample_count": len(raw_returns),
         "drawdown_reduced_count": drawdown_reduced_count,
         "missed_upside_count": missed_upside_count,
         "false_risk_off_count": false_risk_off_count,
+        "turnover": turnover,
         "constraint_hit_count": constraint_hit_count,
         "promotion_gate_allowed": False,
     }
