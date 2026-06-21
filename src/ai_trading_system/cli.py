@@ -21,6 +21,7 @@ from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.cli_commands.evidence import evidence_app
 from ai_trading_system.cli_commands.execution import execution_app
 from ai_trading_system.cli_commands.feedback import feedback_app
+from ai_trading_system.cli_commands.forward_evidence import forward_evidence_app
 from ai_trading_system.cli_commands.fundamentals import fundamentals_app
 from ai_trading_system.cli_commands.industry_chain import industry_chain_app
 from ai_trading_system.cli_commands.llm import llm_app
@@ -42,6 +43,7 @@ from ai_trading_system.cli_commands.system import system_app
 from ai_trading_system.cli_commands.thesis import thesis_app
 from ai_trading_system.cli_commands.trace import trace_app
 from ai_trading_system.cli_commands.trade_review import register_trade_review_commands
+from ai_trading_system.cli_commands.trading_costs import trading_costs_app
 from ai_trading_system.cli_commands.valuation import valuation_app
 from ai_trading_system.cli_commands.watchlist import watchlist_app
 
@@ -62,6 +64,7 @@ app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
 app.add_typer(portfolio_app, name="portfolio")
+app.add_typer(trading_costs_app, name="trading-costs")
 app.add_typer(research_app, name="research")
 app.add_typer(parameters_app, name="parameters")
 app.add_typer(signals_app, name="signals")
@@ -80,6 +83,7 @@ app.add_typer(score_daily_app, name="score-daily")
 app.add_typer(docs_app, name="docs")
 app.add_typer(sec_pit_app, name="sec-pit")
 app.add_typer(etf_app, name="etf")
+app.add_typer(forward_evidence_app, name="forward-evidence")
 register_data_cache_commands(app)
 register_root_utility_commands(app)
 register_trade_review_commands(app)

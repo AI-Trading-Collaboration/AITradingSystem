@@ -1,0 +1,42 @@
+schema_version: 1
+cost_model_id: research_cost_model_baseline_v1
+version: 1.0.0
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Provide explicit research-only cost assumptions before net-return strategy
+    comparison is interpreted.
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  broker_action: none
+commission:
+  type: bps
+  value: 0.0
+spread_model:
+  type: bps_by_asset_type
+  default_bps: 2.0
+slippage_model:
+  type: turnover_bps
+  default_bps: 1.0
+market_impact_model:
+  type: participation_rate_guardrail
+  max_participation_rate: 0.05
+financing_cost:
+  type: none_for_long_only_baseline
+  annual_rate: 0.0
+cash_yield:
+  type: research_cash_proxy
+  annual_rate: 0.0
+fx_cost:
+  type: usd_only_baseline
+  bps: 0.0
+tax_assumption:
+  type: excluded_research_baseline
+min_trade_size:
+  dollars: 0.0
+turnover_penalty:
+  bps_per_100pct_turnover: 3.0
+liquidity_cap:
+  max_participation_rate: 0.05

@@ -1,0 +1,115 @@
+schema_version: 1
+asset_master_id: asset_master_baseline_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Provide stable asset identifiers, ticker history, and tradability metadata
+    for validation-only research data foundations.
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  broker_action: none
+assets:
+  - asset_id: ETF_SPY
+    primary_ticker: SPY
+    ticker_history:
+      - ticker: SPY
+        start_date: 1993-01-29
+        end_date: null
+    exchange: NYSE_ARCA
+    currency: USD
+    asset_type: ETF
+    listing_date: 1993-01-29
+    delisting_date: null
+    tradability_status: tradable
+    sector: broad_market
+    industry: broad_market
+    theme_tags: [market_index]
+    country: US
+    corporate_actions_source: issuer_and_market_data_cache
+    benchmark_memberships:
+      - benchmark: SP500_proxy
+        start_date: 1993-01-29
+        end_date: null
+  - asset_id: ETF_QQQ
+    primary_ticker: QQQ
+    ticker_history:
+      - ticker: QQQ
+        start_date: 1999-03-10
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: ETF
+    listing_date: 1999-03-10
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: broad_technology
+    theme_tags: [market_index, mega_cap_tech]
+    country: US
+    corporate_actions_source: issuer_and_market_data_cache
+    benchmark_memberships:
+      - benchmark: NASDAQ100_proxy
+        start_date: 1999-03-10
+        end_date: null
+  - asset_id: ETF_SMH
+    primary_ticker: SMH
+    ticker_history:
+      - ticker: SMH
+        start_date: 2011-12-20
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: ETF
+    listing_date: 2011-12-20
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: semiconductors
+    theme_tags: [semiconductor, AI_infrastructure]
+    country: US
+    corporate_actions_source: issuer_and_market_data_cache
+    benchmark_memberships:
+      - benchmark: semiconductor_proxy
+        start_date: 2011-12-20
+        end_date: null
+  - asset_id: STOCK_NVDA
+    primary_ticker: NVDA
+    ticker_history:
+      - ticker: NVDA
+        start_date: 1999-01-22
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: stock
+    listing_date: 1999-01-22
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: semiconductors
+    theme_tags: [semiconductor, AI_infrastructure]
+    country: US
+    corporate_actions_source: market_data_vendor_and_sec
+    benchmark_memberships:
+      - benchmark: AI_mega_cap_satellite
+        start_date: 2022-12-01
+        end_date: null
+  - asset_id: CASH_USD
+    primary_ticker: CASH
+    ticker_history:
+      - ticker: CASH
+        start_date: 1900-01-01
+        end_date: null
+    exchange: CASH
+    currency: USD
+    asset_type: cash
+    listing_date: 1900-01-01
+    delisting_date: null
+    tradability_status: tradable
+    sector: cash
+    industry: cash
+    theme_tags: [cash_like]
+    country: US
+    corporate_actions_source: not_applicable
+    benchmark_memberships: []

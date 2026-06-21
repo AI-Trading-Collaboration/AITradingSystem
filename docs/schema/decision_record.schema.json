@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/decision_record.schema.json",
+  "title": "Research Decision Record",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "research_id",
+    "decision_type",
+    "decision",
+    "reason",
+    "created_at",
+    "manual_review_required",
+    "production_effect"
+  ],
+  "properties": {
+    "decision_id": { "type": "string" },
+    "research_id": { "type": "string" },
+    "decision_type": { "type": "string" },
+    "decision": { "type": "string" },
+    "reason": { "type": "string" },
+    "created_at": { "type": "string" },
+    "manual_review_required": { "type": "boolean" },
+    "production_effect": { "type": "string", "const": "none" }
+  },
+  "additionalProperties": true
+}

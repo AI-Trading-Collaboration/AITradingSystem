@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Asset Master Record",
+  "type": "object",
+  "required": [
+    "asset_id",
+    "primary_ticker",
+    "ticker_history",
+    "exchange",
+    "currency",
+    "asset_type",
+    "listing_date",
+    "tradability_status",
+    "sector",
+    "industry",
+    "theme_tags",
+    "country",
+    "corporate_actions_source",
+    "benchmark_memberships"
+  ],
+  "properties": {
+    "asset_id": {"type": "string"},
+    "primary_ticker": {"type": "string"},
+    "ticker_history": {"type": "array"},
+    "theme_tags": {"type": "array", "items": {"type": "string"}}
+  }
+}

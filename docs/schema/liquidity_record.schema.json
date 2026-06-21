@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Liquidity Record",
+  "type": "object",
+  "required": [
+    "asset_id",
+    "date",
+    "adv",
+    "volume",
+    "dollar_volume",
+    "spread_proxy",
+    "volatility",
+    "liquidity_score",
+    "max_participation_rate",
+    "tradable_size_estimate",
+    "liquidity_cap_reason"
+  ],
+  "properties": {
+    "asset_id": {"type": "string"},
+    "date": {"type": "string"},
+    "liquidity_score": {"type": "number"}
+  }
+}

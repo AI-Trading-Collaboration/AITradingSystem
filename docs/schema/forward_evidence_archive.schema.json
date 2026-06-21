@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Forward Evidence Archive",
+  "type": "object",
+  "required": [
+    "archive_id",
+    "decision_time",
+    "asset_universe",
+    "current_portfolio",
+    "feature_snapshot_id",
+    "baseline_outputs",
+    "candidate_strategy_outputs",
+    "benchmark_outputs",
+    "control_outputs",
+    "oracle_diagnostic_outputs",
+    "expected_utility",
+    "decision_trace",
+    "policy_version",
+    "config_hash",
+    "code_version",
+    "outcome_updates",
+    "broker_action",
+    "production_effect"
+  ],
+  "properties": {
+    "broker_action": {"const": "none"},
+    "production_effect": {"const": "none"},
+    "outcome_updates": {"type": "array"}
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Label Record",
+  "type": "object",
+  "required": [
+    "label_id",
+    "label_type",
+    "label_version",
+    "asset_id",
+    "as_of_date",
+    "known_time",
+    "label_value",
+    "as_of_valid",
+    "production_effect"
+  ],
+  "properties": {
+    "label_type": {"enum": ["regime", "event", "cluster"]},
+    "as_of_valid": {"type": "boolean"},
+    "production_effect": {"const": "none"}
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tradability Record",
+  "type": "object",
+  "required": [
+    "asset_id",
+    "date",
+    "tradable",
+    "reason_if_not_tradable",
+    "exchange_open",
+    "halted",
+    "liquidity_ok",
+    "price_available",
+    "corporate_action_pending"
+  ],
+  "properties": {
+    "asset_id": {"type": "string"},
+    "date": {"type": "string"},
+    "tradable": {"type": "boolean"}
+  }
+}

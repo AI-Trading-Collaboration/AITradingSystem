@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/pivot_decision.schema.json",
+  "title": "Pivot Decision",
+  "type": "object",
+  "required": ["research_id", "recommended_action", "reason_codes", "manual_review_required", "production_effect"],
+  "properties": {
+    "research_id": { "type": "string" },
+    "recommended_action": {
+      "type": "string",
+      "enum": [
+        "CONTINUE",
+        "MINIMAL_EXPERIMENT_ONLY",
+        "WATCHLIST",
+        "PAUSE",
+        "REJECT",
+        "DIRECTION_REVIEW",
+        "INFRA_ESCALATION_REVIEW"
+      ]
+    },
+    "reason_codes": { "type": "array", "items": { "type": "string" } },
+    "manual_review_required": { "type": "boolean" },
+    "production_effect": { "type": "string", "const": "none" }
+  },
+  "additionalProperties": true
+}

@@ -5657,6 +5657,391 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: research_protocol_validation
+    title: Research Protocol Validation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research governance protocol-validate
+    artifact_globs:
+      - outputs/research_governance/governance/research_protocol_validation.json
+      - outputs/research_governance/governance/research_protocol_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-703 protocol/schema validation should be refreshed whenever a
+      research protocol, governance policy, schema, or roadmap command surface
+      changes before interpreting downstream research readiness.
+    owner_action: rerun_protocol_validation_before_research_promotion_discussion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_evidence_audit
+    title: Research Evidence Audit
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research governance evidence-audit --research-id <research_id>
+    artifact_globs:
+      - outputs/research_governance/*/evidence/evidence_audit.json
+      - outputs/research_governance/*/evidence/evidence_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-704 evidence ledgers must expose E0-E5 source class policy,
+      provenance, and no-lookahead checks before evidence can be used for a
+      research-state or promotion-readiness review.
+    owner_action: rerun_evidence_audit_after_new_research_evidence_is_ingested
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_promotion_readiness
+    title: Research Promotion Readiness
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research governance promotion-readiness --research-id <research_id>
+    artifact_globs:
+      - outputs/research_governance/*/governance/promotion_readiness.json
+      - outputs/research_governance/*/governance/promotion_readiness.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-708 promotion readiness is the single fail-closed policy/evidence
+      summary and must be visible before any manual promotion discussion.
+    owner_action: block_promotion_review_until_policy_evidence_and_human_review_are_current
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_governance_rollup
+    title: Research Governance Rollup
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research governance rollup --research-id <research_id>
+    artifact_globs:
+      - outputs/research_governance/*/rollup/research_rollup.json
+      - outputs/research_governance/*/rollup/research_rollup.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-709 provides the primary rollup for one research line and should
+      be refreshed after evidence, state, threshold, readiness, or decision
+      artifacts change.
+    owner_action: use_rollup_as_primary_research_review_entrypoint
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_watchlist
+    title: Research Watchlist
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research governance watchlist
+    artifact_globs:
+      - outputs/research_governance/governance/research_watchlist.json
+      - outputs/research_governance/governance/research_watchlist.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-710 watchlist exposes stop/rerun/pivot triggers across active
+      protocols and should be refreshed when protocol status or blockers change.
+    owner_action: review_watchlist_before_starting_new_full_research_batch
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: portfolio_decision_contract_validation
+    title: Portfolio Decision Contract Validation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research portfolio-decision validate-contract
+    artifact_globs:
+      - outputs/portfolio_decision/portfolio_decision_contract_validation.json
+      - outputs/portfolio_decision/portfolio_decision_contract_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-716 dynamic portfolio decision contract validation should be
+      current before action-outcome datasets, value-surface baselines, or
+      strategy adapters are interpreted.
+    owner_action: rerun_contract_validation_after_portfolio_decision_contract_change
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: pit_action_outcome_dataset
+    title: PIT Action Outcome Dataset
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research portfolio-decision build-action-outcome-dataset --research-id <research_id>
+    artifact_globs:
+      - outputs/portfolio_decision/*/pit_action_outcome_dataset.json
+      - outputs/portfolio_decision/*/pit_action_outcome_dataset.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-717 dataset contracts must disclose PIT validity, evaluation-only
+      future outcomes, and horizon maturity before any strategy or value-surface
+      evidence is interpreted.
+    owner_action: refresh_dataset_contract_before_strategy_evaluation_or_value_surface_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: portfolio_value_surface_report
+    title: Portfolio Value Surface Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research portfolio-decision value-surface-report
+    artifact_globs:
+      - outputs/portfolio_decision/value_surface_report.json
+      - outputs/portfolio_decision/value_surface_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-719 value-surface baselines are research-only summaries and should
+      be refreshed after PIT action-outcome dataset or utility contract changes.
+    owner_action: compare_value_surface_against_fixed_window_baseline_before_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_strategy_evaluation
+    title: Research Strategy Evaluation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research strategy evaluate --strategy-id <strategy_id>
+    artifact_globs:
+      - outputs/portfolio_decision/strategy/strategy_evaluation_*.json
+      - outputs/portfolio_decision/strategy/strategy_evaluation_*.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-718 requires every strategy to use the same adapter interface and
+      stage-gated evaluation before complex methods are compared.
+    owner_action: rerun_strategy_evaluation_after_strategy_interface_or_stage_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_ops_dashboard
+    title: Research Ops Dashboard
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research ops dashboard
+    artifact_globs:
+      - outputs/research_ops/research_ops_dashboard.json
+      - outputs/research_ops/research_ops_dashboard.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-721 through TRADING-723 workstream queue, WIP, blockers, stalled
+      items, and next batch recommendations should remain visible during active
+      roadmap execution.
+    owner_action: review_ops_dashboard_before_parallel_research_batches
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: paper_shadow_cohort_prepare
+    title: Paper Shadow Cohort Prepare
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research paper-shadow cohort-prepare
+    artifact_globs:
+      - outputs/portfolio_decision/paper_shadow/paper_shadow_cohort_prepare_*.json
+      - outputs/portfolio_decision/paper_shadow/paper_shadow_cohort_prepare_*.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-724 cohort readiness is only a manual-review input and should be
+      refreshed before any paper-shadow cohort discussion.
+    owner_action: require_human_review_before_any_paper_shadow_change
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: pit_feature_store_snapshot
+    title: PIT Feature Store Snapshot
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data pit-feature-store build-snapshot
+    artifact_globs:
+      - outputs/data_quality/pit_feature_store/*/pit_feature_snapshot_manifest.json
+      - outputs/data_quality/pit_feature_store/*/pit_feature_availability_audit.json
+      - outputs/data_quality/pit_feature_store/*/pit_feature_availability_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-726 PIT feature snapshot manifests must be refreshed when feature
+      availability contracts, source manifests, feature families, or research
+      universes change.
+    owner_action: rerun_pit_feature_snapshot_before_large_scale_research_batch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: asset_master_tradability
+    title: Asset Master And Tradability
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data asset-master validate
+    artifact_globs:
+      - outputs/data_quality/asset_master/asset_master_validation.json
+      - outputs/data_quality/asset_master/asset_master_validation.md
+      - outputs/data_quality/asset_master/tradability_calendar_*.json
+      - outputs/data_quality/asset_master/universe_audit_*.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-727 asset master, ticker history, and tradability calendar should
+      be current before interpreting multi-asset research results.
+    owner_action: rerun_asset_master_and_universe_audit_before_new_universe_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: cost_liquidity_audit
+    title: Cost Liquidity Audit
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits trading-costs audit
+    artifact_globs:
+      - outputs/data_quality/cost_liquidity/cost_liquidity_audit.json
+      - outputs/data_quality/cost_liquidity/cost_liquidity_audit.md
+      - outputs/data_quality/cost_liquidity/trading_cost_estimate.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-728 cost/liquidity assumptions must be versioned and visible
+      before comparing gross and net strategy outcomes.
+    owner_action: rerun_cost_liquidity_audit_before_strategy_net_return_comparison
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_label_store_audit
+    title: Research Label Store Audit
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research labels audit
+    artifact_globs:
+      - outputs/research_labels/research_label_store_audit.json
+      - outputs/research_labels/research_label_store_audit.md
+      - outputs/research_labels/regime_labels.jsonl
+      - outputs/research_labels/event_labels.jsonl
+      - outputs/research_labels/cluster_labels.jsonl
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-729 regime, event, and cluster labels should be refreshed before
+      stratified research interpretation or case-library queries.
+    owner_action: rerun_label_store_audit_before_regime_event_cluster_conclusions
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_run_registry_audit
+    title: Research Run Registry Audit
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research runs audit
+    artifact_globs:
+      - outputs/research_runs/run_registry.jsonl
+      - outputs/research_runs/run_index.json
+      - outputs/research_runs/research_run_registry_audit.json
+      - outputs/research_runs/research_run_registry_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-730 run registry must expose reproducibility fields and artifact
+      paths before large experiment batches are compared.
+    owner_action: audit_run_registry_before_using_experiment_results_for_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_execution_cache_audit
+    title: Research Execution Cache Audit
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research execution cache-audit
+    artifact_globs:
+      - outputs/research_execution/research_execution_plan.json
+      - outputs/research_execution/research_execution_batch_run.json
+      - outputs/research_execution/research_execution_cache_audit.json
+      - outputs/research_execution/research_execution_cache_audit.md
+      - outputs/research_execution/checkpoints/*.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-731 cache/checkpoint readiness should be visible during high
+      throughput research execution and after config/code/data version changes.
+    owner_action: audit_execution_cache_before_resuming_or_expanding_batch_runs
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: forward_evidence_archive
+    title: Forward Evidence Archive
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits forward-evidence capture-daily
+    artifact_globs:
+      - outputs/forward_evidence/daily_archive/forward_evidence_*.json
+      - outputs/forward_evidence/daily_archive/forward_evidence_*.md
+      - outputs/forward_evidence/forward_evidence_audit.json
+      - outputs/forward_evidence/forward_evidence_report.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 1
+    freshness_rationale: >
+      TRADING-732 forward evidence should be captured daily so future
+      paper-shadow or promotion discussions do not rely only on reconstructed
+      historical traces.
+    owner_action: capture_forward_evidence_after_daily_decision_artifacts_are_available
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: research_case_library_audit
+    title: Research Case Library Audit
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits research cases audit
+    artifact_globs:
+      - outputs/research_case_library/case_registry.jsonl
+      - outputs/research_case_library/research_case_library_audit.json
+      - outputs/research_case_library/research_case_library_audit.md
+      - outputs/research_case_library/oracle_diagnostic_case_set.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-733 forward/reverse case libraries should be audited before cases
+      are reused in strategy-pair diagnostics or hypothesis generation.
+    owner_action: audit_case_library_before_using_oracle_or_regret_cases
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

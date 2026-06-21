@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PIT Snapshot Manifest",
+  "type": "object",
+  "required": [
+    "snapshot_id",
+    "snapshot_type",
+    "as_of_date",
+    "decision_time",
+    "feature_families",
+    "asset_universe",
+    "source_manifests",
+    "input_hash",
+    "generated_at",
+    "code_version",
+    "config_hash",
+    "pit_valid",
+    "lookahead_violation_count"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string"},
+    "snapshot_type": {"type": "string"},
+    "feature_families": {"type": "array", "items": {"type": "string"}},
+    "asset_universe": {"type": "string"},
+    "pit_valid": {"type": "boolean"},
+    "lookahead_violation_count": {"type": "integer"}
+  }
+}

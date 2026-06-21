@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cost Model",
+  "type": "object",
+  "required": [
+    "cost_model_id",
+    "commission",
+    "spread_model",
+    "slippage_model",
+    "market_impact_model",
+    "financing_cost",
+    "cash_yield",
+    "fx_cost",
+    "tax_assumption",
+    "min_trade_size",
+    "turnover_penalty",
+    "liquidity_cap",
+    "version"
+  ],
+  "properties": {
+    "cost_model_id": {"type": "string"},
+    "version": {"type": "string"}
+  }
+}

@@ -1,0 +1,147 @@
+schema_version: "1.0"
+policy_id: research_governance_policy_v1
+status: baseline_validation_only
+owner: research_governance
+production_effect: none
+rationale: >
+  Centralize subjective research governance rules so promotion, evidence,
+  blocker, WIP, and advanced-policy decisions are auditable and cannot be
+  hidden in code.
+
+safety_boundary:
+  validation_only: true
+  observe_only: true
+  production_effect: none
+  official_target_weights_allowed: false
+  paper_shadow_change_allowed_default: false
+  broker_action_allowed: false
+  order_action_allowed: false
+  no_lookahead_gate_relaxation_allowed: false
+  data_quality_gate_relaxation_allowed: false
+
+evidence_source_policy:
+  E0:
+    label: TEST_FIXTURE_OR_SYNTHETIC
+    allowed_uses: [unit_test, contract_test, schema_validation]
+    promotion_gate_allowed: false
+  E1:
+    label: BACKTEST_TRACE_BRIDGE
+    allowed_uses: [diagnostic, sensitivity_analysis, hypothesis_generation]
+    promotion_gate_allowed: false
+  E2:
+    label: COMPONENT_PIT_REPLAY
+    allowed_uses: [diagnostic, ablation, sensitivity_analysis]
+    promotion_gate_allowed: false
+  E3:
+    label: FULL_ADVISORY_PIT_REPLAY
+    allowed_uses: [validation, benchmark_comparison, robustness_review]
+    promotion_gate_allowed: true
+  E4:
+    label: FORWARD_PAPER_SHADOW
+    allowed_uses: [forward_observation, readiness_review]
+    promotion_gate_allowed: true
+  E5:
+    label: PRODUCTION_OBSERVATION
+    allowed_uses: [post_deployment_audit, rollback_review]
+    promotion_gate_allowed: true
+
+promotion_readiness_policy:
+  policy_version: promotion_readiness_v1
+  human_review_required: true
+  automatic_weight_change_allowed: false
+  required_evidence_classes: [E3, E4]
+  forbidden_promotion_evidence_classes: [E0, E1, E2]
+  required_controls:
+    - simple_benchmark_comparison
+    - positive_control_detection
+    - negative_control_blocking
+    - future_leakage_trap_blocked
+  threshold_dependency_required: true
+
+blocker_taxonomy:
+  top_level:
+    - DATA
+    - PIT
+    - LINEAGE
+    - MATURITY
+    - SAMPLE_QUALITY
+    - SOURCE_CONSISTENCY
+    - THRESHOLD
+    - ROBUSTNESS
+    - PROTOCOL
+    - REPRODUCIBILITY
+    - BENCHMARK
+    - FALSIFICATION
+    - HYPOTHESIS
+    - METHOD
+    - RISK
+    - OPERATIONAL
+
+research_ops_policy:
+  wip_limit_by_lane:
+    DATA_EVIDENCE:
+      limit: 3
+      rationale: keep PIT/data-quality blockers reviewable
+    GOVERNANCE:
+      limit: 3
+      rationale: avoid accumulating unreviewed policy artifacts
+    STRATEGY:
+      limit: 4
+      rationale: allow benchmark and candidate work without hiding blockers
+    BENCHMARK_CONTROL:
+      limit: 3
+      rationale: keep control failures visible
+    REVERSE_DIAGNOSTIC:
+      limit: 2
+      rationale: prevent oracle diagnostics from becoming promotion work
+    HYPOTHESIS_EXPLORATION:
+      limit: 3
+      rationale: force direction review after low information cycles
+    PORTFOLIO_DECISION:
+      limit: 3
+      rationale: keep contract, dataset, and adapter work coordinated
+    INFRASTRUCTURE:
+      limit: 2
+      rationale: avoid blocker-driven infrastructure sprawl
+  repeated_low_information_cycle_review_count:
+    value: 2
+    rationale: subjective process guardrail for direction review, not an investment threshold
+
+benchmark_zoo:
+  - cash
+  - buy_and_hold
+  - static_allocation
+  - simple_trend_following
+  - moving_average_risk_off
+  - volatility_targeting
+  - drawdown_guard
+  - no_masking
+  - capped_masking
+  - slow_risk_on
+  - fast_risk_off
+
+controls:
+  positive:
+    - strong_trend_window_simple_trend_baseline
+    - drawdown_window_drawdown_guard
+  negative:
+    - date_shuffled_indicator
+    - asset_shuffled_indicator
+    - random_signal
+    - future_leakage_trap
+    - irrelevant_feature_placebo
+
+advanced_policy_sandbox:
+  allowed_methods:
+    - tree
+    - boosting
+    - regularized_linear_model
+    - sequence_neural_model
+    - distributional_model
+    - teacher_distillation
+    - contextual_bandit
+    - offline_rl
+    - ensemble
+    - optimal_stopping
+  required_minimum_stages_before_research_claim: [stage_0_data_controls, stage_1_simple_benchmark, stage_2_minimum_viable_experiment]
+  promotion_gate_allowed: false

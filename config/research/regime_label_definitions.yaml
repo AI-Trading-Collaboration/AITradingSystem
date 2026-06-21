@@ -1,0 +1,22 @@
+schema_version: 1
+label_definition_id: regime_label_definitions_baseline_v1
+safety_boundary:
+  validation_only: true
+  production_effect: none
+label_version: regime_labels_v1
+regime_labels:
+  - trend_regime
+  - volatility_regime
+  - drawdown_regime
+  - liquidity_regime
+  - rates_regime
+  - risk_on_off_regime
+  - macro_event_regime
+baseline_values:
+  trend_regime: trend_unknown_until_feature_snapshot_connected
+  volatility_regime: volatility_unknown_until_feature_snapshot_connected
+  drawdown_regime: drawdown_unknown_until_feature_snapshot_connected
+  liquidity_regime: liquidity_unknown_until_liquidity_model_connected
+  rates_regime: rates_unknown_until_macro_source_connected
+  risk_on_off_regime: risk_unknown_until_scoring_trace_connected
+  macro_event_regime: no_known_macro_event_in_baseline

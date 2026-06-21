@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/research_state.schema.json",
+  "title": "Research State",
+  "type": "object",
+  "required": ["research_id", "state_vector", "blockers", "production_effect"],
+  "properties": {
+    "research_id": { "type": "string" },
+    "state_vector": {
+      "type": "object",
+      "required": [
+        "engineering_readiness",
+        "data_readiness",
+        "evidence_maturity",
+        "robustness_status",
+        "threshold_status",
+        "promotion_readiness",
+        "operational_status",
+        "direction_review_status"
+      ]
+    },
+    "blockers": { "type": "array", "items": { "type": "object" } },
+    "production_effect": { "type": "string", "const": "none" }
+  },
+  "additionalProperties": true
+}

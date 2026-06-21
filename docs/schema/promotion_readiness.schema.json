@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/promotion_readiness.schema.json",
+  "title": "Promotion Readiness",
+  "type": "object",
+  "required": [
+    "research_id",
+    "promotion_ready",
+    "human_review_required",
+    "automatic_weight_change_count",
+    "blocking_reasons",
+    "production_effect"
+  ],
+  "properties": {
+    "research_id": { "type": "string" },
+    "promotion_ready": { "type": "boolean" },
+    "human_review_required": { "type": "boolean" },
+    "automatic_weight_change_count": { "type": "integer", "minimum": 0 },
+    "blocking_reasons": { "type": "array", "items": { "type": "string" } },
+    "production_effect": { "type": "string", "const": "none" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,20 @@
+schema_version: 1
+label_definition_id: cluster_label_definitions_baseline_v1
+safety_boundary:
+  validation_only: true
+  production_effect: none
+label_version: cluster_labels_v1
+static_clusters:
+  market_index: [ETF_SPY, ETF_QQQ]
+  mega_cap_tech: [STOCK_NVDA]
+  semiconductor: [ETF_SMH, STOCK_NVDA]
+  AI_infrastructure: [ETF_SMH, STOCK_NVDA]
+  cloud_software: []
+  defensive: []
+  cash_like: [CASH_USD]
+  bond_duration: []
+  commodity: []
+dynamic_cluster_policy:
+  method: correlation_placeholder_until_history_connected
+  lookback_window: 60d
+  as_of_valid_required: true

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/portfolio_decision_problem.schema.json",
+  "title": "Portfolio Decision Problem",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_id",
+    "state",
+    "investable_universe",
+    "current_portfolio",
+    "action_space",
+    "candidate_horizons",
+    "review_frequency",
+    "utility_profile",
+    "risk_constraints",
+    "cost_model",
+    "output_contract",
+    "safety_boundary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "contract_id": { "type": "string" },
+    "state": { "type": "object" },
+    "investable_universe": { "type": "object" },
+    "current_portfolio": { "type": "object" },
+    "action_space": { "type": "object" },
+    "candidate_horizons": { "type": "array", "items": { "type": "object" } },
+    "review_frequency": { "type": "object" },
+    "utility_profile": {
+      "type": "object",
+      "required": ["version", "objective"]
+    },
+    "risk_constraints": { "type": "object" },
+    "cost_model": { "type": "object" },
+    "output_contract": { "type": "object" },
+    "safety_boundary": { "type": "object" }
+  },
+  "additionalProperties": true
+}

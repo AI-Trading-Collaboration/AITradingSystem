@@ -1,0 +1,50 @@
+schema_version: "1.0"
+research_id: portfolio_decision_problem_v1
+title: Portfolio Decision Problem v1 Protocol
+owner: research_governance
+status: baseline_protocol
+market_regime:
+  regime_id: ai_after_chatgpt
+  requested_date_range: "2022-12-01..present"
+  anchor_event: "ChatGPT public launch on 2022-11-30"
+problem_statement: >
+  Compare candidate portfolio actions by horizon-conditioned expected utility
+  using only PIT state, current portfolio, cost, risk constraints, and auditable
+  future outcomes marked evaluation-only.
+hypotheses:
+  - hypothesis_id: horizon_conditioned_action_value_surface
+    statement: Horizon-conditioned value surfaces can outperform fixed-window baselines.
+    falsification: Fixed-window baselines dominate or negative controls pass.
+evidence_requirements:
+  - evidence_class: E3
+    minimum_role: full_advisory_pit_replay_action_outcome_rows
+    required_for_promotion: true
+  - evidence_class: E4
+    minimum_role: forward_paper_shadow_cohort_review
+    required_for_promotion: true
+benchmark_requirements:
+  - cash
+  - buy_and_hold
+  - static_allocation
+  - simple_trend_following
+control_requirements:
+  - asset_shuffled_indicator
+  - random_signal
+  - future_leakage_trap
+threshold_dependencies:
+  - portfolio_decision.utility_profile_version
+promotion_policy:
+  policy_ref: research_governance_policy_v1
+  human_review_required: true
+  bridge_only_promotion_allowed: false
+outputs:
+  - portfolio_decision_contract
+  - pit_action_outcome_dataset
+  - strategy_evaluation
+  - value_surface_report
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  paper_shadow_change_allowed: false
+  official_target_weights_allowed: false
+  broker_action_allowed: false

@@ -1,0 +1,49 @@
+schema_version: "1.0"
+research_id: valuation_crowding_masking
+title: Valuation/Crowding Masking Research Protocol
+owner: research_governance
+status: baseline_protocol
+market_regime:
+  regime_id: ai_after_chatgpt
+  requested_date_range: "2022-12-01..present"
+  anchor_event: "ChatGPT public launch on 2022-11-30"
+problem_statement: >
+  Determine whether valuation/crowding masking improves AI-related portfolio
+  decisions under PIT information without hiding missed-upside or false risk-off
+  costs.
+hypotheses:
+  - hypothesis_id: baseline_masking_reduces_drawdown
+    statement: Baseline masking reduces downside without unacceptable missed upside.
+    falsification: Negative controls or bridge-only evidence cannot support promotion.
+evidence_requirements:
+  - evidence_class: E3
+    minimum_role: full_advisory_pit_replay
+    required_for_promotion: true
+  - evidence_class: E4
+    minimum_role: forward_paper_shadow_review
+    required_for_promotion: true
+benchmark_requirements:
+  - no_masking
+  - capped_masking
+  - buy_and_hold
+control_requirements:
+  - future_leakage_trap
+  - random_signal
+threshold_dependencies:
+  - indicator_research.effectiveness_min_available_outcome_cases
+  - indicator_research.effectiveness_missed_upside_acceptable_rate
+  - indicator_research.robustness_cluster_dominance_share
+promotion_policy:
+  policy_ref: research_governance_policy_v1
+  human_review_required: true
+  bridge_only_promotion_allowed: false
+outputs:
+  - indicator_research_validation_rollup
+  - evidence_ledger
+  - promotion_readiness
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  paper_shadow_change_allowed: false
+  official_target_weights_allowed: false
+  broker_action_allowed: false

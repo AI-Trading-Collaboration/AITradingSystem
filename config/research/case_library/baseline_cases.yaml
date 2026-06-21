@@ -1,0 +1,27 @@
+schema_version: 1
+case_library_id: research_case_library_baseline_v1
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  broker_action: none
+cases:
+  - case_id: baseline_false_risk_off_placeholder
+    case_type: known_false_risk_off
+    research_ids: [dynamic_trend_thresholds]
+    date_range:
+      start: 2022-12-01
+      end: null
+    assets: [ETF_QQQ, ETF_SMH]
+    regime_labels: [risk_on_off_regime]
+    event_labels: []
+    cluster_labels: [market_index, semiconductor]
+    baseline_strategy: value_surface_baseline
+    comparison_strategy: hindsight_oracle_diagnostic
+    teacher_type: hindsight_oracle
+    expected_behavior: diagnostic_only_identify_false_risk_off
+    known_outcome: evidence_required
+    regret_type: false_risk_off
+    allowed_uses: [diagnostic, hypothesis_generation, casebook_query]
+    promotion_gate_allowed: false
+    source_evidence_ids: [EVIDENCE_REQUIRED]
+    notes: Baseline placeholder until real forward/full-advisory evidence is linked.

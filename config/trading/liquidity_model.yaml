@@ -1,0 +1,28 @@
+schema_version: 1
+liquidity_model_id: research_liquidity_model_baseline_v1
+version: 1.0.0
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  broker_action: none
+default_liquidity:
+  adv: 1000000
+  volume: 1000000
+  dollar_volume: 100000000
+  spread_proxy: 0.0002
+  volatility: 0.02
+  liquidity_score: 1.0
+  max_participation_rate: 0.05
+  tradable_size_estimate: 5000000
+  liquidity_cap_reason: baseline_default
+asset_overrides:
+  CASH_USD:
+    adv: 0
+    volume: 0
+    dollar_volume: 0
+    spread_proxy: 0.0
+    volatility: 0.0
+    liquidity_score: 1.0
+    max_participation_rate: 1.0
+    tradable_size_estimate: 1000000000
+    liquidity_cap_reason: cash_like

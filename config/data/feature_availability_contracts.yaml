@@ -1,0 +1,31 @@
+schema_version: 1
+contract_id: data_foundation_feature_availability_contracts_v1
+status: pilot_baseline
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  broker_action: none
+contracts:
+  - feature_family: price
+    required_time_fields:
+      - raw_event_time
+      - release_time
+      - available_time
+      - decision_time
+    fail_closed_rule: available_time_must_be_on_or_before_decision_time
+    source_manifest_required: true
+  - feature_family: sec_reconstructed
+    required_time_fields:
+      - raw_event_time
+      - accepted_time
+      - available_time
+      - decision_time
+    fail_closed_rule: accepted_time_and_available_time_must_be_on_or_before_decision_time
+    source_manifest_required: true
+  - feature_family: valuation
+    required_time_fields:
+      - raw_event_time
+      - available_time
+      - decision_time
+    fail_closed_rule: current_view_only_must_be_flagged_and_promotion_blocked
+    source_manifest_required: true

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Execution Checkpoint",
+  "type": "object",
+  "required": [
+    "checkpoint_id",
+    "work_item_id",
+    "state",
+    "config_hash",
+    "code_version",
+    "data_version",
+    "cache_key",
+    "created_at",
+    "resume_supported",
+    "production_effect"
+  ],
+  "properties": {
+    "state": {
+      "enum": [
+        "PLANNED",
+        "RUNNING",
+        "CHECKPOINTED",
+        "FAILED_RETRYABLE",
+        "FAILED_FINAL",
+        "COMPLETED",
+        "SKIPPED_DEDUPED",
+        "CANCELLED"
+      ]
+    },
+    "production_effect": {"const": "none"}
+  }
+}

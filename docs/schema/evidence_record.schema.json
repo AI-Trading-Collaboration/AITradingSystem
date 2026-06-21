@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/evidence_record.schema.json",
+  "title": "Evidence Record",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "research_id",
+    "source_class",
+    "source_type",
+    "artifact_path",
+    "generated_at",
+    "provenance",
+    "allowed_uses",
+    "promotion_gate_allowed",
+    "lookahead_checked"
+  ],
+  "properties": {
+    "evidence_id": { "type": "string" },
+    "research_id": { "type": "string" },
+    "source_class": { "type": "string", "enum": ["E0", "E1", "E2", "E3", "E4", "E5"] },
+    "source_type": { "type": "string" },
+    "artifact_path": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "provenance": { "type": "object" },
+    "allowed_uses": { "type": "array", "items": { "type": "string" } },
+    "promotion_gate_allowed": { "type": "boolean" },
+    "lookahead_checked": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

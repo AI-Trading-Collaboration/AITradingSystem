@@ -1,0 +1,48 @@
+schema_version: "1.0"
+research_id: dynamic_trend_thresholds
+title: Dynamic Trend Threshold Governance Protocol
+owner: research_governance
+status: baseline_protocol
+market_regime:
+  regime_id: ai_after_chatgpt
+  requested_date_range: "2022-12-01..present"
+  anchor_event: "ChatGPT public launch on 2022-11-30"
+problem_statement: >
+  Evaluate risk-off, risk-on confirmation, and trend score bands without treating
+  sensitivity-tested thresholds as validated boundaries.
+hypotheses:
+  - hypothesis_id: dynamic_trend_thresholds_have_stable_signal_value
+    statement: Dynamic trend thresholds improve risk-on/risk-off timing across horizons.
+    falsification: Full-advisory and bridge evidence disagree or sample quality is insufficient.
+evidence_requirements:
+  - evidence_class: E3
+    minimum_role: full_advisory_pit_replay
+    required_for_promotion: true
+  - evidence_class: E1
+    minimum_role: backtest_trace_bridge_diagnostic
+    required_for_promotion: false
+benchmark_requirements:
+  - simple_trend_following
+  - moving_average_risk_off
+  - drawdown_guard
+control_requirements:
+  - date_shuffled_indicator
+  - future_leakage_trap
+threshold_dependencies:
+  - dynamic_allocation.risk_off_score_thresholds
+  - dynamic_allocation.risk_on_confirmation_thresholds
+  - trend_calibration.score_bands
+promotion_policy:
+  policy_ref: research_governance_policy_v1
+  human_review_required: true
+  bridge_only_promotion_allowed: false
+outputs:
+  - dynamic_trend_threshold_sensitivity_review
+  - dynamic_trend_bridge_consistency_audit
+  - evidence_ledger
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  paper_shadow_change_allowed: false
+  official_target_weights_allowed: false
+  broker_action_allowed: false

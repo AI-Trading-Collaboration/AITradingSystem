@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/research_direction.schema.json",
+  "title": "Research Direction",
+  "type": "object",
+  "required": ["direction_id", "research_id", "direction_type", "minimum_viable_experiment", "kill_criteria"],
+  "properties": {
+    "direction_id": { "type": "string" },
+    "research_id": { "type": "string" },
+    "direction_type": {
+      "type": "string",
+      "enum": [
+        "LOCAL_REFINEMENT",
+        "STRUCTURAL_VARIANT",
+        "ORTHOGONAL_DIRECTION",
+        "NULL_OR_REVERSAL",
+        "DATA_OR_EXPERIMENT_REFRAME"
+      ]
+    },
+    "minimum_viable_experiment": { "type": "string" },
+    "kill_criteria": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

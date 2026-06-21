@@ -33,6 +33,17 @@ from ai_trading_system.config import (
     PROJECT_ROOT,
     load_data_sources,
 )
+from ai_trading_system.data_foundation import (
+    DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+    DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
+    audit_pit_feature_snapshot,
+    audit_universe,
+    build_pit_feature_snapshot,
+    build_tradability_calendar,
+    query_pit_feature,
+    show_universe,
+    validate_asset_master,
+)
 from ai_trading_system.data_refresh_audit import (
     DEFAULT_DATA_REFRESH_AUDIT_DIR,
     DEFAULT_VALIDATION_AUDIT_DIR,
@@ -85,9 +96,130 @@ data_app = typer.Typer(help="缓存数据诊断和 backtest input repair plannin
 refresh_audit_app = typer.Typer(help="Data refresh audit trail 治理报告。")
 fallback_policy_app = typer.Typer(help="Data source fallback policy 治理报告。")
 cache_catalog_app = typer.Typer(help="Checksum and cache catalog 治理报告。")
+pit_feature_store_app = typer.Typer(help="PIT feature store and snapshot registry。")
+asset_master_app = typer.Typer(help="Asset master and tradability calendar。")
+universe_app = typer.Typer(help="Research universe as-of view and audit。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
 data_app.add_typer(fallback_policy_app, name="fallback-policy")
 data_app.add_typer(cache_catalog_app, name="cache-catalog")
+data_app.add_typer(pit_feature_store_app, name="pit-feature-store")
+data_app.add_typer(asset_master_app, name="asset-master")
+data_app.add_typer(universe_app, name="universe")
+
+
+@pit_feature_store_app.command("build-snapshot")
+def pit_feature_store_build_snapshot_command(
+    as_of_date: Annotated[str, typer.Option("--as-of-date", help="Snapshot as-of date。")],
+    decision_time: Annotated[str, typer.Option("--decision-time", help="Decision timestamp。")],
+    asset_universe: Annotated[
+        str,
+        typer.Option("--asset-universe", help="Universe id。"),
+    ] = "data_foundation_minimum",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="PIT feature store 输出目录。"),
+    ] = DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
+) -> None:
+    payload = build_pit_feature_snapshot(
+        as_of_date=as_of_date,
+        decision_time=decision_time,
+        asset_universe=asset_universe,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@pit_feature_store_app.command("audit")
+def pit_feature_store_audit_command(
+    snapshot_id: Annotated[str, typer.Option("--snapshot-id", help="Snapshot id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="PIT feature store 输出目录。"),
+    ] = DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
+) -> None:
+    payload = audit_pit_feature_snapshot(snapshot_id=snapshot_id, output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@pit_feature_store_app.command("query")
+def pit_feature_store_query_command(
+    feature_id: Annotated[str, typer.Option("--feature-id", help="Feature id。")],
+    asset_id: Annotated[str, typer.Option("--asset-id", help="Asset id。")],
+    as_of_date: Annotated[str, typer.Option("--as-of-date", help="As-of date。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="PIT feature store 输出目录。"),
+    ] = DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
+) -> None:
+    payload = query_pit_feature(
+        feature_id=feature_id,
+        asset_id=asset_id,
+        as_of_date=as_of_date,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@asset_master_app.command("validate")
+def asset_master_validate_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Asset master 输出目录。"),
+    ] = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+) -> None:
+    payload = validate_asset_master(output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@asset_master_app.command("build-tradability-calendar")
+def asset_master_build_tradability_calendar_command(
+    universe: Annotated[
+        str,
+        typer.Option("--universe", help="Universe id。"),
+    ] = "data_foundation_minimum",
+    date_range: Annotated[
+        str,
+        typer.Option("--date-range", help="Date range start:end。"),
+    ] = "2022-12-01:2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Asset master 输出目录。"),
+    ] = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+) -> None:
+    payload = build_tradability_calendar(
+        universe=universe,
+        date_range=date_range,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@universe_app.command("show")
+def universe_show_command(
+    universe: Annotated[str, typer.Option("--universe", help="Universe id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Asset master 输出目录。"),
+    ] = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+) -> None:
+    payload = show_universe(universe=universe, output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@universe_app.command("audit")
+def universe_audit_command(
+    universe: Annotated[str, typer.Option("--universe", help="Universe id。")],
+    date_range: Annotated[
+        str,
+        typer.Option("--date-range", help="Date range start:end。"),
+    ] = "2022-12-01:2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Asset master 输出目录。"),
+    ] = DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+) -> None:
+    payload = audit_universe(universe=universe, date_range=date_range, output_root=output_root)
+    _print_foundation_payload(payload)
 
 
 @data_app.command("diagnose-backtest-inputs")
@@ -866,8 +998,7 @@ def cache_catalog_validate_command(
         "green" if validation.status == "PASS" else "yellow" if validation.passed else "red"
     )
     console.print(
-        f"[{status_style}]Cache catalog validation status={validation.status}"
-        f"[/{status_style}]"
+        f"[{status_style}]Cache catalog validation status={validation.status}" f"[/{status_style}]"
     )
     console.print(f"catalog_id={validation.catalog_id}")
     console.print(f"catalog={catalog_path}")
@@ -971,9 +1102,7 @@ def data_refresh_audit_report_command(
             f"checksum_mismatch={cache_catalog.get('checksum_mismatch_count', 0)}"
         )
     console.print(f"report={paths.get('audit_json')}")
-    console.print(
-        "production_effect=none；只读治理报告，不刷新数据、不补造 cache、不触发 broker。"
-    )
+    console.print("production_effect=none；只读治理报告，不刷新数据、不补造 cache、不触发 broker。")
 
     if status == "FAIL":
         raise typer.Exit(code=1)
@@ -1250,3 +1379,20 @@ def data_repair_backtest_inputs_command(
     console.print(f"Final diagnostic JSON：{repair.final_diagnostics.json_path}")
     console.print(f"Final snapshot manifest：{repair.final_diagnostics.manifest_path}")
     console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+
+
+def _print_foundation_payload(payload: dict[str, object]) -> None:
+    status = str(payload.get("status", "UNKNOWN"))
+    style = "green" if status == "PASS" else "yellow" if "WARNING" in status else "red"
+    console.print(
+        f"[{style}]{payload.get('title', payload.get('report_type'))}：{status}[/{style}]"
+    )
+    summary = payload.get("summary")
+    if isinstance(summary, dict):
+        for key in sorted(summary):
+            console.print(f"{key}={summary[key]}")
+    artifact_paths = payload.get("artifact_paths")
+    if isinstance(artifact_paths, dict):
+        for label, path in artifact_paths.items():
+            console.print(f"{label}={path}")
+    console.print("production_effect=none；broker_action=none；validation_only=true")

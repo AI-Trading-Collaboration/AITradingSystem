@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/research_protocol.schema.json",
+  "title": "Research Protocol",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "research_id",
+    "title",
+    "owner",
+    "status",
+    "market_regime",
+    "problem_statement",
+    "evidence_requirements",
+    "promotion_policy",
+    "safety_boundary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "research_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+    "title": { "type": "string" },
+    "owner": { "type": "string" },
+    "status": { "type": "string" },
+    "market_regime": {
+      "type": "object",
+      "required": ["regime_id", "requested_date_range", "anchor_event"],
+      "properties": {
+        "regime_id": { "type": "string" },
+        "requested_date_range": { "type": "string" },
+        "anchor_event": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "problem_statement": { "type": "string" },
+    "hypotheses": { "type": "array", "items": { "type": "object" } },
+    "evidence_requirements": { "type": "array", "items": { "type": "object" } },
+    "benchmark_requirements": { "type": "array", "items": { "type": "string" } },
+    "control_requirements": { "type": "array", "items": { "type": "string" } },
+    "threshold_dependencies": { "type": "array", "items": { "type": "string" } },
+    "promotion_policy": { "type": "object" },
+    "outputs": { "type": "array", "items": { "type": "string" } },
+    "safety_boundary": { "type": "object" }
+  },
+  "additionalProperties": true
+}

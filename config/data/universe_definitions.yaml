@@ -1,0 +1,15 @@
+schema_version: 1
+universe_policy_id: universe_definitions_baseline_v1
+safety_boundary:
+  validation_only: true
+  production_effect: none
+universes:
+  etf_core:
+    description: Baseline ETF core universe for validation-only research.
+    asset_ids: [ETF_SPY, ETF_QQQ, ETF_SMH, CASH_USD]
+  ai_mega_cap_satellite:
+    description: Initial AI mega-cap satellite universe for research diagnostics.
+    asset_ids: [STOCK_NVDA]
+  data_foundation_minimum:
+    description: Minimum combined universe for TRADING-726 to TRADING-733 baseline tests.
+    asset_ids: [ETF_SPY, ETF_QQQ, ETF_SMH, STOCK_NVDA, CASH_USD]

@@ -1,0 +1,23 @@
+schema_version: 1
+label_definition_id: event_calendar_definitions_baseline_v1
+safety_boundary:
+  validation_only: true
+  production_effect: none
+label_version: event_labels_v1
+event_labels:
+  - FOMC
+  - CPI
+  - payroll
+  - earnings
+  - major_tech_earnings
+  - NVDA_event
+  - MSFT_event
+  - GOOGL_event
+  - semiconductor_theme_event
+  - geopolitical_event
+  - option_expiration
+  - month_end
+  - quarter_end
+future_event_policy:
+  no_future_event_leakage: true
+  label_known_time_required: true

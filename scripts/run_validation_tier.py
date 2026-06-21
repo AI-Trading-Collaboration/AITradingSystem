@@ -56,6 +56,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_report_quality_gate.py",
             "tests/test_cli_direct.py",
             "tests/test_etf_cli_aliases.py",
+            "tests/test_research_master_roadmap.py",
+            "tests/test_data_foundation_roadmap.py",
         ),
     ),
     "contract-validation": TierSpec(
@@ -84,6 +86,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_stress_scenario_library.py",
             "tests/test_drawdown_event_casebook.py",
             "tests/test_flip_rotation_event_casebook.py",
+            "tests/test_research_master_roadmap.py",
+            "tests/test_data_foundation_roadmap.py",
         ),
     ),
     "report-validation": TierSpec(

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Case",
+  "type": "object",
+  "required": [
+    "case_id",
+    "case_type",
+    "research_ids",
+    "date_range",
+    "assets",
+    "regime_labels",
+    "event_labels",
+    "cluster_labels",
+    "baseline_strategy",
+    "comparison_strategy",
+    "teacher_type",
+    "expected_behavior",
+    "known_outcome",
+    "regret_type",
+    "allowed_uses",
+    "promotion_gate_allowed",
+    "source_evidence_ids",
+    "notes"
+  ],
+  "properties": {
+    "promotion_gate_allowed": {"type": "boolean"},
+    "allowed_uses": {"type": "array", "items": {"type": "string"}}
+  }
+}

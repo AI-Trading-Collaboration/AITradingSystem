@@ -1,0 +1,79 @@
+schema_version: 1
+policy_id: pit_feature_store_baseline_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Provide validation-only PIT feature snapshot contracts for large-scale
+    research before real multi-source feature materialization is promoted.
+  intended_effect: >
+    Make available_time, source manifest, current-view risk, snapshot hash and
+    no-lookahead status visible to research workflows.
+  validation_evidence: >
+    tests/test_data_foundation_roadmap.py covers snapshot build, audit, query,
+    stable hash, and safety fields.
+  review_condition: >
+    Review before onboarding real SEC/EDGAR, analyst estimate, macro, or
+    alternative-data feature families.
+safety_boundary:
+  validation_only: true
+  observe_only: true
+  production_effect: none
+  broker_action: none
+  paper_shadow_change_allowed: false
+  promotion_gate_allowed: false
+available_time_minimum_rate:
+  value: 1.0
+  rationale: PIT-sensitive research snapshots require explicit available_time for every baseline feature record.
+  threshold_type: data_quality_contract
+feature_families:
+  - price
+  - return
+  - volatility
+  - trend
+  - momentum
+  - risk
+  - drawdown
+  - valuation
+  - crowding
+  - sec_reconstructed
+  - macro_rates
+  - event_labels
+  - regime_labels
+baseline_feature_records:
+  - feature_id: adjusted_close
+    feature_family: price
+    source: fmp_market_data_cache
+    source_dataset: prices_daily
+    source_version: baseline_cache
+    revision_policy: as_reported_market_close
+    as_reported: true
+    current_view: false
+    source_manifest_path: outputs/reports/market_data_freshness_*.json
+  - feature_id: trend_20d_return
+    feature_family: trend
+    source: derived_from_adjusted_close
+    source_dataset: prices_daily
+    source_version: baseline_cache
+    revision_policy: derived_as_of_close
+    as_reported: true
+    current_view: false
+    source_manifest_path: outputs/reports/market_data_freshness_*.json
+  - feature_id: valuation_crowding_proxy
+    feature_family: valuation
+    source: manual_or_cached_research_input
+    source_dataset: valuation_snapshots
+    source_version: pilot_baseline
+    revision_policy: source_as_of_required
+    as_reported: false
+    current_view: true
+    source_manifest_path: null
+  - feature_id: sec_fundamentals_reconstructed
+    feature_family: sec_reconstructed
+    source: sec_edgar_reconstructed
+    source_dataset: sec_company_facts
+    source_version: pit_reconstruction_required
+    revision_policy: accepted_time_required
+    as_reported: true
+    current_view: false
+    source_manifest_path: config/research/pit_feature_availability_contracts.yaml

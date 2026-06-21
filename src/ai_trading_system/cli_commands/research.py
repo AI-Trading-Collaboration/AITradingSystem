@@ -7,6 +7,30 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.data_foundation import (
+    DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+    audit_research_case_library,
+    audit_research_execution_cache,
+    audit_research_labels,
+    audit_research_runs,
+    build_cases_from_regret_casebook,
+    build_cluster_labels,
+    build_event_labels,
+    build_oracle_diagnostic_set,
+    build_regime_labels,
+    compare_research_runs,
+    plan_research_execution,
+    prune_research_execution_cache,
+    query_research_cases,
+    query_research_runs,
+    register_research_case,
+    register_research_run,
+    resume_research_execution,
+    run_research_execution_batch,
+)
 from ai_trading_system.feature_availability import DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH
 from ai_trading_system.indicator_research import (
     DEFAULT_INDICATOR_OUTPUT_ROOT,
@@ -53,6 +77,43 @@ from ai_trading_system.indicator_research import (
     write_indicator_framework_validation_pack,
     write_indicator_validation_pack_stability_report,
 )
+from ai_trading_system.portfolio_decision import (
+    DEFAULT_PORTFOLIO_DECISION_CONTRACT_PATH,
+    DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+    build_action_outcome_dataset,
+    build_advanced_policy_compare,
+    build_advanced_policy_register,
+    build_advanced_policy_run,
+    build_cohort_prepare,
+    build_cohort_status,
+    build_strategy_compare,
+    build_strategy_evaluation,
+    build_value_surface_evaluate,
+    build_value_surface_fit,
+    build_value_surface_report,
+    show_portfolio_decision_contract,
+    validate_portfolio_decision_contract,
+)
+from ai_trading_system.research_acceleration import (
+    build_batch_plan,
+    build_batch_rollup,
+    build_batch_run,
+    build_benchmark_run,
+    build_control_audit,
+    build_dashboard,
+    build_experiment_pack,
+    build_falsification_run,
+    build_hypothesis_compile,
+    build_pivot_review,
+    build_portfolio_status,
+    build_preflight,
+    build_queue,
+    build_queue_status,
+    build_regret_casebook,
+    build_review_board,
+    build_strategy_pair_diagnosis,
+    record_negative_result,
+)
 from ai_trading_system.research_campaign import (
     DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     DEFAULT_CAMPAIGN_ROOT,
@@ -77,6 +138,26 @@ from ai_trading_system.research_campaign import (
     validate_stage_adapter_contracts,
     write_campaign_control_plane_v1_validation_artifacts,
 )
+from ai_trading_system.research_governance import (
+    DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_GOVERNANCE_POLICY_PATH,
+    DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_PROTOCOL_DIR,
+    ResearchGovernanceError,
+    build_decision_record,
+    build_direction_review_status,
+    build_evidence_audit,
+    build_promotion_readiness,
+    build_protocol_show,
+    build_protocol_validation,
+    build_research_rollup,
+    build_sample_quality_audit,
+    build_state_evaluation,
+    build_threshold_dependency_audit,
+    build_watchlist,
+    ingest_evidence_ledger,
+    write_research_artifact_pair,
+)
 
 console = Console()
 research_app = typer.Typer(help="研究 Campaign 控制面。", no_args_is_help=True)
@@ -88,8 +169,1077 @@ indicators_app = typer.Typer(
     help="日报指标、约束、mapping、遮蔽和研究 gate 控制面。",
     no_args_is_help=True,
 )
+governance_app = typer.Typer(
+    help="Research governance protocol/evidence/state 控制面。", no_args_is_help=True
+)
+acceleration_app = typer.Typer(
+    help="Research acceleration diagnostics、controls、preflight。", no_args_is_help=True
+)
+portfolio_decision_app = typer.Typer(
+    help="Portfolio decision problem contract and datasets。", no_args_is_help=True
+)
+strategy_app = typer.Typer(help="统一 strategy adapter evaluation harness。", no_args_is_help=True)
+advanced_policy_app = typer.Typer(help="Advanced policy sandbox。", no_args_is_help=True)
+research_ops_app = typer.Typer(help="Research workstream ops and dashboard。", no_args_is_help=True)
+paper_shadow_app = typer.Typer(
+    help="Research paper-shadow cohort readiness。", no_args_is_help=True
+)
+labels_app = typer.Typer(help="Research regime/event/cluster label store。", no_args_is_help=True)
+runs_app = typer.Typer(
+    help="Research run registry and experiment warehouse。", no_args_is_help=True
+)
+research_execution_app = typer.Typer(
+    help="Research execution cache/checkpoint engine。", no_args_is_help=True
+)
+cases_app = typer.Typer(help="Research case library。", no_args_is_help=True)
 research_app.add_typer(campaign_app, name="campaign")
 research_app.add_typer(indicators_app, name="indicators")
+research_app.add_typer(governance_app, name="governance")
+research_app.add_typer(acceleration_app, name="acceleration")
+research_app.add_typer(portfolio_decision_app, name="portfolio-decision")
+research_app.add_typer(strategy_app, name="strategy")
+research_app.add_typer(advanced_policy_app, name="advanced-policy")
+research_app.add_typer(research_ops_app, name="ops")
+research_app.add_typer(paper_shadow_app, name="paper-shadow")
+research_app.add_typer(labels_app, name="labels")
+research_app.add_typer(runs_app, name="runs")
+research_app.add_typer(research_execution_app, name="execution")
+research_app.add_typer(cases_app, name="cases")
+
+
+@labels_app.command("build-regime-labels")
+def labels_build_regime_labels_command(
+    as_of_date: Annotated[
+        str,
+        typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
+    ] = "2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research labels 输出目录。"),
+    ] = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_regime_labels(as_of_date=as_of_date, output_root=output_root)
+    )
+    _print_status("Regime labels", str(payload["status"]))
+    _print_summary(payload)
+
+
+@labels_app.command("build-event-labels")
+def labels_build_event_labels_command(
+    as_of_date: Annotated[
+        str,
+        typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
+    ] = "2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research labels 输出目录。"),
+    ] = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_event_labels(as_of_date=as_of_date, output_root=output_root)
+    )
+    _print_status("Event labels", str(payload["status"]))
+    _print_summary(payload)
+
+
+@labels_app.command("build-cluster-labels")
+def labels_build_cluster_labels_command(
+    as_of_date: Annotated[
+        str,
+        typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
+    ] = "2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research labels 输出目录。"),
+    ] = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_cluster_labels(as_of_date=as_of_date, output_root=output_root)
+    )
+    _print_status("Cluster labels", str(payload["status"]))
+    _print_summary(payload)
+
+
+@labels_app.command("audit")
+def labels_audit_command(
+    as_of_date: Annotated[
+        str,
+        typer.Option("--as-of-date", "--as-of", help="Label as-of date。"),
+    ] = "2022-12-01",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research labels 输出目录。"),
+    ] = DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: audit_research_labels(as_of_date=as_of_date, output_root=output_root)
+    )
+    _print_status("Research label audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@runs_app.command("register")
+def runs_register_command(
+    research_id: Annotated[
+        str,
+        typer.Option("--research-id", help="Research id。"),
+    ] = "portfolio_decision_problem_v1",
+    strategy_id: Annotated[
+        str,
+        typer.Option("--strategy-id", help="Strategy id。"),
+    ] = "value_surface_baseline",
+    run_type: Annotated[
+        str,
+        typer.Option("--run-type", help="Run type。"),
+    ] = "validation_only_baseline",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research runs 输出目录。"),
+    ] = DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: register_research_run(
+            research_id=research_id,
+            strategy_id=strategy_id,
+            run_type=run_type,
+            output_root=output_root,
+        )
+    )
+    _print_status("Research run register", str(payload["status"]))
+    _print_summary(payload)
+
+
+@runs_app.command("query")
+def runs_query_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research runs 输出目录。"),
+    ] = DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: query_research_runs(research_id=research_id, output_root=output_root)
+    )
+    _print_status("Research run query", str(payload["status"]))
+    _print_summary(payload)
+
+
+@runs_app.command("compare")
+def runs_compare_command(
+    run_id: Annotated[
+        list[str] | None,
+        typer.Option("--run-id", help="Run id，可重复。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research runs 输出目录。"),
+    ] = DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+) -> None:
+    ids = tuple(run_id or [])
+    if not ids:
+        registered = register_research_run(output_root=output_root)
+        ids = (str(registered["run_record"]["run_id"]),)
+    payload = _build_research_payload(
+        lambda: compare_research_runs(run_ids=ids, output_root=output_root)
+    )
+    _print_status("Research run compare", str(payload["status"]))
+    _print_summary(payload)
+
+
+@runs_app.command("audit")
+def runs_audit_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research runs 输出目录。"),
+    ] = DEFAULT_RESEARCH_RUN_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: audit_research_runs(output_root=output_root))
+    _print_status("Research run audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_execution_app.command("plan")
+def research_execution_plan_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research execution 输出目录。"),
+    ] = DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: plan_research_execution(output_root=output_root))
+    _print_status("Research execution plan", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_execution_app.command("run-batch")
+def research_execution_run_batch_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research execution 输出目录。"),
+    ] = DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: run_research_execution_batch(output_root=output_root))
+    _print_status("Research execution batch", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_execution_app.command("resume")
+def research_execution_resume_command(
+    checkpoint_id: Annotated[str, typer.Option("--checkpoint-id", help="Checkpoint id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research execution 输出目录。"),
+    ] = DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: resume_research_execution(checkpoint_id=checkpoint_id, output_root=output_root)
+    )
+    _print_status("Research execution resume", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_execution_app.command("cache-audit")
+def research_execution_cache_audit_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research execution 输出目录。"),
+    ] = DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: audit_research_execution_cache(output_root=output_root)
+    )
+    _print_status("Research execution cache audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_execution_app.command("cache-prune")
+def research_execution_cache_prune_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research execution 输出目录。"),
+    ] = DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: prune_research_execution_cache(output_root=output_root)
+    )
+    _print_status("Research execution cache prune", str(payload["status"]))
+    _print_summary(payload)
+
+
+@cases_app.command("register")
+def cases_register_command(
+    case_id: Annotated[
+        str,
+        typer.Option("--case-id", help="Case id。"),
+    ] = "baseline_false_risk_off_placeholder",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research case library 输出目录。"),
+    ] = DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: register_research_case(case_id=case_id, output_root=output_root)
+    )
+    _print_status("Research case register", str(payload["status"]))
+    _print_summary(payload)
+
+
+@cases_app.command("query")
+def cases_query_command(
+    case_type: Annotated[
+        str | None,
+        typer.Option("--case-type", help="Case type。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research case library 输出目录。"),
+    ] = DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: query_research_cases(case_type=case_type, output_root=output_root)
+    )
+    _print_status("Research case query", str(payload["status"]))
+    _print_summary(payload)
+
+
+@cases_app.command("build-from-regret-casebook")
+def cases_build_from_regret_casebook_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research case library 输出目录。"),
+    ] = DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_cases_from_regret_casebook(output_root=output_root)
+    )
+    _print_status("Research cases from regret casebook", str(payload["status"]))
+    _print_summary(payload)
+
+
+@cases_app.command("build-oracle-diagnostic-set")
+def cases_build_oracle_diagnostic_set_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research case library 输出目录。"),
+    ] = DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_oracle_diagnostic_set(output_root=output_root))
+    _print_status("Oracle diagnostic case set", str(payload["status"]))
+    _print_summary(payload)
+
+
+@cases_app.command("audit")
+def cases_audit_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research case library 输出目录。"),
+    ] = DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: audit_research_case_library(output_root=output_root))
+    _print_status("Research case library audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@governance_app.command("protocol-validate")
+def governance_protocol_validate_command(
+    protocol_dir: Annotated[
+        Path,
+        typer.Option("--protocol-dir", help="Research protocol 目录。"),
+    ] = DEFAULT_RESEARCH_PROTOCOL_DIR,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """验证 research protocol registry 和 core schema。"""
+    payload = _build_research_payload(lambda: build_protocol_validation(protocol_dir=protocol_dir))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "governance",
+        artifact_id="research_protocol_validation",
+    )
+    _print_research_artifact("Research protocol validation", payload, paths)
+
+
+@governance_app.command("protocol-show")
+def governance_protocol_show_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    protocol_dir: Annotated[
+        Path,
+        typer.Option("--protocol-dir", help="Research protocol 目录。"),
+    ] = DEFAULT_RESEARCH_PROTOCOL_DIR,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出单条 research protocol。"""
+    payload = _build_research_payload(
+        lambda: build_protocol_show(research_id, protocol_dir=protocol_dir)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="research_protocol",
+    )
+    _print_research_artifact("Research protocol", payload, paths)
+
+
+@governance_app.command("evidence-ingest")
+def governance_evidence_ingest_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy", help="Research governance policy。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_POLICY_PATH,
+) -> None:
+    """按 source policy 生成 evidence ledger。"""
+    payload = _build_research_payload(
+        lambda: ingest_evidence_ledger(
+            research_id,
+            output_root=output_root,
+            policy_path=policy_path,
+        )
+    )
+    console.print(f"ledger={payload['ledger_path']}")
+    _print_status("Evidence ingest", str(payload["status"]))
+
+
+@governance_app.command("evidence-audit")
+def governance_evidence_audit_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy", help="Research governance policy。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_POLICY_PATH,
+) -> None:
+    """审计 evidence ledger source class 和 allowed uses。"""
+    payload = _build_research_payload(
+        lambda: build_evidence_audit(
+            research_id,
+            output_root=output_root,
+            policy_path=policy_path,
+        )
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "evidence",
+        artifact_id="evidence_audit",
+    )
+    _print_research_artifact("Evidence audit", payload, paths)
+
+
+@governance_app.command("state-evaluate")
+def governance_state_evaluate_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出 research 多轴状态和 blocker taxonomy。"""
+    payload = _build_research_payload(
+        lambda: build_state_evaluation(research_id, output_root=output_root)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="research_state_evaluation",
+    )
+    _print_research_artifact("Research state evaluation", payload, paths)
+
+
+@governance_app.command("sample-quality-audit")
+def governance_sample_quality_audit_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出 effective evidence sample quality audit。"""
+    payload = _build_research_payload(
+        lambda: build_sample_quality_audit(research_id, output_root=output_root)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="sample_quality_audit",
+    )
+    _print_research_artifact("Sample quality audit", payload, paths)
+
+
+@governance_app.command("threshold-dependency-audit")
+def governance_threshold_dependency_audit_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """审计 research protocol threshold dependency。"""
+    payload = _build_research_payload(
+        lambda: build_threshold_dependency_audit(
+            research_id,
+            threshold_registry_path=threshold_registry_path,
+        )
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="threshold_dependency_audit",
+    )
+    _print_research_artifact("Threshold dependency audit", payload, paths)
+
+
+@governance_app.command("promotion-readiness")
+def governance_promotion_readiness_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出 promotion readiness single source of truth。"""
+    payload = _build_research_payload(
+        lambda: build_promotion_readiness(research_id, output_root=output_root)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="promotion_readiness",
+    )
+    _print_research_artifact("Promotion readiness", payload, paths)
+
+
+@governance_app.command("decision-record")
+def governance_decision_record_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    decision: Annotated[
+        str,
+        typer.Option("--decision", help="Decision label。"),
+    ] = "WATCHLIST",
+    reason: Annotated[
+        str,
+        typer.Option("--reason", help="Decision reason。"),
+    ] = "validation-only baseline decision record",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """追加 research decision ledger record。"""
+    payload = _build_research_payload(
+        lambda: build_decision_record(
+            research_id,
+            decision=decision,
+            reason=reason,
+            output_root=output_root,
+        )
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="decision_record",
+    )
+    _print_research_artifact("Decision record", payload, paths)
+
+
+@governance_app.command("rollup")
+def governance_rollup_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """生成单条 research primary rollup。"""
+    payload = _build_research_payload(
+        lambda: build_research_rollup(research_id, output_root=output_root)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "rollup",
+        artifact_id="research_rollup",
+    )
+    _print_research_artifact("Research rollup", payload, paths)
+
+
+@governance_app.command("watchlist")
+def governance_watchlist_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出 research watchlist。"""
+    payload = _build_research_payload(lambda: build_watchlist(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "governance",
+        artifact_id="research_watchlist",
+    )
+    _print_research_artifact("Research watchlist", payload, paths)
+
+
+@governance_app.command("direction-review-status")
+def governance_direction_review_status_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research governance 输出目录。"),
+    ] = DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT,
+) -> None:
+    """输出 research direction review status。"""
+    payload = _build_research_payload(
+        lambda: build_direction_review_status(research_id, output_root=output_root)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / research_id / "governance",
+        artifact_id="direction_review_status",
+    )
+    _print_research_artifact("Direction review status", payload, paths)
+
+
+@acceleration_app.command("strategy-pair-diagnose")
+def acceleration_strategy_pair_diagnose_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    baseline: Annotated[str, typer.Option("--baseline", help="Baseline strategy id。")],
+    teacher: Annotated[str, typer.Option("--teacher", help="Teacher strategy id。")],
+) -> None:
+    """运行 validation-only strategy pair reverse diagnostics。"""
+    payload = _build_research_payload(
+        lambda: build_strategy_pair_diagnosis(
+            research_id,
+            baseline=baseline,
+            teacher=teacher,
+        )
+    )
+    _print_status("Strategy pair diagnostics", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("regret-casebook")
+def acceleration_regret_casebook_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_regret_casebook(research_id))
+    _print_status("Regret casebook", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("negative-result-record")
+def acceleration_negative_result_record_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    result: Annotated[
+        str, typer.Option("--result", help="Negative result label。")
+    ] = "evidence_required",
+) -> None:
+    payload = _build_research_payload(lambda: record_negative_result(research_id, result=result))
+    _print_status("Negative result record", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("benchmark-run")
+def acceleration_benchmark_run_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_benchmark_run(research_id))
+    _print_status("Benchmark run", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("control-audit")
+def acceleration_control_audit_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_control_audit(research_id))
+    _print_status("Control audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("falsification-run")
+def acceleration_falsification_run_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_falsification_run(research_id))
+    _print_status("Falsification run", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("preflight")
+def acceleration_preflight_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_preflight(research_id))
+    _print_status("Research preflight", str(payload["status"]))
+    _print_summary(payload)
+
+
+@acceleration_app.command("portfolio-status")
+def acceleration_portfolio_status_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(build_portfolio_status)
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "acceleration",
+        artifact_id="portfolio_status",
+    )
+    _print_research_artifact("Research portfolio status", payload, paths)
+
+
+@acceleration_app.command("pivot-review")
+def acceleration_pivot_review_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_pivot_review(research_id))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "acceleration",
+        artifact_id=f"pivot_review_{research_id}",
+    )
+    _print_research_artifact("Pivot review", payload, paths)
+
+
+@acceleration_app.command("hypothesis-compile")
+def acceleration_hypothesis_compile_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_hypothesis_compile(research_id))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "acceleration",
+        artifact_id=f"hypothesis_compile_{research_id}",
+    )
+    _print_research_artifact("Hypothesis compile", payload, paths)
+
+
+@acceleration_app.command("mutation-generate")
+def acceleration_mutation_generate_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_hypothesis_compile(research_id, artifact_id="mutation_generate")
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "acceleration",
+        artifact_id=f"mutation_generate_{research_id}",
+    )
+    _print_research_artifact("Mutation generate", payload, paths)
+
+
+@acceleration_app.command("direction-generate")
+def acceleration_direction_generate_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_hypothesis_compile(research_id, artifact_id="direction_generate")
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "acceleration",
+        artifact_id=f"direction_generate_{research_id}",
+    )
+    _print_research_artifact("Direction generate", payload, paths)
+
+
+@portfolio_decision_app.command("validate-contract")
+def portfolio_decision_validate_contract_command(
+    contract_path: Annotated[
+        Path,
+        typer.Option("--contract", help="Portfolio decision contract path。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_CONTRACT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Portfolio decision 输出目录。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: validate_portfolio_decision_contract(contract_path=contract_path)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="portfolio_decision_contract_validation",
+    )
+    _print_research_artifact("Portfolio decision contract validation", payload, paths)
+
+
+@portfolio_decision_app.command("show-contract")
+def portfolio_decision_show_contract_command(
+    contract_path: Annotated[
+        Path,
+        typer.Option("--contract", help="Portfolio decision contract path。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_CONTRACT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Portfolio decision 输出目录。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: show_portfolio_decision_contract(contract_path=contract_path)
+    )
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="portfolio_decision_contract",
+    )
+    _print_research_artifact("Portfolio decision contract", payload, paths)
+
+
+@portfolio_decision_app.command("build-action-outcome-dataset")
+def portfolio_decision_build_dataset_command(
+    research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Portfolio decision 输出目录。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_action_outcome_dataset(research_id, output_root=output_root)
+    )
+    _print_status("PIT action-outcome dataset", str(payload["status"]))
+    _print_summary(payload)
+
+
+@portfolio_decision_app.command("value-surface-fit")
+def portfolio_decision_value_surface_fit_command() -> None:
+    payload = _build_research_payload(build_value_surface_fit)
+    _print_status("Value surface fit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@portfolio_decision_app.command("value-surface-evaluate")
+def portfolio_decision_value_surface_evaluate_command() -> None:
+    payload = _build_research_payload(build_value_surface_evaluate)
+    _print_status("Value surface evaluate", str(payload["status"]))
+    _print_summary(payload)
+
+
+@portfolio_decision_app.command("value-surface-report")
+def portfolio_decision_value_surface_report_command() -> None:
+    payload = _build_research_payload(build_value_surface_report)
+    _print_status("Value surface report", str(payload["status"]))
+    _print_summary(payload)
+
+
+@strategy_app.command("evaluate")
+def strategy_evaluate_command(
+    strategy_id: Annotated[str, typer.Option("--strategy", help="Strategy id。")],
+    stage: Annotated[str, typer.Option("--stage", help="Evaluation stage。")],
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_strategy_evaluation(strategy_id=strategy_id, stage=stage)
+    )
+    _print_status("Strategy evaluation", str(payload["status"]))
+    _print_summary(payload)
+
+
+@strategy_app.command("compare")
+def strategy_compare_command(
+    run_id: Annotated[str, typer.Option("--run-id", help="Run id。")],
+) -> None:
+    payload = _build_research_payload(lambda: build_strategy_compare(run_id=run_id))
+    _print_status("Strategy compare", str(payload["status"]))
+    _print_summary(payload)
+
+
+@advanced_policy_app.command("register")
+def advanced_policy_register_command(
+    policy_id: Annotated[
+        str, typer.Option("--policy-id", help="Policy id。")
+    ] = "advanced_policy_candidate",
+    method: Annotated[str, typer.Option("--method", help="Advanced policy method。")] = "tree",
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_advanced_policy_register(policy_id=policy_id, method=method)
+    )
+    _print_status("Advanced policy register", str(payload["status"]))
+    _print_summary(payload)
+
+
+@advanced_policy_app.command("run")
+def advanced_policy_run_command(
+    policy_id: Annotated[
+        str, typer.Option("--policy-id", help="Policy id。")
+    ] = "advanced_policy_candidate",
+) -> None:
+    payload = _build_research_payload(lambda: build_advanced_policy_run(policy_id=policy_id))
+    _print_status("Advanced policy run", str(payload["status"]))
+    _print_summary(payload)
+
+
+@advanced_policy_app.command("compare")
+def advanced_policy_compare_command(
+    policy_id: Annotated[
+        str, typer.Option("--policy-id", help="Policy id。")
+    ] = "advanced_policy_candidate",
+) -> None:
+    payload = _build_research_payload(lambda: build_advanced_policy_compare(policy_id=policy_id))
+    _print_status("Advanced policy compare", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_ops_app.command("queue-build")
+def research_ops_queue_build_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_queue(output_root=output_root))
+    _print_status("Research queue build", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_ops_app.command("queue-status")
+def research_ops_queue_status_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_queue_status(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="queue_status",
+    )
+    _print_research_artifact("Research queue status", payload, paths)
+
+
+@research_ops_app.command("batch-plan")
+def research_ops_batch_plan_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_batch_plan(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="batch_plan",
+    )
+    _print_research_artifact("Research batch plan", payload, paths)
+
+
+@research_ops_app.command("batch-run")
+def research_ops_batch_run_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_batch_run(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="batch_run",
+    )
+    _print_research_artifact("Research batch run", payload, paths)
+
+
+@research_ops_app.command("batch-rollup")
+def research_ops_batch_rollup_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_batch_rollup(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="batch_rollup",
+    )
+    _print_research_artifact("Research batch rollup", payload, paths)
+
+
+@research_ops_app.command("experiment-pack-build")
+def research_ops_experiment_pack_build_command(
+    research_id: Annotated[
+        str,
+        typer.Option("--research-id", help="Research id。"),
+    ] = "portfolio_decision_problem_v1",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_experiment_pack(research_id, output_root=output_root)
+    )
+    _print_status("Experiment pack build", str(payload["status"]))
+    _print_summary(payload)
+
+
+@research_ops_app.command("review-board")
+def research_ops_review_board_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_review_board(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="review_board",
+    )
+    _print_research_artifact("Research review board", payload, paths)
+
+
+@research_ops_app.command("dashboard")
+def research_ops_dashboard_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Research ops 输出目录。"),
+    ] = DEFAULT_RESEARCH_OPS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_dashboard(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="research_ops_dashboard",
+    )
+    _print_research_artifact("Research ops dashboard", payload, paths)
+
+
+@paper_shadow_app.command("cohort-prepare")
+def paper_shadow_cohort_prepare_command(
+    candidate_id: Annotated[
+        str,
+        typer.Option("--candidate-id", help="Candidate id。"),
+    ] = "candidate_requires_human_review",
+    strategy_id: Annotated[
+        str,
+        typer.Option("--strategy-id", help="Strategy id。"),
+    ] = "strategy_requires_review",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Portfolio decision 输出目录。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_cohort_prepare(
+            candidate_id=candidate_id,
+            strategy_id=strategy_id,
+            output_root=output_root,
+        )
+    )
+    _print_status("Paper-shadow cohort prepare", str(payload["status"]))
+    _print_summary(payload)
+
+
+@paper_shadow_app.command("cohort-status")
+def paper_shadow_cohort_status_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Portfolio decision 输出目录。"),
+    ] = DEFAULT_PORTFOLIO_DECISION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: build_cohort_status(output_root=output_root))
+    paths = write_research_artifact_pair(
+        payload,
+        output_root=output_root / "paper_shadow",
+        artifact_id="paper_shadow_cohort_status",
+    )
+    _print_research_artifact("Paper-shadow cohort status", payload, paths)
 
 
 @indicators_app.command("ontology")
@@ -2738,6 +3888,13 @@ def _build_indicator_payload(builder):  # type: ignore[no-untyped-def]
         raise typer.BadParameter(str(exc)) from exc
 
 
+def _build_research_payload(builder):  # type: ignore[no-untyped-def]
+    try:
+        return builder()
+    except (ResearchGovernanceError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
 def _print_indicator_artifact(
     label: str,
     payload: dict[str, object],
@@ -2754,6 +3911,29 @@ def _print_indicator_artifact(
     console.print("research_only=true；production_effect=none")
     if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
         raise typer.Exit(code=1)
+
+
+def _print_research_artifact(
+    label: str,
+    payload: dict[str, object],
+    paths: dict[str, str],
+) -> None:
+    _print_status(label, str(payload["status"]))
+    _print_summary(payload)
+    console.print(f"JSON：{paths['json_path']}")
+    console.print(f"Markdown：{paths['markdown_path']}")
+    console.print("research_only=true；production_effect=none")
+    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+        raise typer.Exit(code=1)
+
+
+def _print_summary(payload: dict[str, object]) -> None:
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        return
+    compact = "; ".join(f"{key}={value}" for key, value in list(summary.items())[:6])
+    if compact:
+        console.print(compact)
 
 
 def _print_action_list(label: str, values: object) -> None:

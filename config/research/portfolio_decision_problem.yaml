@@ -1,0 +1,87 @@
+schema_version: "1.0"
+contract_id: portfolio_decision_problem_v1
+status: baseline_validation_only
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  default_start: "2022-12-01"
+  anchor_event: "ChatGPT public launch on 2022-11-30"
+state:
+  required_fields:
+    - as_of_time
+    - market_regime
+    - pit_feature_manifest
+    - signal_state
+    - risk_state
+    - data_quality_status
+investable_universe:
+  supported_universes:
+    - single_asset_plus_cash
+    - multi_asset_long_only
+    - ETF portfolio universe
+    - AI satellite universe
+current_portfolio:
+  required_fields:
+    - asset
+    - current_weight
+    - cash_weight
+    - source_timestamp
+action_space:
+  action_types:
+    - hold
+    - rebalance_to_target
+    - risk_off_reduce
+    - risk_on_increase
+  target_weight_bounds:
+    min_weight: 0.0
+    max_weight: 1.0
+  long_only: true
+candidate_horizons:
+  - horizon_id: 1d
+    trading_days: 1
+  - horizon_id: 5d
+    trading_days: 5
+  - horizon_id: 10d
+    trading_days: 10
+  - horizon_id: 20d
+    trading_days: 20
+review_frequency:
+  default: daily_when_market_open
+  early_review_triggers:
+    - data_quality_gate_fail
+    - risk_event_state_change
+    - threshold_policy_version_change
+utility_profile:
+  version: utility_profile_v1_validation_only
+  objective: net_return_minus_downside_risk_and_turnover_cost
+  rationale: >
+    Baseline validation utility for comparing candidate actions. It is a research
+    objective, not a production allocation mandate.
+risk_constraints:
+  max_single_asset_weight: 1.0
+  long_only: true
+  manual_review_required_for_new_universe: true
+cost_model:
+  version: cost_model_v1_validation_only
+  components:
+    - turnover
+    - spread_proxy
+    - slippage_proxy
+output_contract:
+  required_fields:
+    - target_weights
+    - target_horizon
+    - next_review_time
+    - expected_utility_by_horizon
+    - expected_return_by_horizon
+    - risk_by_horizon
+    - confidence
+    - early_exit_conditions
+    - explanation
+safety_boundary:
+  validation_only: true
+  production_effect: none
+  official_target_weights_allowed: false
+  paper_shadow_change_allowed: false
+  broker_action_allowed: false
+  order_action_allowed: false

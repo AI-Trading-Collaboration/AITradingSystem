@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-trading-system.local/schema/regret_case.schema.json",
+  "title": "Regret Case",
+  "type": "object",
+  "required": ["case_id", "research_id", "regret_type", "as_of_date", "trace_source", "production_effect"],
+  "properties": {
+    "case_id": { "type": "string" },
+    "research_id": { "type": "string" },
+    "regret_type": { "type": "string" },
+    "as_of_date": { "type": "string" },
+    "trace_source": { "type": "string" },
+    "production_effect": { "type": "string", "const": "none" }
+  },
+  "additionalProperties": true
+}
