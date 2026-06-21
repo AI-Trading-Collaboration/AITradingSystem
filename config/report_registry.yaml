@@ -11364,6 +11364,41 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: controlled_benchmark_execution_expansion_report
+    title: Controlled Benchmark Execution Expansion Report
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research controlled-pilot benchmark-expansion
+    artifact_globs:
+      - outputs/research_runs/controlled_benchmark_batch/controlled_benchmark_execution_expansion_report.json
+      - outputs/research_runs/controlled_benchmark_batch/controlled_benchmark_execution_expansion_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-765 benchmark expansion should be regenerated when cached research data, cost policy, benchmark definitions, or control policy changes.
+    owner_action: review_gross_net_turnover_drawdown_cost_asset_horizon_regime_metrics_before_reverse_diagnostics_activation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_daily_dry_run_archive
+    title: Forward Evidence Daily Dry Run Archive
+    group: research
+    cadence: daily
+    audience: operator
+    owner: research_governance
+    command: aits forward-evidence capture-dry-run-daily --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/forward_evidence/daily_archive/forward_evidence_dry_run_????-??-??.json
+      - outputs/forward_evidence/daily_archive/forward_evidence_dry_run_????-??-??.md
+      - outputs/forward_evidence/daily_archive/forward_evidence_dry_run_ledger.jsonl
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 3
+    freshness_rationale: TRADING-768 daily dry-run archive should be captured after score-daily so future forward evidence has an append-only ledger.
+    owner_action: monitor_daily_archive_and_append_outcomes_only_after_realized_windows_are_due
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: marketstack_coverage_expansion_report
     title: Marketstack Coverage Expansion Report
     group: data_quality
@@ -11379,6 +11414,23 @@ reports:
     freshness_sla_days: 90
     freshness_rationale: Marketstack expansion should be refreshed after second-source cache, symbol mapping, or provider coverage changes.
     owner_action: resolve_data_required_or_symbol_mapping_items_before_using_marketstack_reconciliation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: marketstack_data_required_closure_report
+    title: Marketstack DATA_REQUIRED Closure Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_foundation
+    command: aits data source-qualification marketstack-data-required-closure
+    artifact_globs:
+      - outputs/data_quality/marketstack_reconciliation/marketstack_data_required_closure_report.json
+      - outputs/data_quality/marketstack_reconciliation/marketstack_data_required_closure_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-766 closure should be refreshed after Marketstack symbol mapping, endpoint parameter, plan limit, provider coverage, or corporate-action evidence changes.
+    owner_action: treat_marketstack_as_limited_second_source_only_until_promotion_grade_reconciliation_evidence_exists
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
@@ -11401,6 +11453,23 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: fmp_watchlist_closure_report
+    title: FMP WATCHLIST Closure Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_foundation
+    command: aits data source-qualification fmp-watchlist-closure
+    artifact_globs:
+      - outputs/data_quality/fmp_pit_review/fmp_watchlist_closure_report.json
+      - outputs/data_quality/fmp_pit_review/fmp_watchlist_closure_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-767 closure should be refreshed when FMP timestamp, available-time, lineage, or delisted validation evidence changes.
+    owner_action: use_fmp_for_controlled_research_only_while_promotion_gaps_remain
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: reverse_diagnostics_controlled_pilot
     title: Reverse Diagnostics Controlled Pilot
     group: research
@@ -11415,6 +11484,23 @@ reports:
     freshness_sla_days: 90
     freshness_rationale: Reverse diagnostics controlled pilot should be regenerated after benchmark/control results or teacher scope changes.
     owner_action: keep_oracle_teacher_outputs_hypothesis_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: reverse_diagnostics_activation_gate
+    title: Reverse Diagnostics Activation Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research acceleration reverse-diagnostics-activation-gate
+    artifact_globs:
+      - outputs/research_acceleration/reverse_diagnostics/reverse_diagnostics_activation_gate.json
+      - outputs/research_acceleration/reverse_diagnostics/reverse_diagnostics_activation_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-769 activation gate should be refreshed after benchmark expansion, FMP closure, or controlled batch review changes.
+    owner_action: activate_teacher_oracle_diagnostics_only_when_gate_is_ready_for_controlled_activation
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

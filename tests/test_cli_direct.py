@@ -910,6 +910,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
     )
     monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", recorder("score_daily"))
     monkeypatch.setattr(
+        cli_direct.forward_evidence_cli,
+        "forward_evidence_capture_dry_run_daily_command",
+        recorder("forward_evidence_dry_run_daily"),
+    )
+    monkeypatch.setattr(
         cli_direct.reports_cli,
         "evidence_dashboard_command",
         recorder("reports_dashboard"),

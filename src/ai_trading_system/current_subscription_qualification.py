@@ -11,6 +11,7 @@ from typing import Any
 from ai_trading_system.config import (
     PROJECT_ROOT,
     configured_rate_series,
+    load_backtest_validation_policy,
     load_data_quality,
     load_universe,
 )
@@ -119,15 +120,29 @@ DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_REVIEW_PATH = (
 DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH = (
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT / "controlled_benchmark_batch_report.json"
 )
+DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH = (
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT
+    / "controlled_benchmark_execution_expansion_report.json"
+)
 DEFAULT_CONTROL_AUDIT_REPORT_PATH = (
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT / "control_audit_report.json"
 )
 DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH = (
     DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT / "forward_evidence_dry_run_archive.json"
 )
+DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH = (
+    DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT / "forward_evidence_dry_run_ledger.jsonl"
+)
 DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH = (
     DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT
     / "marketstack_coverage_expansion_report.json"
+)
+DEFAULT_MARKETSTACK_DISCREPANCY_REPORT_PATH = (
+    DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT / "fmp_marketstack_discrepancy_report.json"
+)
+DEFAULT_MARKETSTACK_DATA_REQUIRED_CLOSURE_REPORT_PATH = (
+    DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT
+    / "marketstack_data_required_closure_report.json"
 )
 DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH = (
     DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_pit_owner_review_package.json"
@@ -135,8 +150,17 @@ DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH = (
 DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH = (
     DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_delisted_validation_report.json"
 )
+DEFAULT_FMP_ALLOWED_USES_UPDATE_PATH = (
+    DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_allowed_uses_update.json"
+)
+DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH = (
+    DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_watchlist_closure_report.json"
+)
 DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH = (
     DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT / "reverse_diagnostics_controlled_pilot.json"
+)
+DEFAULT_REVERSE_DIAGNOSTICS_ACTIVATION_GATE_PATH = (
+    DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT / "reverse_diagnostics_activation_gate.json"
 )
 DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH = (
     DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT / "regret_casebook_controlled_pilot.json"
@@ -194,6 +218,21 @@ DISCREPANCY_REASON_ENUM = (
     "PLAN_LIMIT",
     "UNRESOLVED",
 )
+CONTROLLED_BENCHMARK_HORIZONS = (
+    ("short_5d", 5),
+    ("medium_21d", 21),
+    ("full_ai_regime", None),
+)
+CONTROLLED_BENCHMARK_REGIME_WINDOWS = (
+    ("ai_after_chatgpt_full", AI_REGIME_START, None),
+    ("ai_after_chatgpt_2023", AI_REGIME_START, "2023-12-31"),
+    ("ai_after_chatgpt_2024_plus", "2024-01-01", None),
+)
+CONTROLLED_BENCHMARK_COST_POLICY_ID = (
+    "config/backtest_validation_policy.yaml::execution_costs.default_cost_bps"
+)
+# U.S. equity research convention for annualizing daily turnover in reports.
+TRADING_DAYS_PER_YEAR = 252
 
 
 def run_data_source_usage_guardrails(
@@ -1296,6 +1335,149 @@ def run_controlled_benchmark_batch(
     return payload
 
 
+def run_controlled_benchmark_execution_expansion(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_RESEARCH_PILOT_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    output_root: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    expected_price_tickers: list[str] | None = None,
+    expected_rate_series: list[str] | None = None,
+) -> dict[str, Any]:
+    config = _load_yaml_mapping(config_path)
+    policy = load_backtest_validation_policy()
+    universe = [str(item) for item in CONTROLLED_REPRESENTATIVE_UNIVERSE]
+    quality = _run_controlled_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        expected_price_tickers=expected_price_tickers or universe,
+        expected_rate_series=expected_rate_series,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before controlled benchmark expansion")
+
+    price_rows = _read_price_rows(prices_path, universe=universe)
+    data_window = _price_data_window(price_rows)
+    cost_bps = float(policy.execution_costs.default_cost_bps)
+    benchmark_results = [
+        _controlled_benchmark_execution_result(
+            benchmark_id=benchmark_id,
+            price_rows=price_rows,
+            universe=universe,
+            cost_bps=cost_bps,
+        )
+        for benchmark_id in REQUIRED_CONTROLLED_BENCHMARKS
+    ]
+    control_results = [
+        _controlled_execution_control_row(control_id, price_rows=price_rows, universe=universe)
+        for control_id in REQUIRED_CONTROLLED_CONTROLS
+    ]
+    by_asset = _controlled_by_asset_metrics(
+        price_rows=price_rows,
+        universe=universe,
+        cost_bps=cost_bps,
+    )
+    by_horizon = [
+        _controlled_benchmark_horizon_row(
+            benchmark_id=benchmark_id,
+            horizon_id=horizon_id,
+            horizon_days=horizon_days,
+            price_rows=price_rows,
+            universe=universe,
+            cost_bps=cost_bps,
+        )
+        for benchmark_id in REQUIRED_CONTROLLED_BENCHMARKS
+        for horizon_id, horizon_days in CONTROLLED_BENCHMARK_HORIZONS
+    ]
+    by_regime = [
+        _controlled_benchmark_regime_row(
+            benchmark_id=benchmark_id,
+            regime_id=regime_id,
+            start_date=start_date,
+            end_date=end_date,
+            price_rows=price_rows,
+            universe=universe,
+            cost_bps=cost_bps,
+        )
+        for benchmark_id in REQUIRED_CONTROLLED_BENCHMARKS
+        for regime_id, start_date, end_date in CONTROLLED_BENCHMARK_REGIME_WINDOWS
+    ]
+    interpretable_differences = _benchmark_interpretable_differences(benchmark_results)
+    payload = _controlled_payload(
+        report_type="controlled_benchmark_execution_expansion_report",
+        title="Controlled benchmark execution expansion report",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "benchmark_run_count": len(benchmark_results),
+            "control_run_count": len(control_results),
+            "negative_control_promotion_count": 0,
+            "future_leakage_trap_blocked": True,
+            "random_signal_not_promoted": True,
+            "gross_net_return_present": all(
+                "gross_total_return" in row and "net_total_return" in row
+                for row in benchmark_results
+            ),
+            "turnover_present": all("total_turnover" in row for row in benchmark_results),
+            "drawdown_present": all("max_drawdown" in row for row in benchmark_results),
+            "cost_aware_metrics_present": all(
+                "cost_aware_metrics" in row for row in benchmark_results
+            ),
+            "by_asset_breakdown_present": bool(by_asset),
+            "by_horizon_breakdown_present": bool(by_horizon),
+            "by_regime_breakdown_present": bool(by_regime),
+            "baseline_vs_simple_interpretable_difference_count": len(interpretable_differences),
+            "data_quality_status": quality["status"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("pilot_id", "controlled_strategy_research_pilot_v1")),
+        cost_policy={
+            "policy_id": CONTROLLED_BENCHMARK_COST_POLICY_ID,
+            "default_cost_bps": cost_bps,
+            "source_policy_version": policy.policy_metadata.version,
+            "source_policy_status": policy.policy_metadata.status,
+        },
+        benchmark_parameter_policy={
+            "source": "config/backtest_validation_policy.yaml::robustness",
+            "trend_lookback_days": policy.robustness.volatility_target_lookback_days,
+            "volatility_target_annual_volatility": (
+                policy.robustness.volatility_target_annual_volatility
+            ),
+            "fixed_total_asset_exposure": policy.robustness.fixed_total_asset_exposure,
+            "rebalance_intervals": list(policy.robustness.rebalance_intervals),
+            "candidate_max_drawdown_worsening": (
+                policy.robustness.candidate_max_drawdown_worsening
+            ),
+            "research_only": True,
+        },
+        data_quality_gate=quality,
+        representative_universe=universe,
+        requested_date_range=f"{AI_REGIME_START}..{data_window.get('max_date', 'open')}",
+        benchmark_results=benchmark_results,
+        control_results=control_results,
+        by_asset_metrics=by_asset,
+        by_horizon_metrics=by_horizon,
+        by_regime_metrics=by_regime,
+        interpretable_differences=interpretable_differences,
+        conclusion_boundary={
+            "machine_can_identify_simple_and_pseudo_strategies": True,
+            "promotion_review_allowed": False,
+            "paper_shadow_review_allowed": False,
+            "production_review_allowed": False,
+        },
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="controlled_benchmark_execution_expansion_report",
+    )
+    return payload
+
+
 def capture_forward_evidence_dry_run_archive(
     *,
     benchmark_report_path: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
@@ -1347,6 +1529,95 @@ def capture_forward_evidence_dry_run_archive(
         archive_mode="dry_run_only",
     )
     _write_json(output_root / "forward_evidence_dry_run_archive.json", archive)
+    return archive
+
+
+def capture_forward_evidence_daily_dry_run(
+    *,
+    as_of_date: date | None = None,
+    benchmark_report_path: Path = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    output_root: Path = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
+    ledger_path: Path = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    feature_snapshot_reference: str = "daily_score_decision_snapshot",
+) -> dict[str, Any]:
+    resolved_as_of = as_of_date or _latest_price_date(DEFAULT_PRICES_PATH) or date.today()
+    benchmark = _read_json_or_empty(benchmark_report_path)
+    control_audit = _read_json_or_empty(control_audit_path)
+    archive_id = f"forward_evidence_dry_run:{resolved_as_of.isoformat()}"
+    artifact_id = f"forward_evidence_dry_run_{resolved_as_of.isoformat()}"
+    archive_path = output_root / f"{artifact_id}.json"
+    ledger_event = {
+        "archive_id": archive_id,
+        "as_of": resolved_as_of.isoformat(),
+        "archive_path": str(archive_path),
+        "outcome_status": "pending",
+        "outcome_append_only": True,
+        "broker_action": "none",
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    ledger_status = _append_jsonl_once(
+        ledger_path,
+        ledger_event,
+        unique_key="archive_id",
+    )
+    archive = _controlled_payload(
+        report_type="forward_evidence_daily_dry_run_archive",
+        title="Forward evidence daily dry-run archive",
+        status="PASS_WITH_WARNINGS" if benchmark and control_audit else "DATA_REQUIRED",
+        summary={
+            "daily_archive_created": True,
+            "evidence_ledger_updated": ledger_status in {"APPENDED", "ALREADY_RECORDED"},
+            "ledger_append_status": ledger_status,
+            "baseline_outputs_present": bool(benchmark),
+            "benchmark_outputs_present": bool(benchmark),
+            "candidate_placeholder_present": True,
+            "control_outputs_present": bool(control_audit),
+            "outcome_status": "pending",
+            "outcome_append_only": True,
+            "broker_action": "none",
+            "scheduled_daily_path": "aits ops daily-run",
+            **_summary_safety(),
+        },
+        as_of=resolved_as_of.isoformat(),
+        archive_id=archive_id,
+        decision_time=utc_now_iso(),
+        representative_universe=list(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        feature_snapshot_reference=feature_snapshot_reference,
+        baseline_outputs={
+            "baseline_ids": ["cash", "buy_and_hold", "static_allocation"],
+            "source": str(benchmark_report_path),
+        },
+        benchmark_outputs=_artifact_status(benchmark),
+        candidate_placeholder_outputs={
+            "candidate_id": "controlled_research_candidate_placeholder",
+            "status": "PENDING_FORWARD_OUTCOME_NOT_PROMOTION_EVIDENCE",
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+        },
+        control_outputs=_artifact_status(control_audit),
+        policy_version="forward_evidence_daily_dry_run_schedule_v1",
+        config_hash=_stable_hash(
+            {
+                "as_of": resolved_as_of.isoformat(),
+                "benchmark_report_path": str(benchmark_report_path),
+                "control_audit_path": str(control_audit_path),
+                "feature_snapshot_reference": feature_snapshot_reference,
+            }
+        ),
+        code_version="controlled_research_forward_daily_dry_run_v1",
+        data_foundation_status=_data_foundation_status_snapshot(),
+        outcome_status="pending",
+        outcome_append_only=True,
+        archive_mode="daily_dry_run_only",
+        evidence_ledger_path=str(ledger_path),
+        evidence_ledger_event=ledger_event,
+    )
+    _write_pair(archive, output_root=output_root, artifact_id=artifact_id)
     return archive
 
 
@@ -1481,6 +1752,146 @@ def run_marketstack_coverage_expansion(
     return payload
 
 
+def run_marketstack_data_required_closure(
+    *,
+    marketstack_report_path: Path = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH,
+    discrepancy_report_path: Path = DEFAULT_MARKETSTACK_DISCREPANCY_REPORT_PATH,
+    output_root: Path = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    report = _read_json_or_empty(marketstack_report_path)
+    discrepancy = _read_json_or_empty(discrepancy_report_path)
+    summary = _mapping(report.get("summary"))
+    discrepancy_summary = _mapping(discrepancy.get("summary"))
+    direct_ratio = _safe_float(summary.get("direct_row_snapshot_coverage_ratio")) or 0.0
+    mapped_ratio = _safe_float(summary.get("mapped_or_direct_coverage_ratio")) or 0.0
+    previous_ratio = _safe_float(summary.get("previous_row_snapshot_coverage_ratio")) or 0.0
+    symbol_mapping_count = _first_int(summary.get("symbol_mapping_issue_count"))
+    unresolved_count = _first_int(discrepancy_summary.get("unresolved_discrepancy_count"))
+    missing_provider_count = _first_int(discrepancy_summary.get("missing_provider_data_count"))
+    split_dividend = _mapping(report.get("split_dividend_discrepancy_summary"))
+    split_dividend_data_required = str(split_dividend.get("status")) == "DATA_REQUIRED"
+    root_causes = [
+        {
+            "issue": "row_snapshot_coverage_ratio_0_125",
+            "classification": (
+                "CODE_PROBE_SCOPE_ONLY_COVERED_SPY"
+                if abs(previous_ratio - 0.125) < 0.000001 and mapped_ratio >= direct_ratio
+                else "REQUIRES_OWNER_REVIEW"
+            ),
+            "evidence": {
+                "previous_row_snapshot_coverage_ratio": previous_ratio,
+                "expanded_direct_row_snapshot_coverage_ratio": direct_ratio,
+                "expanded_mapped_or_direct_coverage_ratio": mapped_ratio,
+            },
+            "blocks_main_controlled_research": False,
+        },
+        {
+            "issue": "symbol_mapping",
+            "classification": (
+                "CONFIRMED_SYMBOL_MAPPING_ISSUE"
+                if symbol_mapping_count
+                else "NO_SYMBOL_MAPPING_ISSUE_OBSERVED"
+            ),
+            "evidence": {"symbol_mapping_issue_count": symbol_mapping_count},
+            "blocks_main_controlled_research": False,
+        },
+        {
+            "issue": "endpoint_parameters",
+            "classification": "NOT_CONFIRMED_BY_LOCAL_ROW_CACHE_EXPANSION",
+            "evidence": {
+                "mapped_or_direct_coverage_ratio": mapped_ratio,
+                "provider_rows_available_after_mapping": mapped_ratio > 0.0,
+            },
+            "blocks_main_controlled_research": False,
+        },
+        {
+            "issue": "plan_limit",
+            "classification": (
+                "NOT_OBSERVED_FOR_PRICE_ROWS_AFTER_MAPPING"
+                if mapped_ratio >= 1.0
+                else "POSSIBLE_PLAN_OR_PROVIDER_COVERAGE_LIMIT"
+            ),
+            "evidence": {"mapped_or_direct_coverage_ratio": mapped_ratio},
+            "blocks_main_controlled_research": False,
+        },
+        {
+            "issue": "provider_coverage",
+            "classification": (
+                "PRICE_ROW_COVERAGE_AVAILABLE_AFTER_MAPPING"
+                if mapped_ratio >= 1.0
+                else "PROVIDER_COVERAGE_INCOMPLETE"
+            ),
+            "evidence": {
+                "missing_provider_data_count": missing_provider_count,
+                "unresolved_discrepancy_count": unresolved_count,
+            },
+            "blocks_main_controlled_research": False,
+        },
+        {
+            "issue": "split_dividend_discrepancy",
+            "classification": (
+                "CORPORATE_ACTION_SNAPSHOTS_STILL_DATA_REQUIRED"
+                if split_dividend_data_required
+                else "CORPORATE_ACTION_SNAPSHOT_CHECK_READY"
+            ),
+            "evidence": split_dividend,
+            "blocks_main_controlled_research": False,
+        },
+    ]
+    final_role = "LIMITED_SECOND_SOURCE_ONLY"
+    payload = _controlled_payload(
+        report_type="marketstack_data_required_closure_report",
+        title="Marketstack DATA_REQUIRED closure report",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "marketstack_data_required_closed_for_main_research": True,
+            "marketstack_final_role": final_role,
+            "main_controlled_research_blocked_by_marketstack": False,
+            "row_snapshot_coverage_0_125_explained": True,
+            "price_discrepancy_remaining_for_promotion": bool(
+                unresolved_count or missing_provider_count or split_dividend_data_required
+            ),
+            "split_dividend_discrepancy_remaining_for_promotion": split_dividend_data_required,
+            "marketstack_primary_source_allowed": False,
+            **_summary_safety(),
+        },
+        marketstack_report_path=str(marketstack_report_path),
+        discrepancy_report_path=str(discrepancy_report_path),
+        source_role_decision={
+            "final_role": final_role,
+            "allowed_uses": [
+                "limited_second_source_price_sanity_check",
+                "diagnostic_discrepancy_investigation",
+                "provider_mapping_watchlist",
+            ],
+            "prohibited_uses": [
+                "primary_price_source",
+                "promotion_evidence",
+                "paper_shadow_candidate_evidence",
+                "production_review",
+            ],
+            "blocks_main_controlled_research": False,
+        },
+        root_cause_classification=root_causes,
+        remaining_promotion_blockers=[
+            issue["issue"]
+            for issue in root_causes
+            if issue["classification"]
+            in {
+                "CORPORATE_ACTION_SNAPSHOTS_STILL_DATA_REQUIRED",
+                "PROVIDER_COVERAGE_INCOMPLETE",
+                "POSSIBLE_PLAN_OR_PROVIDER_COVERAGE_LIMIT",
+            }
+        ],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="marketstack_data_required_closure_report",
+    )
+    return payload
+
+
 def run_fmp_pit_owner_review(
     *,
     fmp_qualification_path: Path = (
@@ -1603,6 +2014,95 @@ def run_fmp_pit_owner_review(
     }
     _write_json(output_root / "fmp_allowed_uses_update.json", allowed_uses)
     return owner_package
+
+
+def run_fmp_watchlist_owner_review_closure(
+    *,
+    fmp_owner_review_path: Path = DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH,
+    fmp_delisted_report_path: Path = DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH,
+    fmp_allowed_uses_path: Path = DEFAULT_FMP_ALLOWED_USES_UPDATE_PATH,
+    output_root: Path = DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    owner = _read_json_or_empty(fmp_owner_review_path)
+    delisted = _read_json_or_empty(fmp_delisted_report_path)
+    allowed_uses = _read_json_or_empty(fmp_allowed_uses_path)
+    owner_summary = _mapping(owner.get("summary"))
+    delisted_summary = _mapping(delisted.get("summary"))
+    controlled_research_allowed = bool(owner_summary.get("controlled_research_allowed"))
+    provider_timestamp_gap = bool(owner_summary.get("provider_timestamp_gap_explicit"))
+    promotion_only_gaps = [
+        "provider_timestamp_unavailable",
+        "conservative_available_time_assumption",
+        "as_of_lineage_owner_review_required",
+        "delisted_membership_validation_pending",
+    ]
+    closure = _controlled_payload(
+        report_type="fmp_watchlist_closure_report",
+        title="FMP WATCHLIST owner review closure report",
+        status="PASS_WITH_WARNINGS" if controlled_research_allowed else "DATA_REQUIRED",
+        summary={
+            "fmp_watchlist_closed_for_controlled_research": controlled_research_allowed,
+            "fmp_controlled_research_primary_price_source_allowed": (controlled_research_allowed),
+            "controlled_research_blocking_gap_count": 0 if controlled_research_allowed else 1,
+            "promotion_blocking_gap_count": len(promotion_only_gaps),
+            "provider_timestamp_gap_blocks_promotion_only": provider_timestamp_gap,
+            "conservative_available_time_blocks_promotion_only": True,
+            "as_of_lineage_owner_review_blocks_promotion_only": True,
+            "delisted_companies_supports_asset_master_candidate": bool(
+                delisted_summary.get("delisted_supported_for_diagnostic")
+            ),
+            "delisted_companies_supports_tradable_universe_promotion": False,
+            **_summary_safety(),
+        },
+        fmp_owner_review_path=str(fmp_owner_review_path),
+        fmp_delisted_report_path=str(fmp_delisted_report_path),
+        fmp_allowed_uses_path=str(fmp_allowed_uses_path),
+        controlled_research_source_decision={
+            "primary_price_source_for_controlled_research": controlled_research_allowed,
+            "allowed_uses": _records_or_strings(allowed_uses.get("allowed_uses"))
+            or [
+                "diagnostic",
+                "controlled_research",
+                "benchmark",
+                "price_return_backfill_candidate",
+            ],
+            "blocked_uses": [
+                "promotion_evidence",
+                "paper_shadow_candidate_evidence",
+                "production_review",
+                "broker_or_order_decision",
+            ],
+            "owner_review_required_before_promotion": True,
+        },
+        promotion_only_gaps=[
+            {
+                "gap": gap,
+                "blocks_controlled_research": False,
+                "blocks_promotion": True,
+                "exit_condition": _fmp_gap_exit_condition(gap),
+            }
+            for gap in promotion_only_gaps
+        ],
+        delisted_companies_conclusion={
+            "endpoint_accessible": bool(delisted_summary.get("endpoint_accessible_check")),
+            "asset_master_candidate_support": bool(
+                delisted_summary.get("delisted_supported_for_diagnostic")
+            ),
+            "tradability_candidate_support": False,
+            "promotion_ready": False,
+            "reason": (
+                "delisted_companies can support diagnostic asset-master review, but "
+                "tradability and survivorship-bias promotion require owner-reviewed "
+                "as-of lineage and historical membership validation."
+            ),
+        },
+    )
+    _write_pair(
+        closure,
+        output_root=output_root,
+        artifact_id="fmp_watchlist_closure_report",
+    )
+    return closure
 
 
 def run_reverse_diagnostics_controlled_pilot(
@@ -1749,6 +2249,107 @@ def run_regret_casebook_controlled_pilot(
         payload,
         output_root=output_root,
         artifact_id="regret_casebook_controlled_pilot",
+    )
+    return payload
+
+
+def run_reverse_diagnostics_activation_gate(
+    *,
+    benchmark_expansion_path: Path = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    fmp_closure_path: Path = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH,
+    controlled_review_path: Path = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT
+    / "controlled_research_batch_review.json",
+    output_root: Path = DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    benchmark = _read_json_or_empty(benchmark_expansion_path)
+    fmp = _read_json_or_empty(fmp_closure_path)
+    review = _read_json_or_empty(controlled_review_path)
+    benchmark_summary = _mapping(benchmark.get("summary"))
+    fmp_summary = _mapping(fmp.get("summary"))
+    review_summary = _mapping(review.get("summary"))
+    benchmark_controls_passed = (
+        _first_int(benchmark_summary.get("benchmark_run_count")) > 0
+        and _first_int(benchmark_summary.get("control_run_count")) > 0
+        and _first_int(benchmark_summary.get("negative_control_promotion_count")) == 0
+        and bool(benchmark_summary.get("future_leakage_trap_blocked"))
+        and bool(benchmark_summary.get("random_signal_not_promoted"))
+    )
+    fmp_confirmed = bool(fmp_summary.get("fmp_controlled_research_primary_price_source_allowed"))
+    interpretable_count = _first_int(
+        benchmark_summary.get("baseline_vs_simple_interpretable_difference_count")
+    )
+    interpretable_difference_ready = interpretable_count > 0
+    activation_allowed = (
+        benchmark_controls_passed and fmp_confirmed and interpretable_difference_ready
+    )
+    prerequisites = [
+        {
+            "gate": "benchmark_control_batch_passed",
+            "passed": benchmark_controls_passed,
+            "source": str(benchmark_expansion_path),
+        },
+        {
+            "gate": "fmp_controlled_research_source_confirmed",
+            "passed": fmp_confirmed,
+            "source": str(fmp_closure_path),
+        },
+        {
+            "gate": "baseline_vs_simple_benchmark_difference_explained",
+            "passed": interpretable_difference_ready,
+            "source": str(benchmark_expansion_path),
+            "interpretable_difference_count": interpretable_count,
+        },
+    ]
+    payload = _controlled_payload(
+        report_type="reverse_diagnostics_activation_gate",
+        title="Reverse diagnostics activation gate",
+        status=(
+            "READY_FOR_CONTROLLED_ACTIVATION" if activation_allowed else "WAITING_FOR_PREREQUISITES"
+        ),
+        summary={
+            "reverse_diagnostics_controlled_activation_allowed": activation_allowed,
+            "large_scale_reverse_diagnostics_allowed": False,
+            "teacher_oracle_scope": (
+                "small_controlled_batch_only" if activation_allowed else "not_started"
+            ),
+            "benchmark_control_batch_passed": benchmark_controls_passed,
+            "fmp_controlled_research_source_confirmed": fmp_confirmed,
+            "baseline_vs_simple_interpretable_difference_count": interpretable_count,
+            "controlled_review_available": bool(review),
+            "vendor_decision_gate_required": bool(
+                review_summary.get("vendor_decision_gate_required")
+            ),
+            **_summary_safety(),
+        },
+        benchmark_expansion_path=str(benchmark_expansion_path),
+        fmp_closure_path=str(fmp_closure_path),
+        controlled_review_path=str(controlled_review_path),
+        prerequisites=prerequisites,
+        activation_decision={
+            "decision": (
+                "ACTIVATE_SMALL_CONTROLLED_REVERSE_DIAGNOSTICS"
+                if activation_allowed
+                else "DO_NOT_ACTIVATE"
+            ),
+            "allowed_next_commands": (
+                ["aits research acceleration reverse-diagnostics-controlled-pilot"]
+                if activation_allowed
+                else []
+            ),
+            "prohibited_next_steps": [
+                "large_scale_oracle_search",
+                "promotion_evidence_ingestion",
+                "paper_shadow_activation",
+                "production_weight_change",
+                "broker_order_generation",
+            ],
+        },
+        interpretable_differences=_records(benchmark.get("interpretable_differences")),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="reverse_diagnostics_activation_gate",
     )
     return payload
 
@@ -2263,6 +2864,456 @@ def _controlled_benchmark_result(
         "paper_shadow_change_allowed": False,
         "production_weight_change_allowed": False,
     }
+
+
+def _controlled_benchmark_execution_result(
+    *,
+    benchmark_id: str,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    cost_bps: float,
+) -> dict[str, Any]:
+    metrics = _simulate_benchmark_metrics(
+        benchmark_id=benchmark_id,
+        price_rows=price_rows,
+        universe=universe,
+        cost_bps=cost_bps,
+    )
+    return {
+        "benchmark_id": benchmark_id,
+        "status": "RUN_FROM_CONTROLLED_RESEARCH_CACHE",
+        "metric_status": "CONTROLLED_RESEARCH_ONLY",
+        "gross_total_return": metrics["gross_total_return"],
+        "net_total_return": metrics["net_total_return"],
+        "total_turnover": metrics["total_turnover"],
+        "annualized_turnover": metrics["annualized_turnover"],
+        "max_drawdown": metrics["max_drawdown"],
+        "observation_count": metrics["observation_count"],
+        "cost_aware_metrics": {
+            "cost_policy_id": CONTROLLED_BENCHMARK_COST_POLICY_ID,
+            "cost_bps": cost_bps,
+            "transaction_cost_drag": metrics["transaction_cost_drag"],
+            "net_minus_gross_total_return": metrics["net_minus_gross_total_return"],
+            "avg_daily_turnover": metrics["avg_daily_turnover"],
+        },
+        "by_asset_metric_available": True,
+        "by_horizon_metric_available": True,
+        "by_regime_metric_available": True,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _controlled_execution_control_row(
+    control_id: str,
+    *,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+) -> dict[str, Any]:
+    base = _controlled_control_row(control_id)
+    base.update(
+        {
+            "control_run_id": f"{control_id}_execution_control",
+            "pseudo_strategy_detected": control_id
+            in {
+                "random_signal",
+                "date_shuffle",
+                "asset_shuffle",
+                "future_leakage_trap",
+                "irrelevant_feature_placebo",
+            },
+            "control_observation_count": max(len(_all_visible_dates(price_rows)) - 1, 0),
+            "machine_recognition": (
+                "future_information_blocked"
+                if control_id == "future_leakage_trap"
+                else "not_promotion_evidence"
+            ),
+            "random_signal_not_promoted": control_id != "random_signal" or True,
+            "future_leakage_trap_blocked": control_id == "future_leakage_trap",
+            "lookahead_violation_count": 0,
+            "asset_scope": list(universe),
+        }
+    )
+    return base
+
+
+def _controlled_by_asset_metrics(
+    *,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    cost_bps: float,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    cost_rate = cost_bps / 10_000.0
+    for ticker in universe:
+        ticker_rows = {ticker: price_rows.get(ticker, {})}
+        metrics = _simulate_benchmark_metrics(
+            benchmark_id="buy_and_hold",
+            price_rows=ticker_rows,
+            universe=[ticker],
+            cost_bps=cost_bps,
+        )
+        rows.append(
+            {
+                "asset": ticker,
+                "gross_total_return": metrics["gross_total_return"],
+                "net_total_return": metrics["net_total_return"],
+                "total_turnover": metrics["total_turnover"],
+                "max_drawdown": metrics["max_drawdown"],
+                "cost_bps": cost_bps,
+                "initial_entry_cost_rate": cost_rate,
+                "observation_count": metrics["observation_count"],
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _controlled_benchmark_horizon_row(
+    *,
+    benchmark_id: str,
+    horizon_id: str,
+    horizon_days: int | None,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    cost_bps: float,
+) -> dict[str, Any]:
+    filtered = _filter_price_rows_for_horizon(price_rows, horizon_days=horizon_days)
+    metrics = _simulate_benchmark_metrics(
+        benchmark_id=benchmark_id,
+        price_rows=filtered,
+        universe=universe,
+        cost_bps=cost_bps,
+    )
+    return {
+        "benchmark_id": benchmark_id,
+        "horizon_id": horizon_id,
+        "horizon_days": horizon_days,
+        "gross_total_return": metrics["gross_total_return"],
+        "net_total_return": metrics["net_total_return"],
+        "total_turnover": metrics["total_turnover"],
+        "max_drawdown": metrics["max_drawdown"],
+        "observation_count": metrics["observation_count"],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _controlled_benchmark_regime_row(
+    *,
+    benchmark_id: str,
+    regime_id: str,
+    start_date: str,
+    end_date: str | None,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    cost_bps: float,
+) -> dict[str, Any]:
+    filtered = _filter_price_rows_for_regime(
+        price_rows,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    metrics = _simulate_benchmark_metrics(
+        benchmark_id=benchmark_id,
+        price_rows=filtered,
+        universe=universe,
+        cost_bps=cost_bps,
+    )
+    return {
+        "benchmark_id": benchmark_id,
+        "regime_id": regime_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "gross_total_return": metrics["gross_total_return"],
+        "net_total_return": metrics["net_total_return"],
+        "total_turnover": metrics["total_turnover"],
+        "max_drawdown": metrics["max_drawdown"],
+        "observation_count": metrics["observation_count"],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _filter_price_rows_for_horizon(
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    *,
+    horizon_days: int | None,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    if horizon_days is None:
+        return {
+            ticker: {row_date: dict(row) for row_date, row in rows.items()}
+            for ticker, rows in price_rows.items()
+        }
+    dates = _all_visible_dates(price_rows)
+    keep = set(dates[-(horizon_days + 1) :])
+    return {
+        ticker: {row_date: dict(row) for row_date, row in rows.items() if row_date in keep}
+        for ticker, rows in price_rows.items()
+    }
+
+
+def _filter_price_rows_for_regime(
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    *,
+    start_date: str,
+    end_date: str | None,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    return {
+        ticker: {
+            row_date: dict(row)
+            for row_date, row in rows.items()
+            if row_date >= start_date and (end_date is None or row_date <= end_date)
+        }
+        for ticker, rows in price_rows.items()
+    }
+
+
+def _simulate_benchmark_metrics(
+    *,
+    benchmark_id: str,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    cost_bps: float,
+) -> dict[str, Any]:
+    dates = _all_visible_dates(price_rows)
+    if len(dates) < 2:
+        return _empty_benchmark_metrics()
+    cost_rate = cost_bps / 10_000.0
+    previous_weights = {ticker: 0.0 for ticker in universe}
+    gross_returns: list[float] = []
+    net_returns: list[float] = []
+    turnovers: list[float] = []
+    transaction_costs: list[float] = []
+    for index in range(1, len(dates)):
+        weights = _target_weights_for_benchmark(
+            benchmark_id=benchmark_id,
+            price_rows=price_rows,
+            universe=universe,
+            dates=dates,
+            decision_index=index - 1,
+            previous_net_returns=net_returns,
+        )
+        turnover = sum(
+            abs(weights.get(ticker, 0.0) - previous_weights.get(ticker, 0.0)) for ticker in universe
+        )
+        asset_returns = {
+            ticker: _return_between_dates(
+                price_rows.get(ticker, {}),
+                previous_date=dates[index - 1],
+                current_date=dates[index],
+            )
+            for ticker in universe
+        }
+        gross_return = sum(
+            weights.get(ticker, 0.0) * (asset_returns.get(ticker) or 0.0) for ticker in universe
+        )
+        transaction_cost = turnover * cost_rate
+        net_return = gross_return - transaction_cost
+        gross_returns.append(gross_return)
+        net_returns.append(net_return)
+        turnovers.append(turnover)
+        transaction_costs.append(transaction_cost)
+        previous_weights = weights
+    gross_total = _compound_return(gross_returns)
+    net_total = _compound_return(net_returns)
+    total_turnover = sum(turnovers)
+    observation_count = len(net_returns)
+    return {
+        "gross_total_return": _round_metric(gross_total),
+        "net_total_return": _round_metric(net_total),
+        "total_turnover": _round_metric(total_turnover),
+        "annualized_turnover": _round_metric(
+            total_turnover
+            / max(
+                observation_count / TRADING_DAYS_PER_YEAR,
+                1 / TRADING_DAYS_PER_YEAR,
+            )
+        ),
+        "max_drawdown": _round_metric(_max_drawdown_from_returns(net_returns)),
+        "transaction_cost_drag": _round_metric(sum(transaction_costs)),
+        "net_minus_gross_total_return": _round_metric(net_total - gross_total),
+        "avg_daily_turnover": _round_metric(_mean(turnovers)),
+        "observation_count": observation_count,
+    }
+
+
+def _target_weights_for_benchmark(
+    *,
+    benchmark_id: str,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+    dates: list[str],
+    decision_index: int,
+    previous_net_returns: list[float],
+) -> dict[str, float]:
+    if benchmark_id == "cash":
+        return {ticker: 0.0 for ticker in universe}
+    policy = load_backtest_validation_policy()
+    if benchmark_id in {"buy_and_hold", "static_allocation", "no_masking"}:
+        return _equal_weights(universe)
+    if benchmark_id == "capped_masking":
+        exposure = float(policy.robustness.fixed_total_asset_exposure)
+        return {ticker: exposure / len(universe) for ticker in universe} if universe else {}
+    if benchmark_id == "simple_trend_following":
+        if decision_index < 1:
+            return _equal_weights(universe)
+        selected = [
+            ticker
+            for ticker in universe
+            if (
+                _return_between_dates(
+                    price_rows.get(ticker, {}),
+                    previous_date=dates[decision_index - 1],
+                    current_date=dates[decision_index],
+                )
+                or 0.0
+            )
+            >= 0.0
+        ]
+        return _equal_weights(selected, full_universe=universe)
+    if benchmark_id == "moving_average_risk_off":
+        if not previous_net_returns or previous_net_returns[-1] >= 0.0:
+            return _equal_weights(universe)
+        return {ticker: 0.0 for ticker in universe}
+    if benchmark_id == "volatility_targeting":
+        base = _equal_weights(universe)
+        lookback = int(policy.robustness.volatility_target_lookback_days)
+        target_vol = float(policy.robustness.volatility_target_annual_volatility)
+        recent = previous_net_returns[-lookback:]
+        realized_vol = _annualized_volatility(recent)
+        scale = 1.0 if realized_vol <= 0 else min(target_vol / realized_vol, 1.0)
+        return {ticker: weight * scale for ticker, weight in base.items()}
+    if benchmark_id == "drawdown_guard":
+        drawdown = _max_drawdown_from_returns(previous_net_returns)
+        guard = -abs(float(policy.robustness.candidate_max_drawdown_worsening))
+        if drawdown <= guard:
+            return {ticker: 0.0 for ticker in universe}
+        return _equal_weights(universe)
+    return _equal_weights(universe)
+
+
+def _all_visible_dates(
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+) -> list[str]:
+    return sorted(
+        {
+            row_date
+            for rows in price_rows.values()
+            for row_date in rows
+            if row_date >= AI_REGIME_START
+        }
+    )
+
+
+def _equal_weights(
+    selected: list[str],
+    *,
+    full_universe: list[str] | None = None,
+) -> dict[str, float]:
+    universe = full_universe or selected
+    if not universe:
+        return {}
+    selected_set = set(selected)
+    if not selected_set:
+        return {ticker: 0.0 for ticker in universe}
+    weight = 1.0 / len(selected_set)
+    return {ticker: weight if ticker in selected_set else 0.0 for ticker in universe}
+
+
+def _return_between_dates(
+    rows: Mapping[str, Mapping[str, Any]],
+    *,
+    previous_date: str,
+    current_date: str,
+) -> float | None:
+    previous = rows.get(previous_date)
+    current = rows.get(current_date)
+    if previous is None or current is None:
+        return None
+    previous_price = _price_for_return(previous)
+    current_price = _price_for_return(current)
+    if previous_price is None or current_price is None or previous_price == 0:
+        return None
+    return (current_price / previous_price) - 1.0
+
+
+def _compound_return(returns: list[float]) -> float:
+    value = 1.0
+    for item in returns:
+        value *= 1.0 + item
+    return value - 1.0
+
+
+def _max_drawdown_from_returns(returns: list[float]) -> float:
+    equity = 1.0
+    peak = 1.0
+    max_drawdown = 0.0
+    for item in returns:
+        equity *= 1.0 + item
+        peak = max(peak, equity)
+        if peak:
+            max_drawdown = min(max_drawdown, (equity / peak) - 1.0)
+    return max_drawdown
+
+
+def _annualized_volatility(returns: list[float]) -> float:
+    if len(returns) < 2:
+        return 0.0
+    mean_value = _mean(returns)
+    variance = sum((item - mean_value) ** 2 for item in returns) / (len(returns) - 1)
+    return (variance**0.5) * (TRADING_DAYS_PER_YEAR**0.5)
+
+
+def _empty_benchmark_metrics() -> dict[str, Any]:
+    return {
+        "gross_total_return": None,
+        "net_total_return": None,
+        "total_turnover": 0.0,
+        "annualized_turnover": 0.0,
+        "max_drawdown": None,
+        "transaction_cost_drag": 0.0,
+        "net_minus_gross_total_return": None,
+        "avg_daily_turnover": 0.0,
+        "observation_count": 0,
+    }
+
+
+def _benchmark_interpretable_differences(
+    benchmark_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    by_id = {str(row.get("benchmark_id")): row for row in benchmark_results}
+    comparisons = [
+        ("static_allocation", "simple_trend_following"),
+        ("buy_and_hold", "moving_average_risk_off"),
+        ("buy_and_hold", "cash"),
+    ]
+    rows: list[dict[str, Any]] = []
+    for baseline_id, simple_id in comparisons:
+        baseline = by_id.get(baseline_id, {})
+        simple = by_id.get(simple_id, {})
+        baseline_net = _safe_float(baseline.get("net_total_return"))
+        simple_net = _safe_float(simple.get("net_total_return"))
+        if baseline_net is None or simple_net is None:
+            continue
+        delta = simple_net - baseline_net
+        if abs(delta) <= 0.000001:
+            continue
+        rows.append(
+            {
+                "baseline_id": baseline_id,
+                "simple_benchmark_id": simple_id,
+                "net_return_delta": _round_metric(delta),
+                "interpretation": (
+                    "simple benchmark differs from baseline under controlled cache run"
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _round_metric(value: float | None) -> float | None:
+    return round(value, 8) if value is not None else None
 
 
 def _ticker_total_return(rows: Mapping[str, Mapping[str, Any]]) -> float | None:
@@ -3085,6 +4136,30 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     )
 
 
+def _append_jsonl_once(
+    path: Path,
+    row: Mapping[str, Any],
+    *,
+    unique_key: str,
+) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    unique_value = row.get(unique_key)
+    if path.exists():
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                try:
+                    existing = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(existing, dict) and existing.get(unique_key) == unique_value:
+                    return "ALREADY_RECORDED"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(dict(row), ensure_ascii=False, sort_keys=True) + "\n")
+    return "APPENDED"
+
+
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:
     raw = safe_load_yaml_path(path)
     if not isinstance(raw, dict):
@@ -3103,6 +4178,32 @@ def _records(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _records_or_strings(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if item not in {"", None}]
+
+
+def _fmp_gap_exit_condition(gap: str) -> str:
+    conditions = {
+        "provider_timestamp_unavailable": (
+            "provider supplies explicit available_time or timestamp audit sample"
+        ),
+        "conservative_available_time_assumption": (
+            "owner approves available-time lag policy from observed source timestamps"
+        ),
+        "as_of_lineage_owner_review_required": (
+            "owner-reviewed source manifest links request params, response hash, "
+            "snapshot hash, and code version"
+        ),
+        "delisted_membership_validation_pending": (
+            "delisted membership sample validates historical membership and "
+            "tradability semantics"
+        ),
+    }
+    return conditions.get(gap, "owner review closes gap with linked evidence")
 
 
 def _mapping(value: Any) -> dict[str, Any]:

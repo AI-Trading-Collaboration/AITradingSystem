@@ -12,11 +12,13 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.current_subscription_qualification import (
     CONTROLLED_REPRESENTATIVE_UNIVERSE,
     build_strategy_research_readiness_board,
+    capture_forward_evidence_daily_dry_run,
     capture_forward_evidence_dry_run_archive,
     classify_forward_evidence_requirement,
     run_asset_master_qualification,
     run_benchmark_controls_real_data_batch,
     run_controlled_benchmark_batch,
+    run_controlled_benchmark_execution_expansion,
     run_controlled_research_batch_review,
     run_cost_liquidity_model_qualification,
     run_data_foundation_acceptance_v2,
@@ -25,16 +27,19 @@ from ai_trading_system.current_subscription_qualification import (
     run_first_current_subscription_source_qualification_batch,
     run_fmp_pit_owner_review,
     run_fmp_price_corporate_action_qualification,
+    run_fmp_watchlist_owner_review_closure,
     run_gbdt_action_utility_baseline,
     run_horizon_conditioned_value_surface_prototype,
     run_label_boundary_qualification,
     run_macro_risk_source_qualification,
     run_marketstack_coverage_expansion,
+    run_marketstack_data_required_closure,
     run_marketstack_reconciliation_qualification,
     run_pilot_batch_review,
     run_regret_casebook_controlled_pilot,
     run_regret_casebook_failure_taxonomy_pilot,
     run_regret_driven_state_machine_prototype,
+    run_reverse_diagnostics_activation_gate,
     run_reverse_diagnostics_controlled_pilot,
     run_sec_fundamental_pit_qualification,
     run_simple_strategy_ensemble_selector_prototype,
@@ -322,6 +327,150 @@ def test_controlled_research_batch_760_to_764_contract(tmp_path: Path) -> None:
     assert decisions["regret_casebook"] == "WATCHLIST"
 
 
+def test_controlled_research_expansion_765_to_769_contract(tmp_path: Path) -> None:
+    coverage_path = _write_coverage(tmp_path)
+    prices_path, marketstack_prices_path, rates_path = _write_controlled_price_caches(tmp_path)
+    source_root = tmp_path / "source"
+    benchmark_root = tmp_path / "benchmark"
+    marketstack_root = tmp_path / "marketstack"
+    fmp_root = tmp_path / "fmp"
+    forward_root = tmp_path / "forward"
+    reverse_root = tmp_path / "reverse"
+    review_root = tmp_path / "review"
+
+    run_fmp_price_corporate_action_qualification(
+        subscription_coverage_path=coverage_path,
+        output_root=source_root,
+    )
+    run_controlled_benchmark_batch(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=benchmark_root,
+        as_of_date=date(2022, 12, 5),
+        expected_price_tickers=list(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        expected_rate_series=["DGS10"],
+    )
+    expansion = run_controlled_benchmark_execution_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=benchmark_root,
+        as_of_date=date(2022, 12, 5),
+        expected_price_tickers=list(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        expected_rate_series=["DGS10"],
+    )
+    _assert_safety(expansion)
+    assert expansion["report_type"] == "controlled_benchmark_execution_expansion_report"
+    assert expansion["summary"]["benchmark_run_count"] > 0
+    assert expansion["summary"]["control_run_count"] > 0
+    assert expansion["summary"]["negative_control_promotion_count"] == 0
+    assert expansion["summary"]["future_leakage_trap_blocked"] is True
+    assert expansion["summary"]["random_signal_not_promoted"] is True
+    assert expansion["summary"]["gross_net_return_present"] is True
+    assert expansion["summary"]["turnover_present"] is True
+    assert expansion["summary"]["drawdown_present"] is True
+    assert expansion["summary"]["cost_aware_metrics_present"] is True
+    assert expansion["summary"]["by_asset_breakdown_present"] is True
+    assert expansion["summary"]["by_horizon_breakdown_present"] is True
+    assert expansion["summary"]["by_regime_breakdown_present"] is True
+    assert expansion["benchmark_results"][0]["cost_aware_metrics"]["cost_bps"] >= 0
+
+    marketstack = run_marketstack_coverage_expansion(
+        subscription_coverage_path=coverage_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=marketstack_root,
+        as_of_date=date(2022, 12, 5),
+        expected_rate_series=["DGS10"],
+    )
+    marketstack_closure = run_marketstack_data_required_closure(
+        marketstack_report_path=marketstack_root / "marketstack_coverage_expansion_report.json",
+        discrepancy_report_path=marketstack_root / "fmp_marketstack_discrepancy_report.json",
+        output_root=marketstack_root,
+    )
+    _assert_safety(marketstack_closure)
+    assert marketstack["summary"]["previous_row_snapshot_coverage_ratio"] == 0.125
+    assert marketstack_closure["summary"]["row_snapshot_coverage_0_125_explained"] is True
+    assert marketstack_closure["summary"]["marketstack_final_role"] == (
+        "LIMITED_SECOND_SOURCE_ONLY"
+    )
+    assert (
+        marketstack_closure["summary"]["main_controlled_research_blocked_by_marketstack"] is False
+    )
+    assert marketstack_closure["summary"]["marketstack_primary_source_allowed"] is False
+
+    fmp_review = run_fmp_pit_owner_review(
+        fmp_qualification_path=source_root / "fmp_price_corporate_action_qualification_report.json",
+        fmp_manifest_path=source_root / "fmp_source_manifest_sample.json",
+        output_root=fmp_root,
+    )
+    fmp_closure = run_fmp_watchlist_owner_review_closure(
+        fmp_owner_review_path=fmp_root / "fmp_pit_owner_review_package.json",
+        fmp_delisted_report_path=fmp_root / "fmp_delisted_validation_report.json",
+        fmp_allowed_uses_path=fmp_root / "fmp_allowed_uses_update.json",
+        output_root=fmp_root,
+    )
+    _assert_safety(fmp_review)
+    _assert_safety(fmp_closure)
+    assert fmp_closure["summary"]["fmp_watchlist_closed_for_controlled_research"] is True
+    assert fmp_closure["summary"]["fmp_controlled_research_primary_price_source_allowed"] is True
+    assert fmp_closure["summary"]["promotion_blocking_gap_count"] > 0
+    assert (
+        fmp_closure["summary"]["delisted_companies_supports_tradable_universe_promotion"] is False
+    )
+
+    forward = capture_forward_evidence_daily_dry_run(
+        as_of_date=date(2022, 12, 5),
+        benchmark_report_path=(
+            benchmark_root / "controlled_benchmark_execution_expansion_report.json"
+        ),
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        output_root=forward_root,
+        ledger_path=forward_root / "forward_evidence_dry_run_ledger.jsonl",
+    )
+    _assert_safety(forward)
+    assert forward["summary"]["daily_archive_created"] is True
+    assert forward["summary"]["candidate_placeholder_present"] is True
+    assert forward["outcome_status"] == "pending"
+    assert forward["outcome_append_only"] is True
+    assert (forward_root / "forward_evidence_dry_run_2022-12-05.json").exists()
+    assert (forward_root / "forward_evidence_dry_run_ledger.jsonl").exists()
+
+    static_forward = capture_forward_evidence_dry_run_archive(
+        benchmark_report_path=benchmark_root / "controlled_benchmark_batch_report.json",
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        output_root=forward_root,
+    )
+    assert static_forward["summary"]["forward_archive_created"] is True
+    review = run_controlled_research_batch_review(
+        benchmark_report_path=benchmark_root / "controlled_benchmark_batch_report.json",
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        forward_archive_path=forward_root / "forward_evidence_dry_run_archive.json",
+        marketstack_report_path=marketstack_root / "marketstack_coverage_expansion_report.json",
+        fmp_owner_review_path=fmp_root / "fmp_pit_owner_review_package.json",
+        fmp_delisted_report_path=fmp_root / "fmp_delisted_validation_report.json",
+        reverse_diagnostics_path=tmp_path / "missing_reverse.json",
+        regret_casebook_path=tmp_path / "missing_regret.json",
+        output_root=review_root,
+    )
+    assert review["summary"]["all_modules_have_decision"] is True
+    activation = run_reverse_diagnostics_activation_gate(
+        benchmark_expansion_path=benchmark_root
+        / "controlled_benchmark_execution_expansion_report.json",
+        fmp_closure_path=fmp_root / "fmp_watchlist_closure_report.json",
+        controlled_review_path=review_root / "controlled_research_batch_review.json",
+        output_root=reverse_root,
+    )
+    _assert_safety(activation)
+    assert activation["summary"]["benchmark_control_batch_passed"] is True
+    assert activation["summary"]["fmp_controlled_research_source_confirmed"] is True
+    assert activation["summary"]["baseline_vs_simple_interpretable_difference_count"] > 0
+    assert activation["summary"]["reverse_diagnostics_controlled_activation_allowed"] is True
+    assert activation["summary"]["large_scale_reverse_diagnostics_allowed"] is False
+
+
 def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> None:
     coverage_path = _write_coverage(tmp_path)
     requirements_path = _write_requirements(tmp_path)
@@ -424,9 +573,14 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
         "current_subscription_source_qualification_batch_review",
         "controlled_benchmark_batch_report",
         "forward_evidence_dry_run_archive",
+        "controlled_benchmark_execution_expansion_report",
+        "forward_evidence_daily_dry_run_archive",
         "marketstack_coverage_expansion_report",
+        "marketstack_data_required_closure_report",
         "fmp_pit_owner_review_package",
+        "fmp_watchlist_closure_report",
         "reverse_diagnostics_controlled_pilot",
+        "reverse_diagnostics_activation_gate",
         "regret_casebook_controlled_pilot",
         "controlled_research_batch_review",
     }:
@@ -440,14 +594,19 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
     assert "current_subscription_source_qualification_batch_review.json/md" in catalog
     assert "controlled_benchmark_batch_report.json/md" in catalog
     assert "controlled_research_batch_review.json/md" in catalog
+    assert "controlled_benchmark_execution_expansion_report.json/md" in catalog
+    assert "forward_evidence_dry_run_YYYY-MM-DD.json/md" in catalog
+    assert "LIMITED_SECOND_SOURCE_ONLY" in catalog
     assert "DO_NOT_BUY_NEW_SOURCE_YET" in catalog
 
     system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
     assert "TRADING-739～748" in system_flow
     assert "TRADING-759" in system_flow
     assert "TRADING-760～764" in system_flow
+    assert "TRADING-765～769" in system_flow
     assert "aits research strategy-pilot readiness-board" in system_flow
     assert "aits research controlled-pilot benchmark-batch" in system_flow
+    assert "aits research controlled-pilot benchmark-expansion" in system_flow
 
     assert (
         PROJECT_ROOT / "docs" / "schema" / "current_subscription_source_qualification.schema.json"
@@ -528,6 +687,13 @@ def _endpoint(
     likely_allowed_use: str = "promotion_candidate_after_qualification",
     available_time_supported: bool = False,
 ) -> dict[str, Any]:
+    coverage = {"coverage_ratio_observed": 1.0}
+    if provider == "Marketstack" and endpoint_name == "eod_historical_price":
+        coverage = {
+            "coverage_ratio_observed": 0.125,
+            "probed": ["SPY"],
+            "covered": ["SPY"],
+        }
     return {
         "provider": provider,
         "endpoint_name": endpoint_name,
@@ -536,7 +702,7 @@ def _endpoint(
         "likely_allowed_use": likely_allowed_use,
         "current_view_only_risk": False,
         "available_time_supported": available_time_supported,
-        "coverage_for_representative_universe": {"coverage_ratio_observed": 1.0},
+        "coverage_for_representative_universe": coverage,
         "production_effect": "none",
         "broker_action": "none",
         "promotion_gate_allowed": False,

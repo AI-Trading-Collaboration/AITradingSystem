@@ -13,6 +13,7 @@ from ai_trading_system.cli_commands import data_cache as data_cache_cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import feedback as feedback_cli
+from ai_trading_system.cli_commands import forward_evidence as forward_evidence_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
 from ai_trading_system.cli_commands import ops as ops_cli
 from ai_trading_system.cli_commands import parameters as parameters_cli
@@ -213,6 +214,22 @@ def _dispatch(args: list[str]) -> None:
                 args,
                 "--risk-event-openai-precheck-visibility-cutoff",
             ),
+        )
+        return
+    if args[:2] == ["forward-evidence", "capture-dry-run-daily"]:
+        forward_evidence_cli.forward_evidence_capture_dry_run_daily_command(
+            as_of=_option(args, "--as-of") or _option(args, "--as-of-date"),
+            benchmark_expansion=_optional_path(args, "--benchmark-expansion")
+            or forward_evidence_cli.DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+            control_audit=_optional_path(args, "--control-audit")
+            or forward_evidence_cli.DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+            feature_snapshot_reference=(
+                _option(args, "--feature-snapshot-reference") or "daily_score_decision_snapshot"
+            ),
+            output_root=_optional_path(args, "--output-root")
+            or forward_evidence_cli.DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
+            ledger_path=_optional_path(args, "--ledger-path")
+            or forward_evidence_cli.DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
         )
         return
     if args[:2] == ["feedback", "optimize-market-feedback"]:

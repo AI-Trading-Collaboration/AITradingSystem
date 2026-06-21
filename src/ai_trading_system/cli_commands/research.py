@@ -15,10 +15,12 @@ from ai_trading_system.current_subscription_qualification import (
     DEFAULT_CONTROL_AUDIT_REPORT_PATH,
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
     DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
     DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH,
     DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH,
+    DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH,
     DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH,
     DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
@@ -26,11 +28,13 @@ from ai_trading_system.current_subscription_qualification import (
     DEFAULT_RATES_PATH,
     DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH,
     DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT,
+    DEFAULT_REVERSE_DIAGNOSTICS_ACTIVATION_GATE_PATH,
     DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
     DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT,
     build_strategy_research_readiness_board,
     run_benchmark_controls_real_data_batch,
     run_controlled_benchmark_batch,
+    run_controlled_benchmark_execution_expansion,
     run_controlled_research_batch_review,
     run_gbdt_action_utility_baseline,
     run_horizon_conditioned_value_surface_prototype,
@@ -38,6 +42,7 @@ from ai_trading_system.current_subscription_qualification import (
     run_regret_casebook_controlled_pilot,
     run_regret_casebook_failure_taxonomy_pilot,
     run_regret_driven_state_machine_prototype,
+    run_reverse_diagnostics_activation_gate,
     run_reverse_diagnostics_controlled_pilot,
     run_simple_strategy_ensemble_selector_prototype,
     run_strategy_pair_reverse_diagnostics_pilot,
@@ -248,6 +253,41 @@ def controlled_pilot_benchmark_batch_command(
         )
     )
     _print_strategy_pilot_payload("Controlled benchmark batch", payload)
+
+
+@controlled_pilot_app.command("benchmark-expansion")
+def controlled_pilot_benchmark_expansion_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-765 benchmark expansion 输出目录。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_benchmark_execution_expansion(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            as_of_date=_parse_optional_date(as_of),
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Controlled benchmark execution expansion", payload)
 
 
 @strategy_pilot_app.command("readiness-board")
@@ -689,6 +729,37 @@ def acceleration_reverse_diagnostics_controlled_pilot_command(
         )
     )
     _print_strategy_pilot_payload("Reverse diagnostics controlled pilot", payload)
+
+
+@acceleration_app.command("reverse-diagnostics-activation-gate")
+def acceleration_reverse_diagnostics_activation_gate_command(
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    fmp_closure: Annotated[
+        Path,
+        typer.Option("--fmp-closure", help="TRADING-767 FMP closure JSON。"),
+    ] = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH,
+    controlled_review: Annotated[
+        Path,
+        typer.Option("--controlled-review", help="TRADING-764 review board JSON。"),
+    ] = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT
+    / "controlled_research_batch_review.json",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-769 activation gate 输出目录。"),
+    ] = DEFAULT_REVERSE_DIAGNOSTICS_ACTIVATION_GATE_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_reverse_diagnostics_activation_gate(
+            benchmark_expansion_path=benchmark_expansion,
+            fmp_closure_path=fmp_closure,
+            controlled_review_path=controlled_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Reverse diagnostics activation gate", payload)
 
 
 @acceleration_app.command("regret-casebook-controlled-pilot")

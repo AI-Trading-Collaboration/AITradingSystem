@@ -41,8 +41,11 @@ from ai_trading_system.current_subscription_qualification import (
     DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH,
     DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
     DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH,
+    DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH,
     DEFAULT_MACRO_RISK_CONFIG_PATH,
     DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+    DEFAULT_MARKETSTACK_DATA_REQUIRED_CLOSURE_REPORT_PATH,
+    DEFAULT_MARKETSTACK_DISCREPANCY_REPORT_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
     DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
     DEFAULT_PRICES_PATH,
@@ -56,8 +59,10 @@ from ai_trading_system.current_subscription_qualification import (
     run_first_current_subscription_source_qualification_batch,
     run_fmp_pit_owner_review,
     run_fmp_price_corporate_action_qualification,
+    run_fmp_watchlist_owner_review_closure,
     run_macro_risk_source_qualification,
     run_marketstack_coverage_expansion,
+    run_marketstack_data_required_closure,
     run_marketstack_reconciliation_qualification,
     run_sec_fundamental_pit_qualification,
 )
@@ -383,6 +388,37 @@ def source_qualification_fmp_pit_owner_review_command(
     _print_foundation_payload(payload)
 
 
+@source_qualification_app.command("fmp-watchlist-closure")
+def source_qualification_fmp_watchlist_closure_command(
+    fmp_owner_review: Annotated[
+        Path,
+        typer.Option("--fmp-owner-review", help="TRADING-762 FMP owner review JSON。"),
+    ] = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH.parent
+    / "fmp_pit_owner_review_package.json",
+    fmp_delisted_report: Annotated[
+        Path,
+        typer.Option("--fmp-delisted-report", help="TRADING-762 delisted validation JSON。"),
+    ] = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH.parent
+    / "fmp_delisted_validation_report.json",
+    fmp_allowed_uses: Annotated[
+        Path,
+        typer.Option("--fmp-allowed-uses", help="TRADING-762 allowed uses JSON。"),
+    ] = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH.parent
+    / "fmp_allowed_uses_update.json",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-767 FMP closure 输出目录。"),
+    ] = DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = run_fmp_watchlist_owner_review_closure(
+        fmp_owner_review_path=fmp_owner_review,
+        fmp_delisted_report_path=fmp_delisted_report,
+        fmp_allowed_uses_path=fmp_allowed_uses,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
 @source_qualification_app.command("marketstack-reconciliation")
 def source_qualification_marketstack_reconciliation_command(
     config_path: Annotated[
@@ -444,6 +480,30 @@ def source_qualification_marketstack_coverage_expansion_command(
         marketstack_prices_path=marketstack_prices_path,
         rates_path=rates_path,
         as_of_date=_parse_date(as_of) if as_of else None,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("marketstack-data-required-closure")
+def source_qualification_marketstack_data_required_closure_command(
+    marketstack_report: Annotated[
+        Path,
+        typer.Option("--marketstack-report", help="TRADING-761 Marketstack expansion JSON。"),
+    ] = DEFAULT_MARKETSTACK_DATA_REQUIRED_CLOSURE_REPORT_PATH.parent
+    / "marketstack_coverage_expansion_report.json",
+    discrepancy_report: Annotated[
+        Path,
+        typer.Option("--discrepancy-report", help="FMP/Marketstack discrepancy JSON。"),
+    ] = DEFAULT_MARKETSTACK_DISCREPANCY_REPORT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-766 Marketstack closure 输出目录。"),
+    ] = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+) -> None:
+    payload = run_marketstack_data_required_closure(
+        marketstack_report_path=marketstack_report,
+        discrepancy_report_path=discrepancy_report,
         output_root=output_root,
     )
     _print_foundation_payload(payload)

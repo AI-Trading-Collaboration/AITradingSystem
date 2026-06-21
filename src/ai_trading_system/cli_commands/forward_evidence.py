@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -9,10 +10,13 @@ from rich.console import Console
 from ai_trading_system.current_subscription_qualification import (
     DEFAULT_CONTROL_AUDIT_REPORT_PATH,
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
     DEFAULT_FORWARD_CAPTURE_CONTRACT_PATH,
+    DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
     DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
     DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
     DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    capture_forward_evidence_daily_dry_run,
     capture_forward_evidence_dry_run_archive,
     classify_forward_evidence_requirement,
     validate_forward_capture_contract,
@@ -24,6 +28,13 @@ from ai_trading_system.data_foundation import (
     report_forward_evidence,
     update_forward_outcomes,
 )
+
+
+def _parse_optional_date(raw: str | None) -> date | None:
+    if not raw:
+        return None
+    return date.fromisoformat(raw)
+
 
 console = Console()
 forward_evidence_app = typer.Typer(help="Forward evidence capture and daily archive。")
@@ -76,6 +87,44 @@ def forward_evidence_capture_dry_run_command(
         control_audit_path=control_audit,
         feature_snapshot_reference=feature_snapshot_reference,
         output_root=output_root,
+    )
+    _print_payload(payload)
+
+
+@forward_evidence_app.command("capture-dry-run-daily")
+def forward_evidence_capture_dry_run_daily_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--as-of-date", help="Daily dry-run archive as-of date。"),
+    ] = None,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-760 control audit report JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    feature_snapshot_reference: Annotated[
+        str,
+        typer.Option("--feature-snapshot-reference", help="Daily PIT feature snapshot reference。"),
+    ] = "daily_score_decision_snapshot",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-768 daily dry-run archive 输出目录。"),
+    ] = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
+    ledger_path: Annotated[
+        Path,
+        typer.Option("--ledger-path", help="TRADING-768 forward evidence ledger JSONL。"),
+    ] = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+) -> None:
+    payload = capture_forward_evidence_daily_dry_run(
+        as_of_date=_parse_optional_date(as_of),
+        benchmark_report_path=benchmark_expansion,
+        control_audit_path=control_audit,
+        feature_snapshot_reference=feature_snapshot_reference,
+        output_root=output_root,
+        ledger_path=ledger_path,
     )
     _print_payload(payload)
 

@@ -491,6 +491,10 @@ def build_daily_ops_plan(
         )
     )
     data_quality_report = default_quality_report_path(reports_dir, download_end)
+    forward_dry_run_root = project_root / "outputs" / "forward_evidence" / "daily_archive"
+    forward_dry_run_json = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.json"
+    forward_dry_run_md = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.md"
+    forward_dry_run_ledger = forward_dry_run_root / "forward_evidence_dry_run_ledger.jsonl"
     score_change_report = default_score_change_attribution_report_path(reports_dir, as_of)
     score_change_json = default_score_change_attribution_json_path(reports_dir, as_of)
     market_panel_report = default_market_panel_report_path(reports_dir, as_of)
@@ -940,6 +944,36 @@ def build_daily_ops_plan(
                 ),
             ),
             DailyOpsStep(
+                step_id="forward_evidence_dry_run_daily",
+                title="留存 forward evidence daily dry-run archive",
+                command=(
+                    (
+                        "aits",
+                        "forward-evidence",
+                        "capture-dry-run-daily",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    forward_dry_run_json,
+                    forward_dry_run_md,
+                    forward_dry_run_ledger,
+                ),
+                quality_gate=(
+                    "每日 dry-run 只记录 baseline/benchmark/candidate placeholder、"
+                    "pending outcome 和 append-only ledger；不触发 broker/order、"
+                    "paper-shadow 或 production weight change。"
+                ),
+                blocks_downstream=False,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
                 step_id="reports_dashboard",
                 title="生成只读决策 dashboard",
                 command=(
@@ -1234,9 +1268,7 @@ def build_daily_ops_plan(
                 step_id="artifact_lineage",
                 title="生成 artifact lineage graph",
                 command=(
-                    ("aits", "reports", "artifact-lineage", "--latest")
-                    if dashboard_enabled
-                    else ()
+                    ("aits", "reports", "artifact-lineage", "--latest") if dashboard_enabled else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(artifact_lineage_json, artifact_lineage_report),

@@ -140,6 +140,20 @@ cadences:
           - score-daily
         closed_market_behavior: skip_score_artifacts
         production_effect: local_report_write
+      - task_id: daily_forward_evidence_dry_run
+        daily_plan_step_id: forward_evidence_dry_run_daily
+        title: Capture forward evidence daily dry-run archive
+        command: aits forward-evidence capture-dry-run-daily --as-of {as_of}
+        command_contains:
+          - forward-evidence
+          - capture-dry-run-daily
+          - --as-of
+        closed_market_behavior: skip_score_artifacts
+        data_quality_gate: "The daily validate_data and score_daily steps must complete earlier in the same daily-run; archive output remains dry-run only and outcome append-only."
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_evidence_dashboard
         daily_plan_step_id: reports_dashboard
         title: Build evidence dashboard
