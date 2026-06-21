@@ -147,3 +147,93 @@ regret_casebook_expansion_gate:
     - regret_type_distribution_stable
     - teacher_oracle_diagnostic_difference_present
     - value_surface_failure_cases_attributed
+value_surface_warning_triage:
+  task_id: TRADING-780
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL
+  continue_requires:
+    horizon_leakage_check_pass: true
+    negative_control_promotion_count: 0
+    benchmark_comparison_present: true
+    action_horizon_surface_present: true
+  sample_concentration_review_share: 0.50
+  warning_categories:
+    - category_id: data_quality_warning
+      source_field: data_quality_status
+      warning_when_not: PASS
+      severity: review
+    - category_id: utility_boundary_unvalidated
+      source_field: not_validated_utility_boundary
+      warning_when: true
+      severity: blocking_for_promotion
+    - category_id: forward_evidence_immature
+      source_field: ledger_event_count
+      warning_when_below: 5
+      severity: review
+    - category_id: sample_concentration
+      source_field: max_group_share
+      warning_when_above: 0.50
+      severity: review
+    - category_id: horizon_smoothness_material_pairs
+      source_field: material_pair_count
+      warning_when_above: 0
+      severity: diagnostic
+utility_ranking_robustness:
+  task_id: TRADING-781
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  pareto_stability_review_floor: 0.50
+  diagnostic_only_when_reversal_count_above: 0
+forward_evidence_continuity:
+  task_id: TRADING-782
+  minimum_ledger_events_for_continue: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  required_output_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+gbdt_pivot_selection:
+  task_id: TRADING-783
+  model_training_allowed: false
+  selected_direction: gbdt_value_surface_residual_model
+  rationale: >
+    Start with residual diagnostics because it keeps the transparent value
+    surface as the primary object and avoids another direct scalar utility
+    regression.
+  direction_details:
+    - direction_id: gbdt_regret_type_classifier
+      minimum_viable_experiment: classify_top_value_surface_failure_cases_by_regret_type
+      required_data: value_surface_failure_cases_with_regret_taxonomy
+      failure_mode: regret_labels_sparse_or_unstable
+      kill_criteria: regret_type_precision_below_simple_frequency_baseline
+      difference_from_previous_action_utility_model: predicts_failure_mode_not_scalar_utility
+    - direction_id: gbdt_state_transition_predictor
+      minimum_viable_experiment: predict_next_controlled_state_from_pit_state_features
+      required_data: state_transition_casebook_with_forward_maturity
+      failure_mode: state_transitions_too_rare_or_hysteresis_dominated
+      kill_criteria: transition_recall_below_static_state_baseline
+      difference_from_previous_action_utility_model: predicts_transition_probability_not_action_return
+    - direction_id: gbdt_value_surface_residual_model
+      minimum_viable_experiment: explain_residual_between_value_surface_rank_and_forward_outcome
+      required_data: matured_value_surface_rows_with_benchmark_disagreement
+      failure_mode: residuals_are_noise_or_follow_single_cost_return_component
+      kill_criteria: residual_rank_information_not_above_simple_component_baseline
+      difference_from_previous_action_utility_model: models_surface_error_after_transparent_policy
+    - direction_id: gbdt_action_ranking_classifier
+      minimum_viable_experiment: classify_top_action_bucket_with_time_ordered_split
+      required_data: matured_action_horizon_rows_with_stable_action_labels
+      failure_mode: action_labels_flip_under_utility_profile_changes
+      kill_criteria: rank_top1_accuracy_below_buy_and_hold_or_cash_baseline
+      difference_from_previous_action_utility_model: predicts_rank_bucket_not_continuous_utility
+regret_activation_inputs:
+  task_id: TRADING-784
+  minimum_value_surface_losing_cases: 25
+  minimum_benchmark_disagreement_cases: 15
+  minimum_false_risk_off_or_missed_upside_cases: 10
+  minimum_distinct_regret_types: 4
+  oracle_teacher_required_for_activation: true

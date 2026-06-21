@@ -11,15 +11,20 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
     run_controlled_strategy_batch_review,
+    run_forward_evidence_daily_continuity_maturity_tracker,
     run_forward_evidence_maturity_tracker,
     run_gbdt_action_utility_baseline,
+    run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
+    run_regret_activation_inputs_from_value_surface_failures,
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
     run_utility_boundary_ranking_policy_audit,
+    run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
     run_value_surface_controlled_prototype,
+    run_value_surface_warning_triage_review,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 from scripts.run_validation_tier import TIER_SPECS
@@ -198,6 +203,71 @@ def test_forward_evidence_maturity_tracker_append_only(tmp_path: Path) -> None:
         "20d",
         "60d",
     }
+
+
+def test_value_surface_warning_triage_decision_enum(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    payload = run_value_surface_warning_triage_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        utility_boundary_audit_path=paths["utility"],
+        forward_maturity_path=paths["maturity"],
+        output_root=tmp_path / "warning_triage",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_warning_triage_review"
+    assert payload["summary"]["warning_taxonomy_present"] is True
+    assert payload["summary"]["decision_date_breakdown_present"] is True
+    assert payload["summary"]["sample_concentration_present"] is True
+    assert payload["summary"]["controlled_expansion_review_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "DATA_REQUIRED",
+        "PAUSE",
+        "KILL",
+    }
+
+
+def test_utility_ranking_robustness_remains_sensitivity_tested(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    payload = run_utility_ranking_robustness_pareto_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        utility_boundary_audit_path=paths["utility"],
+        output_root=tmp_path / "utility_robustness",
+    )
+
+    _assert_safety(payload)
+    assert payload["status"] == "SENSITIVITY_TESTED"
+    assert payload["summary"]["not_validated_utility_boundary"] is True
+    assert payload["summary"]["validated_boundary_count"] == 0
+    assert payload["summary"]["pareto_frontier_stability_present"] is True
+    assert payload["diagnostic_boundary_assessment"]["boundary_use"] == "diagnostic_only"
+
+
+def test_forward_evidence_daily_continuity_tracker(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    prices_path, marketstack_path, rates_path = (
+        paths["prices"],
+        paths["marketstack"],
+        paths["rates"],
+    )
+    payload = run_forward_evidence_daily_continuity_maturity_tracker(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        ledger_path=paths["ledger"],
+        forward_maturity_path=paths["maturity"],
+        value_surface_expansion_path=paths["value_expansion"],
+        output_root=tmp_path / "continuity",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "forward_evidence_daily_continuity_maturity_tracker"
+    assert payload["summary"]["daily_continuity_checked"] is True
+    assert payload["summary"]["append_only_integrity_pass"] is True
+    assert payload["summary"]["horizon_maturity_recorded"] is True
+    assert payload["summary"]["output_coverage_present"] is True
 
 
 def test_regret_state_machine_schema(tmp_path: Path) -> None:
@@ -457,6 +527,67 @@ def test_regret_casebook_expansion_gate_watchlist(tmp_path: Path) -> None:
     assert any(not row["passed"] for row in payload["activation_gate"])
 
 
+def test_gbdt_pivot_direction_selection_no_training(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    gbdt = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+    pivot = run_gbdt_pivot_review(
+        gbdt_action_utility_path=Path(gbdt["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "gbdt_pivot",
+    )
+    payload = run_gbdt_pivot_direction_selection(
+        gbdt_pivot_review_path=Path(pivot["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "gbdt_selection",
+    )
+
+    _assert_safety(payload)
+    assert payload["status"] == "PIVOT_DIRECTION_SELECTED"
+    assert payload["summary"]["model_run_executed"] is False
+    assert payload["summary"]["model_training_allowed"] is False
+    assert payload["summary"]["selected_pivot_direction"] == "gbdt_value_surface_residual_model"
+    assert all(row["minimum_viable_experiment"] for row in payload["candidate_directions"])
+
+
+def test_regret_activation_inputs_stay_watchlist_when_incomplete(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    state = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state",
+        as_of_date=TEST_AS_OF,
+    )
+    expansion = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+    gate = run_regret_casebook_expansion_gate(
+        regret_state_machine_path=Path(state["artifact_paths"]["json_path"]),
+        state_transition_casebook_path=tmp_path / "state" / "state_transition_casebook.json",
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "regret_gate",
+    )
+    payload = run_regret_activation_inputs_from_value_surface_failures(
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        regret_casebook_expansion_gate_path=Path(gate["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "regret_inputs",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regret_activation_inputs_from_value_surface_failures"
+    assert payload["status"] == "WATCHLIST_NOT_READY"
+    assert payload["summary"]["regret_activation_ready"] is False
+    assert payload["watchlist_decision"]["expand_state_machine_now"] is False
+
+
 def test_controlled_strategy_batch_review_schema(tmp_path: Path) -> None:
     paths = _run_candidate_batch(tmp_path)
     review = run_controlled_strategy_batch_review(
@@ -636,6 +767,15 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         [
             "research",
             "strategies",
+            "gbdt-pivot-direction-selection",
+            "--gbdt-pivot-review",
+            str(tmp_path / "cli_gbdt" / "gbdt_pivot_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_gbdt"),
+        ],
+        [
+            "research",
+            "strategies",
             "regret-casebook-expansion-gate",
             "--regret-state-machine",
             str(tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json"),
@@ -643,6 +783,17 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
             str(tmp_path / "cli_state" / "state_transition_casebook.json"),
             "--value-surface-expansion",
             str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--output-root",
+            str(tmp_path / "cli_state"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regret-activation-inputs-from-value-surface-failures",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--regret-casebook-expansion-gate",
+            str(tmp_path / "cli_state" / "regret_casebook_expansion_gate.json"),
             "--output-root",
             str(tmp_path / "cli_state"),
         ],
@@ -657,6 +808,50 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
             str(rates_path),
             "--ledger-path",
             str(ledger_path),
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_maturity"),
+        ],
+        [
+            "research",
+            "strategies",
+            "value-surface-warning-triage-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--utility-boundary-audit",
+            str(tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json"),
+            "--forward-maturity",
+            str(tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "utility-ranking-robustness-pareto-audit",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--utility-boundary-audit",
+            str(tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_utility"),
+        ],
+        [
+            "forward-evidence",
+            "daily-continuity-maturity-tracker",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--ledger-path",
+            str(ledger_path),
+            "--forward-maturity",
+            str(tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json"),
             "--value-surface-expansion",
             str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
             "--as-of",
@@ -688,8 +883,17 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
 
     assert (tmp_path / "cli_review" / "controlled_strategy_batch_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json").exists()
+    assert (tmp_path / "cli_warning" / "value_surface_warning_triage_review.json").exists()
+    assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json").exists()
+    assert (
+        tmp_path / "cli_maturity" / "forward_evidence_daily_continuity_maturity_tracker.json"
+    ).exists()
+    assert (tmp_path / "cli_gbdt" / "gbdt_pivot_direction_selection.json").exists()
     assert (tmp_path / "cli_state" / "regret_casebook_expansion_gate.json").exists()
+    assert (
+        tmp_path / "cli_state" / "regret_activation_inputs_from_value_surface_failures.json"
+    ).exists()
 
 
 def test_controlled_strategy_batch_validation_tiers() -> None:
@@ -705,12 +909,17 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "value_surface_controlled_prototype",
         "value_surface_controlled_expansion",
         "utility_boundary_ranking_policy_audit",
+        "utility_ranking_robustness_pareto_audit",
         "forward_evidence_maturity_tracker",
+        "forward_evidence_daily_continuity_maturity_tracker",
         "regret_state_machine_controlled_prototype",
         "simple_strategy_selector_pilot",
         "gbdt_action_utility_controlled_baseline",
         "gbdt_pivot_review",
+        "gbdt_pivot_direction_selection",
         "regret_casebook_expansion_gate",
+        "regret_activation_inputs_from_value_surface_failures",
+        "value_surface_warning_triage_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -720,17 +929,56 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     catalog = (PROJECT_ROOT / "docs" / "artifact_catalog.md").read_text(encoding="utf-8")
     assert "value_surface_controlled_prototype.json/md" in catalog
     assert "value_surface_controlled_expansion.json/md" in catalog
+    assert "value_surface_warning_triage_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
+    assert "forward_evidence_daily_continuity_maturity_tracker.json/md" in catalog
     assert "controlled_strategy_batch_review.json/md" in catalog
     assert "validated utility boundary" in catalog
 
     system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
     assert "TRADING-770～774" in system_flow
     assert "TRADING-775～779" in system_flow
+    assert "TRADING-780～784" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
+    assert "aits research strategies value-surface-warning-triage-review" in system_flow
     assert "aits forward-evidence maturity-tracker" in system_flow
+    assert "aits forward-evidence daily-continuity-maturity-tracker" in system_flow
     assert "CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE" in system_flow
+
+
+def _run_next_stage_inputs(tmp_path: Path) -> dict[str, Path]:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    expansion = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+    utility = run_utility_boundary_ranking_policy_audit(
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "utility",
+    )
+    ledger_path = _write_forward_ledger(tmp_path)
+    maturity = run_forward_evidence_maturity_tracker(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        ledger_path=ledger_path,
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "maturity",
+        as_of_date=TEST_AS_OF,
+    )
+    return {
+        "prices": prices_path,
+        "marketstack": marketstack_path,
+        "rates": rates_path,
+        "ledger": ledger_path,
+        "value_expansion": Path(expansion["artifact_paths"]["json_path"]),
+        "utility": Path(utility["artifact_paths"]["json_path"]),
+        "maturity": Path(maturity["artifact_paths"]["json_path"]),
+    }
 
 
 def _run_candidate_batch(tmp_path: Path) -> dict[str, Path]:

@@ -11715,3 +11715,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_warning_triage_review
+    title: Value Surface Warning Triage Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-warning-triage-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_warning_triage_review.json
+      - outputs/research_strategies/value_surface_review/value_surface_warning_triage_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-780 should be regenerated after value surface expansion, utility boundary audit, or forward maturity artifacts change.
+    owner_action: review_warning_taxonomy_and_controlled_expansion_decision_without_treating_continue_as_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: utility_ranking_robustness_pareto_audit
+    title: Utility Ranking Robustness Pareto Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies utility-ranking-robustness-pareto-audit
+    artifact_globs:
+      - outputs/research_strategies/utility_boundary/utility_ranking_robustness_pareto_audit.json
+      - outputs/research_strategies/utility_boundary/utility_ranking_robustness_pareto_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-781 should be regenerated when utility profiles, value surface expansion, or Pareto frontier audit changes; status remains capped at SENSITIVITY_TESTED.
+    owner_action: inspect_ranking_reversals_dominant_dimensions_and_pareto_stability_as_diagnostic_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_daily_continuity_maturity_tracker
+    title: Forward Evidence Daily Continuity Maturity Tracker
+    group: research
+    cadence: daily
+    audience: project_owner
+    owner: research_governance
+    command: aits forward-evidence daily-continuity-maturity-tracker
+    artifact_globs:
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_daily_continuity_maturity_tracker.json
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_daily_continuity_maturity_tracker.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-782 tracks forward dry-run daily continuity, missing archive gaps, append-only integrity, horizon maturity, and output coverage.
+    owner_action: review_missing_daily_archives_and_append_only_integrity_before_any_forward_evidence_readiness_claim
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_pivot_direction_selection
+    title: GBDT Pivot Direction Selection
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-pivot-direction-selection
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_pivot_direction_selection.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_pivot_direction_selection.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-783 should be regenerated when pivot policy or GBDT pivot review changes; it selects direction only and does not train a model.
+    owner_action: review_selected_pivot_direction_mve_required_data_failure_mode_and_kill_criteria
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_activation_inputs_from_value_surface_failures
+    title: Regret Activation Inputs From Value Surface Failures
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regret-activation-inputs-from-value-surface-failures
+    artifact_globs:
+      - outputs/research_strategies/regret_state_machine/regret_activation_inputs_from_value_surface_failures.json
+      - outputs/research_strategies/regret_state_machine/regret_activation_inputs_from_value_surface_failures.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-784 should be regenerated when value-surface failure cases, regret gate, or teacher/oracle diagnostics change.
+    owner_action: keep_regret_state_machine_watchlist_until_failure_disagreement_oracle_and_regret_coverage_inputs_are_sufficient
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
