@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_825
+policy_id: controlled_strategy_research_next_stage_775_826
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -21,9 +21,11 @@ rationale: >
   promotion. TRADING-821 to TRADING-825 switch the fallback line into
   falsification-first audit: reconcile count universes, test leakage and label
   coupling, perturb thresholds/lags/horizons/benchmarks/costs, segment by
-  regime, and monitor forward maturity. This policy does not validate utility
-  boundaries and does not permit promotion, paper-shadow, production weight, or
-  broker changes.
+  regime, and monitor forward maturity. TRADING-826 adds a read-only blocker
+  diagnostic over the latest controlled review board and the TRADING-821 to
+  TRADING-825 input artifacts. This policy does not validate utility boundaries
+  and does not permit promotion, paper-shadow, production weight, or broker
+  changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -994,3 +996,31 @@ tail_risk_fallback_forward_maturity_scoreboard:
     The forward scoreboard is blocking-only. It monitors maturity and explains
     what remains missing before any future promotion discussion, but it cannot
     open promotion.
+tail_risk_fallback_blocker_diagnostic:
+  task_id: TRADING-826
+  read_only: true
+  required_review_board_report: tail_risk_policy_controlled_review_board
+  required_input_tasks:
+    - TRADING-821
+    - TRADING-822
+    - TRADING-823
+    - TRADING-824
+    - TRADING-825
+  severity_order:
+    - anti_leakage_critical
+    - universe_reconciliation_incomplete
+    - forward_degraded
+    - sensitivity_fragile
+    - regime_concentrated
+    - forward_insufficient_or_pending
+  forbidden_recommendations:
+    - promotion
+    - paper_shadow
+    - production_weight_change
+    - broker_action
+  rationale: >
+    This diagnostic explains why the controlled review board is blocked by
+    reading existing artifacts only. It may recommend data repair, trigger/label
+    decoupling, more forward maturity, sensitivity investigation, or segment
+    evidence collection, but it must never recommend promotion, paper-shadow,
+    production weights, or broker action.

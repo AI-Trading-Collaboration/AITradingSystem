@@ -10,6 +10,7 @@ from controlled_strategy_batch_helpers import (
     _run_tail_risk_review_board_inputs,
     run_tail_risk_fallback_anti_leakage_audit,
     run_tail_risk_fallback_audit_universe_reconciliation,
+    run_tail_risk_fallback_blocker_diagnostic,
     run_tail_risk_fallback_forward_maturity_scoreboard,
     run_tail_risk_fallback_regime_segmented_robustness,
     run_tail_risk_fallback_threshold_sensitivity,
@@ -173,3 +174,42 @@ def test_tail_risk_controlled_review_board_reads_falsification_reports(
     assert payload["summary"]["anti_leakage_status"] == "ANTI_LEAKAGE_BLOCKED"
     assert payload["review_decision"]["decision"] == "CONTROLLED_RESEARCH_BLOCKED"
     assert payload["review_decision"]["promotion_gate_allowed"] is False
+
+
+def test_tail_risk_fallback_blocker_diagnostic_sorts_root_causes(
+    tmp_path: Path,
+) -> None:
+    paths = _run_tail_risk_falsification_inputs(tmp_path)
+    board = run_tail_risk_policy_controlled_review_board(
+        robustness_path=paths["robustness"],
+        precision_recall_path=paths["precision"],
+        opportunity_cost_path=paths["opportunity"],
+        forward_integration_path=paths["forward"],
+        audit_universe_reconciliation_path=paths["reconciliation"],
+        anti_leakage_path=paths["anti_leakage"],
+        sensitivity_path=paths["sensitivity"],
+        regime_segmented_path=paths["regime"],
+        forward_maturity_scoreboard_path=paths["scoreboard"],
+        output_root=tmp_path / "board",
+    )
+
+    payload = run_tail_risk_fallback_blocker_diagnostic(
+        review_board_path=Path(board["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "diagnostic",
+    )
+
+    _assert_safety(payload)
+    assert payload["task_id"] == "TRADING-826"
+    assert payload["review_board_source"]["present"]
+    assert payload["summary"]["review_board_decision"] == "CONTROLLED_RESEARCH_BLOCKED"
+    assert payload["final_blocked_trigger"]["trigger_tasks"] == ["TRADING-822"]
+    assert payload["severity_ordered_findings"][0]["root_cause_id"] == "anti_leakage_critical"
+    assert [row["task_id"] for row in payload["input_reports"]] == [
+        "TRADING-821",
+        "TRADING-822",
+        "TRADING-823",
+        "TRADING-824",
+        "TRADING-825",
+    ]
+    assert all("promotion" not in payload["next_recommended_action"] for _ in [None])
+    assert payload["report_registry_entry"]["report_id"] == "tail_risk_fallback_blocker_diagnostic"

@@ -48,6 +48,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_risk_benchmark_fallback_robustness_expansion,
     run_tail_risk_fallback_anti_leakage_audit,
     run_tail_risk_fallback_audit_universe_reconciliation,
+    run_tail_risk_fallback_blocker_diagnostic,
     run_tail_risk_fallback_forward_maturity_scoreboard,
     run_tail_risk_fallback_regime_segmented_robustness,
     run_tail_risk_fallback_threshold_sensitivity,

@@ -56,6 +56,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
     DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
     DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH,
     DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
     DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
@@ -103,6 +104,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_risk_benchmark_fallback_robustness_expansion,
     run_tail_risk_fallback_anti_leakage_audit,
     run_tail_risk_fallback_audit_universe_reconciliation,
+    run_tail_risk_fallback_blocker_diagnostic,
     run_tail_risk_fallback_forward_maturity_scoreboard,
     run_tail_risk_fallback_regime_segmented_robustness,
     run_tail_risk_fallback_threshold_sensitivity,
@@ -2419,6 +2421,59 @@ def strategies_tail_risk_policy_controlled_review_board_command(
         )
     )
     _print_strategy_pilot_payload("Tail-risk policy controlled review board", payload)
+
+
+@strategies_app.command("tail-risk-fallback-blocker-diagnostic")
+def strategies_tail_risk_fallback_blocker_diagnostic_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-826 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    review_board: Annotated[
+        Path,
+        typer.Option("--review-board", help="Latest tail-risk controlled review board JSON。"),
+    ] = DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH,
+    audit_universe_reconciliation: Annotated[
+        Path | None,
+        typer.Option(
+            "--audit-universe-reconciliation",
+            help="Optional TRADING-821 universe reconciliation JSON override。",
+        ),
+    ] = None,
+    anti_leakage: Annotated[
+        Path | None,
+        typer.Option("--anti-leakage", help="Optional TRADING-822 anti-leakage JSON override。"),
+    ] = None,
+    sensitivity: Annotated[
+        Path | None,
+        typer.Option("--sensitivity", help="Optional TRADING-823 sensitivity JSON override。"),
+    ] = None,
+    regime_segmented: Annotated[
+        Path | None,
+        typer.Option("--regime-segmented", help="Optional TRADING-824 regime JSON override。"),
+    ] = None,
+    forward_maturity_scoreboard: Annotated[
+        Path | None,
+        typer.Option("--forward-maturity-scoreboard", help="Optional TRADING-825 JSON override。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-826 blocker diagnostic 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_blocker_diagnostic(
+            config_path=config_path,
+            review_board_path=review_board,
+            audit_universe_reconciliation_path=audit_universe_reconciliation,
+            anti_leakage_path=anti_leakage,
+            sensitivity_path=sensitivity,
+            regime_segmented_path=regime_segmented,
+            forward_maturity_scoreboard_path=forward_maturity_scoreboard,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback blocker diagnostic", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

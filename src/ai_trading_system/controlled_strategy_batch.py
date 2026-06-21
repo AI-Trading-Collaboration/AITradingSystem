@@ -209,6 +209,9 @@ DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH = (
 DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_forward_maturity_scoreboard.json"
 )
+DEFAULT_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_blocker_diagnostic.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -4202,11 +4205,11 @@ def run_tail_risk_policy_controlled_review_board(
     precision_recall_path: Path = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
     opportunity_cost_path: Path = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
     forward_integration_path: Path = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
-    audit_universe_reconciliation_path: Path = DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
-    anti_leakage_path: Path = DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
-    sensitivity_path: Path = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
-    regime_segmented_path: Path = DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
-    forward_maturity_scoreboard_path: Path = DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
+    audit_universe_reconciliation_path: Path | None = None,
+    anti_leakage_path: Path | None = None,
+    sensitivity_path: Path | None = None,
+    regime_segmented_path: Path | None = None,
+    forward_maturity_scoreboard_path: Path | None = None,
     output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
 ) -> dict[str, Any]:
     config = _load_next_stage_config(config_path)
@@ -4214,11 +4217,21 @@ def run_tail_risk_policy_controlled_review_board(
     precision = _read_json_or_empty(precision_recall_path)
     opportunity = _read_json_or_empty(opportunity_cost_path)
     forward = _read_json_or_empty(forward_integration_path)
-    audit_universe = _read_json_or_empty(audit_universe_reconciliation_path)
-    anti_leakage = _read_json_or_empty(anti_leakage_path)
-    sensitivity = _read_json_or_empty(sensitivity_path)
-    regime_segmented = _read_json_or_empty(regime_segmented_path)
-    forward_scoreboard = _read_json_or_empty(forward_maturity_scoreboard_path)
+    audit_universe = (
+        _read_json_or_empty(audit_universe_reconciliation_path)
+        if audit_universe_reconciliation_path is not None
+        else {}
+    )
+    anti_leakage = _read_json_or_empty(anti_leakage_path) if anti_leakage_path is not None else {}
+    sensitivity = _read_json_or_empty(sensitivity_path) if sensitivity_path is not None else {}
+    regime_segmented = (
+        _read_json_or_empty(regime_segmented_path) if regime_segmented_path is not None else {}
+    )
+    forward_scoreboard = (
+        _read_json_or_empty(forward_maturity_scoreboard_path)
+        if forward_maturity_scoreboard_path is not None
+        else {}
+    )
     review = _tail_risk_policy_controlled_review_board(
         config=config,
         robustness=robustness,
@@ -4291,6 +4304,75 @@ def run_tail_risk_policy_controlled_review_board(
         payload,
         output_root=output_root,
         artifact_id="tail_risk_policy_controlled_review_board",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_blocker_diagnostic(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    review_board_path: Path = DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH,
+    audit_universe_reconciliation_path: Path | None = None,
+    anti_leakage_path: Path | None = None,
+    sensitivity_path: Path | None = None,
+    regime_segmented_path: Path | None = None,
+    forward_maturity_scoreboard_path: Path | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    review_board = _read_json_or_empty(review_board_path)
+    paths = _tail_risk_blocker_diagnostic_paths(
+        review_board=review_board,
+        audit_universe_reconciliation_path=audit_universe_reconciliation_path,
+        anti_leakage_path=anti_leakage_path,
+        sensitivity_path=sensitivity_path,
+        regime_segmented_path=regime_segmented_path,
+        forward_maturity_scoreboard_path=forward_maturity_scoreboard_path,
+    )
+    reports = {key: _read_json_or_empty(path) for key, path in paths.items()}
+    diagnostic = _tail_risk_fallback_blocker_diagnostic(
+        config=config,
+        review_board=review_board,
+        review_board_path=review_board_path,
+        reports=reports,
+        report_paths=paths,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_blocker_diagnostic",
+        title="Tail-risk fallback blocker and warning diagnostic",
+        status=diagnostic["status"],
+        summary={
+            "task_id": "TRADING-826",
+            "diagnostic_status": diagnostic["status"],
+            "review_board_decision": diagnostic["review_board_decision"],
+            "blocked_trigger_tasks": diagnostic["final_blocked_trigger"]["trigger_tasks"],
+            "highest_severity_root_cause": diagnostic["highest_severity_root_cause"],
+            "report_registry_id": diagnostic["report_registry_entry"]["report_id"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-826",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        blocker_diagnostic_policy=_next_stage_section(
+            config, "tail_risk_fallback_blocker_diagnostic"
+        ),
+        review_board_source=_artifact_status(review_board, review_board_path),
+        input_reports=diagnostic["input_reports"],
+        severity_ordered_findings=diagnostic["severity_ordered_findings"],
+        final_blocked_trigger=diagnostic["final_blocked_trigger"],
+        root_cause_summary=diagnostic["root_cause_summary"],
+        report_registry_entry=diagnostic["report_registry_entry"],
+        read_only_assertions=diagnostic["read_only_assertions"],
+        blockers=diagnostic["blockers"],
+        warnings=diagnostic["warnings"],
+        next_recommended_action=diagnostic["next_recommended_action"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_blocker_diagnostic",
     )
     return payload
 
@@ -10328,6 +10410,477 @@ def _tail_risk_policy_controlled_review_board(
                 else "continue_controlled_research_with_promotion_blocked"
             )
         ),
+    }
+
+
+def _tail_risk_blocker_diagnostic_paths(
+    *,
+    review_board: Mapping[str, Any],
+    audit_universe_reconciliation_path: Path | None,
+    anti_leakage_path: Path | None,
+    sensitivity_path: Path | None,
+    regime_segmented_path: Path | None,
+    forward_maturity_scoreboard_path: Path | None,
+) -> dict[str, Path]:
+    return {
+        "audit_universe_reconciliation": audit_universe_reconciliation_path
+        or _tail_risk_report_path_from_review(
+            review_board,
+            "audit_universe_reconciliation_source",
+            DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
+        ),
+        "anti_leakage": anti_leakage_path
+        or _tail_risk_report_path_from_review(
+            review_board,
+            "anti_leakage_source",
+            DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+        ),
+        "sensitivity": sensitivity_path
+        or _tail_risk_report_path_from_review(
+            review_board,
+            "sensitivity_source",
+            DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
+        ),
+        "regime_segmented": regime_segmented_path
+        or _tail_risk_report_path_from_review(
+            review_board,
+            "regime_segmented_source",
+            DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
+        ),
+        "forward_maturity": forward_maturity_scoreboard_path
+        or _tail_risk_report_path_from_review(
+            review_board,
+            "forward_maturity_scoreboard_source",
+            DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
+        ),
+    }
+
+
+def _tail_risk_report_path_from_review(
+    review_board: Mapping[str, Any], source_key: str, fallback_path: Path
+) -> Path:
+    raw_path = _mapping(review_board.get(source_key)).get("path")
+    return _resolve_project_path(raw_path) if raw_path else fallback_path
+
+
+def _tail_risk_fallback_blocker_diagnostic(
+    *,
+    config: Mapping[str, Any],
+    review_board: Mapping[str, Any],
+    review_board_path: Path,
+    reports: Mapping[str, Mapping[str, Any]],
+    report_paths: Mapping[str, Path],
+) -> dict[str, Any]:
+    review_decision = _mapping(review_board.get("review_decision"))
+    input_reports = [
+        _tail_risk_input_report_row(
+            task_id="TRADING-821",
+            report_key="audit_universe_reconciliation",
+            payload=reports.get("audit_universe_reconciliation", {}),
+            path=report_paths["audit_universe_reconciliation"],
+        ),
+        _tail_risk_input_report_row(
+            task_id="TRADING-822",
+            report_key="anti_leakage",
+            payload=reports.get("anti_leakage", {}),
+            path=report_paths["anti_leakage"],
+        ),
+        _tail_risk_input_report_row(
+            task_id="TRADING-823",
+            report_key="sensitivity",
+            payload=reports.get("sensitivity", {}),
+            path=report_paths["sensitivity"],
+        ),
+        _tail_risk_input_report_row(
+            task_id="TRADING-824",
+            report_key="regime_segmented",
+            payload=reports.get("regime_segmented", {}),
+            path=report_paths["regime_segmented"],
+        ),
+        _tail_risk_input_report_row(
+            task_id="TRADING-825",
+            report_key="forward_maturity",
+            payload=reports.get("forward_maturity", {}),
+            path=report_paths["forward_maturity"],
+        ),
+    ]
+    findings = _tail_risk_severity_ordered_findings(
+        config=config,
+        input_reports=input_reports,
+        reports=reports,
+    )
+    final_trigger = _tail_risk_final_blocked_trigger(
+        review_decision=review_decision,
+        findings=findings,
+    )
+    next_action = _tail_risk_blocker_next_action(final_trigger=final_trigger, findings=findings)
+    blocker_rows = [row for row in findings if row["blocks_controlled_research"]]
+    warning_rows = _tail_risk_warning_rows(input_reports=input_reports, findings=findings)
+    decision = str(
+        review_decision.get(
+            "decision",
+            _mapping(review_board.get("summary")).get("tail_risk_controlled_decision", "MISSING"),
+        )
+    )
+    status = (
+        "TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC_COMPLETE"
+        if review_board
+        else "TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC_DATA_REQUIRED"
+    )
+    return {
+        "status": status,
+        "review_board_decision": decision,
+        "source_review_board_path": str(review_board_path),
+        "input_reports": input_reports,
+        "severity_ordered_findings": findings,
+        "highest_severity_root_cause": findings[0]["root_cause_id"] if findings else None,
+        "final_blocked_trigger": final_trigger,
+        "root_cause_summary": {
+            "input_report_count": len(input_reports),
+            "severity_finding_count": len(findings),
+            "controlled_research_blocker_count": len(blocker_rows),
+            "warning_report_count": sum(1 for row in input_reports if row["warning_count"]),
+            "final_decision": decision,
+            "promotion_recommendation_allowed": False,
+            "paper_shadow_recommendation_allowed": False,
+            "production_change_recommendation_allowed": False,
+        },
+        "report_registry_entry": _tail_risk_blocker_report_registry_entry(),
+        "read_only_assertions": {
+            "strategy_logic_changed": False,
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+            "broker_action": "none",
+            "production_effect": "none",
+            "source_artifacts_mutated": False,
+        },
+        "blockers": blocker_rows,
+        "warnings": warning_rows,
+        "next_recommended_action": next_action,
+    }
+
+
+def _tail_risk_input_report_row(
+    *,
+    task_id: str,
+    report_key: str,
+    payload: Mapping[str, Any],
+    path: Path,
+) -> dict[str, Any]:
+    warnings = _records(payload.get("warnings"))
+    blockers = _records(payload.get("blockers"))
+    status = str(payload.get("status", "MISSING")) if payload else "MISSING"
+    return {
+        "task_id": task_id,
+        "report_key": report_key,
+        "artifact_path": str(path),
+        "present": bool(payload),
+        "report_type": payload.get("report_type") if payload else None,
+        "status": status,
+        "warnings": warnings,
+        "warning_count": len(warnings),
+        "blockers": blockers,
+        "blocker_count": len(blockers),
+        "promotion_block_reason": _tail_risk_promotion_block_reason(
+            task_id=task_id,
+            status=status,
+            payload=payload,
+        ),
+        "root_cause_hint": _tail_risk_root_cause_hint(task_id=task_id, status=status),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_promotion_block_reason(
+    *, task_id: str, status: str, payload: Mapping[str, Any]
+) -> str | None:
+    summary = _mapping(payload.get("summary"))
+    explicit = (
+        payload.get("promotion_block_reason")
+        or summary.get("promotion_block_reason")
+        or _mapping(payload.get("review_decision")).get("promotion_block_reason")
+    )
+    if explicit:
+        return str(explicit)
+    if task_id == "TRADING-821" and status in {"INCOMPLETE", "BLOCKED_BY_MISSING_ARTIFACT"}:
+        return "audit_universe_reconciliation_blocked"
+    if task_id == "TRADING-822" and status == "ANTI_LEAKAGE_BLOCKED":
+        return "anti_leakage_blocked"
+    if task_id == "TRADING-824" and status in {
+        "REGIME_CONCENTRATED",
+        "INSUFFICIENT_SEGMENT_EVIDENCE",
+    }:
+        return "regime_evidence_not_robust"
+    if task_id == "TRADING-825" and status in {"FORWARD_PENDING", "FORWARD_INSUFFICIENT"}:
+        return "forward_evidence_not_mature"
+    if task_id == "TRADING-825" and status == "FORWARD_DEGRADED":
+        return "forward_metric_degradation"
+    return None
+
+
+def _tail_risk_root_cause_hint(*, task_id: str, status: str) -> str | None:
+    if task_id == "TRADING-822" and status == "ANTI_LEAKAGE_BLOCKED":
+        return "trigger_label_same_source_without_independent_validation"
+    if task_id == "TRADING-823" and status == "SENSITIVITY_FRAGILE":
+        return "threshold_lag_horizon_benchmark_or_cost_fragility"
+    if task_id == "TRADING-824" and status == "REGIME_CONCENTRATED":
+        return "regime_evidence_concentrated"
+    if task_id == "TRADING-825" and status in {"FORWARD_PENDING", "FORWARD_INSUFFICIENT"}:
+        return "forward_evidence_not_mature"
+    if task_id == "TRADING-825" and status == "FORWARD_DEGRADED":
+        return "forward_metric_degradation"
+    if task_id == "TRADING-821" and status in {"INCOMPLETE", "BLOCKED_BY_MISSING_ARTIFACT"}:
+        return "universe_reconciliation_incomplete"
+    return None
+
+
+def _tail_risk_severity_ordered_findings(
+    *,
+    config: Mapping[str, Any],
+    input_reports: list[dict[str, Any]],
+    reports: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    report_by_task = {row["task_id"]: row for row in input_reports}
+    policy = _next_stage_section(config, "tail_risk_fallback_blocker_diagnostic")
+    severity_order = [
+        str(item)
+        for item in policy.get(
+            "severity_order",
+            [
+                "anti_leakage_critical",
+                "universe_reconciliation_incomplete",
+                "forward_degraded",
+                "sensitivity_fragile",
+                "regime_concentrated",
+                "forward_insufficient_or_pending",
+            ],
+        )
+    ]
+    severity_rank = {key: index + 1 for index, key in enumerate(severity_order)}
+    candidates = [
+        _tail_risk_finding_row(
+            root_cause_id="anti_leakage_critical",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-822"],
+            active=_tail_risk_anti_leakage_active(reports.get("anti_leakage", {})),
+            root_cause=(
+                "Fallback trigger and tail-risk label share controlled historical label "
+                "source without independent forward outcome validation."
+            ),
+            next_action="decouple_trigger_and_label_or_add_independent_forward_outcome_validation",
+            blocks_controlled_research=True,
+        ),
+        _tail_risk_finding_row(
+            root_cause_id="universe_reconciliation_incomplete",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-821"],
+            active=_tail_risk_universe_incomplete_active(
+                reports.get("audit_universe_reconciliation", {})
+            ),
+            root_cause=(
+                "Universe reconciliation has missing source artifacts, denominators, or "
+                "date-window fields, so count interpretation cannot be reconciled."
+            ),
+            next_action="repair_reconciliation_denominators_before_next_controlled_review",
+            blocks_controlled_research=True,
+        ),
+        _tail_risk_finding_row(
+            root_cause_id="forward_degraded",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-825"],
+            active=report_by_task["TRADING-825"]["status"] == "FORWARD_DEGRADED",
+            root_cause="Matured forward outcomes degraded beyond configured tolerances.",
+            next_action="investigate_forward_metric_degradation_before_next_controlled_review",
+            blocks_controlled_research=True,
+        ),
+        _tail_risk_finding_row(
+            root_cause_id="sensitivity_fragile",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-823"],
+            active=report_by_task["TRADING-823"]["status"] == "SENSITIVITY_FRAGILE",
+            root_cause=(
+                "Fallback behavior is fragile under threshold, lag, horizon, benchmark, "
+                "or transaction-cost perturbations."
+            ),
+            next_action="resolve_sensitivity_fragility_before_next_controlled_review",
+            blocks_controlled_research=False,
+        ),
+        _tail_risk_finding_row(
+            root_cause_id="regime_concentrated",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-824"],
+            active=report_by_task["TRADING-824"]["status"]
+            in {"REGIME_CONCENTRATED", "INSUFFICIENT_SEGMENT_EVIDENCE"},
+            root_cause=(
+                "Evidence is concentrated or insufficient across required market-regime "
+                "segments."
+            ),
+            next_action="collect_more_segment_evidence_before_next_controlled_review",
+            blocks_controlled_research=False,
+        ),
+        _tail_risk_finding_row(
+            root_cause_id="forward_insufficient_or_pending",
+            severity_rank=severity_rank,
+            input_report=report_by_task["TRADING-825"],
+            active=report_by_task["TRADING-825"]["status"]
+            in {"FORWARD_PENDING", "FORWARD_INSUFFICIENT"},
+            root_cause=(
+                "Forward records have not matured or are insufficient; pending outcomes "
+                "cannot be counted as realized evidence."
+            ),
+            next_action="wait_for_forward_outcome_maturity_and_rerun_scoreboard",
+            blocks_controlled_research=False,
+        ),
+    ]
+    active_rows = [row for row in candidates if row]
+    return sorted(active_rows, key=lambda row: (row["severity_rank"], row["task_id"]))
+
+
+def _tail_risk_anti_leakage_active(payload: Mapping[str, Any]) -> bool:
+    summary = _mapping(payload.get("summary"))
+    return (
+        payload.get("status") == "ANTI_LEAKAGE_BLOCKED"
+        or _first_int(summary.get("critical_issue_count")) > 0
+        or any(row.get("blocker") for row in _records(payload.get("blockers")))
+    )
+
+
+def _tail_risk_universe_incomplete_active(payload: Mapping[str, Any]) -> bool:
+    summary = _mapping(payload.get("summary"))
+    return (
+        payload.get("status") in {"INCOMPLETE", "BLOCKED_BY_MISSING_ARTIFACT"}
+        or summary.get("controlled_review_status") == "CONTROLLED_RESEARCH_BLOCKED"
+    )
+
+
+def _tail_risk_finding_row(
+    *,
+    root_cause_id: str,
+    severity_rank: Mapping[str, int],
+    input_report: Mapping[str, Any],
+    active: bool,
+    root_cause: str,
+    next_action: str,
+    blocks_controlled_research: bool,
+) -> dict[str, Any] | None:
+    if not active:
+        return None
+    return {
+        "severity_rank": severity_rank.get(root_cause_id, 999),
+        "severity_label": root_cause_id,
+        "task_id": input_report.get("task_id"),
+        "report_key": input_report.get("report_key"),
+        "artifact_path": input_report.get("artifact_path"),
+        "status": input_report.get("status"),
+        "root_cause_id": root_cause_id,
+        "root_cause": root_cause,
+        "warning_count": input_report.get("warning_count", 0),
+        "blocker_count": input_report.get("blocker_count", 0),
+        "promotion_block_reason": input_report.get("promotion_block_reason"),
+        "blocks_controlled_research": blocks_controlled_research,
+        "blocks_promotion": True,
+        "next_recommended_action": next_action,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_final_blocked_trigger(
+    *,
+    review_decision: Mapping[str, Any],
+    findings: list[dict[str, Any]],
+) -> dict[str, Any]:
+    decision = str(review_decision.get("decision", "MISSING"))
+    reason = str(review_decision.get("reason", ""))
+    reason_map = {
+        "anti_leakage_audit_blocked": ("TRADING-822", "anti_leakage_critical"),
+        "audit_universe_reconciliation_incomplete_or_missing": (
+            "TRADING-821",
+            "universe_reconciliation_incomplete",
+        ),
+        "forward_maturity_degraded": ("TRADING-825", "forward_degraded"),
+    }
+    trigger_tasks: list[str] = []
+    trigger_root_causes: list[str] = []
+    if decision == "CONTROLLED_RESEARCH_BLOCKED" and reason in reason_map:
+        task_id, root_cause_id = reason_map[reason]
+        trigger_tasks = [task_id]
+        trigger_root_causes = [root_cause_id]
+    elif decision == "CONTROLLED_RESEARCH_BLOCKED":
+        blocking_findings = [row for row in findings if row["blocks_controlled_research"]]
+        trigger_tasks = [str(row["task_id"]) for row in blocking_findings]
+        trigger_root_causes = [str(row["root_cause_id"]) for row in blocking_findings]
+    return {
+        "decision": decision,
+        "review_board_reason": reason or None,
+        "trigger_tasks": trigger_tasks,
+        "trigger_root_causes": trigger_root_causes,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_blocker_next_action(
+    *,
+    final_trigger: Mapping[str, Any],
+    findings: list[dict[str, Any]],
+) -> str:
+    trigger_causes = set(final_trigger.get("trigger_root_causes") or [])
+    for finding in findings:
+        if finding["root_cause_id"] in trigger_causes:
+            return str(finding["next_recommended_action"])
+    return (
+        str(findings[0]["next_recommended_action"])
+        if findings
+        else "continue_read_only_monitoring_with_promotion_blocked"
+    )
+
+
+def _tail_risk_warning_rows(
+    *,
+    input_reports: list[dict[str, Any]],
+    findings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = [
+        {
+            "task_id": report["task_id"],
+            "report_key": report["report_key"],
+            "status": report["status"],
+            "warning_count": report["warning_count"],
+            "warnings": report["warnings"],
+            "promotion_gate_allowed": False,
+        }
+        for report in input_reports
+        if report["warning_count"]
+    ]
+    rows.extend(
+        {
+            "task_id": finding["task_id"],
+            "report_key": finding["report_key"],
+            "status": finding["status"],
+            "root_cause_id": finding["root_cause_id"],
+            "warning": "root_cause_blocks_promotion_but_not_controlled_research",
+            "promotion_gate_allowed": False,
+        }
+        for finding in findings
+        if not finding["blocks_controlled_research"]
+    )
+    return rows
+
+
+def _tail_risk_blocker_report_registry_entry() -> dict[str, Any]:
+    return {
+        "report_id": "tail_risk_fallback_blocker_diagnostic",
+        "title": "Tail-Risk Fallback Blocker Diagnostic",
+        "command": "aits research strategies tail-risk-fallback-blocker-diagnostic",
+        "artifact_globs": [
+            "outputs/research_strategies/value_surface_review/"
+            "tail_risk_fallback_blocker_diagnostic.json",
+            "outputs/research_strategies/value_surface_review/"
+            "tail_risk_fallback_blocker_diagnostic.md",
+        ],
+        "artifact_selection_policy": "latest_available",
+        "required_for_daily_reading": False,
+        "production_effect": "none",
     }
 
 

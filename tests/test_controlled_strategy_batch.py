@@ -863,6 +863,15 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "tail-risk-fallback-blocker-diagnostic",
+            "--review-board",
+            str(tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -945,6 +954,7 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         tmp_path / "cli_warning" / "tail_risk_fallback_forward_maturity_scoreboard.json"
     ).exists()
     assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_fallback_blocker_diagnostic.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1041,6 +1051,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "tail_risk_fallback_regime_segmented_robustness",
         "tail_risk_fallback_forward_maturity_scoreboard",
         "tail_risk_policy_controlled_review_board",
+        "tail_risk_fallback_blocker_diagnostic",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1085,6 +1096,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "tail_risk_fallback_regime_segmented_robustness.json/md" in catalog
     assert "tail_risk_fallback_forward_maturity_scoreboard.json/md" in catalog
     assert "tail_risk_policy_controlled_review_board.json/md" in catalog
+    assert "tail_risk_fallback_blocker_diagnostic.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1109,6 +1121,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-810～815" in system_flow
     assert "TRADING-816～820" in system_flow
     assert "TRADING-821～825" in system_flow
+    assert "TRADING-826" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1159,6 +1172,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies tail-risk-fallback-regime-segmented-robustness" in system_flow
     assert "aits research strategies tail-risk-fallback-forward-maturity-scoreboard" in system_flow
     assert "aits research strategies tail-risk-policy-controlled-review-board" in system_flow
+    assert "aits research strategies tail-risk-fallback-blocker-diagnostic" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow

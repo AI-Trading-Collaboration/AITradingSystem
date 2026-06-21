@@ -12497,3 +12497,20 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: tail_risk_fallback_blocker_diagnostic
+    title: Tail-Risk Fallback Blocker Diagnostic
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-fallback-blocker-diagnostic
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_blocker_diagnostic.json
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_blocker_diagnostic.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-826 should be regenerated after the latest tail-risk controlled review board or any TRADING-821 through TRADING-825 input artifact changes.
+    owner_action: review_blocker_warning_root_cause_order_without_promotion_paper_shadow_or_production_change
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
