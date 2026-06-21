@@ -1,0 +1,29 @@
+schema_version: "1.0"
+qualification_id: asset_master_qualification_v1
+status: baseline_validation_only
+owner: data_foundation
+production_effect: none
+rationale: >
+  Build a minimum auditable asset master and tradability calendar for the
+  AI-after-ChatGPT research universe before strategy research is interpreted.
+candidate_sources:
+  - provider: FMP
+    endpoints:
+      - delisted_companies
+      - price_coverage
+  - provider: EODHD
+    endpoints:
+      - exchange_symbol_list_symbol_change
+  - provider: internal
+    endpoints:
+      - manual_cash_asset_definition
+minimum_universe:
+  - SPY
+  - QQQ
+  - SMH
+  - MSFT
+  - GOOGL
+  - NVDA
+  - AMD
+  - TSM
+  - cash

@@ -1,0 +1,36 @@
+schema_version: "1.0"
+pilot_id: controlled_strategy_research_pilot_v1
+status: baseline_validation_only
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch on 2022-11-30
+  default_start: "2022-12-01"
+production_effect: none
+rationale: >
+  Permit only diagnostic and controlled strategy research after data foundation
+  acceptance v2; no candidate can become promotion, paper-shadow, production,
+  official-weight, or broker/order evidence in this pilot.
+benchmark_zoo:
+  - cash
+  - buy_and_hold
+  - static_allocation
+  - simple_trend_following
+  - moving_average_risk_off
+  - volatility_targeting
+  - drawdown_guard
+  - no_masking
+  - capped_masking
+  - random_signal
+  - date_shuffle
+  - future_leakage_trap
+teacher_types:
+  - hindsight_oracle
+  - constrained_oracle
+  - simple_benchmark
+  - parameter_search_champion
+candidate_prototypes:
+  - horizon_conditioned_value_surface
+  - regret_driven_state_machine
+  - simple_strategy_ensemble_selector
+  - gbdt_action_utility_baseline

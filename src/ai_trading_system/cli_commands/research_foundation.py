@@ -7,6 +7,11 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_LABEL_BOUNDARY_CONFIG_PATH,
+    DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    run_label_boundary_qualification,
+)
 from ai_trading_system.data_foundation import (
     DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT,
     DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT,
@@ -121,6 +126,27 @@ def labels_audit_command(
         lambda: audit_research_labels(as_of_date=as_of_date, output_root=output_root)
     )
     _print_status("Research label audit", str(payload["status"]))
+    _print_summary(payload)
+
+
+@labels_app.command("boundary-qualification")
+def labels_boundary_qualification_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="TRADING-746 label boundary qualification config。"),
+    ] = DEFAULT_LABEL_BOUNDARY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-746 label boundary 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_label_boundary_qualification(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_status("Research label boundary qualification", str(payload["status"]))
     _print_summary(payload)
 
 

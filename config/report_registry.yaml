@@ -10964,3 +10964,351 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: data_source_usage_policy_audit
+    title: Data Source Usage Policy Audit
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification usage-guardrails
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/data_source_usage_policy_audit.json
+      - outputs/data_quality/current_subscription_source_qualification/data_source_usage_policy_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Usage guardrails should be regenerated when source qualification policy or coverage artifacts change.
+    owner_action: review_before_strategy_research_uses_new_source_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: fmp_price_corporate_action_qualification_report
+    title: FMP Price Corporate Action Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification fmp-price-corporate-action
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/fmp_price_corporate_action_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/fmp_price_corporate_action_qualification_report.md
+      - outputs/data_quality/current_subscription_source_qualification/fmp_source_manifest_sample.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: FMP qualification should be regenerated after entitlement, endpoint, or available-time policy changes.
+    owner_action: review_before_treating_fmp_as_more_than_candidate_source
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: marketstack_reconciliation_qualification_report
+    title: Marketstack Reconciliation Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification marketstack-reconciliation
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/marketstack_reconciliation_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/marketstack_reconciliation_qualification_report.md
+      - outputs/data_quality/current_subscription_source_qualification/fmp_marketstack_price_diff_report.json
+      - outputs/data_quality/current_subscription_source_qualification/split_dividend_crosscheck_report.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Second-source reconciliation should be refreshed when Marketstack/FMP access or universe changes.
+    owner_action: review_discrepancies_before_using_second_source_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: asset_master_qualification_report
+    title: Asset Master Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification asset-master
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/asset_master_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/asset_master_qualification_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Asset master qualification should be refreshed when representative universe or symbol-change sources change.
+    owner_action: review_before_interpreting_tradability_or_survivorship_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_requirement_reclassification
+    title: Forward Evidence Requirement Reclassification
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits forward-evidence classify-requirement
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/forward_evidence_requirement_reclassification.json
+      - outputs/data_quality/current_subscription_source_qualification/forward_evidence_requirement_reclassification.md
+      - outputs/data_quality/current_subscription_source_qualification/forward_evidence_capture_contract.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Forward evidence source classification should be refreshed when source requirements change.
+    owner_action: review_if_external_broker_or_live_source_requirement_is_detected
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: sec_fundamental_pit_qualification_report
+    title: SEC Fundamental PIT Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification sec-fundamental-pit
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/sec_fundamental_pit_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/sec_fundamental_pit_qualification_report.md
+      - outputs/data_quality/current_subscription_source_qualification/fundamental_source_usage_matrix.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Fundamental PIT qualification should be regenerated after SEC/FMP/EODHD source policy changes.
+    owner_action: keep_current_view_fundamentals_diagnostic_until_asof_contract_is_proven
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: macro_risk_source_qualification_report
+    title: Macro Risk Source Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification macro-risk
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/macro_risk_source_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/macro_risk_source_qualification_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: FRED/Cboe qualification should be refreshed when macro/risk source policy changes.
+    owner_action: review_available_time_assumptions_before_strategy_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: label_boundary_qualification_report
+    title: Label Boundary Qualification Report
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research labels boundary-qualification
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/label_boundary_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/label_boundary_qualification_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Label boundary qualification should be refreshed when research labels or source defaults change.
+    owner_action: block_post_hoc_labels_from_strategy_input
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: cost_liquidity_qualification_report
+    title: Cost Liquidity Qualification Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits trading-costs qualify-model
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification/cost_liquidity_qualification_report.json
+      - outputs/data_quality/current_subscription_source_qualification/cost_liquidity_qualification_report.md
+      - outputs/data_quality/current_subscription_source_qualification/cash_yield_policy.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Cost/liquidity qualification should be refreshed when cost, liquidity, or cash-yield policies change.
+    owner_action: review_before_interpreting_net_return_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: data_foundation_acceptance_report_v2
+    title: Data Foundation Acceptance Report V2
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data foundation-acceptance run --include-qualified-sources
+    artifact_globs:
+      - outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report_v2.json
+      - outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report_v2.md
+      - outputs/data_quality/data_foundation_acceptance/minimum_research_readiness_report.json
+      - outputs/data_quality/data_foundation_acceptance/minimum_research_readiness_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Acceptance v2 should be regenerated after source qualification artifacts change.
+    owner_action: use_readiness_level_to_bound_controlled_strategy_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: strategy_research_readiness_board
+    title: Strategy Research Readiness Board
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot readiness-board
+    artifact_globs:
+      - outputs/controlled_strategy_research/strategy_research_readiness_board.json
+      - outputs/controlled_strategy_research/strategy_research_readiness_board.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Readiness board should be refreshed after acceptance v2 changes.
+    owner_action: start_only_research_decisions_marked_ready
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: benchmark_controls_real_data_batch
+    title: Benchmark Controls Real Data Batch
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot benchmark-controls
+    artifact_globs:
+      - outputs/controlled_strategy_research/benchmark_controls_real_data_batch.json
+      - outputs/controlled_strategy_research/benchmark_controls_real_data_batch.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Benchmark/control batch should be regenerated when controlled research inputs change.
+    owner_action: keep_negative_controls_non_promotional
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: strategy_pair_reverse_diagnostics_pilot
+    title: Strategy Pair Reverse Diagnostics Pilot
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot reverse-diagnostics
+    artifact_globs:
+      - outputs/controlled_strategy_research/strategy_pair_reverse_diagnostics_pilot.json
+      - outputs/controlled_strategy_research/strategy_pair_reverse_diagnostics_pilot.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Reverse diagnostics should be regenerated when teacher/baseline scope changes.
+    owner_action: block_oracle_or_teacher_outputs_from_promotion_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_casebook_failure_taxonomy_pilot
+    title: Regret Casebook Failure Taxonomy Pilot
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot regret-casebook
+    artifact_globs:
+      - outputs/controlled_strategy_research/regret_casebook_failure_taxonomy_pilot.json
+      - outputs/controlled_strategy_research/regret_casebook_failure_taxonomy_pilot.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Regret taxonomy should be regenerated when reverse diagnostic taxonomy changes.
+    owner_action: review_unclassified_regret_cases_before_next_batch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: horizon_conditioned_value_surface_prototype
+    title: Horizon Conditioned Value Surface Prototype
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot value-surface
+    artifact_globs:
+      - outputs/controlled_strategy_research/horizon_conditioned_value_surface_prototype.json
+      - outputs/controlled_strategy_research/horizon_conditioned_value_surface_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Value surface prototype should be regenerated when action/horizon contract changes.
+    owner_action: keep_output_diagnostic_until_horizon_leakage_checks_pass
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_driven_state_machine_prototype
+    title: Regret Driven State Machine Prototype
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot state-machine
+    artifact_globs:
+      - outputs/controlled_strategy_research/regret_driven_state_machine_prototype.json
+      - outputs/controlled_strategy_research/regret_driven_state_machine_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: State machine prototype should be regenerated when regret taxonomy or transition policy changes.
+    owner_action: review_transition_explanations_before_any_candidate_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_strategy_ensemble_selector_prototype
+    title: Simple Strategy Ensemble Selector Prototype
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot ensemble-selector
+    artifact_globs:
+      - outputs/controlled_strategy_research/simple_strategy_ensemble_selector_prototype.json
+      - outputs/controlled_strategy_research/simple_strategy_ensemble_selector_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Ensemble selector prototype should be regenerated when simple strategy zoo changes.
+    owner_action: review_overfit_warning_before_interpreting_selector_results
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_action_utility_baseline
+    title: GBDT Action Utility Baseline
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot gbdt-action-utility
+    artifact_globs:
+      - outputs/controlled_strategy_research/gbdt_action_utility_baseline.json
+      - outputs/controlled_strategy_research/gbdt_action_utility_baseline.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: GBDT action utility baseline should be regenerated when candidate action/horizon features change.
+    owner_action: require_controls_and_simple_baseline_before_model_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: pilot_batch_review
+    title: Pilot Batch Review
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research strategy-pilot batch-review
+    artifact_globs:
+      - outputs/controlled_strategy_research/pilot_batch_review.json
+      - outputs/controlled_strategy_research/pilot_batch_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Pilot batch review should be regenerated after TRADING-750 to TRADING-756 artifacts change.
+    owner_action: review_continue_pause_kill_pivot_decisions_before_next_batch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: data_vendor_decision_gate
+    title: Data Vendor Decision Gate
+    group: data_quality
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_foundation
+    command: aits data source-qualification vendor-decision-gate
+    artifact_globs:
+      - outputs/controlled_strategy_research/data_vendor_decision_gate.json
+      - outputs/controlled_strategy_research/data_vendor_decision_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Vendor decision should be refreshed only after acceptance v2 shows unresolved source blockers.
+    owner_action: do_not_purchase_new_source_without_blocker_mapping
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

@@ -1,0 +1,27 @@
+schema_version: "1.0"
+qualification_id: macro_risk_source_qualification_v1
+status: baseline_validation_only
+owner: data_foundation
+production_effect: none
+rationale: >
+  FRED and Cboe are official-source candidates for rates, cash yield proxies,
+  macro labels, and VIX risk diagnostics.
+sources:
+  - provider: FRED
+    role: macro_rates_cash_yield_candidate
+    endpoints:
+      - series_observations
+      - releases
+    available_time_rule: release_calendar_or_conservative_next_observation_lag
+  - provider: Cboe
+    role: vix_official_risk_candidate
+    endpoints:
+      - vix_daily_history
+    available_time_rule: next_trading_day_before_configured_decision_time
+cash_yield_proxy:
+  proxy_id: fred_risk_free_proxy_v1
+  source_provider: FRED
+  candidate_series:
+    - SOFR
+    - DGS3MO
+  status: diagnostic_until_release_time_validated

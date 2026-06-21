@@ -1,0 +1,37 @@
+schema_version: "1.0"
+qualification_id: marketstack_reconciliation_v1
+status: baseline_validation_only
+owner: data_foundation
+provider: Marketstack
+source_role: second_price_reconciliation_candidate
+production_effect: none
+rationale: >
+  Marketstack should be used as a second-source price/corporate-action
+  reconciliation source, not as the primary source for promotion evidence.
+representative_universe:
+  - SPY
+  - QQQ
+  - SMH
+  - MSFT
+  - GOOGL
+  - NVDA
+  - AMD
+  - TSM
+endpoints:
+  - eod_historical_price
+  - splits
+  - dividends
+comparison_policy:
+  price_fields:
+    - open
+    - high
+    - low
+    - close
+    - volume
+  corporate_action_fields:
+    - split_ratio
+    - dividend_amount
+  primary_source_allowed: false
+  allowed_uses:
+    - second_source_reconciliation
+    - diagnostic

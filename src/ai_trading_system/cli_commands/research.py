@@ -10,6 +10,18 @@ from rich.console import Console
 from ai_trading_system.cli_commands.research_foundation import (
     register_research_foundation_commands,
 )
+from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+    build_strategy_research_readiness_board,
+    run_benchmark_controls_real_data_batch,
+    run_gbdt_action_utility_baseline,
+    run_horizon_conditioned_value_surface_prototype,
+    run_pilot_batch_review,
+    run_regret_casebook_failure_taxonomy_pilot,
+    run_regret_driven_state_machine_prototype,
+    run_simple_strategy_ensemble_selector_prototype,
+    run_strategy_pair_reverse_diagnostics_pilot,
+)
 from ai_trading_system.feature_availability import DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH
 from ai_trading_system.indicator_research import (
     DEFAULT_INDICATOR_OUTPUT_ROOT,
@@ -159,6 +171,9 @@ portfolio_decision_app = typer.Typer(
 )
 strategy_app = typer.Typer(help="统一 strategy adapter evaluation harness。", no_args_is_help=True)
 advanced_policy_app = typer.Typer(help="Advanced policy sandbox。", no_args_is_help=True)
+strategy_pilot_app = typer.Typer(
+    help="Controlled strategy research pilot board and diagnostics。", no_args_is_help=True
+)
 research_ops_app = typer.Typer(help="Research workstream ops and dashboard。", no_args_is_help=True)
 paper_shadow_app = typer.Typer(
     help="Research paper-shadow cohort readiness。", no_args_is_help=True
@@ -170,9 +185,125 @@ research_app.add_typer(acceleration_app, name="acceleration")
 research_app.add_typer(portfolio_decision_app, name="portfolio-decision")
 research_app.add_typer(strategy_app, name="strategy")
 research_app.add_typer(advanced_policy_app, name="advanced-policy")
+research_app.add_typer(strategy_pilot_app, name="strategy-pilot")
 research_app.add_typer(research_ops_app, name="ops")
 research_app.add_typer(paper_shadow_app, name="paper-shadow")
 register_research_foundation_commands(research_app)
+
+
+@strategy_pilot_app.command("readiness-board")
+def strategy_pilot_readiness_board_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-749 strategy readiness board 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: build_strategy_research_readiness_board(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Strategy research readiness board", payload)
+
+
+@strategy_pilot_app.command("benchmark-controls")
+def strategy_pilot_benchmark_controls_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-750 benchmark/control batch 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_benchmark_controls_real_data_batch(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Benchmark controls batch", payload)
+
+
+@strategy_pilot_app.command("reverse-diagnostics")
+def strategy_pilot_reverse_diagnostics_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-751 reverse diagnostics 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_strategy_pair_reverse_diagnostics_pilot(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Strategy pair reverse diagnostics pilot", payload)
+
+
+@strategy_pilot_app.command("regret-casebook")
+def strategy_pilot_regret_casebook_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-752 regret casebook 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regret_casebook_failure_taxonomy_pilot(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Regret casebook pilot", payload)
+
+
+@strategy_pilot_app.command("value-surface")
+def strategy_pilot_value_surface_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-753 value surface 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_horizon_conditioned_value_surface_prototype(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Horizon-conditioned value surface", payload)
+
+
+@strategy_pilot_app.command("state-machine")
+def strategy_pilot_state_machine_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-754 state machine 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regret_driven_state_machine_prototype(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Regret-driven state machine", payload)
+
+
+@strategy_pilot_app.command("ensemble-selector")
+def strategy_pilot_ensemble_selector_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-755 ensemble selector 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_simple_strategy_ensemble_selector_prototype(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Simple strategy ensemble selector", payload)
+
+
+@strategy_pilot_app.command("gbdt-action-utility")
+def strategy_pilot_gbdt_action_utility_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-756 GBDT action utility 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_gbdt_action_utility_baseline(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("GBDT action utility baseline", payload)
+
+
+@strategy_pilot_app.command("batch-review")
+def strategy_pilot_batch_review_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-757 pilot batch review 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(lambda: run_pilot_batch_review(output_root=output_root))
+    _print_strategy_pilot_payload("Pilot batch review", payload)
 
 
 @governance_app.command("protocol-validate")
@@ -3598,6 +3729,18 @@ def _print_research_artifact(
     console.print(f"JSON：{paths['json_path']}")
     console.print(f"Markdown：{paths['markdown_path']}")
     console.print("research_only=true；production_effect=none")
+    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+        raise typer.Exit(code=1)
+
+
+def _print_strategy_pilot_payload(label: str, payload: dict[str, object]) -> None:
+    _print_status(label, str(payload["status"]))
+    _print_summary(payload)
+    paths = payload.get("artifact_paths")
+    if isinstance(paths, dict):
+        console.print(f"JSON：{paths.get('json_path')}")
+        console.print(f"Markdown：{paths.get('markdown_path')}")
+    console.print("research_only=true；promotion_gate_allowed=false；production_effect=none")
     if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
         raise typer.Exit(code=1)
 

@@ -6,6 +6,13 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_FORWARD_CAPTURE_CONTRACT_PATH,
+    DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    classify_forward_evidence_requirement,
+    validate_forward_capture_contract,
+)
 from ai_trading_system.data_foundation import (
     DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT,
     audit_forward_evidence,
@@ -72,6 +79,42 @@ def forward_evidence_report_command(
     ] = DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT,
 ) -> None:
     payload = report_forward_evidence(output_root=output_root)
+    _print_payload(payload)
+
+
+@forward_evidence_app.command("classify-requirement")
+def forward_evidence_classify_requirement_command(
+    source_requirement_matrix: Annotated[
+        Path,
+        typer.Option("--source-requirement-matrix", help="TRADING-737 requirement matrix JSON。"),
+    ] = DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-743 reclassification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = classify_forward_evidence_requirement(
+        source_requirement_matrix_path=source_requirement_matrix,
+        output_root=output_root,
+    )
+    _print_payload(payload)
+
+
+@forward_evidence_app.command("validate-capture-contract")
+def forward_evidence_validate_capture_contract_command(
+    capture_contract: Annotated[
+        Path,
+        typer.Option("--capture-contract", help="Forward evidence capture contract JSON。"),
+    ] = DEFAULT_FORWARD_CAPTURE_CONTRACT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-743 contract validation 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = validate_forward_capture_contract(
+        capture_contract_path=capture_contract,
+        output_root=output_root,
+    )
     _print_payload(payload)
 
 

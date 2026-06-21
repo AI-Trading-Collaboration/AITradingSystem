@@ -6,6 +6,11 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_COST_LIQUIDITY_QUALIFICATION_CONFIG_PATH,
+    DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    run_cost_liquidity_model_qualification,
+)
 from ai_trading_system.data_foundation import (
     DEFAULT_COST_LIQUIDITY_OUTPUT_ROOT,
     audit_cost_liquidity,
@@ -49,6 +54,24 @@ def trading_costs_audit_command(
     payload = audit_cost_liquidity(
         universe=universe,
         date_range=date_range,
+        output_root=output_root,
+    )
+    _print_payload(payload)
+
+
+@trading_costs_app.command("qualify-model")
+def trading_costs_qualify_model_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="TRADING-747 cost/liquidity qualification config。"),
+    ] = DEFAULT_COST_LIQUIDITY_QUALIFICATION_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-747 cost/liquidity qualification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_cost_liquidity_model_qualification(
+        config_path=config_path,
         output_root=output_root,
     )
     _print_payload(payload)

@@ -1,0 +1,45 @@
+schema_version: "1.0"
+qualification_id: fmp_price_corporate_action_v1
+status: baseline_validation_only
+owner: data_foundation
+provider: FMP
+source_role: primary_price_candidate
+production_effect: none
+rationale: >
+  FMP is the current-subscription primary candidate for price, dividend, split,
+  and delisted diagnostics, but endpoint access is not source qualification.
+review_condition: >
+  Revisit after manifest samples, available-time assumptions, and second-source
+  reconciliation have been reviewed.
+endpoints:
+  - historical_eod_price_full
+  - historical_eod_price_light
+  - historical_eod_price_non_split_adjusted
+  - dividends
+  - splits
+  - delisted_companies
+required_fields:
+  - source_manifest
+  - endpoint_url_template
+  - request_params_hash
+  - response_hash
+  - downloaded_at
+  - provider_timestamp_if_available
+  - available_time_rule
+  - adjustment_policy
+  - raw_vs_adjusted_policy
+  - dividend_policy
+  - split_policy
+  - delisted_policy
+available_time_contract:
+  provider_explicit_available_time: false
+  available_time_rule: conservative_assumption
+  daily_eod_price: next_trading_day_before_configured_decision_time
+  dividend_split_event: provider_observed_date_plus_conservative_lag
+  delisted_list: diagnostic_until_historical_membership_validated
+  not_validated_provider_timestamp: true
+adjustment_policy:
+  raw_vs_adjusted_policy: keep_raw_and_adjusted_separate
+  dividend_policy: require_event_date_and_observed_timestamp_before_strategy_use
+  split_policy: require_event_date_and_observed_timestamp_before_strategy_use
+  delisted_policy: diagnostic_until_survivorship_membership_validated

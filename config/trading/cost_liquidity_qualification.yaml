@@ -1,0 +1,21 @@
+schema_version: "1.0"
+qualification_id: cost_liquidity_cash_yield_qualification_v1
+status: baseline_validation_only
+owner: data_foundation
+production_effect: none
+rationale: >
+  Qualify the first auditable research-only cost, liquidity, and cash-yield
+  model before interpreting net-return strategy research.
+model_components:
+  commission: configurable
+  spread_proxy: ohlcv_derived_or_fixed_conservative_assumption
+  slippage: turnover_times_spread_proxy
+  market_impact: diagnostic_placeholder
+  cash_yield: fred_proxy
+  financing_cost: configurable
+  liquidity_cap: adv_based
+validation_requirements:
+  - gross_and_net_return_supported
+  - cash_yield_policy_present
+  - turnover_cost_monotonicity_test_pass
+  - liquidity_cap_reported

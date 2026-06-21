@@ -1,0 +1,17 @@
+schema_version: "1.0"
+qualification_id: sec_fundamental_pit_v1
+status: baseline_validation_only
+owner: data_foundation
+provider: SEC EDGAR
+source_role: fundamental_pit_proof_primary
+production_effect: none
+rationale: >
+  SEC accepted time should be the primary PIT proof path for fundamentals;
+  FMP/EODHD fundamentals remain diagnostic unless an as-of contract is proven.
+accepted_time_contract:
+  company_submissions_accepted_time_supported: true
+  companyfacts_available_time_supported: false
+  strategy_input_requires_accepted_time: true
+diagnostic_helpers:
+  - FMP income_statement
+  - EODHD fundamentals

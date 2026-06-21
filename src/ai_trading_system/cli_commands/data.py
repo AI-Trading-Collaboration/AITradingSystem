@@ -33,6 +33,25 @@ from ai_trading_system.config import (
     PROJECT_ROOT,
     load_data_sources,
 )
+from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_ASSET_MASTER_QUALIFICATION_CONFIG_PATH,
+    DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+    DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH,
+    DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH,
+    DEFAULT_MACRO_RISK_CONFIG_PATH,
+    DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
+    DEFAULT_SEC_FUNDAMENTAL_PIT_CONFIG_PATH,
+    DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    run_asset_master_qualification,
+    run_data_foundation_acceptance_v2,
+    run_data_source_usage_guardrails,
+    run_data_vendor_decision_gate,
+    run_fmp_price_corporate_action_qualification,
+    run_macro_risk_source_qualification,
+    run_marketstack_reconciliation_qualification,
+    run_sec_fundamental_pit_qualification,
+)
 from ai_trading_system.data_foundation import (
     DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
@@ -137,8 +156,18 @@ def foundation_acceptance_run_command(
         Path,
         typer.Option("--output-root", help="Data foundation acceptance 输出目录。"),
     ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    include_qualified_sources: Annotated[
+        bool,
+        typer.Option(
+            "--include-qualified-sources",
+            help="生成 TRADING-748 data foundation acceptance v2 和 minimum readiness。",
+        ),
+    ] = False,
 ) -> None:
-    payload = run_data_foundation_acceptance(output_root=output_root)
+    if include_qualified_sources:
+        payload = run_data_foundation_acceptance_v2(output_root=output_root)
+    else:
+        payload = run_data_foundation_acceptance(output_root=output_root)
     _print_foundation_payload(payload)
 
 
@@ -261,6 +290,157 @@ def source_qualification_subscription_audit_command(
         output_root=output_root,
         timeout_seconds=timeout_seconds,
     )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("usage-guardrails")
+def source_qualification_usage_guardrails_command(
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy", help="Data source usage policy YAML。"),
+    ] = DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    source_requirement_matrix: Annotated[
+        Path,
+        typer.Option("--source-requirement-matrix", help="TRADING-737 requirement matrix JSON。"),
+    ] = DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    qualification_matrix_updated: Annotated[
+        Path,
+        typer.Option("--qualification-matrix-updated", help="TRADING-736 updated matrix JSON。"),
+    ] = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-739 usage guardrails 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_source_usage_guardrails(
+        policy_path=policy_path,
+        subscription_coverage_path=subscription_coverage,
+        source_requirement_matrix_path=source_requirement_matrix,
+        qualification_matrix_updated_path=qualification_matrix_updated,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("fmp-price-corporate-action")
+def source_qualification_fmp_price_corporate_action_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="FMP price/corporate-action qualification config。"),
+    ] = DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-740 FMP qualification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_fmp_price_corporate_action_qualification(
+        config_path=config_path,
+        subscription_coverage_path=subscription_coverage,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("marketstack-reconciliation")
+def source_qualification_marketstack_reconciliation_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Marketstack reconciliation qualification config。"),
+    ] = DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-741 reconciliation 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_marketstack_reconciliation_qualification(
+        config_path=config_path,
+        subscription_coverage_path=subscription_coverage,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("asset-master")
+def source_qualification_asset_master_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Asset master qualification config。"),
+    ] = DEFAULT_ASSET_MASTER_QUALIFICATION_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-742 asset master qualification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_asset_master_qualification(config_path=config_path, output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("sec-fundamental-pit")
+def source_qualification_sec_fundamental_pit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="SEC fundamental PIT qualification config。"),
+    ] = DEFAULT_SEC_FUNDAMENTAL_PIT_CONFIG_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-744 SEC qualification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_sec_fundamental_pit_qualification(
+        config_path=config_path,
+        subscription_coverage_path=subscription_coverage,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("macro-risk")
+def source_qualification_macro_risk_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="FRED/Cboe macro-risk qualification config。"),
+    ] = DEFAULT_MACRO_RISK_CONFIG_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-745 macro-risk qualification 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_macro_risk_source_qualification(
+        config_path=config_path,
+        subscription_coverage_path=subscription_coverage,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("vendor-decision-gate")
+def source_qualification_vendor_decision_gate_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-758 vendor decision gate 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_vendor_decision_gate(output_root=output_root)
     _print_foundation_payload(payload)
 
 

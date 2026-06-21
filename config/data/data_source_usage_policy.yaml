@@ -1,0 +1,50 @@
+schema_version: "1.0"
+policy_id: data_source_usage_policy_v1
+status: baseline_validation_only
+owner: data_foundation
+production_effect: none
+rationale: >
+  Keep current-view-only, research-label-only, and blocked-until-qualified
+  sources from entering strategy inputs, promotion evidence, paper-shadow
+  candidates, or production weight decisions before source qualification passes.
+intended_effect: >
+  Make allowed use explicit for every source qualification status while the
+  current-subscription-first qualification plan is executed.
+validation_evidence: >
+  TRADING-739 focused tests verify fail-closed allowed-use flags and
+  no-promotion safety fields.
+review_condition: >
+  Review after TRADING-748 data foundation acceptance v2 and before any source
+  status is upgraded for promotion or paper-shadow evidence.
+
+CURRENT_VIEW_ONLY:
+  strategy_input_allowed: false
+  promotion_gate_allowed: false
+  paper_shadow_candidate_allowed: false
+  allowed_uses:
+    - diagnostic
+    - reporting
+
+RESEARCH_LABEL_ONLY:
+  strategy_input_allowed: false
+  promotion_gate_allowed: false
+  paper_shadow_candidate_allowed: false
+  allowed_uses:
+    - casebook
+    - stratified_reporting
+    - post_hoc_analysis
+
+BLOCKED_UNTIL_QUALIFIED:
+  strategy_input_allowed: false
+  promotion_gate_allowed: false
+  paper_shadow_candidate_allowed: false
+  allowed_uses:
+    - diagnostic
+
+PROMOTION_CANDIDATE_AFTER_QUALIFICATION:
+  strategy_input_allowed: false
+  promotion_gate_allowed: false
+  paper_shadow_candidate_allowed: false
+  allowed_uses:
+    - diagnostic
+    - source_qualification

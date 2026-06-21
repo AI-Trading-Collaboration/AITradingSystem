@@ -1,0 +1,38 @@
+schema_version: "1.0"
+qualification_id: label_boundary_qualification_v1
+status: baseline_validation_only
+owner: research_governance
+production_effect: none
+rationale: >
+  Make label boundaries explicit so post-hoc research labels cannot become
+  strategy inputs or promotion evidence through naming ambiguity.
+label_classes:
+  AS_OF_STRATEGY_INPUT_LABEL:
+    strategy_input_allowed: true
+    requirements:
+      - rolling_asof_window
+      - source_manifest
+      - available_time_contract
+  AS_OF_DIAGNOSTIC_LABEL:
+    strategy_input_allowed: false
+    allowed_uses:
+      - diagnostic
+      - reporting
+  POST_HOC_RESEARCH_LABEL:
+    strategy_input_allowed: false
+    allowed_uses:
+      - post_hoc_analysis
+      - casebook
+  CASEBOOK_ONLY_LABEL:
+    strategy_input_allowed: false
+    allowed_uses:
+      - casebook
+  BLOCKED_UNTIL_QUALIFIED:
+    strategy_input_allowed: false
+    allowed_uses:
+      - diagnostic
+source_defaults:
+  Congress.gov: POST_HOC_RESEARCH_LABEL
+  GovInfo: BLOCKED_UNTIL_QUALIFIED
+  price_derived: AS_OF_DIAGNOSTIC_LABEL
+  manual_event_seed: POST_HOC_RESEARCH_LABEL
