@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_779
+policy_id: controlled_strategy_research_next_stage_775_789
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -12,9 +12,10 @@ production_effect: none
 rationale: >
   Continue only the value surface line after controlled strategy batch 1,
   audit utility-ranking sensitivity, track append-only forward evidence
-  maturity, pivot GBDT by design, and keep regret state-machine expansion gated
-  until more cases exist. This policy does not validate utility boundaries and
-  does not permit promotion, paper-shadow, production weight, or broker changes.
+  maturity, pivot GBDT by design, run residual diagnostics, and keep regret
+  state-machine expansion gated until enough cases exist. This policy does not
+  validate utility boundaries and does not permit promotion, paper-shadow,
+  production weight, or broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -237,3 +238,58 @@ regret_activation_inputs:
   minimum_false_risk_off_or_missed_upside_cases: 10
   minimum_distinct_regret_types: 4
   oracle_teacher_required_for_activation: true
+value_surface_walk_forward_expansion:
+  task_id: TRADING-785
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL
+  max_window_count: 6
+  min_decision_dates_per_window: 6
+  continue_min_window_win_rate: 0.50
+  continue_min_mean_delta_vs_benchmark_bps: 0
+  sample_concentration_review_share: 0.50
+  rationale: >
+    Walk-forward thresholds are controlled-review sorting rules only. They are
+    not validated investment boundaries and cannot allow promotion or
+    paper-shadow.
+utility_pareto_ranking_review:
+  task_id: TRADING-786
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  horizon_cliff_abs_utility_bps: 100
+  rationale: >
+    Ranking flip and horizon cliff checks identify heuristic utility fragility.
+    They cannot upgrade the boundary to VALIDATED_BOUNDARY.
+forward_evidence_daily_continuity_review:
+  task_id: TRADING-787
+  minimum_ledger_events_for_continuity_review: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  required_output_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+  rationale: >
+    Forward evidence continuity is an accumulation tracker. Early continuity
+    warnings are not paper-shadow readiness evidence.
+gbdt_value_surface_residual_diagnostic:
+  task_id: TRADING-788
+  large_residual_abs_return_floor_bps: 200
+  feature_importance_method: categorical_residual_separation
+  strategy_signal_generated: false
+  rationale: >
+    The residual diagnostic can generate hypotheses about where the transparent
+    value surface fails, but it does not directly generate strategy actions.
+regret_casebook_activation_recheck:
+  task_id: TRADING-789
+  minimum_value_surface_losing_cases: 25
+  minimum_benchmark_disagreement_cases: 15
+  minimum_oracle_teacher_better_cases: 1
+  minimum_distinct_regret_types: 4
+  expansion_execution_allowed: false
+  rationale: >
+    This recheck only decides whether a follow-up regret casebook expansion
+    task should be opened. It does not expand the casebook by itself.

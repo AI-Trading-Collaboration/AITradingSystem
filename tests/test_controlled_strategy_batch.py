@@ -12,11 +12,14 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
     run_controlled_strategy_batch_review,
     run_forward_evidence_daily_continuity_maturity_tracker,
+    run_forward_evidence_daily_continuity_review,
     run_forward_evidence_maturity_tracker,
     run_gbdt_action_utility_baseline,
     run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
+    run_gbdt_value_surface_residual_diagnostic_prototype,
     run_regret_activation_inputs_from_value_surface_failures,
+    run_regret_casebook_activation_recheck,
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
@@ -24,6 +27,8 @@ from ai_trading_system.controlled_strategy_batch import (
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
     run_value_surface_controlled_prototype,
+    run_value_surface_controlled_walk_forward_expansion,
+    run_value_surface_utility_pareto_ranking_review,
     run_value_surface_warning_triage_review,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -268,6 +273,114 @@ def test_forward_evidence_daily_continuity_tracker(tmp_path: Path) -> None:
     assert payload["summary"]["append_only_integrity_pass"] is True
     assert payload["summary"]["horizon_maturity_recorded"] is True
     assert payload["summary"]["output_coverage_present"] is True
+
+
+def test_value_surface_controlled_walk_forward_expansion(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    warning = run_value_surface_warning_triage_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        utility_boundary_audit_path=paths["utility"],
+        forward_maturity_path=paths["maturity"],
+        output_root=tmp_path / "warning_triage",
+    )
+    payload = run_value_surface_controlled_walk_forward_expansion(
+        prices_path=paths["prices"],
+        marketstack_prices_path=paths["marketstack"],
+        rates_path=paths["rates"],
+        value_surface_expansion_path=paths["value_expansion"],
+        warning_triage_path=Path(warning["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "walk_forward",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_controlled_walk_forward_expansion"
+    assert payload["summary"]["walk_forward_window_count"] >= 1
+    assert payload["summary"]["decision_date_count"] >= 1
+    assert payload["summary"]["benchmark_comparison_present"] is True
+    assert payload["summary"]["negative_control_promotion_count"] == 0
+    assert payload["summary"]["future_leakage_trap_blocked"] is True
+    assert payload["summary"]["controlled_walk_forward_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "DATA_REQUIRED",
+        "PAUSE",
+        "KILL",
+    }
+
+
+def test_value_surface_utility_pareto_ranking_review(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    payload = run_value_surface_utility_pareto_ranking_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        utility_boundary_audit_path=paths["utility"],
+        output_root=tmp_path / "utility_pareto",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_utility_pareto_ranking_review"
+    assert payload["status"] == "SENSITIVITY_TESTED"
+    assert payload["summary"]["utility_profile_count"] >= 1
+    assert payload["summary"]["pareto_candidate_count"] >= 1
+    assert payload["summary"]["validated_boundary_count"] == 0
+    assert payload["summary"]["not_validated_utility_boundary"] is True
+    assert "horizon_cliff_count" in payload["summary"]
+
+
+def test_forward_evidence_daily_continuity_review(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    payload = run_forward_evidence_daily_continuity_review(
+        prices_path=paths["prices"],
+        marketstack_prices_path=paths["marketstack"],
+        rates_path=paths["rates"],
+        ledger_path=paths["ledger"],
+        value_surface_expansion_path=paths["value_expansion"],
+        output_root=tmp_path / "continuity_review",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "forward_evidence_daily_continuity_review"
+    assert payload["summary"]["ledger_event_count"] == 1
+    assert payload["summary"]["append_only_integrity_pass"] is True
+    assert payload["summary"]["horizon_maturity_recorded"] is True
+    assert payload["summary"]["output_coverage_present"] is True
+
+
+def test_gbdt_value_surface_residual_diagnostic_no_strategy(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    payload = run_gbdt_value_surface_residual_diagnostic_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        output_root=tmp_path / "gbdt_residual",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "gbdt_value_surface_residual_diagnostic_prototype"
+    assert payload["summary"]["residual_case_count"] > 0
+    assert payload["summary"]["feature_importance_present"] is True
+    assert payload["summary"]["strategy_signal_generated"] is False
+    assert payload["diagnostic_boundary"]["direct_action_utility_prediction"] is False
+
+
+def test_regret_casebook_activation_recheck_stays_watchlist(tmp_path: Path) -> None:
+    paths = _run_next_stage_inputs(tmp_path)
+    activation = run_regret_activation_inputs_from_value_surface_failures(
+        value_surface_expansion_path=paths["value_expansion"],
+        regret_casebook_expansion_gate_path=tmp_path / "missing_regret_gate.json",
+        output_root=tmp_path / "regret",
+    )
+    payload = run_regret_casebook_activation_recheck(
+        value_surface_expansion_path=paths["value_expansion"],
+        regret_activation_inputs_path=Path(activation["artifact_paths"]["json_path"]),
+        regret_casebook_expansion_gate_path=tmp_path / "missing_regret_gate.json",
+        output_root=tmp_path / "regret",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regret_casebook_activation_recheck"
+    assert payload["status"] == "WATCHLIST_NOT_READY"
+    assert payload["summary"]["regret_casebook_expansion_allowed"] is False
+    assert payload["activation_recheck_decision"]["expansion_executed"] is False
 
 
 def test_regret_state_machine_schema(tmp_path: Path) -> None:
@@ -776,6 +889,17 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         [
             "research",
             "strategies",
+            "gbdt-value-surface-residual-diagnostic-prototype",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--gbdt-pivot-selection",
+            str(tmp_path / "cli_gbdt" / "gbdt_pivot_direction_selection.json"),
+            "--output-root",
+            str(tmp_path / "cli_gbdt"),
+        ],
+        [
+            "research",
+            "strategies",
             "regret-casebook-expansion-gate",
             "--regret-state-machine",
             str(tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json"),
@@ -792,6 +916,21 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
             "regret-activation-inputs-from-value-surface-failures",
             "--value-surface-expansion",
             str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--regret-casebook-expansion-gate",
+            str(tmp_path / "cli_state" / "regret_casebook_expansion_gate.json"),
+            "--output-root",
+            str(tmp_path / "cli_state"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regret-casebook-activation-recheck",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--regret-activation-inputs",
+            str(
+                tmp_path / "cli_state" / "regret_activation_inputs_from_value_surface_failures.json"
+            ),
             "--regret-casebook-expansion-gate",
             str(tmp_path / "cli_state" / "regret_casebook_expansion_gate.json"),
             "--output-root",
@@ -831,7 +970,37 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         [
             "research",
             "strategies",
+            "value-surface-controlled-walk-forward-expansion",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--warning-triage",
+            str(tmp_path / "cli_warning" / "value_surface_warning_triage_review.json"),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
             "utility-ranking-robustness-pareto-audit",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--utility-boundary-audit",
+            str(tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_utility"),
+        ],
+        [
+            "research",
+            "strategies",
+            "value-surface-utility-pareto-ranking-review",
             "--value-surface-expansion",
             str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
             "--utility-boundary-audit",
@@ -852,6 +1021,24 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
             str(ledger_path),
             "--forward-maturity",
             str(tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json"),
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_maturity"),
+        ],
+        [
+            "forward-evidence",
+            "daily-continuity-review",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--ledger-path",
+            str(ledger_path),
             "--value-surface-expansion",
             str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
             "--as-of",
@@ -884,16 +1071,25 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (tmp_path / "cli_review" / "controlled_strategy_batch_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json").exists()
     assert (tmp_path / "cli_warning" / "value_surface_warning_triage_review.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "value_surface_controlled_walk_forward_expansion.json"
+    ).exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
+    assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json").exists()
     assert (
         tmp_path / "cli_maturity" / "forward_evidence_daily_continuity_maturity_tracker.json"
     ).exists()
+    assert (tmp_path / "cli_maturity" / "forward_evidence_daily_continuity_review.json").exists()
     assert (tmp_path / "cli_gbdt" / "gbdt_pivot_direction_selection.json").exists()
+    assert (
+        tmp_path / "cli_gbdt" / "gbdt_value_surface_residual_diagnostic_prototype.json"
+    ).exists()
     assert (tmp_path / "cli_state" / "regret_casebook_expansion_gate.json").exists()
     assert (
         tmp_path / "cli_state" / "regret_activation_inputs_from_value_surface_failures.json"
     ).exists()
+    assert (tmp_path / "cli_state" / "regret_casebook_activation_recheck.json").exists()
 
 
 def test_controlled_strategy_batch_validation_tiers() -> None:
@@ -910,16 +1106,21 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "value_surface_controlled_expansion",
         "utility_boundary_ranking_policy_audit",
         "utility_ranking_robustness_pareto_audit",
+        "value_surface_utility_pareto_ranking_review",
         "forward_evidence_maturity_tracker",
         "forward_evidence_daily_continuity_maturity_tracker",
+        "forward_evidence_daily_continuity_review",
         "regret_state_machine_controlled_prototype",
         "simple_strategy_selector_pilot",
         "gbdt_action_utility_controlled_baseline",
         "gbdt_pivot_review",
         "gbdt_pivot_direction_selection",
+        "gbdt_value_surface_residual_diagnostic_prototype",
         "regret_casebook_expansion_gate",
         "regret_activation_inputs_from_value_surface_failures",
+        "regret_casebook_activation_recheck",
         "value_surface_warning_triage_review",
+        "value_surface_controlled_walk_forward_expansion",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -930,8 +1131,13 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "value_surface_controlled_prototype.json/md" in catalog
     assert "value_surface_controlled_expansion.json/md" in catalog
     assert "value_surface_warning_triage_review.json/md" in catalog
+    assert "value_surface_controlled_walk_forward_expansion.json/md" in catalog
+    assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
     assert "forward_evidence_daily_continuity_maturity_tracker.json/md" in catalog
+    assert "forward_evidence_daily_continuity_review.json/md" in catalog
+    assert "gbdt_value_surface_residual_diagnostic_prototype.json/md" in catalog
+    assert "regret_casebook_activation_recheck.json/md" in catalog
     assert "controlled_strategy_batch_review.json/md" in catalog
     assert "validated utility boundary" in catalog
 
@@ -939,11 +1145,19 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-770～774" in system_flow
     assert "TRADING-775～779" in system_flow
     assert "TRADING-780～784" in system_flow
+    assert "TRADING-785～789" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
+    assert "aits research strategies value-surface-controlled-walk-forward-expansion" in system_flow
+    assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert "aits forward-evidence maturity-tracker" in system_flow
     assert "aits forward-evidence daily-continuity-maturity-tracker" in system_flow
+    assert "aits forward-evidence daily-continuity-review" in system_flow
+    assert (
+        "aits research strategies gbdt-value-surface-residual-diagnostic-prototype" in system_flow
+    )
+    assert "aits research strategies regret-casebook-activation-recheck" in system_flow
     assert "CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE" in system_flow
 
 

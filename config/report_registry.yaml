@@ -11800,3 +11800,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_controlled_walk_forward_expansion
+    title: Value Surface Controlled Walk Forward Expansion
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-controlled-walk-forward-expansion
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_controlled_walk_forward_expansion.json
+      - outputs/research_strategies/value_surface_review/value_surface_controlled_walk_forward_expansion.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-785 should be regenerated when value surface expansion, warning triage, cached data, or control audit inputs change.
+    owner_action: review_walk_forward_stability_benchmark_comparison_warning_taxonomy_negative_controls_and_allowed_decision_without_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: value_surface_utility_pareto_ranking_review
+    title: Value Surface Utility Pareto Ranking Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-utility-pareto-ranking-review
+    artifact_globs:
+      - outputs/research_strategies/utility_boundary/value_surface_utility_pareto_ranking_review.json
+      - outputs/research_strategies/utility_boundary/value_surface_utility_pareto_ranking_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-786 should be regenerated when utility profiles or value surface rows change; status remains capped at SENSITIVITY_TESTED.
+    owner_action: inspect_ranking_flips_pareto_candidates_dominant_metrics_and_horizon_cliffs_as_diagnostic_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_daily_continuity_review
+    title: Forward Evidence Daily Continuity Review
+    group: research
+    cadence: daily
+    audience: project_owner
+    owner: research_governance
+    command: aits forward-evidence daily-continuity-review
+    artifact_globs:
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_daily_continuity_review.json
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_daily_continuity_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-787 tracks append-only forward dry-run continuity, missing archives, horizon maturity, and output coverage.
+    owner_action: review_daily_forward_evidence_continuity_before_any_paper_shadow_readiness_claim
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_value_surface_residual_diagnostic_prototype
+    title: GBDT Value Surface Residual Diagnostic Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-value-surface-residual-diagnostic-prototype
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_value_surface_residual_diagnostic_prototype.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_value_surface_residual_diagnostic_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-788 should be regenerated when value surface rows or residual diagnostic policy changes; it is an auxiliary diagnostic only.
+    owner_action: review_residual_concentration_feature_importance_and_hypothesis_candidates_without_using_them_as_strategy_actions
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_casebook_activation_recheck
+    title: Regret Casebook Activation Recheck
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regret-casebook-activation-recheck
+    artifact_globs:
+      - outputs/research_strategies/regret_state_machine/regret_casebook_activation_recheck.json
+      - outputs/research_strategies/regret_state_machine/regret_casebook_activation_recheck.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-789 should be regenerated when value-surface failure cases, regret gate, or activation inputs change.
+    owner_action: keep_regret_casebook_watchlist_unless_losing_disagreement_teacher_oracle_and_regret_type_stability_conditions_are_sufficient
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
