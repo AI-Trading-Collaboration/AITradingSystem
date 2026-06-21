@@ -1,0 +1,149 @@
+schema_version: "1.0"
+policy_id: controlled_strategy_research_next_stage_775_779
+status: next_stage_controlled_baseline
+owner: research_governance
+heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
+base_config_path: config/research/controlled_strategy_candidate_research.yaml
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch on 2022-11-30
+  default_start: "2022-12-01"
+production_effect: none
+rationale: >
+  Continue only the value surface line after controlled strategy batch 1,
+  audit utility-ranking sensitivity, track append-only forward evidence
+  maturity, pivot GBDT by design, and keep regret state-machine expansion gated
+  until more cases exist. This policy does not validate utility boundaries and
+  does not permit promotion, paper-shadow, production weight, or broker changes.
+controlled_scope:
+  validation_only: true
+  observe_only: true
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  broker_action: none
+value_surface_expansion:
+  task_id: TRADING-775
+  max_decision_dates: 72
+  benchmark_required: true
+  negative_controls_required: true
+  gross_net_turnover_drawdown_required: true
+  cluster_policy:
+    unclassified_cluster: unclassified
+    static_clusters:
+      broad_market:
+        - SPY
+        - QQQ
+      ai_semiconductors:
+        - SMH
+        - NVDA
+        - AMD
+        - TSM
+      ai_platforms:
+        - MSFT
+        - GOOGL
+  regime_segments:
+    - segment_id: ai_after_chatgpt_full
+      start_date: "2022-12-01"
+      end_date: null
+    - segment_id: recent_controlled_window
+      trailing_decision_dates: 24
+  horizon_smoothness:
+    audit_only: true
+    adjacent_delta_materiality_bps: 100
+    rationale: >
+      Materiality is an owner-review sorting threshold for sensitivity audit
+      only; it is not a pass/fail promotion threshold and cannot validate a
+      utility boundary.
+utility_boundary_audit:
+  task_id: TRADING-776
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  dominance_share_review_floor: 0.65
+  rationale: >
+    Profiles decompose return, risk, cost, and uncertainty effects on ranking.
+    Profile reversals are expected evidence for owner review, not automatic
+    calibration or promotion evidence.
+  utility_profiles:
+    - profile_id: return_only
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.0
+      cost_weight: 0.0
+      uncertainty_weight: 0.0
+    - profile_id: return_minus_cost
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.0
+      cost_weight: 1.0
+      uncertainty_weight: 0.0
+    - profile_id: risk_adjusted
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.0
+    - profile_id: balanced_transparent
+      expected_return_weight: 0.6
+      median_return_weight: 0.2
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.1
+    - profile_id: uncertainty_penalized
+      expected_return_weight: 0.6
+      median_return_weight: 0.2
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.5
+  pareto_components:
+    reward: expected_return
+    risk: downside_risk
+    cost: estimated_cost
+    uncertainty: uncertainty
+forward_evidence_maturity:
+  task_id: TRADING-777
+  append_only_outcome_policy: true
+  horizons:
+    - horizon_id: 1d
+      days: 1
+    - horizon_id: 5d
+      days: 5
+    - horizon_id: 10d
+      days: 10
+    - horizon_id: 20d
+      days: 20
+    - horizon_id: 60d
+      days: 60
+  required_artifact_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+    - candidate_outputs
+gbdt_pivot_review:
+  task_id: TRADING-778
+  no_local_parameter_tuning: true
+  design_only: true
+  pivot_options:
+    - option_id: gbdt_action_ranking_classifier
+      target: action_rank_bucket
+      rationale: Predict action ranking instead of noisy scalar utility.
+    - option_id: gbdt_regret_type_classifier
+      target: regret_type
+      rationale: Predict failure mode diagnostics for value surface cases.
+    - option_id: gbdt_state_transition_predictor
+      target: state_transition
+      rationale: Estimate controlled state transition probability.
+    - option_id: gbdt_value_surface_residual_model
+      target: value_surface_residual
+      rationale: Explain residuals after transparent value surface policy.
+regret_casebook_expansion_gate:
+  task_id: TRADING-779
+  status_cap: WATCHLIST
+  activation_allowed_without_gate_pass: false
+  minimum_case_count: 50
+  minimum_distinct_regret_types: 4
+  required_conditions:
+    - regret_case_count_floor_met
+    - regret_type_distribution_stable
+    - teacher_oracle_diagnostic_difference_present
+    - value_surface_failure_cases_attributed

@@ -14,16 +14,25 @@ from ai_trading_system.cli_commands.research_foundation import (
 from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
+    DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
     DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
     DEFAULT_GBDT_ACTION_UTILITY_PATH,
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
     DEFAULT_REGRET_STATE_MACHINE_PATH,
     DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT,
     DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
+    DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
+    DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
+    DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT,
+    DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
     DEFAULT_VALUE_SURFACE_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_PATH,
+    run_gbdt_pivot_review,
+    run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_utility_boundary_ranking_policy_audit,
+    run_value_surface_controlled_expansion,
     run_value_surface_controlled_prototype,
 )
 from ai_trading_system.controlled_strategy_batch import (
@@ -513,6 +522,145 @@ def strategies_gbdt_action_utility_baseline_command(
         )
     )
     _print_strategy_pilot_payload("GBDT action utility baseline", payload)
+
+
+@strategies_app.command("value-surface-controlled-expansion")
+def strategies_value_surface_controlled_expansion_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-775 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-765 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-775 value surface expansion 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_value_surface_controlled_expansion(
+            config_path=config_path,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            benchmark_expansion_path=benchmark_expansion,
+            control_audit_path=control_audit,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_strategy_pilot_payload("Value surface controlled expansion", payload)
+
+
+@strategies_app.command("utility-boundary-ranking-policy-audit")
+def strategies_utility_boundary_ranking_policy_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-776 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-776 utility boundary audit 输出目录。"),
+    ] = DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_utility_boundary_ranking_policy_audit(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Utility boundary ranking policy audit", payload)
+
+
+@strategies_app.command("gbdt-pivot-review")
+def strategies_gbdt_pivot_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-778 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    gbdt_action_utility: Annotated[
+        Path,
+        typer.Option("--gbdt-action-utility", help="TRADING-773 GBDT baseline JSON。"),
+    ] = DEFAULT_GBDT_ACTION_UTILITY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-778 GBDT pivot review 输出目录。"),
+    ] = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_gbdt_pivot_review(
+            config_path=config_path,
+            gbdt_action_utility_path=gbdt_action_utility,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("GBDT pivot review", payload)
+
+
+@strategies_app.command("regret-casebook-expansion-gate")
+def strategies_regret_casebook_expansion_gate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-779 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    regret_state_machine: Annotated[
+        Path,
+        typer.Option("--regret-state-machine", help="TRADING-771 state machine JSON。"),
+    ] = DEFAULT_REGRET_STATE_MACHINE_PATH,
+    state_transition_casebook: Annotated[
+        Path,
+        typer.Option("--state-transition-casebook", help="TRADING-771 state transition casebook。"),
+    ] = DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-779 regret gate 输出目录。"),
+    ] = DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regret_casebook_expansion_gate(
+            config_path=config_path,
+            regret_state_machine_path=regret_state_machine,
+            state_transition_casebook_path=state_transition_casebook,
+            value_surface_expansion_path=value_surface_expansion,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regret casebook expansion gate", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

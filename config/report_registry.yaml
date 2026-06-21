@@ -11627,3 +11627,91 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_controlled_expansion
+    title: Value Surface Controlled Expansion
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-controlled-expansion
+    artifact_globs:
+      - outputs/research_strategies/value_surface_expansion/value_surface_controlled_expansion.json
+      - outputs/research_strategies/value_surface_expansion/value_surface_controlled_expansion.md
+      - outputs/research_strategies/value_surface_expansion/value_surface_expansion_horizon_smoothness_audit.json
+      - outputs/research_strategies/value_surface_expansion/value_surface_expansion_horizon_leakage_audit.json
+      - outputs/research_strategies/value_surface_expansion/value_surface_expansion_benchmark_comparison.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-775 should be regenerated when next-stage value-surface policy, cached research data, controls, benchmark expansion, or data quality gates change.
+    owner_action: review_value_surface_expansion_smoothness_leakage_controls_and_by_asset_regime_cluster_breakdowns_before_any_walk_forward_candidate_scope
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: utility_boundary_ranking_policy_audit
+    title: Utility Boundary Ranking Policy Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies utility-boundary-ranking-policy-audit
+    artifact_globs:
+      - outputs/research_strategies/utility_boundary/utility_boundary_ranking_policy_audit.json
+      - outputs/research_strategies/utility_boundary/utility_boundary_ranking_policy_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-776 should be regenerated after value surface expansion or utility profile policy changes; status is capped at SENSITIVITY_TESTED.
+    owner_action: inspect_profile_reversals_single_weight_dominance_and_pareto_frontier_without_treating_any_boundary_as_validated
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_maturity_tracker
+    title: Forward Evidence Maturity Tracker
+    group: research
+    cadence: daily
+    audience: project_owner
+    owner: research_governance
+    command: aits forward-evidence maturity-tracker
+    artifact_globs:
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_maturity_tracker.json
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_maturity_tracker.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-777 tracks daily dry-run append-only evidence maturity and should be refreshed as forward archives accumulate.
+    owner_action: review_append_only_horizon_maturity_before_any_paper_shadow_readiness_claim
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_pivot_review
+    title: GBDT Pivot Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-pivot-review
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_pivot_review.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_pivot_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-778 should be regenerated when the GBDT baseline or pivot policy changes; this is design-only and does not run a new model.
+    owner_action: choose_whether_to_reframe_gbdt_as_action_ranking_regret_type_state_transition_or_value_surface_residual_model
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_casebook_expansion_gate
+    title: Regret Casebook Expansion Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regret-casebook-expansion-gate
+    artifact_globs:
+      - outputs/research_strategies/regret_state_machine/regret_casebook_expansion_gate.json
+      - outputs/research_strategies/regret_state_machine/regret_casebook_expansion_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-779 should be regenerated when regret casebook, state machine, value-surface failure attribution, or teacher/oracle diagnostics change.
+    owner_action: keep_regret_state_machine_on_watchlist_until_case_count_distribution_teacher_oracle_and_failure_attribution_gates_pass
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

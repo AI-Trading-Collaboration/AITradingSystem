@@ -28,8 +28,15 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "controlled_strategy_candidate_research.yaml"
 )
+DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "research" / "controlled_strategy_next_stage_research.yaml"
+)
 DEFAULT_RESEARCH_STRATEGY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_strategies"
 DEFAULT_VALUE_SURFACE_OUTPUT_ROOT = DEFAULT_RESEARCH_STRATEGY_OUTPUT_ROOT / "value_surface"
+DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT = (
+    DEFAULT_RESEARCH_STRATEGY_OUTPUT_ROOT / "value_surface_expansion"
+)
+DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT = DEFAULT_RESEARCH_STRATEGY_OUTPUT_ROOT / "utility_boundary"
 DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT = (
     DEFAULT_RESEARCH_STRATEGY_OUTPUT_ROOT / "regret_state_machine"
 )
@@ -39,6 +46,9 @@ DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT = (
 )
 DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "research_ops" / "review_board"
+)
+DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "forward_evidence" / "maturity_tracker"
 )
 DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
@@ -71,11 +81,27 @@ DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH = (
     / "daily_archive"
     / "forward_evidence_dry_run_archive.json"
 )
+DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "forward_evidence"
+    / "daily_archive"
+    / "forward_evidence_dry_run_ledger.jsonl"
+)
 DEFAULT_VALUE_SURFACE_PATH = (
     DEFAULT_VALUE_SURFACE_OUTPUT_ROOT / "value_surface_controlled_prototype.json"
 )
+DEFAULT_VALUE_SURFACE_EXPANSION_PATH = (
+    DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT / "value_surface_controlled_expansion.json"
+)
+DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
+    DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
+)
 DEFAULT_REGRET_STATE_MACHINE_PATH = (
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT / "regret_state_machine_controlled_prototype.json"
+)
+DEFAULT_STATE_TRANSITION_CASEBOOK_PATH = (
+    DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT / "state_transition_casebook.json"
 )
 DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH = (
     DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT / "simple_strategy_selector_pilot.json"
@@ -617,9 +643,410 @@ def run_controlled_strategy_batch_review(
     return payload
 
 
+def run_value_surface_controlled_expansion(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    benchmark_expansion_path: Path = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    universe = _universe(config)
+    horizons = _horizons(config)
+    actions = _actions(config)
+    quality = _run_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        universe=universe,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before value surface controlled expansion")
+
+    price_rows = _read_price_rows(prices_path, universe=universe)
+    dates = _all_dates(price_rows)
+    decision_dates = _next_stage_decision_dates(dates, config)
+    cost_bps = _configured_cost_bps()
+    cluster_by_asset = _cluster_by_asset(config)
+    recent_window_dates = _recent_regime_window_dates(decision_dates, config)
+    surface_rows = [
+        _with_surface_context(
+            _value_surface_row(
+                decision_date=decision_date,
+                asset=asset,
+                action=action,
+                horizon=horizon,
+                price_rows=price_rows,
+                all_dates=dates,
+                cost_bps=cost_bps,
+            ),
+            cluster_by_asset=cluster_by_asset,
+            recent_window_dates=recent_window_dates,
+        )
+        for decision_date in decision_dates
+        for asset in universe
+        for action in actions
+        for horizon in horizons
+    ]
+    control_results = _control_results(_read_json_or_empty(control_audit_path))
+    comparison = _benchmark_comparison(
+        price_rows=price_rows,
+        universe=universe,
+        config=config,
+        cost_bps=cost_bps,
+        benchmark_expansion_path=benchmark_expansion_path,
+    )
+    leakage_audit = _value_surface_horizon_audit(
+        horizons=horizons,
+        surface_rows=surface_rows,
+        decision_dates=decision_dates,
+    )
+    leakage_audit["report_type"] = "value_surface_expansion_horizon_leakage_audit"
+    leakage_audit["source_policy"] = str(config_path)
+    smoothness_audit = _value_surface_horizon_smoothness_audit(
+        surface_rows=surface_rows,
+        horizons=horizons,
+        config=config,
+    )
+    action_metrics = [
+        {
+            **_strategy_metrics(
+                str(action["action_id"]),
+                price_rows=price_rows,
+                dates=dates,
+                universe=universe,
+                cost_bps=cost_bps,
+            ),
+            "action_id": str(action["action_id"]),
+        }
+        for action in actions
+    ]
+    control_failed = any(not row["passed"] for row in control_results)
+    status = "CONTROL_FAILED" if control_failed else "PASS_WITH_WARNINGS"
+    payload = _controlled_payload(
+        report_type="value_surface_controlled_expansion",
+        title="Value surface controlled expansion",
+        status=status,
+        summary={
+            "value_surface_expansion_generated": bool(surface_rows),
+            "decision_date_count": len(decision_dates),
+            "candidate_action_count": len(actions),
+            "horizon_count": len(horizons),
+            "action_horizon_surface_present": True,
+            "benchmark_comparison_present": True,
+            "horizon_smoothness_audit_present": True,
+            "horizon_leakage_check_pass": leakage_audit["summary"]["horizon_leakage_check_pass"],
+            "by_asset_breakdown_present": True,
+            "by_regime_breakdown_present": True,
+            "by_cluster_breakdown_present": True,
+            "gross_net_turnover_drawdown_present": True,
+            "negative_control_promotion_count": _negative_control_promotion_count(control_results),
+            "data_quality_status": quality["status"],
+            "data_foundation_status": _data_foundation_status(quality),
+            "evidence_source_mix": _evidence_source_mix(),
+            "ranking_policy": "heuristic",
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        data_quality_gate=quality,
+        data_foundation_status=_data_foundation_status(quality),
+        evidence_source_mix=_evidence_source_mix(),
+        requested_date_range=_requested_date_range(dates),
+        representative_universe=universe,
+        candidate_actions=actions,
+        horizons=horizons,
+        decision_dates=decision_dates,
+        value_surface=surface_rows,
+        action_horizon_surface=_surface_group_summary(surface_rows, ["action", "horizon"]),
+        by_asset_breakdown=_surface_group_summary(surface_rows, ["asset"]),
+        by_regime_breakdown=_surface_group_summary(surface_rows, ["regime_segment"]),
+        by_cluster_breakdown=_surface_group_summary(surface_rows, ["asset_cluster"]),
+        gross_net_turnover_drawdown=action_metrics,
+        return_profile=_profile(surface_rows, "expected_return"),
+        risk_profile=_profile(surface_rows, "downside_risk"),
+        cost_profile=_profile(surface_rows, "estimated_cost"),
+        uncertainty_profile=_profile(surface_rows, "uncertainty"),
+        benchmark_comparison=comparison["rows"],
+        best_simple_benchmark=comparison["best_simple_benchmark"],
+        control_results=control_results,
+        horizon_smoothness_summary=smoothness_audit["summary"],
+        horizon_leakage_summary=leakage_audit["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="value_surface_controlled_expansion")
+    _write_json(
+        output_root / "value_surface_expansion_horizon_smoothness_audit.json", smoothness_audit
+    )
+    _write_json(output_root / "value_surface_expansion_horizon_leakage_audit.json", leakage_audit)
+    _write_json(output_root / "value_surface_expansion_benchmark_comparison.json", comparison)
+    return payload
+
+
+def run_utility_boundary_ranking_policy_audit(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Path = DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    rows = _records(value_surface.get("value_surface"))
+    profiles = _utility_profiles(config)
+    rankings = [
+        _utility_profile_ranking(surface_rows=rows, profile=profile) for profile in profiles
+    ]
+    reversals = _profile_reversal_report(rankings)
+    dominance = _single_weight_dominance_report(config, profiles)
+    pareto = _pareto_frontier(rows, config)
+    payload = _controlled_payload(
+        report_type="utility_boundary_ranking_policy_audit",
+        title="Utility boundary and ranking policy audit",
+        status="SENSITIVITY_TESTED",
+        summary={
+            "utility_boundary_status": "SENSITIVITY_TESTED",
+            "validated_boundary_count": 0,
+            "boundary_validated": False,
+            "profile_count": len(profiles),
+            "profile_reversal_report_present": True,
+            "ranking_reversal_count": reversals["summary"]["ranking_reversal_count"],
+            "single_weight_dominance_report_present": True,
+            "single_weight_dominance_profile_count": dominance["summary"][
+                "single_weight_dominance_profile_count"
+            ],
+            "pareto_frontier_present": True,
+            "pareto_frontier_count": len(pareto),
+            "ranking_policy": "heuristic",
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        data_foundation_status=value_surface.get("data_foundation_status", {}),
+        utility_profiles=profiles,
+        utility_profile_rankings=rankings,
+        profile_reversal_report=reversals,
+        single_weight_dominance_report=dominance,
+        pareto_frontier=pareto,
+        status_cap=str(
+            _next_stage_section(config, "utility_boundary_audit").get(
+                "status_cap", "SENSITIVITY_TESTED"
+            )
+        ),
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload, output_root=output_root, artifact_id="utility_boundary_ranking_policy_audit"
+    )
+    return payload
+
+
+def run_forward_evidence_maturity_tracker(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    ledger_path: Path = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    benchmark_expansion_path: Path = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Path = DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    universe = _universe(config)
+    quality = _run_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        universe=universe,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before forward evidence maturity tracker")
+
+    price_rows = _read_price_rows(prices_path, universe=universe)
+    dates = _all_dates(price_rows)
+    ledger_rows = _read_jsonl_rows(ledger_path)
+    maturity_rows = _forward_maturity_rows(
+        ledger_rows=ledger_rows,
+        dates=dates,
+        config=config,
+    )
+    horizon_summary = _forward_maturity_summary(maturity_rows)
+    append_only = (
+        all(bool(row.get("outcome_append_only")) for row in ledger_rows) if ledger_rows else False
+    )
+    retention = _forward_artifact_retention(
+        benchmark_expansion_path=benchmark_expansion_path,
+        control_audit_path=control_audit_path,
+        value_surface_expansion_path=value_surface_expansion_path,
+    )
+    status = "PASS_WITH_WARNINGS" if ledger_rows else "DATA_REQUIRED"
+    payload = _controlled_payload(
+        report_type="forward_evidence_maturity_tracker",
+        title="Forward evidence daily dry-run maturity tracker",
+        status=status,
+        summary={
+            "forward_maturity_tracker_generated": True,
+            "ledger_event_count": len(ledger_rows),
+            "future_outcomes_appended_only": append_only,
+            "horizon_maturity_recorded": True,
+            "horizon_count": len(_forward_maturity_horizons(config)),
+            "daily_archive_retained": any(row.get("archive_path") for row in ledger_rows),
+            "artifact_retention_report_present": True,
+            "data_quality_status": quality["status"],
+            "data_foundation_status": _data_foundation_status(quality),
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        data_quality_gate=quality,
+        data_foundation_status=_data_foundation_status(quality),
+        requested_date_range=_requested_date_range(dates),
+        ledger_path=str(ledger_path),
+        ledger_rows=ledger_rows,
+        horizon_maturity=maturity_rows,
+        horizon_maturity_summary=horizon_summary,
+        artifact_retention=retention,
+        append_only_policy=_next_stage_section(config, "forward_evidence_maturity").get(
+            "append_only_outcome_policy", True
+        ),
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="forward_evidence_maturity_tracker")
+    return payload
+
+
+def run_gbdt_pivot_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    gbdt_action_utility_path: Path = DEFAULT_GBDT_ACTION_UTILITY_PATH,
+    output_root: Path = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    gbdt = _read_json_or_empty(gbdt_action_utility_path)
+    pivot_policy = _next_stage_section(config, "gbdt_pivot_review")
+    pivot_options = _records(pivot_policy.get("pivot_options"))
+    root_causes = _gbdt_pivot_root_cause_review(gbdt)
+    payload = _controlled_payload(
+        report_type="gbdt_pivot_review",
+        title="GBDT pivot review",
+        status="PIVOT_REVIEW_READY",
+        summary={
+            "gbdt_pivot_review_status": "PIVOT_REVIEW_READY",
+            "candidate_decision": "PIVOT",
+            "model_run_executed": False,
+            "local_parameter_tuning_allowed": False,
+            "pivot_design_only": True,
+            "pivot_option_count": len(pivot_options),
+            "root_cause_review_present": True,
+            "ranking_policy": "heuristic",
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        gbdt_source=_artifact_status(gbdt, gbdt_action_utility_path),
+        source_calibration_report=gbdt.get("calibration_report", {}),
+        source_feature_importance=gbdt.get("feature_importance", []),
+        root_cause_review=root_causes,
+        pivot_options=pivot_options,
+        recommended_next_scope={
+            "scope": "pivot_design_only",
+            "run_new_model_allowed": False,
+            "local_tree_parameter_tuning_allowed": False,
+            "preferred_first_review": (
+                "gbdt_action_ranking_classifier_or_value_surface_residual_model"
+            ),
+        },
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="gbdt_pivot_review")
+    return payload
+
+
+def run_regret_casebook_expansion_gate(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    regret_state_machine_path: Path = DEFAULT_REGRET_STATE_MACHINE_PATH,
+    state_transition_casebook_path: Path = DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Path = DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    state_machine = _read_json_or_empty(regret_state_machine_path)
+    casebook = _read_json_or_empty(state_transition_casebook_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    gate = _regret_casebook_gate_conditions(
+        config=config,
+        state_machine=state_machine,
+        casebook=casebook,
+        value_surface=value_surface,
+    )
+    expansion_allowed = all(bool(row["passed"]) for row in gate)
+    status = "READY_FOR_CONTROLLED_EXPANSION" if expansion_allowed else "WATCHLIST_NOT_READY"
+    payload = _controlled_payload(
+        report_type="regret_casebook_expansion_gate",
+        title="Regret casebook expansion gate",
+        status=status,
+        summary={
+            "regret_casebook_expansion_allowed": expansion_allowed,
+            "regret_state_machine_status": "WATCHLIST",
+            "activation_condition_count": len(gate),
+            "activation_condition_pass_count": sum(1 for row in gate if row["passed"]),
+            "case_count": _casebook_case_count(casebook, state_machine),
+            "ranking_policy": "heuristic",
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        regret_state_machine_source=_artifact_status(state_machine, regret_state_machine_path),
+        state_transition_casebook_source=_artifact_status(casebook, state_transition_casebook_path),
+        value_surface_expansion_source=_artifact_status(
+            value_surface, value_surface_expansion_path
+        ),
+        activation_gate=gate,
+        expansion_policy=_next_stage_section(config, "regret_casebook_expansion_gate"),
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="regret_casebook_expansion_gate")
+    return payload
+
+
 def _load_config(path: Path) -> dict[str, Any]:
     raw = safe_load_yaml_path(path)
     return dict(raw) if isinstance(raw, Mapping) else {}
+
+
+def _load_next_stage_config(path: Path) -> dict[str, Any]:
+    overlay = _load_config(path)
+    base_path = overlay.get("base_config_path")
+    if not base_path:
+        return overlay
+    resolved_base = _resolve_project_path(base_path)
+    merged = _load_config(resolved_base)
+    merged.update(overlay)
+    return merged
+
+
+def _resolve_project_path(value: Any) -> Path:
+    path = Path(str(value))
+    return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 def _universe(config: Mapping[str, Any]) -> list[str]:
@@ -717,6 +1144,588 @@ def _minimum(config: Mapping[str, Any], key: str, default: int) -> int:
 
 def _heuristic_policy_version(config: Mapping[str, Any]) -> str:
     return str(config.get("heuristic_policy_version", "controlled_strategy_batch_1_heuristic_v1"))
+
+
+def _next_stage_section(config: Mapping[str, Any], key: str) -> dict[str, Any]:
+    value = config.get(key)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _next_stage_decision_dates(dates: list[str], config: Mapping[str, Any]) -> list[str]:
+    if not dates:
+        return []
+    expansion = _next_stage_section(config, "value_surface_expansion")
+    max_dates = int(
+        expansion.get("max_decision_dates") or _minimum(config, "max_decision_dates", 24)
+    )
+    eligible = dates[:-1] if len(dates) > 1 else dates
+    return eligible[-max_dates:]
+
+
+def _cluster_by_asset(config: Mapping[str, Any]) -> dict[str, str]:
+    expansion = _next_stage_section(config, "value_surface_expansion")
+    cluster_policy = expansion.get("cluster_policy")
+    if not isinstance(cluster_policy, Mapping):
+        return {}
+    clusters = cluster_policy.get("static_clusters")
+    if not isinstance(clusters, Mapping):
+        return {}
+    values: dict[str, str] = {}
+    for cluster_id, tickers in clusters.items():
+        if not isinstance(tickers, list):
+            continue
+        for ticker in tickers:
+            values[str(ticker).upper()] = str(cluster_id)
+    return values
+
+
+def _recent_regime_window_dates(decision_dates: list[str], config: Mapping[str, Any]) -> set[str]:
+    expansion = _next_stage_section(config, "value_surface_expansion")
+    segments = _records(expansion.get("regime_segments"))
+    trailing = 0
+    for segment in segments:
+        trailing = max(trailing, _first_int(segment.get("trailing_decision_dates")))
+    return set(decision_dates[-trailing:]) if trailing > 0 else set()
+
+
+def _with_surface_context(
+    row: dict[str, Any],
+    *,
+    cluster_by_asset: Mapping[str, str],
+    recent_window_dates: set[str],
+) -> dict[str, Any]:
+    enriched = dict(row)
+    asset = str(row.get("asset", "")).upper()
+    row_date = str(row.get("date", ""))
+    enriched["asset_cluster"] = cluster_by_asset.get(asset, "unclassified")
+    enriched["regime_segment"] = (
+        "recent_controlled_window" if row_date in recent_window_dates else "ai_after_chatgpt_full"
+    )
+    return enriched
+
+
+def _surface_group_summary(
+    rows: list[dict[str, Any]],
+    group_keys: list[str],
+) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, ...], list[dict[str, Any]]] = {}
+    for row in rows:
+        key = tuple(str(row.get(group_key, "unknown")) for group_key in group_keys)
+        grouped.setdefault(key, []).append(row)
+    summaries: list[dict[str, Any]] = []
+    for key, values in sorted(grouped.items()):
+        summary = {group_key: key[index] for index, group_key in enumerate(group_keys)}
+        mature_count = sum(
+            1
+            for value in values
+            if isinstance(value.get("sample_quality"), Mapping)
+            and value["sample_quality"].get("outcome_mature")
+        )
+        summary.update(
+            {
+                "row_count": len(values),
+                "mean_expected_return": _round(
+                    _mean([_float(value.get("expected_return"), 0.0) for value in values])
+                ),
+                "mean_median_return": _round(
+                    _mean([_float(value.get("median_return"), 0.0) for value in values])
+                ),
+                "mean_net_utility": _round(
+                    _mean([_float(value.get("net_utility"), 0.0) for value in values])
+                ),
+                "median_net_utility": _round(
+                    _median([_float(value.get("net_utility"), 0.0) for value in values])
+                ),
+                "mean_downside_risk": _round(
+                    _mean([_float(value.get("downside_risk"), 0.0) for value in values])
+                ),
+                "mean_estimated_cost": _round(
+                    _mean([_float(value.get("estimated_cost"), 0.0) for value in values])
+                ),
+                "mean_uncertainty": _round(
+                    _mean([_float(value.get("uncertainty"), 0.0) for value in values])
+                ),
+                "mature_outcome_rate": _round(mature_count / len(values) if values else 0.0),
+                "promotion_gate_allowed": False,
+            }
+        )
+        if any(value.get("profile_utility") is not None for value in values):
+            summary["mean_profile_utility"] = _round(
+                _mean([_float(value.get("profile_utility"), 0.0) for value in values])
+            )
+        summaries.append(summary)
+    return summaries
+
+
+def _value_surface_horizon_smoothness_audit(
+    *,
+    surface_rows: list[dict[str, Any]],
+    horizons: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    expansion = _next_stage_section(config, "value_surface_expansion")
+    smoothness = expansion.get("horizon_smoothness")
+    smoothness_policy = dict(smoothness) if isinstance(smoothness, Mapping) else {}
+    materiality = _float(smoothness_policy.get("adjacent_delta_materiality_bps"), 100.0) / 10_000.0
+    horizon_order = {str(row["horizon_id"]): int(row["days"]) for row in horizons}
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in surface_rows:
+        grouped.setdefault(
+            (str(row.get("date")), str(row.get("asset")), str(row.get("action"))), []
+        ).append(row)
+    adjacent_rows: list[dict[str, Any]] = []
+    for (row_date, asset, action), values in sorted(grouped.items()):
+        ordered = sorted(values, key=lambda row: horizon_order.get(str(row.get("horizon")), 0))
+        for previous, current in zip(ordered, ordered[1:], strict=False):
+            delta = _float(current.get("net_utility"), 0.0) - _float(
+                previous.get("net_utility"), 0.0
+            )
+            adjacent_rows.append(
+                {
+                    "date": row_date,
+                    "asset": asset,
+                    "action": action,
+                    "previous_horizon": previous.get("horizon"),
+                    "current_horizon": current.get("horizon"),
+                    "net_utility_delta": _round(delta),
+                    "abs_net_utility_delta": _round(abs(delta)),
+                    "material_for_review": abs(delta) >= materiality,
+                    "promotion_gate_allowed": False,
+                }
+            )
+    abs_values = [_float(row.get("abs_net_utility_delta"), 0.0) for row in adjacent_rows]
+    return {
+        "schema_version": "1.0",
+        "report_type": "value_surface_expansion_horizon_smoothness_audit",
+        "status": "PASS_WITH_WARNINGS",
+        "summary": {
+            "horizon_smoothness_audit_present": True,
+            "audit_only": bool(smoothness_policy.get("audit_only", True)),
+            "adjacent_pair_count": len(adjacent_rows),
+            "material_pair_count": sum(1 for row in adjacent_rows if row["material_for_review"]),
+            "median_abs_adjacent_delta": _round(_median(abs_values)) if abs_values else None,
+            "max_abs_adjacent_delta": _round(max(abs_values)) if abs_values else None,
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        "smoothness_policy": smoothness_policy,
+        "adjacent_horizon_deltas": adjacent_rows,
+        **PRODUCTION_SAFETY,
+    }
+
+
+def _utility_profiles(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    audit = _next_stage_section(config, "utility_boundary_audit")
+    profiles = _records(audit.get("utility_profiles"))
+    return profiles or [
+        {
+            "profile_id": "balanced_transparent",
+            "expected_return_weight": 0.6,
+            "median_return_weight": 0.2,
+            "downside_risk_weight": 0.5,
+            "cost_weight": 1.0,
+            "uncertainty_weight": 0.1,
+        }
+    ]
+
+
+def _utility_profile_ranking(
+    *,
+    surface_rows: list[dict[str, Any]],
+    profile: Mapping[str, Any],
+) -> dict[str, Any]:
+    scored = [
+        {
+            **row,
+            "profile_utility": _round(_utility_score(row=row, profile=profile)),
+        }
+        for row in surface_rows
+    ]
+    grouped = _surface_group_summary(scored, ["action", "horizon"])
+    ranked = sorted(
+        grouped,
+        key=lambda row: _float(row.get("mean_profile_utility"), 0.0),
+        reverse=True,
+    )
+    return {
+        "profile_id": str(profile.get("profile_id", "unknown_profile")),
+        "ranking": ranked,
+        "top_rank": ranked[0] if ranked else {},
+        "profile_weights": dict(profile),
+        "ranking_policy": "heuristic",
+        "not_validated_utility_boundary": True,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _utility_score(*, row: Mapping[str, Any], profile: Mapping[str, Any]) -> float:
+    return (
+        _float(profile.get("expected_return_weight"), 0.0) * _float(row.get("expected_return"), 0.0)
+        + _float(profile.get("median_return_weight"), 0.0) * _float(row.get("median_return"), 0.0)
+        - _float(profile.get("downside_risk_weight"), 0.0) * _float(row.get("downside_risk"), 0.0)
+        - _float(profile.get("cost_weight"), 0.0) * _float(row.get("estimated_cost"), 0.0)
+        - _float(profile.get("uncertainty_weight"), 0.0) * _float(row.get("uncertainty"), 0.0)
+    )
+
+
+def _profile_reversal_report(rankings: list[dict[str, Any]]) -> dict[str, Any]:
+    if not rankings:
+        return {"summary": {"ranking_reversal_count": 0}, "rows": []}
+    base = next(
+        (ranking for ranking in rankings if ranking.get("profile_id") == "balanced_transparent"),
+        rankings[0],
+    )
+    base_top = (
+        base.get("top_rank", {}).get("action"),
+        base.get("top_rank", {}).get("horizon"),
+    )
+    rows = []
+    for ranking in rankings:
+        top = (
+            ranking.get("top_rank", {}).get("action"),
+            ranking.get("top_rank", {}).get("horizon"),
+        )
+        rows.append(
+            {
+                "profile_id": ranking.get("profile_id"),
+                "top_action": top[0],
+                "top_horizon": top[1],
+                "reverses_balanced_top": top != base_top,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "summary": {
+            "base_profile_id": base.get("profile_id"),
+            "ranking_reversal_count": sum(1 for row in rows if row["reverses_balanced_top"]),
+            "profile_reversal_report_present": True,
+        },
+        "rows": rows,
+    }
+
+
+def _single_weight_dominance_report(
+    config: Mapping[str, Any],
+    profiles: list[dict[str, Any]],
+) -> dict[str, Any]:
+    audit = _next_stage_section(config, "utility_boundary_audit")
+    floor = _float(audit.get("dominance_share_review_floor"), 0.65)
+    weight_keys = [
+        "expected_return_weight",
+        "median_return_weight",
+        "downside_risk_weight",
+        "cost_weight",
+        "uncertainty_weight",
+    ]
+    rows = []
+    for profile in profiles:
+        weights = {key: abs(_float(profile.get(key), 0.0)) for key in weight_keys}
+        total = sum(weights.values()) or 1.0
+        dominant_key, dominant_value = max(weights.items(), key=lambda item: item[1])
+        share = dominant_value / total
+        rows.append(
+            {
+                "profile_id": profile.get("profile_id"),
+                "dominant_component": dominant_key,
+                "dominant_component_share": _round(share),
+                "single_weight_dominance_for_review": share >= floor,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "summary": {
+            "dominance_share_review_floor": floor,
+            "single_weight_dominance_profile_count": sum(
+                1 for row in rows if row["single_weight_dominance_for_review"]
+            ),
+            "single_weight_dominance_report_present": True,
+        },
+        "rows": rows,
+    }
+
+
+def _pareto_frontier(
+    surface_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    components = _next_stage_section(config, "utility_boundary_audit").get("pareto_components")
+    component_map = dict(components) if isinstance(components, Mapping) else {}
+    reward_key = str(component_map.get("reward", "expected_return"))
+    risk_key = str(component_map.get("risk", "downside_risk"))
+    cost_key = str(component_map.get("cost", "estimated_cost"))
+    uncertainty_key = str(component_map.get("uncertainty", "uncertainty"))
+    candidates = _surface_group_summary(surface_rows, ["action", "horizon"])
+    frontier: list[dict[str, Any]] = []
+    for candidate in candidates:
+        candidate_reward = _float(candidate.get(f"mean_{reward_key}"), 0.0)
+        candidate_risk = _float(candidate.get(f"mean_{risk_key}"), 0.0)
+        candidate_cost = _float(candidate.get(f"mean_{cost_key}"), 0.0)
+        candidate_uncertainty = _float(candidate.get(f"mean_{uncertainty_key}"), 0.0)
+        dominated = False
+        for challenger in candidates:
+            if challenger is candidate:
+                continue
+            challenger_reward = _float(challenger.get(f"mean_{reward_key}"), 0.0)
+            challenger_risk = _float(challenger.get(f"mean_{risk_key}"), 0.0)
+            challenger_cost = _float(challenger.get(f"mean_{cost_key}"), 0.0)
+            challenger_uncertainty = _float(challenger.get(f"mean_{uncertainty_key}"), 0.0)
+            weakly_better = (
+                challenger_reward >= candidate_reward
+                and challenger_risk <= candidate_risk
+                and challenger_cost <= candidate_cost
+                and challenger_uncertainty <= candidate_uncertainty
+            )
+            strictly_better = (
+                challenger_reward > candidate_reward
+                or challenger_risk < candidate_risk
+                or challenger_cost < candidate_cost
+                or challenger_uncertainty < candidate_uncertainty
+            )
+            if weakly_better and strictly_better:
+                dominated = True
+                break
+        if not dominated:
+            frontier.append(
+                {
+                    **candidate,
+                    "pareto_frontier": True,
+                    "not_validated_utility_boundary": True,
+                    "promotion_gate_allowed": False,
+                }
+            )
+    return frontier
+
+
+def _forward_maturity_horizons(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    forward = _next_stage_section(config, "forward_evidence_maturity")
+    rows = _records(forward.get("horizons"))
+    return [
+        {"horizon_id": str(row.get("horizon_id")), "days": int(row.get("days", 1))}
+        for row in rows
+        if row.get("horizon_id")
+    ] or [
+        {"horizon_id": "1d", "days": 1},
+        {"horizon_id": "5d", "days": 5},
+        {"horizon_id": "10d", "days": 10},
+        {"horizon_id": "20d", "days": 20},
+        {"horizon_id": "60d", "days": 60},
+    ]
+
+
+def _read_jsonl_rows(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        raw = json.loads(line)
+        if isinstance(raw, Mapping):
+            rows.append(dict(raw))
+    return rows
+
+
+def _forward_maturity_rows(
+    *,
+    ledger_rows: list[dict[str, Any]],
+    dates: list[str],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    horizons = _forward_maturity_horizons(config)
+    rows: list[dict[str, Any]] = []
+    for ledger_row in ledger_rows:
+        as_of = str(ledger_row.get("as_of") or "")
+        decision_index = _date_index_on_or_before(dates, as_of)
+        for horizon in horizons:
+            horizon_days = int(horizon["days"])
+            target_index = decision_index + horizon_days if decision_index is not None else None
+            matured = target_index is not None and target_index < len(dates)
+            rows.append(
+                {
+                    "archive_id": ledger_row.get("archive_id"),
+                    "as_of": as_of,
+                    "horizon": horizon["horizon_id"],
+                    "horizon_days": horizon_days,
+                    "matured": matured,
+                    "target_date": (
+                        dates[target_index] if matured and target_index is not None else None
+                    ),
+                    "outcome_status": "matured" if matured else "pending",
+                    "outcome_append_only": bool(ledger_row.get("outcome_append_only")),
+                    "promotion_gate_allowed": False,
+                }
+            )
+    return rows
+
+
+def _forward_maturity_summary(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get("horizon")), []).append(row)
+    return [
+        {
+            "horizon": horizon,
+            "ledger_event_count": len(values),
+            "matured_count": sum(1 for value in values if value.get("matured")),
+            "pending_count": sum(1 for value in values if not value.get("matured")),
+            "future_outcomes_appended_only": all(
+                bool(value.get("outcome_append_only")) for value in values
+            ),
+            "promotion_gate_allowed": False,
+        }
+        for horizon, values in sorted(grouped.items())
+    ]
+
+
+def _date_index_on_or_before(dates: list[str], raw_date: str) -> int | None:
+    eligible = [index for index, row_date in enumerate(dates) if row_date <= raw_date]
+    return eligible[-1] if eligible else None
+
+
+def _forward_artifact_retention(
+    *,
+    benchmark_expansion_path: Path,
+    control_audit_path: Path,
+    value_surface_expansion_path: Path,
+) -> dict[str, Any]:
+    candidate_paths = [
+        DEFAULT_VALUE_SURFACE_PATH,
+        DEFAULT_REGRET_STATE_MACHINE_PATH,
+        DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
+        DEFAULT_GBDT_ACTION_UTILITY_PATH,
+        value_surface_expansion_path,
+    ]
+    return {
+        "benchmark_expansion": _artifact_status(
+            _read_json_or_empty(benchmark_expansion_path), benchmark_expansion_path
+        ),
+        "control_audit": _artifact_status(
+            _read_json_or_empty(control_audit_path), control_audit_path
+        ),
+        "value_surface_controlled_expansion": _artifact_status(
+            _read_json_or_empty(value_surface_expansion_path), value_surface_expansion_path
+        ),
+        "candidate_outputs": [
+            _artifact_status(_read_json_or_empty(path), path) for path in candidate_paths
+        ],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _gbdt_pivot_root_cause_review(gbdt: Mapping[str, Any]) -> list[dict[str, Any]]:
+    split = gbdt.get("train_test_split") if isinstance(gbdt, Mapping) else {}
+    calibration = gbdt.get("calibration_report") if isinstance(gbdt, Mapping) else {}
+    feature_importance = _records(gbdt.get("feature_importance"))
+    max_feature = (
+        max(feature_importance, key=lambda row: _float(row.get("importance"), 0.0))
+        if feature_importance
+        else {}
+    )
+    train_count = _first_int(split.get("train_row_count")) if isinstance(split, Mapping) else 0
+    test_count = _first_int(split.get("test_row_count")) if isinstance(split, Mapping) else 0
+    return [
+        {
+            "question": "sample_size_or_walk_forward_split_limit",
+            "evidence": {
+                "train_row_count": train_count,
+                "test_row_count": test_count,
+                "split_policy": split.get("split_policy") if isinstance(split, Mapping) else None,
+            },
+            "review_decision": "requires_larger_walk_forward_design_before_model_continuation",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "question": "utility_label_too_noisy_for_direct_regression",
+            "evidence": {
+                "calibration_status": (
+                    calibration.get("calibration_status")
+                    if isinstance(calibration, Mapping)
+                    else None
+                ),
+                "mean_absolute_error": (
+                    calibration.get("mean_absolute_error")
+                    if isinstance(calibration, Mapping)
+                    else None
+                ),
+            },
+            "review_decision": "prefer_ranking_or_regret_type_target_over_scalar_utility",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "question": "feature_set_or_target_mismatch",
+            "evidence": {
+                "top_feature": max_feature.get("feature"),
+                "top_feature_importance": max_feature.get("importance"),
+                "future_feature_violation_count": _summary_value(
+                    gbdt, "future_feature_violation_count"
+                ),
+            },
+            "review_decision": "use_as_feature_quality_or_residual_diagnostic_until_reframed",
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _regret_casebook_gate_conditions(
+    *,
+    config: Mapping[str, Any],
+    state_machine: Mapping[str, Any],
+    casebook: Mapping[str, Any],
+    value_surface: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    gate = _next_stage_section(config, "regret_casebook_expansion_gate")
+    minimum_cases = _first_int(gate.get("minimum_case_count"))
+    minimum_types = _first_int(gate.get("minimum_distinct_regret_types"))
+    case_count = _casebook_case_count(casebook, state_machine)
+    covered_types = [
+        row
+        for row in _records(state_machine.get("regret_type_coverage"))
+        if row.get("covered_by_state_machine")
+    ]
+    teacher_oracle_difference_present = bool(
+        state_machine.get("teacher_oracle_diagnostic_difference")
+    )
+    failure_attribution_present = bool(value_surface.get("failure_case_attribution"))
+    return [
+        {
+            "condition_id": "regret_case_count_floor_met",
+            "passed": case_count >= minimum_cases,
+            "observed": case_count,
+            "required": minimum_cases,
+            "promotion_gate_allowed": False,
+        },
+        {
+            "condition_id": "regret_type_distribution_stable",
+            "passed": len(covered_types) >= minimum_types,
+            "observed": len(covered_types),
+            "required": minimum_types,
+            "promotion_gate_allowed": False,
+        },
+        {
+            "condition_id": "teacher_oracle_diagnostic_difference_present",
+            "passed": teacher_oracle_difference_present,
+            "observed": teacher_oracle_difference_present,
+            "required": True,
+            "promotion_gate_allowed": False,
+        },
+        {
+            "condition_id": "value_surface_failure_cases_attributed",
+            "passed": failure_attribution_present,
+            "observed": failure_attribution_present,
+            "required": True,
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _casebook_case_count(
+    casebook: Mapping[str, Any],
+    state_machine: Mapping[str, Any],
+) -> int:
+    case_rows = _records(casebook.get("casebook_rows"))
+    if case_rows:
+        return len(case_rows)
+    return len(_records(state_machine.get("state_by_date")))
 
 
 def _run_data_quality_gate(

@@ -11,9 +11,14 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
     run_controlled_strategy_batch_review,
+    run_forward_evidence_maturity_tracker,
     run_gbdt_action_utility_baseline,
+    run_gbdt_pivot_review,
+    run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_utility_boundary_ranking_policy_audit,
+    run_value_surface_controlled_expansion,
     run_value_surface_controlled_prototype,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -111,6 +116,88 @@ def test_value_surface_promotion_false(tmp_path: Path) -> None:
 
     _assert_safety(payload)
     assert payload["summary"]["promotion_gate_allowed"] is False
+
+
+def test_value_surface_controlled_expansion_schema(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_controlled_expansion"
+    assert payload["summary"]["value_surface_expansion_generated"] is True
+    assert payload["summary"]["action_horizon_surface_present"] is True
+    assert payload["summary"]["horizon_smoothness_audit_present"] is True
+    assert payload["summary"]["horizon_leakage_check_pass"] is True
+    assert payload["summary"]["by_cluster_breakdown_present"] is True
+    assert payload["summary"]["gross_net_turnover_drawdown_present"] is True
+    assert (tmp_path / "value_expansion" / "value_surface_controlled_expansion.json").exists()
+    assert (
+        tmp_path / "value_expansion" / "value_surface_expansion_horizon_smoothness_audit.json"
+    ).exists()
+
+
+def test_utility_boundary_audit_status_cap(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+    payload = run_utility_boundary_ranking_policy_audit(
+        value_surface_expansion_path=(
+            tmp_path / "value_expansion" / "value_surface_controlled_expansion.json"
+        ),
+        output_root=tmp_path / "utility",
+    )
+
+    _assert_safety(payload)
+    assert payload["status"] == "SENSITIVITY_TESTED"
+    assert payload["summary"]["validated_boundary_count"] == 0
+    assert payload["summary"]["not_validated_utility_boundary"] is True
+    assert payload["summary"]["profile_reversal_report_present"] is True
+    assert payload["summary"]["pareto_frontier_present"] is True
+
+
+def test_forward_evidence_maturity_tracker_append_only(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    expansion = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+    ledger_path = _write_forward_ledger(tmp_path)
+    payload = run_forward_evidence_maturity_tracker(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        ledger_path=ledger_path,
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "maturity",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "forward_evidence_maturity_tracker"
+    assert payload["summary"]["forward_maturity_tracker_generated"] is True
+    assert payload["summary"]["future_outcomes_appended_only"] is True
+    assert payload["summary"]["horizon_maturity_recorded"] is True
+    assert {row["horizon"] for row in payload["horizon_maturity_summary"]} >= {
+        "1d",
+        "5d",
+        "10d",
+        "20d",
+        "60d",
+    }
 
 
 def test_regret_state_machine_schema(tmp_path: Path) -> None:
@@ -319,6 +406,57 @@ def test_gbdt_promotion_false(tmp_path: Path) -> None:
     _assert_safety(payload)
 
 
+def test_gbdt_pivot_review_design_only(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    gbdt = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+    payload = run_gbdt_pivot_review(
+        gbdt_action_utility_path=Path(gbdt["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "gbdt_pivot",
+    )
+
+    _assert_safety(payload)
+    assert payload["status"] == "PIVOT_REVIEW_READY"
+    assert payload["summary"]["model_run_executed"] is False
+    assert payload["summary"]["local_parameter_tuning_allowed"] is False
+    assert payload["summary"]["pivot_option_count"] >= 4
+
+
+def test_regret_casebook_expansion_gate_watchlist(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    state = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state",
+        as_of_date=TEST_AS_OF,
+    )
+    expansion = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_expansion",
+        as_of_date=TEST_AS_OF,
+    )
+    payload = run_regret_casebook_expansion_gate(
+        regret_state_machine_path=Path(state["artifact_paths"]["json_path"]),
+        state_transition_casebook_path=tmp_path / "state" / "state_transition_casebook.json",
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "regret_gate",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regret_casebook_expansion_gate"
+    assert payload["status"] == "WATCHLIST_NOT_READY"
+    assert payload["summary"]["regret_casebook_expansion_allowed"] is False
+    assert any(not row["passed"] for row in payload["activation_gate"])
+
+
 def test_controlled_strategy_batch_review_schema(tmp_path: Path) -> None:
     paths = _run_candidate_batch(tmp_path)
     review = run_controlled_strategy_batch_review(
@@ -399,6 +537,7 @@ def test_next_batch_recommendation_present(tmp_path: Path) -> None:
 
 def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    ledger_path = _write_forward_ledger(tmp_path)
     runner = CliRunner()
     commands = [
         [
@@ -415,6 +554,30 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
             "2023-05-17",
             "--output-root",
             str(tmp_path / "cli_value"),
+        ],
+        [
+            "research",
+            "strategies",
+            "value-surface-controlled-expansion",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_value_expansion"),
+        ],
+        [
+            "research",
+            "strategies",
+            "utility-boundary-ranking-policy-audit",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--output-root",
+            str(tmp_path / "cli_utility"),
         ],
         [
             "research",
@@ -463,6 +626,46 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "gbdt-pivot-review",
+            "--gbdt-action-utility",
+            str(tmp_path / "cli_gbdt" / "gbdt_action_utility_baseline.json"),
+            "--output-root",
+            str(tmp_path / "cli_gbdt"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regret-casebook-expansion-gate",
+            "--regret-state-machine",
+            str(tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json"),
+            "--state-transition-casebook",
+            str(tmp_path / "cli_state" / "state_transition_casebook.json"),
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--output-root",
+            str(tmp_path / "cli_state"),
+        ],
+        [
+            "forward-evidence",
+            "maturity-tracker",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--ledger-path",
+            str(ledger_path),
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_maturity"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -484,6 +687,9 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         assert "production_effect=none" in result.output
 
     assert (tmp_path / "cli_review" / "controlled_strategy_batch_review.json").exists()
+    assert (tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json").exists()
+    assert (tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json").exists()
+    assert (tmp_path / "cli_state" / "regret_casebook_expansion_gate.json").exists()
 
 
 def test_controlled_strategy_batch_validation_tiers() -> None:
@@ -497,9 +703,14 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}
     for report_id in {
         "value_surface_controlled_prototype",
+        "value_surface_controlled_expansion",
+        "utility_boundary_ranking_policy_audit",
+        "forward_evidence_maturity_tracker",
         "regret_state_machine_controlled_prototype",
         "simple_strategy_selector_pilot",
         "gbdt_action_utility_controlled_baseline",
+        "gbdt_pivot_review",
+        "regret_casebook_expansion_gate",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -508,12 +719,17 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
 
     catalog = (PROJECT_ROOT / "docs" / "artifact_catalog.md").read_text(encoding="utf-8")
     assert "value_surface_controlled_prototype.json/md" in catalog
+    assert "value_surface_controlled_expansion.json/md" in catalog
+    assert "forward_evidence_maturity_tracker.json/md" in catalog
     assert "controlled_strategy_batch_review.json/md" in catalog
     assert "validated utility boundary" in catalog
 
     system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
     assert "TRADING-770～774" in system_flow
+    assert "TRADING-775～779" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
+    assert "aits research strategies value-surface-controlled-expansion" in system_flow
+    assert "aits forward-evidence maturity-tracker" in system_flow
     assert "CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE" in system_flow
 
 
@@ -599,6 +815,41 @@ def _business_dates(start: date, count: int) -> list[date]:
             values.append(current)
         current += timedelta(days=1)
     return values
+
+
+def _write_forward_ledger(tmp_path: Path) -> Path:
+    archive_path = tmp_path / "forward_evidence_dry_run_2023-02-01.json"
+    _write_json(
+        archive_path,
+        {
+            "report_type": "forward_evidence_daily_dry_run_archive",
+            "status": "PASS_WITH_WARNINGS",
+            "as_of": "2023-02-01",
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_gate_allowed": False,
+        },
+    )
+    ledger_path = tmp_path / "forward_evidence_dry_run_ledger.jsonl"
+    rows = [
+        {
+            "archive_id": "forward_evidence_dry_run:2023-02-01",
+            "archive_path": str(archive_path),
+            "as_of": "2023-02-01",
+            "outcome_append_only": True,
+            "outcome_status": "pending",
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+        }
+    ]
+    ledger_path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+    return ledger_path
 
 
 def _read_json(path: Path) -> dict[str, Any]:
