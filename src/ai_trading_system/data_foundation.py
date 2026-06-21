@@ -56,6 +56,9 @@ DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT = (
 DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "data_quality" / "data_source_remediation_execution"
 )
+DEFAULT_DATA_SOURCE_REQUIREMENTS_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "data_quality" / "data_source_requirements"
+)
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH = (
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT / "data_foundation_acceptance_report.json"
 )
@@ -68,6 +71,18 @@ DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH = (
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH = (
     DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT
     / "data_foundation_acceptance_summary_updated.json"
+)
+DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_REPORT_PATH = (
+    DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT
+    / "data_source_remediation_execution_report.json"
+)
+DEFAULT_DATA_SOURCE_REMEDIATION_ITEM_RESULTS_PATH = (
+    DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT
+    / "data_source_remediation_item_results.json"
+)
+DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH = (
+    DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT
+    / "data_source_qualification_matrix_updated.json"
 )
 
 AI_REGIME_START = "2022-12-01"
@@ -2015,6 +2030,87 @@ def run_data_source_remediation_execution(
     return result
 
 
+def run_data_source_requirement_matrix(
+    *,
+    remediation_execution_report_path: Path = DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_REPORT_PATH,
+    remediation_item_results_path: Path = DEFAULT_DATA_SOURCE_REMEDIATION_ITEM_RESULTS_PATH,
+    qualification_matrix_updated_path: Path = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
+    output_root: Path = DEFAULT_DATA_SOURCE_REQUIREMENTS_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    for path in (
+        remediation_execution_report_path,
+        remediation_item_results_path,
+        qualification_matrix_updated_path,
+    ):
+        if not path.exists():
+            raise DataFoundationError(f"required TRADING-737 input not found: {path}")
+
+    execution_report = _read_json(remediation_execution_report_path)
+    item_results_payload = _read_json(remediation_item_results_path)
+    updated_matrix = _read_json(qualification_matrix_updated_path)
+    p0_remaining_items = [
+        item
+        for item in _records(item_results_payload.get("remediation_item_results"))
+        if item.get("priority") == "P0"
+        and not bool(item.get("promotion_grade_candidate_after_fix"))
+    ]
+    requirements = [
+        _source_level_requirement(item, index=index + 1)
+        for index, item in enumerate(p0_remaining_items)
+    ]
+    category_counts = _source_requirement_category_counts(requirements)
+    summary = {
+        "source_requirement_count": len(requirements),
+        "P0_remaining_count": int(
+            _mapping(updated_matrix.get("summary")).get("P0_remaining_count") or len(requirements)
+        ),
+        "P0_requirement_count": len(requirements),
+        "can_fix_with_existing_data_count": len(
+            [item for item in requirements if item.get("can_fix_with_existing_data")]
+        ),
+        "requires_new_data_source_count": len(
+            [item for item in requirements if item.get("requires_new_data_source")]
+        ),
+        "can_remain_diagnostic_only_count": len(
+            [item for item in requirements if item.get("can_remain_diagnostic_only")]
+        ),
+        "promotion_grade_blocker_count": len(
+            [item for item in requirements if item.get("promotion_grade_blocker")]
+        ),
+        "status_upgrade_attempted": False,
+        "lookahead_violation_count": int(execution_report.get("lookahead_violation_count") or 0),
+        "production_effect": "none",
+        "broker_action": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    payload = _base_payload(
+        report_type="data_source_requirement_matrix",
+        title="Data source requirement matrix",
+        status="REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS",
+        summary=summary,
+        remediation_execution_report_path=str(remediation_execution_report_path),
+        remediation_item_results_path=str(remediation_item_results_path),
+        qualification_matrix_updated_path=str(qualification_matrix_updated_path),
+        source_requirements=requirements,
+        source_requirement_categories=_source_requirement_category_catalog(),
+        source_requirement_category_counts=category_counts,
+        production_effect="none",
+        broker_action="none",
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        lookahead_violation_count=summary["lookahead_violation_count"],
+    )
+    write_foundation_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="data_source_requirement_matrix",
+    )
+    return payload
+
+
 FORWARD_CASE_TYPES = {
     "trend_continuation",
     "risk_off_protection",
@@ -3071,6 +3167,232 @@ def _unique_strings(values: Sequence[str]) -> list[str]:
             seen.add(value)
             result.append(value)
     return result
+
+
+def _source_requirement_category_catalog() -> list[str]:
+    return [
+        "SOURCE_MANIFEST_REQUIRED",
+        "AVAILABLE_TIME_REQUIRED",
+        "AS_OF_SNAPSHOT_REQUIRED",
+        "CORPORATE_ACTION_POLICY_REQUIRED",
+        "VENDOR_CURRENT_VIEW_ONLY",
+        "RESEARCH_LABEL_ONLY_BY_DESIGN",
+        "TRUE_PIT_LIMITATION",
+        "MANUAL_REVIEW_REQUIRED",
+    ]
+
+
+def _source_level_requirement(item: Mapping[str, Any], *, index: int) -> dict[str, Any]:
+    component = _text(item.get("component"))
+    blocked_reason = _text(item.get("blocked_reason"))
+    current_status = _text(item.get("after_status"), _text(item.get("before_status")))
+    missing_proof = _source_requirement_missing_proof(item)
+    categories = _source_requirement_categories(item, missing_proof)
+    can_remain_diagnostic_only = current_status in {
+        "DIAGNOSTIC_ONLY",
+        "CURRENT_VIEW_ONLY",
+        "RESEARCH_LABEL_ONLY",
+    }
+    requires_new_data_source = _source_requirement_requires_new_source(item, categories)
+    can_fix_with_existing_data = (
+        not requires_new_data_source
+        and "TRUE_PIT_LIMITATION" not in categories
+        and current_status != "CURRENT_VIEW_ONLY"
+    )
+    return {
+        "requirement_id": f"TRADING-737-P0-{index:02d}",
+        "component": component,
+        "current_status": current_status,
+        "blocked_reason": blocked_reason,
+        "missing_proof": missing_proof,
+        "required_raw_source": _source_requirement_raw_source(component, blocked_reason),
+        "required_timestamp_fields": _source_requirement_timestamp_fields(
+            component, blocked_reason
+        ),
+        "required_source_manifest": _source_requirement_manifest(component, blocked_reason),
+        "required_as_of_snapshot": _source_requirement_as_of_snapshot(component, blocked_reason),
+        "required_corporate_action_revision_policy": (
+            _source_requirement_revision_policy(component, blocked_reason)
+        ),
+        "requirement_categories": categories,
+        "can_fix_with_existing_data": can_fix_with_existing_data,
+        "requires_new_data_source": requires_new_data_source,
+        "can_remain_diagnostic_only": can_remain_diagnostic_only,
+        "promotion_grade_blocker": True,
+        "status_upgrade_attempted": False,
+        "allowed_uses_until_qualified": list(item.get("allowed_uses") or []),
+        "source_input_allowed": False,
+        "strategy_input_allowed": False,
+        "promotion_evidence_allowed": False,
+        "lookahead_violation_count": 0,
+        "production_effect": "none",
+        "broker_action": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _source_requirement_missing_proof(item: Mapping[str, Any]) -> list[str]:
+    proof = list(_strings(item.get("remaining_gap")))
+    if bool(item.get("missing_source_manifest")):
+        proof.append("source_manifest")
+    if bool(item.get("missing_available_time")):
+        proof.append("available_time")
+    if bool(item.get("missing_contract")):
+        proof.append("qualification_contract")
+    if bool(item.get("lineage_gap")):
+        proof.append("lineage")
+    if bool(item.get("current_view_only_risk")):
+        proof.append("as_of_snapshot")
+    if not proof:
+        proof.append("manual_forward_maturity_or_owner_review")
+    return _unique_strings(proof)
+
+
+def _source_requirement_categories(
+    item: Mapping[str, Any],
+    missing_proof: Sequence[str],
+) -> list[str]:
+    categories: list[str] = []
+    current_status = _text(item.get("after_status"), _text(item.get("before_status")))
+    blocked_reason = _text(item.get("blocked_reason"))
+    if "source_manifest" in missing_proof or "qualified_source_manifest_missing" in missing_proof:
+        categories.append("SOURCE_MANIFEST_REQUIRED")
+    if "available_time" in missing_proof or "as_of_available_time_missing" in missing_proof:
+        categories.append("AVAILABLE_TIME_REQUIRED")
+    if (
+        "as_of_snapshot" in missing_proof
+        or "current_view_only_as_of_snapshot_missing" in missing_proof
+    ):
+        categories.append("AS_OF_SNAPSHOT_REQUIRED")
+    if "corporate_action" in blocked_reason or "price" in blocked_reason:
+        categories.append("CORPORATE_ACTION_POLICY_REQUIRED")
+    if bool(item.get("current_view_only_risk")) or current_status == "CURRENT_VIEW_ONLY":
+        categories.append("VENDOR_CURRENT_VIEW_ONLY")
+    if current_status == "RESEARCH_LABEL_ONLY":
+        categories.append("RESEARCH_LABEL_ONLY_BY_DESIGN")
+    if not bool(item.get("repairable_without_relaxing_gate")):
+        categories.append("TRUE_PIT_LIMITATION")
+    if current_status in {"DIAGNOSTIC_ONLY", "CURRENT_VIEW_ONLY", "RESEARCH_LABEL_ONLY"}:
+        categories.append("MANUAL_REVIEW_REQUIRED")
+    return _unique_strings(categories)
+
+
+def _source_requirement_requires_new_source(
+    item: Mapping[str, Any],
+    categories: Sequence[str],
+) -> bool:
+    if "TRUE_PIT_LIMITATION" in categories:
+        return False
+    if _text(item.get("after_status")) == "CURRENT_VIEW_ONLY":
+        return True
+    if bool(item.get("missing_source_manifest")) or bool(item.get("missing_available_time")):
+        return True
+    return bool(item.get("lineage_gap"))
+
+
+def _source_requirement_raw_source(component: str, blocked_reason: str) -> list[str]:
+    if "price" in blocked_reason or "trend" in blocked_reason:
+        return [
+            "qualified PIT OHLCV adjusted-price vendor feed",
+            "split/dividend/corporate-action feed",
+            "representative universe coverage file for SPY/QQQ/SMH/MSFT/GOOGL/NVDA/AMD/TSM/CASH",
+        ]
+    if "valuation" in blocked_reason:
+        return ["as-of valuation snapshot provider", "revision-aware valuation raw extract"]
+    if "SEC" in blocked_reason or "fundamental" in blocked_reason:
+        return ["SEC EDGAR submissions/companyfacts raw files", "accession-level acceptance log"]
+    if component in {"asset_master", "tradable_universe"}:
+        return ["exchange listing master", "ticker history file", "tradability/calendar source"]
+    if component == "cost_liquidity_model":
+        return ["spread source", "ADV/dollar-volume source", "cash yield and financing source"]
+    if component == "regime_event_cluster_labels":
+        return ["event calendar source", "as-known-before event timestamp source"]
+    if component == "forward_evidence_archive":
+        return ["append-only forward decision archive", "matured outcome observation feed"]
+    return ["owner-approved source evidence bundle"]
+
+
+def _source_requirement_timestamp_fields(component: str, blocked_reason: str) -> list[str]:
+    if "SEC" in blocked_reason or "fundamental" in blocked_reason:
+        return ["filing_date", "accepted_time", "available_time", "ingestion_time"]
+    if "event" in blocked_reason or component == "regime_event_cluster_labels":
+        return ["event_time", "known_time", "source_published_time", "available_time"]
+    if component == "forward_evidence_archive":
+        return ["decision_time", "archive_time", "outcome_append_time", "outcome_available_time"]
+    return ["raw_event_time", "release_time", "available_time", "ingestion_time"]
+
+
+def _source_requirement_manifest(component: str, blocked_reason: str) -> dict[str, Any]:
+    return {
+        "required": True,
+        "fields": [
+            "provider_name",
+            "endpoint_or_file",
+            "request_parameters",
+            "download_timestamp",
+            "row_count",
+            "checksum",
+            "schema_version",
+            "coverage_universe",
+            "lineage_input_hash",
+        ],
+        "component": component,
+        "blocked_reason": blocked_reason,
+    }
+
+
+def _source_requirement_as_of_snapshot(component: str, blocked_reason: str) -> dict[str, Any]:
+    return {
+        "required": True,
+        "snapshot_fields": [
+            "snapshot_id",
+            "decision_time",
+            "available_time_cutoff",
+            "input_hash",
+            "config_hash",
+            "source_manifest_ref",
+            "lookahead_violation_count",
+        ],
+        "must_filter_available_time_on_or_before_decision_time": True,
+        "component": component,
+        "blocked_reason": blocked_reason,
+    }
+
+
+def _source_requirement_revision_policy(component: str, blocked_reason: str) -> dict[str, Any]:
+    required = (
+        component
+        in {
+            "pit_feature_store",
+            "asset_master",
+            "tradable_universe",
+            "cost_liquidity_model",
+        }
+        or "price" in blocked_reason
+    )
+    return {
+        "required": required,
+        "policy_fields": [
+            "as_reported_or_adjusted_basis",
+            "split_policy",
+            "dividend_policy",
+            "restatement_policy",
+            "revision_time",
+            "current_view_forbidden_without_as_of_snapshot",
+        ],
+    }
+
+
+def _source_requirement_category_counts(
+    requirements: Sequence[Mapping[str, Any]],
+) -> dict[str, int]:
+    counts = {category: 0 for category in _source_requirement_category_catalog()}
+    for item in requirements:
+        for category in _strings(item.get("requirement_categories")):
+            counts[category] = counts.get(category, 0) + 1
+    return counts
 
 
 def _p0_source_remediation_priorities() -> list[dict[str, Any]]:

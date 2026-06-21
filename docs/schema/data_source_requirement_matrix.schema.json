@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data Source Requirement Matrix",
+  "type": "object",
+  "required": [
+    "report_type",
+    "status",
+    "summary",
+    "source_requirements",
+    "source_requirement_categories",
+    "source_requirement_category_counts",
+    "remediation_execution_report_path",
+    "remediation_item_results_path",
+    "qualification_matrix_updated_path",
+    "production_effect",
+    "broker_action",
+    "promotion_gate_allowed",
+    "paper_shadow_change_allowed",
+    "production_weight_change_allowed",
+    "lookahead_violation_count"
+  ],
+  "properties": {
+    "report_type": {"const": "data_source_requirement_matrix"},
+    "production_effect": {"const": "none"},
+    "broker_action": {"const": "none"},
+    "promotion_gate_allowed": {"const": false},
+    "paper_shadow_change_allowed": {"const": false},
+    "production_weight_change_allowed": {"const": false},
+    "lookahead_violation_count": {"const": 0},
+    "summary": {
+      "type": "object",
+      "required": [
+        "source_requirement_count",
+        "P0_remaining_count",
+        "P0_requirement_count",
+        "can_fix_with_existing_data_count",
+        "requires_new_data_source_count",
+        "can_remain_diagnostic_only_count",
+        "promotion_grade_blocker_count",
+        "status_upgrade_attempted",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "status_upgrade_attempted": {"const": false},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    },
+    "source_requirement_categories": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/category"},
+      "minItems": 8
+    },
+    "source_requirements": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/sourceRequirement"},
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "category": {
+      "enum": [
+        "SOURCE_MANIFEST_REQUIRED",
+        "AVAILABLE_TIME_REQUIRED",
+        "AS_OF_SNAPSHOT_REQUIRED",
+        "CORPORATE_ACTION_POLICY_REQUIRED",
+        "VENDOR_CURRENT_VIEW_ONLY",
+        "RESEARCH_LABEL_ONLY_BY_DESIGN",
+        "TRUE_PIT_LIMITATION",
+        "MANUAL_REVIEW_REQUIRED"
+      ]
+    },
+    "sourceRequirement": {
+      "type": "object",
+      "required": [
+        "component",
+        "current_status",
+        "missing_proof",
+        "required_raw_source",
+        "required_timestamp_fields",
+        "required_source_manifest",
+        "required_as_of_snapshot",
+        "required_corporate_action_revision_policy",
+        "can_fix_with_existing_data",
+        "requires_new_data_source",
+        "can_remain_diagnostic_only",
+        "promotion_grade_blocker",
+        "status_upgrade_attempted",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "current_status": {
+          "enum": [
+            "DIAGNOSTIC_ONLY",
+            "BLOCKED_UNTIL_QUALIFIED",
+            "RESEARCH_LABEL_ONLY",
+            "CURRENT_VIEW_ONLY",
+            "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+          ]
+        },
+        "promotion_grade_blocker": {"const": true},
+        "status_upgrade_attempted": {"const": false},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    }
+  }
+}

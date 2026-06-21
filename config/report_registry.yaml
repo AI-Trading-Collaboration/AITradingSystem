@@ -6115,6 +6115,27 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: data_source_requirement_matrix
+    title: Data Source Requirement Matrix
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data source-qualification requirements
+    artifact_globs:
+      - outputs/data_quality/data_source_requirements/data_source_requirement_matrix.json
+      - outputs/data_quality/data_source_requirements/data_source_requirement_matrix.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-737 source-level requirements must be refreshed after each
+      TRADING-736 remediation execution run or whenever a P0 source proof,
+      raw source, timestamp field, source manifest, as-of snapshot, corporate
+      action policy, revision policy, or manual review requirement changes.
+    owner_action: collect_required_source_proofs_without_relaxing_PIT_data_quality_or_lineage_gates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

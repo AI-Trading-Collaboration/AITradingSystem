@@ -61,6 +61,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_data_foundation_acceptance.py",
             "tests/test_data_source_qualification_remediation.py",
             "tests/test_data_source_remediation_execution.py",
+            "tests/test_data_source_requirement_matrix.py",
         ),
     ),
     "contract-validation": TierSpec(
@@ -94,6 +95,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_data_foundation_acceptance.py",
             "tests/test_data_source_qualification_remediation.py",
             "tests/test_data_source_remediation_execution.py",
+            "tests/test_data_source_requirement_matrix.py",
         ),
     ),
     "report-validation": TierSpec(

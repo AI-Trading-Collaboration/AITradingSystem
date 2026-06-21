@@ -40,8 +40,12 @@ from ai_trading_system.data_foundation import (
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH,
     DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH,
     DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_PATH,
+    DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
     DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT,
     DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT,
+    DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_REPORT_PATH,
+    DEFAULT_DATA_SOURCE_REMEDIATION_ITEM_RESULTS_PATH,
+    DEFAULT_DATA_SOURCE_REQUIREMENTS_OUTPUT_ROOT,
     DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
     audit_pit_feature_snapshot,
     audit_universe,
@@ -51,6 +55,7 @@ from ai_trading_system.data_foundation import (
     run_data_foundation_acceptance,
     run_data_source_qualification_remediation,
     run_data_source_remediation_execution,
+    run_data_source_requirement_matrix,
     show_universe,
     validate_asset_master,
 )
@@ -189,6 +194,40 @@ def source_qualification_execute_remediation_command(
         remediation_plan_path=remediation_plan,
         updated_acceptance_summary_path=updated_acceptance_summary,
         acceptance_output_root=acceptance_output_root,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("requirements")
+def source_qualification_requirements_command(
+    remediation_execution_report: Annotated[
+        Path,
+        typer.Option(
+            "--remediation-execution-report",
+            help="TRADING-736 remediation execution report JSON。",
+        ),
+    ] = DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_REPORT_PATH,
+    remediation_item_results: Annotated[
+        Path,
+        typer.Option("--remediation-item-results", help="TRADING-736 item results JSON。"),
+    ] = DEFAULT_DATA_SOURCE_REMEDIATION_ITEM_RESULTS_PATH,
+    qualification_matrix_updated: Annotated[
+        Path,
+        typer.Option(
+            "--qualification-matrix-updated",
+            help="TRADING-736 updated qualification matrix JSON。",
+        ),
+    ] = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-737 source requirement matrix 输出目录。"),
+    ] = DEFAULT_DATA_SOURCE_REQUIREMENTS_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_source_requirement_matrix(
+        remediation_execution_report_path=remediation_execution_report,
+        remediation_item_results_path=remediation_item_results,
+        qualification_matrix_updated_path=qualification_matrix_updated,
         output_root=output_root,
     )
     _print_foundation_payload(payload)
