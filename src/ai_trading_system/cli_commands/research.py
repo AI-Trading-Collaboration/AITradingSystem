@@ -12,9 +12,11 @@ from ai_trading_system.cli_commands.research_foundation import (
     register_research_foundation_commands,
 )
 from ai_trading_system.controlled_strategy_batch import (
+    DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
     DEFAULT_FORWARD_EVIDENCE_CONTINUITY_EXTENSION_PATH,
     DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
     DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
@@ -25,7 +27,9 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH,
     DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH,
     DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
     DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH,
     DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
     DEFAULT_REGRET_ACTIVATION_INPUTS_PATH,
     DEFAULT_REGRET_CASEBOOK_EXPANSION_GATE_PATH,
@@ -47,14 +51,18 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_VALUE_SURFACE_UTILITY_PARETO_RANKING_PATH,
     DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH,
     DEFAULT_VALUE_SURFACE_WARNING_TRIAGE_PATH,
+    run_ai_after_chatgpt_full_regime_attribution_review,
+    run_cost_turnover_aware_regime_conditioned_value_surface,
     run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
     run_gbdt_residual_hypothesis_regime_conditioning,
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_long_horizon_quarantine_selection_review,
     run_regime_conditioned_value_surface_controlled_review,
     run_regime_conditioned_value_surface_design,
+    run_regime_conditioned_walk_forward_holdout,
     run_regime_horizon_loss_attribution_matrix,
     run_regret_activation_inputs_from_value_surface_failures,
     run_regret_casebook_activation_recheck,
@@ -70,6 +78,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_value_surface_direction_review,
     run_value_surface_failure_attribution,
     run_value_surface_utility_pareto_ranking_review,
+    run_value_surface_v2_controlled_review,
     run_value_surface_warning_triage_review,
 )
 from ai_trading_system.controlled_strategy_batch import (
@@ -1325,6 +1334,229 @@ def strategies_regime_conditioned_value_surface_controlled_review_command(
         )
     )
     _print_strategy_pilot_payload("Regime-conditioned value surface controlled review", payload)
+
+
+@strategies_app.command("cost-turnover-aware-regime-conditioned-value-surface")
+def strategies_cost_turnover_aware_regime_conditioned_value_surface_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-800 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design: Annotated[
+        Path,
+        typer.Option("--design", help="TRADING-795 regime-conditioned design JSON。"),
+    ] = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    guardrail_policy: Annotated[
+        Path,
+        typer.Option("--guardrail-policy", help="TRADING-796 guardrail/fallback JSON。"),
+    ] = DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-800 cost/turnover-aware 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_cost_turnover_aware_regime_conditioned_value_surface(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            horizon_stabilization_path=horizon_stabilization,
+            design_path=design,
+            guardrail_policy_path=guardrail_policy,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Cost/turnover-aware regime-conditioned value surface", payload)
+
+
+@strategies_app.command("long-horizon-quarantine-selection-review")
+def strategies_long_horizon_quarantine_selection_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-801 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    cost_turnover: Annotated[
+        Path,
+        typer.Option("--cost-turnover", help="TRADING-800 cost/turnover-aware JSON。"),
+    ] = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-801 long-horizon review 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_long_horizon_quarantine_selection_review(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            horizon_stabilization_path=horizon_stabilization,
+            cost_turnover_path=cost_turnover,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Long-horizon quarantine selection review", payload)
+
+
+@strategies_app.command("ai-after-chatgpt-full-regime-attribution-review")
+def strategies_ai_after_chatgpt_full_regime_attribution_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-802 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    loss_matrix: Annotated[
+        Path,
+        typer.Option("--loss-matrix", help="TRADING-797 loss matrix JSON。"),
+    ] = DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-802 regime attribution 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_ai_after_chatgpt_full_regime_attribution_review(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            loss_matrix_path=loss_matrix,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("ai_after_chatgpt_full regime attribution review", payload)
+
+
+@strategies_app.command("regime-conditioned-walk-forward-holdout")
+def strategies_regime_conditioned_walk_forward_holdout_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-803 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design: Annotated[
+        Path,
+        typer.Option("--design", help="TRADING-795 design JSON。"),
+    ] = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    cost_turnover: Annotated[
+        Path,
+        typer.Option("--cost-turnover", help="TRADING-800 cost/turnover-aware JSON。"),
+    ] = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    horizon_quarantine: Annotated[
+        Path,
+        typer.Option("--horizon-quarantine", help="TRADING-801 long-horizon JSON。"),
+    ] = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    regime_attribution: Annotated[
+        Path,
+        typer.Option("--regime-attribution", help="TRADING-802 regime attribution JSON。"),
+    ] = DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-803 holdout 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regime_conditioned_walk_forward_holdout(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            horizon_stabilization_path=horizon_stabilization,
+            design_path=design,
+            cost_turnover_path=cost_turnover,
+            horizon_quarantine_path=horizon_quarantine,
+            regime_attribution_path=regime_attribution,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regime-conditioned walk-forward holdout", payload)
+
+
+@strategies_app.command("value-surface-v2-controlled-review")
+def strategies_value_surface_v2_controlled_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-804 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    cost_turnover: Annotated[
+        Path,
+        typer.Option("--cost-turnover", help="TRADING-800 cost/turnover-aware JSON。"),
+    ] = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    horizon_quarantine: Annotated[
+        Path,
+        typer.Option("--horizon-quarantine", help="TRADING-801 long-horizon JSON。"),
+    ] = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    regime_attribution: Annotated[
+        Path,
+        typer.Option("--regime-attribution", help="TRADING-802 regime attribution JSON。"),
+    ] = DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
+    holdout: Annotated[
+        Path,
+        typer.Option("--holdout", help="TRADING-803 holdout JSON。"),
+    ] = DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-804 v2 controlled review 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_value_surface_v2_controlled_review(
+            config_path=config_path,
+            cost_turnover_path=cost_turnover,
+            horizon_quarantine_path=horizon_quarantine,
+            regime_attribution_path=regime_attribution,
+            holdout_path=holdout,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Value surface v2 controlled review", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

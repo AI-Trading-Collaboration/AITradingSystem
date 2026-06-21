@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_799
+policy_id: controlled_strategy_research_next_stage_775_804
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -434,3 +434,90 @@ regime_conditioned_value_surface_controlled_review:
     Controlled review compares guarded variants against the original value
     surface. It can continue research or pivot, but cannot permit promotion,
     paper-shadow, production weight changes, or broker action.
+cost_turnover_aware_regime_conditioned_value_surface:
+  task_id: TRADING-800
+  turnover_penalty_bps: 25
+  action_hysteresis_min_delta_bps: 25
+  no_trade_band_abs_delta_bps: 10
+  max_action_change_cap_per_asset: 2
+  beat_rate_retention_floor: 0.80
+  v2_score_turnover_penalty_weight: 0.001
+  v2_score_cost_penalty_weight: 0.01
+  v2_score_tail_loss_penalty_weight: 1.0
+  allowed_variants:
+    - regime_conditioned_turnover_penalty
+    - regime_conditioned_action_hysteresis
+    - regime_conditioned_no_trade_band
+    - regime_conditioned_benchmark_fallback
+    - regime_conditioned_max_action_change_cap
+  rationale: >
+    These are controlled diagnostic variants that test whether the regime
+    conditioned repair can keep tail-loss benefits without worsening
+    turnover/cost. They are not production execution rules.
+long_horizon_quarantine_selection_review:
+  task_id: TRADING-801
+  reviewed_horizons:
+    - 20d
+    - 60d
+  downgrade_multiplier: 0.50
+  trend_confirmation_required: true
+  high_loss_share_floor: 0.25
+  fallback_to_shorter_horizon: 10d
+  comparison_variants:
+    - original
+    - disable_20d_60d
+    - downgrade_20d_60d
+    - regime_only_20d_60d
+    - confirmation_required_20d_60d
+    - fallback_to_shorter_horizon
+  rationale: >
+    Long-horizon quarantine tests whether 20d/60d losses point to a horizon
+    selector problem rather than a broader action model failure.
+ai_after_chatgpt_full_regime_attribution:
+  task_id: TRADING-802
+  target_regime: ai_after_chatgpt_full
+  benchmark_stability_drawdown_floor_bps: 0
+  overoptimism_delta_floor_bps: 0
+  candidate_repairs:
+    - regime-specific action cap
+    - regime-specific horizon cap
+    - regime-specific fallback benchmark
+    - regime-specific volatility guard
+  rationale: >
+    The top loss regime must be decomposed before value surface v2 can be
+    interpreted. Findings are diagnostic only and cannot justify promotion.
+regime_conditioned_walk_forward_holdout:
+  task_id: TRADING-803
+  holdout_dimensions:
+    - regime_segment
+    - horizon
+    - asset_cluster
+    - date_window
+  min_holdout_case_count: 20
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_floor: 0.10
+  cost_turnover_not_worse_required: true
+  holdout_pass_rate_floor: 0.60
+  date_window: month
+  rationale: >
+    Holdout checks whether v2 improvements are only fitted to known failure
+    pockets. A failed holdout keeps the line in watchlist or pivot status.
+value_surface_v2_controlled_review:
+  task_id: TRADING-804
+  allowed_decisions:
+    - CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_HORIZON_SELECTOR
+    - KILL_VALUE_SURFACE
+    - DATA_REQUIRED
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_required_share: 0.20
+  beat_rate_retention_floor: 0.80
+  turnover_cost_not_worse_required: true
+  holdout_pass_rate_floor: 0.60
+  horizon_quarantine_tail_loss_reduction_floor: 0.20
+  rationale: >
+    V2 can only continue to larger controlled research when return, tail-loss,
+    beat-rate, turnover/cost and holdout criteria all hold. This review cannot
+    permit promotion, paper-shadow, production weights, or broker action.

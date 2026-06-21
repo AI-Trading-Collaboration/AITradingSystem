@@ -123,6 +123,23 @@ DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_CONTROLLED_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
     / "regime_conditioned_value_surface_controlled_review.json"
 )
+DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "cost_turnover_aware_regime_conditioned_value_surface.json"
+)
+DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "long_horizon_quarantine_selection_review.json"
+)
+DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "ai_after_chatgpt_full_regime_attribution_review.json"
+)
+DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "regime_conditioned_walk_forward_holdout.json"
+)
+DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_v2_controlled_review.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -2499,6 +2516,335 @@ def run_regime_conditioned_value_surface_controlled_review(
         payload,
         output_root=output_root,
         artifact_id="regime_conditioned_value_surface_controlled_review",
+    )
+    return payload
+
+
+def run_cost_turnover_aware_regime_conditioned_value_surface(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design_path: Path = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    guardrail_policy_path: Path = DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    design = _read_json_or_empty(design_path)
+    guardrail = _read_json_or_empty(guardrail_policy_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    comparison = _cost_turnover_aware_variant_comparison(
+        selected_cases=selected_cases,
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+    )
+    best = comparison["summary"]["best_variant_by_v2_score"]
+    payload = _controlled_payload(
+        report_type="cost_turnover_aware_regime_conditioned_value_surface",
+        title="Cost/turnover-aware regime-conditioned value surface",
+        status="COST_TURNOVER_AWARE_VARIANTS_REVIEWED",
+        summary={
+            "case_count": len(selected_cases),
+            "variant_count": len(comparison["variant_metrics"]),
+            "best_variant_by_v2_score": best,
+            "mean_delta_improved": comparison["summary"]["mean_delta_improved"],
+            "tail_loss_reduced": comparison["summary"]["tail_loss_reduced"],
+            "turnover_cost_not_worse": comparison["summary"]["turnover_cost_not_worse"],
+            "beat_rate_retained": comparison["summary"]["beat_rate_retained"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        cost_turnover_policy=_next_stage_section(
+            config, "cost_turnover_aware_regime_conditioned_value_surface"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        design_source=_artifact_status(design, design_path),
+        guardrail_policy_source=_artifact_status(guardrail, guardrail_policy_path),
+        variant_metrics=comparison["variant_metrics"],
+        variant_rules=comparison["variant_rules"],
+        transition_report=comparison["transition_report"],
+        v2_score_policy=comparison["v2_score_policy"],
+        diagnostic_boundary=comparison["diagnostic_boundary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="cost_turnover_aware_regime_conditioned_value_surface",
+    )
+    return payload
+
+
+def run_long_horizon_quarantine_selection_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    cost_turnover_path: Path = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    cost_turnover = _read_json_or_empty(cost_turnover_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _long_horizon_quarantine_review(
+        selected_cases=selected_cases,
+        config=config,
+        horizon=horizon,
+    )
+    payload = _controlled_payload(
+        report_type="long_horizon_quarantine_selection_review",
+        title="Long-horizon quarantine / horizon selection review",
+        status="LONG_HORIZON_QUARANTINE_REVIEW_COMPLETE",
+        summary={
+            "reviewed_horizon_count": len(review["reviewed_horizons"]),
+            "best_comparison_variant": review["summary"]["best_comparison_variant"],
+            "best_variant_mean_delta_vs_benchmark": review["summary"][
+                "best_variant_mean_delta_vs_benchmark"
+            ],
+            "tail_loss_reduction_best_variant": review["summary"][
+                "tail_loss_reduction_best_variant"
+            ],
+            "horizon_selector_issue_likely": review["summary"]["horizon_selector_issue_likely"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        quarantine_policy=_next_stage_section(config, "long_horizon_quarantine_selection_review"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        cost_turnover_source=_artifact_status(cost_turnover, cost_turnover_path),
+        horizon_loss_matrix=review["horizon_loss_matrix"],
+        horizon_return_matrix=review["horizon_return_matrix"],
+        horizon_turnover_matrix=review["horizon_turnover_matrix"],
+        horizon_cliff_matrix=review["horizon_cliff_matrix"],
+        disable_vs_downgrade_comparison=review["disable_vs_downgrade_comparison"],
+        reviewed_horizons=review["reviewed_horizons"],
+        review_summary=review["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="long_horizon_quarantine_selection_review",
+    )
+    return payload
+
+
+def run_ai_after_chatgpt_full_regime_attribution_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    loss_matrix_path: Path = DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    loss_matrix = _read_json_or_empty(loss_matrix_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _ai_regime_attribution_review(selected_cases, config)
+    payload = _controlled_payload(
+        report_type="ai_after_chatgpt_full_regime_attribution_review",
+        title="ai_after_chatgpt_full regime attribution review",
+        status="AI_REGIME_ATTRIBUTION_REVIEW_COMPLETE",
+        summary={
+            "target_regime": review["summary"]["target_regime"],
+            "regime_case_count": review["summary"]["regime_case_count"],
+            "regime_losing_case_count": review["summary"]["regime_losing_case_count"],
+            "top_loss_asset": review["summary"]["top_loss_asset"],
+            "top_loss_horizon": review["summary"]["top_loss_horizon"],
+            "top_loss_action": review["summary"]["top_loss_action"],
+            "value_surface_systematic_overoptimism": review["summary"][
+                "value_surface_systematic_overoptimism"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        regime_attribution_policy=_next_stage_section(
+            config, "ai_after_chatgpt_full_regime_attribution"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        loss_matrix_source=_artifact_status(loss_matrix, loss_matrix_path),
+        loss_by_asset=review["loss_by_asset"],
+        loss_by_horizon=review["loss_by_horizon"],
+        loss_by_action=review["loss_by_action"],
+        loss_by_cluster=review["loss_by_cluster"],
+        benchmark_stability=review["benchmark_stability"],
+        value_surface_overoptimism=review["value_surface_overoptimism"],
+        candidate_repairs=review["candidate_repairs"],
+        review_summary=review["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="ai_after_chatgpt_full_regime_attribution_review",
+    )
+    return payload
+
+
+def run_regime_conditioned_walk_forward_holdout(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design_path: Path = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    cost_turnover_path: Path = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    horizon_quarantine_path: Path = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    regime_attribution_path: Path = DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    design = _read_json_or_empty(design_path)
+    cost_turnover = _read_json_or_empty(cost_turnover_path)
+    horizon_quarantine = _read_json_or_empty(horizon_quarantine_path)
+    regime_attribution = _read_json_or_empty(regime_attribution_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    holdout = _regime_conditioned_holdout_review(
+        selected_cases=selected_cases,
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+        cost_turnover=cost_turnover,
+    )
+    payload = _controlled_payload(
+        report_type="regime_conditioned_walk_forward_holdout",
+        title="Regime-conditioned walk-forward holdout",
+        status="REGIME_CONDITIONED_HOLDOUT_REVIEW_COMPLETE",
+        summary={
+            "holdout_case_count": holdout["summary"]["holdout_case_count"],
+            "holdout_pass_count": holdout["summary"]["holdout_pass_count"],
+            "holdout_pass_rate": holdout["summary"]["holdout_pass_rate"],
+            "overfit_risk": holdout["summary"]["overfit_risk"],
+            "best_variant": holdout["summary"]["best_variant"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        holdout_policy=_next_stage_section(config, "regime_conditioned_walk_forward_holdout"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        design_source=_artifact_status(design, design_path),
+        cost_turnover_source=_artifact_status(cost_turnover, cost_turnover_path),
+        horizon_quarantine_source=_artifact_status(horizon_quarantine, horizon_quarantine_path),
+        regime_attribution_source=_artifact_status(regime_attribution, regime_attribution_path),
+        leave_one_regime_out=holdout["leave_one_regime_out"],
+        leave_one_horizon_out=holdout["leave_one_horizon_out"],
+        leave_one_asset_cluster_out=holdout["leave_one_asset_cluster_out"],
+        leave_one_date_window_out=holdout["leave_one_date_window_out"],
+        holdout_summary=holdout["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="regime_conditioned_walk_forward_holdout",
+    )
+    return payload
+
+
+def run_value_surface_v2_controlled_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    cost_turnover_path: Path = DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    horizon_quarantine_path: Path = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    regime_attribution_path: Path = DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
+    holdout_path: Path = DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    cost_turnover = _read_json_or_empty(cost_turnover_path)
+    horizon_quarantine = _read_json_or_empty(horizon_quarantine_path)
+    regime_attribution = _read_json_or_empty(regime_attribution_path)
+    holdout = _read_json_or_empty(holdout_path)
+    decision = _value_surface_v2_review_decision(
+        config=config,
+        cost_turnover=cost_turnover,
+        horizon_quarantine=horizon_quarantine,
+        regime_attribution=regime_attribution,
+        holdout=holdout,
+    )
+    payload = _controlled_payload(
+        report_type="value_surface_v2_controlled_review",
+        title="Value surface v2 controlled review",
+        status="VALUE_SURFACE_V2_CONTROLLED_REVIEW_COMPLETE",
+        summary={
+            "value_surface_v2_decision": decision["decision"],
+            "best_cost_turnover_variant": decision["best_cost_turnover_variant"],
+            "mean_delta_condition_met": decision["mean_delta_condition_met"],
+            "tail_loss_condition_met": decision["tail_loss_condition_met"],
+            "turnover_cost_condition_met": decision["turnover_cost_condition_met"],
+            "beat_rate_condition_met": decision["beat_rate_condition_met"],
+            "holdout_condition_met": decision["holdout_condition_met"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        v2_review_policy=_next_stage_section(config, "value_surface_v2_controlled_review"),
+        cost_turnover_source=_artifact_status(cost_turnover, cost_turnover_path),
+        horizon_quarantine_source=_artifact_status(horizon_quarantine, horizon_quarantine_path),
+        regime_attribution_source=_artifact_status(regime_attribution, regime_attribution_path),
+        holdout_source=_artifact_status(holdout, holdout_path),
+        review_decision=decision,
+        evidence_summary=_value_surface_v2_evidence_summary(
+            cost_turnover=cost_turnover,
+            horizon_quarantine=horizon_quarantine,
+            regime_attribution=regime_attribution,
+            holdout=holdout,
+        ),
+        disallowed_actions=[
+            "expand_unconditional_value_surface",
+            "train_gbdt_nn_or_rl_strategy",
+            "enter_paper_shadow",
+            "continue_based_only_on_mean_delta",
+            "ignore_turnover_cost_not_worse_false",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="value_surface_v2_controlled_review",
     )
     return payload
 
@@ -5588,6 +5934,747 @@ def _high_loss_group_values(
         return selected
     top = max(groups, key=lambda row: _float(row.get("loss_share"), 0.0), default={})
     return [str(top.get(group_key))] if top.get(group_key) is not None else []
+
+
+def _cost_turnover_aware_variant_comparison(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    design: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "cost_turnover_aware_regime_conditioned_value_surface")
+    variants = [str(item) for item in policy.get("allowed_variants", [])]
+    original_rows = [dict(row) for row in selected_cases]
+    variant_rows = {
+        variant_id: _cost_aware_variant_cases(
+            selected_cases=selected_cases,
+            variant_id=variant_id,
+            config=config,
+            failure=failure,
+            horizon=horizon,
+            design=design,
+        )
+        for variant_id in variants
+    }
+    original_metric = _v2_variant_metric_row("original_value_surface", original_rows, config)
+    metrics = [
+        _add_variant_deltas(_v2_variant_metric_row(variant_id, rows, config), original_metric)
+        for variant_id, rows in variant_rows.items()
+    ]
+    best = max(metrics, key=lambda row: _v2_metric_score(row, policy), default={})
+    return {
+        "summary": {
+            "best_variant_by_v2_score": best.get("variant_id"),
+            "best_variant_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+            "original_mean_delta_vs_benchmark": original_metric.get("mean_delta_vs_benchmark"),
+            "mean_delta_improved": _float(best.get("mean_delta_vs_benchmark"), 0.0)
+            > _float(original_metric.get("mean_delta_vs_benchmark"), 0.0),
+            "tail_loss_reduced": _float(best.get("tail_loss_delta"), 0.0) < 0,
+            "turnover_cost_not_worse": _float(best.get("turnover_delta"), 0.0) <= 0
+            and _float(best.get("cost_delta"), 0.0) <= 0,
+            "beat_rate_retained": _beat_rate_retention(original_metric, best)
+            >= _float(policy.get("beat_rate_retention_floor"), 0.80),
+            "promotion_gate_allowed": False,
+        },
+        "variant_metrics": [original_metric, *metrics],
+        "variant_rules": _cost_turnover_variant_rules(policy),
+        "transition_report": {
+            "original": _transition_report(original_rows),
+            **{variant_id: _transition_report(rows) for variant_id, rows in variant_rows.items()},
+        },
+        "v2_score_policy": {
+            "turnover_penalty_weight": policy.get("v2_score_turnover_penalty_weight"),
+            "cost_penalty_weight": policy.get("v2_score_cost_penalty_weight"),
+            "tail_loss_penalty_weight": policy.get("v2_score_tail_loss_penalty_weight"),
+            "policy_source": (
+                "controlled_strategy_next_stage_research."
+                "cost_turnover_aware_regime_conditioned_value_surface"
+            ),
+        },
+        "diagnostic_boundary": {
+            "retrospective_ablation_only": True,
+            "requires_forward_cost_confirmation": True,
+            "production_execution_rule": False,
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _cost_aware_variant_cases(
+    *,
+    selected_cases: list[dict[str, Any]],
+    variant_id: str,
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    design: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    guardrail_policy = _next_stage_section(config, "tail_loss_guardrail_fallback_policy")
+    policy = _next_stage_section(config, "cost_turnover_aware_regime_conditioned_value_surface")
+    risk_context = _guardrail_risk_context(
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+    )
+    base_rows = [
+        _apply_guardrail_variant(
+            dict(row),
+            "regime_conditioned_value_surface",
+            risk_context,
+            guardrail_policy,
+        )
+        for row in selected_cases
+    ]
+    rows = _annotate_transitions(base_rows)
+    if variant_id == "regime_conditioned_turnover_penalty":
+        penalty = _float(policy.get("turnover_penalty_bps"), 25.0) / 10_000.0
+        return [_apply_turnover_penalty(row, penalty) for row in rows]
+    if variant_id == "regime_conditioned_action_hysteresis":
+        threshold = _float(policy.get("action_hysteresis_min_delta_bps"), 25.0) / 10_000.0
+        return [
+            (
+                _fallback_case_to_benchmark(dict(row), "action_hysteresis_fallback")
+                if row.get("action_flip_for_review")
+                and abs(_float(row.get("delta_vs_benchmark"), 0.0)) < threshold
+                else row
+            )
+            for row in rows
+        ]
+    if variant_id == "regime_conditioned_no_trade_band":
+        band = _float(policy.get("no_trade_band_abs_delta_bps"), 10.0) / 10_000.0
+        return [
+            (
+                _fallback_case_to_benchmark(dict(row), "no_trade_band_fallback")
+                if abs(_float(row.get("delta_vs_benchmark"), 0.0)) < band
+                else row
+            )
+            for row in rows
+        ]
+    if variant_id == "regime_conditioned_benchmark_fallback":
+        return [
+            _apply_guardrail_variant(
+                dict(row),
+                "benchmark_fallback_value_surface",
+                risk_context,
+                guardrail_policy,
+            )
+            for row in selected_cases
+        ]
+    if variant_id == "regime_conditioned_max_action_change_cap":
+        cap = max(0, _first_int(policy.get("max_action_change_cap_per_asset")))
+        return _apply_action_change_cap(rows, cap)
+    return rows
+
+
+def _apply_turnover_penalty(row: dict[str, Any], penalty: float) -> dict[str, Any]:
+    output = dict(row)
+    if row.get("action_flip_for_review") or row.get("horizon_switch_for_review"):
+        output["selected_realized_net_return"] = _round(
+            _float(row.get("selected_realized_net_return"), 0.0) - penalty
+        )
+        output["delta_vs_benchmark"] = _round(_float(row.get("delta_vs_benchmark"), 0.0) - penalty)
+        output["selected_estimated_cost"] = _round(
+            _float(row.get("selected_estimated_cost"), 0.0) + penalty
+        )
+        output["value_surface_beats_benchmark"] = _float(output.get("delta_vs_benchmark"), 0.0) >= 0
+        output["guardrail_action"] = "turnover_penalty_applied"
+    return output
+
+
+def _apply_action_change_cap(rows: list[dict[str, Any]], cap: int) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    output = []
+    for row in rows:
+        item = dict(row)
+        asset = str(item.get("asset", "unknown"))
+        if item.get("action_flip_for_review"):
+            counts[asset] = counts.get(asset, 0) + 1
+            if counts[asset] > cap:
+                item = _fallback_case_to_benchmark(item, "max_action_change_cap_fallback")
+        output.append(item)
+    return output
+
+
+def _annotate_transitions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    previous_by_asset: dict[str, dict[str, Any]] = {}
+    output = []
+    horizon_order = {"1d": 1, "5d": 5, "10d": 10, "20d": 20, "60d": 60}
+    ordered = sorted(
+        [dict(row) for row in rows],
+        key=lambda row: (
+            str(row.get("asset")),
+            str(row.get("date")),
+            horizon_order.get(str(row.get("horizon")), _first_int(row.get("horizon_days"))),
+        ),
+    )
+    for row in ordered:
+        asset = str(row.get("asset", "unknown"))
+        previous = previous_by_asset.get(asset)
+        row["action_flip_for_review"] = previous is not None and previous.get(
+            "selected_action"
+        ) != row.get("selected_action")
+        row["horizon_switch_for_review"] = previous is not None and previous.get(
+            "horizon"
+        ) != row.get("horizon")
+        previous_by_asset[asset] = row
+        output.append(row)
+    return output
+
+
+def _transition_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    annotated = _annotate_transitions(rows)
+    action_flips = sum(1 for row in annotated if row.get("action_flip_for_review"))
+    horizon_switches = sum(1 for row in annotated if row.get("horizon_switch_for_review"))
+    return {
+        "case_count": len(annotated),
+        "action_flip_count": action_flips,
+        "horizon_switch_count": horizon_switches,
+        "action_flip_rate": _round(action_flips / len(annotated) if annotated else 0.0),
+        "horizon_switch_rate": _round(horizon_switches / len(annotated) if annotated else 0.0),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _v2_variant_metric_row(
+    variant_id: str,
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    metric = _variant_metric_row(variant_id, rows, config)
+    transition = _transition_report(rows)
+    metric["action_flip_count"] = transition["action_flip_count"]
+    metric["horizon_switch_count"] = transition["horizon_switch_count"]
+    metric["promotion_gate_allowed"] = False
+    return metric
+
+
+def _add_variant_deltas(
+    metric: dict[str, Any],
+    original_metric: Mapping[str, Any],
+) -> dict[str, Any]:
+    output = dict(metric)
+    for key, delta_key in [
+        ("turnover", "turnover_delta"),
+        ("cost", "cost_delta"),
+        ("drawdown", "drawdown_delta"),
+        ("tail_loss_contribution", "tail_loss_delta"),
+        ("mean_delta_vs_benchmark", "mean_delta_improvement"),
+        ("value_surface_beats_benchmark_rate", "beat_rate_delta"),
+    ]:
+        output[delta_key] = _round(
+            _float(output.get(key), 0.0) - _float(original_metric.get(key), 0.0)
+        )
+    return output
+
+
+def _v2_metric_score(row: Mapping[str, Any], policy: Mapping[str, Any]) -> float:
+    turnover_weight = _float(policy.get("v2_score_turnover_penalty_weight"), 0.001)
+    cost_weight = _float(policy.get("v2_score_cost_penalty_weight"), 0.01)
+    tail_loss_weight = _float(policy.get("v2_score_tail_loss_penalty_weight"), 1.0)
+    return (
+        _float(row.get("mean_delta_vs_benchmark"), -999.0)
+        - max(0.0, _float(row.get("turnover_delta"), 0.0)) * turnover_weight
+        - max(0.0, _float(row.get("cost_delta"), 0.0)) * cost_weight
+        - max(0.0, _float(row.get("tail_loss_delta"), 0.0)) * tail_loss_weight
+    )
+
+
+def _cost_turnover_variant_rules(policy: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "variant_id": "regime_conditioned_turnover_penalty",
+            "rule": "apply configured return penalty when action or horizon switches",
+            "turnover_penalty_bps": policy.get("turnover_penalty_bps"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "regime_conditioned_action_hysteresis",
+            "rule": "fallback to benchmark when action changes but delta is inside hysteresis band",
+            "action_hysteresis_min_delta_bps": policy.get("action_hysteresis_min_delta_bps"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "regime_conditioned_no_trade_band",
+            "rule": "fallback to benchmark when benchmark-relative delta is inside no-trade band",
+            "no_trade_band_abs_delta_bps": policy.get("no_trade_band_abs_delta_bps"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "regime_conditioned_benchmark_fallback",
+            "rule": "fallback to benchmark for high-risk disagreement cases",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "regime_conditioned_max_action_change_cap",
+            "rule": "fallback to benchmark after configured action-change cap per asset",
+            "max_action_change_cap_per_asset": policy.get("max_action_change_cap_per_asset"),
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _long_horizon_quarantine_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "long_horizon_quarantine_selection_review")
+    reviewed = [str(item) for item in policy.get("reviewed_horizons", [])]
+    original_metric = _variant_metric_row("original", selected_cases, config)
+    variants = {
+        variant_id: _long_horizon_variant_cases(selected_cases, config, variant_id, reviewed)
+        for variant_id in [str(item) for item in policy.get("comparison_variants", [])]
+    }
+    metrics = [
+        _add_variant_deltas(_variant_metric_row(variant_id, rows, config), original_metric)
+        for variant_id, rows in variants.items()
+    ]
+    best = max(
+        metrics, key=lambda row: _float(row.get("mean_delta_vs_benchmark"), -999.0), default={}
+    )
+    tail_reduction = _tail_loss_reduction(original_metric, best)
+    return {
+        "summary": {
+            "best_comparison_variant": best.get("variant_id"),
+            "best_variant_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+            "tail_loss_reduction_best_variant": _round(tail_reduction),
+            "horizon_selector_issue_likely": tail_reduction
+            >= _float(policy.get("high_loss_share_floor"), 0.25),
+            "promotion_gate_allowed": False,
+        },
+        "reviewed_horizons": reviewed,
+        "horizon_loss_matrix": _horizon_loss_matrix(selected_cases),
+        "horizon_return_matrix": _horizon_return_matrix(selected_cases),
+        "horizon_turnover_matrix": _horizon_turnover_matrix(selected_cases),
+        "horizon_cliff_matrix": _horizon_cliff_matrix(horizon),
+        "disable_vs_downgrade_comparison": metrics,
+    }
+
+
+def _long_horizon_variant_cases(
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    variant_id: str,
+    reviewed_horizons: list[str],
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "long_horizon_quarantine_selection_review")
+    target_regime = _next_stage_section(config, "ai_after_chatgpt_full_regime_attribution").get(
+        "target_regime",
+        "ai_after_chatgpt_full",
+    )
+    multiplier = _float(policy.get("downgrade_multiplier"), 0.50)
+    output = []
+    for row in rows:
+        item = dict(row)
+        reviewed = str(item.get("horizon")) in set(reviewed_horizons)
+        if variant_id == "disable_20d_60d" and reviewed:
+            item = _fallback_case_to_benchmark(item, "long_horizon_disabled")
+        elif variant_id == "downgrade_20d_60d" and reviewed:
+            item = _scale_case_delta(item, multiplier, "long_horizon_downgraded")
+        elif (
+            variant_id == "regime_only_20d_60d"
+            and reviewed
+            and item.get("regime_segment") == target_regime
+        ):
+            item = _fallback_case_to_benchmark(item, "long_horizon_target_regime_quarantine")
+        elif (
+            variant_id == "confirmation_required_20d_60d"
+            and reviewed
+            and item.get("selected_action") != item.get("benchmark_action")
+        ):
+            item = _fallback_case_to_benchmark(item, "long_horizon_confirmation_fallback")
+        elif variant_id == "fallback_to_shorter_horizon" and reviewed:
+            item = _fallback_case_to_benchmark(item, "long_horizon_shorter_horizon_fallback")
+        item["variant_id"] = variant_id
+        item["promotion_gate_allowed"] = False
+        output.append(item)
+    return output
+
+
+def _horizon_loss_matrix(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    losers = [row for row in rows if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    return _loss_concentration(losers, "horizon")
+
+
+def _horizon_return_matrix(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return _walk_forward_group_result(rows, "horizon")
+
+
+def _horizon_turnover_matrix(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get("horizon", "unknown")), []).append(row)
+    return [
+        {
+            "horizon": horizon,
+            "case_count": len(values),
+            "turnover": _round(
+                sum(_float(row.get("selected_turnover_cost_assumption"), 0.0) for row in values)
+            ),
+            "cost": _round(sum(_float(row.get("selected_estimated_cost"), 0.0) for row in values)),
+            "promotion_gate_allowed": False,
+        }
+        for horizon, values in sorted(grouped.items())
+    ]
+
+
+def _horizon_cliff_matrix(horizon: Mapping[str, Any]) -> list[dict[str, Any]]:
+    report = (
+        horizon.get("utility_profile_cliff_report")
+        if isinstance(horizon.get("utility_profile_cliff_report"), Mapping)
+        else {}
+    )
+    return _records(report.get("horizon_cliff_rows"))
+
+
+def _ai_regime_attribution_review(
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "ai_after_chatgpt_full_regime_attribution")
+    target_regime = str(policy.get("target_regime", "ai_after_chatgpt_full"))
+    regime_rows = [row for row in selected_cases if row.get("regime_segment") == target_regime]
+    losing = [row for row in regime_rows if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    enriched = [
+        {
+            **row,
+            "action": row.get("selected_action"),
+            "cluster": row.get("asset_cluster"),
+        }
+        for row in losing
+    ]
+    loss_by_asset = _loss_matrix_group(enriched, "asset")
+    loss_by_horizon = _loss_matrix_group(enriched, "horizon")
+    loss_by_action = _loss_matrix_group(enriched, "action")
+    loss_by_cluster = _loss_matrix_group(enriched, "cluster")
+    benchmark_stability = _benchmark_stability_report(regime_rows)
+    overoptimism = _value_surface_overoptimism_report(regime_rows)
+    return {
+        "summary": {
+            "target_regime": target_regime,
+            "regime_case_count": len(regime_rows),
+            "regime_losing_case_count": len(losing),
+            "top_loss_asset": _top_group_value(loss_by_asset, "asset"),
+            "top_loss_horizon": _top_group_value(loss_by_horizon, "horizon"),
+            "top_loss_action": _top_group_value(loss_by_action, "action"),
+            "top_loss_cluster": _top_group_value(loss_by_cluster, "cluster"),
+            "value_surface_systematic_overoptimism": overoptimism[
+                "systematic_overoptimism_for_review"
+            ],
+            "promotion_gate_allowed": False,
+        },
+        "loss_by_asset": loss_by_asset,
+        "loss_by_horizon": loss_by_horizon,
+        "loss_by_action": loss_by_action,
+        "loss_by_cluster": loss_by_cluster,
+        "benchmark_stability": benchmark_stability,
+        "value_surface_overoptimism": overoptimism,
+        "candidate_repairs": [
+            {
+                "repair": str(repair),
+                "diagnostic_evidence": {
+                    "top_loss_asset": _top_group_value(loss_by_asset, "asset"),
+                    "top_loss_horizon": _top_group_value(loss_by_horizon, "horizon"),
+                    "top_loss_action": _top_group_value(loss_by_action, "action"),
+                    "top_loss_cluster": _top_group_value(loss_by_cluster, "cluster"),
+                },
+                "requires_followup_ablation": True,
+                "promotion_gate_allowed": False,
+            }
+            for repair in policy.get("candidate_repairs", [])
+        ],
+    }
+
+
+def _top_group_value(report: Mapping[str, Any], group_key: str) -> str | None:
+    groups = _records(report.get("groups"))
+    if not groups:
+        return None
+    return str(groups[0].get(group_key))
+
+
+def _benchmark_stability_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    selected = [_float(row.get("selected_realized_net_return"), 0.0) for row in rows]
+    benchmark = [_float(row.get("benchmark_realized_net_return"), 0.0) for row in rows]
+    selected_negative = sum(1 for value in selected if value < 0)
+    benchmark_negative = sum(1 for value in benchmark if value < 0)
+    return {
+        "case_count": len(rows),
+        "mean_selected_realized_net_return": _round(_mean(selected)),
+        "mean_benchmark_realized_net_return": _round(_mean(benchmark)),
+        "selected_negative_rate": _round(selected_negative / len(rows) if rows else 0.0),
+        "benchmark_negative_rate": _round(benchmark_negative / len(rows) if rows else 0.0),
+        "benchmark_more_stable": benchmark_negative <= selected_negative,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _value_surface_overoptimism_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    optimism = [
+        _float(row.get("selected_net_utility"), 0.0)
+        - _float(row.get("selected_realized_net_return"), 0.0)
+        for row in rows
+        if row.get("selected_net_utility") is not None
+    ]
+    positive = [value for value in optimism if value > 0]
+    return {
+        "case_count": len(optimism),
+        "mean_utility_minus_realized": _round(_mean(optimism)),
+        "positive_overoptimism_case_count": len(positive),
+        "positive_overoptimism_rate": _round(len(positive) / len(optimism) if optimism else 0.0),
+        "systematic_overoptimism_for_review": (
+            len(positive) / len(optimism) >= 0.50 if optimism else False
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _regime_conditioned_holdout_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    design: Mapping[str, Any],
+    cost_turnover: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "regime_conditioned_walk_forward_holdout")
+    best_variant = str(
+        cost_turnover.get("summary", {}).get("best_variant_by_v2_score")
+        or "regime_conditioned_benchmark_fallback"
+    )
+    candidate_cases = _cost_aware_variant_cases(
+        selected_cases=selected_cases,
+        variant_id=best_variant,
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+    )
+    dimensions = [str(item) for item in policy.get("holdout_dimensions", [])]
+    result_by_dimension = {
+        dimension: _holdout_dimension_results(
+            original_cases=selected_cases,
+            candidate_cases=candidate_cases,
+            config=config,
+            dimension=dimension,
+        )
+        for dimension in dimensions
+    }
+    rows = [row for values in result_by_dimension.values() for row in values]
+    eligible = [row for row in rows if not row.get("insufficient_holdout_cases")]
+    passed = [row for row in eligible if row.get("passed")]
+    holdout_pass_rate_floor = _float(policy.get("holdout_pass_rate_floor"), 0.60)
+    holdout_pass_rate = len(passed) / len(eligible) if eligible else 0.0
+    return {
+        "summary": {
+            "best_variant": best_variant,
+            "holdout_case_count": len(rows),
+            "eligible_holdout_case_count": len(eligible),
+            "holdout_pass_count": len(passed),
+            "holdout_pass_rate": _round(holdout_pass_rate),
+            "holdout_pass_rate_floor": holdout_pass_rate_floor,
+            "overfit_risk": (
+                "HIGH" if eligible and holdout_pass_rate < holdout_pass_rate_floor else "WATCH"
+            ),
+            "promotion_gate_allowed": False,
+        },
+        "leave_one_regime_out": result_by_dimension.get("regime_segment", []),
+        "leave_one_horizon_out": result_by_dimension.get("horizon", []),
+        "leave_one_asset_cluster_out": result_by_dimension.get("asset_cluster", []),
+        "leave_one_date_window_out": result_by_dimension.get("date_window", []),
+    }
+
+
+def _holdout_dimension_results(
+    *,
+    original_cases: list[dict[str, Any]],
+    candidate_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    dimension: str,
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "regime_conditioned_walk_forward_holdout")
+    min_cases = _first_int(policy.get("min_holdout_case_count"))
+    mean_floor = _float(policy.get("mean_delta_floor_bps"), 0.0) / 10_000.0
+    tail_floor = _float(policy.get("tail_loss_reduction_floor"), 0.10)
+    values = sorted({_holdout_dimension_value(row, dimension, config) for row in original_cases})
+    rows = []
+    for value in values:
+        original_subset = [
+            row
+            for row in original_cases
+            if _holdout_dimension_value(row, dimension, config) == value
+        ]
+        candidate_subset = [
+            row
+            for row in candidate_cases
+            if _holdout_dimension_value(row, dimension, config) == value
+        ]
+        original_metric = _v2_variant_metric_row("original_holdout", original_subset, config)
+        candidate_metric = _add_variant_deltas(
+            _v2_variant_metric_row("candidate_holdout", candidate_subset, config),
+            original_metric,
+        )
+        tail_reduction = _tail_loss_reduction(original_metric, candidate_metric)
+        turnover_cost_not_worse = (
+            _float(candidate_metric.get("turnover_delta"), 0.0) <= 0
+            and _float(candidate_metric.get("cost_delta"), 0.0) <= 0
+        )
+        insufficient = len(original_subset) < min_cases
+        passed = (
+            not insufficient
+            and _float(candidate_metric.get("mean_delta_vs_benchmark"), 0.0) >= mean_floor
+            and tail_reduction >= tail_floor
+            and turnover_cost_not_worse
+        )
+        rows.append(
+            {
+                "holdout_dimension": dimension,
+                "holdout_value": value,
+                "case_count": len(original_subset),
+                "insufficient_holdout_cases": insufficient,
+                "original_mean_delta_vs_benchmark": original_metric.get("mean_delta_vs_benchmark"),
+                "candidate_mean_delta_vs_benchmark": candidate_metric.get(
+                    "mean_delta_vs_benchmark"
+                ),
+                "tail_loss_reduction": _round(tail_reduction),
+                "turnover_delta": candidate_metric.get("turnover_delta"),
+                "cost_delta": candidate_metric.get("cost_delta"),
+                "turnover_cost_not_worse": turnover_cost_not_worse,
+                "passed": passed,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _holdout_dimension_value(
+    row: Mapping[str, Any],
+    dimension: str,
+    config: Mapping[str, Any],
+) -> str:
+    if dimension == "date_window":
+        return _date_window(str(row.get("date")), config)
+    return str(row.get(dimension, "unknown"))
+
+
+def _value_surface_v2_review_decision(
+    *,
+    config: Mapping[str, Any],
+    cost_turnover: Mapping[str, Any],
+    horizon_quarantine: Mapping[str, Any],
+    regime_attribution: Mapping[str, Any],
+    holdout: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "value_surface_v2_controlled_review")
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    if not cost_turnover or not horizon_quarantine or not regime_attribution or not holdout:
+        decision = "DATA_REQUIRED"
+        reason = "missing_required_800_to_803_artifact"
+        best = {}
+        original = {}
+    else:
+        metrics = _records(cost_turnover.get("variant_metrics"))
+        best_id = cost_turnover.get("summary", {}).get("best_variant_by_v2_score")
+        best = next((row for row in metrics if row.get("variant_id") == best_id), {})
+        original = next(
+            (row for row in metrics if row.get("variant_id") == "original_value_surface"), {}
+        )
+        mean_ok = (
+            _float(best.get("mean_delta_vs_benchmark"), 0.0)
+            >= _float(policy.get("mean_delta_floor_bps"), 0.0) / 10_000.0
+            and _float(best.get("mean_delta_improvement"), 0.0) > 0
+        )
+        tail_ok = _tail_loss_reduction(original, best) >= _float(
+            policy.get("tail_loss_reduction_required_share"), 0.20
+        )
+        turnover_cost_ok = (
+            _float(best.get("turnover_delta"), 0.0) <= 0
+            and _float(best.get("cost_delta"), 0.0) <= 0
+        )
+        beat_ok = _beat_rate_retention(original, best) >= _float(
+            policy.get("beat_rate_retention_floor"), 0.80
+        )
+        holdout_ok = _float(holdout.get("summary", {}).get("holdout_pass_rate"), 0.0) >= _float(
+            policy.get("holdout_pass_rate_floor"), 0.60
+        )
+        horizon_tail_reduction = _float(
+            horizon_quarantine.get("summary", {}).get("tail_loss_reduction_best_variant"),
+            0.0,
+        )
+        if mean_ok and tail_ok and turnover_cost_ok and beat_ok and holdout_ok:
+            decision = "CONTINUE_TO_LARGER_CONTROLLED_RESEARCH"
+            reason = "v2_conditions_met_without_promotion"
+        elif horizon_tail_reduction >= _float(
+            policy.get("horizon_quarantine_tail_loss_reduction_floor"), 0.20
+        ):
+            decision = "PIVOT_TO_HORIZON_SELECTOR"
+            reason = "long_horizon_quarantine_reduces_tail_loss"
+        elif tail_ok and not turnover_cost_ok:
+            decision = "PIVOT_TO_TAIL_RISK_POLICY"
+            reason = "tail_loss_improves_but_turnover_or_cost_worsens"
+        elif not mean_ok and holdout.get("summary", {}).get("overfit_risk") == "HIGH":
+            decision = "KILL_VALUE_SURFACE"
+            reason = "v2_no_mean_recovery_and_holdout_overfit_risk_high"
+        else:
+            decision = "WATCHLIST"
+            reason = "v2_improvement_incomplete"
+    if allowed and decision not in allowed:
+        decision = "WATCHLIST"
+        reason = "computed_decision_not_allowed_by_policy"
+    return {
+        "decision": decision,
+        "reason": reason,
+        "allowed_decisions": allowed,
+        "best_cost_turnover_variant": best.get("variant_id"),
+        "best_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+        "original_mean_delta_vs_benchmark": original.get("mean_delta_vs_benchmark"),
+        "mean_delta_condition_met": _float(best.get("mean_delta_vs_benchmark"), -999.0)
+        >= _float(policy.get("mean_delta_floor_bps"), 0.0) / 10_000.0,
+        "tail_loss_condition_met": _tail_loss_reduction(original, best)
+        >= _float(policy.get("tail_loss_reduction_required_share"), 0.20),
+        "turnover_cost_condition_met": _float(best.get("turnover_delta"), 0.0) <= 0
+        and _float(best.get("cost_delta"), 0.0) <= 0,
+        "beat_rate_condition_met": _beat_rate_retention(original, best)
+        >= _float(policy.get("beat_rate_retention_floor"), 0.80),
+        "holdout_condition_met": _float(
+            holdout.get("summary", {}).get("holdout_pass_rate"),
+            0.0,
+        )
+        >= _float(policy.get("holdout_pass_rate_floor"), 0.60),
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _value_surface_v2_evidence_summary(
+    *,
+    cost_turnover: Mapping[str, Any],
+    horizon_quarantine: Mapping[str, Any],
+    regime_attribution: Mapping[str, Any],
+    holdout: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "cost_turnover_status": cost_turnover.get("status"),
+        "best_variant_by_v2_score": cost_turnover.get("summary", {}).get(
+            "best_variant_by_v2_score"
+        ),
+        "turnover_cost_not_worse": cost_turnover.get("summary", {}).get("turnover_cost_not_worse"),
+        "horizon_quarantine_status": horizon_quarantine.get("status"),
+        "horizon_selector_issue_likely": horizon_quarantine.get("summary", {}).get(
+            "horizon_selector_issue_likely"
+        ),
+        "regime_attribution_status": regime_attribution.get("status"),
+        "top_loss_horizon": regime_attribution.get("summary", {}).get("top_loss_horizon"),
+        "holdout_status": holdout.get("status"),
+        "holdout_pass_rate": holdout.get("summary", {}).get("holdout_pass_rate"),
+        "promotion_gate_allowed": False,
+    }
 
 
 def _run_data_quality_gate(

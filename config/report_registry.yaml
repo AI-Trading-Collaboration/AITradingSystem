@@ -12055,3 +12055,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: cost_turnover_aware_regime_conditioned_value_surface
+    title: Cost/Turnover-Aware Regime-Conditioned Value Surface
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies cost-turnover-aware-regime-conditioned-value-surface
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/cost_turnover_aware_regime_conditioned_value_surface.json
+      - outputs/research_strategies/value_surface_review/cost_turnover_aware_regime_conditioned_value_surface.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-800 should be regenerated when regime-conditioned value-surface rows, failure attribution, horizon cliffs, or cost policy changes.
+    owner_action: review_cost_turnover_aware_variants_without_treating_retrospective_ablation_as_promotion_or_paper_shadow_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: long_horizon_quarantine_selection_review
+    title: Long-Horizon Quarantine Selection Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies long-horizon-quarantine-selection-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/long_horizon_quarantine_selection_review.json
+      - outputs/research_strategies/value_surface_review/long_horizon_quarantine_selection_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-801 should be regenerated when value-surface losses, horizon attribution, or v2 cost-aware variants change.
+    owner_action: review_20d_60d_disable_downgrade_regime_confirmation_and_shorter_horizon_fallback_before_expanding_value_surface
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: ai_after_chatgpt_full_regime_attribution_review
+    title: ai_after_chatgpt_full Regime Attribution Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies ai-after-chatgpt-full-regime-attribution-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/ai_after_chatgpt_full_regime_attribution_review.json
+      - outputs/research_strategies/value_surface_review/ai_after_chatgpt_full_regime_attribution_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-802 should be regenerated when the top losing regime or value-surface loss attribution changes.
+    owner_action: review_top_regime_asset_horizon_action_cluster_losses_benchmark_stability_and_value_surface_overoptimism
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regime_conditioned_walk_forward_holdout
+    title: Regime-Conditioned Walk-Forward Holdout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regime-conditioned-walk-forward-holdout
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/regime_conditioned_walk_forward_holdout.json
+      - outputs/research_strategies/value_surface_review/regime_conditioned_walk_forward_holdout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-803 should be regenerated when v2 variants, horizon quarantine, regime attribution, or value-surface rows change.
+    owner_action: review_leave_one_regime_horizon_asset_cluster_and_date_window_holdout_before_accepting_v2_improvements
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: value_surface_v2_controlled_review
+    title: Value Surface v2 Controlled Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-v2-controlled-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_v2_controlled_review.json
+      - outputs/research_strategies/value_surface_review/value_surface_v2_controlled_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-804 should be regenerated after TRADING-800 through TRADING-803 artifacts change.
+    owner_action: choose_continue_watchlist_pivot_to_tail_risk_pivot_to_horizon_selector_kill_or_data_required_without_promotion_paper_shadow_or_production_mutation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

@@ -10,7 +10,9 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
+    run_ai_after_chatgpt_full_regime_attribution_review,
     run_controlled_strategy_batch_review,
+    run_cost_turnover_aware_regime_conditioned_value_surface,
     run_forward_evidence_continuity_extension,
     run_forward_evidence_daily_continuity_maturity_tracker,
     run_forward_evidence_daily_continuity_review,
@@ -22,8 +24,10 @@ from ai_trading_system.controlled_strategy_batch import (
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_long_horizon_quarantine_selection_review,
     run_regime_conditioned_value_surface_controlled_review,
     run_regime_conditioned_value_surface_design,
+    run_regime_conditioned_walk_forward_holdout,
     run_regime_horizon_loss_attribution_matrix,
     run_regret_activation_inputs_from_value_surface_failures,
     run_regret_casebook_activation_recheck,
@@ -39,6 +43,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_value_surface_direction_review,
     run_value_surface_failure_attribution,
     run_value_surface_utility_pareto_ranking_review,
+    run_value_surface_v2_controlled_review,
     run_value_surface_warning_triage_review,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -639,6 +644,130 @@ def test_regime_conditioned_controlled_review_decision_enum(tmp_path: Path) -> N
         "KILL_CURRENT_VALUE_SURFACE",
         "PIVOT_TO_TAIL_RISK_POLICY",
         "PIVOT_TO_BENCHMARK_FALLBACK",
+        "DATA_REQUIRED",
+    }
+    assert payload["review_decision"]["promotion_gate_allowed"] is False
+
+
+def test_cost_turnover_aware_regime_conditioned_value_surface(tmp_path: Path) -> None:
+    paths = _run_value_surface_v2_inputs(tmp_path)
+    payload = run_cost_turnover_aware_regime_conditioned_value_surface(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        guardrail_policy_path=paths["guardrail"],
+        output_root=tmp_path / "cost_turnover",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "cost_turnover_aware_regime_conditioned_value_surface"
+    variant_ids = {row["variant_id"] for row in payload["variant_metrics"]}
+    assert "regime_conditioned_turnover_penalty" in variant_ids
+    assert "regime_conditioned_action_hysteresis" in variant_ids
+    assert "regime_conditioned_no_trade_band" in variant_ids
+    assert payload["variant_metrics"][0]["action_flip_count"] >= 0
+    assert "turnover_delta" in payload["variant_metrics"][1]
+    assert payload["v2_score_policy"]["policy_source"].endswith(
+        "cost_turnover_aware_regime_conditioned_value_surface"
+    )
+    assert payload["diagnostic_boundary"]["production_execution_rule"] is False
+
+
+def test_long_horizon_quarantine_selection_review(tmp_path: Path) -> None:
+    paths = _run_value_surface_v2_inputs(tmp_path)
+    cost = run_cost_turnover_aware_regime_conditioned_value_surface(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        guardrail_policy_path=paths["guardrail"],
+        output_root=tmp_path / "long_horizon",
+    )
+    payload = run_long_horizon_quarantine_selection_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        cost_turnover_path=Path(cost["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "long_horizon",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "long_horizon_quarantine_selection_review"
+    assert {"20d", "60d"}.issubset(set(payload["reviewed_horizons"]))
+    assert payload["horizon_loss_matrix"]["summary"]["promotion_gate_allowed"] is False
+    assert payload["disable_vs_downgrade_comparison"]
+
+
+def test_ai_after_chatgpt_full_regime_attribution_review(tmp_path: Path) -> None:
+    paths = _run_value_surface_v2_inputs(tmp_path)
+    matrix = run_regime_horizon_loss_attribution_matrix(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        output_root=tmp_path / "ai_regime",
+    )
+    payload = run_ai_after_chatgpt_full_regime_attribution_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        loss_matrix_path=Path(matrix["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "ai_regime",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "ai_after_chatgpt_full_regime_attribution_review"
+    assert payload["summary"]["target_regime"] == "ai_after_chatgpt_full"
+    assert "benchmark_more_stable" in payload["benchmark_stability"]
+    assert payload["candidate_repairs"]
+
+
+def test_regime_conditioned_walk_forward_holdout(tmp_path: Path) -> None:
+    paths = _run_value_surface_v2_full_inputs(tmp_path)
+    payload = run_regime_conditioned_walk_forward_holdout(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        output_root=tmp_path / "holdout",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regime_conditioned_walk_forward_holdout"
+    assert payload["summary"]["holdout_case_count"] >= 0
+    assert "overfit_risk" in payload["summary"]
+    assert payload["leave_one_horizon_out"] is not None
+
+
+def test_value_surface_v2_controlled_review_decision_enum(tmp_path: Path) -> None:
+    paths = _run_value_surface_v2_full_inputs(tmp_path)
+    holdout = run_regime_conditioned_walk_forward_holdout(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        output_root=tmp_path / "v2_review",
+    )
+    payload = run_value_surface_v2_controlled_review(
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        holdout_path=Path(holdout["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_review",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_v2_controlled_review"
+    assert payload["summary"]["value_surface_v2_decision"] in {
+        "CONTINUE_TO_LARGER_CONTROLLED_RESEARCH",
+        "WATCHLIST",
+        "PIVOT_TO_TAIL_RISK_POLICY",
+        "PIVOT_TO_HORIZON_SELECTOR",
+        "KILL_VALUE_SURFACE",
         "DATA_REQUIRED",
     }
     assert payload["review_decision"]["promotion_gate_allowed"] is False
@@ -1458,6 +1587,105 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "cost-turnover-aware-regime-conditioned-value-surface",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--design",
+            str(tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json"),
+            "--guardrail-policy",
+            str(tmp_path / "cli_warning" / "tail_loss_guardrail_fallback_policy.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "long-horizon-quarantine-selection-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--cost-turnover",
+            str(
+                tmp_path
+                / "cli_warning"
+                / "cost_turnover_aware_regime_conditioned_value_surface.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "ai-after-chatgpt-full-regime-attribution-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--loss-matrix",
+            str(tmp_path / "cli_warning" / "regime_horizon_loss_attribution_matrix.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regime-conditioned-walk-forward-holdout",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--design",
+            str(tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json"),
+            "--cost-turnover",
+            str(
+                tmp_path
+                / "cli_warning"
+                / "cost_turnover_aware_regime_conditioned_value_surface.json"
+            ),
+            "--horizon-quarantine",
+            str(tmp_path / "cli_warning" / "long_horizon_quarantine_selection_review.json"),
+            "--regime-attribution",
+            str(tmp_path / "cli_warning" / "ai_after_chatgpt_full_regime_attribution_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "value-surface-v2-controlled-review",
+            "--cost-turnover",
+            str(
+                tmp_path
+                / "cli_warning"
+                / "cost_turnover_aware_regime_conditioned_value_surface.json"
+            ),
+            "--horizon-quarantine",
+            str(tmp_path / "cli_warning" / "long_horizon_quarantine_selection_review.json"),
+            "--regime-attribution",
+            str(tmp_path / "cli_warning" / "ai_after_chatgpt_full_regime_attribution_review.json"),
+            "--holdout",
+            str(tmp_path / "cli_warning" / "regime_conditioned_walk_forward_holdout.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -1492,6 +1720,15 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (
         tmp_path / "cli_warning" / "regime_conditioned_value_surface_controlled_review.json"
     ).exists()
+    assert (
+        tmp_path / "cli_warning" / "cost_turnover_aware_regime_conditioned_value_surface.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "long_horizon_quarantine_selection_review.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "ai_after_chatgpt_full_regime_attribution_review.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "regime_conditioned_walk_forward_holdout.json").exists()
+    assert (tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1555,6 +1792,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "regime_horizon_loss_attribution_matrix",
         "gbdt_residual_hypothesis_regime_conditioning",
         "regime_conditioned_value_surface_controlled_review",
+        "cost_turnover_aware_regime_conditioned_value_surface",
+        "long_horizon_quarantine_selection_review",
+        "ai_after_chatgpt_full_regime_attribution_review",
+        "regime_conditioned_walk_forward_holdout",
+        "value_surface_v2_controlled_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1573,6 +1815,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "regime_horizon_loss_attribution_matrix.json/md" in catalog
     assert "gbdt_residual_hypothesis_regime_conditioning.json/md" in catalog
     assert "regime_conditioned_value_surface_controlled_review.json/md" in catalog
+    assert "cost_turnover_aware_regime_conditioned_value_surface.json/md" in catalog
+    assert "long_horizon_quarantine_selection_review.json/md" in catalog
+    assert "ai_after_chatgpt_full_regime_attribution_review.json/md" in catalog
+    assert "regime_conditioned_walk_forward_holdout.json/md" in catalog
+    assert "value_surface_v2_controlled_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1592,6 +1839,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-785～789" in system_flow
     assert "TRADING-790～794" in system_flow
     assert "TRADING-795～799" in system_flow
+    assert "TRADING-800～804" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1605,6 +1853,14 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert (
         "aits research strategies regime-conditioned-value-surface-controlled-review" in system_flow
     )
+    assert (
+        "aits research strategies cost-turnover-aware-regime-conditioned-value-surface"
+        in system_flow
+    )
+    assert "aits research strategies long-horizon-quarantine-selection-review" in system_flow
+    assert "aits research strategies ai-after-chatgpt-full-regime-attribution-review" in system_flow
+    assert "aits research strategies regime-conditioned-walk-forward-holdout" in system_flow
+    assert "aits research strategies value-surface-v2-controlled-review" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
@@ -1736,6 +1992,66 @@ def _run_regime_conditioning_inputs(tmp_path: Path) -> dict[str, Path]:
         "residual_triage": Path(residual_triage["artifact_paths"]["json_path"]),
         "forward": Path(forward["artifact_paths"]["json_path"]),
         "direction": Path(direction["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_value_surface_v2_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    design = run_regime_conditioned_value_surface_design(
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        residual_triage_path=paths["residual_triage"],
+        direction_review_path=paths["direction"],
+        output_root=tmp_path / "v2_design",
+    )
+    guardrail = run_tail_loss_guardrail_fallback_policy(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=Path(design["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_guardrail",
+    )
+    return {
+        **paths,
+        "design": Path(design["artifact_paths"]["json_path"]),
+        "guardrail": Path(guardrail["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_value_surface_v2_full_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_value_surface_v2_inputs(tmp_path)
+    cost = run_cost_turnover_aware_regime_conditioned_value_surface(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        guardrail_policy_path=paths["guardrail"],
+        output_root=tmp_path / "v2_cost",
+    )
+    long_horizon = run_long_horizon_quarantine_selection_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        cost_turnover_path=Path(cost["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_long_horizon",
+    )
+    matrix = run_regime_horizon_loss_attribution_matrix(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        output_root=tmp_path / "v2_matrix",
+    )
+    ai_regime = run_ai_after_chatgpt_full_regime_attribution_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        loss_matrix_path=Path(matrix["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_ai_regime",
+    )
+    return {
+        **paths,
+        "cost_turnover": Path(cost["artifact_paths"]["json_path"]),
+        "long_horizon": Path(long_horizon["artifact_paths"]["json_path"]),
+        "loss_matrix": Path(matrix["artifact_paths"]["json_path"]),
+        "ai_regime": Path(ai_regime["artifact_paths"]["json_path"]),
     }
 
 
