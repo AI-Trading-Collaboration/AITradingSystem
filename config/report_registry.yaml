@@ -12140,3 +12140,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: horizon_selector_problem_contract
+    title: Horizon Selector Problem Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies horizon-selector-problem-contract
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/horizon_selector_problem_contract.json
+      - outputs/research_strategies/value_surface_review/horizon_selector_problem_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-805 should be regenerated when v2 review, long-horizon review, or horizon selector policy changes.
+    owner_action: review_selector_problem_contract_before_any_model_training_or_paper_shadow_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: long_horizon_quarantine_fallback_review
+    title: Long-Horizon Quarantine Fallback Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies long-horizon-quarantine-fallback-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/long_horizon_quarantine_fallback_review.json
+      - outputs/research_strategies/value_surface_review/long_horizon_quarantine_fallback_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-806 should be regenerated when value-surface rows, v2 review, or horizon selector contract changes.
+    owner_action: review_whether_20d_60d_disable_or_fallback_reduces_tail_loss_without_destroying_beat_rate_or_cost
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: horizon_selector_controlled_prototype
+    title: Horizon Selector Controlled Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies horizon-selector-controlled-prototype
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/horizon_selector_controlled_prototype.json
+      - outputs/research_strategies/value_surface_review/horizon_selector_controlled_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-807 should be regenerated when horizon selector contract, fallback review, or horizon cliff review changes.
+    owner_action: review_rule_based_selector_decisions_without_treating_them_as_ml_model_or_production_policy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: cost_aware_horizon_hysteresis
+    title: Cost-Aware Horizon Hysteresis
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies cost-aware-horizon-hysteresis
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/cost_aware_horizon_hysteresis.json
+      - outputs/research_strategies/value_surface_review/cost_aware_horizon_hysteresis.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-808 should be regenerated when selector prototype, cost policy, or horizon cliff review changes.
+    owner_action: review_hysteresis_turnover_cost_and_tail_loss_tradeoff_before_any_selector_expansion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: horizon_selector_holdout_review
+    title: Horizon Selector Holdout Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies horizon-selector-holdout-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/horizon_selector_holdout_review.json
+      - outputs/research_strategies/value_surface_review/horizon_selector_holdout_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-809 should be regenerated after TRADING-805 through TRADING-808 artifacts change.
+    owner_action: choose_continue_watchlist_pivot_to_tail_risk_pivot_to_benchmark_selector_kill_action_policy_or_data_required_without_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

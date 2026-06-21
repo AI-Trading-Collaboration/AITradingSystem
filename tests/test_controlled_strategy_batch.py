@@ -12,6 +12,7 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
     run_ai_after_chatgpt_full_regime_attribution_review,
     run_controlled_strategy_batch_review,
+    run_cost_aware_horizon_hysteresis,
     run_cost_turnover_aware_regime_conditioned_value_surface,
     run_forward_evidence_continuity_extension,
     run_forward_evidence_daily_continuity_maturity_tracker,
@@ -24,6 +25,10 @@ from ai_trading_system.controlled_strategy_batch import (
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_horizon_selector_controlled_prototype,
+    run_horizon_selector_holdout_review,
+    run_horizon_selector_problem_contract,
+    run_long_horizon_quarantine_fallback_review,
     run_long_horizon_quarantine_selection_review,
     run_regime_conditioned_value_surface_controlled_review,
     run_regime_conditioned_value_surface_design,
@@ -768,6 +773,107 @@ def test_value_surface_v2_controlled_review_decision_enum(tmp_path: Path) -> Non
         "PIVOT_TO_TAIL_RISK_POLICY",
         "PIVOT_TO_HORIZON_SELECTOR",
         "KILL_VALUE_SURFACE",
+        "DATA_REQUIRED",
+    }
+    assert payload["review_decision"]["promotion_gate_allowed"] is False
+
+
+def test_horizon_selector_problem_contract(tmp_path: Path) -> None:
+    paths = _run_horizon_selector_inputs(tmp_path)
+    payload = run_horizon_selector_problem_contract(
+        v2_review_path=paths["v2_review"],
+        long_horizon_review_path=paths["long_horizon"],
+        output_root=tmp_path / "horizon_contract_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "horizon_selector_problem_contract"
+    assert {row["horizon"] for row in payload["candidate_horizons"]} == {
+        "1d",
+        "5d",
+        "10d",
+        "20d",
+        "60d",
+    }
+    assert payload["target_horizon_is_holding_commitment"] is False
+    assert payload["selector_output"]["review_interval"] == "daily"
+    assert "invalidation_condition" in {row["field"] for row in payload["selector_output_schema"]}
+
+
+def test_long_horizon_quarantine_fallback_review(tmp_path: Path) -> None:
+    paths = _run_horizon_selector_inputs(tmp_path)
+    payload = run_long_horizon_quarantine_fallback_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        v2_review_path=paths["v2_review"],
+        output_root=tmp_path / "horizon_fallback_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "long_horizon_quarantine_fallback_review"
+    variant_ids = {row["variant_id"] for row in payload["variant_metrics"]}
+    assert "disable_60d" in variant_ids
+    assert "disable_20d_60d" in variant_ids
+    assert "long_horizon_fallback_to_5d_10d" in variant_ids
+    assert "holdout_pass_rate" in payload["variant_metrics"][0]
+    assert payload["review_summary"]["promotion_gate_allowed"] is False
+
+
+def test_horizon_selector_controlled_prototype(tmp_path: Path) -> None:
+    paths = _run_horizon_selector_inputs(tmp_path)
+    payload = run_horizon_selector_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_prototype_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "horizon_selector_controlled_prototype"
+    assert payload["summary"]["model_run_executed"] is False
+    assert payload["horizon_decision_by_date"]
+    assert payload["prototype_summary"]["fallback_count"] >= 0
+    assert payload["selector_metric"]["promotion_gate_allowed"] is False
+
+
+def test_cost_aware_horizon_hysteresis(tmp_path: Path) -> None:
+    paths = _run_horizon_selector_full_inputs(tmp_path)
+    payload = run_cost_aware_horizon_hysteresis(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        prototype_path=paths["prototype"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_hysteresis_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "cost_aware_horizon_hysteresis"
+    assert "horizon_switch_count" in payload["summary"]
+    assert "utility_lost_to_hysteresis" in payload["summary"]
+    assert payload["hysteresis_metric"]["promotion_gate_allowed"] is False
+
+
+def test_horizon_selector_holdout_review_decision_enum(tmp_path: Path) -> None:
+    paths = _run_horizon_selector_full_inputs(tmp_path)
+    payload = run_horizon_selector_holdout_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        prototype_path=paths["prototype"],
+        hysteresis_path=paths["hysteresis"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_holdout_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "horizon_selector_holdout_review"
+    assert payload["summary"]["horizon_selector_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "PIVOT_TO_TAIL_RISK_POLICY",
+        "PIVOT_TO_BENCHMARK_SELECTOR",
+        "KILL_VALUE_SURFACE_AS_ACTION_POLICY",
         "DATA_REQUIRED",
     }
     assert payload["review_decision"]["promotion_gate_allowed"] is False
@@ -1686,6 +1792,85 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "horizon-selector-problem-contract",
+            "--v2-review",
+            str(tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json"),
+            "--long-horizon-review",
+            str(tmp_path / "cli_warning" / "long_horizon_quarantine_selection_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "long-horizon-quarantine-fallback-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "horizon_selector_problem_contract.json"),
+            "--v2-review",
+            str(tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "horizon-selector-controlled-prototype",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "horizon_selector_problem_contract.json"),
+            "--fallback-review",
+            str(tmp_path / "cli_warning" / "long_horizon_quarantine_fallback_review.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "cost-aware-horizon-hysteresis",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "horizon_selector_problem_contract.json"),
+            "--prototype",
+            str(tmp_path / "cli_warning" / "horizon_selector_controlled_prototype.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "horizon-selector-holdout-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "horizon_selector_problem_contract.json"),
+            "--fallback-review",
+            str(tmp_path / "cli_warning" / "long_horizon_quarantine_fallback_review.json"),
+            "--prototype",
+            str(tmp_path / "cli_warning" / "horizon_selector_controlled_prototype.json"),
+            "--hysteresis",
+            str(tmp_path / "cli_warning" / "cost_aware_horizon_hysteresis.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -1729,6 +1914,11 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     ).exists()
     assert (tmp_path / "cli_warning" / "regime_conditioned_walk_forward_holdout.json").exists()
     assert (tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json").exists()
+    assert (tmp_path / "cli_warning" / "horizon_selector_problem_contract.json").exists()
+    assert (tmp_path / "cli_warning" / "long_horizon_quarantine_fallback_review.json").exists()
+    assert (tmp_path / "cli_warning" / "horizon_selector_controlled_prototype.json").exists()
+    assert (tmp_path / "cli_warning" / "cost_aware_horizon_hysteresis.json").exists()
+    assert (tmp_path / "cli_warning" / "horizon_selector_holdout_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1797,6 +1987,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "ai_after_chatgpt_full_regime_attribution_review",
         "regime_conditioned_walk_forward_holdout",
         "value_surface_v2_controlled_review",
+        "horizon_selector_problem_contract",
+        "long_horizon_quarantine_fallback_review",
+        "horizon_selector_controlled_prototype",
+        "cost_aware_horizon_hysteresis",
+        "horizon_selector_holdout_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1820,6 +2015,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "ai_after_chatgpt_full_regime_attribution_review.json/md" in catalog
     assert "regime_conditioned_walk_forward_holdout.json/md" in catalog
     assert "value_surface_v2_controlled_review.json/md" in catalog
+    assert "horizon_selector_problem_contract.json/md" in catalog
+    assert "long_horizon_quarantine_fallback_review.json/md" in catalog
+    assert "horizon_selector_controlled_prototype.json/md" in catalog
+    assert "cost_aware_horizon_hysteresis.json/md" in catalog
+    assert "horizon_selector_holdout_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1840,6 +2040,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-790～794" in system_flow
     assert "TRADING-795～799" in system_flow
     assert "TRADING-800～804" in system_flow
+    assert "TRADING-805～809" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1861,6 +2062,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies ai-after-chatgpt-full-regime-attribution-review" in system_flow
     assert "aits research strategies regime-conditioned-walk-forward-holdout" in system_flow
     assert "aits research strategies value-surface-v2-controlled-review" in system_flow
+    assert "aits research strategies horizon-selector-problem-contract" in system_flow
+    assert "aits research strategies long-horizon-quarantine-fallback-review" in system_flow
+    assert "aits research strategies horizon-selector-controlled-prototype" in system_flow
+    assert "aits research strategies cost-aware-horizon-hysteresis" in system_flow
+    assert "aits research strategies horizon-selector-holdout-review" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
@@ -2052,6 +2258,68 @@ def _run_value_surface_v2_full_inputs(tmp_path: Path) -> dict[str, Path]:
         "long_horizon": Path(long_horizon["artifact_paths"]["json_path"]),
         "loss_matrix": Path(matrix["artifact_paths"]["json_path"]),
         "ai_regime": Path(ai_regime["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_horizon_selector_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_value_surface_v2_full_inputs(tmp_path)
+    holdout = run_regime_conditioned_walk_forward_holdout(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        output_root=tmp_path / "horizon_v2_holdout",
+    )
+    v2_review = run_value_surface_v2_controlled_review(
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        holdout_path=Path(holdout["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "horizon_v2_review",
+    )
+    contract = run_horizon_selector_problem_contract(
+        v2_review_path=Path(v2_review["artifact_paths"]["json_path"]),
+        long_horizon_review_path=paths["long_horizon"],
+        output_root=tmp_path / "horizon_contract",
+    )
+    fallback = run_long_horizon_quarantine_fallback_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=Path(contract["artifact_paths"]["json_path"]),
+        v2_review_path=Path(v2_review["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "horizon_fallback",
+    )
+    return {
+        **paths,
+        "v2_holdout": Path(holdout["artifact_paths"]["json_path"]),
+        "v2_review": Path(v2_review["artifact_paths"]["json_path"]),
+        "contract": Path(contract["artifact_paths"]["json_path"]),
+        "fallback_review": Path(fallback["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_horizon_selector_full_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_horizon_selector_inputs(tmp_path)
+    prototype = run_horizon_selector_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_prototype",
+    )
+    hysteresis = run_cost_aware_horizon_hysteresis(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        prototype_path=Path(prototype["artifact_paths"]["json_path"]),
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_hysteresis",
+    )
+    return {
+        **paths,
+        "prototype": Path(prototype["artifact_paths"]["json_path"]),
+        "hysteresis": Path(hysteresis["artifact_paths"]["json_path"]),
     }
 
 

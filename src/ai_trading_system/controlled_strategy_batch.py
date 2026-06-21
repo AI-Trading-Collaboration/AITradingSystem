@@ -140,6 +140,21 @@ DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH = (
 DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_v2_controlled_review.json"
 )
+DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "horizon_selector_problem_contract.json"
+)
+DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "long_horizon_quarantine_fallback_review.json"
+)
+DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "horizon_selector_controlled_prototype.json"
+)
+DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "cost_aware_horizon_hysteresis.json"
+)
+DEFAULT_HORIZON_SELECTOR_HOLDOUT_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "horizon_selector_holdout_review.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -2845,6 +2860,324 @@ def run_value_surface_v2_controlled_review(
         payload,
         output_root=output_root,
         artifact_id="value_surface_v2_controlled_review",
+    )
+    return payload
+
+
+def run_horizon_selector_problem_contract(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    v2_review_path: Path = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    long_horizon_review_path: Path = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    v2_review = _read_json_or_empty(v2_review_path)
+    long_horizon = _read_json_or_empty(long_horizon_review_path)
+    contract = _horizon_selector_problem_contract(config)
+    payload = _controlled_payload(
+        report_type="horizon_selector_problem_contract",
+        title="Horizon selector problem contract",
+        status="HORIZON_SELECTOR_CONTRACT_DEFINED",
+        summary={
+            "candidate_horizon_count": len(contract["candidate_horizons"]),
+            "allowed_horizon_count": len(contract["selector_output"]["allowed_horizons"]),
+            "preferred_horizon": contract["selector_output"]["preferred_horizon"],
+            "fallback_horizon": contract["selector_output"]["fallback_horizon"],
+            "target_horizon_is_holding_commitment": contract[
+                "target_horizon_is_holding_commitment"
+            ],
+            "regime_change_can_invalidate_horizon": contract[
+                "regime_change_can_invalidate_horizon"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        selector_contract_policy=_next_stage_section(config, "horizon_selector_problem_contract"),
+        v2_review_source=_artifact_status(v2_review, v2_review_path),
+        long_horizon_review_source=_artifact_status(long_horizon, long_horizon_review_path),
+        candidate_horizons=contract["candidate_horizons"],
+        horizon_status=contract["horizon_status"],
+        selector_output_schema=contract["selector_output_schema"],
+        selector_output=contract["selector_output"],
+        target_horizon_is_holding_commitment=contract["target_horizon_is_holding_commitment"],
+        regime_change_can_invalidate_horizon=contract["regime_change_can_invalidate_horizon"],
+        problem_statement=contract["problem_statement"],
+        disallowed_actions=[
+            "train_horizon_selector_model",
+            "treat_target_horizon_as_holding_commitment",
+            "enter_paper_shadow",
+            "change_production_weights",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="horizon_selector_problem_contract",
+    )
+    return payload
+
+
+def run_long_horizon_quarantine_fallback_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract_path: Path = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    v2_review_path: Path = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    contract = _read_json_or_empty(contract_path)
+    v2_review = _read_json_or_empty(v2_review_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _long_horizon_quarantine_fallback_review(
+        selected_cases=selected_cases,
+        config=config,
+    )
+    payload = _controlled_payload(
+        report_type="long_horizon_quarantine_fallback_review",
+        title="Long-horizon quarantine / fallback review",
+        status="LONG_HORIZON_FALLBACK_REVIEW_COMPLETE",
+        summary={
+            "case_count": len(selected_cases),
+            "variant_count": len(review["variant_metrics"]),
+            "best_variant_by_tail_loss": review["summary"]["best_variant_by_tail_loss"],
+            "best_variant_tail_loss_reduction": review["summary"][
+                "best_variant_tail_loss_reduction"
+            ],
+            "best_variant_turnover_cost_not_worse": review["summary"][
+                "best_variant_turnover_cost_not_worse"
+            ],
+            "horizon_selector_problem_supported": review["summary"][
+                "horizon_selector_problem_supported"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        fallback_review_policy=_next_stage_section(
+            config, "long_horizon_quarantine_fallback_review"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        contract_source=_artifact_status(contract, contract_path),
+        v2_review_source=_artifact_status(v2_review, v2_review_path),
+        variant_metrics=review["variant_metrics"],
+        variant_rules=review["variant_rules"],
+        holdout_summary_by_variant=review["holdout_summary_by_variant"],
+        review_summary=review["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="long_horizon_quarantine_fallback_review",
+    )
+    return payload
+
+
+def run_horizon_selector_controlled_prototype(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract_path: Path = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    fallback_review_path: Path = DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    contract = _read_json_or_empty(contract_path)
+    fallback_review = _read_json_or_empty(fallback_review_path)
+    horizon_stabilization = _read_json_or_empty(horizon_stabilization_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    prototype = _horizon_selector_controlled_prototype(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    payload = _controlled_payload(
+        report_type="horizon_selector_controlled_prototype",
+        title="Horizon selector controlled prototype",
+        status="HORIZON_SELECTOR_PROTOTYPE_REVIEWED",
+        summary={
+            "case_count": len(selected_cases),
+            "decision_row_count": len(prototype["horizon_decision_by_date"]),
+            "quarantined_horizon_count": prototype["summary"]["quarantined_horizon_count"],
+            "fallback_count": prototype["summary"]["fallback_count"],
+            "tail_loss_after_selector": prototype["summary"]["tail_loss_after_selector"],
+            "cost_after_selector": prototype["summary"]["cost_after_selector"],
+            "model_run_executed": False,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        prototype_policy=_next_stage_section(config, "horizon_selector_controlled_prototype"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        contract_source=_artifact_status(contract, contract_path),
+        fallback_review_source=_artifact_status(fallback_review, fallback_review_path),
+        horizon_stabilization_source=_artifact_status(
+            horizon_stabilization, horizon_stabilization_path
+        ),
+        horizon_decision_by_date=prototype["horizon_decision_by_date"],
+        selector_metric=prototype["selector_metric"],
+        transition_report=prototype["transition_report"],
+        selector_rules=prototype["selector_rules"],
+        prototype_summary=prototype["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="horizon_selector_controlled_prototype",
+    )
+    return payload
+
+
+def run_cost_aware_horizon_hysteresis(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract_path: Path = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    prototype_path: Path = DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    contract = _read_json_or_empty(contract_path)
+    prototype = _read_json_or_empty(prototype_path)
+    horizon_stabilization = _read_json_or_empty(horizon_stabilization_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _cost_aware_horizon_hysteresis_review(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    payload = _controlled_payload(
+        report_type="cost_aware_horizon_hysteresis",
+        title="Cost-aware horizon hysteresis",
+        status="COST_AWARE_HORIZON_HYSTERESIS_REVIEWED",
+        summary={
+            "horizon_switch_count": review["summary"]["horizon_switch_count"],
+            "action_flip_count": review["summary"]["action_flip_count"],
+            "turnover_delta": review["summary"]["turnover_delta"],
+            "cost_delta": review["summary"]["cost_delta"],
+            "utility_lost_to_hysteresis": review["summary"]["utility_lost_to_hysteresis"],
+            "tail_loss_reduction": review["summary"]["tail_loss_reduction"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        hysteresis_policy=_next_stage_section(config, "cost_aware_horizon_hysteresis"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        contract_source=_artifact_status(contract, contract_path),
+        prototype_source=_artifact_status(prototype, prototype_path),
+        horizon_stabilization_source=_artifact_status(
+            horizon_stabilization, horizon_stabilization_path
+        ),
+        original_metric=review["original_metric"],
+        selector_metric=review["selector_metric"],
+        hysteresis_metric=review["hysteresis_metric"],
+        transition_report=review["transition_report"],
+        hysteresis_cases=review["hysteresis_cases"],
+        hysteresis_summary=review["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="cost_aware_horizon_hysteresis",
+    )
+    return payload
+
+
+def run_horizon_selector_holdout_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract_path: Path = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    fallback_review_path: Path = DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
+    prototype_path: Path = DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    hysteresis_path: Path = DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    contract = _read_json_or_empty(contract_path)
+    fallback_review = _read_json_or_empty(fallback_review_path)
+    prototype = _read_json_or_empty(prototype_path)
+    hysteresis = _read_json_or_empty(hysteresis_path)
+    horizon_stabilization = _read_json_or_empty(horizon_stabilization_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _horizon_selector_holdout_review(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    payload = _controlled_payload(
+        report_type="horizon_selector_holdout_review",
+        title="Horizon selector holdout review",
+        status="HORIZON_SELECTOR_HOLDOUT_REVIEW_COMPLETE",
+        summary={
+            "horizon_selector_decision": review["summary"]["horizon_selector_decision"],
+            "holdout_case_count": review["summary"]["holdout_case_count"],
+            "holdout_pass_count": review["summary"]["holdout_pass_count"],
+            "holdout_pass_rate": review["summary"]["holdout_pass_rate"],
+            "tail_loss_condition_met": review["summary"]["tail_loss_condition_met"],
+            "turnover_cost_condition_met": review["summary"]["turnover_cost_condition_met"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        holdout_policy=_next_stage_section(config, "horizon_selector_holdout_review"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        contract_source=_artifact_status(contract, contract_path),
+        fallback_review_source=_artifact_status(fallback_review, fallback_review_path),
+        prototype_source=_artifact_status(prototype, prototype_path),
+        hysteresis_source=_artifact_status(hysteresis, hysteresis_path),
+        horizon_stabilization_source=_artifact_status(
+            horizon_stabilization, horizon_stabilization_path
+        ),
+        review_decision=review["review_decision"],
+        leave_one_regime_out=review["leave_one_regime_out"],
+        leave_one_horizon_out=review["leave_one_horizon_out"],
+        leave_one_asset_cluster_out=review["leave_one_asset_cluster_out"],
+        leave_one_date_window_out=review["leave_one_date_window_out"],
+        holdout_summary=review["summary"],
+        disallowed_actions=[
+            "expand_unconditional_value_surface",
+            "treat_regime_conditioned_mean_delta_near_zero_as_success",
+            "train_gbdt_nn_or_rl_strategy",
+            "continue_utility_boundary_tuning",
+            "enter_paper_shadow",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="horizon_selector_holdout_review",
     )
     return payload
 
@@ -6675,6 +7008,741 @@ def _value_surface_v2_evidence_summary(
         "holdout_pass_rate": holdout.get("summary", {}).get("holdout_pass_rate"),
         "promotion_gate_allowed": False,
     }
+
+
+def _horizon_selector_problem_contract(config: Mapping[str, Any]) -> dict[str, Any]:
+    policy = _next_stage_section(config, "horizon_selector_problem_contract")
+    candidate_horizons = [str(item) for item in policy.get("candidate_horizons", [])]
+    if not candidate_horizons:
+        candidate_horizons = [str(row.get("horizon_id")) for row in _horizons(config)]
+    status_map = _horizon_status_map(config)
+    allowed_horizons = [
+        horizon
+        for horizon in candidate_horizons
+        if status_map.get(horizon, "ALLOWED") in {"ALLOWED", "DOWNWEIGHTED"}
+    ]
+    fallback_horizon = str(policy.get("default_fallback_horizon", "5d"))
+    preferred = str(policy.get("default_preferred_horizon", fallback_horizon))
+    if preferred not in allowed_horizons and allowed_horizons:
+        preferred = allowed_horizons[0]
+    invalidation_conditions = [str(item) for item in policy.get("invalidation_conditions", [])]
+    return {
+        "candidate_horizons": [
+            {
+                "horizon": horizon,
+                "status": status_map.get(horizon, "ALLOWED"),
+                "promotion_gate_allowed": False,
+            }
+            for horizon in candidate_horizons
+        ],
+        "horizon_status": status_map,
+        "selector_output_schema": [
+            {"field": str(field), "required": True, "promotion_gate_allowed": False}
+            for field in policy.get("selector_output_fields", [])
+        ],
+        "selector_output": {
+            "allowed_horizons": allowed_horizons,
+            "preferred_horizon": preferred,
+            "fallback_horizon": fallback_horizon,
+            "horizon_confidence": _float(policy.get("horizon_confidence_default"), 0.50),
+            "invalidation_condition": invalidation_conditions,
+            "review_interval": str(policy.get("review_interval", "daily")),
+            "promotion_gate_allowed": False,
+        },
+        "target_horizon_is_holding_commitment": bool(
+            policy.get("target_horizon_is_holding_commitment", False)
+        ),
+        "regime_change_can_invalidate_horizon": bool(
+            policy.get("regime_change_can_invalidate_horizon", True)
+        ),
+        "problem_statement": {
+            "value_surface_role": "action_scoring_submodule",
+            "selector_role": "controlled_research_horizon_policy_candidate",
+            "target_horizon_not_holding_period_commitment": True,
+            "review_interval_can_remain_daily": True,
+            "regime_change_can_invalidate_horizon_early": True,
+            "model_training_allowed": False,
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _horizon_status_map(config: Mapping[str, Any]) -> dict[str, str]:
+    policy = _next_stage_section(config, "horizon_selector_problem_contract")
+    allowed = {str(item) for item in policy.get("allowed_statuses", [])} or {
+        "ALLOWED",
+        "DOWNWEIGHTED",
+        "QUARANTINED",
+        "FALLBACK_ONLY",
+    }
+    raw = policy.get("horizon_status", {})
+    status_map = dict(raw) if isinstance(raw, Mapping) else {}
+    return {
+        str(horizon): (
+            str(status_map.get(str(horizon), "ALLOWED"))
+            if str(status_map.get(str(horizon), "ALLOWED")) in allowed
+            else "ALLOWED"
+        )
+        for horizon in [str(item) for item in policy.get("candidate_horizons", [])]
+    }
+
+
+def _long_horizon_quarantine_fallback_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "long_horizon_quarantine_fallback_review")
+    variants = [str(item) for item in policy.get("variants", [])]
+    original_rows = [dict(row) for row in selected_cases]
+    original_metric = _v2_variant_metric_row("baseline_value_surface", original_rows, config)
+    metrics = []
+    holdout_by_variant = []
+    for variant_id in variants:
+        rows = _long_horizon_fallback_variant_cases(selected_cases, config, variant_id)
+        metric = _add_variant_deltas(
+            _v2_variant_metric_row(variant_id, rows, config),
+            original_metric,
+        )
+        metric["beat_rate_retention"] = _beat_rate_retention(original_metric, metric)
+        metric["tail_loss_reduction"] = _round(_tail_loss_reduction(original_metric, metric))
+        holdout_summary = _horizon_selector_holdout_summary(
+            original_cases=selected_cases,
+            candidate_cases=rows,
+            config=config,
+        )
+        metric["holdout_pass_rate"] = holdout_summary["holdout_pass_rate"]
+        metrics.append(metric)
+        holdout_by_variant.append({"variant_id": variant_id, **holdout_summary})
+    best = max(
+        [row for row in metrics if row.get("variant_id") != "baseline_value_surface"],
+        key=lambda row: (
+            _float(row.get("tail_loss_reduction"), -999.0),
+            -max(0.0, _float(row.get("cost_delta"), 0.0)),
+            _float(row.get("value_surface_beats_benchmark_rate"), 0.0),
+        ),
+        default={},
+    )
+    tail_floor = _float(policy.get("tail_loss_reduction_floor"), 0.20)
+    beat_floor = _float(policy.get("beat_rate_retention_floor"), 0.80)
+    return {
+        "summary": {
+            "best_variant_by_tail_loss": best.get("variant_id"),
+            "best_variant_tail_loss_reduction": best.get("tail_loss_reduction"),
+            "best_variant_turnover_cost_not_worse": _float(best.get("turnover_delta"), 0.0) <= 0
+            and _float(best.get("cost_delta"), 0.0) <= 0,
+            "best_variant_beat_rate_retention": best.get("beat_rate_retention"),
+            "horizon_selector_problem_supported": _float(best.get("tail_loss_reduction"), 0.0)
+            >= tail_floor
+            and _float(best.get("beat_rate_retention"), 0.0) >= beat_floor,
+            "promotion_gate_allowed": False,
+        },
+        "variant_metrics": metrics,
+        "variant_rules": _long_horizon_fallback_variant_rules(policy),
+        "holdout_summary_by_variant": holdout_by_variant,
+    }
+
+
+def _long_horizon_fallback_variant_cases(
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    variant_id: str,
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "long_horizon_quarantine_fallback_review")
+    long_horizons = {str(item) for item in policy.get("long_horizons", [])}
+    fallback_horizons = [str(item) for item in policy.get("fallback_horizons", [])]
+    utility_floor = _float(policy.get("confirmation_utility_floor_bps"), 0.0) / 10_000.0
+    by_key = _horizon_replacement_index(rows)
+    output = []
+    for row in rows:
+        item = dict(row)
+        horizon = str(item.get("horizon"))
+        is_long = horizon in long_horizons
+        if variant_id == "disable_60d" and horizon == "60d":
+            item = _fallback_case_to_benchmark(item, "disable_60d")
+        elif variant_id == "disable_20d_60d" and is_long:
+            item = _fallback_case_to_benchmark(item, "disable_20d_60d")
+        elif variant_id == "long_horizon_only_with_confirmation" and is_long:
+            confirmed = (
+                item.get("selected_action") == item.get("benchmark_action")
+                or _float(item.get("selected_net_utility"), 0.0) > utility_floor
+            )
+            if not confirmed:
+                item = _fallback_case_to_benchmark(item, "long_horizon_confirmation_failed")
+        elif variant_id == "long_horizon_fallback_to_5d_10d" and is_long:
+            item = _fallback_to_shorter_horizon(
+                item,
+                by_key,
+                fallback_horizons,
+                "long_horizon_shorter_fallback",
+            )
+        elif variant_id == "long_horizon_fallback_to_benchmark" and is_long:
+            item = _fallback_case_to_benchmark(item, "long_horizon_benchmark_fallback")
+        item["variant_id"] = variant_id
+        item["promotion_gate_allowed"] = False
+        output.append(item)
+    return output
+
+
+def _long_horizon_fallback_variant_rules(policy: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "variant_id": "baseline_value_surface",
+            "rule": "keep original horizon-conditioned value surface cases",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "disable_60d",
+            "rule": "fallback 60d cases to benchmark",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "disable_20d_60d",
+            "rule": "fallback 20d and 60d cases to benchmark",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "long_horizon_only_with_confirmation",
+            "rule": "allow long horizon only when configured confirmation proxy passes",
+            "confirmation_utility_floor_bps": policy.get("confirmation_utility_floor_bps"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "long_horizon_fallback_to_5d_10d",
+            "rule": "replace long horizon with same date/asset 10d or 5d candidate where available",
+            "fallback_horizons": policy.get("fallback_horizons"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "long_horizon_fallback_to_benchmark",
+            "rule": "fallback long horizon cases to benchmark action",
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _horizon_replacement_index(
+    rows: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], dict[str, Any]]:
+    return {
+        (str(row.get("date")), str(row.get("asset")), str(row.get("horizon"))): dict(row)
+        for row in rows
+    }
+
+
+def _fallback_to_shorter_horizon(
+    row: dict[str, Any],
+    by_key: Mapping[tuple[str, str, str], dict[str, Any]],
+    fallback_horizons: list[str],
+    reason: str,
+) -> dict[str, Any]:
+    for horizon in fallback_horizons:
+        replacement = by_key.get((str(row.get("date")), str(row.get("asset")), horizon))
+        if replacement is not None:
+            return _replace_case_with_horizon(row, replacement, reason)
+    return _fallback_case_to_benchmark(dict(row), f"{reason}_benchmark_unavailable")
+
+
+def _replace_case_with_horizon(
+    original: Mapping[str, Any],
+    replacement: Mapping[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    output = dict(replacement)
+    output["original_horizon"] = original.get("original_horizon", original.get("horizon"))
+    output["replacement_horizon"] = replacement.get("horizon")
+    output["horizon_selector_action"] = reason
+    output["guardrail_action"] = reason
+    output["promotion_gate_allowed"] = False
+    return output
+
+
+def _horizon_selector_controlled_prototype(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    horizon_stabilization: Mapping[str, Any],
+) -> dict[str, Any]:
+    selector_rows = _horizon_selector_rule_cases(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    metric = _v2_variant_metric_row("horizon_selector_controlled_prototype", selector_rows, config)
+    decisions = _horizon_decision_rows(selected_cases, config)
+    transition = _transition_report(selector_rows)
+    fallback_count = sum(
+        1 for row in selector_rows if row.get("horizon_selector_action", "keep") != "keep"
+    )
+    quarantined = sum(
+        1
+        for row in selected_cases
+        if _horizon_status_map(config).get(str(row.get("horizon")))
+        in {"QUARANTINED", "FALLBACK_ONLY"}
+    )
+    return {
+        "summary": {
+            "quarantined_horizon_count": quarantined,
+            "fallback_count": fallback_count,
+            "tail_loss_after_selector": metric.get("tail_loss_contribution"),
+            "cost_after_selector": metric.get("cost"),
+            "promotion_gate_allowed": False,
+        },
+        "horizon_decision_by_date": decisions,
+        "selector_metric": metric,
+        "transition_report": transition,
+        "selector_rules": _horizon_selector_rule_descriptions(config),
+        "selector_cases": selector_rows[:250],
+    }
+
+
+def _horizon_selector_rule_cases(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    horizon_stabilization: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "horizon_selector_controlled_prototype")
+    status_map = _horizon_status_map(config)
+    long_rule = policy.get("long_horizon_regime_quarantine", {})
+    long_regime = str(long_rule.get("regime_segment", "ai_after_chatgpt_full"))
+    long_horizons = {str(item) for item in long_rule.get("horizons", [])}
+    cliff_horizons = _high_cliff_horizons(horizon_stabilization, config)
+    fallback_horizons = [str(policy.get("fallback_horizon", "5d")), "10d", "5d"]
+    uncertainty_floor = _float(policy.get("uncertainty_high_utility_floor"), 0.0)
+    by_key = _horizon_replacement_index(selected_cases)
+    output = []
+    for row in selected_cases:
+        item = dict(row)
+        horizon = str(item.get("horizon"))
+        status = status_map.get(horizon, "ALLOWED")
+        item["original_horizon"] = item.get("original_horizon", horizon)
+        item["horizon_status"] = status
+        item["horizon_confidence"] = _horizon_confidence(item, status, config)
+        item["horizon_selector_action"] = "keep"
+        if status == "FALLBACK_ONLY":
+            item = _fallback_to_shorter_horizon(item, by_key, fallback_horizons, "fallback_only")
+        elif status == "QUARANTINED" and (
+            horizon in long_horizons or item.get("regime_segment") == long_regime
+        ):
+            item = _fallback_to_shorter_horizon(
+                item,
+                by_key,
+                fallback_horizons,
+                "quarantined_long_horizon",
+            )
+        elif horizon in cliff_horizons:
+            item = _fallback_to_shorter_horizon(item, by_key, fallback_horizons, "horizon_cliff")
+        elif (
+            bool(policy.get("fallback_to_benchmark_when_uncertain", True))
+            and _float(item.get("selected_net_utility"), 0.0) <= uncertainty_floor
+        ):
+            item = _fallback_case_to_benchmark(item, "uncertainty_high_benchmark_fallback")
+            item["horizon_selector_action"] = "uncertainty_high_benchmark_fallback"
+        item["horizon_confidence"] = _horizon_confidence(item, status, config)
+        item["promotion_gate_allowed"] = False
+        output.append(item)
+    return _annotate_transitions(output)
+
+
+def _horizon_decision_rows(
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    contract = _next_stage_section(config, "horizon_selector_problem_contract")
+    prototype_policy = _next_stage_section(config, "horizon_selector_controlled_prototype")
+    status_map = _horizon_status_map(config)
+    allowed = [
+        horizon for horizon, status in status_map.items() if status in {"ALLOWED", "DOWNWEIGHTED"}
+    ]
+    fallback = str(contract.get("default_fallback_horizon", "5d"))
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in selected_cases:
+        grouped.setdefault((str(row.get("date")), str(row.get("asset"))), []).append(row)
+    rows = []
+    for (row_date, asset), values in sorted(grouped.items()):
+        preferred_row = max(
+            [row for row in values if str(row.get("horizon")) in allowed] or values,
+            key=lambda row: _float(row.get("selected_net_utility"), -999.0),
+        )
+        status = status_map.get(str(preferred_row.get("horizon")), "ALLOWED")
+        rows.append(
+            {
+                "date": row_date,
+                "asset": asset,
+                "allowed_horizons": allowed,
+                "preferred_horizon": preferred_row.get("horizon"),
+                "fallback_horizon": fallback,
+                "horizon_confidence": _horizon_confidence(preferred_row, status, config),
+                "invalidation_condition": contract.get("invalidation_conditions", []),
+                "review_interval": contract.get("review_interval", "daily"),
+                "target_horizon_is_holding_commitment": False,
+                "promotion_gate_allowed": False,
+            }
+        )
+    limit = _first_int(prototype_policy.get("max_decision_rows")) or 250
+    return rows[:limit]
+
+
+def _horizon_confidence(
+    row: Mapping[str, Any],
+    status: str,
+    config: Mapping[str, Any],
+) -> float:
+    contract = _next_stage_section(config, "horizon_selector_problem_contract")
+    base = _float(contract.get("horizon_confidence_default"), 0.50)
+    if status == "ALLOWED":
+        base += 0.20
+    elif status == "DOWNWEIGHTED":
+        base += 0.05
+    elif status == "QUARANTINED":
+        base -= 0.15
+    elif status == "FALLBACK_ONLY":
+        base -= 0.25
+    if _float(row.get("selected_net_utility"), 0.0) <= 0:
+        base -= 0.10
+    return _round(max(0.0, min(1.0, base)))
+
+
+def _high_cliff_horizons(
+    horizon_stabilization: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> set[str]:
+    policy = _next_stage_section(config, "horizon_selector_controlled_prototype")
+    threshold = _float(policy.get("horizon_cliff_high_threshold"), 0.20)
+    rows = _horizon_cliff_matrix(horizon_stabilization)
+    horizons: set[str] = set()
+    for row in rows:
+        magnitude = max(
+            abs(_float(row.get("delta"), 0.0)),
+            abs(_float(row.get("cliff_magnitude"), 0.0)),
+            abs(_float(row.get("ranking_delta"), 0.0)),
+        )
+        if magnitude >= threshold:
+            for key in ["horizon", "from_horizon", "to_horizon", "horizon_id"]:
+                if row.get(key) is not None:
+                    horizons.add(str(row.get(key)))
+    return horizons
+
+
+def _horizon_selector_rule_descriptions(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    prototype = _next_stage_section(config, "horizon_selector_controlled_prototype")
+    hysteresis = _next_stage_section(config, "cost_aware_horizon_hysteresis")
+    return [
+        {
+            "rule_id": "long_horizon_regime_quarantine",
+            "rule": "quarantine configured long horizons in configured failure regime",
+            "policy": prototype.get("long_horizon_regime_quarantine"),
+            "model_run_executed": False,
+            "promotion_gate_allowed": False,
+        },
+        {
+            "rule_id": "horizon_cliff_fallback",
+            "rule": "fallback to shorter horizon when horizon cliff is high",
+            "threshold": prototype.get("horizon_cliff_high_threshold"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "rule_id": "uncertainty_benchmark_fallback",
+            "rule": "fallback to benchmark when utility confidence proxy is too low",
+            "threshold": prototype.get("uncertainty_high_utility_floor"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "rule_id": "cost_aware_hysteresis",
+            "rule": "do not switch horizon unless utility advantage and confidence pass policy",
+            "min_utility_advantage_bps_for_switch": hysteresis.get(
+                "min_utility_advantage_bps_for_switch"
+            ),
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _cost_aware_horizon_hysteresis_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    horizon_stabilization: Mapping[str, Any],
+) -> dict[str, Any]:
+    original_metric = _v2_variant_metric_row("baseline_value_surface", selected_cases, config)
+    selector_rows = _horizon_selector_rule_cases(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    selector_metric = _add_variant_deltas(
+        _v2_variant_metric_row("horizon_selector_controlled_prototype", selector_rows, config),
+        original_metric,
+    )
+    hysteresis_rows = _apply_cost_aware_horizon_hysteresis(selector_rows, config)
+    hysteresis_metric = _add_variant_deltas(
+        _v2_variant_metric_row("cost_aware_horizon_hysteresis", hysteresis_rows, config),
+        original_metric,
+    )
+    utility_lost = sum(
+        max(
+            0.0,
+            _float(before.get("selected_realized_net_return"), 0.0)
+            - _float(after.get("selected_realized_net_return"), 0.0),
+        )
+        for before, after in zip(selector_rows, hysteresis_rows, strict=False)
+    )
+    transition = _transition_report(hysteresis_rows)
+    return {
+        "summary": {
+            "horizon_switch_count": transition["horizon_switch_count"],
+            "action_flip_count": transition["action_flip_count"],
+            "turnover_delta": hysteresis_metric.get("turnover_delta"),
+            "cost_delta": hysteresis_metric.get("cost_delta"),
+            "utility_lost_to_hysteresis": _round(utility_lost),
+            "tail_loss_reduction": _round(_tail_loss_reduction(original_metric, hysteresis_metric)),
+            "promotion_gate_allowed": False,
+        },
+        "original_metric": original_metric,
+        "selector_metric": selector_metric,
+        "hysteresis_metric": hysteresis_metric,
+        "transition_report": transition,
+        "hysteresis_cases": [
+            row for row in hysteresis_rows if row.get("hysteresis_action") is not None
+        ][:100],
+    }
+
+
+def _apply_cost_aware_horizon_hysteresis(
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "cost_aware_horizon_hysteresis")
+    no_switch_band = _float(policy.get("no_switch_band_bps"), 10.0) / 10_000.0
+    cost_floor = _float(policy.get("high_cost_state_cost_floor"), 0.50)
+    confidence_floor = _float(policy.get("high_confidence_floor"), 0.70)
+    output = []
+    for row in _annotate_transitions(rows):
+        item = dict(row)
+        should_hold = bool(item.get("horizon_switch_for_review")) and (
+            abs(_float(item.get("delta_vs_benchmark"), 0.0)) < no_switch_band
+            or _float(item.get("selected_estimated_cost"), 0.0) >= cost_floor
+            or _float(item.get("horizon_confidence"), 0.0) < confidence_floor
+        )
+        if should_hold:
+            item = _fallback_case_to_benchmark(item, "horizon_hysteresis_no_switch")
+            item["hysteresis_action"] = "horizon_hysteresis_no_switch"
+        item["promotion_gate_allowed"] = False
+        output.append(item)
+    return output
+
+
+def _horizon_selector_holdout_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    horizon_stabilization: Mapping[str, Any],
+) -> dict[str, Any]:
+    original_metric = _v2_variant_metric_row("baseline_value_surface", selected_cases, config)
+    selector_rows = _horizon_selector_rule_cases(
+        selected_cases=selected_cases,
+        config=config,
+        horizon_stabilization=horizon_stabilization,
+    )
+    candidate_rows = _apply_cost_aware_horizon_hysteresis(selector_rows, config)
+    candidate_metric = _add_variant_deltas(
+        _v2_variant_metric_row("horizon_selector_candidate", candidate_rows, config),
+        original_metric,
+    )
+    policy = _next_stage_section(config, "horizon_selector_holdout_review")
+    dimensions = [str(item) for item in policy.get("holdout_dimensions", [])]
+    result_by_dimension = {
+        dimension: _horizon_selector_holdout_dimension_results(
+            original_cases=selected_cases,
+            candidate_cases=candidate_rows,
+            config=config,
+            dimension=dimension,
+        )
+        for dimension in dimensions
+    }
+    rows = [row for values in result_by_dimension.values() for row in values]
+    eligible = [row for row in rows if not row.get("insufficient_holdout_cases")]
+    passed = [row for row in eligible if row.get("passed")]
+    pass_rate = len(passed) / len(eligible) if eligible else 0.0
+    tail_condition = _tail_loss_reduction(original_metric, candidate_metric) >= _float(
+        policy.get("tail_loss_reduction_floor"), 0.10
+    )
+    turnover_cost_condition = (
+        _float(candidate_metric.get("turnover_delta"), 0.0) <= 0
+        and _float(candidate_metric.get("cost_delta"), 0.0) <= 0
+    )
+    decision, reason = _horizon_selector_decision(
+        policy=policy,
+        pass_rate=pass_rate,
+        tail_condition=tail_condition,
+        turnover_cost_condition=turnover_cost_condition,
+        candidate_metric=candidate_metric,
+    )
+    summary = {
+        "horizon_selector_decision": decision,
+        "decision_reason": reason,
+        "holdout_case_count": len(rows),
+        "eligible_holdout_case_count": len(eligible),
+        "holdout_pass_count": len(passed),
+        "holdout_pass_rate": _round(pass_rate),
+        "tail_loss_condition_met": tail_condition,
+        "turnover_cost_condition_met": turnover_cost_condition,
+        "candidate_mean_delta_vs_benchmark": candidate_metric.get("mean_delta_vs_benchmark"),
+        "promotion_gate_allowed": False,
+    }
+    return {
+        "summary": summary,
+        "review_decision": {
+            **summary,
+            "allowed_decisions": policy.get("allowed_decisions", []),
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+        },
+        "leave_one_regime_out": result_by_dimension.get("regime_segment", []),
+        "leave_one_horizon_out": result_by_dimension.get("horizon", []),
+        "leave_one_asset_cluster_out": result_by_dimension.get("asset_cluster", []),
+        "leave_one_date_window_out": result_by_dimension.get("date_window", []),
+    }
+
+
+def _horizon_selector_decision(
+    *,
+    policy: Mapping[str, Any],
+    pass_rate: float,
+    tail_condition: bool,
+    turnover_cost_condition: bool,
+    candidate_metric: Mapping[str, Any],
+) -> tuple[str, str]:
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    pass_floor = _float(policy.get("holdout_pass_rate_floor"), 0.60)
+    if pass_rate >= pass_floor and tail_condition and turnover_cost_condition:
+        decision = "CONTINUE"
+        reason = "selector_holdout_passed_tail_and_cost_conditions"
+    elif tail_condition and not turnover_cost_condition:
+        decision = "PIVOT_TO_TAIL_RISK_POLICY"
+        reason = "tail_loss_improves_but_turnover_or_cost_worsens"
+    elif (
+        tail_condition
+        and _float(candidate_metric.get("value_surface_beats_benchmark_rate"), 0.0) > 0
+    ):
+        decision = "PIVOT_TO_BENCHMARK_SELECTOR"
+        reason = "tail_loss_improves_but_holdout_or_cost_requires_benchmark_selector"
+    elif pass_rate == 0 and not tail_condition:
+        decision = "KILL_VALUE_SURFACE_AS_ACTION_POLICY"
+        reason = "selector_holdout_failed_without_tail_loss_reduction"
+    else:
+        decision = "WATCHLIST"
+        reason = "selector_evidence_incomplete"
+    if allowed and decision not in allowed:
+        return "WATCHLIST", "computed_decision_not_allowed_by_policy"
+    return decision, reason
+
+
+def _horizon_selector_holdout_summary(
+    *,
+    original_cases: list[dict[str, Any]],
+    candidate_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "horizon_selector_holdout_review")
+    dimensions = [str(item) for item in policy.get("holdout_dimensions", [])]
+    rows = [
+        row
+        for dimension in dimensions
+        for row in _horizon_selector_holdout_dimension_results(
+            original_cases=original_cases,
+            candidate_cases=candidate_cases,
+            config=config,
+            dimension=dimension,
+        )
+    ]
+    eligible = [row for row in rows if not row.get("insufficient_holdout_cases")]
+    passed = [row for row in eligible if row.get("passed")]
+    return {
+        "holdout_case_count": len(rows),
+        "eligible_holdout_case_count": len(eligible),
+        "holdout_pass_count": len(passed),
+        "holdout_pass_rate": _round(len(passed) / len(eligible) if eligible else 0.0),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _horizon_selector_holdout_dimension_results(
+    *,
+    original_cases: list[dict[str, Any]],
+    candidate_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    dimension: str,
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "horizon_selector_holdout_review")
+    min_cases = _first_int(policy.get("min_holdout_case_count"))
+    mean_floor = _float(policy.get("mean_delta_floor_bps"), 0.0) / 10_000.0
+    tail_floor = _float(policy.get("tail_loss_reduction_floor"), 0.10)
+    values = sorted(
+        {_horizon_selector_holdout_value(row, dimension, config) for row in original_cases}
+    )
+    rows = []
+    for value in values:
+        original_subset = [
+            row
+            for row in original_cases
+            if _horizon_selector_holdout_value(row, dimension, config) == value
+        ]
+        candidate_subset = [
+            row
+            for row in candidate_cases
+            if _horizon_selector_holdout_value(row, dimension, config) == value
+        ]
+        original_metric = _v2_variant_metric_row("original_holdout", original_subset, config)
+        candidate_metric = _add_variant_deltas(
+            _v2_variant_metric_row("candidate_holdout", candidate_subset, config),
+            original_metric,
+        )
+        tail_reduction = _tail_loss_reduction(original_metric, candidate_metric)
+        turnover_cost_not_worse = (
+            _float(candidate_metric.get("turnover_delta"), 0.0) <= 0
+            and _float(candidate_metric.get("cost_delta"), 0.0) <= 0
+        )
+        insufficient = len(original_subset) < min_cases
+        passed = (
+            not insufficient
+            and _float(candidate_metric.get("mean_delta_vs_benchmark"), 0.0) >= mean_floor
+            and tail_reduction >= tail_floor
+            and turnover_cost_not_worse
+        )
+        rows.append(
+            {
+                "holdout_dimension": dimension,
+                "holdout_value": value,
+                "case_count": len(original_subset),
+                "insufficient_holdout_cases": insufficient,
+                "original_mean_delta_vs_benchmark": original_metric.get("mean_delta_vs_benchmark"),
+                "candidate_mean_delta_vs_benchmark": candidate_metric.get(
+                    "mean_delta_vs_benchmark"
+                ),
+                "tail_loss_reduction": _round(tail_reduction),
+                "turnover_delta": candidate_metric.get("turnover_delta"),
+                "cost_delta": candidate_metric.get("cost_delta"),
+                "turnover_cost_not_worse": turnover_cost_not_worse,
+                "passed": passed,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _horizon_selector_holdout_value(
+    row: Mapping[str, Any],
+    dimension: str,
+    config: Mapping[str, Any],
+) -> str:
+    if dimension == "date_window":
+        return _date_window(str(row.get("date")), config)
+    if dimension == "horizon":
+        return str(row.get("original_horizon", row.get("horizon", "unknown")))
+    return str(row.get(dimension, "unknown"))
 
 
 def _run_data_quality_gate(

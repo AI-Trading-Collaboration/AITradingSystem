@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_804
+policy_id: controlled_strategy_research_next_stage_775_809
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -521,3 +521,117 @@ value_surface_v2_controlled_review:
     V2 can only continue to larger controlled research when return, tail-loss,
     beat-rate, turnover/cost and holdout criteria all hold. This review cannot
     permit promotion, paper-shadow, production weights, or broker action.
+horizon_selector_problem_contract:
+  task_id: TRADING-805
+  candidate_horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  horizon_status:
+    1d: ALLOWED
+    5d: ALLOWED
+    10d: ALLOWED
+    20d: QUARANTINED
+    60d: FALLBACK_ONLY
+  allowed_statuses:
+    - ALLOWED
+    - DOWNWEIGHTED
+    - QUARANTINED
+    - FALLBACK_ONLY
+  default_preferred_horizon: 5d
+  default_fallback_horizon: 5d
+  review_interval: daily
+  horizon_confidence_default: 0.50
+  target_horizon_is_holding_commitment: false
+  regime_change_can_invalidate_horizon: true
+  invalidation_conditions:
+    - regime_change
+    - horizon_cliff_high
+    - long_horizon_tail_loss_concentration
+    - uncertainty_high
+    - turnover_cost_pressure_high
+  selector_output_fields:
+    - allowed_horizons
+    - preferred_horizon
+    - fallback_horizon
+    - horizon_confidence
+    - invalidation_condition
+    - review_interval
+  rationale: >
+    The selector contract defines the research problem before any model training.
+    The target horizon is a review target, not a holding-period promise, and it
+    can be invalidated early when regime or risk conditions change.
+long_horizon_quarantine_fallback_review:
+  task_id: TRADING-806
+  long_horizons:
+    - 20d
+    - 60d
+  fallback_horizons:
+    - 10d
+    - 5d
+  confirmation_required_for_long_horizon: true
+  confirmation_utility_floor_bps: 0
+  beat_rate_retention_floor: 0.80
+  tail_loss_reduction_floor: 0.20
+  holdout_pass_rate_floor: 0.60
+  variants:
+    - baseline_value_surface
+    - disable_60d
+    - disable_20d_60d
+    - long_horizon_only_with_confirmation
+    - long_horizon_fallback_to_5d_10d
+    - long_horizon_fallback_to_benchmark
+  rationale: >
+    This review tests whether 20d/60d failures are horizon-selector failures
+    rather than value-surface action model failures.
+horizon_selector_controlled_prototype:
+  task_id: TRADING-807
+  horizon_cliff_high_threshold: 0.20
+  uncertainty_high_utility_floor: 0.00
+  turnover_cost_pressure_cost_floor: 0.50
+  high_confidence_floor: 0.70
+  long_horizon_regime_quarantine:
+    regime_segment: ai_after_chatgpt_full
+    horizons:
+      - 20d
+      - 60d
+  fallback_to_benchmark_when_uncertain: true
+  fallback_horizon: 5d
+  max_decision_rows: 250
+  rationale: >
+    First selector prototype uses explicit controlled rules only. It does not
+    train ML or produce a production horizon policy.
+cost_aware_horizon_hysteresis:
+  task_id: TRADING-808
+  min_utility_advantage_bps_for_switch: 25
+  no_switch_band_bps: 10
+  high_cost_state_cost_floor: 0.50
+  long_horizon_confirmation_count: 2
+  high_confidence_floor: 0.70
+  rationale: >
+    Hysteresis tests whether cost-aware horizon switching discipline can reduce
+    turnover and cost without reintroducing large tail losses.
+horizon_selector_holdout_review:
+  task_id: TRADING-809
+  holdout_dimensions:
+    - regime_segment
+    - horizon
+    - asset_cluster
+    - date_window
+  min_holdout_case_count: 20
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_floor: 0.10
+  holdout_pass_rate_floor: 0.60
+  cost_turnover_not_worse_required: true
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_BENCHMARK_SELECTOR
+    - KILL_VALUE_SURFACE_AS_ACTION_POLICY
+    - DATA_REQUIRED
+  rationale: >
+    The selector can continue only if leave-one holdouts reduce tail loss without
+    worsening cost/turnover. Failed holdout keeps the line in watchlist or pivot.

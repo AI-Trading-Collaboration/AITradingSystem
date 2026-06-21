@@ -16,6 +16,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH,
     DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
     DEFAULT_FORWARD_EVIDENCE_CONTINUITY_EXTENSION_PATH,
     DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
@@ -27,6 +28,9 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH,
     DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH,
     DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
     DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
     DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
     DEFAULT_REGIME_CONDITIONED_WALK_FORWARD_HOLDOUT_PATH,
@@ -49,9 +53,11 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_VALUE_SURFACE_PATH,
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_UTILITY_PARETO_RANKING_PATH,
+    DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
     DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH,
     DEFAULT_VALUE_SURFACE_WARNING_TRIAGE_PATH,
     run_ai_after_chatgpt_full_regime_attribution_review,
+    run_cost_aware_horizon_hysteresis,
     run_cost_turnover_aware_regime_conditioned_value_surface,
     run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
@@ -59,6 +65,10 @@ from ai_trading_system.controlled_strategy_batch import (
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_horizon_selector_controlled_prototype,
+    run_horizon_selector_holdout_review,
+    run_horizon_selector_problem_contract,
+    run_long_horizon_quarantine_fallback_review,
     run_long_horizon_quarantine_selection_review,
     run_regime_conditioned_value_surface_controlled_review,
     run_regime_conditioned_value_surface_design,
@@ -1557,6 +1567,209 @@ def strategies_value_surface_v2_controlled_review_command(
         )
     )
     _print_strategy_pilot_payload("Value surface v2 controlled review", payload)
+
+
+@strategies_app.command("horizon-selector-problem-contract")
+def strategies_horizon_selector_problem_contract_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-805 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    v2_review: Annotated[
+        Path,
+        typer.Option("--v2-review", help="TRADING-804 v2 controlled review JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    long_horizon_review: Annotated[
+        Path,
+        typer.Option("--long-horizon-review", help="TRADING-801 long-horizon review JSON。"),
+    ] = DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-805 horizon selector contract 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_horizon_selector_problem_contract(
+            config_path=config_path,
+            v2_review_path=v2_review,
+            long_horizon_review_path=long_horizon_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Horizon selector problem contract", payload)
+
+
+@strategies_app.command("long-horizon-quarantine-fallback-review")
+def strategies_long_horizon_quarantine_fallback_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-806 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-805 horizon selector contract JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    v2_review: Annotated[
+        Path,
+        typer.Option("--v2-review", help="TRADING-804 v2 controlled review JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-806 long-horizon fallback 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_long_horizon_quarantine_fallback_review(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            contract_path=contract,
+            v2_review_path=v2_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Long-horizon quarantine fallback review", payload)
+
+
+@strategies_app.command("horizon-selector-controlled-prototype")
+def strategies_horizon_selector_controlled_prototype_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-807 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-805 horizon selector contract JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    fallback_review: Annotated[
+        Path,
+        typer.Option("--fallback-review", help="TRADING-806 long-horizon fallback JSON。"),
+    ] = DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-807 selector prototype 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_horizon_selector_controlled_prototype(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            contract_path=contract,
+            fallback_review_path=fallback_review,
+            horizon_stabilization_path=horizon_stabilization,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Horizon selector controlled prototype", payload)
+
+
+@strategies_app.command("cost-aware-horizon-hysteresis")
+def strategies_cost_aware_horizon_hysteresis_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-808 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-805 horizon selector contract JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    prototype: Annotated[
+        Path,
+        typer.Option("--prototype", help="TRADING-807 selector prototype JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-808 horizon hysteresis 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_cost_aware_horizon_hysteresis(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            contract_path=contract,
+            prototype_path=prototype,
+            horizon_stabilization_path=horizon_stabilization,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Cost-aware horizon hysteresis", payload)
+
+
+@strategies_app.command("horizon-selector-holdout-review")
+def strategies_horizon_selector_holdout_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-809 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-805 horizon selector contract JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
+    fallback_review: Annotated[
+        Path,
+        typer.Option("--fallback-review", help="TRADING-806 long-horizon fallback JSON。"),
+    ] = DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
+    prototype: Annotated[
+        Path,
+        typer.Option("--prototype", help="TRADING-807 selector prototype JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    hysteresis: Annotated[
+        Path,
+        typer.Option("--hysteresis", help="TRADING-808 cost-aware hysteresis JSON。"),
+    ] = DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-809 selector holdout 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_horizon_selector_holdout_review(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            contract_path=contract,
+            fallback_review_path=fallback_review,
+            prototype_path=prototype,
+            hysteresis_path=hysteresis,
+            horizon_stabilization_path=horizon_stabilization,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Horizon selector holdout review", payload)
 
 
 @strategy_pilot_app.command("readiness-board")
