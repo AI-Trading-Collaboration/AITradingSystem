@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -9,24 +10,32 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.current_subscription_qualification import (
+    CONTROLLED_REPRESENTATIVE_UNIVERSE,
     build_strategy_research_readiness_board,
+    capture_forward_evidence_dry_run_archive,
     classify_forward_evidence_requirement,
     run_asset_master_qualification,
     run_benchmark_controls_real_data_batch,
+    run_controlled_benchmark_batch,
+    run_controlled_research_batch_review,
     run_cost_liquidity_model_qualification,
     run_data_foundation_acceptance_v2,
     run_data_source_usage_guardrails,
     run_data_vendor_decision_gate,
     run_first_current_subscription_source_qualification_batch,
+    run_fmp_pit_owner_review,
     run_fmp_price_corporate_action_qualification,
     run_gbdt_action_utility_baseline,
     run_horizon_conditioned_value_surface_prototype,
     run_label_boundary_qualification,
     run_macro_risk_source_qualification,
+    run_marketstack_coverage_expansion,
     run_marketstack_reconciliation_qualification,
     run_pilot_batch_review,
+    run_regret_casebook_controlled_pilot,
     run_regret_casebook_failure_taxonomy_pilot,
     run_regret_driven_state_machine_prototype,
+    run_reverse_diagnostics_controlled_pilot,
     run_sec_fundamental_pit_qualification,
     run_simple_strategy_ensemble_selector_prototype,
     run_strategy_pair_reverse_diagnostics_pilot,
@@ -201,6 +210,118 @@ def test_current_subscription_source_qualification_contracts(tmp_path: Path) -> 
     ).exists()
 
 
+def test_controlled_research_batch_760_to_764_contract(tmp_path: Path) -> None:
+    coverage_path = _write_coverage(tmp_path)
+    prices_path, marketstack_prices_path, rates_path = _write_controlled_price_caches(tmp_path)
+    source_root = tmp_path / "source"
+    benchmark_root = tmp_path / "benchmark"
+    marketstack_root = tmp_path / "marketstack"
+    fmp_root = tmp_path / "fmp"
+    reverse_root = tmp_path / "reverse"
+    regret_root = tmp_path / "regret"
+    review_root = tmp_path / "review"
+
+    run_fmp_price_corporate_action_qualification(
+        subscription_coverage_path=coverage_path,
+        output_root=source_root,
+    )
+    benchmark = run_controlled_benchmark_batch(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=benchmark_root,
+        as_of_date=date(2022, 12, 5),
+        expected_price_tickers=list(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        expected_rate_series=["DGS10"],
+    )
+    _assert_safety(benchmark)
+    assert benchmark["report_type"] == "controlled_benchmark_batch_report"
+    assert benchmark["summary"]["benchmark_run_count"] >= benchmark["summary"]["configured_minimum"]
+    assert benchmark["summary"]["negative_control_promotion_count"] == 0
+    assert benchmark["summary"]["future_leakage_trap_blocked"] is True
+    assert (benchmark_root / "control_audit_report.json").exists()
+
+    forward = capture_forward_evidence_dry_run_archive(
+        benchmark_report_path=benchmark_root / "controlled_benchmark_batch_report.json",
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        output_root=tmp_path / "forward",
+    )
+    _assert_safety(forward)
+    assert forward["summary"]["forward_archive_created"] is True
+    assert forward["outcome_status"] == "pending"
+    assert forward["outcome_append_only"] is True
+
+    marketstack = run_marketstack_coverage_expansion(
+        subscription_coverage_path=coverage_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=marketstack_root,
+        as_of_date=date(2022, 12, 5),
+        expected_rate_series=["DGS10"],
+    )
+    _assert_safety(marketstack)
+    assert marketstack["summary"]["representative_universe_probe_complete"] is True
+    assert marketstack["summary"]["coverage_ratio_explained"] is True
+    assert marketstack["summary"]["symbol_mapping_issue_count"] == 1
+    assert marketstack["summary"]["marketstack_primary_source_allowed"] is False
+    discrepancy = json.loads(
+        (marketstack_root / "fmp_marketstack_discrepancy_report.json").read_text(encoding="utf-8")
+    )
+    assert "SYMBOL_MAPPING_ISSUE" in discrepancy["discrepancy_reason_enum"]
+
+    fmp_review = run_fmp_pit_owner_review(
+        fmp_qualification_path=source_root / "fmp_price_corporate_action_qualification_report.json",
+        fmp_manifest_path=source_root / "fmp_source_manifest_sample.json",
+        output_root=fmp_root,
+    )
+    _assert_safety(fmp_review)
+    assert fmp_review["summary"]["owner_review_package_generated"] is True
+    assert fmp_review["summary"]["provider_timestamp_gap_explicit"] is True
+    delisted = json.loads(
+        (fmp_root / "fmp_delisted_validation_report.json").read_text(encoding="utf-8")
+    )
+    assert delisted["summary"]["promotion_blocker_remaining"] is True
+
+    reverse = run_reverse_diagnostics_controlled_pilot(
+        benchmark_report_path=benchmark_root / "controlled_benchmark_batch_report.json",
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        output_root=reverse_root,
+    )
+    _assert_safety(reverse)
+    assert reverse["summary"]["oracle_promotion_violation_count"] == 0
+    assert reverse["summary"]["decision_delta_trace_complete"] is True
+
+    regret = run_regret_casebook_controlled_pilot(
+        reverse_diagnostics_path=reverse_root / "reverse_diagnostics_controlled_pilot.json",
+        output_root=regret_root,
+    )
+    _assert_safety(regret)
+    assert regret["summary"]["regret_case_count"] > 0
+    assert regret["summary"]["unclassified_regret_case_count"] == 0
+    assert regret["summary"]["hypothesis_candidate_count"] > 0
+
+    review = run_controlled_research_batch_review(
+        benchmark_report_path=benchmark_root / "controlled_benchmark_batch_report.json",
+        control_audit_path=benchmark_root / "control_audit_report.json",
+        forward_archive_path=tmp_path / "forward" / "forward_evidence_dry_run_archive.json",
+        marketstack_report_path=marketstack_root / "marketstack_coverage_expansion_report.json",
+        fmp_owner_review_path=fmp_root / "fmp_pit_owner_review_package.json",
+        fmp_delisted_report_path=fmp_root / "fmp_delisted_validation_report.json",
+        reverse_diagnostics_path=reverse_root / "reverse_diagnostics_controlled_pilot.json",
+        regret_casebook_path=regret_root / "regret_casebook_controlled_pilot.json",
+        output_root=review_root,
+    )
+    _assert_safety(review)
+    assert review["summary"]["all_modules_have_decision"] is True
+    assert review["summary"]["next_batch_recommendation_present"] is True
+    assert review["summary"]["promotion_gate_allowed"] is False
+    decisions = {item["module_id"]: item["decision"] for item in review["module_decisions"]}
+    assert decisions["benchmark_controls"] == "CONTINUE"
+    assert decisions["marketstack_reconciliation"] in {"WATCHLIST", "DATA_REQUIRED"}
+    assert decisions["regret_casebook"] == "WATCHLIST"
+
+
 def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> None:
     coverage_path = _write_coverage(tmp_path)
     requirements_path = _write_requirements(tmp_path)
@@ -301,6 +422,13 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
         "benchmark_controls_real_data_batch",
         "data_vendor_decision_gate",
         "current_subscription_source_qualification_batch_review",
+        "controlled_benchmark_batch_report",
+        "forward_evidence_dry_run_archive",
+        "marketstack_coverage_expansion_report",
+        "fmp_pit_owner_review_package",
+        "reverse_diagnostics_controlled_pilot",
+        "regret_casebook_controlled_pilot",
+        "controlled_research_batch_review",
     }:
         assert report_id in report_ids
         assert report_ids[report_id]["artifact_selection_policy"] == "latest_available"
@@ -310,12 +438,16 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
     assert "data_source_usage_policy_audit.json/md" in catalog
     assert "strategy_research_readiness_board.json/md" in catalog
     assert "current_subscription_source_qualification_batch_review.json/md" in catalog
+    assert "controlled_benchmark_batch_report.json/md" in catalog
+    assert "controlled_research_batch_review.json/md" in catalog
     assert "DO_NOT_BUY_NEW_SOURCE_YET" in catalog
 
     system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
     assert "TRADING-739～748" in system_flow
     assert "TRADING-759" in system_flow
+    assert "TRADING-760～764" in system_flow
     assert "aits research strategy-pilot readiness-board" in system_flow
+    assert "aits research controlled-pilot benchmark-batch" in system_flow
 
     assert (
         PROJECT_ROOT / "docs" / "schema" / "current_subscription_source_qualification.schema.json"
@@ -409,6 +541,41 @@ def _endpoint(
         "broker_action": "none",
         "promotion_gate_allowed": False,
     }
+
+
+def _write_controlled_price_caches(tmp_path: Path) -> tuple[Path, Path, Path]:
+    dates = ["2022-12-01", "2022-12-02", "2022-12-05"]
+    prices_path = tmp_path / "prices_daily.csv"
+    marketstack_path = tmp_path / "prices_marketstack_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    header = "date,ticker,open,high,low,close,adj_close,volume\n"
+    primary_rows = [header]
+    secondary_rows = [header]
+    for ticker_index, ticker in enumerate(CONTROLLED_REPRESENTATIVE_UNIVERSE):
+        base = 100 + ticker_index
+        for day_index, row_date in enumerate(dates):
+            close = base + day_index
+            primary_rows.append(
+                f"{row_date},{ticker},{close - 1},{close + 1},{close - 2},"
+                f"{close},{close},{1000000 + ticker_index}\n"
+            )
+            secondary_ticker = "GOOG" if ticker == "GOOGL" else ticker
+            if ticker == "GOOGL":
+                close = close + 1
+            secondary_rows.append(
+                f"{row_date},{secondary_ticker},{close - 1},{close + 1},{close - 2},"
+                f"{close},{close},{1000000 + ticker_index}\n"
+            )
+    prices_path.write_text("".join(primary_rows), encoding="utf-8")
+    marketstack_path.write_text("".join(secondary_rows), encoding="utf-8")
+    rates_path.write_text(
+        "date,series,value\n"
+        "2022-12-01,DGS10,3.50\n"
+        "2022-12-02,DGS10,3.51\n"
+        "2022-12-05,DGS10,3.52\n",
+        encoding="utf-8",
+    )
+    return prices_path, marketstack_path, rates_path
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:

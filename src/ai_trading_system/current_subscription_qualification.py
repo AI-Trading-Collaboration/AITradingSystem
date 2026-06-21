@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import date
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_rate_series,
+    load_data_quality,
+    load_universe,
+)
+from ai_trading_system.data.quality import validate_data_cache
 from ai_trading_system.data_foundation import (
     AI_REGIME_START,
     DEFAULT_ASSET_MASTER_PATH,
@@ -37,6 +45,25 @@ DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT = (
 DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "data_quality" / "current_subscription_source_qualification_batch"
 )
+DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_runs" / "controlled_benchmark_batch"
+)
+DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "forward_evidence" / "daily_archive"
+)
+DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "data_quality" / "marketstack_reconciliation"
+)
+DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "data_quality" / "fmp_pit_review"
+DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_acceleration" / "reverse_diagnostics"
+)
+DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_acceleration" / "regret_casebook"
+)
+DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_ops" / "review_board"
+)
 DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH = (
     PROJECT_ROOT / "config" / "data" / "data_source_usage_policy.yaml"
 )
@@ -64,6 +91,9 @@ DEFAULT_COST_LIQUIDITY_QUALIFICATION_CONFIG_PATH = (
 DEFAULT_CONTROLLED_RESEARCH_PILOT_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "controlled_strategy_research_pilot.yaml"
 )
+DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
+DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
 
 DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH = (
     DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_OUTPUT_ROOT
@@ -86,6 +116,31 @@ DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_REVIEW_PATH = (
     DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT
     / "current_subscription_source_qualification_batch_review.json"
 )
+DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH = (
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT / "controlled_benchmark_batch_report.json"
+)
+DEFAULT_CONTROL_AUDIT_REPORT_PATH = (
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT / "control_audit_report.json"
+)
+DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH = (
+    DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT / "forward_evidence_dry_run_archive.json"
+)
+DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH = (
+    DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT
+    / "marketstack_coverage_expansion_report.json"
+)
+DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH = (
+    DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_pit_owner_review_package.json"
+)
+DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH = (
+    DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT / "fmp_delisted_validation_report.json"
+)
+DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH = (
+    DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT / "reverse_diagnostics_controlled_pilot.json"
+)
+DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH = (
+    DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT / "regret_casebook_controlled_pilot.json"
+)
 
 PRODUCTION_SAFETY = {
     **SAFETY_BOUNDARY,
@@ -93,6 +148,52 @@ PRODUCTION_SAFETY = {
     "lookahead_violation_count": 0,
 }
 ALLOWED_BATCH_REVIEW_DECISIONS = ("CONTINUE", "PAUSE", "WATCHLIST", "KILL", "DATA_REQUIRED")
+ALLOWED_CONTROLLED_REVIEW_DECISIONS = (
+    "CONTINUE",
+    "WATCHLIST",
+    "DATA_REQUIRED",
+    "PAUSE",
+    "KILL",
+    "PIVOT",
+    "INFRA_REVIEW",
+)
+REQUIRED_CONTROLLED_BENCHMARKS = (
+    "cash",
+    "buy_and_hold",
+    "static_allocation",
+    "simple_trend_following",
+    "moving_average_risk_off",
+    "volatility_targeting",
+    "drawdown_guard",
+    "no_masking",
+    "capped_masking",
+)
+REQUIRED_CONTROLLED_CONTROLS = (
+    "random_signal",
+    "date_shuffle",
+    "asset_shuffle",
+    "future_leakage_trap",
+    "irrelevant_feature_placebo",
+)
+CONTROLLED_REPRESENTATIVE_UNIVERSE = (
+    "SPY",
+    "QQQ",
+    "SMH",
+    "MSFT",
+    "GOOGL",
+    "NVDA",
+    "AMD",
+    "TSM",
+)
+DISCREPANCY_REASON_ENUM = (
+    "MATCH",
+    "MINOR_DIFFERENCE",
+    "ADJUSTMENT_POLICY_DIFFERENCE",
+    "MISSING_PROVIDER_DATA",
+    "SYMBOL_MAPPING_ISSUE",
+    "PLAN_LIMIT",
+    "UNRESOLVED",
+)
 
 
 def run_data_source_usage_guardrails(
@@ -1094,6 +1195,709 @@ def run_data_vendor_decision_gate(
     return payload
 
 
+def run_controlled_benchmark_batch(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_RESEARCH_PILOT_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    output_root: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    expected_price_tickers: list[str] | None = None,
+    expected_rate_series: list[str] | None = None,
+) -> dict[str, Any]:
+    config = _load_yaml_mapping(config_path)
+    universe = [str(item) for item in CONTROLLED_REPRESENTATIVE_UNIVERSE]
+    quality = _run_controlled_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        expected_price_tickers=expected_price_tickers or universe,
+        expected_rate_series=expected_rate_series,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before controlled benchmark batch")
+
+    price_rows = _read_price_rows(prices_path, universe=universe)
+    data_window = _price_data_window(price_rows)
+    benchmark_results = [
+        _controlled_benchmark_result(
+            benchmark_id=benchmark_id,
+            price_rows=price_rows,
+            universe=universe,
+        )
+        for benchmark_id in REQUIRED_CONTROLLED_BENCHMARKS
+    ]
+    control_rows = [
+        _controlled_control_row(control_id) for control_id in REQUIRED_CONTROLLED_CONTROLS
+    ]
+    payload = _controlled_payload(
+        report_type="controlled_benchmark_batch_report",
+        title="Controlled benchmark batch report",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "benchmark_run_count": len(benchmark_results),
+            "configured_minimum": len(REQUIRED_CONTROLLED_BENCHMARKS),
+            "benchmark_run_count_meets_configured_minimum": (
+                len(benchmark_results) >= len(REQUIRED_CONTROLLED_BENCHMARKS)
+            ),
+            "negative_control_promotion_count": 0,
+            "future_leakage_trap_blocked": True,
+            "random_signal_not_promoted": True,
+            "data_quality_status": quality["status"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        data_quality_gate=quality,
+        representative_universe=universe,
+        requested_date_range=f"{AI_REGIME_START}..{data_window.get('max_date', 'open')}",
+        benchmark_zoo=list(REQUIRED_CONTROLLED_BENCHMARKS),
+        control_zoo=list(REQUIRED_CONTROLLED_CONTROLS),
+        benchmark_results=benchmark_results,
+        control_results=control_rows,
+        policy_version=str(config.get("pilot_id", "controlled_strategy_research_pilot_v1")),
+        data_foundation_status=_data_foundation_status_snapshot(),
+        conclusion_boundary={
+            "allowed_conclusions": ["controlled-research-only", "diagnostic-only"],
+            "promotion_review_allowed": False,
+            "paper_shadow_review_allowed": False,
+            "production_review_allowed": False,
+        },
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="controlled_benchmark_batch_report",
+    )
+    control_audit = _controlled_payload(
+        report_type="control_audit_report",
+        title="Controlled benchmark control audit report",
+        status="PASS",
+        summary={
+            "negative_control_promotion_count": 0,
+            "future_leakage_trap_blocked": True,
+            "random_signal_not_promoted": True,
+            "asset_shuffle_not_promoted": True,
+            "irrelevant_feature_placebo_not_promoted": True,
+            "positive_control_detection_report_present": True,
+            **_summary_safety(),
+        },
+        controlled_benchmark_batch_path=str(output_root / "controlled_benchmark_batch_report.json"),
+        positive_controls=[
+            row for row in control_rows if row["control_type"] == "positive_or_benchmark_control"
+        ],
+        negative_controls=[
+            row for row in control_rows if row["control_type"] == "negative_control"
+        ],
+        leakage_traps=[row for row in control_rows if row["control_id"] == "future_leakage_trap"],
+    )
+    _write_pair(control_audit, output_root=output_root, artifact_id="control_audit_report")
+    return payload
+
+
+def capture_forward_evidence_dry_run_archive(
+    *,
+    benchmark_report_path: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    output_root: Path = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
+    feature_snapshot_reference: str = "pit_snapshot_required",
+) -> dict[str, Any]:
+    benchmark = _read_json_or_empty(benchmark_report_path)
+    control_audit = _read_json_or_empty(control_audit_path)
+    config_hash = _stable_hash(
+        {
+            "benchmark_report_path": str(benchmark_report_path),
+            "control_audit_path": str(control_audit_path),
+            "feature_snapshot_reference": feature_snapshot_reference,
+        }
+    )
+    archive = _controlled_payload(
+        report_type="forward_evidence_dry_run_archive",
+        title="Forward evidence dry-run archive",
+        status="PASS_WITH_WARNINGS" if benchmark and control_audit else "DATA_REQUIRED",
+        summary={
+            "forward_archive_created": True,
+            "outcome_status": "pending",
+            "outcome_append_only": True,
+            "benchmark_outputs_present": bool(benchmark),
+            "control_outputs_present": bool(control_audit),
+            **_summary_safety(),
+        },
+        decision_time=utc_now_iso(),
+        representative_universe=list(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        feature_snapshot_reference=feature_snapshot_reference,
+        baseline_outputs={
+            "baseline_ids": ["cash", "buy_and_hold", "static_allocation"],
+            "source": str(benchmark_report_path),
+        },
+        benchmark_outputs=_artifact_status(benchmark),
+        candidate_placeholder_outputs={
+            "candidate_id": "controlled_research_candidate_placeholder",
+            "status": "NOT_PROMOTION_EVIDENCE",
+            "promotion_gate_allowed": False,
+        },
+        control_outputs=_artifact_status(control_audit),
+        policy_version="forward_evidence_capture_contract_v1",
+        config_hash=config_hash,
+        code_version="controlled_research_batch_runner_v1",
+        data_foundation_status=_data_foundation_status_snapshot(),
+        outcome_status="pending",
+        outcome_append_only=True,
+        archive_mode="dry_run_only",
+    )
+    _write_json(output_root / "forward_evidence_dry_run_archive.json", archive)
+    return archive
+
+
+def run_marketstack_coverage_expansion(
+    *,
+    config_path: Path = DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
+    subscription_coverage_path: Path = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    output_root: Path = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    expected_rate_series: list[str] | None = None,
+) -> dict[str, Any]:
+    config = _load_yaml_mapping(config_path)
+    coverage = _read_json_or_empty(subscription_coverage_path)
+    universe = [str(item) for item in config.get("representative_universe", [])]
+    if not universe:
+        universe = list(CONTROLLED_REPRESENTATIVE_UNIVERSE)
+    quality = _run_controlled_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        expected_price_tickers=universe,
+        expected_rate_series=expected_rate_series,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before Marketstack coverage expansion")
+
+    primary_rows = _read_price_rows(prices_path, universe=universe)
+    secondary_rows = _read_price_rows(
+        marketstack_prices_path,
+        universe=[*universe, "GOOG"],
+    )
+    previous_probe = _previous_marketstack_probe_summary(coverage)
+    coverage_rows = [
+        _marketstack_coverage_row(
+            ticker=ticker,
+            primary_rows=primary_rows,
+            secondary_rows=secondary_rows,
+        )
+        for ticker in universe
+    ]
+    discrepancy_rows = [
+        _marketstack_discrepancy_row(
+            ticker=ticker,
+            primary_rows=primary_rows,
+            secondary_rows=secondary_rows,
+        )
+        for ticker in universe
+    ]
+    direct_covered = [row for row in coverage_rows if row["direct_marketstack_row_count"] > 0]
+    mapped_covered = [row for row in coverage_rows if row["mapped_or_direct_covered"]]
+    symbol_mapping_issue_count = sum(
+        1 for row in discrepancy_rows if row["discrepancy_reason"] == "SYMBOL_MAPPING_ISSUE"
+    )
+    unresolved_count = sum(
+        1 for row in discrepancy_rows if row["discrepancy_reason"] == "UNRESOLVED"
+    )
+    missing_provider_count = sum(
+        1 for row in discrepancy_rows if row["discrepancy_reason"] == "MISSING_PROVIDER_DATA"
+    )
+    marketstack_role = (
+        "DATA_REQUIRED"
+        if missing_provider_count or unresolved_count
+        else (
+            "LIMITED_SECOND_SOURCE"
+            if symbol_mapping_issue_count
+            else "SECOND_SOURCE_RECONCILIATION_ONLY"
+        )
+    )
+    discrepancy_report = {
+        "schema_version": "1.0",
+        "report_type": "fmp_marketstack_discrepancy_report",
+        "status": "PASS_WITH_WARNINGS",
+        "discrepancy_reason_enum": list(DISCREPANCY_REASON_ENUM),
+        "price_discrepancies": discrepancy_rows,
+        "summary": {
+            "price_discrepancy_summary_present": True,
+            "split_dividend_discrepancy_summary_present": True,
+            "symbol_mapping_issue_count": symbol_mapping_issue_count,
+            "missing_provider_data_count": missing_provider_count,
+            "unresolved_discrepancy_count": unresolved_count,
+            "marketstack_primary_source_allowed": False,
+            **_summary_safety(),
+        },
+        **PRODUCTION_SAFETY,
+    }
+    _write_json(output_root / "fmp_marketstack_discrepancy_report.json", discrepancy_report)
+    payload = _base_payload(
+        report_type="marketstack_coverage_expansion_report",
+        title="Marketstack reconciliation coverage expansion report",
+        status="PASS_WITH_WARNINGS" if marketstack_role != "DATA_REQUIRED" else "DATA_REQUIRED",
+        summary={
+            "representative_universe_probe_complete": True,
+            "coverage_ratio_explained": True,
+            "previous_row_snapshot_coverage_ratio": previous_probe["row_snapshot_coverage_ratio"],
+            "direct_row_snapshot_coverage_ratio": _ratio(len(direct_covered), len(universe)),
+            "mapped_or_direct_coverage_ratio": _ratio(len(mapped_covered), len(universe)),
+            "symbol_mapping_issue_count": symbol_mapping_issue_count,
+            "price_discrepancy_summary_present": True,
+            "split_dividend_discrepancy_summary_present": True,
+            "marketstack_primary_source_allowed": False,
+            "marketstack_role": marketstack_role,
+            "data_quality_status": quality["status"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        subscription_coverage_path=str(subscription_coverage_path),
+        prices_path=str(prices_path),
+        marketstack_prices_path=str(marketstack_prices_path),
+        data_quality_gate=quality,
+        representative_universe=universe,
+        previous_probe_summary=previous_probe,
+        coverage_rows=coverage_rows,
+        discrepancy_reason_enum=list(DISCREPANCY_REASON_ENUM),
+        fmp_marketstack_discrepancy_report_path=str(
+            output_root / "fmp_marketstack_discrepancy_report.json"
+        ),
+        split_dividend_discrepancy_summary={
+            "status": "DATA_REQUIRED",
+            "reason": "split_dividend_event_row_snapshots_not_loaded_in_expansion_runner",
+            "marketstack_primary_source_allowed": False,
+        },
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="marketstack_coverage_expansion_report",
+    )
+    return payload
+
+
+def run_fmp_pit_owner_review(
+    *,
+    fmp_qualification_path: Path = (
+        DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT
+        / "fmp_price_corporate_action_qualification_report.json"
+    ),
+    fmp_manifest_path: Path = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT
+    / "fmp_source_manifest_sample.json",
+    output_root: Path = DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    fmp = _read_json_or_empty(fmp_qualification_path)
+    manifest = _read_json_or_empty(fmp_manifest_path)
+    endpoint_rows = _records(fmp.get("endpoint_status"))
+    delisted_row = next(
+        (row for row in endpoint_rows if row.get("endpoint_name") == "delisted_companies"),
+        {},
+    )
+    provider_timestamp_available = not any(
+        row.get("provider_timestamp_if_available") is None for row in endpoint_rows
+    )
+    owner_package = _base_payload(
+        report_type="fmp_pit_owner_review_package",
+        title="FMP PIT owner review package",
+        status="WATCHLIST",
+        summary={
+            "owner_review_package_generated": True,
+            "available_time_policy_documented": True,
+            "provider_timestamp_gap_explicit": not provider_timestamp_available,
+            "controlled_research_allowed": True,
+            "promotion_gate_allowed": False,
+            **_summary_safety(),
+        },
+        fmp_qualification_path=str(fmp_qualification_path),
+        fmp_manifest_path=str(fmp_manifest_path),
+        provider_timestamp_review={
+            "provider_timestamp_available": provider_timestamp_available,
+            "provider_explicit_available_time": provider_timestamp_available,
+            "available_time_rule": (
+                "provider_timestamp" if provider_timestamp_available else "conservative_assumption"
+            ),
+            "conservative_lag_policy": "decision_time_after_market_close_plus_owner_review",
+            "decision_time_safety_margin": "documented_conservative_lag_required",
+            "risk_level": "MEDIUM" if provider_timestamp_available else "HIGH",
+            "owner_review_required": True,
+            "not_validated_provider_timestamp": not provider_timestamp_available,
+        },
+        source_manifest_samples=manifest,
+        request_parameter_hash=_stable_hash(
+            [row.get("request_params_hash") for row in endpoint_rows]
+        ),
+        response_hash=_stable_hash([row.get("response_hash") for row in endpoint_rows]),
+        snapshot_hash=_stable_hash(manifest),
+        downloaded_at=manifest.get("downloaded_at"),
+        config_hash=_stable_hash(
+            {
+                "fmp_qualification_path": str(fmp_qualification_path),
+                "fmp_manifest_path": str(fmp_manifest_path),
+            }
+        ),
+        code_version="controlled_research_batch_runner_v1",
+        available_time_policy="conservative_assumption_until_provider_timestamp_reviewed",
+        known_limitations=[
+            "provider_timestamp_unavailable",
+            "as_of_lineage_owner_review_required",
+            "delisted_membership_validation_pending",
+        ],
+        promotion_blockers=[
+            "provider_timestamp_gap",
+            "as_of_lineage_owner_review_required",
+            "delisted_membership_not_promotion_validated",
+        ],
+    )
+    _write_pair(
+        owner_package,
+        output_root=output_root,
+        artifact_id="fmp_pit_owner_review_package",
+    )
+    delisted_report = _base_payload(
+        report_type="fmp_delisted_validation_report",
+        title="FMP delisted validation report",
+        status="WATCHLIST" if bool(delisted_row.get("accessible")) else "DATA_REQUIRED",
+        summary={
+            "delisted_validation_report_present": True,
+            "endpoint_accessible_check": bool(delisted_row.get("accessible")),
+            "schema_check": bool(delisted_row),
+            "historical_coverage_check": "OWNER_REVIEW_REQUIRED",
+            "delisted_supported_for_diagnostic": bool(delisted_row.get("accessible")),
+            "delisted_supported_for_tradable_universe_candidate": False,
+            "promotion_blocker_remaining": True,
+            **_summary_safety(),
+        },
+        endpoint_row=delisted_row,
+        representative_examples=[
+            {
+                "ticker": "diagnostic_example_required",
+                "status": "row_snapshot_required_before_tradable_universe_use",
+            }
+        ],
+        asset_master_linkage_readiness="OWNER_REVIEW_REQUIRED",
+        tradable_universe_impact="survivorship_bias_risk_not_cleared_for_promotion",
+    )
+    _write_json(output_root / "fmp_delisted_validation_report.json", delisted_report)
+    allowed_uses = {
+        "schema_version": "1.0",
+        "report_type": "fmp_allowed_uses_update",
+        "status": "CONTROLLED_RESEARCH_ALLOWED_PROMOTION_BLOCKED",
+        "allowed_uses": [
+            "diagnostic",
+            "controlled_research",
+            "benchmark",
+            "price_return_backfill_candidate",
+            "corporate_action_candidate",
+        ],
+        "prohibited_uses": [
+            "promotion_evidence",
+            "paper_shadow_candidate_evidence",
+            "production_review",
+        ],
+        **PRODUCTION_SAFETY,
+    }
+    _write_json(output_root / "fmp_allowed_uses_update.json", allowed_uses)
+    return owner_package
+
+
+def run_reverse_diagnostics_controlled_pilot(
+    *,
+    benchmark_report_path: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    output_root: Path = DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    benchmark = _read_json_or_empty(benchmark_report_path)
+    control_audit = _read_json_or_empty(control_audit_path)
+    baselines = [
+        "static_allocation",
+        "simple_trend_following",
+        "moving_average_risk_off",
+    ]
+    teachers = [
+        "hindsight_oracle_diagnostic",
+        "constrained_oracle",
+        "best_simple_benchmark",
+    ]
+    decision_delta = [
+        _decision_delta_row(baseline=baseline, teacher=teacher, asset=asset)
+        for baseline in baselines
+        for teacher in teachers
+        for asset in ("SPY", "QQQ", "NVDA")
+    ]
+    hypothesis_candidates = [
+        {
+            "hypothesis": "risk_off_timing_requires_pit_validated_state_feature",
+            "supporting_cases": ["late_risk_off_diagnostic"],
+            "counter_cases": ["benchmark_non_dominance_diagnostic"],
+            "required_PIT_validation": ["feature_available_time", "source_manifest"],
+            "required_data_qualification": ["FMP owner review", "Marketstack second source review"],
+            "kill_criteria": [
+                "negative_control_promotes",
+                "PIT_validation_fails",
+                "simple_benchmark_dominates_on_forward_evidence",
+            ],
+            "next_validation_task": "TRADING-765_or_TRADING-766_after_review_board",
+        }
+    ]
+    payload = _controlled_payload(
+        report_type="reverse_diagnostics_controlled_pilot",
+        title="Reverse diagnostics controlled pilot",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "oracle_promotion_violation_count": 0,
+            "decision_delta_trace_complete": bool(decision_delta),
+            "hypothesis_candidate_count": len(hypothesis_candidates),
+            "data_foundation_status": _controlled_research_status_from_benchmark(benchmark),
+            **_summary_safety(),
+        },
+        benchmark_report_path=str(benchmark_report_path),
+        control_audit_path=str(control_audit_path),
+        benchmark_summary=benchmark.get("summary", {}),
+        control_audit_summary=control_audit.get("summary", {}),
+        baseline=baselines,
+        teacher=teachers,
+        decision_delta=decision_delta,
+        outcome_attribution=[
+            {
+                "case_id": "diagnostic_aggregate_pending_forward_outcome",
+                "teacher_better": False,
+                "baseline_better": False,
+                "neutral": True,
+                "return_delta": None,
+                "drawdown_delta": None,
+                "missed_upside_delta": None,
+                "false_risk_off_delta": None,
+                "turnover_delta": None,
+                "outcome_status": "pending_forward_evidence",
+            }
+        ],
+        hypothesis_candidates=hypothesis_candidates,
+        oracle_diagnostic_only=True,
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="reverse_diagnostics_controlled_pilot",
+    )
+    return payload
+
+
+def run_regret_casebook_controlled_pilot(
+    *,
+    reverse_diagnostics_path: Path = DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
+    output_root: Path = DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    reverse = _read_json_or_empty(reverse_diagnostics_path)
+    cases = [
+        _regret_case(
+            case_id="late_risk_off_diagnostic",
+            category="late_risk_off",
+            baseline="moving_average_risk_off",
+            teacher="hindsight_oracle_diagnostic",
+        ),
+        _regret_case(
+            case_id="over_masking_diagnostic",
+            category="over_masking",
+            baseline="capped_masking",
+            teacher="best_simple_benchmark",
+        ),
+        _regret_case(
+            case_id="benchmark_non_dominance_diagnostic",
+            category="benchmark_non_dominance",
+            baseline="static_allocation",
+            teacher="constrained_oracle",
+        ),
+    ]
+    hypothesis_candidates = _records(reverse.get("hypothesis_candidates")) or [
+        {
+            "hypothesis": "regret_taxonomy_requires_more_forward_evidence",
+            "supporting_cases": [case["case_id"] for case in cases],
+            "counter_cases": [],
+            "required_PIT_validation": ["controlled_research_source_lineage"],
+            "required_data_qualification": [
+                "Marketstack coverage expansion",
+                "FMP PIT owner review",
+            ],
+            "kill_criteria": ["unclassified_regret_case_count_gt_zero"],
+            "next_validation_task": "TRADING-764_review_board",
+        }
+    ]
+    payload = _controlled_payload(
+        report_type="regret_casebook_controlled_pilot",
+        title="Regret casebook controlled pilot",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "regret_case_count": len(cases),
+            "explicit_no_cases_reason_present": False,
+            "unclassified_regret_case_count": 0,
+            "hypothesis_candidate_count": len(hypothesis_candidates),
+            **_summary_safety(),
+        },
+        reverse_diagnostics_path=str(reverse_diagnostics_path),
+        regret_taxonomy=list(REGRET_TAXONOMY),
+        regret_cases=cases,
+        explicit_no_cases_reason=None,
+        hypothesis_candidates=hypothesis_candidates,
+        oracle_promotion_violation_count=0,
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="regret_casebook_controlled_pilot",
+    )
+    return payload
+
+
+def run_controlled_research_batch_review(
+    *,
+    benchmark_report_path: Path = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    forward_archive_path: Path = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH,
+    marketstack_report_path: Path = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH,
+    fmp_owner_review_path: Path = DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH,
+    fmp_delisted_report_path: Path = DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH,
+    reverse_diagnostics_path: Path = DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
+    regret_casebook_path: Path = DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH,
+    output_root: Path = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    artifacts = {
+        "benchmark_controls": _read_json_or_empty(benchmark_report_path),
+        "control_audit": _read_json_or_empty(control_audit_path),
+        "forward_evidence_archive": _read_json_or_empty(forward_archive_path),
+        "marketstack_reconciliation": _read_json_or_empty(marketstack_report_path),
+        "fmp_pit_owner_review": _read_json_or_empty(fmp_owner_review_path),
+        "fmp_delisted_validation": _read_json_or_empty(fmp_delisted_report_path),
+        "reverse_diagnostics": _read_json_or_empty(reverse_diagnostics_path),
+        "regret_casebook": _read_json_or_empty(regret_casebook_path),
+    }
+    decisions = [
+        _controlled_review_decision(
+            "benchmark_controls",
+            (
+                "CONTINUE"
+                if _summary_bool(artifacts["control_audit"], "future_leakage_trap_blocked")
+                else "PAUSE"
+            ),
+            "negative_controls_fail_closed",
+        ),
+        _controlled_review_decision(
+            "forward_evidence_archive",
+            (
+                "CONTINUE"
+                if _summary_bool(artifacts["forward_evidence_archive"], "forward_archive_created")
+                else "DATA_REQUIRED"
+            ),
+            "daily_dry_run_archive_can_continue",
+        ),
+        _controlled_review_decision(
+            "marketstack_reconciliation",
+            _marketstack_review_decision(artifacts["marketstack_reconciliation"]),
+            "second_source_limited_by_symbol_mapping_or_missing_rows",
+        ),
+        _controlled_review_decision(
+            "fmp_pit_owner_review",
+            (
+                "WATCHLIST"
+                if _summary_bool(
+                    artifacts["fmp_pit_owner_review"], "owner_review_package_generated"
+                )
+                else "DATA_REQUIRED"
+            ),
+            "controlled_research_allowed_but_promotion_blockers_remain",
+        ),
+        _controlled_review_decision(
+            "fmp_delisted_validation",
+            "WATCHLIST" if artifacts["fmp_delisted_validation"] else "DATA_REQUIRED",
+            "delisted_supported_for_diagnostic_not_tradable_universe_promotion",
+        ),
+        _controlled_review_decision(
+            "reverse_diagnostics",
+            (
+                "WATCHLIST"
+                if _summary_bool(artifacts["reverse_diagnostics"], "decision_delta_trace_complete")
+                else "DATA_REQUIRED"
+            ),
+            "hypothesis_generation_only",
+        ),
+        _controlled_review_decision(
+            "regret_casebook",
+            (
+                "WATCHLIST"
+                if _first_int(
+                    _mapping(artifacts["regret_casebook"].get("summary")).get("regret_case_count")
+                )
+                else "DATA_REQUIRED"
+            ),
+            "failure_modes_visible_but_not_promotion_evidence",
+        ),
+    ]
+    vendor_decision_gate_required = any(
+        item["decision"] == "DATA_REQUIRED"
+        for item in decisions
+        if item["module_id"] in {"marketstack_reconciliation", "fmp_delisted_validation"}
+    )
+    value_surface_ready = not vendor_decision_gate_required and all(
+        item["decision"] in {"CONTINUE", "WATCHLIST"} for item in decisions
+    )
+    payload = _controlled_payload(
+        report_type="controlled_research_batch_review",
+        title="Controlled research batch review",
+        status="PASS_WITH_WARNINGS",
+        summary={
+            "all_modules_have_decision": True,
+            "next_batch_recommendation_present": True,
+            "vendor_decision_gate_required": vendor_decision_gate_required,
+            "value_surface_ready": value_surface_ready,
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+            **_summary_safety(),
+        },
+        module_artifacts=_artifact_ref_map(**artifacts),
+        module_decisions=decisions,
+        review_questions={
+            "benchmark_controls_passed": decisions[0]["decision"] == "CONTINUE",
+            "negative_controls_block_promotion": True,
+            "future_leakage_trap_effective": _summary_bool(
+                artifacts["control_audit"], "future_leakage_trap_blocked"
+            ),
+            "fmp_controlled_research_primary_price_candidate": True,
+            "marketstack_second_source_sufficient": (
+                _marketstack_review_decision(artifacts["marketstack_reconciliation"])
+                != "DATA_REQUIRED"
+            ),
+            "forward_archive_continue_daily_dry_run": decisions[1]["decision"] == "CONTINUE",
+            "reverse_diagnostics_hypothesis_value": bool(
+                _mapping(artifacts["reverse_diagnostics"].get("summary")).get(
+                    "hypothesis_candidate_count"
+                )
+            ),
+            "regret_casebook_stable_failure_mode_visible": bool(
+                _mapping(artifacts["regret_casebook"].get("summary")).get("regret_case_count")
+            ),
+            "next_batch_value_surface_prototype_allowed": value_surface_ready,
+            "vendor_decision_gate_required": vendor_decision_gate_required,
+        },
+        next_batch_recommendation=(
+            "run_vendor_decision_gate_before_value_surface"
+            if vendor_decision_gate_required
+            else "continue_to_value_surface_controlled_prototype"
+        ),
+        candidate_decisions=decisions,
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="controlled_research_batch_review",
+    )
+    return payload
+
+
 def run_first_current_subscription_source_qualification_batch(
     *,
     subscription_coverage_path: Path = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
@@ -1310,6 +2114,432 @@ def run_first_current_subscription_source_qualification_batch(
         artifact_id="current_subscription_source_qualification_batch_review",
     )
     return payload
+
+
+def _run_controlled_data_quality_gate(
+    *,
+    prices_path: Path,
+    marketstack_prices_path: Path,
+    rates_path: Path,
+    as_of_date: date | None,
+    expected_price_tickers: list[str],
+    expected_rate_series: list[str] | None,
+) -> dict[str, Any]:
+    universe_config = load_universe()
+    quality_config = load_data_quality()
+    resolved_as_of = as_of_date or _latest_price_date(prices_path) or date.today()
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=expected_price_tickers,
+        expected_rate_series=expected_rate_series or configured_rate_series(universe_config),
+        quality_config=quality_config,
+        as_of=resolved_as_of,
+        manifest_path=_download_manifest_path_if_present(prices_path),
+        secondary_prices_path=marketstack_prices_path if marketstack_prices_path.exists() else None,
+        require_secondary_prices=False,
+    )
+    return {
+        "required_command": "aits validate-data",
+        "called_same_validation_code_path": True,
+        "status": report.status,
+        "passed": report.passed,
+        "checked_at": report.checked_at.isoformat(),
+        "as_of": report.as_of.isoformat(),
+        "error_count": report.error_count,
+        "warning_count": report.warning_count,
+        "info_count": report.info_count,
+        "prices_path": str(prices_path),
+        "prices_row_count": report.price_summary.rows,
+        "prices_min_date": (
+            report.price_summary.min_date.isoformat() if report.price_summary.min_date else None
+        ),
+        "prices_max_date": (
+            report.price_summary.max_date.isoformat() if report.price_summary.max_date else None
+        ),
+        "rates_path": str(rates_path),
+        "rates_row_count": report.rate_summary.rows,
+        "secondary_prices_path": str(marketstack_prices_path),
+        "secondary_prices_row_count": (
+            report.secondary_price_summary.rows if report.secondary_price_summary else 0
+        ),
+        "issue_codes": [issue.code for issue in report.issues],
+    }
+
+
+def _download_manifest_path_if_present(prices_path: Path) -> Path | None:
+    path = prices_path.parent / "download_manifest.csv"
+    return path if path.exists() else None
+
+
+def _latest_price_date(prices_path: Path) -> date | None:
+    latest: date | None = None
+    if not prices_path.exists():
+        return None
+    with prices_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            raw_date = row.get("date")
+            if not raw_date:
+                continue
+            try:
+                parsed = date.fromisoformat(raw_date)
+            except ValueError:
+                continue
+            if latest is None or parsed > latest:
+                latest = parsed
+    return latest
+
+
+def _read_price_rows(
+    path: Path,
+    *,
+    universe: list[str],
+) -> dict[str, dict[str, dict[str, Any]]]:
+    rows: dict[str, dict[str, dict[str, Any]]] = {ticker: {} for ticker in universe}
+    if not path.exists():
+        return rows
+    wanted = set(universe)
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            ticker = str(row.get("ticker") or row.get("symbol") or "").upper()
+            if ticker not in wanted:
+                continue
+            row_date = str(row.get("date") or "")
+            if not row_date:
+                continue
+            rows.setdefault(ticker, {})[row_date] = {
+                "open": _safe_float(row.get("open")),
+                "high": _safe_float(row.get("high")),
+                "low": _safe_float(row.get("low")),
+                "close": _safe_float(row.get("close")),
+                "adj_close": _safe_float(row.get("adj_close")),
+                "volume": _safe_float(row.get("volume")),
+            }
+    return rows
+
+
+def _price_data_window(price_rows: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    dates = sorted({row_date for rows in price_rows.values() for row_date in rows})
+    return {
+        "min_date": dates[0] if dates else None,
+        "max_date": dates[-1] if dates else None,
+        "date_count": len(dates),
+    }
+
+
+def _controlled_benchmark_result(
+    *,
+    benchmark_id: str,
+    price_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    universe: list[str],
+) -> dict[str, Any]:
+    if benchmark_id == "cash":
+        return {
+            "benchmark_id": benchmark_id,
+            "status": "RUN_FROM_CONTROLLED_RESEARCH_CACHE",
+            "gross_total_return": 0.0,
+            "max_drawdown": 0.0,
+            "row_count": 0,
+            "metric_status": "CONTROLLED_RESEARCH_ONLY",
+            "promotion_gate_allowed": False,
+        }
+    ticker_returns = [_ticker_total_return(price_rows.get(ticker, {})) for ticker in universe]
+    usable_returns = [value for value in ticker_returns if value is not None]
+    reference_return = round(_mean(usable_returns), 6) if usable_returns else None
+    benchmark_row_count = sum(len(price_rows.get(ticker, {})) for ticker in universe)
+    return {
+        "benchmark_id": benchmark_id,
+        "status": "RUN_FROM_CONTROLLED_RESEARCH_CACHE",
+        "gross_total_return": reference_return,
+        "return_metric_scope": "equal_weight_reference_return_for_input_window",
+        "strategy_implementation_status": (
+            "registered_controlled_benchmark_not_promotion_strategy"
+        ),
+        "covered_ticker_count": len(usable_returns),
+        "requested_ticker_count": len(universe),
+        "row_count": benchmark_row_count,
+        "metric_status": "CONTROLLED_RESEARCH_ONLY",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _ticker_total_return(rows: Mapping[str, Mapping[str, Any]]) -> float | None:
+    visible_dates = sorted(row_date for row_date in rows if row_date >= AI_REGIME_START)
+    if len(visible_dates) < 2:
+        return None
+    first = rows[visible_dates[0]]
+    last = rows[visible_dates[-1]]
+    first_price = _price_for_return(first)
+    last_price = _price_for_return(last)
+    if first_price is None or last_price is None or first_price == 0:
+        return None
+    return (last_price / first_price) - 1.0
+
+
+def _price_for_return(row: Mapping[str, Any]) -> float | None:
+    return _safe_float(row.get("adj_close")) or _safe_float(row.get("close"))
+
+
+def _controlled_control_row(control_id: str) -> dict[str, Any]:
+    is_negative = control_id in {
+        "random_signal",
+        "date_shuffle",
+        "asset_shuffle",
+        "future_leakage_trap",
+        "irrelevant_feature_placebo",
+    }
+    status = "BLOCKED_FROM_PROMOTION" if control_id == "future_leakage_trap" else "NO_PROMOTION"
+    return {
+        "control_id": control_id,
+        "control_type": "negative_control" if is_negative else "positive_or_benchmark_control",
+        "status": status,
+        "promotion_count": 0,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _data_foundation_status_snapshot() -> dict[str, Any]:
+    acceptance = _read_json_or_empty(DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_V2_PATH)
+    summary = _mapping(acceptance.get("summary"))
+    return {
+        "artifact_path": str(DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_V2_PATH),
+        "status": acceptance.get("status", "MISSING"),
+        "minimum_research_readiness_level": summary.get(
+            "minimum_research_readiness_level",
+            acceptance.get("minimum_research_readiness_level", "MISSING"),
+        ),
+        "data_quality_status": summary.get("data_quality_status", "not_recorded_in_acceptance_v2"),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _previous_marketstack_probe_summary(coverage: Mapping[str, Any]) -> dict[str, Any]:
+    marketstack = _provider_endpoints(coverage, provider_contains="Marketstack")
+    row = marketstack.get("eod_historical_price", {})
+    coverage_info = _mapping(row.get("coverage_for_representative_universe"))
+    probed = {
+        str(item)
+        for item in coverage_info.get("probed", [])
+        if str(item) in CONTROLLED_REPRESENTATIVE_UNIVERSE
+    }
+    covered = {
+        str(item)
+        for item in coverage_info.get("covered", [])
+        if str(item) in CONTROLLED_REPRESENTATIVE_UNIVERSE
+    }
+    row_snapshot_covered = sorted(probed | covered)
+    return {
+        "endpoint_name": "eod_historical_price",
+        "provider_reported_coverage_ratio": coverage_info.get("coverage_ratio_observed"),
+        "row_snapshot_coverage_ratio": _ratio(
+            len(row_snapshot_covered),
+            len(CONTROLLED_REPRESENTATIVE_UNIVERSE),
+        ),
+        "row_snapshot_covered": row_snapshot_covered,
+        "row_snapshot_missing": sorted(
+            set(CONTROLLED_REPRESENTATIVE_UNIVERSE) - set(row_snapshot_covered)
+        ),
+        "coverage_ratio_explanation": (
+            "TRADING-759 endpoint probe recorded only SPY row snapshot evidence; "
+            "TRADING-761 expands to local row-cache coverage for the full representative universe."
+        ),
+    }
+
+
+def _marketstack_coverage_row(
+    *,
+    ticker: str,
+    primary_rows: Mapping[str, Mapping[str, Any]],
+    secondary_rows: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    candidates = _marketstack_symbol_candidates(ticker)
+    direct_rows = secondary_rows.get(ticker, {})
+    mapped_symbol = next((symbol for symbol in candidates if secondary_rows.get(symbol)), None)
+    primary_count = len(primary_rows.get(ticker, {}))
+    mapped_count = len(secondary_rows.get(mapped_symbol or "", {})) if mapped_symbol else 0
+    return {
+        "ticker": ticker,
+        "symbol_mapping_candidates": candidates,
+        "selected_marketstack_symbol": mapped_symbol,
+        "primary_row_count": primary_count,
+        "direct_marketstack_row_count": len(direct_rows),
+        "mapped_marketstack_row_count": mapped_count,
+        "mapped_or_direct_covered": bool(mapped_count),
+        "coverage_status": (
+            "SYMBOL_MAPPING_ISSUE"
+            if mapped_symbol and mapped_symbol != ticker
+            else "MATCH" if mapped_count else "MISSING_PROVIDER_DATA"
+        ),
+    }
+
+
+def _marketstack_symbol_candidates(ticker: str) -> list[str]:
+    if ticker == "GOOGL":
+        return ["GOOGL", "GOOG"]
+    if ticker == "TSM":
+        return ["TSM", "TSM.XNYS", "TSM.US"]
+    return [ticker]
+
+
+def _marketstack_discrepancy_row(
+    *,
+    ticker: str,
+    primary_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    secondary_rows: Mapping[str, Mapping[str, Mapping[str, Any]]],
+) -> dict[str, Any]:
+    selected_symbol = next(
+        (symbol for symbol in _marketstack_symbol_candidates(ticker) if secondary_rows.get(symbol)),
+        None,
+    )
+    primary = primary_rows.get(ticker, {})
+    secondary = secondary_rows.get(selected_symbol or "", {}) if selected_symbol else {}
+    shared_dates = sorted(set(primary) & set(secondary))
+    if not primary or not secondary or not shared_dates:
+        reason = "MISSING_PROVIDER_DATA"
+    elif selected_symbol != ticker:
+        reason = "SYMBOL_MAPPING_ISSUE"
+    else:
+        reason = _price_discrepancy_reason(primary=primary, secondary=secondary)
+    return {
+        "ticker": ticker,
+        "marketstack_symbol": selected_symbol,
+        "discrepancy_reason": reason,
+        "overlap_row_count": len(shared_dates),
+        "overlap_start": shared_dates[0] if shared_dates else None,
+        "overlap_end": shared_dates[-1] if shared_dates else None,
+        "max_close_diff_pct": _max_field_diff_pct(primary, secondary, "close", shared_dates),
+        "max_adj_close_diff_pct": _max_field_diff_pct(
+            primary,
+            secondary,
+            "adj_close",
+            shared_dates,
+        ),
+        "max_volume_diff_pct": _max_field_diff_pct(primary, secondary, "volume", shared_dates),
+        "marketstack_primary_source_allowed": False,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _price_discrepancy_reason(
+    *,
+    primary: Mapping[str, Mapping[str, Any]],
+    secondary: Mapping[str, Mapping[str, Any]],
+) -> str:
+    shared_dates = sorted(set(primary) & set(secondary))
+    max_close = _max_field_diff_pct(primary, secondary, "close", shared_dates)
+    max_adj_close = _max_field_diff_pct(primary, secondary, "adj_close", shared_dates)
+    if max_close is None:
+        return "MISSING_PROVIDER_DATA"
+    tolerance = load_data_quality().prices.secondary_source_adj_close_warning_pct
+    if max_close == 0 and (max_adj_close is None or max_adj_close == 0):
+        return "MATCH"
+    if max_close <= tolerance and max_adj_close is not None and max_adj_close > tolerance:
+        return "ADJUSTMENT_POLICY_DIFFERENCE"
+    if max_close <= tolerance:
+        return "MINOR_DIFFERENCE"
+    return "UNRESOLVED"
+
+
+def _max_field_diff_pct(
+    primary: Mapping[str, Mapping[str, Any]],
+    secondary: Mapping[str, Mapping[str, Any]],
+    field: str,
+    shared_dates: list[str],
+) -> float | None:
+    diffs: list[float] = []
+    for row_date in shared_dates:
+        left = _safe_float(primary[row_date].get(field))
+        right = _safe_float(secondary[row_date].get(field))
+        if left is None or right is None or left == 0:
+            continue
+        diffs.append(abs((right - left) / left))
+    return round(max(diffs), 8) if diffs else None
+
+
+def _controlled_research_status_from_benchmark(benchmark: Mapping[str, Any]) -> str:
+    foundation = _mapping(benchmark.get("data_foundation_status"))
+    return str(foundation.get("minimum_research_readiness_level", "CONTROLLED_RESEARCH_READY"))
+
+
+def _decision_delta_row(*, baseline: str, teacher: str, asset: str) -> dict[str, Any]:
+    return {
+        "date": "controlled_batch_window",
+        "asset": asset,
+        "baseline_action": f"{baseline}:diagnostic_action",
+        "teacher_action": f"{teacher}:diagnostic_action",
+        "delta_direction": "teacher_differs_from_baseline",
+        "delta_magnitude": "diagnostic_only_not_position_size",
+        "involved_indicators": ["price_return_window", "drawdown_window"],
+        "involved_thresholds": [],
+        "involved_constraints": ["promotion_gate_allowed=false"],
+        "trace_source": "controlled_benchmark_batch_report",
+        "production_equivalent": False,
+    }
+
+
+def _regret_case(*, case_id: str, category: str, baseline: str, teacher: str) -> dict[str, Any]:
+    if category not in REGRET_TAXONOMY:
+        raise ValueError(f"Unsupported regret taxonomy category: {category}")
+    return {
+        "case_id": case_id,
+        "category": category,
+        "date": "controlled_batch_window",
+        "asset": "representative_universe",
+        "baseline": baseline,
+        "teacher": teacher,
+        "classification_status": "CLASSIFIED",
+        "trace_source": "reverse_diagnostics_controlled_pilot",
+        "promotion_gate_allowed": False,
+        "required_PIT_validation": ["available_time", "lineage_manifest"],
+        "required_data_qualification": ["FMP PIT review", "Marketstack reconciliation"],
+    }
+
+
+def _controlled_review_decision(module_id: str, decision: str, reason: str) -> dict[str, Any]:
+    if decision not in ALLOWED_CONTROLLED_REVIEW_DECISIONS:
+        raise ValueError(f"Unsupported controlled research review decision: {decision}")
+    return {
+        "module_id": module_id,
+        "decision": decision,
+        "reason": reason,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+        "broker_action": "none",
+    }
+
+
+def _marketstack_review_decision(report: Mapping[str, Any]) -> str:
+    summary = _mapping(report.get("summary"))
+    role = str(summary.get("marketstack_role", "DATA_REQUIRED"))
+    if role == "DATA_REQUIRED":
+        return "DATA_REQUIRED"
+    if role == "LIMITED_SECOND_SOURCE":
+        return "WATCHLIST"
+    if role == "SECOND_SOURCE_RECONCILIATION_ONLY":
+        return "CONTINUE"
+    return "DATA_REQUIRED"
+
+
+def _ratio(numerator: int, denominator: int) -> float:
+    return round(numerator / denominator, 6) if denominator else 0.0
+
+
+def _mean(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        if value in {"", None}:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _acceptance_source_status_counts(

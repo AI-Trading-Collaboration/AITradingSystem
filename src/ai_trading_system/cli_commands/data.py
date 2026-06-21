@@ -39,9 +39,14 @@ from ai_trading_system.current_subscription_qualification import (
     DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
     DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT,
     DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH,
+    DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
     DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH,
     DEFAULT_MACRO_RISK_CONFIG_PATH,
+    DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+    DEFAULT_MARKETSTACK_PRICES_PATH,
     DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
+    DEFAULT_PRICES_PATH,
+    DEFAULT_RATES_PATH,
     DEFAULT_SEC_FUNDAMENTAL_PIT_CONFIG_PATH,
     DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
     run_asset_master_qualification,
@@ -49,8 +54,10 @@ from ai_trading_system.current_subscription_qualification import (
     run_data_source_usage_guardrails,
     run_data_vendor_decision_gate,
     run_first_current_subscription_source_qualification_batch,
+    run_fmp_pit_owner_review,
     run_fmp_price_corporate_action_qualification,
     run_macro_risk_source_qualification,
+    run_marketstack_coverage_expansion,
     run_marketstack_reconciliation_qualification,
     run_sec_fundamental_pit_qualification,
 )
@@ -351,6 +358,31 @@ def source_qualification_fmp_price_corporate_action_command(
     _print_foundation_payload(payload)
 
 
+@source_qualification_app.command("fmp-pit-owner-review")
+def source_qualification_fmp_pit_owner_review_command(
+    fmp_qualification: Annotated[
+        Path,
+        typer.Option("--fmp-qualification", help="FMP qualification report JSON。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT
+    / "fmp_price_corporate_action_qualification_report.json",
+    fmp_manifest: Annotated[
+        Path,
+        typer.Option("--fmp-manifest", help="FMP source manifest sample JSON。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT
+    / "fmp_source_manifest_sample.json",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-762 FMP PIT review 输出目录。"),
+    ] = DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = run_fmp_pit_owner_review(
+        fmp_qualification_path=fmp_qualification,
+        fmp_manifest_path=fmp_manifest,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
 @source_qualification_app.command("marketstack-reconciliation")
 def source_qualification_marketstack_reconciliation_command(
     config_path: Annotated[
@@ -369,6 +401,49 @@ def source_qualification_marketstack_reconciliation_command(
     payload = run_marketstack_reconciliation_qualification(
         config_path=config_path,
         subscription_coverage_path=subscription_coverage,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("marketstack-coverage-expansion")
+def source_qualification_marketstack_coverage_expansion_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Marketstack reconciliation config。"),
+    ] = DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH,
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-761 Marketstack expansion 输出目录。"),
+    ] = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT,
+) -> None:
+    payload = run_marketstack_coverage_expansion(
+        config_path=config_path,
+        subscription_coverage_path=subscription_coverage,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=_parse_date(as_of) if as_of else None,
         output_root=output_root,
     )
     _print_foundation_payload(payload)

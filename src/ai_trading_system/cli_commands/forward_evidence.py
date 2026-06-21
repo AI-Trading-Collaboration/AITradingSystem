@@ -7,9 +7,13 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
     DEFAULT_FORWARD_CAPTURE_CONTRACT_PATH,
+    DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
     DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
     DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    capture_forward_evidence_dry_run_archive,
     classify_forward_evidence_requirement,
     validate_forward_capture_contract,
 )
@@ -43,6 +47,34 @@ def forward_evidence_capture_daily_command(
     payload = capture_forward_evidence(
         as_of_date=as_of_date,
         feature_snapshot_id=feature_snapshot_id,
+        output_root=output_root,
+    )
+    _print_payload(payload)
+
+
+@forward_evidence_app.command("capture-dry-run")
+def forward_evidence_capture_dry_run_command(
+    benchmark_report: Annotated[
+        Path,
+        typer.Option("--benchmark-report", help="TRADING-760 benchmark report JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-760 control audit report JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    feature_snapshot_reference: Annotated[
+        str,
+        typer.Option("--feature-snapshot-reference", help="PIT feature snapshot reference。"),
+    ] = "pit_snapshot_required",
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-760 forward dry-run archive 输出目录。"),
+    ] = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT,
+) -> None:
+    payload = capture_forward_evidence_dry_run_archive(
+        benchmark_report_path=benchmark_report,
+        control_audit_path=control_audit,
+        feature_snapshot_reference=feature_snapshot_reference,
         output_root=output_root,
     )
     _print_payload(payload)

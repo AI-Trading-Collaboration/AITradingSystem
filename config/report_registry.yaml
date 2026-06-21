@@ -11329,3 +11329,126 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: controlled_benchmark_batch_report
+    title: Controlled Benchmark Batch Report
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research controlled-pilot benchmark-batch
+    artifact_globs:
+      - outputs/research_runs/controlled_benchmark_batch/controlled_benchmark_batch_report.json
+      - outputs/research_runs/controlled_benchmark_batch/controlled_benchmark_batch_report.md
+      - outputs/research_runs/controlled_benchmark_batch/control_audit_report.json
+      - outputs/research_runs/controlled_benchmark_batch/control_audit_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Controlled benchmark/control batch should be regenerated when cached research data, benchmark zoo, or control policy changes.
+    owner_action: review_negative_controls_and_data_quality_before_interpreting_benchmark_outputs
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_dry_run_archive
+    title: Forward Evidence Dry Run Archive
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits forward-evidence capture-dry-run
+    artifact_globs:
+      - outputs/forward_evidence/daily_archive/forward_evidence_dry_run_archive.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Dry-run archive should be regenerated when controlled benchmark/control outputs or capture contract changes.
+    owner_action: keep_archive_append_only_and_broker_action_none
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: marketstack_coverage_expansion_report
+    title: Marketstack Coverage Expansion Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification marketstack-coverage-expansion
+    artifact_globs:
+      - outputs/data_quality/marketstack_reconciliation/marketstack_coverage_expansion_report.json
+      - outputs/data_quality/marketstack_reconciliation/marketstack_coverage_expansion_report.md
+      - outputs/data_quality/marketstack_reconciliation/fmp_marketstack_discrepancy_report.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Marketstack expansion should be refreshed after second-source cache, symbol mapping, or provider coverage changes.
+    owner_action: resolve_data_required_or_symbol_mapping_items_before_using_marketstack_reconciliation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: fmp_pit_owner_review_package
+    title: FMP PIT Owner Review Package
+    group: data_quality
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_foundation
+    command: aits data source-qualification fmp-pit-owner-review
+    artifact_globs:
+      - outputs/data_quality/fmp_pit_review/fmp_pit_owner_review_package.json
+      - outputs/data_quality/fmp_pit_review/fmp_pit_owner_review_package.md
+      - outputs/data_quality/fmp_pit_review/fmp_delisted_validation_report.json
+      - outputs/data_quality/fmp_pit_review/fmp_allowed_uses_update.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: FMP PIT owner review should be refreshed when FMP manifest, timestamp policy, lineage, or delisted evidence changes.
+    owner_action: complete_owner_review_before_any_promotion_or_tradable_universe_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: reverse_diagnostics_controlled_pilot
+    title: Reverse Diagnostics Controlled Pilot
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research acceleration reverse-diagnostics-controlled-pilot
+    artifact_globs:
+      - outputs/research_acceleration/reverse_diagnostics/reverse_diagnostics_controlled_pilot.json
+      - outputs/research_acceleration/reverse_diagnostics/reverse_diagnostics_controlled_pilot.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Reverse diagnostics controlled pilot should be regenerated after benchmark/control results or teacher scope changes.
+    owner_action: keep_oracle_teacher_outputs_hypothesis_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_casebook_controlled_pilot
+    title: Regret Casebook Controlled Pilot
+    group: research
+    cadence: ad_hoc
+    audience: operator
+    owner: research_governance
+    command: aits research acceleration regret-casebook-controlled-pilot
+    artifact_globs:
+      - outputs/research_acceleration/regret_casebook/regret_casebook_controlled_pilot.json
+      - outputs/research_acceleration/regret_casebook/regret_casebook_controlled_pilot.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Regret casebook controlled pilot should be regenerated after reverse diagnostics or taxonomy changes.
+    owner_action: review_failure_modes_as_hypotheses_not_promotion_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: controlled_research_batch_review
+    title: Controlled Research Batch Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research ops controlled-batch-review
+    artifact_globs:
+      - outputs/research_ops/review_board/controlled_research_batch_review.json
+      - outputs/research_ops/review_board/controlled_research_batch_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Controlled research review should be regenerated after any TRADING-760 to TRADING-763 artifact changes.
+    owner_action: use_review_board_decisions_to_select_next_controlled_research_batch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

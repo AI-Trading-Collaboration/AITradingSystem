@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -11,14 +12,33 @@ from ai_trading_system.cli_commands.research_foundation import (
     register_research_foundation_commands,
 )
 from ai_trading_system.current_subscription_qualification import (
+    DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
+    DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+    DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH,
+    DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH,
+    DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH,
+    DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH,
+    DEFAULT_MARKETSTACK_PRICES_PATH,
+    DEFAULT_PRICES_PATH,
+    DEFAULT_RATES_PATH,
+    DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH,
+    DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT,
+    DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
+    DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT,
     build_strategy_research_readiness_board,
     run_benchmark_controls_real_data_batch,
+    run_controlled_benchmark_batch,
+    run_controlled_research_batch_review,
     run_gbdt_action_utility_baseline,
     run_horizon_conditioned_value_surface_prototype,
     run_pilot_batch_review,
+    run_regret_casebook_controlled_pilot,
     run_regret_casebook_failure_taxonomy_pilot,
     run_regret_driven_state_machine_prototype,
+    run_reverse_diagnostics_controlled_pilot,
     run_simple_strategy_ensemble_selector_prototype,
     run_strategy_pair_reverse_diagnostics_pilot,
 )
@@ -174,6 +194,9 @@ advanced_policy_app = typer.Typer(help="Advanced policy sandbox。", no_args_is_
 strategy_pilot_app = typer.Typer(
     help="Controlled strategy research pilot board and diagnostics。", no_args_is_help=True
 )
+controlled_pilot_app = typer.Typer(
+    help="TRADING-760 controlled benchmark and control batch。", no_args_is_help=True
+)
 research_ops_app = typer.Typer(help="Research workstream ops and dashboard。", no_args_is_help=True)
 paper_shadow_app = typer.Typer(
     help="Research paper-shadow cohort readiness。", no_args_is_help=True
@@ -186,9 +209,45 @@ research_app.add_typer(portfolio_decision_app, name="portfolio-decision")
 research_app.add_typer(strategy_app, name="strategy")
 research_app.add_typer(advanced_policy_app, name="advanced-policy")
 research_app.add_typer(strategy_pilot_app, name="strategy-pilot")
+research_app.add_typer(controlled_pilot_app, name="controlled-pilot")
 research_app.add_typer(research_ops_app, name="ops")
 research_app.add_typer(paper_shadow_app, name="paper-shadow")
 register_research_foundation_commands(research_app)
+
+
+@controlled_pilot_app.command("benchmark-batch")
+def controlled_pilot_benchmark_batch_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-760 controlled benchmark 输出目录。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_benchmark_batch(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            as_of_date=_parse_optional_date(as_of),
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Controlled benchmark batch", payload)
 
 
 @strategy_pilot_app.command("readiness-board")
@@ -607,6 +666,51 @@ def acceleration_regret_casebook_command(
     _print_summary(payload)
 
 
+@acceleration_app.command("reverse-diagnostics-controlled-pilot")
+def acceleration_reverse_diagnostics_controlled_pilot_command(
+    benchmark_report: Annotated[
+        Path,
+        typer.Option("--benchmark-report", help="TRADING-760 benchmark report JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-760 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-763 reverse diagnostics 输出目录。"),
+    ] = DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_reverse_diagnostics_controlled_pilot(
+            benchmark_report_path=benchmark_report,
+            control_audit_path=control_audit,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Reverse diagnostics controlled pilot", payload)
+
+
+@acceleration_app.command("regret-casebook-controlled-pilot")
+def acceleration_regret_casebook_controlled_pilot_command(
+    reverse_diagnostics: Annotated[
+        Path,
+        typer.Option("--reverse-diagnostics", help="TRADING-763 reverse diagnostics JSON。"),
+    ] = DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-763 regret casebook 输出目录。"),
+    ] = DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regret_casebook_controlled_pilot(
+            reverse_diagnostics_path=reverse_diagnostics,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regret casebook controlled pilot", payload)
+
+
 @acceleration_app.command("negative-result-record")
 def acceleration_negative_result_record_command(
     research_id: Annotated[str, typer.Option("--research-id", help="Research id。")],
@@ -988,6 +1092,61 @@ def research_ops_review_board_command(
         artifact_id="review_board",
     )
     _print_research_artifact("Research review board", payload, paths)
+
+
+@research_ops_app.command("controlled-batch-review")
+def research_ops_controlled_batch_review_command(
+    benchmark_report: Annotated[
+        Path,
+        typer.Option("--benchmark-report", help="TRADING-760 benchmark report JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_BATCH_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-760 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    forward_archive: Annotated[
+        Path,
+        typer.Option("--forward-archive", help="TRADING-760 forward dry-run archive JSON。"),
+    ] = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH,
+    marketstack_report: Annotated[
+        Path,
+        typer.Option("--marketstack-report", help="TRADING-761 Marketstack expansion JSON。"),
+    ] = DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_REPORT_PATH,
+    fmp_owner_review: Annotated[
+        Path,
+        typer.Option("--fmp-owner-review", help="TRADING-762 FMP owner review JSON。"),
+    ] = DEFAULT_FMP_OWNER_REVIEW_PACKAGE_PATH,
+    fmp_delisted_report: Annotated[
+        Path,
+        typer.Option("--fmp-delisted-report", help="TRADING-762 FMP delisted report JSON。"),
+    ] = DEFAULT_FMP_DELISTED_VALIDATION_REPORT_PATH,
+    reverse_diagnostics: Annotated[
+        Path,
+        typer.Option("--reverse-diagnostics", help="TRADING-763 reverse diagnostics JSON。"),
+    ] = DEFAULT_REVERSE_DIAGNOSTICS_CONTROLLED_PILOT_PATH,
+    regret_casebook: Annotated[
+        Path,
+        typer.Option("--regret-casebook", help="TRADING-763 regret casebook JSON。"),
+    ] = DEFAULT_REGRET_CASEBOOK_CONTROLLED_PILOT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-764 review board 输出目录。"),
+    ] = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_research_batch_review(
+            benchmark_report_path=benchmark_report,
+            control_audit_path=control_audit,
+            forward_archive_path=forward_archive,
+            marketstack_report_path=marketstack_report,
+            fmp_owner_review_path=fmp_owner_review,
+            fmp_delisted_report_path=fmp_delisted_report,
+            reverse_diagnostics_path=reverse_diagnostics,
+            regret_casebook_path=regret_casebook,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Controlled research batch review", payload)
 
 
 @research_ops_app.command("dashboard")
@@ -3743,6 +3902,15 @@ def _print_strategy_pilot_payload(label: str, payload: dict[str, object]) -> Non
     console.print("research_only=true；promotion_gate_allowed=false；production_effect=none")
     if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
         raise typer.Exit(code=1)
+
+
+def _parse_optional_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
 
 
 def _print_summary(payload: dict[str, object]) -> None:
