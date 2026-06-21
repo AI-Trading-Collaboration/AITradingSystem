@@ -31,4 +31,4 @@
   - 误执行记录：一次 `python -m black --check ... docs/requirements/TRADING-734_Daily_Incremental_Refactor_CLI_Boundary.md ...` 因 Markdown 不是 Python 文件而 ParseError；随后已用仅 Python 受影响文件的 Black check 通过。
 - 遇到的 blocker：初次触发时工作区已有未提交 TRADING-703～733 改动；经 owner 后续授权，已验证并提交为 `2e342c6b` 后继续。
 - 后续增量重构参考点：本轮完成后以最终 refactor commit SHA 为下一次基线候选。
-- 本轮重构提交 SHA：`aa9479dd`。
+- 本轮重构实现提交 SHA：`428e8534`。
