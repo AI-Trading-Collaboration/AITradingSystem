@@ -13,6 +13,9 @@ from ai_trading_system.cli_commands.research_foundation import (
 )
 from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
+    DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
+    DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
     DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
     DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
@@ -29,6 +32,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH,
     DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
     DEFAULT_HORIZON_SELECTOR_CONTROLLED_PROTOTYPE_PATH,
+    DEFAULT_HORIZON_SELECTOR_HOLDOUT_REVIEW_PATH,
     DEFAULT_HORIZON_SELECTOR_PROBLEM_CONTRACT_PATH,
     DEFAULT_LONG_HORIZON_QUARANTINE_FALLBACK_REVIEW_PATH,
     DEFAULT_LONG_HORIZON_QUARANTINE_REVIEW_PATH,
@@ -42,6 +46,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT,
     DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
     DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
+    DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
     DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
@@ -51,12 +56,16 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
     DEFAULT_VALUE_SURFACE_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_PATH,
+    DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_UTILITY_PARETO_RANKING_PATH,
     DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
     DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH,
     DEFAULT_VALUE_SURFACE_WARNING_TRIAGE_PATH,
     run_ai_after_chatgpt_full_regime_attribution_review,
+    run_benchmark_fallback_drawdown_guard_controlled_prototype,
+    run_benchmark_first_tail_risk_policy_contract,
+    run_conservative_horizon_risk_filter,
     run_cost_aware_horizon_hysteresis,
     run_cost_turnover_aware_regime_conditioned_value_surface,
     run_gbdt_pivot_direction_selection,
@@ -79,7 +88,9 @@ from ai_trading_system.controlled_strategy_batch import (
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
+    run_tail_risk_policy_family_controlled_review,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
@@ -87,6 +98,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_value_surface_controlled_walk_forward_expansion,
     run_value_surface_direction_review,
     run_value_surface_failure_attribution,
+    run_value_surface_policy_kill_diagnostic_downgrade,
     run_value_surface_utility_pareto_ranking_review,
     run_value_surface_v2_controlled_review,
     run_value_surface_warning_triage_review,
@@ -1770,6 +1782,217 @@ def strategies_horizon_selector_holdout_review_command(
         )
     )
     _print_strategy_pilot_payload("Horizon selector holdout review", payload)
+
+
+@strategies_app.command("value-surface-policy-kill-diagnostic-downgrade")
+def strategies_value_surface_policy_kill_diagnostic_downgrade_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-810 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    horizon_selector_holdout: Annotated[
+        Path,
+        typer.Option("--horizon-selector-holdout", help="TRADING-809 holdout review JSON。"),
+    ] = DEFAULT_HORIZON_SELECTOR_HOLDOUT_REVIEW_PATH,
+    v2_review: Annotated[
+        Path,
+        typer.Option("--v2-review", help="TRADING-804 value surface v2 review JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-810 policy kill 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_value_surface_policy_kill_diagnostic_downgrade(
+            config_path=config_path,
+            horizon_selector_holdout_path=horizon_selector_holdout,
+            v2_review_path=v2_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Value surface policy kill", payload)
+
+
+@strategies_app.command("benchmark-first-tail-risk-policy-contract")
+def strategies_benchmark_first_tail_risk_policy_contract_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-811 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    policy_kill: Annotated[
+        Path,
+        typer.Option("--policy-kill", help="TRADING-810 value surface policy kill JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-811 policy contract 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_benchmark_first_tail_risk_policy_contract(
+            config_path=config_path,
+            policy_kill_path=policy_kill,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Benchmark-first tail-risk policy contract", payload)
+
+
+@strategies_app.command("tail-loss-avoidance-classifier-prototype")
+def strategies_tail_loss_avoidance_classifier_prototype_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-812 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    policy_kill: Annotated[
+        Path,
+        typer.Option("--policy-kill", help="TRADING-810 value surface policy kill JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-812 classifier 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_loss_avoidance_classifier_prototype(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            policy_kill_path=policy_kill,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-loss avoidance classifier prototype", payload)
+
+
+@strategies_app.command("conservative-horizon-risk-filter")
+def strategies_conservative_horizon_risk_filter_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-813 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-811 policy contract JSON。"),
+    ] = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-813 horizon risk filter 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_conservative_horizon_risk_filter(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            contract_path=contract,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Conservative horizon risk filter", payload)
+
+
+@strategies_app.command("benchmark-fallback-drawdown-guard-prototype")
+def strategies_benchmark_fallback_drawdown_guard_prototype_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-814 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    horizon_filter: Annotated[
+        Path,
+        typer.Option("--horizon-filter", help="TRADING-813 horizon risk filter JSON。"),
+    ] = DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-811 policy contract JSON。"),
+    ] = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-814 fallback/drawdown 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_benchmark_fallback_drawdown_guard_controlled_prototype(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            horizon_filter_path=horizon_filter,
+            contract_path=contract,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Benchmark fallback drawdown guard prototype", payload)
+
+
+@strategies_app.command("tail-risk-policy-family-controlled-review")
+def strategies_tail_risk_policy_family_controlled_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-815 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    policy_kill: Annotated[
+        Path,
+        typer.Option("--policy-kill", help="TRADING-810 value surface policy kill JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    contract: Annotated[
+        Path,
+        typer.Option("--contract", help="TRADING-811 policy contract JSON。"),
+    ] = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    horizon_filter: Annotated[
+        Path,
+        typer.Option("--horizon-filter", help="TRADING-813 horizon risk filter JSON。"),
+    ] = DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH,
+    fallback: Annotated[
+        Path,
+        typer.Option("--fallback", help="TRADING-814 fallback/drawdown JSON。"),
+    ] = DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-815 controlled review 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_policy_family_controlled_review(
+            config_path=config_path,
+            policy_kill_path=policy_kill,
+            contract_path=contract,
+            classifier_path=classifier,
+            horizon_filter_path=horizon_filter,
+            fallback_path=fallback,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk policy family controlled review", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

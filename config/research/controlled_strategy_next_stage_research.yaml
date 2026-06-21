@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_809
+policy_id: controlled_strategy_research_next_stage_775_815
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -13,9 +13,11 @@ rationale: >
   Continue only the value surface line after controlled strategy batch 1,
   audit utility-ranking sensitivity, track append-only forward evidence
   maturity, pivot GBDT by design, run residual diagnostics, and keep regret
-  state-machine expansion gated until enough cases exist. This policy does not
-  validate utility boundaries and does not permit promotion, paper-shadow,
-  production weight, or broker changes.
+  state-machine expansion gated until enough cases exist. After TRADING-809
+  kills value surface as an action policy, downgrade it to diagnostics and move
+  the main research line to benchmark-first tail-risk avoidance. This policy
+  does not validate utility boundaries and does not permit promotion,
+  paper-shadow, production weight, or broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -635,3 +637,138 @@ horizon_selector_holdout_review:
   rationale: >
     The selector can continue only if leave-one holdouts reduce tail loss without
     worsening cost/turnover. Failed holdout keeps the line in watchlist or pivot.
+value_surface_policy_kill_diagnostic_downgrade:
+  task_id: TRADING-810
+  action_policy_allowed: false
+  promotion_gate_allowed: false
+  allowed_uses:
+    - diagnostic
+    - residual_analysis
+    - tail_loss_attribution
+    - horizon_risk_signal
+    - benchmark_fallback_trigger
+  disallowed_uses:
+    - direct_action_policy
+    - horizon_selector_policy
+    - paper_shadow_signal
+    - production_weight_policy
+    - broker_order_instruction
+  kill_reason: horizon_selector_holdout_failed_and_action_policy_killed
+  required_prior_decision: KILL_VALUE_SURFACE_AS_ACTION_POLICY
+  rationale: >
+    TRADING-809 failed holdout, tail-loss, and turnover/cost requirements.
+    Value surface remains useful as diagnostics and fallback triggers, but it is
+    no longer allowed to act as an action, horizon, paper-shadow, or production
+    policy.
+benchmark_first_tail_risk_policy_contract:
+  task_id: TRADING-811
+  base_policy: benchmark_or_simple_trend_static_allocation
+  allowed_deviation:
+    - risk_downshift
+    - drawdown_guard
+    - cash_fallback
+    - low_cost_confirmed_deviation
+  risk_downshift_condition:
+    - tail_risk_signal_high
+    - benchmark_deviation_loss_risk_high
+    - long_horizon_failure_risk_high
+    - drawdown_pressure_high
+  risk_recovery_condition:
+    - tail_risk_signal_low
+    - cost_pressure_acceptable
+    - confirmation_persistent
+    - drawdown_pressure_normalized
+  max_turnover_budget:
+    policy_status: diagnostic_baseline
+    daily_action_flip_budget: 0
+    daily_horizon_switch_budget: 0
+    rationale: >
+      Zero incremental flip/switch budget is a conservative diagnostic baseline,
+      not a calibrated production turnover limit.
+  fallback_policy: benchmark_first
+  review_interval: daily
+  confirmation_window_count: 2
+  rationale: >
+    The new main problem is benchmark-first loss avoidance. Deviations are
+    allowed only for risk downshift or low-cost confirmed changes, not for
+    unconstrained return maximization.
+tail_loss_avoidance_classifier_prototype:
+  task_id: TRADING-812
+  large_loss_delta_floor: -0.05
+  tail_loss_quantile: 0.10
+  benchmark_underperformance_floor_bps: 0
+  long_horizon_failure_horizons:
+    - 20d
+    - 60d
+  gate_value_surface_or_aggressive_action_only: true
+  strategy_signal_generated: false
+  labels:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  rationale: >
+    This controlled prototype predicts whether deviation from benchmark is at
+    risk of large loss. Labels only gate value-surface or aggressive actions and
+    cannot directly determine portfolio weights.
+conservative_horizon_risk_filter:
+  task_id: TRADING-813
+  horizon_status:
+    1d: ALLOWED
+    5d: ALLOWED
+    10d: ALLOWED
+    20d: QUARANTINED
+    60d: FALLBACK_ONLY
+  default_allowed_horizons:
+    - 1d
+    - 5d
+    - 10d
+  fallback_horizon: 5d
+  low_risk_regime_condition:
+    - tail_risk_signal_low
+    - benchmark_underperformance_case_false
+    - cost_pressure_acceptable
+  long_horizon_activation_requires_low_risk_regime: true
+  selector_mode: risk_filter_not_optimal_horizon_selector
+  rationale: >
+    Horizon research is retained only as a conservative risk filter. The filter
+    blocks dangerous long horizons instead of selecting a return-maximizing
+    horizon.
+benchmark_fallback_drawdown_guard_controlled_prototype:
+  task_id: TRADING-814
+  policy_variants:
+    - benchmark_first_baseline
+    - tail_risk_benchmark_fallback
+    - drawdown_guard_cash_fallback
+    - conservative_horizon_filter_fallback
+  tail_risk_fallback_labels:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  drawdown_guard_action: hold_cash
+  beat_rate_retention_floor: 0.80
+  tail_loss_reduction_floor: 0.20
+  max_turnover_cost_worsening_allowed: false
+  holdout_pass_rate_floor: 0.60
+  rationale: >
+    The prototype tests whether a simple benchmark-first fallback or drawdown
+    guard is more robust than a complex value-surface action policy.
+tail_risk_policy_family_controlled_review:
+  task_id: TRADING-815
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL
+    - PIVOT
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  beat_rate_retention_floor: 0.80
+  holdout_pass_rate_floor: 0.60
+  cost_turnover_not_worse_required: true
+  explainability_required: true
+  benchmark_improvement_required: true
+  rationale: >
+    The family can continue only when tail loss is reduced, turnover/cost do not
+    worsen, holdout evidence is acceptable, simple benchmark comparison remains
+    favorable, and the policy is interpretable.

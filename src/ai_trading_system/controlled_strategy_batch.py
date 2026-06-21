@@ -155,6 +155,24 @@ DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH = (
 DEFAULT_HORIZON_SELECTOR_HOLDOUT_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "horizon_selector_holdout_review.json"
 )
+DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_policy_kill_diagnostic_downgrade.json"
+)
+DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "benchmark_first_tail_risk_policy_contract.json"
+)
+DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_loss_avoidance_classifier_prototype.json"
+)
+DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "conservative_horizon_risk_filter.json"
+)
+DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "benchmark_fallback_drawdown_guard_prototype.json"
+)
+DEFAULT_TAIL_RISK_POLICY_FAMILY_CONTROLLED_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_policy_family_controlled_review.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -3178,6 +3196,365 @@ def run_horizon_selector_holdout_review(
         payload,
         output_root=output_root,
         artifact_id="horizon_selector_holdout_review",
+    )
+    return payload
+
+
+def run_value_surface_policy_kill_diagnostic_downgrade(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    horizon_selector_holdout_path: Path = DEFAULT_HORIZON_SELECTOR_HOLDOUT_REVIEW_PATH,
+    v2_review_path: Path = DEFAULT_VALUE_SURFACE_V2_CONTROLLED_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    horizon_holdout = _read_json_or_empty(horizon_selector_holdout_path)
+    v2_review = _read_json_or_empty(v2_review_path)
+    downgrade = _value_surface_policy_kill_diagnostic_downgrade(
+        config=config,
+        horizon_holdout=horizon_holdout,
+        v2_review=v2_review,
+    )
+    payload = _controlled_payload(
+        report_type="value_surface_policy_kill_diagnostic_downgrade",
+        title="Value surface policy kill and diagnostic downgrade",
+        status="VALUE_SURFACE_POLICY_KILLED_DIAGNOSTIC_DOWNGRADE_COMPLETE",
+        summary={
+            "action_policy_allowed": downgrade["action_policy_allowed"],
+            "promotion_gate_allowed": downgrade["promotion_gate_allowed"],
+            "allowed_use_count": len(downgrade["allowed_uses"]),
+            "disallowed_use_count": len(downgrade["disallowed_uses"]),
+            "prior_horizon_selector_decision": downgrade["prior_horizon_selector_decision"],
+            "diagnostic_downgrade_applied": downgrade["diagnostic_downgrade_applied"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        downgrade_policy=_next_stage_section(
+            config, "value_surface_policy_kill_diagnostic_downgrade"
+        ),
+        horizon_selector_holdout_source=_artifact_status(
+            horizon_holdout, horizon_selector_holdout_path
+        ),
+        v2_review_source=_artifact_status(v2_review, v2_review_path),
+        policy_downgrade=downgrade,
+        research_registry_guardrail={
+            "value_surface_as_action_policy": "KILLED",
+            "value_surface_allowed_use": "DIAGNOSTIC_ONLY",
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+        },
+        disallowed_actions=[
+            "use_value_surface_as_direct_action_policy",
+            "use_value_surface_as_horizon_selector_policy",
+            "enter_paper_shadow",
+            "change_production_weights",
+            "emit_broker_order_instruction",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="value_surface_policy_kill_diagnostic_downgrade",
+    )
+    return payload
+
+
+def run_benchmark_first_tail_risk_policy_contract(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    policy_kill_path: Path = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    policy_kill = _read_json_or_empty(policy_kill_path)
+    contract = _benchmark_first_tail_risk_policy_contract(config)
+    payload = _controlled_payload(
+        report_type="benchmark_first_tail_risk_policy_contract",
+        title="Benchmark-first tail-risk policy contract",
+        status="BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_DEFINED",
+        summary={
+            "base_policy": contract["base_policy"],
+            "allowed_deviation_count": len(contract["allowed_deviation"]),
+            "risk_downshift_condition_count": len(contract["risk_downshift_condition"]),
+            "fallback_policy": contract["fallback_policy"],
+            "review_interval": contract["review_interval"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        contract_policy=_next_stage_section(config, "benchmark_first_tail_risk_policy_contract"),
+        policy_kill_source=_artifact_status(policy_kill, policy_kill_path),
+        policy_contract=contract,
+        problem_statement=(
+            "Default to benchmark/simple trend/static allocation; deviate only for "
+            "tail-risk downshift or low-cost confirmed recovery."
+        ),
+        disallowed_actions=[
+            "return_maximization_direct_action_policy",
+            "unconditional_value_surface_expansion",
+            "direct_gbdt_nn_rl_strategy",
+            "paper_shadow_signal",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="benchmark_first_tail_risk_policy_contract",
+    )
+    return payload
+
+
+def run_tail_loss_avoidance_classifier_prototype(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    policy_kill_path: Path = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    policy_kill = _read_json_or_empty(policy_kill_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    classifier = _tail_loss_avoidance_classifier_prototype(
+        selected_cases=selected_cases,
+        config=config,
+    )
+    payload = _controlled_payload(
+        report_type="tail_loss_avoidance_classifier_prototype",
+        title="Tail-loss avoidance classifier prototype",
+        status="TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPED",
+        summary={
+            "case_count": len(selected_cases),
+            "label_case_count": classifier["summary"]["label_case_count"],
+            "large_loss_case_count": classifier["summary"]["large_loss_case_count"],
+            "tail_loss_case_count": classifier["summary"]["tail_loss_case_count"],
+            "benchmark_underperformance_case_count": classifier["summary"][
+                "benchmark_underperformance_case_count"
+            ],
+            "long_horizon_failure_case_count": classifier["summary"][
+                "long_horizon_failure_case_count"
+            ],
+            "gate_block_count": classifier["summary"]["gate_block_count"],
+            "strategy_signal_generated": False,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        classifier_policy=_next_stage_section(config, "tail_loss_avoidance_classifier_prototype"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        policy_kill_source=_artifact_status(policy_kill, policy_kill_path),
+        classifier_summary=classifier["summary"],
+        label_breakdown=classifier["label_breakdown"],
+        classifier_rows=classifier["classifier_rows"],
+        gate_semantics=classifier["gate_semantics"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_loss_avoidance_classifier_prototype",
+    )
+    return payload
+
+
+def run_conservative_horizon_risk_filter(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    contract_path: Path = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    contract = _read_json_or_empty(contract_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _conservative_horizon_risk_filter(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="conservative_horizon_risk_filter",
+        title="Conservative horizon risk filter",
+        status="CONSERVATIVE_HORIZON_RISK_FILTER_REVIEWED",
+        summary={
+            "case_count": len(selected_cases),
+            "allowed_horizon_count": review["summary"]["allowed_horizon_count"],
+            "quarantined_horizon_count": review["summary"]["quarantined_horizon_count"],
+            "fallback_only_horizon_count": review["summary"]["fallback_only_horizon_count"],
+            "fallback_count": review["summary"]["fallback_count"],
+            "tail_loss_after_filter": review["summary"]["tail_loss_after_filter"],
+            "selector_mode": review["selector_mode"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        horizon_filter_policy=_next_stage_section(config, "conservative_horizon_risk_filter"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        contract_source=_artifact_status(contract, contract_path),
+        horizon_status=review["horizon_status"],
+        horizon_filter_rows=review["horizon_filter_rows"],
+        original_metric=review["original_metric"],
+        filtered_metric=review["filtered_metric"],
+        filter_summary=review["summary"],
+        selector_mode=review["selector_mode"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="conservative_horizon_risk_filter",
+    )
+    return payload
+
+
+def run_benchmark_fallback_drawdown_guard_controlled_prototype(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    horizon_filter_path: Path = DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH,
+    contract_path: Path = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    horizon_filter = _read_json_or_empty(horizon_filter_path)
+    contract = _read_json_or_empty(contract_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _benchmark_fallback_drawdown_guard_controlled_prototype(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+        horizon_filter=horizon_filter,
+    )
+    payload = _controlled_payload(
+        report_type="benchmark_fallback_drawdown_guard_controlled_prototype",
+        title="Benchmark fallback / drawdown guard controlled prototype",
+        status="BENCHMARK_FALLBACK_DRAWDOWN_GUARD_REVIEWED",
+        summary={
+            "case_count": len(selected_cases),
+            "variant_count": len(review["variant_metrics"]),
+            "best_variant_by_tail_loss": review["summary"]["best_variant_by_tail_loss"],
+            "best_variant_tail_loss_reduction": review["summary"][
+                "best_variant_tail_loss_reduction"
+            ],
+            "best_variant_turnover_cost_not_worse": review["summary"][
+                "best_variant_turnover_cost_not_worse"
+            ],
+            "holdout_pass_rate": review["summary"]["holdout_pass_rate"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        fallback_policy=_next_stage_section(
+            config, "benchmark_fallback_drawdown_guard_controlled_prototype"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        horizon_filter_source=_artifact_status(horizon_filter, horizon_filter_path),
+        contract_source=_artifact_status(contract, contract_path),
+        variant_metrics=review["variant_metrics"],
+        variant_rules=review["variant_rules"],
+        holdout_summary_by_variant=review["holdout_summary_by_variant"],
+        review_summary=review["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="benchmark_fallback_drawdown_guard_prototype",
+    )
+    return payload
+
+
+def run_tail_risk_policy_family_controlled_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    policy_kill_path: Path = DEFAULT_VALUE_SURFACE_POLICY_KILL_DIAGNOSTIC_DOWNGRADE_PATH,
+    contract_path: Path = DEFAULT_BENCHMARK_FIRST_TAIL_RISK_POLICY_CONTRACT_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    horizon_filter_path: Path = DEFAULT_CONSERVATIVE_HORIZON_RISK_FILTER_PATH,
+    fallback_path: Path = DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    policy_kill = _read_json_or_empty(policy_kill_path)
+    contract = _read_json_or_empty(contract_path)
+    classifier = _read_json_or_empty(classifier_path)
+    horizon_filter = _read_json_or_empty(horizon_filter_path)
+    fallback = _read_json_or_empty(fallback_path)
+    review = _tail_risk_policy_family_controlled_review(
+        config=config,
+        policy_kill=policy_kill,
+        contract=contract,
+        classifier=classifier,
+        horizon_filter=horizon_filter,
+        fallback=fallback,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_policy_family_controlled_review",
+        title="Controlled review of tail-risk policy family",
+        status="TAIL_RISK_POLICY_FAMILY_CONTROLLED_REVIEW_COMPLETE",
+        summary={
+            "tail_risk_policy_decision": review["review_decision"]["decision"],
+            "tail_loss_condition_met": review["review_decision"]["tail_loss_condition_met"],
+            "turnover_cost_condition_met": review["review_decision"]["turnover_cost_condition_met"],
+            "holdout_condition_met": review["review_decision"]["holdout_condition_met"],
+            "explainability_condition_met": review["review_decision"][
+                "explainability_condition_met"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        controlled_review_policy=_next_stage_section(
+            config, "tail_risk_policy_family_controlled_review"
+        ),
+        policy_kill_source=_artifact_status(policy_kill, policy_kill_path),
+        contract_source=_artifact_status(contract, contract_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        horizon_filter_source=_artifact_status(horizon_filter, horizon_filter_path),
+        fallback_source=_artifact_status(fallback, fallback_path),
+        review_decision=review["review_decision"],
+        evidence_summary=review["evidence_summary"],
+        disallowed_actions=[
+            "unconditional_value_surface_expansion",
+            "horizon_selector_micro_tuning",
+            "utility_boundary_micro_tuning",
+            "direct_gbdt_nn_rl_strategy",
+            "large_regret_casebook_expansion",
+            "enter_paper_shadow",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_policy_family_controlled_review",
     )
     return payload
 
@@ -7743,6 +8120,535 @@ def _horizon_selector_holdout_value(
     if dimension == "horizon":
         return str(row.get("original_horizon", row.get("horizon", "unknown")))
     return str(row.get(dimension, "unknown"))
+
+
+def _value_surface_policy_kill_diagnostic_downgrade(
+    *,
+    config: Mapping[str, Any],
+    horizon_holdout: Mapping[str, Any],
+    v2_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "value_surface_policy_kill_diagnostic_downgrade")
+    holdout_summary = (
+        horizon_holdout.get("summary")
+        if isinstance(horizon_holdout.get("summary"), Mapping)
+        else {}
+    )
+    v2_summary = v2_review.get("summary") if isinstance(v2_review.get("summary"), Mapping) else {}
+    prior_decision = str(holdout_summary.get("horizon_selector_decision", "UNKNOWN"))
+    required_prior = str(
+        policy.get("required_prior_decision", "KILL_VALUE_SURFACE_AS_ACTION_POLICY")
+    )
+    return {
+        "task_id": policy.get("task_id", "TRADING-810"),
+        "action_policy_allowed": bool(policy.get("action_policy_allowed", False)),
+        "promotion_gate_allowed": bool(policy.get("promotion_gate_allowed", False)),
+        "allowed_uses": [str(item) for item in policy.get("allowed_uses", [])],
+        "disallowed_uses": [str(item) for item in policy.get("disallowed_uses", [])],
+        "kill_reason": policy.get("kill_reason"),
+        "required_prior_decision": required_prior,
+        "prior_horizon_selector_decision": prior_decision,
+        "prior_decision_matches_required": prior_decision == required_prior,
+        "prior_value_surface_v2_decision": v2_summary.get("value_surface_v2_decision"),
+        "diagnostic_downgrade_applied": True,
+        "future_research_allowed_only_when_use_in_allowed_uses": True,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+        "broker_action": "none",
+    }
+
+
+def _benchmark_first_tail_risk_policy_contract(
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "benchmark_first_tail_risk_policy_contract")
+    return {
+        "task_id": policy.get("task_id", "TRADING-811"),
+        "base_policy": str(
+            policy.get("base_policy", "benchmark_or_simple_trend_static_allocation")
+        ),
+        "allowed_deviation": [str(item) for item in policy.get("allowed_deviation", [])],
+        "risk_downshift_condition": [
+            str(item) for item in policy.get("risk_downshift_condition", [])
+        ],
+        "risk_recovery_condition": [
+            str(item) for item in policy.get("risk_recovery_condition", [])
+        ],
+        "max_turnover_budget": dict(policy.get("max_turnover_budget", {})),
+        "fallback_policy": str(policy.get("fallback_policy", "benchmark_first")),
+        "review_interval": str(policy.get("review_interval", "daily")),
+        "confirmation_window_count": _first_int(policy.get("confirmation_window_count")) or 0,
+        "policy_mode": "benchmark_first_tail_risk_avoidance",
+        "direct_position_policy": False,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _tail_loss_avoidance_classifier_prototype(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_loss_avoidance_classifier_prototype")
+    large_loss_floor = _float(policy.get("large_loss_delta_floor"), -0.05)
+    underperformance_floor = (
+        _float(policy.get("benchmark_underperformance_floor_bps"), 0.0) / 10_000
+    )
+    quantile = _float(policy.get("tail_loss_quantile"), 0.10)
+    long_horizons = {str(item) for item in policy.get("long_horizon_failure_horizons", [])}
+    losing_cases = [row for row in selected_cases if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    ordered_losers = sorted(
+        losing_cases,
+        key=lambda row: _float(row.get("delta_vs_benchmark"), 0.0),
+    )
+    tail_count = (
+        min(len(ordered_losers), max(1, math.ceil(len(ordered_losers) * quantile)))
+        if ordered_losers
+        else 0
+    )
+    tail_keys = {_case_key(row) for row in ordered_losers[:tail_count]}
+    classifier_rows = []
+    for row in selected_cases:
+        delta = _float(row.get("delta_vs_benchmark"), 0.0)
+        labels = {
+            "large_loss_case": delta <= large_loss_floor,
+            "tail_loss_case": _case_key(row) in tail_keys,
+            "benchmark_underperformance_case": delta < underperformance_floor,
+            "long_horizon_failure_case": str(row.get("horizon")) in long_horizons
+            and delta < underperformance_floor,
+        }
+        gate_blocked = any(labels.values())
+        classifier_rows.append(
+            {
+                "case_key": _case_key(row),
+                "date": row.get("date"),
+                "asset": row.get("asset"),
+                "horizon": row.get("horizon"),
+                "regime_segment": row.get("regime_segment"),
+                "asset_cluster": row.get("asset_cluster"),
+                "selected_action": row.get("selected_action"),
+                "delta_vs_benchmark": _round(delta),
+                **labels,
+                "tail_risk_signal_high": gate_blocked,
+                "allow_value_surface_or_aggressive_action": not gate_blocked,
+                "strategy_signal_generated": False,
+                "promotion_gate_allowed": False,
+            }
+        )
+    label_breakdown = [
+        _label_breakdown_row(classifier_rows, label)
+        for label in [
+            "large_loss_case",
+            "tail_loss_case",
+            "benchmark_underperformance_case",
+            "long_horizon_failure_case",
+        ]
+    ]
+    summary = {
+        "label_case_count": len(classifier_rows),
+        "large_loss_case_count": _count_true(classifier_rows, "large_loss_case"),
+        "tail_loss_case_count": _count_true(classifier_rows, "tail_loss_case"),
+        "benchmark_underperformance_case_count": _count_true(
+            classifier_rows, "benchmark_underperformance_case"
+        ),
+        "long_horizon_failure_case_count": _count_true(
+            classifier_rows, "long_horizon_failure_case"
+        ),
+        "gate_block_count": _count_true(classifier_rows, "tail_risk_signal_high"),
+        "tail_loss_quantile": quantile,
+        "large_loss_delta_floor": large_loss_floor,
+        "gate_value_surface_or_aggressive_action_only": bool(
+            policy.get("gate_value_surface_or_aggressive_action_only", True)
+        ),
+        "strategy_signal_generated": bool(policy.get("strategy_signal_generated", False)),
+        "promotion_gate_allowed": False,
+    }
+    return {
+        "summary": summary,
+        "label_breakdown": label_breakdown,
+        "classifier_rows": classifier_rows,
+        "gate_semantics": {
+            "direct_position_policy": False,
+            "allows_action_only_when_all_tail_risk_labels_false": True,
+            "blocked_output_use": "portfolio_weight_or_order_instruction",
+            "allowed_output_use": "gate_value_surface_or_aggressive_action",
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _conservative_horizon_risk_filter(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "conservative_horizon_risk_filter")
+    status_map = {str(key): str(value) for key, value in policy.get("horizon_status", {}).items()}
+    label_map = _classifier_label_map(classifier)
+    fallback_horizons = [str(policy.get("fallback_horizon", "5d")), "10d", "5d", "1d"]
+    by_key = _horizon_replacement_index(selected_cases)
+    rows = []
+    for row in selected_cases:
+        item = dict(row)
+        horizon = str(item.get("horizon"))
+        status = status_map.get(horizon, "ALLOWED")
+        labels = label_map.get(_case_key(item), {})
+        low_risk = not bool(labels.get("tail_risk_signal_high"))
+        item["original_horizon"] = item.get("original_horizon", horizon)
+        item["horizon_status"] = status
+        item["horizon_risk_filter_action"] = "keep"
+        if status == "FALLBACK_ONLY":
+            item = _fallback_case_to_benchmark(item, "fallback_only_horizon_benchmark")
+            item["horizon_risk_filter_action"] = "fallback_only_horizon_benchmark"
+        elif status == "QUARANTINED" and not low_risk:
+            item = _fallback_to_shorter_horizon(
+                item,
+                by_key,
+                fallback_horizons,
+                "quarantined_horizon_tail_risk_filter",
+            )
+            item["horizon_risk_filter_action"] = "quarantined_horizon_tail_risk_filter"
+        elif status == "QUARANTINED" and low_risk:
+            item["horizon_risk_filter_action"] = "allow_quarantined_horizon_low_risk_only"
+        item["tail_risk_signal_high"] = bool(labels.get("tail_risk_signal_high"))
+        item["promotion_gate_allowed"] = False
+        rows.append(item)
+    original_metric = _v2_variant_metric_row("original_value_surface", selected_cases, config)
+    filtered_metric = _add_variant_deltas(
+        _v2_variant_metric_row("conservative_horizon_risk_filter", rows, config),
+        original_metric,
+    )
+    status_counts = {
+        status: sum(1 for value in status_map.values() if value == status)
+        for status in sorted(set(status_map.values()))
+    }
+    fallback_count = sum(
+        1 for row in rows if row.get("horizon_risk_filter_action") not in {None, "keep"}
+    )
+    return {
+        "horizon_status": [
+            {
+                "horizon": horizon,
+                "status": status,
+                "default_usable": status == "ALLOWED",
+                "promotion_gate_allowed": False,
+            }
+            for horizon, status in status_map.items()
+        ],
+        "horizon_filter_rows": rows,
+        "original_metric": original_metric,
+        "filtered_metric": filtered_metric,
+        "selector_mode": str(
+            policy.get("selector_mode", "risk_filter_not_optimal_horizon_selector")
+        ),
+        "summary": {
+            "allowed_horizon_count": status_counts.get("ALLOWED", 0),
+            "quarantined_horizon_count": status_counts.get("QUARANTINED", 0),
+            "fallback_only_horizon_count": status_counts.get("FALLBACK_ONLY", 0),
+            "fallback_count": fallback_count,
+            "tail_loss_after_filter": filtered_metric.get("tail_loss_contribution"),
+            "turnover_delta": filtered_metric.get("turnover_delta"),
+            "cost_delta": filtered_metric.get("cost_delta"),
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _benchmark_fallback_drawdown_guard_controlled_prototype(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+    horizon_filter: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "benchmark_fallback_drawdown_guard_controlled_prototype")
+    original_metric = _v2_variant_metric_row("original_value_surface", selected_cases, config)
+    label_map = _classifier_label_map(classifier)
+    horizon_rows = _records(horizon_filter.get("horizon_filter_rows"))
+    horizon_by_key = {_case_key(row): row for row in horizon_rows}
+    variant_rows = {
+        "original_value_surface": [dict(row) for row in selected_cases],
+        "benchmark_first_baseline": [
+            _fallback_case_to_benchmark(dict(row), "benchmark_first_baseline")
+            for row in selected_cases
+        ],
+        "tail_risk_benchmark_fallback": [
+            _tail_risk_benchmark_fallback_case(row, label_map) for row in selected_cases
+        ],
+        "drawdown_guard_cash_fallback": [
+            _drawdown_guard_cash_fallback_case(row, label_map) for row in selected_cases
+        ],
+        "conservative_horizon_filter_fallback": [
+            dict(horizon_by_key.get(_case_key(row), row)) for row in selected_cases
+        ],
+    }
+    configured_variants = [
+        "original_value_surface",
+        *[str(item) for item in policy.get("policy_variants", [])],
+    ]
+    variant_metrics = []
+    holdout_summary_by_variant = {}
+    for variant_id in configured_variants:
+        rows = variant_rows.get(variant_id, [])
+        metric = _add_variant_deltas(
+            _v2_variant_metric_row(variant_id, rows, config),
+            original_metric,
+        )
+        metric["max_drawdown"] = _round(
+            max((_float(row.get("selected_drawdown_proxy"), 0.0) for row in rows), default=0.0)
+        )
+        metric["tail_loss_reduction"] = _round(_tail_loss_reduction(original_metric, metric))
+        metric["beat_rate_retention"] = _round(_beat_rate_retention(original_metric, metric))
+        metric["turnover_cost_not_worse"] = (
+            _float(metric.get("turnover_delta"), 0.0) <= 0
+            and _float(metric.get("cost_delta"), 0.0) <= 0
+        )
+        variant_metrics.append(metric)
+        holdout_summary_by_variant[variant_id] = _horizon_selector_holdout_summary(
+            original_cases=selected_cases,
+            candidate_cases=rows,
+            config=config,
+        )
+    best = max(
+        variant_metrics,
+        key=lambda row: (
+            _float(row.get("tail_loss_reduction"), 0.0),
+            _float(row.get("mean_delta_vs_benchmark"), -999.0),
+            -max(0.0, _float(row.get("cost_delta"), 0.0)),
+        ),
+    )
+    holdout_summary = holdout_summary_by_variant.get(str(best.get("variant_id")), {})
+    return {
+        "variant_metrics": variant_metrics,
+        "variant_rules": _benchmark_fallback_variant_rules(policy),
+        "holdout_summary_by_variant": holdout_summary_by_variant,
+        "summary": {
+            "best_variant_by_tail_loss": best.get("variant_id"),
+            "best_variant_tail_loss_reduction": best.get("tail_loss_reduction"),
+            "best_variant_turnover_cost_not_worse": best.get("turnover_cost_not_worse"),
+            "best_variant_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+            "best_variant_losing_avg": best.get("losing_avg"),
+            "best_variant_max_drawdown": best.get("max_drawdown"),
+            "best_variant_turnover": best.get("turnover"),
+            "best_variant_cost": best.get("cost"),
+            "best_variant_beat_rate_retention": best.get("beat_rate_retention"),
+            "holdout_pass_rate": holdout_summary.get("holdout_pass_rate", 0.0),
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _tail_risk_policy_family_controlled_review(
+    *,
+    config: Mapping[str, Any],
+    policy_kill: Mapping[str, Any],
+    contract: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+    horizon_filter: Mapping[str, Any],
+    fallback: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_policy_family_controlled_review")
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    fallback_summary = (
+        fallback.get("review_summary")
+        if isinstance(fallback.get("review_summary"), Mapping)
+        else {}
+    )
+    metrics = _records(fallback.get("variant_metrics"))
+    best_id = str(fallback_summary.get("best_variant_by_tail_loss", ""))
+    best = next((row for row in metrics if str(row.get("variant_id")) == best_id), {})
+    tail_condition = _float(
+        fallback_summary.get("best_variant_tail_loss_reduction"), 0.0
+    ) >= _float(policy.get("tail_loss_reduction_floor"), 0.20)
+    turnover_cost_condition = bool(
+        fallback_summary.get("best_variant_turnover_cost_not_worse", False)
+    )
+    holdout_condition = _float(fallback_summary.get("holdout_pass_rate"), 0.0) >= _float(
+        policy.get("holdout_pass_rate_floor"), 0.60
+    )
+    beat_condition = _float(best.get("beat_rate_retention"), 0.0) >= _float(
+        policy.get("beat_rate_retention_floor"), 0.80
+    )
+    benchmark_condition = (
+        not bool(policy.get("benchmark_improvement_required", True))
+        or _float(best.get("mean_delta_vs_benchmark"), -999.0) >= 0
+    )
+    explainability_condition = (
+        policy_kill.get("status") is not None
+        and contract.get("status") is not None
+        and classifier.get("status") is not None
+        and horizon_filter.get("status") is not None
+        and fallback.get("status") is not None
+        and policy_kill.get("summary", {}).get("action_policy_allowed") is False
+        and classifier.get("summary", {}).get("strategy_signal_generated") is False
+    )
+    missing_artifact = not all(
+        artifact for artifact in [policy_kill, contract, classifier, horizon_filter, fallback]
+    )
+    if missing_artifact:
+        decision = "DATA_REQUIRED"
+        reason = "required_tail_risk_family_artifact_missing"
+    elif (
+        tail_condition
+        and turnover_cost_condition
+        and holdout_condition
+        and beat_condition
+        and benchmark_condition
+        and explainability_condition
+    ):
+        decision = "CONTINUE"
+        reason = "tail_risk_family_passed_tail_cost_holdout_benchmark_explainability"
+    elif tail_condition and turnover_cost_condition and explainability_condition:
+        decision = "WATCHLIST"
+        reason = "tail_and_cost_conditions_pass_but_holdout_or_benchmark_incomplete"
+    elif not tail_condition:
+        decision = "PIVOT"
+        reason = "tail_loss_not_reduced_enough"
+    else:
+        decision = "WATCHLIST"
+        reason = "evidence_incomplete_or_cost_holdout_not_ready"
+    if allowed and decision not in allowed:
+        decision = "WATCHLIST"
+        reason = "computed_decision_not_allowed_by_policy"
+    review_decision = {
+        "decision": decision,
+        "reason": reason,
+        "allowed_decisions": allowed,
+        "best_variant_by_tail_loss": best_id,
+        "tail_loss_condition_met": tail_condition,
+        "turnover_cost_condition_met": turnover_cost_condition,
+        "holdout_condition_met": holdout_condition,
+        "beat_rate_condition_met": beat_condition,
+        "benchmark_condition_met": benchmark_condition,
+        "explainability_condition_met": explainability_condition,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    return {
+        "review_decision": review_decision,
+        "evidence_summary": {
+            "policy_kill_status": policy_kill.get("status"),
+            "action_policy_allowed": policy_kill.get("summary", {}).get("action_policy_allowed"),
+            "contract_status": contract.get("status"),
+            "base_policy": contract.get("summary", {}).get("base_policy"),
+            "classifier_status": classifier.get("status"),
+            "gate_block_count": classifier.get("summary", {}).get("gate_block_count"),
+            "horizon_filter_status": horizon_filter.get("status"),
+            "selector_mode": horizon_filter.get("summary", {}).get("selector_mode"),
+            "fallback_status": fallback.get("status"),
+            "best_variant_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+            "best_variant_tail_loss_reduction": fallback_summary.get(
+                "best_variant_tail_loss_reduction"
+            ),
+            "best_variant_turnover_cost_not_worse": fallback_summary.get(
+                "best_variant_turnover_cost_not_worse"
+            ),
+            "holdout_pass_rate": fallback_summary.get("holdout_pass_rate"),
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _case_key(row: Mapping[str, Any]) -> str:
+    return f"{row.get('date')}|{row.get('asset')}|{row.get('horizon')}"
+
+
+def _count_true(rows: list[Mapping[str, Any]], field: str) -> int:
+    return sum(1 for row in rows if bool(row.get(field)))
+
+
+def _label_breakdown_row(rows: list[Mapping[str, Any]], label: str) -> dict[str, Any]:
+    count = _count_true(rows, label)
+    return {
+        "label": label,
+        "case_count": count,
+        "case_rate": _round(count / len(rows) if rows else 0.0),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _classifier_label_map(classifier: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    rows = _records(classifier.get("classifier_rows"))
+    return {str(row.get("case_key")): row for row in rows if row.get("case_key")}
+
+
+def _tail_risk_benchmark_fallback_case(
+    row: Mapping[str, Any],
+    label_map: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    item = dict(row)
+    labels = label_map.get(_case_key(item), {})
+    if bool(labels.get("tail_risk_signal_high")):
+        return _fallback_case_to_benchmark(item, "tail_risk_benchmark_fallback")
+    item["guardrail_action"] = "keep_benchmark_first_candidate"
+    item["promotion_gate_allowed"] = False
+    return item
+
+
+def _drawdown_guard_cash_fallback_case(
+    row: Mapping[str, Any],
+    label_map: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    item = dict(row)
+    labels = label_map.get(_case_key(item), {})
+    if bool(labels.get("tail_risk_signal_high")):
+        return _fallback_case_to_cash(item, "drawdown_guard_cash_fallback")
+    item["guardrail_action"] = "keep_benchmark_first_candidate"
+    item["promotion_gate_allowed"] = False
+    return item
+
+
+def _fallback_case_to_cash(case: dict[str, Any], reason: str) -> dict[str, Any]:
+    benchmark_return = _float(case.get("benchmark_realized_net_return"), 0.0)
+    case["selected_action_before_guardrail"] = case.get("selected_action")
+    case["selected_action"] = "hold_cash"
+    case["selected_realized_net_return"] = 0.0
+    case["delta_vs_benchmark"] = _round(-benchmark_return)
+    case["value_surface_beats_benchmark"] = -benchmark_return >= 0
+    case["selected_estimated_cost"] = 0.0
+    case["selected_turnover_cost_assumption"] = 0.0
+    case["selected_drawdown_proxy"] = 0.0
+    case["guardrail_action"] = reason
+    case["promotion_gate_allowed"] = False
+    return case
+
+
+def _benchmark_fallback_variant_rules(policy: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "variant_id": "original_value_surface",
+            "rule": "diagnostic comparator only; value surface remains action-policy killed",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "benchmark_first_baseline",
+            "rule": "fallback every candidate to benchmark baseline",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "tail_risk_benchmark_fallback",
+            "rule": "fallback to benchmark when any configured tail-loss classifier label is true",
+            "labels": policy.get("tail_risk_fallback_labels", []),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "drawdown_guard_cash_fallback",
+            "rule": (
+                "fallback tail-risk cases to cash-style drawdown guard " "for controlled comparison"
+            ),
+            "drawdown_guard_action": policy.get("drawdown_guard_action"),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "conservative_horizon_filter_fallback",
+            "rule": "use conservative horizon filter rows from TRADING-813",
+            "promotion_gate_allowed": False,
+        },
+    ]
 
 
 def _run_data_quality_gate(

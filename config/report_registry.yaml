@@ -12225,3 +12225,105 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_policy_kill_diagnostic_downgrade
+    title: Value Surface Policy Kill Diagnostic Downgrade
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-policy-kill-diagnostic-downgrade
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_policy_kill_diagnostic_downgrade.json
+      - outputs/research_strategies/value_surface_review/value_surface_policy_kill_diagnostic_downgrade.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-810 should be regenerated when horizon selector holdout, v2 review, or value-surface allowed-use policy changes.
+    owner_action: confirm_value_surface_is_diagnostic_only_and_not_action_policy_paper_shadow_or_production_weight_source
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: benchmark_first_tail_risk_policy_contract
+    title: Benchmark-First Tail-Risk Policy Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies benchmark-first-tail-risk-policy-contract
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/benchmark_first_tail_risk_policy_contract.json
+      - outputs/research_strategies/value_surface_review/benchmark_first_tail_risk_policy_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-811 should be regenerated when value-surface policy kill, benchmark-first policy, turnover budget, fallback, or review interval changes.
+    owner_action: review_benchmark_first_tail_risk_problem_contract_before_any_classifier_or_fallback_expansion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_loss_avoidance_classifier_prototype
+    title: Tail-Loss Avoidance Classifier Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-loss-avoidance-classifier-prototype
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_loss_avoidance_classifier_prototype.json
+      - outputs/research_strategies/value_surface_review/tail_loss_avoidance_classifier_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-812 should be regenerated when value-surface rows, tail-loss labels, or benchmark-deviation risk policy changes.
+    owner_action: review_loss_avoidance_labels_as_gate_only_not_position_or_action_policy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: conservative_horizon_risk_filter
+    title: Conservative Horizon Risk Filter
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies conservative-horizon-risk-filter
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/conservative_horizon_risk_filter.json
+      - outputs/research_strategies/value_surface_review/conservative_horizon_risk_filter.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-813 should be regenerated when classifier labels, conservative horizon statuses, or fallback horizon policy changes.
+    owner_action: review_horizon_risk_filter_as_blocking_filter_not_optimal_horizon_selector
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: benchmark_fallback_drawdown_guard_prototype
+    title: Benchmark Fallback Drawdown Guard Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies benchmark-fallback-drawdown-guard-prototype
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/benchmark_fallback_drawdown_guard_prototype.json
+      - outputs/research_strategies/value_surface_review/benchmark_fallback_drawdown_guard_prototype.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-814 should be regenerated when classifier labels, horizon filter rows, fallback policy, or drawdown guard policy changes.
+    owner_action: compare_benchmark_first_fallback_tail_loss_drawdown_turnover_cost_and_beat_retention_without_treating_result_as_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_policy_family_controlled_review
+    title: Tail-Risk Policy Family Controlled Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-policy-family-controlled-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_policy_family_controlled_review.json
+      - outputs/research_strategies/value_surface_review/tail_risk_policy_family_controlled_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-815 should be regenerated after TRADING-810 through TRADING-814 artifacts change.
+    owner_action: choose_continue_watchlist_kill_pivot_or_data_required_for_tail_risk_policy_family_without_promotion_paper_shadow_or_production_mutation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

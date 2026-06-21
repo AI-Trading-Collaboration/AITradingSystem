@@ -11,6 +11,9 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.controlled_strategy_batch import (
     run_ai_after_chatgpt_full_regime_attribution_review,
+    run_benchmark_fallback_drawdown_guard_controlled_prototype,
+    run_benchmark_first_tail_risk_policy_contract,
+    run_conservative_horizon_risk_filter,
     run_controlled_strategy_batch_review,
     run_cost_aware_horizon_hysteresis,
     run_cost_turnover_aware_regime_conditioned_value_surface,
@@ -39,7 +42,9 @@ from ai_trading_system.controlled_strategy_batch import (
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
+    run_tail_risk_policy_family_controlled_review,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
@@ -47,6 +52,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_value_surface_controlled_walk_forward_expansion,
     run_value_surface_direction_review,
     run_value_surface_failure_attribution,
+    run_value_surface_policy_kill_diagnostic_downgrade,
     run_value_surface_utility_pareto_ranking_review,
     run_value_surface_v2_controlled_review,
     run_value_surface_warning_triage_review,
@@ -874,6 +880,128 @@ def test_horizon_selector_holdout_review_decision_enum(tmp_path: Path) -> None:
         "PIVOT_TO_TAIL_RISK_POLICY",
         "PIVOT_TO_BENCHMARK_SELECTOR",
         "KILL_VALUE_SURFACE_AS_ACTION_POLICY",
+        "DATA_REQUIRED",
+    }
+    assert payload["review_decision"]["promotion_gate_allowed"] is False
+
+
+def test_value_surface_policy_kill_diagnostic_downgrade(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_inputs(tmp_path)
+    payload = run_value_surface_policy_kill_diagnostic_downgrade(
+        horizon_selector_holdout_path=paths["horizon_holdout"],
+        v2_review_path=paths["v2_review"],
+        output_root=tmp_path / "tail_policy_kill_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_policy_kill_diagnostic_downgrade"
+    assert payload["summary"]["action_policy_allowed"] is False
+    assert payload["summary"]["promotion_gate_allowed"] is False
+    assert payload["policy_downgrade"]["allowed_uses"] == [
+        "diagnostic",
+        "residual_analysis",
+        "tail_loss_attribution",
+        "horizon_risk_signal",
+        "benchmark_fallback_trigger",
+    ]
+    assert "direct_action_policy" in payload["policy_downgrade"]["disallowed_uses"]
+
+
+def test_benchmark_first_tail_risk_policy_contract(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_inputs(tmp_path)
+    payload = run_benchmark_first_tail_risk_policy_contract(
+        policy_kill_path=paths["policy_kill"],
+        output_root=tmp_path / "tail_contract_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "benchmark_first_tail_risk_policy_contract"
+    contract = payload["policy_contract"]
+    assert contract["base_policy"] == "benchmark_or_simple_trend_static_allocation"
+    assert "risk_downshift" in contract["allowed_deviation"]
+    assert contract["fallback_policy"] == "benchmark_first"
+    assert contract["review_interval"] == "daily"
+    assert contract["direct_position_policy"] is False
+
+
+def test_tail_loss_avoidance_classifier_prototype_is_gate_only(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_inputs(tmp_path)
+    payload = run_tail_loss_avoidance_classifier_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        policy_kill_path=paths["policy_kill"],
+        output_root=tmp_path / "tail_classifier_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_loss_avoidance_classifier_prototype"
+    assert payload["summary"]["strategy_signal_generated"] is False
+    assert payload["gate_semantics"]["direct_position_policy"] is False
+    assert payload["summary"]["large_loss_case_count"] >= 0
+    assert payload["summary"]["tail_loss_case_count"] >= 0
+    assert payload["summary"]["benchmark_underperformance_case_count"] >= 0
+    assert payload["summary"]["long_horizon_failure_case_count"] >= 0
+
+
+def test_conservative_horizon_risk_filter_status(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_inputs(tmp_path)
+    payload = run_conservative_horizon_risk_filter(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        contract_path=paths["contract"],
+        output_root=tmp_path / "horizon_filter_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "conservative_horizon_risk_filter"
+    status = {row["horizon"]: row["status"] for row in payload["horizon_status"]}
+    assert status["1d"] == "ALLOWED"
+    assert status["5d"] == "ALLOWED"
+    assert status["10d"] == "ALLOWED"
+    assert status["20d"] == "QUARANTINED"
+    assert status["60d"] == "FALLBACK_ONLY"
+    assert payload["selector_mode"] == "risk_filter_not_optimal_horizon_selector"
+
+
+def test_benchmark_fallback_drawdown_guard_controlled_prototype(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+    payload = run_benchmark_fallback_drawdown_guard_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        horizon_filter_path=paths["horizon_filter"],
+        contract_path=paths["contract"],
+        output_root=tmp_path / "fallback_guard_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "benchmark_fallback_drawdown_guard_controlled_prototype"
+    variant_ids = {row["variant_id"] for row in payload["variant_metrics"]}
+    assert "benchmark_first_baseline" in variant_ids
+    assert "tail_risk_benchmark_fallback" in variant_ids
+    assert "drawdown_guard_cash_fallback" in variant_ids
+    assert "mean_delta_vs_benchmark" in payload["variant_metrics"][0]
+    assert "tail_loss_contribution" in payload["variant_metrics"][0]
+    assert "max_drawdown" in payload["variant_metrics"][0]
+    assert "beat_rate_retention" in payload["variant_metrics"][0]
+
+
+def test_tail_risk_policy_family_controlled_review_decision_enum(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+    payload = run_tail_risk_policy_family_controlled_review(
+        policy_kill_path=paths["policy_kill"],
+        contract_path=paths["contract"],
+        classifier_path=paths["classifier"],
+        horizon_filter_path=paths["horizon_filter"],
+        fallback_path=paths["fallback"],
+        output_root=tmp_path / "tail_family_review_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_policy_family_controlled_review"
+    assert payload["summary"]["tail_risk_policy_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "KILL",
+        "PIVOT",
         "DATA_REQUIRED",
     }
     assert payload["review_decision"]["promotion_gate_allowed"] is False
@@ -1871,6 +1999,82 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "value-surface-policy-kill-diagnostic-downgrade",
+            "--horizon-selector-holdout",
+            str(tmp_path / "cli_warning" / "horizon_selector_holdout_review.json"),
+            "--v2-review",
+            str(tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "benchmark-first-tail-risk-policy-contract",
+            "--policy-kill",
+            str(tmp_path / "cli_warning" / "value_surface_policy_kill_diagnostic_downgrade.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-loss-avoidance-classifier-prototype",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--policy-kill",
+            str(tmp_path / "cli_warning" / "value_surface_policy_kill_diagnostic_downgrade.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "conservative-horizon-risk-filter",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "benchmark_first_tail_risk_policy_contract.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "benchmark-fallback-drawdown-guard-prototype",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--horizon-filter",
+            str(tmp_path / "cli_warning" / "conservative_horizon_risk_filter.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "benchmark_first_tail_risk_policy_contract.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-policy-family-controlled-review",
+            "--policy-kill",
+            str(tmp_path / "cli_warning" / "value_surface_policy_kill_diagnostic_downgrade.json"),
+            "--contract",
+            str(tmp_path / "cli_warning" / "benchmark_first_tail_risk_policy_contract.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--horizon-filter",
+            str(tmp_path / "cli_warning" / "conservative_horizon_risk_filter.json"),
+            "--fallback",
+            str(tmp_path / "cli_warning" / "benchmark_fallback_drawdown_guard_prototype.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -1919,6 +2123,14 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (tmp_path / "cli_warning" / "horizon_selector_controlled_prototype.json").exists()
     assert (tmp_path / "cli_warning" / "cost_aware_horizon_hysteresis.json").exists()
     assert (tmp_path / "cli_warning" / "horizon_selector_holdout_review.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "value_surface_policy_kill_diagnostic_downgrade.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "benchmark_first_tail_risk_policy_contract.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json").exists()
+    assert (tmp_path / "cli_warning" / "conservative_horizon_risk_filter.json").exists()
+    assert (tmp_path / "cli_warning" / "benchmark_fallback_drawdown_guard_prototype.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_policy_family_controlled_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1992,6 +2204,12 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "horizon_selector_controlled_prototype",
         "cost_aware_horizon_hysteresis",
         "horizon_selector_holdout_review",
+        "value_surface_policy_kill_diagnostic_downgrade",
+        "benchmark_first_tail_risk_policy_contract",
+        "tail_loss_avoidance_classifier_prototype",
+        "conservative_horizon_risk_filter",
+        "benchmark_fallback_drawdown_guard_prototype",
+        "tail_risk_policy_family_controlled_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -2020,6 +2238,12 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "horizon_selector_controlled_prototype.json/md" in catalog
     assert "cost_aware_horizon_hysteresis.json/md" in catalog
     assert "horizon_selector_holdout_review.json/md" in catalog
+    assert "value_surface_policy_kill_diagnostic_downgrade.json/md" in catalog
+    assert "benchmark_first_tail_risk_policy_contract.json/md" in catalog
+    assert "tail_loss_avoidance_classifier_prototype.json/md" in catalog
+    assert "conservative_horizon_risk_filter.json/md" in catalog
+    assert "benchmark_fallback_drawdown_guard_prototype.json/md" in catalog
+    assert "tail_risk_policy_family_controlled_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -2041,6 +2265,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-795～799" in system_flow
     assert "TRADING-800～804" in system_flow
     assert "TRADING-805～809" in system_flow
+    assert "TRADING-810～815" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -2067,6 +2292,12 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies horizon-selector-controlled-prototype" in system_flow
     assert "aits research strategies cost-aware-horizon-hysteresis" in system_flow
     assert "aits research strategies horizon-selector-holdout-review" in system_flow
+    assert "aits research strategies value-surface-policy-kill-diagnostic-downgrade" in system_flow
+    assert "aits research strategies benchmark-first-tail-risk-policy-contract" in system_flow
+    assert "aits research strategies tail-loss-avoidance-classifier-prototype" in system_flow
+    assert "aits research strategies conservative-horizon-risk-filter" in system_flow
+    assert "aits research strategies benchmark-fallback-drawdown-guard-prototype" in system_flow
+    assert "aits research strategies tail-risk-policy-family-controlled-review" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
@@ -2320,6 +2551,63 @@ def _run_horizon_selector_full_inputs(tmp_path: Path) -> dict[str, Path]:
         **paths,
         "prototype": Path(prototype["artifact_paths"]["json_path"]),
         "hysteresis": Path(hysteresis["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_tail_risk_policy_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_horizon_selector_full_inputs(tmp_path)
+    horizon_holdout = run_horizon_selector_holdout_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        prototype_path=paths["prototype"],
+        hysteresis_path=paths["hysteresis"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "tail_horizon_holdout",
+    )
+    policy_kill = run_value_surface_policy_kill_diagnostic_downgrade(
+        horizon_selector_holdout_path=Path(horizon_holdout["artifact_paths"]["json_path"]),
+        v2_review_path=paths["v2_review"],
+        output_root=tmp_path / "tail_policy_kill",
+    )
+    contract = run_benchmark_first_tail_risk_policy_contract(
+        policy_kill_path=Path(policy_kill["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "tail_contract",
+    )
+    classifier = run_tail_loss_avoidance_classifier_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        policy_kill_path=Path(policy_kill["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "tail_classifier",
+    )
+    return {
+        **paths,
+        "horizon_contract": paths["contract"],
+        "horizon_holdout": Path(horizon_holdout["artifact_paths"]["json_path"]),
+        "policy_kill": Path(policy_kill["artifact_paths"]["json_path"]),
+        "contract": Path(contract["artifact_paths"]["json_path"]),
+        "classifier": Path(classifier["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_tail_risk_policy_full_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_tail_risk_policy_inputs(tmp_path)
+    horizon_filter = run_conservative_horizon_risk_filter(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        contract_path=paths["contract"],
+        output_root=tmp_path / "tail_horizon_filter",
+    )
+    fallback = run_benchmark_fallback_drawdown_guard_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        horizon_filter_path=Path(horizon_filter["artifact_paths"]["json_path"]),
+        contract_path=paths["contract"],
+        output_root=tmp_path / "tail_fallback",
+    )
+    return {
+        **paths,
+        "horizon_filter": Path(horizon_filter["artifact_paths"]["json_path"]),
+        "fallback": Path(fallback["artifact_paths"]["json_path"]),
     }
 
 
