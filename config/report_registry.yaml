@@ -11538,3 +11538,92 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_controlled_prototype
+    title: Value Surface Controlled Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-controlled-prototype
+    artifact_globs:
+      - outputs/research_strategies/value_surface/value_surface_controlled_prototype.json
+      - outputs/research_strategies/value_surface/value_surface_controlled_prototype.md
+      - outputs/research_strategies/value_surface/value_surface_horizon_audit.json
+      - outputs/research_strategies/value_surface/value_surface_benchmark_comparison.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-770 should be regenerated when cached research data, action/horizon policy, benchmark expansion, controls, or data quality gates change.
+    owner_action: review_value_surface_horizon_audit_controls_and_sample_quality_before_any_larger_controlled_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regret_state_machine_controlled_prototype
+    title: Regret State Machine Controlled Prototype
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regret-state-machine-controlled-prototype
+    artifact_globs:
+      - outputs/research_strategies/regret_state_machine/regret_state_machine_controlled_prototype.json
+      - outputs/research_strategies/regret_state_machine/regret_state_machine_controlled_prototype.md
+      - outputs/research_strategies/regret_state_machine/state_transition_casebook.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-771 should be regenerated when regret taxonomy, state policy, benchmark expansion, controls, or cached research data changes.
+    owner_action: review_state_transition_explanations_regret_mapping_turnover_and_whipsaw_guardrails
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_strategy_selector_pilot
+    title: Simple Strategy Selector Pilot
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-strategy-selector-pilot
+    artifact_globs:
+      - outputs/research_strategies/simple_ensemble/simple_strategy_selector_pilot.json
+      - outputs/research_strategies/simple_ensemble/simple_strategy_selector_pilot.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-772 should be regenerated when simple strategy zoo, selector rules, benchmark expansion, controls, or cached research data changes.
+    owner_action: keep_simple_benchmark_when_selector_does_not_beat_best_simple_strategy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_action_utility_controlled_baseline
+    title: GBDT Action Utility Controlled Baseline
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-action-utility-baseline
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_action_utility_baseline.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_action_utility_baseline.md
+      - outputs/research_strategies/gbdt_action_utility/gbdt_feature_importance.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-773 should be regenerated when PIT feature policy, action/horizon policy, benchmark expansion, controls, or cached research data changes.
+    owner_action: treat_model_output_as_diagnostic_feature_utility_not_strategy_or_weight_output
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: controlled_strategy_batch_review
+    title: Controlled Strategy Batch Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research ops controlled-strategy-batch-review
+    artifact_globs:
+      - outputs/research_ops/review_board/controlled_strategy_batch_review.json
+      - outputs/research_ops/review_board/controlled_strategy_batch_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-774 should be regenerated after any TRADING-770 to TRADING-773 candidate artifact, benchmark/control report, forward archive, or source closure changes.
+    owner_action: use_continue_watchlist_kill_pivot_data_required_decisions_only_for_next_controlled_research_scope
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

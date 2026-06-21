@@ -11,6 +11,27 @@ from rich.console import Console
 from ai_trading_system.cli_commands.research_foundation import (
     register_research_foundation_commands,
 )
+from ai_trading_system.controlled_strategy_batch import (
+    DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
+    DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
+    DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+    DEFAULT_GBDT_ACTION_UTILITY_PATH,
+    DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
+    DEFAULT_REGRET_STATE_MACHINE_PATH,
+    DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT,
+    DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
+    DEFAULT_VALUE_SURFACE_OUTPUT_ROOT,
+    DEFAULT_VALUE_SURFACE_PATH,
+    run_regret_state_machine_controlled_prototype,
+    run_simple_strategy_selector_pilot,
+    run_value_surface_controlled_prototype,
+)
+from ai_trading_system.controlled_strategy_batch import (
+    run_controlled_strategy_batch_review as run_controlled_strategy_candidate_batch_review,
+)
+from ai_trading_system.controlled_strategy_batch import (
+    run_gbdt_action_utility_baseline as run_controlled_gbdt_action_utility_baseline,
+)
 from ai_trading_system.current_subscription_qualification import (
     DEFAULT_CONTROL_AUDIT_REPORT_PATH,
     DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT,
@@ -195,6 +216,9 @@ portfolio_decision_app = typer.Typer(
     help="Portfolio decision problem contract and datasets。", no_args_is_help=True
 )
 strategy_app = typer.Typer(help="统一 strategy adapter evaluation harness。", no_args_is_help=True)
+strategies_app = typer.Typer(
+    help="TRADING-770 controlled strategy candidate prototypes。", no_args_is_help=True
+)
 advanced_policy_app = typer.Typer(help="Advanced policy sandbox。", no_args_is_help=True)
 strategy_pilot_app = typer.Typer(
     help="Controlled strategy research pilot board and diagnostics。", no_args_is_help=True
@@ -212,6 +236,7 @@ research_app.add_typer(governance_app, name="governance")
 research_app.add_typer(acceleration_app, name="acceleration")
 research_app.add_typer(portfolio_decision_app, name="portfolio-decision")
 research_app.add_typer(strategy_app, name="strategy")
+research_app.add_typer(strategies_app, name="strategies")
 research_app.add_typer(advanced_policy_app, name="advanced-policy")
 research_app.add_typer(strategy_pilot_app, name="strategy-pilot")
 research_app.add_typer(controlled_pilot_app, name="controlled-pilot")
@@ -288,6 +313,206 @@ def controlled_pilot_benchmark_expansion_command(
         )
     )
     _print_strategy_pilot_payload("Controlled benchmark execution expansion", payload)
+
+
+@strategies_app.command("value-surface-controlled-prototype")
+def strategies_value_surface_controlled_prototype_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-770 controlled strategy candidate config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-765 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-770 value surface 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_value_surface_controlled_prototype(
+            config_path=config_path,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            benchmark_expansion_path=benchmark_expansion,
+            control_audit_path=control_audit,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_strategy_pilot_payload("Value surface controlled prototype", payload)
+
+
+@strategies_app.command("regret-state-machine-controlled-prototype")
+def strategies_regret_state_machine_controlled_prototype_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-771 controlled strategy candidate config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-765 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-771 state machine 输出目录。"),
+    ] = DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regret_state_machine_controlled_prototype(
+            config_path=config_path,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            benchmark_expansion_path=benchmark_expansion,
+            control_audit_path=control_audit,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_strategy_pilot_payload("Regret state machine controlled prototype", payload)
+
+
+@strategies_app.command("simple-strategy-selector-pilot")
+def strategies_simple_strategy_selector_pilot_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-772 controlled strategy candidate config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-765 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-772 simple ensemble 输出目录。"),
+    ] = DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_simple_strategy_selector_pilot(
+            config_path=config_path,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            benchmark_expansion_path=benchmark_expansion,
+            control_audit_path=control_audit,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_strategy_pilot_payload("Simple strategy selector pilot", payload)
+
+
+@strategies_app.command("gbdt-action-utility-baseline")
+def strategies_gbdt_action_utility_baseline_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-773 controlled strategy candidate config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_BATCH_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-765 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-773 GBDT action utility 输出目录。"),
+    ] = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_gbdt_action_utility_baseline(
+            config_path=config_path,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            benchmark_expansion_path=benchmark_expansion,
+            control_audit_path=control_audit,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_strategy_pilot_payload("GBDT action utility baseline", payload)
 
 
 @strategy_pilot_app.command("readiness-board")
@@ -1218,6 +1443,56 @@ def research_ops_controlled_batch_review_command(
         )
     )
     _print_strategy_pilot_payload("Controlled research batch review", payload)
+
+
+@research_ops_app.command("controlled-strategy-batch-review")
+def research_ops_controlled_strategy_batch_review_command(
+    value_surface: Annotated[
+        Path,
+        typer.Option("--value-surface", help="TRADING-770 value surface JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_PATH,
+    regret_state_machine: Annotated[
+        Path,
+        typer.Option("--regret-state-machine", help="TRADING-771 state machine JSON。"),
+    ] = DEFAULT_REGRET_STATE_MACHINE_PATH,
+    simple_selector: Annotated[
+        Path,
+        typer.Option("--simple-selector", help="TRADING-772 simple selector JSON。"),
+    ] = DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
+    gbdt_action_utility: Annotated[
+        Path,
+        typer.Option("--gbdt-action-utility", help="TRADING-773 GBDT utility JSON。"),
+    ] = DEFAULT_GBDT_ACTION_UTILITY_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    forward_archive: Annotated[
+        Path,
+        typer.Option("--forward-archive", help="Forward evidence dry-run archive JSON。"),
+    ] = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH,
+    fmp_closure: Annotated[
+        Path,
+        typer.Option("--fmp-closure", help="TRADING-767 FMP closure JSON。"),
+    ] = DEFAULT_FMP_WATCHLIST_CLOSURE_REPORT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-774 review board 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_BATCH_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_strategy_candidate_batch_review(
+            value_surface_path=value_surface,
+            regret_state_machine_path=regret_state_machine,
+            simple_selector_path=simple_selector,
+            gbdt_action_utility_path=gbdt_action_utility,
+            benchmark_expansion_path=benchmark_expansion,
+            forward_archive_path=forward_archive,
+            fmp_closure_path=fmp_closure,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Controlled strategy batch review", payload)
 
 
 @research_ops_app.command("dashboard")

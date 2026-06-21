@@ -1,0 +1,620 @@
+from __future__ import annotations
+
+import json
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any
+
+from typer.testing import CliRunner
+
+from ai_trading_system.cli import app
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.controlled_strategy_batch import (
+    run_controlled_strategy_batch_review,
+    run_gbdt_action_utility_baseline,
+    run_regret_state_machine_controlled_prototype,
+    run_simple_strategy_selector_pilot,
+    run_value_surface_controlled_prototype,
+)
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+from scripts.run_validation_tier import TIER_SPECS
+
+TEST_AS_OF = date(2023, 5, 17)
+
+
+def test_value_surface_schema(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_surface",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "value_surface_controlled_prototype"
+    assert payload["summary"]["value_surface_generated"] is True
+    assert payload["summary"]["candidate_action_count"] >= payload["summary"]["configured_minimum"]
+    assert payload["summary"]["horizon_count"] >= payload["summary"]["horizon_configured_minimum"]
+    assert payload["summary"]["sample_quality_report_present"] is True
+    assert (tmp_path / "value_surface" / "value_surface_controlled_prototype.json").exists()
+    assert (tmp_path / "value_surface" / "value_surface_horizon_audit.json").exists()
+    assert (tmp_path / "value_surface" / "value_surface_benchmark_comparison.json").exists()
+
+
+def test_value_surface_no_future_horizon_selection(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_surface",
+        as_of_date=TEST_AS_OF,
+    )
+    audit = _read_json(tmp_path / "value_surface" / "value_surface_horizon_audit.json")
+
+    assert audit["summary"]["horizon_leakage_check_pass"] is True
+    assert audit["summary"]["future_outcome_used_for_horizon_selection"] is False
+    assert audit["future_outcome_policy"]["strategy_input_allowed"] is False
+
+
+def test_value_surface_control_failure_blocks_recommendation(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    control_audit = _write_json(
+        tmp_path / "control_audit_failed.json",
+        {
+            "summary": {
+                "negative_control_promotion_count": 1,
+                "future_leakage_trap_blocked": False,
+            }
+        },
+    )
+    payload = run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        control_audit_path=control_audit,
+        output_root=tmp_path / "value_surface",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["status"] == "CONTROL_FAILED"
+    assert payload["summary"]["value_surface_status"] == "CONTROL_FAILED"
+    assert payload["summary"]["promotion_gate_allowed"] is False
+
+
+def test_value_surface_benchmark_comparison_required(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_surface",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["benchmark_comparison_present"] is True
+    assert payload["benchmark_comparison"]
+    assert payload["summary"]["future_leakage_trap_blocked"] is True
+
+
+def test_value_surface_promotion_false(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value_surface",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["summary"]["promotion_gate_allowed"] is False
+
+
+def test_regret_state_machine_schema(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state_machine",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regret_state_machine_controlled_prototype"
+    assert payload["summary"]["state_transition_explainable"] is True
+    assert payload["state_transition_table"]
+    assert (tmp_path / "state_machine" / "state_transition_casebook.json").exists()
+
+
+def test_state_transition_has_explanation(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state_machine",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert all(row["explanation"] for row in payload["state_transition_table"])
+
+
+def test_regret_type_mapping_required(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state_machine",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["regret_type_mapping_present"] is True
+    assert payload["regret_type_coverage"]
+
+
+def test_state_machine_turnover_guardrail_reported(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state_machine",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["turnover_guardrail_reported"] is True
+    assert "turnover_not_worse_than_baseline_guardrail" in payload
+    assert payload["summary"]["whipsaw_report_present"] is True
+
+
+def test_state_machine_promotion_false(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state_machine",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+
+
+def test_simple_strategy_selector_schema(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_simple_strategy_selector_pilot(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "simple",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "simple_strategy_selector_pilot"
+    assert payload["summary"]["simple_strategy_count"] >= payload["summary"]["configured_minimum"]
+    assert payload["summary"]["selector_rules_present"] is True
+
+
+def test_selector_compares_to_best_simple_strategy(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_simple_strategy_selector_pilot(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "simple",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["best_simple_benchmark_comparison_present"] is True
+    assert payload["best_single_strategy_comparison"]["best_single_strategy"]
+
+
+def test_selector_overfit_warning_present(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_simple_strategy_selector_pilot(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "simple",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["selector_overfit_warning_present"] is True
+    assert payload["overfit_warning"]["not_validated_utility_boundary"] is True
+
+
+def test_selector_promotion_false(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_simple_strategy_selector_pilot(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "simple",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+
+
+def test_gbdt_action_utility_schema(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "gbdt_action_utility_baseline"
+    assert payload["summary"]["model_run_complete"] is True
+    assert payload["action_utility_prediction"]
+
+
+def test_gbdt_no_future_features(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["future_feature_violation_count"] == 0
+    assert payload["future_feature_audit"]["future_outcome_role"] == "evaluation_label_only"
+    assert payload["future_feature_audit"]["input_feature_policy"] == (
+        "PIT_state_action_horizon_cost_only"
+    )
+
+
+def test_gbdt_negative_control_required(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["negative_control_pass"] is True
+    assert (
+        payload["negative_control_result"]["random_label_check"]["random_label_promoted"] is False
+    )
+
+
+def test_gbdt_feature_importance_present(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert payload["summary"]["feature_importance_report_present"] is True
+    assert payload["feature_importance"]
+    assert (tmp_path / "gbdt" / "gbdt_feature_importance.json").exists()
+
+
+def test_gbdt_promotion_false(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    payload = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+
+
+def test_controlled_strategy_batch_review_schema(tmp_path: Path) -> None:
+    paths = _run_candidate_batch(tmp_path)
+    review = run_controlled_strategy_batch_review(
+        value_surface_path=paths["value_surface"],
+        regret_state_machine_path=paths["state_machine"],
+        simple_selector_path=paths["simple"],
+        gbdt_action_utility_path=paths["gbdt"],
+        output_root=tmp_path / "review",
+    )
+
+    _assert_safety(review)
+    assert review["report_type"] == "controlled_strategy_batch_review"
+    assert review["summary"]["all_candidates_have_decision"] is True
+    assert review["status"] == "CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE"
+
+
+def test_all_candidates_have_decision(tmp_path: Path) -> None:
+    paths = _run_candidate_batch(tmp_path)
+    review = run_controlled_strategy_batch_review(
+        value_surface_path=paths["value_surface"],
+        regret_state_machine_path=paths["state_machine"],
+        simple_selector_path=paths["simple"],
+        gbdt_action_utility_path=paths["gbdt"],
+        output_root=tmp_path / "review",
+    )
+
+    decisions = {row["candidate_id"]: row["decision"] for row in review["candidate_decisions"]}
+    assert decisions.keys() == {
+        "value_surface",
+        "regret_state_machine",
+        "simple_strategy_selector",
+        "gbdt_action_utility",
+    }
+
+
+def test_no_promotion_from_controlled_review(tmp_path: Path) -> None:
+    paths = _run_candidate_batch(tmp_path)
+    review = run_controlled_strategy_batch_review(
+        value_surface_path=paths["value_surface"],
+        regret_state_machine_path=paths["state_machine"],
+        simple_selector_path=paths["simple"],
+        gbdt_action_utility_path=paths["gbdt"],
+        output_root=tmp_path / "review",
+    )
+
+    assert review["summary"]["no_candidate_promoted_without_policy"] is True
+    assert all(row["promotion_gate_allowed"] is False for row in review["candidate_decisions"])
+
+
+def test_kill_pause_pivot_enum(tmp_path: Path) -> None:
+    paths = _run_candidate_batch(tmp_path)
+    review = run_controlled_strategy_batch_review(
+        value_surface_path=paths["value_surface"],
+        regret_state_machine_path=paths["state_machine"],
+        simple_selector_path=paths["simple"],
+        gbdt_action_utility_path=paths["gbdt"],
+        output_root=tmp_path / "review",
+    )
+
+    allowed = {"CONTINUE", "WATCHLIST", "DATA_REQUIRED", "PAUSE", "KILL", "PIVOT", "INFRA_REVIEW"}
+    assert {row["decision"] for row in review["candidate_decisions"]} <= allowed
+    assert review["summary"]["kill_pause_pivot_decisions_present"] is True
+
+
+def test_next_batch_recommendation_present(tmp_path: Path) -> None:
+    paths = _run_candidate_batch(tmp_path)
+    review = run_controlled_strategy_batch_review(
+        value_surface_path=paths["value_surface"],
+        regret_state_machine_path=paths["state_machine"],
+        simple_selector_path=paths["simple"],
+        gbdt_action_utility_path=paths["gbdt"],
+        output_root=tmp_path / "review",
+    )
+
+    assert review["summary"]["next_batch_recommendation_present"] is True
+    assert review["next_batch_recommendation"]["promotion_gate_allowed"] is False
+
+
+def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    runner = CliRunner()
+    commands = [
+        [
+            "research",
+            "strategies",
+            "value-surface-controlled-prototype",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_value"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regret-state-machine-controlled-prototype",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_state"),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-strategy-selector-pilot",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_simple"),
+        ],
+        [
+            "research",
+            "strategies",
+            "gbdt-action-utility-baseline",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2023-05-17",
+            "--output-root",
+            str(tmp_path / "cli_gbdt"),
+        ],
+        [
+            "research",
+            "ops",
+            "controlled-strategy-batch-review",
+            "--value-surface",
+            str(tmp_path / "cli_value" / "value_surface_controlled_prototype.json"),
+            "--regret-state-machine",
+            str(tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json"),
+            "--simple-selector",
+            str(tmp_path / "cli_simple" / "simple_strategy_selector_pilot.json"),
+            "--gbdt-action-utility",
+            str(tmp_path / "cli_gbdt" / "gbdt_action_utility_baseline.json"),
+            "--output-root",
+            str(tmp_path / "cli_review"),
+        ],
+    ]
+
+    for command in commands:
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0, result.output
+        assert "production_effect=none" in result.output
+
+    assert (tmp_path / "cli_review" / "controlled_strategy_batch_review.json").exists()
+
+
+def test_controlled_strategy_batch_validation_tiers() -> None:
+    test_path = "tests/test_controlled_strategy_batch.py"
+    assert test_path in TIER_SPECS["fast-unit"].paths
+    assert test_path in TIER_SPECS["contract-validation"].paths
+
+
+def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
+    registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
+    report_ids = {str(item.get("report_id")): item for item in registry["reports"]}
+    for report_id in {
+        "value_surface_controlled_prototype",
+        "regret_state_machine_controlled_prototype",
+        "simple_strategy_selector_pilot",
+        "gbdt_action_utility_controlled_baseline",
+        "controlled_strategy_batch_review",
+    }:
+        assert report_id in report_ids
+        assert report_ids[report_id]["artifact_selection_policy"] == "latest_available"
+        assert report_ids[report_id]["required_for_daily_reading"] is False
+
+    catalog = (PROJECT_ROOT / "docs" / "artifact_catalog.md").read_text(encoding="utf-8")
+    assert "value_surface_controlled_prototype.json/md" in catalog
+    assert "controlled_strategy_batch_review.json/md" in catalog
+    assert "validated utility boundary" in catalog
+
+    system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
+    assert "TRADING-770～774" in system_flow
+    assert "aits research strategies value-surface-controlled-prototype" in system_flow
+    assert "CONTROLLED_STRATEGY_RESEARCH_BATCH_1_COMPLETE" in system_flow
+
+
+def _run_candidate_batch(tmp_path: Path) -> dict[str, Path]:
+    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+    value = run_value_surface_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "value",
+        as_of_date=TEST_AS_OF,
+    )
+    state = run_regret_state_machine_controlled_prototype(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "state",
+        as_of_date=TEST_AS_OF,
+    )
+    simple = run_simple_strategy_selector_pilot(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "simple",
+        as_of_date=TEST_AS_OF,
+    )
+    gbdt = run_gbdt_action_utility_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=tmp_path / "gbdt",
+        as_of_date=TEST_AS_OF,
+    )
+    _assert_safety(value)
+    _assert_safety(state)
+    _assert_safety(simple)
+    _assert_safety(gbdt)
+    return {
+        "value_surface": tmp_path / "value" / "value_surface_controlled_prototype.json",
+        "state_machine": tmp_path / "state" / "regret_state_machine_controlled_prototype.json",
+        "simple": tmp_path / "simple" / "simple_strategy_selector_pilot.json",
+        "gbdt": tmp_path / "gbdt" / "gbdt_action_utility_baseline.json",
+    }
+
+
+def _write_price_caches(tmp_path: Path) -> tuple[Path, Path, Path]:
+    universe = ["SPY", "QQQ", "SMH", "MSFT", "GOOGL", "NVDA", "AMD", "TSM"]
+    dates = _business_dates(date(2022, 12, 1), 120)
+    prices_path = tmp_path / "prices_daily.csv"
+    marketstack_path = tmp_path / "prices_marketstack_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    price_rows = ["date,ticker,open,high,low,close,adj_close,volume\n"]
+    secondary_rows = ["date,ticker,open,high,low,close,adj_close,volume\n"]
+    for ticker_index, ticker in enumerate(universe):
+        base = 100.0 + ticker_index * 7.0
+        for day_index, row_date in enumerate(dates):
+            trend = 1.0 + day_index * 0.0015
+            cycle = (day_index % 9 - 4) * 0.001
+            drawdown = -0.05 if 45 <= day_index <= 55 else 0.0
+            close = base * (trend + cycle + drawdown)
+            row = (
+                f"{row_date.isoformat()},{ticker},{close - 0.5:.4f},{close + 0.5:.4f},"
+                f"{close - 1.0:.4f},{close:.4f},{close:.4f},{1000000 + ticker_index}\n"
+            )
+            price_rows.append(row)
+            secondary_rows.append(row)
+    rate_rows = ["date,series,value\n"]
+    for day_index, row_date in enumerate(dates):
+        rate_rows.append(f"{row_date.isoformat()},DGS10,{3.5 + day_index * 0.001:.4f}\n")
+        rate_rows.append(f"{row_date.isoformat()},DGS2,{3.0 + day_index * 0.001:.4f}\n")
+        rate_rows.append(f"{row_date.isoformat()},DTWEXBGS,{120.0 + day_index * 0.01:.4f}\n")
+    prices_path.write_text("".join(price_rows), encoding="utf-8")
+    marketstack_path.write_text("".join(secondary_rows), encoding="utf-8")
+    rates_path.write_text("".join(rate_rows), encoding="utf-8")
+    return prices_path, marketstack_path, rates_path
+
+
+def _business_dates(start: date, count: int) -> list[date]:
+    values: list[date] = []
+    current = start
+    while len(values) < count:
+        if current.weekday() < 5:
+            values.append(current)
+        current += timedelta(days=1)
+    return values
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def _assert_safety(payload: dict[str, Any]) -> None:
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["lookahead_violation_count"] == 0

@@ -1,0 +1,197 @@
+schema_version: "1.0"
+policy_id: controlled_strategy_candidate_research_batch_1
+status: first_batch_heuristic_baseline
+owner: research_governance
+heuristic_policy_version: controlled_strategy_batch_1_heuristic_v1
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch on 2022-11-30
+  default_start: "2022-12-01"
+production_effect: none
+rationale: >
+  Run the first controlled strategy candidate research batch after TRADING-765
+  to TRADING-769. All ranking, selector, state-machine, and diagnostic utility
+  outputs are heuristic controlled baselines, not validated utility boundaries.
+controlled_scope:
+  validation_only: true
+  observe_only: true
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  broker_action: none
+research_universe:
+  - SPY
+  - QQQ
+  - SMH
+  - MSFT
+  - GOOGL
+  - NVDA
+  - AMD
+  - TSM
+cash_asset: cash
+horizons:
+  - horizon_id: 1d
+    days: 1
+    maturity_required_for_primary_evaluation: true
+  - horizon_id: 5d
+    days: 5
+    maturity_required_for_primary_evaluation: true
+  - horizon_id: 10d
+    days: 10
+    maturity_required_for_primary_evaluation: true
+  - horizon_id: 20d
+    days: 20
+    maturity_required_for_primary_evaluation: true
+  - horizon_id: 60d
+    days: 60
+    maturity_required_for_primary_evaluation: false
+candidate_actions:
+  - action_id: hold_cash
+    exposure_multiplier: 0.0
+    cost_turnover_assumption: 1.0
+    rationale: Remain in cash for controlled comparison.
+  - action_id: buy_and_hold
+    exposure_multiplier: 1.0
+    cost_turnover_assumption: 1.0
+    rationale: Full equal-weight benchmark exposure.
+  - action_id: increase_exposure
+    exposure_multiplier: 1.0
+    cost_turnover_assumption: 0.5
+    rationale: First batch does not introduce leverage; increase means move toward full exposure.
+  - action_id: hold_exposure
+    exposure_multiplier: 1.0
+    cost_turnover_assumption: 0.0
+    rationale: Preserve existing full exposure in the diagnostic surface.
+  - action_id: decrease_exposure
+    exposure_multiplier: 0.5
+    cost_turnover_assumption: 0.5
+    rationale: Reduce exposure without going fully risk-off.
+  - action_id: risk_off
+    exposure_multiplier: 0.0
+    cost_turnover_assumption: 1.0
+    rationale: Controlled risk-off diagnostic action.
+  - action_id: risk_on
+    exposure_multiplier: 1.0
+    cost_turnover_assumption: 1.0
+    rationale: Controlled risk-on diagnostic action.
+  - action_id: vol_target
+    exposure_multiplier: 0.75
+    cost_turnover_assumption: 0.25
+    rationale: Heuristic lower exposure proxy for volatility targeting.
+  - action_id: drawdown_guard
+    exposure_multiplier: 0.25
+    cost_turnover_assumption: 0.75
+    rationale: Heuristic defensive exposure after drawdown pressure.
+  - action_id: capped_masking
+    exposure_multiplier: 0.5
+    cost_turnover_assumption: 0.5
+    rationale: Controlled masking cap proxy.
+  - action_id: no_masking
+    exposure_multiplier: 1.0
+    cost_turnover_assumption: 0.0
+    rationale: Full exposure no-mask comparison.
+minimums:
+  candidate_action_count: 10
+  horizon_count: 4
+  simple_strategy_count: 8
+  max_decision_dates: 24
+heuristic_state_policy:
+  trend_positive_return_floor: 0.0
+  volatility_high_daily_floor: 0.025
+  drawdown_watch_floor: -0.05
+  drawdown_risk_off_floor: -0.10
+  whipsaw_high_flip_count: 3
+  minimum_hold_days: 5
+state_machine:
+  states:
+    - RISK_ON
+    - RISK_ON_OVERHEATED
+    - NEUTRAL
+    - RISK_OFF_WATCH
+    - RISK_OFF
+    - RECOVERY_CONFIRMING
+  transitions:
+    - from_state: NEUTRAL
+      to_state: RISK_ON
+      condition: strong_trend_and_low_volatility
+      regret_types:
+        - late_risk_on
+      explanation: Positive PIT trend with controlled volatility supports risk-on watch.
+    - from_state: RISK_ON
+      to_state: RISK_ON_OVERHEATED
+      condition: strong_trend_and_high_volatility
+      regret_types:
+        - false_risk_on
+        - threshold_cliff
+      explanation: Trend remains positive, but volatility pressure raises overheating risk.
+    - from_state: RISK_ON_OVERHEATED
+      to_state: RISK_OFF_WATCH
+      condition: drawdown_worsening
+      regret_types:
+        - late_risk_off
+        - under_masking
+      explanation: Drawdown pressure moves the state into watch mode before full risk-off.
+    - from_state: RISK_OFF_WATCH
+      to_state: RISK_OFF
+      condition: drawdown_breaches_risk_off_floor
+      regret_types:
+        - late_risk_off
+        - constraint_overbind
+      explanation: Drawdown breach activates the defensive state.
+    - from_state: RISK_OFF
+      to_state: RECOVERY_CONFIRMING
+      condition: trend_recovers_without_high_volatility
+      regret_types:
+        - late_risk_on
+        - over_masking
+      explanation: Recovery confirmation prevents immediate whipsaw back to full risk-on.
+    - from_state: RECOVERY_CONFIRMING
+      to_state: NEUTRAL
+      condition: recovery_not_yet_confirmed
+      regret_types:
+        - whipsaw
+        - early_risk_off
+      explanation: Incomplete recovery moves back to neutral, not full risk-on.
+regret_types:
+  - late_risk_off
+  - early_risk_off
+  - late_risk_on
+  - false_risk_on
+  - over_masking
+  - under_masking
+  - whipsaw
+  - threshold_cliff
+  - constraint_overbind
+simple_strategy_zoo:
+  - cash
+  - buy_and_hold
+  - static_allocation
+  - simple_trend
+  - moving_average_risk_off
+  - volatility_targeting
+  - drawdown_guard
+  - capped_masking
+  - risk_off_fast
+  - risk_on_slow
+selector_rules:
+  - rule_id: high_vol_drawdown_guard
+    condition: high_volatility_and_drawdown_worsening
+    selected_strategy: drawdown_guard
+    heuristic: true
+  - rule_id: strong_trend_simple_trend
+    condition: strong_trend_and_low_volatility
+    selected_strategy: simple_trend
+    heuristic: true
+  - rule_id: whipsaw_static_allocation
+    condition: whipsaw_high
+    selected_strategy: static_allocation
+    heuristic: true
+  - rule_id: uncertainty_cash
+    condition: uncertainty_high
+    selected_strategy: cash
+    heuristic: true
+gbdt_diagnostic:
+  train_fraction: 0.7
+  preferred_model_family: GradientBoostingRegressor
+  no_new_dependency_allowed: true
+  built_in_adapter_when_sklearn_unavailable: deterministic_tree_diagnostic_adapter
