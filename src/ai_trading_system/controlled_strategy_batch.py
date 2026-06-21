@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import statistics
 from collections.abc import Mapping
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -191,6 +192,22 @@ DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH = (
 )
 DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_policy_controlled_review_board.json"
+)
+DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_fallback_audit_universe_reconciliation.json"
+)
+DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_anti_leakage_audit.json"
+)
+DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_threshold_sensitivity.json"
+)
+DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_regime_segmented_robustness.json"
+)
+DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_forward_maturity_scoreboard.json"
 )
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
@@ -3824,7 +3841,7 @@ def run_tail_risk_forward_evidence_integration(
     return payload
 
 
-def run_tail_risk_policy_controlled_review_board(
+def run_tail_risk_fallback_audit_universe_reconciliation(
     *,
     config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
     robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
@@ -3838,12 +3855,381 @@ def run_tail_risk_policy_controlled_review_board(
     precision = _read_json_or_empty(precision_recall_path)
     opportunity = _read_json_or_empty(opportunity_cost_path)
     forward = _read_json_or_empty(forward_integration_path)
+    reconciliation = _tail_risk_fallback_audit_universe_reconciliation(
+        config=config,
+        robustness=robustness,
+        precision=precision,
+        opportunity=opportunity,
+        forward=forward,
+        paths={
+            "TRADING-816": robustness_path,
+            "TRADING-817": precision_recall_path,
+            "TRADING-818": opportunity_cost_path,
+            "TRADING-819": forward_integration_path,
+        },
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_audit_universe_reconciliation",
+        title="Tail-risk fallback audit universe and count reconciliation",
+        status=reconciliation["status"],
+        summary={
+            "task_id": "TRADING-821",
+            "reconciliation_status": reconciliation["status"],
+            "count_summary_count": len(reconciliation["count_reconciliation_summary"]),
+            "missing_field_count": len(reconciliation["missing_field_records"]),
+            "controlled_review_status": reconciliation["controlled_review_status"],
+            "next_recommended_action": reconciliation["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-821",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        reconciliation_policy=_next_stage_section(
+            config, "tail_risk_fallback_audit_universe_reconciliation"
+        ),
+        input_artifacts=reconciliation["input_artifacts"],
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_policy_controlled_review_board")
+        ),
+        data_window=reconciliation["data_window"],
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        task_reconciliation_rows=reconciliation["task_reconciliation_rows"],
+        count_reconciliation_summary=reconciliation["count_reconciliation_summary"],
+        missing_field_records=reconciliation["missing_field_records"],
+        metrics=reconciliation["metrics"],
+        warnings=reconciliation["warnings"],
+        blockers=reconciliation["blockers"],
+        next_recommended_action=reconciliation["next_recommended_action"],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_audit_universe_reconciliation",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_anti_leakage_audit(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    audit = _tail_risk_fallback_anti_leakage_audit(
+        selected_cases=selected_cases,
+        config=config,
+        value_surface=value_surface,
+        classifier=classifier,
+        robustness=robustness,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_anti_leakage_audit",
+        title="Anti-leakage audit for fallback trigger, label, and outcome",
+        status=audit["status"],
+        summary={
+            "task_id": "TRADING-822",
+            "anti_leakage_status": audit["status"],
+            "max_coupling_risk": audit["label_trigger_overlap_audit"]["coupling_risk"],
+            "critical_issue_count": audit["summary"]["critical_issue_count"],
+            "controlled_review_status": audit["controlled_review_status"],
+            "next_recommended_action": audit["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-822",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        anti_leakage_policy=_next_stage_section(config, "tail_risk_fallback_anti_leakage_audit"),
+        input_artifacts={
+            "value_surface_expansion": _artifact_status(
+                value_surface, value_surface_expansion_path
+            ),
+            "classifier": _artifact_status(classifier, classifier_path),
+            "robustness": _artifact_status(robustness, robustness_path),
+        },
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_fallback_anti_leakage_audit")
+        ),
+        data_window=_case_data_window(selected_cases),
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        timestamp_availability_audit=audit["timestamp_availability_audit"],
+        label_trigger_overlap_audit=audit["label_trigger_overlap_audit"],
+        outcome_horizon_separation_audit=audit["outcome_horizon_separation_audit"],
+        pit_revision_audit=audit["pit_revision_audit"],
+        metrics=audit["summary"],
+        warnings=audit["warnings"],
+        blockers=audit["blockers"],
+        next_recommended_action=audit["next_recommended_action"],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_anti_leakage_audit",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_threshold_sensitivity(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    sensitivity = _tail_risk_fallback_threshold_sensitivity(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_threshold_sensitivity",
+        title="Tail-risk fallback threshold sensitivity and perturbation test",
+        status=sensitivity["status"],
+        summary={
+            "task_id": "TRADING-823",
+            "sensitivity_status": sensitivity["status"],
+            "variant_count": len(sensitivity["variant_results"]),
+            "cliff_detected": sensitivity["stability_summary"]["cliff_detected"],
+            "promotion_block_reason": sensitivity["promotion_block_reason"],
+            "next_recommended_action": sensitivity["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-823",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        sensitivity_policy=_next_stage_section(config, "tail_risk_fallback_threshold_sensitivity"),
+        input_artifacts={
+            "value_surface_expansion": _artifact_status(
+                value_surface, value_surface_expansion_path
+            ),
+            "classifier": _artifact_status(classifier, classifier_path),
+            "robustness": _artifact_status(robustness, robustness_path),
+        },
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_fallback_threshold_sensitivity")
+        ),
+        data_window=_case_data_window(selected_cases),
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        variant_results=sensitivity["variant_results"],
+        perturbation_coverage=sensitivity["perturbation_coverage"],
+        stability_summary=sensitivity["stability_summary"],
+        metrics=sensitivity["stability_summary"],
+        warnings=sensitivity["warnings"],
+        blockers=sensitivity["blockers"],
+        next_recommended_action=sensitivity["next_recommended_action"],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_threshold_sensitivity",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_regime_segmented_robustness(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    segmented = _tail_risk_fallback_regime_segmented_robustness(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_regime_segmented_robustness",
+        title="Regime-segmented tail-risk fallback robustness review",
+        status=segmented["status"],
+        summary={
+            "task_id": "TRADING-824",
+            "regime_segmented_status": segmented["status"],
+            "segment_count": len(segmented["segment_results"]),
+            "concentration_risk": segmented["concentration_summary"]["concentration_risk"],
+            "controlled_review_status": segmented["controlled_review_status"],
+            "next_recommended_action": segmented["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-824",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        segmented_policy=_next_stage_section(
+            config, "tail_risk_fallback_regime_segmented_robustness"
+        ),
+        input_artifacts={
+            "value_surface_expansion": _artifact_status(
+                value_surface, value_surface_expansion_path
+            ),
+            "classifier": _artifact_status(classifier, classifier_path),
+            "robustness": _artifact_status(robustness, robustness_path),
+        },
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_fallback_regime_segmented_robustness")
+        ),
+        data_window=_case_data_window(selected_cases),
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        segment_results=segmented["segment_results"],
+        segment_unavailable=segmented["segment_unavailable"],
+        concentration_summary=segmented["concentration_summary"],
+        metrics=segmented["concentration_summary"],
+        warnings=segmented["warnings"],
+        blockers=segmented["blockers"],
+        next_recommended_action=segmented["next_recommended_action"],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_regime_segmented_robustness",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_forward_maturity_scoreboard(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    forward_integration_path: Path = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    forward = _read_json_or_empty(forward_integration_path)
+    scoreboard = _tail_risk_fallback_forward_maturity_scoreboard(
+        config=config,
+        forward=forward,
+        forward_path=forward_integration_path,
+        as_of_date=as_of_date,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_forward_maturity_scoreboard",
+        title="Tail-risk fallback forward maturity monitor and scoreboard",
+        status=scoreboard["status"],
+        summary={
+            "task_id": "TRADING-825",
+            "forward_maturity_status": scoreboard["status"],
+            "forward_record_count": scoreboard["scoreboard"]["forward_record_count"],
+            "matured_record_count": scoreboard["scoreboard"]["matured_record_count"],
+            "promotion_readiness_assessment": scoreboard["promotion_readiness_assessment"],
+            "next_recommended_action": scoreboard["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-825",
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        forward_maturity_policy=_next_stage_section(
+            config, "tail_risk_fallback_forward_maturity_scoreboard"
+        ),
+        input_artifacts={
+            "forward_integration": _artifact_status(forward, forward_integration_path),
+        },
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_fallback_forward_maturity_scoreboard")
+        ),
+        data_window=scoreboard["data_window"],
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        record_level_results=scoreboard["record_level_results"],
+        scoreboard=scoreboard["scoreboard"],
+        promotion_readiness_assessment=scoreboard["promotion_readiness_assessment"],
+        metrics=scoreboard["scoreboard"],
+        warnings=scoreboard["warnings"],
+        blockers=scoreboard["blockers"],
+        next_recommended_action=scoreboard["next_recommended_action"],
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_forward_maturity_scoreboard",
+    )
+    return payload
+
+
+def run_tail_risk_policy_controlled_review_board(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall_path: Path = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    opportunity_cost_path: Path = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    forward_integration_path: Path = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    audit_universe_reconciliation_path: Path = DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
+    anti_leakage_path: Path = DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    sensitivity_path: Path = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
+    regime_segmented_path: Path = DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
+    forward_maturity_scoreboard_path: Path = DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    robustness = _read_json_or_empty(robustness_path)
+    precision = _read_json_or_empty(precision_recall_path)
+    opportunity = _read_json_or_empty(opportunity_cost_path)
+    forward = _read_json_or_empty(forward_integration_path)
+    audit_universe = _read_json_or_empty(audit_universe_reconciliation_path)
+    anti_leakage = _read_json_or_empty(anti_leakage_path)
+    sensitivity = _read_json_or_empty(sensitivity_path)
+    regime_segmented = _read_json_or_empty(regime_segmented_path)
+    forward_scoreboard = _read_json_or_empty(forward_maturity_scoreboard_path)
     review = _tail_risk_policy_controlled_review_board(
         config=config,
         robustness=robustness,
         precision=precision,
         opportunity=opportunity,
         forward=forward,
+        audit_universe=audit_universe,
+        anti_leakage=anti_leakage,
+        sensitivity=sensitivity,
+        regime_segmented=regime_segmented,
+        forward_scoreboard=forward_scoreboard,
     )
     payload = _controlled_payload(
         report_type="tail_risk_policy_controlled_review_board",
@@ -3851,6 +4237,13 @@ def run_tail_risk_policy_controlled_review_board(
         status="TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_COMPLETE",
         summary={
             "tail_risk_controlled_decision": review["review_decision"]["decision"],
+            "audit_universe_reconciliation_status": review["review_decision"].get(
+                "audit_universe_reconciliation_status"
+            ),
+            "anti_leakage_status": review["review_decision"].get("anti_leakage_status"),
+            "sensitivity_status": review["review_decision"].get("sensitivity_status"),
+            "regime_segmented_status": review["review_decision"].get("regime_segmented_status"),
+            "forward_maturity_status": review["review_decision"].get("forward_maturity_status"),
             "robustness_condition_met": review["review_decision"]["robustness_condition_met"],
             "trigger_quality_condition_met": review["review_decision"][
                 "trigger_quality_condition_met"
@@ -3871,6 +4264,15 @@ def run_tail_risk_policy_controlled_review_board(
         precision_recall_source=_artifact_status(precision, precision_recall_path),
         opportunity_cost_source=_artifact_status(opportunity, opportunity_cost_path),
         forward_integration_source=_artifact_status(forward, forward_integration_path),
+        audit_universe_reconciliation_source=_artifact_status(
+            audit_universe, audit_universe_reconciliation_path
+        ),
+        anti_leakage_source=_artifact_status(anti_leakage, anti_leakage_path),
+        sensitivity_source=_artifact_status(sensitivity, sensitivity_path),
+        regime_segmented_source=_artifact_status(regime_segmented, regime_segmented_path),
+        forward_maturity_scoreboard_source=_artifact_status(
+            forward_scoreboard, forward_maturity_scoreboard_path
+        ),
         review_decision=review["review_decision"],
         evidence_summary=review["evidence_summary"],
         disallowed_actions=[
@@ -3880,6 +4282,9 @@ def run_tail_risk_policy_controlled_review_board(
             "broker_order",
             "treat_forward_pending_outcome_as_mature_evidence",
         ],
+        blockers=review["blockers"],
+        warnings=review["warnings"],
+        next_recommended_action=review["next_recommended_action"],
         remaining_blockers=_common_blockers(),
     )
     _write_pair(
@@ -9211,6 +9616,559 @@ def _tail_risk_forward_evidence_integration(
     }
 
 
+def _tail_risk_fallback_audit_universe_reconciliation(
+    *,
+    config: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    precision: Mapping[str, Any],
+    opportunity: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    paths: Mapping[str, Path],
+) -> dict[str, Any]:
+    artifacts = {
+        "TRADING-816": robustness,
+        "TRADING-817": precision,
+        "TRADING-818": opportunity,
+        "TRADING-819": forward,
+    }
+    input_artifacts = {
+        task_id: _artifact_status(artifact, paths.get(task_id))
+        for task_id, artifact in artifacts.items()
+    }
+    rows = [
+        _reconciliation_task_row(
+            task_id="TRADING-816",
+            artifact_id="tail_risk_benchmark_fallback_robustness_expansion",
+            report_path=paths["TRADING-816"],
+            payload=robustness,
+            sample_universe_name="historical_robustness_universe",
+            denominator=_first_int(_mapping(robustness.get("original_metric")).get("case_count")),
+            fallback_trigger_count=_first_int(
+                _nested_mapping(robustness, "robustness_summary", "summary").get(
+                    "fallback_trigger_count"
+                )
+            ),
+            label_definition=(
+                "not_primary_confusion_label; robustness compares original vs fallback rows"
+            ),
+            trigger_definition="tail_risk_signal_high from classifier labels",
+            benchmark_name="buy_and_hold_or_hold_exposure_proxy",
+            outcome_horizon="configured value-surface horizons",
+            asset_universe=_group_values(robustness.get("by_asset"), "group_value"),
+        ),
+        _reconciliation_task_row(
+            task_id="TRADING-817",
+            artifact_id="tail_risk_fallback_trigger_precision_recall_audit",
+            report_path=paths["TRADING-817"],
+            payload=precision,
+            sample_universe_name="precision_recall_confusion_universe",
+            denominator=_confusion_total(precision),
+            fallback_trigger_count=_first_int(
+                _nested_mapping(precision, "trigger_audit_summary", "summary").get(
+                    "fallback_trigger_count"
+                )
+            ),
+            positive_label_count=_confusion_positive_count(precision),
+            negative_label_count=max(
+                0, _confusion_total(precision) - _confusion_positive_count(precision)
+            ),
+            tp=_first_int(_mapping(precision.get("confusion_matrix")).get("true_positive")),
+            fp=_first_int(_mapping(precision.get("confusion_matrix")).get("false_positive")),
+            fn=_first_int(_mapping(precision.get("confusion_matrix")).get("false_negative")),
+            tn=_first_int(_mapping(precision.get("confusion_matrix")).get("true_negative")),
+            label_definition="large_loss_case OR tail_loss_case OR long_horizon_failure_case",
+            trigger_definition=(
+                "fallback_triggered; " "TP+FP excludes risk_downshift_non_tail_negative_count"
+            ),
+            benchmark_name="selected action vs benchmark proxy",
+            outcome_horizon="configured value-surface horizons",
+        ),
+        _reconciliation_task_row(
+            task_id="TRADING-818",
+            artifact_id="tail_risk_opportunity_cost_upside_capture_review",
+            report_path=paths["TRADING-818"],
+            payload=opportunity,
+            sample_universe_name="benchmark_upside_opportunity_universe",
+            denominator=_first_int(
+                _nested_mapping(opportunity, "opportunity_cost_summary", "summary").get(
+                    "benchmark_upside_case_count"
+                )
+            ),
+            fallback_trigger_count=_first_int(
+                _nested_mapping(robustness, "robustness_summary", "summary").get(
+                    "fallback_trigger_count"
+                )
+            ),
+            label_definition="benchmark_realized_net_return > configured upside floor",
+            trigger_definition=(
+                "not a trigger universe; "
+                "opportunity-cost universe filters benchmark upside cases"
+            ),
+            benchmark_name="benchmark upside days",
+            outcome_horizon="configured value-surface horizons",
+        ),
+        _reconciliation_task_row(
+            task_id="TRADING-819",
+            artifact_id="tail_risk_forward_evidence_integration",
+            report_path=paths["TRADING-819"],
+            payload=forward,
+            sample_universe_name="forward_evidence_record_universe",
+            denominator=_first_int(
+                _nested_mapping(forward, "integration_summary", "summary").get(
+                    "forward_record_count"
+                )
+            ),
+            fallback_trigger_count=_first_int(
+                _nested_mapping(forward, "integration_summary", "summary").get(
+                    "fallback_trigger_count"
+                )
+            ),
+            label_definition="future outcome pending; no matured label yet",
+            trigger_definition="tail-risk fallback signal captured in forward dry-run record",
+            benchmark_name="forward dry-run benchmark output",
+            outcome_horizon="pending maturity horizons",
+            asset_universe=_forward_record_assets(forward),
+        ),
+    ]
+    count_summary = _count_reconciliation_summary(rows, robustness, precision, opportunity, forward)
+    missing_records = [item for row in rows for item in row.pop("missing_field_records")]
+    missing_artifacts = [task_id for task_id, artifact in artifacts.items() if not artifact]
+    missing_denominator = [
+        row["task_id"] for row in rows if row.get("sample_count_total") in {None, 0}
+    ]
+    warnings = []
+    blockers = []
+    if missing_artifacts:
+        blockers.append(
+            {
+                "blocker": "missing_required_artifact",
+                "affected_tasks": missing_artifacts,
+                "impact": "count reconciliation cannot explain all controlled evidence universes",
+            }
+        )
+    if missing_denominator:
+        blockers.append(
+            {
+                "blocker": "missing_denominator",
+                "affected_tasks": missing_denominator,
+                "impact": "reconciliation_status cannot be RECONCILED without denominators",
+            }
+        )
+    if missing_records:
+        warnings.append(
+            {
+                "warning": "field_level_gaps_disclosed",
+                "missing_field_count": len(missing_records),
+                "impact": "report remains partially reconciled until all fields are explicit",
+            }
+        )
+    if missing_artifacts:
+        status = "BLOCKED_BY_MISSING_ARTIFACT"
+    elif missing_denominator:
+        status = "INCOMPLETE"
+    elif missing_records:
+        status = "PARTIALLY_RECONCILED"
+    else:
+        status = "RECONCILED"
+    controlled_status = (
+        "CONTROLLED_RESEARCH_BLOCKED"
+        if status in {"INCOMPLETE", "BLOCKED_BY_MISSING_ARTIFACT"}
+        else "CONTROLLED_RESEARCH_CONTINUE"
+    )
+    return {
+        "status": status,
+        "controlled_review_status": controlled_status,
+        "input_artifacts": input_artifacts,
+        "data_window": _combined_data_window(rows),
+        "task_reconciliation_rows": rows,
+        "count_reconciliation_summary": count_summary,
+        "missing_field_records": missing_records,
+        "metrics": {
+            "task_count": len(rows),
+            "missing_artifact_count": len(missing_artifacts),
+            "missing_denominator_count": len(missing_denominator),
+            "missing_field_count": len(missing_records),
+            "not_directly_comparable_count": sum(
+                1 for item in count_summary if not item["is_comparable_to_other_count"]
+            ),
+        },
+        "warnings": warnings,
+        "blockers": blockers,
+        "next_recommended_action": (
+            "restore_missing_artifacts_or_denominators_before_interpreting_counts"
+            if blockers
+            else "use_reconciled_universe_labels_when_discussing_tail_risk_counts"
+        ),
+    }
+
+
+def _tail_risk_fallback_anti_leakage_audit(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    value_surface: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_fallback_anti_leakage_audit")
+    timestamp_rows = _timestamp_availability_audit_rows(value_surface, policy)
+    overlap = _label_trigger_overlap_audit(config, policy)
+    outcome_rows = _outcome_horizon_separation_rows(selected_cases, value_surface)
+    pit_rows = _pit_revision_audit_rows(timestamp_rows, classifier, robustness)
+    critical_feature = any(row["leakage_risk"] in {"HIGH", "CRITICAL"} for row in timestamp_rows)
+    critical_outcome = any(row["leakage_risk"] == "CRITICAL" for row in outcome_rows)
+    critical_coupling = (
+        overlap["coupling_risk"] in {"HIGH", "CRITICAL"}
+        and not overlap["independent_outcome_validation_present"]
+    )
+    blockers = []
+    if critical_feature:
+        blockers.append(
+            {
+                "blocker": "feature_available_after_decision",
+                "impact": "trigger may use future information",
+            }
+        )
+    if critical_outcome:
+        blockers.append(
+            {
+                "blocker": "outcome_horizon_overlaps_decision",
+                "impact": "evaluation outcome can contaminate trigger timestamp",
+            }
+        )
+    if critical_coupling:
+        blockers.append(
+            {
+                "blocker": "trigger_label_same_source_without_independent_validation",
+                "impact": (
+                    "perfect precision/recall may be label coupling "
+                    "rather than predictive quality"
+                ),
+            }
+        )
+    warnings = []
+    if any(row["pit_status"] == "unknown" for row in pit_rows):
+        warnings.append(
+            {
+                "warning": "pit_status_unknown_not_treated_as_safe",
+                "impact": "revision-sensitive inputs remain review items",
+            }
+        )
+    status = (
+        "ANTI_LEAKAGE_BLOCKED"
+        if blockers
+        else ("ANTI_LEAKAGE_WARNING" if warnings else "ANTI_LEAKAGE_PASS")
+    )
+    return {
+        "status": status,
+        "controlled_review_status": (
+            "CONTROLLED_RESEARCH_BLOCKED" if blockers else "CONTROLLED_RESEARCH_CONTINUE"
+        ),
+        "timestamp_availability_audit": timestamp_rows,
+        "label_trigger_overlap_audit": overlap,
+        "outcome_horizon_separation_audit": outcome_rows,
+        "pit_revision_audit": pit_rows,
+        "summary": {
+            "feature_count": len(timestamp_rows),
+            "feature_lag_fail_count": sum(1 for row in timestamp_rows if not row["lag_pass"]),
+            "outcome_overlap_count": sum(1 for row in outcome_rows if row["overlap_detected"]),
+            "critical_issue_count": len(blockers),
+            "pit_unknown_count": sum(1 for row in pit_rows if row["pit_status"] == "unknown"),
+            "promotion_gate_allowed": False,
+        },
+        "warnings": warnings,
+        "blockers": blockers,
+        "next_recommended_action": (
+            "decouple_trigger_and_label_or_add_independent_forward_outcome_validation"
+            if blockers
+            else "continue_controlled_monitoring_without_promotion"
+        ),
+    }
+
+
+def _tail_risk_fallback_threshold_sensitivity(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_fallback_threshold_sensitivity")
+    baseline_rows = _tail_risk_variant_rows(selected_cases, classifier)
+    variants: list[dict[str, Any]] = [
+        _tail_risk_sensitivity_variant_result(
+            "baseline",
+            selected_cases,
+            baseline_rows,
+            config,
+            threshold_delta=0.0,
+            lag_mode="same_day_close",
+            outcome_horizon="all",
+            benchmark_name="current_dynamic_policy",
+            cost_level="cost=0",
+        )
+    ]
+    for delta in [-0.20, -0.10, -0.05, 0.05, 0.10, 0.20]:
+        rows = _tail_risk_variant_rows(
+            selected_cases,
+            classifier,
+            min_trigger_score=0.25 * (1.0 + delta),
+        )
+        variants.append(
+            _tail_risk_sensitivity_variant_result(
+                f"threshold_{delta:+.0%}",
+                selected_cases,
+                rows,
+                config,
+                threshold_delta=delta,
+                lag_mode="same_day_close",
+                outcome_horizon="all",
+                benchmark_name="current_dynamic_policy",
+                cost_level="cost=0",
+            )
+        )
+    for lag_mode, lag_days in [("next_day_open", 1), ("next_day_close", 1), ("two_day_lag", 2)]:
+        rows = _tail_risk_lagged_variant_rows(selected_cases, classifier, lag_days=lag_days)
+        variants.append(
+            _tail_risk_sensitivity_variant_result(
+                f"lag_{lag_mode}",
+                selected_cases,
+                rows,
+                config,
+                threshold_delta=0.0,
+                lag_mode=lag_mode,
+                outcome_horizon="all",
+                benchmark_name="current_dynamic_policy",
+                cost_level="cost=0",
+            )
+        )
+    for horizon in ["1d", "3d", "5d", "10d", "20d", "60d"]:
+        subset = [row for row in selected_cases if str(row.get("horizon")) == horizon]
+        rows = _tail_risk_variant_rows(subset, classifier)
+        variants.append(
+            _tail_risk_sensitivity_variant_result(
+                f"horizon_{horizon}",
+                subset,
+                rows,
+                config,
+                threshold_delta=0.0,
+                lag_mode="same_day_close",
+                outcome_horizon=horizon,
+                benchmark_name="current_dynamic_policy",
+                cost_level="cost=0",
+            )
+        )
+    for benchmark_name in ["no_trade", "static_baseline", "defensive_baseline"]:
+        rows = _tail_risk_variant_rows(
+            selected_cases,
+            classifier,
+            benchmark_mode=benchmark_name,
+        )
+        variants.append(
+            _tail_risk_sensitivity_variant_result(
+                f"benchmark_{benchmark_name}",
+                selected_cases,
+                rows,
+                config,
+                threshold_delta=0.0,
+                lag_mode="same_day_close",
+                outcome_horizon="all",
+                benchmark_name=benchmark_name,
+                cost_level="cost=0",
+            )
+        )
+    for cost_level, cost_penalty in [
+        ("cost=low", 0.0005),
+        ("cost=medium", 0.001),
+        ("cost=high", 0.002),
+    ]:
+        rows = _tail_risk_variant_rows(selected_cases, classifier, cost_penalty=cost_penalty)
+        variants.append(
+            _tail_risk_sensitivity_variant_result(
+                f"cost_{cost_level.split('=')[1]}",
+                selected_cases,
+                rows,
+                config,
+                threshold_delta=0.0,
+                lag_mode="same_day_close",
+                outcome_horizon="all",
+                benchmark_name="current_dynamic_policy",
+                cost_level=cost_level,
+            )
+        )
+    stability = _tail_risk_sensitivity_stability_summary(variants, policy)
+    status = (
+        "SENSITIVITY_FRAGILE"
+        if stability["cliff_detected"]
+        else ("SENSITIVITY_WARNING" if stability["warning_detected"] else "SENSITIVITY_STABLE")
+    )
+    return {
+        "status": status,
+        "variant_results": variants,
+        "perturbation_coverage": {
+            "baseline_present": any(row["variant_id"] == "baseline" for row in variants),
+            "threshold": any(row["threshold_delta"] not in {None, 0.0} for row in variants),
+            "lag": any(
+                str(row["lag_mode"]).startswith("next") or row["lag_mode"] == "two_day_lag"
+                for row in variants
+            ),
+            "horizon": any(row["outcome_horizon"] != "all" for row in variants),
+            "benchmark": any(row["benchmark_name"] != "current_dynamic_policy" for row in variants),
+            "cost": any(row["cost_level"] != "cost=0" for row in variants),
+            "promotion_gate_allowed": False,
+        },
+        "stability_summary": stability,
+        "promotion_block_reason": (
+            "sensitivity_fragile"
+            if status == "SENSITIVITY_FRAGILE"
+            else "controlled_only_no_promotion"
+        ),
+        "warnings": stability["warnings"],
+        "blockers": [],
+        "next_recommended_action": (
+            "keep_promotion_and_paper_shadow_blocked_until_fragility_is_resolved"
+            if status == "SENSITIVITY_FRAGILE"
+            else "continue_controlled_observation"
+        ),
+    }
+
+
+def _tail_risk_fallback_regime_segmented_robustness(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_fallback_regime_segmented_robustness")
+    fallback_rows = _tail_risk_variant_rows(selected_cases, classifier)
+    segment_results: list[dict[str, Any]] = []
+    segment_results.extend(_calendar_segment_rows(selected_cases, fallback_rows, config, policy))
+    segment_results.extend(_volatility_segment_rows(selected_cases, fallback_rows, config, policy))
+    segment_results.extend(_trend_segment_rows(selected_cases, fallback_rows, config, policy))
+    segment_results.extend(
+        _tail_severity_segment_rows(selected_cases, fallback_rows, config, policy)
+    )
+    segment_unavailable = [
+        {
+            "segment_type": "liquidity_macro",
+            "segment_name": "liquidity_easing/liquidity_neutral/liquidity_tightening",
+            "segment_unavailable": True,
+            "reason": "missing liquidity proxy in controlled value-surface cases",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "segment_type": "liquidity_macro",
+            "segment_name": "macro_stress/macro_normal",
+            "segment_unavailable": True,
+            "reason": "missing macro stress proxy in controlled value-surface cases",
+            "promotion_gate_allowed": False,
+        },
+    ]
+    concentration = _regime_concentration_summary(fallback_rows, segment_results, policy)
+    if concentration["concentration_risk"] == "HIGH":
+        status = "REGIME_CONCENTRATED"
+    elif concentration["low_sample_segments"]:
+        status = "INSUFFICIENT_SEGMENT_EVIDENCE"
+    elif concentration["segment_count_with_negative_effect"] > 0:
+        status = "REGIME_WARNING"
+    else:
+        status = "REGIME_ROBUST"
+    controlled = (
+        "NEEDS_MORE_EVIDENCE"
+        if status == "INSUFFICIENT_SEGMENT_EVIDENCE"
+        else "CONTROLLED_RESEARCH_CONTINUE"
+    )
+    return {
+        "status": status,
+        "controlled_review_status": controlled,
+        "segment_results": segment_results,
+        "segment_unavailable": segment_unavailable,
+        "concentration_summary": concentration,
+        "warnings": segment_unavailable
+        + (
+            [
+                {
+                    "warning": "regime_concentration_or_low_sample_detected",
+                    "status": status,
+                    "promotion_gate_allowed": False,
+                }
+            ]
+            if status in {"REGIME_CONCENTRATED", "INSUFFICIENT_SEGMENT_EVIDENCE"}
+            else []
+        ),
+        "blockers": [],
+        "next_recommended_action": (
+            "collect_more_segment_evidence_before_any_promotion_discussion"
+            if status in {"REGIME_CONCENTRATED", "INSUFFICIENT_SEGMENT_EVIDENCE"}
+            else "continue_controlled_segment_monitoring"
+        ),
+    }
+
+
+def _tail_risk_fallback_forward_maturity_scoreboard(
+    *,
+    config: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    forward_path: Path,
+    as_of_date: date | None,
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_fallback_forward_maturity_scoreboard")
+    resolved_as_of = as_of_date or date.today()
+    source_records = _records(forward.get("forward_records"))
+    records = [
+        _tail_risk_scoreboard_record(record, as_of=resolved_as_of) for record in source_records
+    ]
+    scoreboard = _tail_risk_forward_scoreboard(records, policy)
+    readiness = _forward_promotion_readiness_assessment(scoreboard, policy)
+    if scoreboard["matured_record_count"] == 0 and scoreboard["pending_record_count"] > 0:
+        status = "FORWARD_PENDING"
+    elif scoreboard["matured_record_count"] < _first_int(policy.get("min_matured_forward_records")):
+        status = "FORWARD_INSUFFICIENT"
+    elif scoreboard["metric_degradation_detected"]:
+        status = "FORWARD_DEGRADED"
+    else:
+        status = "FORWARD_MATURED_CONTINUE"
+    scoreboard["status"] = status
+    scoreboard["promotion_block_reason"] = _forward_promotion_block_reason(
+        status, scoreboard, policy
+    )
+    warnings = []
+    blockers = []
+    if status in {"FORWARD_PENDING", "FORWARD_INSUFFICIENT"}:
+        warnings.append(
+            {
+                "warning": "forward_evidence_not_mature_enough",
+                "promotion_block_reason": scoreboard["promotion_block_reason"],
+                "promotion_gate_allowed": False,
+            }
+        )
+    if status == "FORWARD_DEGRADED":
+        blockers.append(
+            {
+                "blocker": "forward_metrics_degraded",
+                "impact": "controlled research blocked until forward degradation is reviewed",
+            }
+        )
+    return {
+        "status": status,
+        "data_window": _record_data_window(records),
+        "record_level_results": records,
+        "scoreboard": scoreboard,
+        "promotion_readiness_assessment": readiness,
+        "warnings": warnings,
+        "blockers": blockers,
+        "next_recommended_action": (
+            "wait_for_forward_outcome_maturity_and_rerun_scoreboard"
+            if status in {"FORWARD_PENDING", "FORWARD_INSUFFICIENT"}
+            else (
+                "investigate_forward_metric_degradation"
+                if status == "FORWARD_DEGRADED"
+                else "continue_controlled_research_without_promotion"
+            )
+        ),
+        "source_forward_path": str(forward_path),
+    }
+
+
 def _tail_risk_policy_controlled_review_board(
     *,
     config: Mapping[str, Any],
@@ -9218,6 +10176,11 @@ def _tail_risk_policy_controlled_review_board(
     precision: Mapping[str, Any],
     opportunity: Mapping[str, Any],
     forward: Mapping[str, Any],
+    audit_universe: Mapping[str, Any],
+    anti_leakage: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+    regime_segmented: Mapping[str, Any],
+    forward_scoreboard: Mapping[str, Any],
 ) -> dict[str, Any]:
     policy = _next_stage_section(config, "tail_risk_policy_controlled_review_board")
     allowed = [str(item) for item in policy.get("allowed_decisions", [])]
@@ -9225,6 +10188,18 @@ def _tail_risk_policy_controlled_review_board(
     precision_summary = _nested_mapping(precision, "trigger_audit_summary", "summary")
     opportunity_summary = _nested_mapping(opportunity, "opportunity_cost_summary", "summary")
     forward_summary = _nested_mapping(forward, "integration_summary", "summary")
+    audit_status = str(audit_universe.get("status", "MISSING")) if audit_universe else "MISSING"
+    anti_leakage_status = str(anti_leakage.get("status", "MISSING")) if anti_leakage else "MISSING"
+    sensitivity_status = str(sensitivity.get("status", "MISSING")) if sensitivity else "MISSING"
+    regime_status = (
+        str(regime_segmented.get("status", "MISSING")) if regime_segmented else "MISSING"
+    )
+    forward_maturity_status = (
+        str(forward_scoreboard.get("status", "MISSING")) if forward_scoreboard else "MISSING"
+    )
+    new_audit_inputs_present = any(
+        [audit_universe, anti_leakage, sensitivity, regime_segmented, forward_scoreboard]
+    )
     robustness_condition = robust_summary.get("robustness_decision") == "CONTINUE" and _float(
         robust_summary.get("tail_loss_reduction"), 0.0
     ) >= _float(policy.get("tail_loss_reduction_floor"), 0.20)
@@ -9242,24 +10217,60 @@ def _tail_risk_policy_controlled_review_board(
         policy.get("forward_record_count_floor")
     ) and bool(forward_summary.get("append_only_integrity_pass"))
     missing = not all([robustness, precision, opportunity, forward])
-    if missing:
+    promotion_block_reason = None
+    if new_audit_inputs_present and anti_leakage_status == "ANTI_LEAKAGE_BLOCKED":
+        decision = "CONTROLLED_RESEARCH_BLOCKED"
+        reason = "anti_leakage_audit_blocked"
+        promotion_block_reason = "anti_leakage_blocked"
+    elif new_audit_inputs_present and audit_status in {"INCOMPLETE", "BLOCKED_BY_MISSING_ARTIFACT"}:
+        decision = "CONTROLLED_RESEARCH_BLOCKED"
+        reason = "audit_universe_reconciliation_incomplete_or_missing"
+        promotion_block_reason = "audit_universe_reconciliation_blocked"
+    elif new_audit_inputs_present and forward_maturity_status == "FORWARD_DEGRADED":
+        decision = "CONTROLLED_RESEARCH_BLOCKED"
+        reason = "forward_maturity_degraded"
+        promotion_block_reason = "forward_metric_degradation"
+    elif new_audit_inputs_present and sensitivity_status == "SENSITIVITY_FRAGILE":
+        decision = "CONTROLLED_RESEARCH_CONTINUE"
+        reason = "sensitivity_fragile_but_controlled_research_may_continue"
+        promotion_block_reason = "sensitivity_fragile"
+    elif new_audit_inputs_present and regime_status in {
+        "REGIME_CONCENTRATED",
+        "INSUFFICIENT_SEGMENT_EVIDENCE",
+    }:
+        decision = "CONTROLLED_RESEARCH_CONTINUE"
+        reason = "regime_evidence_not_robust"
+        promotion_block_reason = "regime_evidence_not_robust"
+    elif new_audit_inputs_present and forward_maturity_status in {
+        "FORWARD_PENDING",
+        "FORWARD_INSUFFICIENT",
+    }:
+        decision = "NEEDS_MORE_FORWARD_EVIDENCE"
+        reason = "forward_evidence_not_mature"
+        promotion_block_reason = "forward_evidence_not_mature"
+    elif missing:
         decision = "DATA_REQUIRED"
         reason = "required_tail_risk_review_artifact_missing"
     elif robustness_condition and trigger_condition and opportunity_condition and forward_condition:
         decision = "CONTROLLED_RESEARCH_CONTINUE"
         reason = "continue_to_longer_controlled_walk_forward_and_forward_maturity_tracking"
+        promotion_block_reason = "promotion_not_allowed_in_controlled_research"
     elif robustness_condition and trigger_condition and opportunity_condition:
         decision = "WATCHLIST_FORWARD_MATURITY"
         reason = "historical_conditions_pass_but_forward_archive_not_ready"
+        promotion_block_reason = "forward_evidence_not_mature"
     elif robustness_condition and not opportunity_condition:
         decision = "PIVOT_OVERCONSERVATIVE"
         reason = "tail_loss_reduction_may_be_purchased_by_upside_sacrifice"
+        promotion_block_reason = "opportunity_cost_not_cleared"
     elif not robustness_condition:
         decision = "KILL"
         reason = "fallback_robustness_failed"
+        promotion_block_reason = "fallback_robustness_failed"
     else:
         decision = "WATCHLIST"
         reason = "mixed_tail_risk_policy_evidence"
+        promotion_block_reason = "mixed_controlled_evidence"
     if allowed and decision not in allowed:
         decision = "WATCHLIST"
         reason = "computed_decision_not_allowed_by_policy"
@@ -9267,6 +10278,12 @@ def _tail_risk_policy_controlled_review_board(
         "decision": decision,
         "reason": reason,
         "allowed_decisions": allowed,
+        "audit_universe_reconciliation_status": audit_status,
+        "anti_leakage_status": anti_leakage_status,
+        "sensitivity_status": sensitivity_status,
+        "regime_segmented_status": regime_status,
+        "forward_maturity_status": forward_maturity_status,
+        "promotion_block_reason": promotion_block_reason,
         "robustness_condition_met": robustness_condition,
         "trigger_quality_condition_met": trigger_condition,
         "opportunity_cost_condition_met": opportunity_condition,
@@ -9290,8 +10307,27 @@ def _tail_risk_policy_controlled_review_board(
             "forward_status": forward.get("status"),
             "forward_record_count": forward_summary.get("forward_record_count"),
             "future_outcome_status": forward_summary.get("future_outcome_status"),
+            "audit_universe_reconciliation_status": audit_status,
+            "anti_leakage_status": anti_leakage_status,
+            "sensitivity_status": sensitivity_status,
+            "regime_segmented_status": regime_status,
+            "forward_maturity_status": forward_maturity_status,
             "promotion_gate_allowed": False,
         },
+        "warnings": _records(sensitivity.get("warnings"))
+        + _records(regime_segmented.get("warnings")),
+        "blockers": _records(audit_universe.get("blockers"))
+        + _records(anti_leakage.get("blockers"))
+        + _records(forward_scoreboard.get("blockers")),
+        "next_recommended_action": (
+            "resolve_controlled_research_blockers_before_interpreting_fallback"
+            if decision == "CONTROLLED_RESEARCH_BLOCKED"
+            else (
+                "wait_for_more_forward_evidence"
+                if decision == "NEEDS_MORE_FORWARD_EVIDENCE"
+                else "continue_controlled_research_with_promotion_blocked"
+            )
+        ),
     }
 
 
@@ -9561,6 +10597,1154 @@ def _nested_mapping(payload: Mapping[str, Any], preferred: str, fallback: str) -
         return value
     value = payload.get(fallback)
     return value if isinstance(value, Mapping) else {}
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _stable_hash(value: Any) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _case_data_window(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    dates = sorted(str(row.get("date")) for row in rows if row.get("date"))
+    return {
+        "date_start": dates[0] if dates else None,
+        "date_end": dates[-1] if dates else None,
+        "sample_count": len(rows),
+        "market_regime": "ai_after_chatgpt",
+    }
+
+
+def _record_data_window(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    dates = sorted(
+        str(row.get("decision_timestamp")) for row in rows if row.get("decision_timestamp")
+    )
+    return {
+        "date_start": dates[0] if dates else None,
+        "date_end": dates[-1] if dates else None,
+        "sample_count": len(rows),
+        "market_regime": "ai_after_chatgpt",
+    }
+
+
+def _combined_data_window(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    starts = [str(row["date_start"]) for row in rows if row.get("date_start")]
+    ends = [str(row["date_end"]) for row in rows if row.get("date_end")]
+    return {
+        "date_start": min(starts) if starts else None,
+        "date_end": max(ends) if ends else None,
+        "task_count": len(rows),
+        "market_regime": "ai_after_chatgpt",
+    }
+
+
+def _reconciliation_task_row(
+    *,
+    task_id: str,
+    artifact_id: str,
+    report_path: Path,
+    payload: Mapping[str, Any],
+    sample_universe_name: str,
+    denominator: int,
+    fallback_trigger_count: int,
+    label_definition: str,
+    trigger_definition: str,
+    benchmark_name: str,
+    outcome_horizon: str,
+    asset_universe: list[str] | None = None,
+    positive_label_count: int | None = None,
+    negative_label_count: int | None = None,
+    tp: int | None = None,
+    fp: int | None = None,
+    fn: int | None = None,
+    tn: int | None = None,
+) -> dict[str, Any]:
+    date_start, date_end = _artifact_date_window(payload)
+    row = {
+        "task_id": task_id,
+        "artifact_id": artifact_id,
+        "report_path": str(report_path),
+        "sample_universe_name": sample_universe_name,
+        "date_start": date_start,
+        "date_end": date_end,
+        "asset_universe": asset_universe or [],
+        "benchmark_name": benchmark_name,
+        "label_definition": label_definition,
+        "trigger_definition": trigger_definition,
+        "outcome_horizon": outcome_horizon,
+        "feature_timestamp_rule": (
+            "decision-time PIT features only; realized outcome evaluation-only"
+        ),
+        "label_timestamp_rule": (
+            "label assigned after realized outcome maturity or controlled audit label"
+        ),
+        "sample_count_total": denominator or None,
+        "eligible_sample_count": denominator or None,
+        "fallback_trigger_count": fallback_trigger_count,
+        "positive_label_count": positive_label_count,
+        "negative_label_count": negative_label_count,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "tn": tn,
+        "excluded_sample_count": 0,
+        "exclusion_reason_summary": "none recorded in source artifact",
+        "missing_field_records": [],
+        "promotion_gate_allowed": False,
+    }
+    required = [
+        "task_id",
+        "artifact_id",
+        "report_path",
+        "sample_universe_name",
+        "date_start",
+        "date_end",
+        "asset_universe",
+        "benchmark_name",
+        "label_definition",
+        "trigger_definition",
+        "outcome_horizon",
+        "feature_timestamp_rule",
+        "label_timestamp_rule",
+        "sample_count_total",
+        "eligible_sample_count",
+        "fallback_trigger_count",
+        "positive_label_count",
+        "negative_label_count",
+        "tp",
+        "fp",
+        "fn",
+        "tn",
+        "excluded_sample_count",
+        "exclusion_reason_summary",
+    ]
+    for field in required:
+        value = row.get(field)
+        if value is None or value == "" or value == []:
+            row["missing_field_records"].append(
+                {
+                    "task_id": task_id,
+                    "missing_field": True,
+                    "missing_field_name": field,
+                    "reconciliation_status": "INCOMPLETE",
+                    "promotion_gate_allowed": False,
+                }
+            )
+    row["missing_field"] = bool(row["missing_field_records"])
+    row["reconciliation_status"] = "INCOMPLETE" if row["missing_field"] else "RECONCILED"
+    return row
+
+
+def _artifact_date_window(payload: Mapping[str, Any]) -> tuple[str | None, str | None]:
+    summary = _mapping(payload.get("summary"))
+    requested = str(summary.get("requested_date_range", ""))
+    if ".." in requested:
+        start, end = requested.split("..", 1)
+        return start or None, end or None
+    records = _records(payload.get("forward_records")) or _records(payload.get("fallback_cases"))
+    dates = sorted(
+        str(row.get("date") or _source_case_date(row.get("source_case_key")) or "")
+        for row in records
+        if row.get("date") or row.get("source_case_key")
+    )
+    return (dates[0], dates[-1]) if dates else (None, None)
+
+
+def _source_case_date(value: Any) -> str | None:
+    if not value:
+        return None
+    text = str(value)
+    return text.split("|", 1)[0] if "|" in text else None
+
+
+def _group_values(value: Any, field: str) -> list[str]:
+    return sorted({str(row.get(field)) for row in _records(value) if row.get(field)})
+
+
+def _forward_record_assets(forward: Mapping[str, Any]) -> list[str]:
+    return sorted(
+        {
+            str(row.get("asset"))
+            for row in _records(forward.get("forward_records"))
+            if row.get("asset")
+        }
+    )
+
+
+def _confusion_total(precision: Mapping[str, Any]) -> int:
+    matrix = _mapping(precision.get("confusion_matrix"))
+    return sum(
+        _first_int(matrix.get(field))
+        for field in ["true_positive", "false_positive", "false_negative", "true_negative"]
+    )
+
+
+def _confusion_positive_count(precision: Mapping[str, Any]) -> int:
+    matrix = _mapping(precision.get("confusion_matrix"))
+    return _first_int(matrix.get("true_positive")) + _first_int(matrix.get("false_negative"))
+
+
+def _count_reconciliation_summary(
+    rows: list[Mapping[str, Any]],
+    robustness: Mapping[str, Any],
+    precision: Mapping[str, Any],
+    opportunity: Mapping[str, Any],
+    forward: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    row_by_task = {str(row["task_id"]): row for row in rows}
+    matrix = _mapping(precision.get("confusion_matrix"))
+    opportunity_summary = _nested_mapping(opportunity, "opportunity_cost_summary", "summary")
+    forward_summary = _nested_mapping(forward, "integration_summary", "summary")
+    return [
+        {
+            "count_name": "fallback_trigger_count",
+            "source_task": "TRADING-816",
+            "value": row_by_task["TRADING-816"].get("fallback_trigger_count"),
+            "denominator": row_by_task["TRADING-816"].get("sample_count_total"),
+            "universe": row_by_task["TRADING-816"].get("sample_universe_name"),
+            "date_window": _row_date_window(row_by_task["TRADING-816"]),
+            "interpretation": "full historical robustness fallback trigger count",
+            "is_comparable_to_other_count": False,
+            "not_comparable_reason": (
+                "different denominator and universe from precision, upside, " "and forward reports"
+            ),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "count_name": "TP_plus_FP",
+            "source_task": "TRADING-817",
+            "value": _first_int(matrix.get("true_positive"))
+            + _first_int(matrix.get("false_positive")),
+            "denominator": row_by_task["TRADING-817"].get("sample_count_total"),
+            "universe": row_by_task["TRADING-817"].get("sample_universe_name"),
+            "date_window": _row_date_window(row_by_task["TRADING-817"]),
+            "interpretation": (
+                "precision/recall label-positive trigger subset; "
+                "excludes risk_downshift_non_tail_negative_count"
+            ),
+            "is_comparable_to_other_count": False,
+            "not_comparable_reason": (
+                "TP+FP is a confusion-matrix subset, not the full trigger count"
+            ),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "count_name": "benchmark_upside_case_count",
+            "source_task": "TRADING-818",
+            "value": opportunity_summary.get("benchmark_upside_case_count"),
+            "denominator": row_by_task["TRADING-818"].get("sample_count_total"),
+            "universe": row_by_task["TRADING-818"].get("sample_universe_name"),
+            "date_window": _row_date_window(row_by_task["TRADING-818"]),
+            "interpretation": (
+                "benchmark upside opportunity universe, not fallback trigger universe"
+            ),
+            "is_comparable_to_other_count": False,
+            "not_comparable_reason": "filters for benchmark-upside opportunity cases",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "count_name": "fallback_trigger_count",
+            "source_task": "TRADING-819",
+            "value": forward_summary.get("fallback_trigger_count"),
+            "denominator": row_by_task["TRADING-819"].get("sample_count_total"),
+            "universe": row_by_task["TRADING-819"].get("sample_universe_name"),
+            "date_window": _row_date_window(row_by_task["TRADING-819"]),
+            "interpretation": "fallback triggers inside capped forward evidence record universe",
+            "is_comparable_to_other_count": False,
+            "not_comparable_reason": "forward record universe is capped and pending maturity",
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _row_date_window(row: Mapping[str, Any]) -> str:
+    return f"{row.get('date_start')}..{row.get('date_end')}"
+
+
+def _timestamp_availability_audit_rows(
+    value_surface: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    configured = _records(policy.get("feature_inputs"))
+    source_rows = _records(value_surface.get("feature_inputs")) or configured
+    if not source_rows:
+        source_rows = [
+            {
+                "feature_name": "trailing_return",
+                "source_type": "price_cache",
+                "pit_status": "pit_safe",
+            },
+            {
+                "feature_name": "trailing_volatility",
+                "source_type": "price_cache",
+                "pit_status": "pit_safe",
+            },
+            {
+                "feature_name": "trailing_drawdown",
+                "source_type": "price_cache",
+                "pit_status": "pit_safe",
+            },
+            {
+                "feature_name": "classifier_tail_risk_labels",
+                "source_type": "controlled_label_proxy",
+                "pit_status": "unknown",
+            },
+        ]
+    rows = []
+    for item in source_rows:
+        decision = str(item.get("decision_timestamp", "decision_timestamp"))
+        feature_timestamp = str(item.get("feature_timestamp", decision))
+        available_at = str(item.get("available_at_timestamp", decision))
+        lag_pass = _timestamp_lag_pass(available_at, decision)
+        rows.append(
+            {
+                "feature_name": str(item.get("feature_name", item.get("field", "unknown"))),
+                "feature_timestamp": feature_timestamp,
+                "decision_timestamp": decision,
+                "available_at_timestamp": available_at,
+                "required_lag": item.get("required_lag", "available_at<=decision"),
+                "actual_lag": item.get("actual_lag", "0" if lag_pass else "negative"),
+                "lag_pass": lag_pass,
+                "source_type": str(item.get("source_type", "controlled_artifact")),
+                "pit_status": str(item.get("pit_status", "unknown")),
+                "leakage_risk": "LOW" if lag_pass else "HIGH",
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _timestamp_lag_pass(available_at: str, decision: str) -> bool:
+    if available_at == decision:
+        return True
+    try:
+        return date.fromisoformat(available_at[:10]) <= date.fromisoformat(decision[:10])
+    except ValueError:
+        return available_at <= decision
+
+
+def _label_trigger_overlap_audit(
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    trigger_fields = [
+        str(item)
+        for item in policy.get(
+            "trigger_input_fields",
+            [
+                "large_loss_case",
+                "tail_loss_case",
+                "benchmark_underperformance_case",
+                "long_horizon_failure_case",
+            ],
+        )
+    ]
+    label_policy = _next_stage_section(config, "tail_risk_fallback_trigger_precision_recall_audit")
+    label_fields = [
+        str(item)
+        for item in policy.get("label_input_fields", label_policy.get("positive_label_fields", []))
+    ]
+    overlap = sorted(set(trigger_fields) & set(label_fields))
+    derived_overlap = (
+        ["tail_risk_signal_high"] if overlap and "tail_risk_signal_high" not in overlap else []
+    )
+    denominator = max(1, len(set(trigger_fields) | set(label_fields)))
+    ratio = (len(overlap) + len(derived_overlap)) / denominator
+    if ratio >= 0.75:
+        risk = "CRITICAL"
+    elif ratio >= 0.50:
+        risk = "HIGH"
+    elif ratio > 0:
+        risk = "MEDIUM"
+    else:
+        risk = "LOW"
+    independent = bool(policy.get("independent_outcome_validation_present", False))
+    return {
+        "trigger_input_fields": trigger_fields,
+        "label_input_fields": label_fields,
+        "overlap_fields": overlap,
+        "derived_overlap_fields": derived_overlap,
+        "overlap_ratio": _round(ratio),
+        "coupling_risk": risk,
+        "independent_outcome_validation_present": independent,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _outcome_horizon_separation_rows(
+    selected_cases: list[dict[str, Any]],
+    value_surface: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    configured = _records(value_surface.get("outcome_windows"))
+    source_rows = configured or selected_cases[:25]
+    rows = []
+    for item in source_rows:
+        decision = str(item.get("decision_timestamp") or item.get("date") or "decision_timestamp")
+        horizon_days = _horizon_days(item.get("outcome_horizon") or item.get("horizon"))
+        outcome_start = str(item.get("outcome_start_timestamp") or _add_days_text(decision, 1))
+        outcome_end = str(
+            item.get("outcome_end_timestamp") or _add_days_text(decision, horizon_days)
+        )
+        overlap = _timestamp_not_after(outcome_start, decision)
+        rows.append(
+            {
+                "decision_timestamp": decision,
+                "outcome_start_timestamp": outcome_start,
+                "outcome_end_timestamp": outcome_end,
+                "horizon_days": horizon_days,
+                "separation_days": 0 if overlap else 1,
+                "overlap_detected": overlap,
+                "leakage_risk": "CRITICAL" if overlap else "LOW",
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _pit_revision_audit_rows(
+    timestamp_rows: list[Mapping[str, Any]],
+    classifier: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    rows = []
+    for item in timestamp_rows:
+        pit_status = str(item.get("pit_status", "unknown"))
+        rows.append(
+            {
+                "feature_name": item.get("feature_name"),
+                "pit_safe": pit_status == "pit_safe",
+                "pit_status": pit_status,
+                "revision_risk": (
+                    "LOW"
+                    if pit_status == "pit_safe"
+                    else ("MEDIUM" if pit_status == "unknown" else "HIGH")
+                ),
+                "source_type": item.get("source_type"),
+                "promotion_gate_allowed": False,
+            }
+        )
+    if classifier and robustness:
+        rows.append(
+            {
+                "feature_name": "tail_risk_classifier_labels",
+                "pit_safe": False,
+                "pit_status": "unknown",
+                "revision_risk": "MEDIUM",
+                "source_type": "controlled_historical_label_proxy",
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _tail_risk_variant_rows(
+    selected_cases: list[dict[str, Any]],
+    classifier: Mapping[str, Any],
+    *,
+    min_trigger_score: float = 0.25,
+    forced_trigger_by_key: Mapping[str, bool] | None = None,
+    benchmark_mode: str = "current_dynamic_policy",
+    cost_penalty: float = 0.0,
+) -> list[dict[str, Any]]:
+    label_map = _classifier_label_map(classifier)
+    output = []
+    for original in selected_cases:
+        labels = label_map.get(_case_key(original), {})
+        trigger_labels = _tail_risk_trigger_labels(labels)
+        score = len(trigger_labels) / 4 if trigger_labels else 0.0
+        forced = forced_trigger_by_key.get(_case_key(original)) if forced_trigger_by_key else None
+        triggered = bool(forced) if forced is not None else score >= min_trigger_score
+        item = (
+            _fallback_case_to_benchmark(dict(original), "tail_risk_benchmark_fallback")
+            if triggered
+            else dict(original)
+        )
+        if benchmark_mode != "current_dynamic_policy":
+            item = _apply_benchmark_mode(item, benchmark_mode)
+        if triggered and cost_penalty:
+            item["selected_realized_net_return"] = _round(
+                _float(item.get("selected_realized_net_return"), 0.0) - cost_penalty
+            )
+            item["delta_vs_benchmark"] = _round(
+                _float(item.get("selected_realized_net_return"), 0.0)
+                - _float(item.get("benchmark_realized_net_return"), 0.0)
+            )
+            item["selected_estimated_cost"] = _round(
+                _float(item.get("selected_estimated_cost"), 0.0) + cost_penalty
+            )
+        original_delta = _float(original.get("delta_vs_benchmark"), 0.0)
+        original_return = _float(original.get("selected_realized_net_return"), 0.0)
+        fallback_return = _float(item.get("selected_realized_net_return"), 0.0)
+        item.update(
+            {
+                "case_key": _case_key(original),
+                "fallback_triggered": triggered,
+                "trigger_reason": ",".join(trigger_labels) if trigger_labels else "not_triggered",
+                "trigger_labels": trigger_labels,
+                "tail_risk_signal_high": triggered,
+                "trigger_score": _round(score),
+                "original_delta_vs_benchmark": _round(original_delta),
+                "missed_upside": _round(
+                    max(0.0, original_return - fallback_return) if triggered else 0.0
+                ),
+                "avoided_tail_loss": _round(max(0.0, -original_delta) if triggered else 0.0),
+                "promotion_gate_allowed": False,
+            }
+        )
+        for label in [
+            "large_loss_case",
+            "tail_loss_case",
+            "benchmark_underperformance_case",
+            "long_horizon_failure_case",
+        ]:
+            item[label] = bool(labels.get(label))
+        output.append(item)
+    return output
+
+
+def _tail_risk_trigger_labels(labels: Mapping[str, Any]) -> list[str]:
+    return [
+        label
+        for label in [
+            "large_loss_case",
+            "tail_loss_case",
+            "benchmark_underperformance_case",
+            "long_horizon_failure_case",
+        ]
+        if bool(labels.get(label))
+    ]
+
+
+def _apply_benchmark_mode(row: dict[str, Any], benchmark_mode: str) -> dict[str, Any]:
+    output = dict(row)
+    current = _float(output.get("benchmark_realized_net_return"), 0.0)
+    if benchmark_mode == "no_trade":
+        benchmark = 0.0
+    elif benchmark_mode == "defensive_baseline":
+        benchmark = min(current, 0.0)
+    else:
+        benchmark = current
+    output["benchmark_name"] = benchmark_mode
+    output["benchmark_realized_net_return"] = _round(benchmark)
+    output["delta_vs_benchmark"] = _round(
+        _float(output.get("selected_realized_net_return"), 0.0) - benchmark
+    )
+    output["value_surface_beats_benchmark"] = _float(output["delta_vs_benchmark"], 0.0) >= 0
+    return output
+
+
+def _tail_risk_lagged_variant_rows(
+    selected_cases: list[dict[str, Any]],
+    classifier: Mapping[str, Any],
+    *,
+    lag_days: int,
+) -> list[dict[str, Any]]:
+    baseline = _tail_risk_variant_rows(selected_cases, classifier)
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in baseline:
+        grouped.setdefault((str(row.get("asset")), str(row.get("horizon"))), []).append(row)
+    forced: dict[str, bool] = {}
+    for values in grouped.values():
+        ordered = sorted(values, key=lambda row: str(row.get("date")))
+        for index, row in enumerate(ordered):
+            source_index = index - lag_days
+            forced[_case_key(row)] = (
+                bool(ordered[source_index].get("fallback_triggered"))
+                if source_index >= 0
+                else False
+            )
+    return _tail_risk_variant_rows(selected_cases, classifier, forced_trigger_by_key=forced)
+
+
+def _tail_risk_sensitivity_variant_result(
+    variant_id: str,
+    original_rows: list[dict[str, Any]],
+    variant_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    *,
+    threshold_delta: float,
+    lag_mode: str,
+    outcome_horizon: str,
+    benchmark_name: str,
+    cost_level: str,
+) -> dict[str, Any]:
+    original_metric = _v2_variant_metric_row("original", original_rows, config)
+    metric = _add_variant_deltas(
+        _v2_variant_metric_row(variant_id, variant_rows, config),
+        original_metric,
+    )
+    deltas = [_float(row.get("delta_vs_benchmark"), 0.0) for row in variant_rows]
+    confusion = _variant_confusion_counts(variant_rows, config)
+    precision = (
+        confusion["tp"] / (confusion["tp"] + confusion["fp"])
+        if (confusion["tp"] + confusion["fp"])
+        else 0.0
+    )
+    recall = (
+        confusion["tp"] / (confusion["tp"] + confusion["fn"])
+        if (confusion["tp"] + confusion["fn"])
+        else 0.0
+    )
+    return {
+        "variant_id": variant_id,
+        "threshold_delta": threshold_delta,
+        "lag_mode": lag_mode,
+        "outcome_horizon": outcome_horizon,
+        "benchmark_name": benchmark_name,
+        "cost_level": cost_level,
+        "sample_count": len(variant_rows),
+        "fallback_trigger_count": sum(1 for row in variant_rows if row.get("fallback_triggered")),
+        "tail_loss_reduction": _round(_tail_loss_reduction(original_metric, metric)),
+        "mean_delta_vs_benchmark": metric.get("mean_delta_vs_benchmark"),
+        "median_delta_vs_benchmark": metric.get("median_delta_vs_benchmark"),
+        "p10_delta_vs_benchmark": _round(_percentile(deltas, 10)),
+        "p90_delta_vs_benchmark": _round(_percentile(deltas, 90)),
+        "precision": _round(precision),
+        "recall": _round(recall),
+        "false_positive_count": confusion["fp"],
+        "false_negative_count": confusion["fn"],
+        "missed_upside_count": sum(
+            1 for row in variant_rows if _float(row.get("missed_upside"), 0.0) > 0
+        ),
+        "upside_capture_ratio": _upside_capture_summary(original_rows, variant_rows).get(
+            "upside_capture_ratio"
+        ),
+        "turnover_proxy": metric.get("turnover"),
+        "constraint_hit_count": sum(1 for row in variant_rows if row.get("fallback_triggered")),
+        "status": "BASELINE" if variant_id == "baseline" else "PERTURBED",
+        "promotion_gate_allowed": False,
+    }
+
+
+def _variant_confusion_counts(
+    rows: list[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, int]:
+    policy = _next_stage_section(config, "tail_risk_fallback_trigger_precision_recall_audit")
+    positive_fields = [str(item) for item in policy.get("positive_label_fields", [])]
+    counts = {"tp": 0, "fp": 0, "fn": 0, "tn": 0}
+    for row in rows:
+        actual = any(bool(row.get(field)) for field in positive_fields)
+        triggered = bool(row.get("fallback_triggered"))
+        if triggered and actual:
+            counts["tp"] += 1
+        elif triggered and not actual and _float(row.get("original_delta_vs_benchmark"), 0.0) > 0:
+            counts["fp"] += 1
+        elif not triggered and actual:
+            counts["fn"] += 1
+        elif not triggered and not actual:
+            counts["tn"] += 1
+    return counts
+
+
+def _tail_risk_sensitivity_stability_summary(
+    variants: list[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    baseline = next((row for row in variants if row.get("variant_id") == "baseline"), {})
+    perturbed = [row for row in variants if row.get("variant_id") != "baseline"]
+    values = [_float(row.get("tail_loss_reduction"), 0.0) for row in perturbed]
+    baseline_metric = _float(baseline.get("tail_loss_reduction"), 0.0)
+    drop_floor = _float(policy.get("small_threshold_tail_loss_drop_floor"), 0.20)
+    missed_floor = _first_int(policy.get("small_threshold_missed_upside_increase_floor")) or 1
+    small_threshold_cliff = any(
+        abs(_float(row.get("threshold_delta"), 0.0)) <= 0.05
+        and (
+            baseline_metric - _float(row.get("tail_loss_reduction"), 0.0) >= drop_floor
+            or _first_int(row.get("missed_upside_count"))
+            - _first_int(baseline.get("missed_upside_count"))
+            >= missed_floor
+        )
+        for row in perturbed
+    )
+    next_lag = next((row for row in perturbed if row.get("lag_mode") == "next_day_open"), {})
+    lag_cliff = (
+        bool(next_lag)
+        and baseline_metric - _float(next_lag.get("tail_loss_reduction"), 0.0) >= drop_floor
+    )
+    horizon_cliff = any(
+        row.get("outcome_horizon") not in {"all", "3d"}
+        and _float(row.get("precision"), 0.0) < _float(policy.get("precision_floor"), 0.60)
+        for row in perturbed
+    )
+    cost_cliff = any(
+        row.get("cost_level") == "cost=high"
+        and _float(row.get("upside_capture_ratio"), 0.0)
+        < _float(policy.get("cost_high_upside_capture_floor"), 1.0)
+        for row in perturbed
+    )
+    cliff = small_threshold_cliff or lag_cliff or horizon_cliff or cost_cliff
+    worst = min(
+        perturbed,
+        key=lambda row: _float(row.get("tail_loss_reduction"), 999.0),
+        default={},
+    )
+    reasons = []
+    if small_threshold_cliff:
+        reasons.append("small_threshold_perturbation_cliff")
+    if lag_cliff:
+        reasons.append("next_day_lag_degradation")
+    if horizon_cliff:
+        reasons.append("horizon_precision_recall_degradation")
+    if cost_cliff:
+        reasons.append("cost_high_upside_capture_below_floor")
+    return {
+        "baseline_metric": baseline_metric,
+        "perturbed_min": _round(min(values)) if values else None,
+        "perturbed_max": _round(max(values)) if values else None,
+        "perturbed_mean": _round(_mean(values)),
+        "perturbed_std": _round(_stddev(values)),
+        "worst_case_variant": worst.get("variant_id"),
+        "cliff_detected": cliff,
+        "warning_detected": bool(reasons),
+        "fragility_reason": ",".join(reasons) if reasons else "none",
+        "warnings": [
+            {
+                "warning": reason,
+                "promotion_gate_allowed": False,
+            }
+            for reason in reasons
+        ],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _percentile(values: list[float], percentile: int) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    index = (len(ordered) - 1) * percentile / 100
+    lower = math.floor(index)
+    upper = math.ceil(index)
+    if lower == upper:
+        return ordered[int(index)]
+    weight = index - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
+
+
+def _calendar_segment_rows(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    years = sorted({str(row.get("date", ""))[:4] for row in original_rows if row.get("date")})
+    return [
+        _segment_metric_row(
+            "calendar",
+            year,
+            [row for row in original_rows if str(row.get("date", "")).startswith(year)],
+            [row for row in fallback_rows if str(row.get("date", "")).startswith(year)],
+            config,
+            policy,
+        )
+        for year in years
+    ]
+
+
+def _volatility_segment_rows(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    scored = sorted(
+        [
+            (abs(_float(row.get("benchmark_realized_net_return"), 0.0)), _case_key(row))
+            for row in original_rows
+        ]
+    )
+    bucket_by_key = {}
+    labels = ["vol_q1_low", "vol_q2_mid_low", "vol_q3_mid_high", "vol_q4_high"]
+    for index, (_score, key) in enumerate(scored):
+        bucket_by_key[key] = labels[min(3, int(index * 4 / max(1, len(scored))))]
+    return [
+        _segment_metric_row(
+            "volatility",
+            label,
+            [row for row in original_rows if bucket_by_key.get(_case_key(row)) == label],
+            [row for row in fallback_rows if bucket_by_key.get(_case_key(row)) == label],
+            config,
+            policy,
+        )
+        for label in labels
+    ]
+
+
+def _trend_segment_rows(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    def label(row: Mapping[str, Any]) -> str:
+        benchmark = _float(row.get("benchmark_realized_net_return"), 0.0)
+        original = _float(
+            row.get("original_delta_vs_benchmark", row.get("delta_vs_benchmark")), 0.0
+        )
+        if benchmark <= -0.05:
+            return "sharp_drawdown"
+        if benchmark < -0.005:
+            return "downtrend"
+        if benchmark > 0.02 and original < 0:
+            return "rebound"
+        if benchmark > 0.005:
+            return "uptrend"
+        return "sideways"
+
+    labels = ["uptrend", "sideways", "downtrend", "sharp_drawdown", "rebound"]
+    return [
+        _segment_metric_row(
+            "trend",
+            segment,
+            [row for row in original_rows if label(row) == segment],
+            [row for row in fallback_rows if label(row) == segment],
+            config,
+            policy,
+        )
+        for segment in labels
+    ]
+
+
+def _tail_severity_segment_rows(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    def label(row: Mapping[str, Any]) -> str:
+        delta = _float(row.get("original_delta_vs_benchmark", row.get("delta_vs_benchmark")), 0.0)
+        if delta <= -0.05:
+            return "extreme_risk"
+        if delta <= -0.02:
+            return "high_risk"
+        if delta < 0:
+            return "medium_risk"
+        return "mild_risk"
+
+    labels = ["mild_risk", "medium_risk", "high_risk", "extreme_risk"]
+    return [
+        _segment_metric_row(
+            "tail_event_severity",
+            segment,
+            [row for row in original_rows if label(row) == segment],
+            [row for row in fallback_rows if label(row) == segment],
+            config,
+            policy,
+        )
+        for segment in labels
+    ]
+
+
+def _segment_metric_row(
+    segment_type: str,
+    segment_name: str,
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    original_metric = _v2_variant_metric_row("segment_original", original_rows, config)
+    fallback_metric = _add_variant_deltas(
+        _v2_variant_metric_row("segment_fallback", fallback_rows, config),
+        original_metric,
+    )
+    confusion = _variant_confusion_counts(fallback_rows, config)
+    sample_floor = _first_int(policy.get("min_segment_sample_count")) or 20
+    positive = confusion["tp"] + confusion["fn"]
+    dates = sorted(str(row.get("date")) for row in original_rows if row.get("date"))
+    mean_delta = _float(fallback_metric.get("mean_delta_vs_benchmark"), 0.0)
+    status = (
+        "INSUFFICIENT_SEGMENT_EVIDENCE"
+        if len(original_rows) < sample_floor
+        else ("SEGMENT_NEGATIVE" if mean_delta < 0 else "SEGMENT_CONTINUE")
+    )
+    return {
+        "segment_type": segment_type,
+        "segment_name": segment_name,
+        "date_start": dates[0] if dates else None,
+        "date_end": dates[-1] if dates else None,
+        "sample_count": len(original_rows),
+        "fallback_trigger_count": sum(1 for row in fallback_rows if row.get("fallback_triggered")),
+        "positive_label_count": positive,
+        "negative_label_count": max(0, len(fallback_rows) - positive),
+        "tail_loss_reduction": _round(_tail_loss_reduction(original_metric, fallback_metric)),
+        "mean_delta_vs_benchmark": fallback_metric.get("mean_delta_vs_benchmark"),
+        "median_delta_vs_benchmark": fallback_metric.get("median_delta_vs_benchmark"),
+        "precision": _round(
+            confusion["tp"] / (confusion["tp"] + confusion["fp"])
+            if (confusion["tp"] + confusion["fp"])
+            else 0.0
+        ),
+        "recall": _round(
+            confusion["tp"] / (confusion["tp"] + confusion["fn"])
+            if (confusion["tp"] + confusion["fn"])
+            else 0.0
+        ),
+        "false_positive_count": confusion["fp"],
+        "false_negative_count": confusion["fn"],
+        "missed_upside_count": sum(
+            1 for row in fallback_rows if _float(row.get("missed_upside"), 0.0) > 0
+        ),
+        "upside_capture_ratio": _upside_capture_summary(original_rows, fallback_rows).get(
+            "upside_capture_ratio"
+        ),
+        "worst_case_delta": _round(
+            min((_float(row.get("delta_vs_benchmark"), 0.0) for row in fallback_rows), default=0.0)
+        ),
+        "status": status,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _regime_concentration_summary(
+    fallback_rows: list[Mapping[str, Any]],
+    segment_rows: list[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    total = sum(_float(row.get("avoided_tail_loss"), 0.0) for row in fallback_rows)
+    calendar = [row for row in segment_rows if row.get("segment_type") == "calendar"]
+    contributions = sorted(
+        [
+            sum(
+                _float(row.get("avoided_tail_loss"), 0.0)
+                for row in fallback_rows
+                if str(row.get("date", "")).startswith(str(segment.get("segment_name")))
+            )
+            for segment in calendar
+        ],
+        reverse=True,
+    )
+    top1 = contributions[0] / total if total and contributions else 0.0
+    top3 = sum(contributions[:3]) / total if total else 0.0
+    low_sample = [
+        f"{row.get('segment_type')}:{row.get('segment_name')}"
+        for row in segment_rows
+        if row.get("status") == "INSUFFICIENT_SEGMENT_EVIDENCE"
+    ]
+    concentration_risk = (
+        "HIGH"
+        if top1 >= _float(policy.get("top_segment_contribution_high_risk_floor"), 0.60)
+        else "LOW"
+    )
+    return {
+        "total_tail_loss_reduction": _round(total),
+        "top_1_segment_contribution_ratio": _round(top1),
+        "top_3_segment_contribution_ratio": _round(top3),
+        "segment_count_with_positive_effect": sum(
+            1 for row in segment_rows if _float(row.get("tail_loss_reduction"), 0.0) > 0
+        ),
+        "segment_count_with_negative_effect": sum(
+            1 for row in segment_rows if _float(row.get("mean_delta_vs_benchmark"), 0.0) < 0
+        ),
+        "min_segment_sample_count": min(
+            (_first_int(row.get("sample_count")) for row in segment_rows),
+            default=0,
+        ),
+        "low_sample_segments": low_sample,
+        "concentration_risk": concentration_risk,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_scoreboard_record(record: Mapping[str, Any], *, as_of: date) -> dict[str, Any]:
+    decision_timestamp = str(
+        record.get("decision_timestamp")
+        or _source_case_date(record.get("source_case_key"))
+        or record.get("as_of")
+        or ""
+    )
+    horizon = str(record.get("outcome_horizon") or record.get("horizon") or "unknown")
+    outcome_available_at = str(
+        record.get("outcome_available_at")
+        or _add_days_text(decision_timestamp, _horizon_days(horizon))
+    )
+    outcome = _mapping(record.get("actual_future_outcome_after_maturity"))
+    source_status = str(record.get("maturity_status") or outcome.get("status") or "")
+    actual = _optional_float(record.get("actual_outcome", outcome.get("actual_outcome")))
+    benchmark = _optional_float(record.get("benchmark_outcome", outcome.get("benchmark_outcome")))
+    fallback = _optional_float(record.get("fallback_outcome", outcome.get("fallback_outcome")))
+    if source_status == "pending_maturity":
+        maturity_status = "pending_maturity"
+    elif actual is None or benchmark is None or fallback is None:
+        maturity_status = "missing_outcome"
+    elif not decision_timestamp:
+        maturity_status = "invalid_record"
+    else:
+        maturity_status = "matured"
+    delta = fallback - benchmark if maturity_status == "matured" else None
+    tail_loss_reduced = bool(delta is not None and benchmark < 0 and delta > 0)
+    missed_upside = bool(delta is not None and benchmark > 0 and delta < 0)
+    classification = _forward_classification(
+        fallback_triggered=bool(record.get("fallback_triggered")),
+        tail_loss_reduced=tail_loss_reduced,
+        missed_upside=missed_upside,
+        maturity_status=maturity_status,
+    )
+    return {
+        "record_id": record.get("record_id"),
+        "decision_timestamp": decision_timestamp,
+        "asset": record.get("asset"),
+        "benchmark": _mapping(record.get("benchmark_output")).get("benchmark_action"),
+        "fallback_triggered": bool(record.get("fallback_triggered")),
+        "trigger_reason": record.get("trigger_reason"),
+        "outcome_horizon": horizon,
+        "outcome_available_at": outcome_available_at,
+        "maturity_status": maturity_status,
+        "actual_outcome": _round(actual) if actual is not None else None,
+        "benchmark_outcome": _round(benchmark) if benchmark is not None else None,
+        "fallback_outcome": _round(fallback) if fallback is not None else None,
+        "delta_vs_benchmark": _round(delta) if delta is not None else None,
+        "tail_loss_reduced": tail_loss_reduced,
+        "missed_upside": missed_upside,
+        "classification": classification,
+        "as_of": as_of.isoformat(),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_forward_scoreboard(
+    records: list[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    matured = [row for row in records if row.get("maturity_status") == "matured"]
+    pending = [row for row in records if row.get("maturity_status") == "pending_maturity"]
+    invalid = [row for row in records if row.get("maturity_status") == "invalid_record"]
+    missing = [row for row in records if row.get("maturity_status") == "missing_outcome"]
+    triggered = [row for row in matured if row.get("fallback_triggered")]
+    false_positive = [
+        row for row in triggered if row.get("classification") in {"false_positive", "upside_missed"}
+    ]
+    false_negative = [
+        row
+        for row in matured
+        if (not row.get("fallback_triggered")) and row.get("tail_loss_reduced")
+    ]
+    deltas = [
+        _float(row.get("delta_vs_benchmark"), 0.0)
+        for row in matured
+        if row.get("delta_vs_benchmark") is not None
+    ]
+    positive_benchmark = [row for row in matured if _float(row.get("benchmark_outcome"), 0.0) > 0]
+    captured = sum(max(0.0, _float(row.get("fallback_outcome"), 0.0)) for row in positive_benchmark)
+    benchmark_sum = sum(_float(row.get("benchmark_outcome"), 0.0) for row in positive_benchmark)
+    tail_loss_reduction = sum(1 for row in matured if row.get("tail_loss_reduced"))
+    metric_degradation = bool(deltas and _mean(deltas) < 0)
+    return {
+        "forward_record_count": len(records),
+        "matured_record_count": len(matured),
+        "pending_record_count": len(pending),
+        "invalid_record_count": len(invalid),
+        "missing_outcome_count": len(missing),
+        "fallback_trigger_count": sum(1 for row in records if row.get("fallback_triggered")),
+        "matured_fallback_trigger_count": len(triggered),
+        "tail_loss_reduction_forward": _round(tail_loss_reduction),
+        "mean_delta_vs_benchmark_forward": _round(_mean(deltas)),
+        "precision_forward": _round(
+            (len(triggered) - len(false_positive)) / len(triggered) if triggered else 0.0
+        ),
+        "recall_forward": _round(
+            len(triggered) / (len(triggered) + len(false_negative))
+            if (len(triggered) + len(false_negative))
+            else 0.0
+        ),
+        "missed_upside_count_forward": sum(1 for row in matured if row.get("missed_upside")),
+        "upside_capture_ratio_forward": _round(captured / benchmark_sum if benchmark_sum else 0.0),
+        "worst_case_forward_delta": _round(min(deltas)) if deltas else None,
+        "evidence_maturity_ratio": _round(len(matured) / len(records) if records else 0.0),
+        "metric_degradation_detected": metric_degradation,
+        "min_matured_forward_records": _first_int(policy.get("min_matured_forward_records")),
+        "min_matured_fallback_triggers": _first_int(policy.get("min_matured_fallback_triggers")),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _forward_promotion_readiness_assessment(
+    scoreboard: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> str:
+    if _first_int(scoreboard.get("pending_record_count")) > 0:
+        return "NOT_READY_FORWARD_PENDING"
+    if _first_int(scoreboard.get("matured_fallback_trigger_count")) < _first_int(
+        policy.get("min_matured_fallback_triggers")
+    ):
+        return "NOT_READY_INSUFFICIENT_MATURED_TRIGGERS"
+    if bool(scoreboard.get("metric_degradation_detected")):
+        return "NOT_READY_FORWARD_METRIC_DEGRADATION"
+    if _float(scoreboard.get("evidence_maturity_ratio"), 0.0) < _float(
+        policy.get("min_evidence_maturity_ratio"), 0.60
+    ):
+        return "NOT_READY_FORWARD_PENDING"
+    return "WATCHLIST_ONLY"
+
+
+def _forward_promotion_block_reason(
+    status: str,
+    scoreboard: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> str:
+    if status == "FORWARD_PENDING":
+        return "forward_records_pending_maturity"
+    if status == "FORWARD_DEGRADED":
+        return "forward_metric_degradation"
+    if _first_int(scoreboard.get("matured_record_count")) < _first_int(
+        policy.get("min_matured_forward_records")
+    ):
+        return "insufficient_matured_forward_records"
+    if _first_int(scoreboard.get("matured_fallback_trigger_count")) < _first_int(
+        policy.get("min_matured_fallback_triggers")
+    ):
+        return "insufficient_matured_fallback_triggers"
+    return "promotion_not_allowed_controlled_only"
+
+
+def _forward_classification(
+    *,
+    fallback_triggered: bool,
+    tail_loss_reduced: bool,
+    missed_upside: bool,
+    maturity_status: str,
+) -> str:
+    if maturity_status != "matured":
+        return "inconclusive"
+    if fallback_triggered and tail_loss_reduced:
+        return "true_positive"
+    if fallback_triggered and missed_upside:
+        return "false_positive"
+    if (not fallback_triggered) and tail_loss_reduced:
+        return "false_negative"
+    if fallback_triggered:
+        return "upside_preserved"
+    return "true_negative"
+
+
+def _add_days_text(value: str, days: int) -> str:
+    try:
+        return (date.fromisoformat(value[:10]) + timedelta(days=max(0, days))).isoformat()
+    except ValueError:
+        return f"{value}+{max(0, days)}d"
+
+
+def _timestamp_not_after(left: str, right: str) -> bool:
+    try:
+        return date.fromisoformat(left[:10]) <= date.fromisoformat(right[:10])
+    except ValueError:
+        return left <= right
+
+
+def _horizon_days(value: Any) -> int:
+    text = str(value or "")
+    digits = "".join(char for char in text if char.isdigit())
+    return int(digits) if digits else 1
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    return _float(value)
 
 
 def _case_key(row: Mapping[str, Any]) -> str:

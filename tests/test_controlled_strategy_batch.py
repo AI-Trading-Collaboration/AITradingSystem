@@ -748,6 +748,89 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         [
             "research",
             "strategies",
+            "tail-risk-fallback-audit-universe-reconciliation",
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--precision-recall",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
+            ),
+            "--opportunity-cost",
+            str(tmp_path / "cli_warning" / "tail_risk_opportunity_cost_upside_capture_review.json"),
+            "--forward-integration",
+            str(
+                tmp_path
+                / "cli_forward_tail"
+                / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-anti-leakage-audit",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-threshold-sensitivity",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-regime-segmented-robustness",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-forward-maturity-scoreboard",
+            "--forward-integration",
+            str(
+                tmp_path
+                / "cli_forward_tail"
+                / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+            ),
+            "--as-of-date",
+            TEST_AS_OF.isoformat(),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
             "tail-risk-policy-controlled-review-board",
             "--robustness",
             str(
@@ -765,6 +848,16 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
                 / "cli_forward_tail"
                 / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
             ),
+            "--audit-universe-reconciliation",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_audit_universe_reconciliation.json"),
+            "--anti-leakage",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_anti_leakage_audit.json"),
+            "--sensitivity",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_threshold_sensitivity.json"),
+            "--regime-segmented",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_regime_segmented_robustness.json"),
+            "--forward-maturity-scoreboard",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_forward_maturity_scoreboard.json"),
             "--output-root",
             str(tmp_path / "cli_warning"),
         ],
@@ -840,6 +933,17 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         / "cli_forward_tail"
         / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
     ).exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_fallback_audit_universe_reconciliation.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_fallback_anti_leakage_audit.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_fallback_threshold_sensitivity.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_fallback_regime_segmented_robustness.json"
+    ).exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_fallback_forward_maturity_scoreboard.json"
+    ).exists()
     assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
@@ -872,6 +976,7 @@ def test_controlled_strategy_batch_validation_tiers() -> None:
         "tests/test_controlled_strategy_tail_risk_policy.py",
         "tests/test_controlled_strategy_candidate_batch.py",
         "tests/test_controlled_strategy_batch.py",
+        "tests/test_tail_risk_fallback_falsification_audit.py",
     }
     assert controlled_strategy_paths.issubset(set(TIER_SPECS["fast-unit"].paths))
     assert controlled_strategy_paths.issubset(set(TIER_SPECS["contract-validation"].paths))
@@ -930,6 +1035,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "tail_risk_fallback_trigger_precision_recall_audit",
         "tail_risk_opportunity_cost_upside_capture_review",
         "tail_risk_forward_evidence_integration",
+        "tail_risk_fallback_audit_universe_reconciliation",
+        "tail_risk_fallback_anti_leakage_audit",
+        "tail_risk_fallback_threshold_sensitivity",
+        "tail_risk_fallback_regime_segmented_robustness",
+        "tail_risk_fallback_forward_maturity_scoreboard",
         "tail_risk_policy_controlled_review_board",
         "controlled_strategy_batch_review",
     }:
@@ -969,6 +1079,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "tail_risk_fallback_trigger_precision_recall_audit.json/md" in catalog
     assert "tail_risk_opportunity_cost_upside_capture_review.json/md" in catalog
     assert "tail_risk_benchmark_fallback_forward_evidence_integration.json/md" in catalog
+    assert "tail_risk_fallback_audit_universe_reconciliation.json/md" in catalog
+    assert "tail_risk_fallback_anti_leakage_audit.json/md" in catalog
+    assert "tail_risk_fallback_threshold_sensitivity.json/md" in catalog
+    assert "tail_risk_fallback_regime_segmented_robustness.json/md" in catalog
+    assert "tail_risk_fallback_forward_maturity_scoreboard.json/md" in catalog
     assert "tail_risk_policy_controlled_review_board.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
@@ -993,6 +1108,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-805～809" in system_flow
     assert "TRADING-810～815" in system_flow
     assert "TRADING-816～820" in system_flow
+    assert "TRADING-821～825" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1035,6 +1151,13 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "aits research strategies tail-risk-opportunity-cost-upside-capture-review" in system_flow
     )
     assert "aits research strategies tail-risk-forward-evidence-integration" in system_flow
+    assert (
+        "aits research strategies tail-risk-fallback-audit-universe-reconciliation" in system_flow
+    )
+    assert "aits research strategies tail-risk-fallback-anti-leakage-audit" in system_flow
+    assert "aits research strategies tail-risk-fallback-threshold-sensitivity" in system_flow
+    assert "aits research strategies tail-risk-fallback-regime-segmented-robustness" in system_flow
+    assert "aits research strategies tail-risk-fallback-forward-maturity-scoreboard" in system_flow
     assert "aits research strategies tail-risk-policy-controlled-review-board" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (

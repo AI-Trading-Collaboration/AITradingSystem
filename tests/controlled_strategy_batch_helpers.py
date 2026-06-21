@@ -46,6 +46,11 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
     run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_fallback_anti_leakage_audit,
+    run_tail_risk_fallback_audit_universe_reconciliation,
+    run_tail_risk_fallback_forward_maturity_scoreboard,
+    run_tail_risk_fallback_regime_segmented_robustness,
+    run_tail_risk_fallback_threshold_sensitivity,
     run_tail_risk_fallback_trigger_precision_recall_audit,
     run_tail_risk_forward_evidence_integration,
     run_tail_risk_opportunity_cost_upside_capture_review,
@@ -407,6 +412,48 @@ def _run_tail_risk_review_board_inputs(tmp_path: Path) -> dict[str, Path]:
         "precision": Path(precision["artifact_paths"]["json_path"]),
         "opportunity": Path(opportunity["artifact_paths"]["json_path"]),
         "forward": Path(forward["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_tail_risk_falsification_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_tail_risk_review_board_inputs(tmp_path)
+    reconciliation = run_tail_risk_fallback_audit_universe_reconciliation(
+        robustness_path=paths["robustness"],
+        precision_recall_path=paths["precision"],
+        opportunity_cost_path=paths["opportunity"],
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "tail_reconciliation",
+    )
+    anti_leakage = run_tail_risk_fallback_anti_leakage_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_anti_leakage",
+    )
+    sensitivity = run_tail_risk_fallback_threshold_sensitivity(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_sensitivity",
+    )
+    regime = run_tail_risk_fallback_regime_segmented_robustness(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_regime",
+    )
+    scoreboard = run_tail_risk_fallback_forward_maturity_scoreboard(
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "tail_scoreboard",
+        as_of_date=TEST_AS_OF,
+    )
+    return {
+        **paths,
+        "reconciliation": Path(reconciliation["artifact_paths"]["json_path"]),
+        "anti_leakage": Path(anti_leakage["artifact_paths"]["json_path"]),
+        "sensitivity": Path(sensitivity["artifact_paths"]["json_path"]),
+        "regime": Path(regime["artifact_paths"]["json_path"]),
+        "scoreboard": Path(scoreboard["artifact_paths"]["json_path"]),
     }
 
 

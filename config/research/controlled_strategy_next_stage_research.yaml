@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_820
+policy_id: controlled_strategy_research_next_stage_775_825
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -18,8 +18,12 @@ rationale: >
   the main research line to benchmark-first tail-risk avoidance. After
   TRADING-815 continues the tail-risk fallback family, expand robustness,
   trigger quality, opportunity cost, and forward evidence tracking without
-  promotion. This policy does not validate utility boundaries and does not
-  permit promotion, paper-shadow, production weight, or broker changes.
+  promotion. TRADING-821 to TRADING-825 switch the fallback line into
+  falsification-first audit: reconcile count universes, test leakage and label
+  coupling, perturb thresholds/lags/horizons/benchmarks/costs, segment by
+  regime, and monitor forward maturity. This policy does not validate utility
+  boundaries and does not permit promotion, paper-shadow, production weight, or
+  broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -847,6 +851,9 @@ tail_risk_policy_controlled_review_board:
   task_id: TRADING-820
   allowed_decisions:
     - CONTROLLED_RESEARCH_CONTINUE
+    - CONTROLLED_RESEARCH_BLOCKED
+    - NEEDS_MORE_FORWARD_EVIDENCE
+    - PROMOTION_NOT_ALLOWED
     - WATCHLIST_FORWARD_MATURITY
     - WATCHLIST
     - PIVOT_OVERCONSERVATIVE
@@ -863,3 +870,127 @@ tail_risk_policy_controlled_review_board:
     The review board can only continue controlled research, wait for forward
     maturity, watchlist, pivot, kill, or request data. Even strong results do
     not permit paper-shadow, production weights, or broker action.
+tail_risk_fallback_audit_universe_reconciliation:
+  task_id: TRADING-821
+  allowed_statuses:
+    - RECONCILED
+    - PARTIALLY_RECONCILED
+    - INCOMPLETE
+    - BLOCKED_BY_MISSING_ARTIFACT
+  required_source_tasks:
+    - TRADING-816
+    - TRADING-817
+    - TRADING-818
+    - TRADING-819
+  direct_count_comparison_allowed: false
+  rationale: >
+    Count reconciliation is an audit artifact. It explains different
+    denominator universes and blocks only when source artifacts or denominators
+    are missing.
+tail_risk_fallback_anti_leakage_audit:
+  task_id: TRADING-822
+  trigger_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  label_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  independent_outcome_validation_present: false
+  feature_inputs:
+    - feature_name: trailing_return
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: trailing_volatility
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: trailing_drawdown
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: classifier_tail_risk_labels
+      source_type: controlled_historical_label_proxy
+      pit_status: unknown
+  blocked_risks:
+    - CRITICAL
+    - feature_available_after_decision
+    - trigger_label_same_source_without_independent_validation
+  rationale: >
+    Precision/recall can look perfect when trigger and label share the same
+    label source. Unknown PIT status is not treated as safe.
+tail_risk_fallback_threshold_sensitivity:
+  task_id: TRADING-823
+  threshold_deltas:
+    - -0.20
+    - -0.10
+    - -0.05
+    - 0.00
+    - 0.05
+    - 0.10
+    - 0.20
+  lag_modes:
+    - same_day_close
+    - next_day_open
+    - next_day_close
+    - two_day_lag
+  outcome_horizons:
+    - 1d
+    - 3d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  benchmarks:
+    - no_trade
+    - static_baseline
+    - current_dynamic_policy
+    - defensive_baseline
+  cost_levels:
+    - cost=0
+    - cost=low
+    - cost=medium
+    - cost=high
+  small_threshold_tail_loss_drop_floor: 0.20
+  small_threshold_missed_upside_increase_floor: 1
+  precision_floor: 0.60
+  cost_high_upside_capture_floor: 1.00
+  rationale: >
+    Sensitivity diagnostics can mark the candidate fragile and keep promotion
+    blocked, but they do not by themselves modify production policy.
+tail_risk_fallback_regime_segmented_robustness:
+  task_id: TRADING-824
+  required_segment_types:
+    - calendar
+    - volatility
+    - trend
+  min_segment_sample_count: 20
+  top_segment_contribution_high_risk_floor: 0.60
+  unavailable_segments_must_report_reason: true
+  rationale: >
+    Segment review checks whether controlled evidence is concentrated in a
+    small set of calendar or market-regime slices. Missing macro or liquidity
+    features must be disclosed rather than fabricated.
+tail_risk_fallback_forward_maturity_scoreboard:
+  task_id: TRADING-825
+  min_matured_forward_records: 100
+  min_matured_fallback_triggers: 30
+  max_forward_false_positive_rate_tolerance: 0.05
+  max_forward_false_negative_rate_tolerance: 0.05
+  max_missed_upside_count: 0
+  min_forward_tail_loss_reduction: 0
+  min_evidence_maturity_ratio: 0.60
+  allowed_promotion_readiness_assessments:
+    - NOT_ASSESSED
+    - NOT_READY_FORWARD_PENDING
+    - NOT_READY_INSUFFICIENT_MATURED_TRIGGERS
+    - NOT_READY_FORWARD_METRIC_DEGRADATION
+    - NOT_READY_LEAKAGE_OR_RECONCILIATION_BLOCKED
+    - WATCHLIST_ONLY
+  forbidden_assessments:
+    - READY
+    - PROMOTION_READY
+  rationale: >
+    The forward scoreboard is blocking-only. It monitors maturity and explains
+    what remains missing before any future promotion discussion, but it cannot
+    open promotion.

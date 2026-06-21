@@ -68,6 +68,13 @@ target-version = "py311"
 [tool.black]
 line-length = 100
 target-version = ["py311"]
+extend-exclude = '''
+/(
+    \.venv_old_.*
+  | outputs
+  | run
+)/
+'''
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

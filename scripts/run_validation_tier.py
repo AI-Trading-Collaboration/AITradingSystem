@@ -69,6 +69,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_controlled_strategy_tail_risk_policy.py",
             "tests/test_controlled_strategy_candidate_batch.py",
             "tests/test_controlled_strategy_batch.py",
+            "tests/test_tail_risk_fallback_falsification_audit.py",
         ),
     ),
     "contract-validation": TierSpec(
@@ -110,6 +111,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_controlled_strategy_tail_risk_policy.py",
             "tests/test_controlled_strategy_candidate_batch.py",
             "tests/test_controlled_strategy_batch.py",
+            "tests/test_tail_risk_fallback_falsification_audit.py",
         ),
     ),
     "report-validation": TierSpec(

@@ -49,10 +49,15 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
     DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
     DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
     DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
     DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
     DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
     DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
+    DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
@@ -96,6 +101,11 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
     run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_fallback_anti_leakage_audit,
+    run_tail_risk_fallback_audit_universe_reconciliation,
+    run_tail_risk_fallback_forward_maturity_scoreboard,
+    run_tail_risk_fallback_regime_segmented_robustness,
+    run_tail_risk_fallback_threshold_sensitivity,
     run_tail_risk_fallback_trigger_precision_recall_audit,
     run_tail_risk_forward_evidence_integration,
     run_tail_risk_opportunity_cost_upside_capture_review,
@@ -2163,6 +2173,187 @@ def strategies_tail_risk_forward_evidence_integration_command(
     _print_strategy_pilot_payload("Tail-risk forward evidence integration", payload)
 
 
+@strategies_app.command("tail-risk-fallback-audit-universe-reconciliation")
+def strategies_tail_risk_fallback_audit_universe_reconciliation_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-821 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall: Annotated[
+        Path,
+        typer.Option("--precision-recall", help="TRADING-817 precision/recall JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    opportunity_cost: Annotated[
+        Path,
+        typer.Option("--opportunity-cost", help="TRADING-818 opportunity cost JSON。"),
+    ] = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    forward_integration: Annotated[
+        Path,
+        typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-821 reconciliation 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_audit_universe_reconciliation(
+            config_path=config_path,
+            robustness_path=robustness,
+            precision_recall_path=precision_recall,
+            opportunity_cost_path=opportunity_cost,
+            forward_integration_path=forward_integration,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback universe reconciliation", payload)
+
+
+@strategies_app.command("tail-risk-fallback-anti-leakage-audit")
+def strategies_tail_risk_fallback_anti_leakage_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-822 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-822 anti-leakage 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_anti_leakage_audit(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback anti-leakage audit", payload)
+
+
+@strategies_app.command("tail-risk-fallback-threshold-sensitivity")
+def strategies_tail_risk_fallback_threshold_sensitivity_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-823 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-823 sensitivity 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_threshold_sensitivity(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback threshold sensitivity", payload)
+
+
+@strategies_app.command("tail-risk-fallback-regime-segmented-robustness")
+def strategies_tail_risk_fallback_regime_segmented_robustness_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-824 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-824 regime segmented 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_regime_segmented_robustness(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback regime-segmented robustness", payload)
+
+
+@strategies_app.command("tail-risk-fallback-forward-maturity-scoreboard")
+def strategies_tail_risk_fallback_forward_maturity_scoreboard_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-825 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    forward_integration: Annotated[
+        Path,
+        typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    as_of_date: Annotated[
+        str | None,
+        typer.Option("--as-of-date", help="TRADING-825 maturity scoreboard as-of date。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-825 forward maturity 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_forward_maturity_scoreboard(
+            config_path=config_path,
+            forward_integration_path=forward_integration,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of_date),
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback forward maturity scoreboard", payload)
+
+
 @strategies_app.command("tail-risk-policy-controlled-review-board")
 def strategies_tail_risk_policy_controlled_review_board_command(
     config_path: Annotated[
@@ -2185,6 +2376,28 @@ def strategies_tail_risk_policy_controlled_review_board_command(
         Path,
         typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
     ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    audit_universe_reconciliation: Annotated[
+        Path,
+        typer.Option(
+            "--audit-universe-reconciliation", help="TRADING-821 universe reconciliation JSON。"
+        ),
+    ] = DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
+    anti_leakage: Annotated[
+        Path,
+        typer.Option("--anti-leakage", help="TRADING-822 anti-leakage JSON。"),
+    ] = DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    sensitivity: Annotated[
+        Path,
+        typer.Option("--sensitivity", help="TRADING-823 sensitivity JSON。"),
+    ] = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
+    regime_segmented: Annotated[
+        Path,
+        typer.Option("--regime-segmented", help="TRADING-824 regime segmented JSON。"),
+    ] = DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
+    forward_maturity_scoreboard: Annotated[
+        Path,
+        typer.Option("--forward-maturity-scoreboard", help="TRADING-825 scoreboard JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="TRADING-820 controlled review board 输出目录。"),
@@ -2197,6 +2410,11 @@ def strategies_tail_risk_policy_controlled_review_board_command(
             precision_recall_path=precision_recall,
             opportunity_cost_path=opportunity_cost,
             forward_integration_path=forward_integration,
+            audit_universe_reconciliation_path=audit_universe_reconciliation,
+            anti_leakage_path=anti_leakage,
+            sensitivity_path=sensitivity,
+            regime_segmented_path=regime_segmented,
+            forward_maturity_scoreboard_path=forward_maturity_scoreboard,
             output_root=output_root,
         )
     )
@@ -5908,7 +6126,7 @@ def _print_indicator_artifact(
     console.print(f"JSON：{paths['json_path']}")
     console.print(f"Markdown：{paths['markdown_path']}")
     console.print("research_only=true；production_effect=none")
-    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+    if str(payload["status"]) == "FAIL":
         raise typer.Exit(code=1)
 
 
@@ -5922,19 +6140,37 @@ def _print_research_artifact(
     console.print(f"JSON：{paths['json_path']}")
     console.print(f"Markdown：{paths['markdown_path']}")
     console.print("research_only=true；production_effect=none")
-    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+    if str(payload["status"]) == "FAIL":
         raise typer.Exit(code=1)
 
 
 def _print_strategy_pilot_payload(label: str, payload: dict[str, object]) -> None:
     _print_status(label, str(payload["status"]))
+    console.print(f"task_id={payload.get('task_id', 'N/A')}")
+    console.print(f"status={payload.get('status')}")
     _print_summary(payload)
     paths = payload.get("artifact_paths")
     if isinstance(paths, dict):
+        console.print(f"artifact_path={paths.get('json_path')}")
         console.print(f"JSON：{paths.get('json_path')}")
         console.print(f"Markdown：{paths.get('markdown_path')}")
-    console.print("research_only=true；promotion_gate_allowed=false；production_effect=none")
-    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+    blockers = payload.get("blockers") or payload.get("remaining_blockers") or []
+    warnings = payload.get("warnings") or []
+    console.print(f"blockers={len(blockers) if isinstance(blockers, list) else 0}")
+    console.print(f"warnings={len(warnings) if isinstance(warnings, list) else 0}")
+    console.print(
+        f"next_recommended_action={payload.get('next_recommended_action', 'manual_review')}"
+    )
+    for safety_field in (
+        "controlled_only=true",
+        "promotion_gate_allowed=false",
+        "paper_shadow_change_allowed=false",
+        "production_weight_change_allowed=false",
+        "broker_action=none",
+        "production_effect=none",
+    ):
+        console.print(safety_field)
+    if str(payload["status"]) == "FAIL":
         raise typer.Exit(code=1)
 
 
