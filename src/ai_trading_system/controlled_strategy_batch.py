@@ -104,6 +104,12 @@ DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
     / "value_surface_controlled_walk_forward_expansion.json"
 )
+DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_failure_attribution.json"
+)
+DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_direction_review.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -113,11 +119,17 @@ DEFAULT_UTILITY_RANKING_ROBUSTNESS_PATH = (
 DEFAULT_VALUE_SURFACE_UTILITY_PARETO_RANKING_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "value_surface_utility_pareto_ranking_review.json"
 )
+DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH = (
+    DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "horizon_cliff_utility_ranking_stabilization_review.json"
+)
 DEFAULT_FORWARD_CONTINUITY_MATURITY_PATH = (
     DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT / "forward_evidence_daily_continuity_maturity_tracker.json"
 )
 DEFAULT_FORWARD_DAILY_CONTINUITY_REVIEW_PATH = (
     DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT / "forward_evidence_daily_continuity_review.json"
+)
+DEFAULT_FORWARD_EVIDENCE_CONTINUITY_EXTENSION_PATH = (
+    DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT / "forward_evidence_continuity_extension.json"
 )
 DEFAULT_REGRET_STATE_MACHINE_PATH = (
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT / "regret_state_machine_controlled_prototype.json"
@@ -138,6 +150,9 @@ DEFAULT_GBDT_PIVOT_SELECTION_PATH = (
 DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH = (
     DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT
     / "gbdt_value_surface_residual_diagnostic_prototype.json"
+)
+DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH = (
+    DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT / "gbdt_residual_hypothesis_triage.json"
 )
 DEFAULT_REGRET_CASEBOOK_EXPANSION_GATE_PATH = (
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT / "regret_casebook_expansion_gate.json"
@@ -1808,6 +1823,357 @@ def run_regret_casebook_activation_recheck(
     return payload
 
 
+def run_value_surface_failure_attribution(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    walk_forward_path: Path = DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    universe = _universe(config)
+    quality = _run_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        universe=universe,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before value surface failure attribution")
+
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    walk_forward = _read_json_or_empty(walk_forward_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    attribution = _failure_attribution_report(selected_cases, config)
+    payload = _controlled_payload(
+        report_type="value_surface_failure_attribution",
+        title="Value surface failure attribution",
+        status="FAILURE_ATTRIBUTION_COMPLETE",
+        summary={
+            "case_count": len(selected_cases),
+            "winning_case_count": attribution["summary"]["winning_case_count"],
+            "losing_case_count": attribution["summary"]["losing_case_count"],
+            "winning_case_average_delta": attribution["summary"]["winning_case_average_delta"],
+            "losing_case_average_delta": attribution["summary"]["losing_case_average_delta"],
+            "tail_loss_contribution": attribution["tail_loss_contribution"]["tail_loss_share"],
+            "max_loss_concentration_share": attribution["summary"]["max_loss_concentration_share"],
+            "data_quality_status": quality["status"],
+            "data_foundation_status": _data_foundation_status(quality),
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        data_quality_gate=quality,
+        data_foundation_status=_data_foundation_status(quality),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        walk_forward_source=_artifact_status(walk_forward, walk_forward_path),
+        failure_attribution_policy=_next_stage_section(config, "value_surface_failure_attribution"),
+        winning_losing_delta=attribution["winning_losing_delta"],
+        top_losing_cases=attribution["top_losing_cases"],
+        loss_concentration_by_date=attribution["loss_concentration_by_date"],
+        loss_concentration_by_asset=attribution["loss_concentration_by_asset"],
+        loss_concentration_by_horizon=attribution["loss_concentration_by_horizon"],
+        loss_concentration_by_regime=attribution["loss_concentration_by_regime"],
+        tail_loss_contribution=attribution["tail_loss_contribution"],
+        turnover_cost_contribution=attribution["turnover_cost_contribution"],
+        drawdown_contribution=attribution["drawdown_contribution"],
+        benchmark_relative_downside_attribution=attribution[
+            "benchmark_relative_downside_attribution"
+        ],
+        attribution_summary=attribution["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="value_surface_failure_attribution",
+    )
+    return payload
+
+
+def run_horizon_cliff_utility_ranking_stabilization_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    utility_pareto_ranking_path: Path = DEFAULT_VALUE_SURFACE_UTILITY_PARETO_RANKING_PATH,
+    output_root: Path = DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    utility_review = _read_json_or_empty(utility_pareto_ranking_path)
+    surface_rows = _records(value_surface.get("value_surface"))
+    ranking_jumps = _horizon_ranking_jump_report(surface_rows, config)
+    single_horizon = _single_horizon_action_report(surface_rows, config)
+    utility_cliffs = _utility_profile_cliff_report(utility_review)
+    smoothing = _horizon_smoothing_assessment(
+        config=config,
+        ranking_jumps=ranking_jumps,
+        single_horizon=single_horizon,
+        utility_cliffs=utility_cliffs,
+        utility_review=utility_review,
+    )
+    payload = _controlled_payload(
+        report_type="horizon_cliff_utility_ranking_stabilization_review",
+        title="Horizon cliff and utility ranking stabilization review",
+        status="SENSITIVITY_TESTED",
+        summary={
+            "ranking_jump_count": ranking_jumps["summary"]["ranking_jump_count"],
+            "horizon_cliff_count": utility_review.get("summary", {}).get("horizon_cliff_count", 0),
+            "single_horizon_action_count": single_horizon["summary"]["single_horizon_action_count"],
+            "utility_profile_cliff_count": utility_cliffs["summary"]["utility_profile_cliff_count"],
+            "horizon_smoothing_review_required": smoothing["horizon_smoothing_review_required"],
+            "pareto_frontier_policy_review_required": smoothing[
+                "pareto_frontier_policy_review_required"
+            ],
+            "validated_boundary_count": 0,
+            "not_validated_utility_boundary": True,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        utility_pareto_source=_artifact_status(utility_review, utility_pareto_ranking_path),
+        stabilization_policy=_next_stage_section(config, "horizon_cliff_stabilization_review"),
+        ranking_jump_by_horizon=ranking_jumps,
+        single_horizon_action_report=single_horizon,
+        utility_profile_cliff_report=utility_cliffs,
+        horizon_smoothing_assessment=smoothing,
+        diagnostic_boundary_assessment={
+            "status_cap": "SENSITIVITY_TESTED",
+            "validated_boundary_allowed": False,
+            "validated_boundary_count": 0,
+            "not_validated_utility_boundary": True,
+            "promotion_gate_allowed": False,
+        },
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="horizon_cliff_utility_ranking_stabilization_review",
+    )
+    return payload
+
+
+def run_gbdt_residual_hypothesis_triage(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    residual_diagnostic_path: Path = DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH,
+    output_root: Path = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    residual_diagnostic = _read_json_or_empty(residual_diagnostic_path)
+    residual_rows = _value_surface_residual_rows(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    triage = _residual_hypothesis_triage(residual_rows, config)
+    payload = _controlled_payload(
+        report_type="gbdt_residual_hypothesis_triage",
+        title="GBDT residual hypothesis triage",
+        status="RESIDUAL_HYPOTHESIS_TRIAGED",
+        summary={
+            "residual_case_count": len(residual_rows),
+            "large_residual_case_count": triage["summary"]["large_residual_case_count"],
+            "feature_explanation_count": len(triage["feature_explanations"]),
+            "repair_rule_candidate_count": len(triage["repair_rule_candidates"]),
+            "new_hypothesis_candidate_count": len(triage["new_hypothesis_candidates"]),
+            "strategy_signal_generated": False,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        residual_diagnostic_source=_artifact_status(residual_diagnostic, residual_diagnostic_path),
+        triage_policy=_next_stage_section(config, "gbdt_residual_hypothesis_triage"),
+        prediction_error_summary=triage["prediction_error_summary"],
+        residual_by_asset=triage["residual_by_asset"],
+        residual_by_horizon=triage["residual_by_horizon"],
+        residual_by_regime=triage["residual_by_regime"],
+        feature_explanations=triage["feature_explanations"],
+        repair_rule_candidates=triage["repair_rule_candidates"],
+        new_hypothesis_candidates=triage["new_hypothesis_candidates"],
+        diagnostic_boundary={
+            "strategy_signal_generated": False,
+            "model_training_executed": False,
+            "direct_action_policy_generated": False,
+            "promotion_gate_allowed": False,
+        },
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="gbdt_residual_hypothesis_triage",
+    )
+    return payload
+
+
+def run_forward_evidence_continuity_extension(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    ledger_path: Path = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    benchmark_expansion_path: Path = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_PATH,
+    control_audit_path: Path = DEFAULT_CONTROL_AUDIT_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    output_root: Path = DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    universe = _universe(config)
+    quality = _run_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        as_of_date=as_of_date,
+        universe=universe,
+    )
+    if not quality["passed"]:
+        raise ValueError("validate-data gate failed before forward continuity extension")
+
+    price_rows = _read_price_rows(prices_path, universe=universe)
+    dates = _all_dates(price_rows)
+    ledger_rows = _read_jsonl_rows(ledger_path)
+    maturity_rows = _forward_maturity_rows(ledger_rows=ledger_rows, dates=dates, config=config)
+    continuity = _forward_daily_continuity_report(
+        ledger_rows=ledger_rows,
+        dates=dates,
+        config=config,
+    )
+    append_only = _append_only_integrity_report(ledger_rows)
+    coverage = _forward_output_coverage_report(
+        benchmark_expansion_path=benchmark_expansion_path,
+        control_audit_path=control_audit_path,
+        value_surface_expansion_path=value_surface_expansion_path,
+    )
+    payload = _controlled_payload(
+        report_type="forward_evidence_continuity_extension",
+        title="Forward evidence continuity extension",
+        status="PASS_WITH_WARNINGS" if ledger_rows else "DATA_REQUIRED",
+        summary={
+            "ledger_event_count": len(ledger_rows),
+            "missing_daily_archive_count": continuity["summary"]["missing_daily_archive_count"],
+            "append_only_integrity_pass": append_only["summary"]["append_only_integrity_pass"],
+            "horizon_maturity_recorded": bool(maturity_rows),
+            "output_coverage_present": True,
+            "data_quality_status": quality["status"],
+            "data_foundation_status": _data_foundation_status(quality),
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        data_quality_gate=quality,
+        data_foundation_status=_data_foundation_status(quality),
+        requested_date_range=_requested_date_range(dates),
+        ledger_path=str(ledger_path),
+        continuity_extension_policy=_next_stage_section(
+            config, "forward_evidence_continuity_extension"
+        ),
+        daily_archive_continuity=continuity,
+        append_only_integrity=append_only,
+        horizon_maturity_summary=_forward_maturity_summary(maturity_rows),
+        output_coverage=coverage,
+        forward_evidence_scope={
+            "decides_current_strategy_quality": False,
+            "paper_shadow_ready": False,
+            "promotion_gate_allowed": False,
+        },
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="forward_evidence_continuity_extension",
+    )
+    return payload
+
+
+def run_value_surface_direction_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    residual_triage_path: Path = DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    forward_continuity_extension_path: Path = DEFAULT_FORWARD_EVIDENCE_CONTINUITY_EXTENSION_PATH,
+    walk_forward_path: Path = DEFAULT_VALUE_SURFACE_WALK_FORWARD_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    residual = _read_json_or_empty(residual_triage_path)
+    forward = _read_json_or_empty(forward_continuity_extension_path)
+    walk_forward = _read_json_or_empty(walk_forward_path)
+    decision = _value_surface_direction_decision(
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        residual=residual,
+        forward=forward,
+        walk_forward=walk_forward,
+    )
+    payload = _controlled_payload(
+        report_type="value_surface_direction_review",
+        title="Value surface direction review",
+        status="DIRECTION_REVIEW_COMPLETE",
+        summary={
+            "direction_decision": decision["decision"],
+            "do_not_default_continue": True,
+            "failure_attribution_present": bool(failure),
+            "horizon_stabilization_present": bool(horizon),
+            "residual_triage_present": bool(residual),
+            "forward_continuity_extension_present": bool(forward),
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        direction_review_policy=_next_stage_section(config, "value_surface_direction_review"),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        residual_triage_source=_artifact_status(residual, residual_triage_path),
+        forward_continuity_extension_source=_artifact_status(
+            forward, forward_continuity_extension_path
+        ),
+        walk_forward_source=_artifact_status(walk_forward, walk_forward_path),
+        direction_decision=decision,
+        evidence_summary=_direction_evidence_summary(
+            failure=failure,
+            horizon=horizon,
+            residual=residual,
+            forward=forward,
+            walk_forward=walk_forward,
+        ),
+        disallowed_actions=[
+            "continue_expanding_value_surface_sample",
+            "train_gbdt_strategy_directly",
+            "expand_regret_casebook_now",
+            "enter_paper_shadow",
+            "treat_high_beat_rate_as_strategy_evidence",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="value_surface_direction_review")
+    return payload
+
+
 def _load_config(path: Path) -> dict[str, Any]:
     raw = safe_load_yaml_path(path)
     return dict(raw) if isinstance(raw, Mapping) else {}
@@ -3029,6 +3395,7 @@ def _selected_value_surface_cases(
                 "date": row_date,
                 "asset": asset,
                 "horizon": horizon,
+                "horizon_days": top.get("horizon_days"),
                 "regime_segment": top.get("regime_segment"),
                 "asset_cluster": top.get("asset_cluster"),
                 "pit_state": top.get("pit_state"),
@@ -3039,6 +3406,22 @@ def _selected_value_surface_cases(
                 "delta_vs_benchmark": _round(selected_net - benchmark_net),
                 "value_surface_beats_benchmark": selected_net >= benchmark_net,
                 "selected_net_utility": top.get("net_utility"),
+                "selected_estimated_cost": top.get("estimated_cost"),
+                "benchmark_estimated_cost": benchmark.get("estimated_cost") if benchmark else 0.0,
+                "selected_turnover_cost_assumption": action_by_id.get(
+                    str(top.get("action")), {}
+                ).get("cost_turnover_assumption"),
+                "benchmark_turnover_cost_assumption": (
+                    action_by_id.get(str(benchmark.get("action")), {}).get(
+                        "cost_turnover_assumption"
+                    )
+                    if benchmark
+                    else 0.0
+                ),
+                "selected_drawdown_proxy": top.get("max_drawdown_proxy"),
+                "benchmark_drawdown_proxy": (
+                    benchmark.get("max_drawdown_proxy") if benchmark else None
+                ),
                 "promotion_gate_allowed": False,
             }
         )
@@ -3308,6 +3691,9 @@ def _value_surface_residual_rows(
                 "realized_action_net_return": _round(realized_net),
                 "residual": _round(residual),
                 "abs_residual": _round(abs(residual)),
+                "estimated_cost": row.get("estimated_cost"),
+                "downside_risk": row.get("downside_risk"),
+                "max_drawdown_proxy": row.get("max_drawdown_proxy"),
                 "large_residual_for_review": abs(residual) >= floor,
                 "residual_role": "diagnostic_only",
                 "promotion_gate_allowed": False,
@@ -3471,6 +3857,549 @@ def _stable_regret_type_count(gate: Mapping[str, Any]) -> int:
         {},
     )
     return _first_int(regret_coverage.get("observed"))
+
+
+def _failure_attribution_report(
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "value_surface_failure_attribution")
+    winners = [row for row in selected_cases if _float(row.get("delta_vs_benchmark"), 0.0) >= 0]
+    losers = [row for row in selected_cases if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    deltas = [_float(row.get("delta_vs_benchmark"), 0.0) for row in selected_cases]
+    concentration_reports = {
+        "date": _loss_concentration(losers, "date"),
+        "asset": _loss_concentration(losers, "asset"),
+        "horizon": _loss_concentration(losers, "horizon"),
+        "regime_segment": _loss_concentration(losers, "regime_segment"),
+    }
+    max_share = max(
+        (
+            report["summary"]["max_loss_share"]
+            for report in concentration_reports.values()
+            if report["summary"]["loss_case_count"]
+        ),
+        default=0.0,
+    )
+    top_limit = _first_int(policy.get("top_losing_case_count")) or 25
+    top_losing = sorted(losers, key=lambda row: _float(row.get("delta_vs_benchmark"), 0.0))[
+        :top_limit
+    ]
+    return {
+        "summary": {
+            "case_count": len(selected_cases),
+            "winning_case_count": len(winners),
+            "losing_case_count": len(losers),
+            "winning_case_average_delta": _round(
+                _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in winners])
+            ),
+            "losing_case_average_delta": _round(
+                _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in losers])
+            ),
+            "overall_mean_delta_vs_benchmark": _round(_mean(deltas)),
+            "overall_median_delta_vs_benchmark": _round(_median(deltas)),
+            "max_loss_concentration_share": _round(max_share),
+            "promotion_gate_allowed": False,
+        },
+        "winning_losing_delta": {
+            "winning_case_average_delta": _round(
+                _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in winners])
+            ),
+            "losing_case_average_delta": _round(
+                _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in losers])
+            ),
+            "winning_case_count": len(winners),
+            "losing_case_count": len(losers),
+            "promotion_gate_allowed": False,
+        },
+        "top_losing_cases": top_losing,
+        "loss_concentration_by_date": concentration_reports["date"],
+        "loss_concentration_by_asset": concentration_reports["asset"],
+        "loss_concentration_by_horizon": concentration_reports["horizon"],
+        "loss_concentration_by_regime": concentration_reports["regime_segment"],
+        "tail_loss_contribution": _tail_loss_contribution(losers, config),
+        "turnover_cost_contribution": _turnover_cost_contribution(losers),
+        "drawdown_contribution": _drawdown_contribution(losers),
+        "benchmark_relative_downside_attribution": _benchmark_relative_downside_attribution(
+            selected_cases
+        ),
+    }
+
+
+def _loss_concentration(rows: list[dict[str, Any]], group_key: str) -> dict[str, Any]:
+    total_abs_loss = sum(abs(_float(row.get("delta_vs_benchmark"), 0.0)) for row in rows)
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get(group_key, "unknown")), []).append(row)
+    groups = []
+    for group, values in sorted(grouped.items()):
+        group_loss = sum(abs(_float(row.get("delta_vs_benchmark"), 0.0)) for row in values)
+        groups.append(
+            {
+                group_key: group,
+                "loss_case_count": len(values),
+                "average_delta_vs_benchmark": _round(
+                    _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in values])
+                ),
+                "absolute_loss": _round(group_loss),
+                "loss_share": _round(group_loss / total_abs_loss if total_abs_loss else 0.0),
+                "promotion_gate_allowed": False,
+            }
+        )
+    groups = sorted(groups, key=lambda row: _float(row.get("loss_share"), 0.0), reverse=True)
+    return {
+        "summary": {
+            "group_key": group_key,
+            "loss_case_count": len(rows),
+            "group_count": len(groups),
+            "total_abs_loss": _round(total_abs_loss),
+            "max_loss_share": groups[0]["loss_share"] if groups else 0.0,
+            "promotion_gate_allowed": False,
+        },
+        "groups": groups,
+    }
+
+
+def _tail_loss_contribution(
+    losing_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "value_surface_failure_attribution")
+    quantile = _float(policy.get("tail_loss_quantile"), 0.10)
+    ordered = sorted(
+        losing_cases,
+        key=lambda row: abs(_float(row.get("delta_vs_benchmark"), 0.0)),
+        reverse=True,
+    )
+    tail_count = min(len(ordered), max(1, math.ceil(len(ordered) * quantile))) if ordered else 0
+    tail = ordered[:tail_count]
+    total_abs_loss = sum(abs(_float(row.get("delta_vs_benchmark"), 0.0)) for row in losing_cases)
+    tail_abs_loss = sum(abs(_float(row.get("delta_vs_benchmark"), 0.0)) for row in tail)
+    return {
+        "tail_loss_quantile": quantile,
+        "tail_case_count": tail_count,
+        "losing_case_count": len(losing_cases),
+        "tail_abs_loss": _round(tail_abs_loss),
+        "total_abs_loss": _round(total_abs_loss),
+        "tail_loss_share": _round(tail_abs_loss / total_abs_loss if total_abs_loss else 0.0),
+        "tail_cases": tail,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _turnover_cost_contribution(losing_cases: list[dict[str, Any]]) -> dict[str, Any]:
+    cost_deltas = [
+        _float(row.get("selected_estimated_cost"), 0.0)
+        - _float(row.get("benchmark_estimated_cost"), 0.0)
+        for row in losing_cases
+    ]
+    turnover_deltas = [
+        _float(row.get("selected_turnover_cost_assumption"), 0.0)
+        - _float(row.get("benchmark_turnover_cost_assumption"), 0.0)
+        for row in losing_cases
+    ]
+    total_abs_loss = sum(abs(_float(row.get("delta_vs_benchmark"), 0.0)) for row in losing_cases)
+    positive_cost_drag = sum(max(value, 0.0) for value in cost_deltas)
+    return {
+        "loss_case_count": len(losing_cases),
+        "mean_cost_delta_vs_benchmark": _round(_mean(cost_deltas)),
+        "mean_turnover_assumption_delta_vs_benchmark": _round(_mean(turnover_deltas)),
+        "positive_cost_drag": _round(positive_cost_drag),
+        "positive_cost_drag_share_of_abs_loss": _round(
+            positive_cost_drag / total_abs_loss if total_abs_loss else 0.0
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _drawdown_contribution(losing_cases: list[dict[str, Any]]) -> dict[str, Any]:
+    drawdown_deltas = [
+        _float(row.get("selected_drawdown_proxy"), 0.0)
+        - _float(row.get("benchmark_drawdown_proxy"), 0.0)
+        for row in losing_cases
+        if row.get("benchmark_drawdown_proxy") is not None
+    ]
+    worse_drawdown = [value for value in drawdown_deltas if value < 0]
+    return {
+        "loss_case_count": len(losing_cases),
+        "mean_drawdown_delta_vs_benchmark": _round(_mean(drawdown_deltas)),
+        "worse_drawdown_case_count": len(worse_drawdown),
+        "worse_drawdown_case_rate": _round(
+            len(worse_drawdown) / len(drawdown_deltas) if drawdown_deltas else 0.0
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _benchmark_relative_downside_attribution(
+    selected_cases: list[dict[str, Any]],
+) -> dict[str, Any]:
+    selected_negative = [
+        row for row in selected_cases if _float(row.get("selected_realized_net_return"), 0.0) < 0
+    ]
+    benchmark_positive = [
+        row
+        for row in selected_negative
+        if _float(row.get("benchmark_realized_net_return"), 0.0) >= 0
+    ]
+    underperform = [row for row in selected_cases if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    return {
+        "selected_negative_case_count": len(selected_negative),
+        "benchmark_nonnegative_when_selected_negative_count": len(benchmark_positive),
+        "benchmark_relative_underperform_case_count": len(underperform),
+        "average_underperformance_delta": _round(
+            _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in underperform])
+        ),
+        "downside_concentrated_when_benchmark_nonnegative": _round(
+            len(benchmark_positive) / len(selected_negative) if selected_negative else 0.0
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _horizon_ranking_jump_report(
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    horizon_order = {str(row["horizon_id"]): int(row["days"]) for row in _horizons(config)}
+    grouped = _surface_group_summary(rows, ["horizon", "action"])
+    by_horizon: dict[str, list[dict[str, Any]]] = {}
+    for row in grouped:
+        by_horizon.setdefault(str(row.get("horizon")), []).append(row)
+    ranked_by_horizon = []
+    for horizon, values in sorted(
+        by_horizon.items(), key=lambda item: horizon_order.get(item[0], 0)
+    ):
+        ranking = sorted(
+            values,
+            key=lambda row: _float(row.get("mean_net_utility"), 0.0),
+            reverse=True,
+        )
+        ranked_by_horizon.append(
+            {
+                "horizon": horizon,
+                "top_action": ranking[0].get("action") if ranking else None,
+                "ranking": [
+                    {
+                        "rank": index,
+                        "action": row.get("action"),
+                        "mean_net_utility": row.get("mean_net_utility"),
+                        "promotion_gate_allowed": False,
+                    }
+                    for index, row in enumerate(ranking, start=1)
+                ],
+                "promotion_gate_allowed": False,
+            }
+        )
+    jumps = []
+    for previous, current in zip(ranked_by_horizon, ranked_by_horizon[1:], strict=False):
+        jumps.append(
+            {
+                "previous_horizon": previous["horizon"],
+                "current_horizon": current["horizon"],
+                "previous_top_action": previous["top_action"],
+                "current_top_action": current["top_action"],
+                "top_action_changed": previous["top_action"] != current["top_action"],
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "summary": {
+            "horizon_count": len(ranked_by_horizon),
+            "ranking_jump_count": sum(1 for row in jumps if row["top_action_changed"]),
+            "promotion_gate_allowed": False,
+        },
+        "ranked_by_horizon": ranked_by_horizon,
+        "adjacent_horizon_jumps": jumps,
+    }
+
+
+def _single_horizon_action_report(
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    horizon_count = len(_horizons(config))
+    ranking = _horizon_ranking_jump_report(rows, config)["ranked_by_horizon"]
+    top_counts: dict[str, int] = {}
+    for row in ranking:
+        action = str(row.get("top_action"))
+        top_counts[action] = top_counts.get(action, 0) + 1
+    action_rows = [
+        {
+            "action": action,
+            "top_horizon_count": count,
+            "top_horizon_share": _round(count / horizon_count if horizon_count else 0.0),
+            "single_horizon_only": count == 1,
+            "promotion_gate_allowed": False,
+        }
+        for action, count in sorted(top_counts.items())
+    ]
+    return {
+        "summary": {
+            "action_count": len(action_rows),
+            "single_horizon_action_count": sum(
+                1 for row in action_rows if row["single_horizon_only"]
+            ),
+            "promotion_gate_allowed": False,
+        },
+        "actions": action_rows,
+    }
+
+
+def _utility_profile_cliff_report(utility_review: Mapping[str, Any]) -> dict[str, Any]:
+    cliffs = _records(
+        utility_review.get("horizon_cliff_report", {}).get("rows")
+        if isinstance(utility_review.get("horizon_cliff_report"), Mapping)
+        else []
+    )
+    ranking_flips = _records(
+        utility_review.get("ranking_flip_report", {}).get("rows")
+        if isinstance(utility_review.get("ranking_flip_report"), Mapping)
+        else []
+    )
+    active_cliffs = [row for row in cliffs if row.get("horizon_cliff_for_review")]
+    active_flips = [row for row in ranking_flips if row.get("reverses_balanced_top")]
+    return {
+        "summary": {
+            "utility_profile_cliff_count": len(active_cliffs),
+            "ranking_flip_count": len(active_flips),
+            "validated_boundary_count": 0,
+            "not_validated_utility_boundary": True,
+            "promotion_gate_allowed": False,
+        },
+        "horizon_cliff_rows": active_cliffs,
+        "ranking_flip_rows": active_flips,
+    }
+
+
+def _horizon_smoothing_assessment(
+    *,
+    config: Mapping[str, Any],
+    ranking_jumps: Mapping[str, Any],
+    single_horizon: Mapping[str, Any],
+    utility_cliffs: Mapping[str, Any],
+    utility_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "horizon_cliff_stabilization_review")
+    jump_floor = _first_int(policy.get("ranking_jump_review_floor"))
+    ranking_jump_count = _first_int(ranking_jumps.get("summary", {}).get("ranking_jump_count"))
+    cliff_count = _first_int(utility_cliffs.get("summary", {}).get("utility_profile_cliff_count"))
+    flip_count = _first_int(utility_cliffs.get("summary", {}).get("ranking_flip_count"))
+    pareto_count = _first_int(utility_review.get("summary", {}).get("pareto_candidate_count"))
+    smoothing_required = ranking_jump_count >= jump_floor or cliff_count > 0
+    pareto_review = flip_count > 0 or pareto_count > 0
+    return {
+        "horizon_smoothing_review_required": smoothing_required,
+        "pareto_frontier_policy_review_required": pareto_review,
+        "single_utility_ranking_stable": not smoothing_required and flip_count == 0,
+        "recommended_stabilization_options": [
+            option
+            for option, enabled in [
+                ("horizon_smoothing", smoothing_required),
+                ("pareto_frontier_policy", pareto_review),
+                (
+                    "single_horizon_action_suppression",
+                    _first_int(single_horizon.get("summary", {}).get("single_horizon_action_count"))
+                    > 0,
+                ),
+            ]
+            if enabled
+        ],
+        "validated_boundary_count": 0,
+        "not_validated_utility_boundary": True,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _residual_hypothesis_triage(
+    residual_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "gbdt_residual_hypothesis_triage")
+    limit = _first_int(policy.get("hypothesis_candidate_limit")) or 10
+    feature_explanations = _residual_feature_importance(
+        residual_rows,
+        features=["asset", "horizon", "regime_segment", "asset_cluster", "pit_state", "action"],
+    )
+    repair_candidates = _residual_repair_rule_candidates(residual_rows, config)
+    new_hypotheses = _residual_hypothesis_candidates(residual_rows)[:limit]
+    large_residuals = [row for row in residual_rows if row.get("large_residual_for_review")]
+    return {
+        "summary": {
+            "residual_case_count": len(residual_rows),
+            "large_residual_case_count": len(large_residuals),
+            "strategy_signal_generated": False,
+            "promotion_gate_allowed": False,
+        },
+        "prediction_error_summary": {
+            "mean_residual": _round(
+                _mean([_float(row.get("residual"), 0.0) for row in residual_rows])
+            ),
+            "mean_abs_residual": _round(
+                _mean([_float(row.get("abs_residual"), 0.0) for row in residual_rows])
+            ),
+            "large_residual_rate": _round(
+                len(large_residuals) / len(residual_rows) if residual_rows else 0.0
+            ),
+            "promotion_gate_allowed": False,
+        },
+        "residual_by_asset": _residual_group_result(residual_rows, "asset"),
+        "residual_by_horizon": _residual_group_result(residual_rows, "horizon"),
+        "residual_by_regime": _residual_group_result(residual_rows, "regime_segment"),
+        "feature_explanations": feature_explanations,
+        "repair_rule_candidates": repair_candidates,
+        "new_hypothesis_candidates": new_hypotheses,
+    }
+
+
+def _residual_repair_rule_candidates(
+    residual_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    policy = _next_stage_section(config, "gbdt_residual_hypothesis_triage")
+    configured = [str(item) for item in policy.get("repair_rule_candidates", [])]
+    large = [row for row in residual_rows if row.get("large_residual_for_review")]
+    horizon_groups = _residual_group_result(residual_rows, "horizon")
+    regime_groups = _residual_group_result(residual_rows, "regime_segment")
+    action_groups = _residual_group_result(residual_rows, "action")
+    candidates = []
+    for rule in configured:
+        if rule == "tail-loss filter":
+            evidence = {
+                "large_residual_case_count": len(large),
+                "large_residual_rate": _round(
+                    len(large) / len(residual_rows) if residual_rows else 0.0
+                ),
+            }
+        elif rule == "horizon smoothing":
+            evidence = {"top_horizon_residual": horizon_groups[:3]}
+        elif rule == "regime-conditioned utility":
+            evidence = {"top_regime_residual": regime_groups[:3]}
+        elif rule == "cost-aware action suppression":
+            evidence = {"top_action_residual": action_groups[:3]}
+        elif rule == "drawdown-sensitive ranking":
+            evidence = {
+                "mean_drawdown_proxy_large_residual": _round(
+                    _mean([_float(row.get("max_drawdown_proxy"), 0.0) for row in large])
+                )
+            }
+        else:
+            evidence = {}
+        candidates.append(
+            {
+                "repair_rule": rule,
+                "evidence": evidence,
+                "strategy_signal_generated": False,
+                "requires_followup_experiment": True,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return candidates
+
+
+def _value_surface_direction_decision(
+    *,
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    residual: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    walk_forward: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "value_surface_direction_review")
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    failure_summary = failure.get("summary") if isinstance(failure.get("summary"), Mapping) else {}
+    attribution_summary = (
+        failure.get("attribution_summary")
+        if isinstance(failure.get("attribution_summary"), Mapping)
+        else {}
+    )
+    horizon_summary = horizon.get("summary") if isinstance(horizon.get("summary"), Mapping) else {}
+    residual_summary = (
+        residual.get("summary") if isinstance(residual.get("summary"), Mapping) else {}
+    )
+    mean_delta = _float(attribution_summary.get("overall_mean_delta_vs_benchmark"), 0.0)
+    tail_share = _float(failure_summary.get("tail_loss_contribution"), 0.0)
+    max_loss_share = _float(failure_summary.get("max_loss_concentration_share"), 0.0)
+    horizon_cliff_count = _first_int(horizon_summary.get("horizon_cliff_count"))
+    ranking_jump_count = _first_int(horizon_summary.get("ranking_jump_count"))
+    large_residual_count = _first_int(residual_summary.get("large_residual_case_count"))
+    kill_floor = _float(policy.get("kill_mean_delta_floor_bps"), -500.0) / 10_000.0
+    tail_pivot_share = _float(policy.get("tail_loss_pivot_share"), 0.50)
+    horizon_floor = _first_int(policy.get("horizon_cliff_pivot_floor"))
+    broad_ceiling = _float(policy.get("broad_loss_group_share_ceiling"), 0.35)
+    if not failure or not horizon:
+        decision = "WATCHLIST"
+        reason = "missing_failure_or_horizon_review"
+    elif mean_delta <= kill_floor and max_loss_share <= broad_ceiling:
+        decision = "KILL_CURRENT_VALUE_SURFACE_VERSION"
+        reason = "broad_negative_delta_below_kill_floor"
+    elif mean_delta < 0 and tail_share >= tail_pivot_share:
+        decision = "PIVOT_TO_TAIL_RISK_FILTER"
+        reason = "negative_mean_delta_with_tail_loss_concentration"
+    elif mean_delta < 0 and max_loss_share > broad_ceiling:
+        decision = "PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE"
+        reason = "negative_mean_delta_with_group_loss_concentration"
+    elif horizon_cliff_count >= horizon_floor or ranking_jump_count > 0:
+        decision = "PIVOT_TO_PARETO_FRONTIER_POLICY"
+        reason = "horizon_cliff_or_ranking_jump_requires_stabilization"
+    elif mean_delta < 0 or large_residual_count > 0:
+        decision = "WATCHLIST"
+        reason = "negative_or_residual_risk_without_clear_local_fix"
+    else:
+        decision = "CONTINUE_LOCAL_FIX"
+        reason = "no_structural_failure_detected_but_no_promotion_allowed"
+    if allowed and decision not in allowed:
+        decision = "WATCHLIST"
+        reason = "computed_decision_not_in_allowed_policy"
+    return {
+        "decision": decision,
+        "reason": reason,
+        "allowed_decisions": allowed,
+        "mean_delta_vs_benchmark": _round(mean_delta),
+        "tail_loss_share": _round(tail_share),
+        "max_loss_concentration_share": _round(max_loss_share),
+        "horizon_cliff_count": horizon_cliff_count,
+        "ranking_jump_count": ranking_jump_count,
+        "large_residual_case_count": large_residual_count,
+        "forward_ledger_event_count": _first_int(
+            forward.get("summary", {}).get("ledger_event_count")
+        ),
+        "walk_forward_decision": walk_forward.get("summary", {}).get(
+            "controlled_walk_forward_decision"
+        ),
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _direction_evidence_summary(
+    *,
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    residual: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    walk_forward: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "walk_forward_status": walk_forward.get("status"),
+        "walk_forward_decision": walk_forward.get("summary", {}).get(
+            "controlled_walk_forward_decision"
+        ),
+        "failure_status": failure.get("status"),
+        "overall_mean_delta_vs_benchmark": failure.get("attribution_summary", {}).get(
+            "overall_mean_delta_vs_benchmark"
+        ),
+        "tail_loss_contribution": failure.get("summary", {}).get("tail_loss_contribution"),
+        "horizon_status": horizon.get("status"),
+        "horizon_cliff_count": horizon.get("summary", {}).get("horizon_cliff_count"),
+        "residual_status": residual.get("status"),
+        "residual_case_count": residual.get("summary", {}).get("residual_case_count"),
+        "forward_status": forward.get("status"),
+        "ledger_event_count": forward.get("summary", {}).get("ledger_event_count"),
+        "promotion_gate_allowed": False,
+    }
 
 
 def _run_data_quality_gate(

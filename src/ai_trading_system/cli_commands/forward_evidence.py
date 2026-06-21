@@ -14,6 +14,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_PRICES_PATH,
     DEFAULT_RATES_PATH,
     DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    run_forward_evidence_continuity_extension,
     run_forward_evidence_daily_continuity_maturity_tracker,
     run_forward_evidence_daily_continuity_review,
     run_forward_evidence_maturity_tracker,
@@ -312,6 +313,66 @@ def forward_evidence_daily_continuity_review_command(
     ] = DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
 ) -> None:
     payload = run_forward_evidence_daily_continuity_review(
+        config_path=config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        ledger_path=ledger_path,
+        benchmark_expansion_path=benchmark_expansion,
+        control_audit_path=control_audit,
+        value_surface_expansion_path=value_surface_expansion,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload(payload)
+
+
+@forward_evidence_app.command("continuity-extension")
+def forward_evidence_continuity_extension_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-793 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="FMP 主价格缓存 CSV。"),
+    ] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="Marketstack 第二源价格缓存 CSV。"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    ledger_path: Annotated[
+        Path,
+        typer.Option("--ledger-path", help="TRADING-768 forward evidence ledger JSONL。"),
+    ] = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    benchmark_expansion: Annotated[
+        Path,
+        typer.Option("--benchmark-expansion", help="TRADING-765 benchmark expansion JSON。"),
+    ] = DEFAULT_CONTROLLED_BENCHMARK_EXPANSION_REPORT_PATH,
+    control_audit: Annotated[
+        Path,
+        typer.Option("--control-audit", help="TRADING-760 control audit JSON。"),
+    ] = DEFAULT_CONTROL_AUDIT_REPORT_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-793 continuity extension 输出目录。"),
+    ] = DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
+) -> None:
+    payload = run_forward_evidence_continuity_extension(
         config_path=config_path,
         prices_path=prices_path,
         marketstack_prices_path=marketstack_prices_path,

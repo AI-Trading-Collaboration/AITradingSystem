@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_789
+policy_id: controlled_strategy_research_next_stage_775_794
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -293,3 +293,59 @@ regret_casebook_activation_recheck:
   rationale: >
     This recheck only decides whether a follow-up regret casebook expansion
     task should be opened. It does not expand the casebook by itself.
+value_surface_failure_attribution:
+  task_id: TRADING-790
+  top_losing_case_count: 25
+  tail_loss_quantile: 0.10
+  concentration_review_share: 0.50
+  rationale: >
+    Attribution explains why high beat rate can still produce negative average
+    benchmark delta. Tail and concentration thresholds are diagnostic sorting
+    rules, not promotion gates or validated risk boundaries.
+horizon_cliff_stabilization_review:
+  task_id: TRADING-791
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  ranking_jump_review_floor: 2
+  horizon_cliff_abs_utility_bps: 100
+  single_horizon_action_review_share: 0.80
+  rationale: >
+    Horizon cliff and ranking stabilization review can suggest smoothing or
+    Pareto direction, but cannot validate utility boundaries.
+gbdt_residual_hypothesis_triage:
+  task_id: TRADING-792
+  hypothesis_candidate_limit: 10
+  repair_rule_candidates:
+    - tail-loss filter
+    - horizon smoothing
+    - regime-conditioned utility
+    - cost-aware action suppression
+    - drawdown-sensitive ranking
+  rationale: >
+    Residual triage turns diagnostic residual concentration into reviewable
+    hypotheses. It does not train or deploy a GBDT strategy.
+forward_evidence_continuity_extension:
+  task_id: TRADING-793
+  minimum_ledger_events_for_extension_review: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  rationale: >
+    Continuity extension keeps forward evidence running. It does not decide
+    current strategy validity or paper-shadow readiness.
+value_surface_direction_review:
+  task_id: TRADING-794
+  allowed_decisions:
+    - CONTINUE_LOCAL_FIX
+    - WATCHLIST
+    - PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE
+    - PIVOT_TO_PARETO_FRONTIER_POLICY
+    - PIVOT_TO_TAIL_RISK_FILTER
+    - KILL_CURRENT_VALUE_SURFACE_VERSION
+  tail_loss_pivot_share: 0.50
+  horizon_cliff_pivot_floor: 10
+  broad_loss_group_share_ceiling: 0.35
+  kill_mean_delta_floor_bps: -500
+  rationale: >
+    Direction review must not default to continuing. Negative benchmark-relative
+    delta, tail loss concentration, horizon cliffs, and broad distribution risk
+    decide whether to local-fix, watchlist, pivot, or kill the current version.

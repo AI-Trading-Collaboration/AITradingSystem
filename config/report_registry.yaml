@@ -11885,3 +11885,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: value_surface_failure_attribution
+    title: Value Surface Failure Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-failure-attribution
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_failure_attribution.json
+      - outputs/research_strategies/value_surface_review/value_surface_failure_attribution.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-790 should be regenerated when value surface expansion or walk-forward review changes.
+    owner_action: review_tail_loss_cost_drawdown_and_benchmark_relative_downside_before_any_value_surface_continuation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: horizon_cliff_utility_ranking_stabilization_review
+    title: Horizon Cliff Utility Ranking Stabilization Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies horizon-cliff-utility-ranking-stabilization-review
+    artifact_globs:
+      - outputs/research_strategies/utility_boundary/horizon_cliff_utility_ranking_stabilization_review.json
+      - outputs/research_strategies/utility_boundary/horizon_cliff_utility_ranking_stabilization_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-791 should be regenerated when utility/Pareto ranking review or value surface rows change; status remains capped at SENSITIVITY_TESTED.
+    owner_action: review_horizon_jumps_single_horizon_actions_smoothing_need_and_pareto_policy_direction_without_validating_boundary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_residual_hypothesis_triage
+    title: GBDT Residual Hypothesis Triage
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-residual-hypothesis-triage
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_residual_hypothesis_triage.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_residual_hypothesis_triage.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-792 should be regenerated when value-surface residual diagnostics or value-surface rows change.
+    owner_action: review_residual_hypotheses_and_repair_rule_candidates_without_treating_them_as_strategy_signals
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: forward_evidence_continuity_extension
+    title: Forward Evidence Continuity Extension
+    group: research
+    cadence: daily
+    audience: project_owner
+    owner: research_governance
+    command: aits forward-evidence continuity-extension
+    artifact_globs:
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_continuity_extension.json
+      - outputs/forward_evidence/maturity_tracker/forward_evidence_continuity_extension.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-793 extends daily forward evidence continuity tracking and should be regenerated as new dry-run ledger events accumulate.
+    owner_action: review_append_only_continuity_and_maturity_without_using_it_as_current_strategy_quality_or_paper_shadow_readiness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: value_surface_direction_review
+    title: Value Surface Direction Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies value-surface-direction-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/value_surface_direction_review.json
+      - outputs/research_strategies/value_surface_review/value_surface_direction_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-794 should be regenerated after failure attribution, horizon stabilization, residual triage, or forward continuity extension changes.
+    owner_action: choose_continue_watchlist_pivot_or_kill_current_value_surface_version_without_defaulting_to_continuation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
