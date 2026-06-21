@@ -34,6 +34,9 @@ DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT = (
 DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "controlled_strategy_research"
 )
+DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "data_quality" / "current_subscription_source_qualification_batch"
+)
 DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH = (
     PROJECT_ROOT / "config" / "data" / "data_source_usage_policy.yaml"
 )
@@ -79,12 +82,17 @@ DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_V2_PATH = (
 DEFAULT_MINIMUM_RESEARCH_READINESS_REPORT_PATH = (
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT / "minimum_research_readiness_report.json"
 )
+DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_REVIEW_PATH = (
+    DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT
+    / "current_subscription_source_qualification_batch_review.json"
+)
 
 PRODUCTION_SAFETY = {
     **SAFETY_BOUNDARY,
     "status_upgrade_attempted": False,
     "lookahead_violation_count": 0,
 }
+ALLOWED_BATCH_REVIEW_DECISIONS = ("CONTINUE", "PAUSE", "WATCHLIST", "KILL", "DATA_REQUIRED")
 
 
 def run_data_source_usage_guardrails(
@@ -629,6 +637,7 @@ def run_data_foundation_acceptance_v2(
         DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT / "cost_liquidity_qualification_report.json"
     ),
     forward_capture_contract_path: Path = DEFAULT_FORWARD_CAPTURE_CONTRACT_PATH,
+    qualification_matrix_updated_path: Path = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
 ) -> dict[str, Any]:
     base = run_data_foundation_acceptance(output_root=output_root)
     source_inputs = {
@@ -637,6 +646,7 @@ def run_data_foundation_acceptance_v2(
         "asset_master": _read_json_or_empty(asset_master_qualification_path),
         "cost_liquidity": _read_json_or_empty(cost_qualification_path),
         "forward_capture_contract": _read_json_or_empty(forward_capture_contract_path),
+        "qualification_matrix_updated": _read_json_or_empty(qualification_matrix_updated_path),
     }
     forward_contract = source_inputs["forward_capture_contract"]
     forward_capture_contract_ready = bool(
@@ -670,10 +680,15 @@ def run_data_foundation_acceptance_v2(
         value is True for key, value in checks.items() if key != "lookahead_violation_count"
     )
     readiness_level = "CONTROLLED_RESEARCH_READY" if controlled_ready else "DIAGNOSTIC_ONLY_READY"
+    source_status_counts = _acceptance_source_status_counts(
+        source_inputs=source_inputs,
+        base_acceptance=base,
+    )
     summary = {
         "minimum_research_readiness_level": readiness_level,
         "include_qualified_sources": include_qualified_sources,
         **checks,
+        **source_status_counts,
         **_summary_safety(),
     }
     payload = _base_payload(
@@ -1077,6 +1092,519 @@ def run_data_vendor_decision_gate(
     )
     _write_pair(payload, output_root=output_root, artifact_id="data_vendor_decision_gate")
     return payload
+
+
+def run_first_current_subscription_source_qualification_batch(
+    *,
+    subscription_coverage_path: Path = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    source_requirement_matrix_path: Path = DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    qualification_matrix_updated_path: Path = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
+    source_output_root: Path = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    acceptance_output_root: Path = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    controlled_output_root: Path = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    usage = run_data_source_usage_guardrails(
+        subscription_coverage_path=subscription_coverage_path,
+        source_requirement_matrix_path=source_requirement_matrix_path,
+        qualification_matrix_updated_path=qualification_matrix_updated_path,
+        output_root=source_output_root,
+    )
+    fmp = run_fmp_price_corporate_action_qualification(
+        subscription_coverage_path=subscription_coverage_path,
+        output_root=source_output_root,
+    )
+    marketstack = run_marketstack_reconciliation_qualification(
+        subscription_coverage_path=subscription_coverage_path,
+        output_root=source_output_root,
+    )
+    forward = classify_forward_evidence_requirement(
+        source_requirement_matrix_path=source_requirement_matrix_path,
+        output_root=source_output_root,
+    )
+    forward_validation = validate_forward_capture_contract(
+        capture_contract_path=source_output_root / "forward_evidence_capture_contract.json",
+        output_root=source_output_root,
+    )
+
+    asset_master = run_asset_master_qualification(output_root=source_output_root)
+    costs = run_cost_liquidity_model_qualification(output_root=source_output_root)
+    acceptance = run_data_foundation_acceptance_v2(
+        output_root=acceptance_output_root,
+        usage_guardrails_path=source_output_root / "data_source_usage_policy_audit.json",
+        fmp_qualification_path=(
+            source_output_root / "fmp_price_corporate_action_qualification_report.json"
+        ),
+        asset_master_qualification_path=(
+            source_output_root / "asset_master_qualification_report.json"
+        ),
+        cost_qualification_path=source_output_root / "cost_liquidity_qualification_report.json",
+        forward_capture_contract_path=(
+            source_output_root / "forward_evidence_capture_contract.json"
+        ),
+        qualification_matrix_updated_path=qualification_matrix_updated_path,
+    )
+
+    readiness_level = str(
+        acceptance.get("minimum_research_readiness_level")
+        or acceptance.get("summary", {}).get("minimum_research_readiness_level")
+        or "BLOCKED"
+    )
+    controlled_artifacts: dict[str, dict[str, Any]] = {}
+    if readiness_level in {"DIAGNOSTIC_ONLY_READY", "CONTROLLED_RESEARCH_READY"}:
+        controlled_artifacts["benchmark_controls"] = run_benchmark_controls_real_data_batch(
+            output_root=controlled_output_root
+        )
+        controlled_artifacts["reverse_diagnostics"] = run_strategy_pair_reverse_diagnostics_pilot(
+            output_root=controlled_output_root
+        )
+        controlled_artifacts["regret_casebook"] = run_regret_casebook_failure_taxonomy_pilot(
+            output_root=controlled_output_root
+        )
+
+    price_diff_report_path = str(marketstack.get("price_diff_report_path", ""))
+    split_dividend_report_path = str(marketstack.get("split_dividend_crosscheck_report_path", ""))
+    price_diff_report = (
+        _read_json_or_empty(Path(price_diff_report_path)) if price_diff_report_path else {}
+    )
+    split_dividend_report = (
+        _read_json_or_empty(Path(split_dividend_report_path)) if split_dividend_report_path else {}
+    )
+    candidate_decisions = _first_batch_candidate_decisions(
+        fmp=fmp,
+        marketstack=marketstack,
+        forward=forward,
+        readiness_level=readiness_level,
+        controlled_artifacts=controlled_artifacts,
+        price_diff_report=price_diff_report,
+        split_dividend_report=split_dividend_report,
+    )
+    status = (
+        "PASS_WITH_DATA_REQUIRED"
+        if any(item["decision"] == "DATA_REQUIRED" for item in candidate_decisions)
+        else "PASS_WITH_WARNINGS"
+    )
+    acceptance_summary = _mapping(acceptance.get("summary"))
+    usage_summary = _mapping(usage.get("summary"))
+    fmp_summary = _mapping(fmp.get("summary"))
+    marketstack_summary = _mapping(marketstack.get("summary"))
+    payload = _base_payload(
+        report_type="current_subscription_source_qualification_batch_review",
+        title="Current subscription source qualification batch review",
+        status=status,
+        summary={
+            "batch_id": "TRADING-759",
+            "minimum_research_readiness_level": readiness_level,
+            "current_view_only_strategy_input_violation_count": usage_summary.get(
+                "current_view_only_strategy_input_violation_count", 0
+            ),
+            "research_label_only_promotion_violation_count": usage_summary.get(
+                "research_label_only_promotion_violation_count", 0
+            ),
+            "blocked_until_qualified_promotion_violation_count": usage_summary.get(
+                "blocked_until_qualified_promotion_violation_count", 0
+            ),
+            "fmp_source_manifest_generated": fmp_summary.get("source_manifest_generated", False),
+            "fmp_raw_adjusted_policy_documented": fmp_summary.get(
+                "raw_adjusted_policy_documented", False
+            ),
+            "fmp_dividend_split_policy_documented": fmp_summary.get(
+                "dividend_split_policy_documented", False
+            ),
+            "fmp_available_time_contract_present": fmp_summary.get(
+                "available_time_contract_present", False
+            ),
+            "marketstack_second_source_only": not bool(
+                marketstack_summary.get("marketstack_primary_source_allowed", False)
+            ),
+            "promotion_candidate_after_qualification_count": acceptance_summary.get(
+                "promotion_candidate_after_qualification_count", 0
+            ),
+            "diagnostic_only_count": acceptance_summary.get("diagnostic_only_count", 0),
+            "blocked_until_qualified_count": acceptance_summary.get(
+                "blocked_until_qualified_count", 0
+            ),
+            "current_view_only_count": acceptance_summary.get("current_view_only_count", 0),
+            "research_label_only_count": acceptance_summary.get("research_label_only_count", 0),
+            **_summary_safety(),
+        },
+        batch_scope="validation-only / observe-only",
+        source_artifacts=_artifact_ref_map(
+            usage=usage,
+            fmp_price_corporate_action=fmp,
+            marketstack_reconciliation=marketstack,
+            forward_reclassification=forward,
+            forward_capture_contract_validation=forward_validation,
+            asset_master=asset_master,
+            cost_liquidity=costs,
+            acceptance_v2=acceptance,
+            **controlled_artifacts,
+        ),
+        usage_guardrails={
+            "current_view_only_strategy_input_violation_count": usage_summary.get(
+                "current_view_only_strategy_input_violation_count", 0
+            ),
+            "research_label_only_promotion_violation_count": usage_summary.get(
+                "research_label_only_promotion_violation_count", 0
+            ),
+            "blocked_until_qualified_promotion_violation_count": usage_summary.get(
+                "blocked_until_qualified_promotion_violation_count", 0
+            ),
+        },
+        fmp_price_corporate_action={
+            "covered_endpoints": [
+                row.get("endpoint_name") for row in _records(fmp.get("endpoint_status"))
+            ],
+            "source_manifest_generated": fmp_summary.get("source_manifest_generated", False),
+            "raw_adjusted_policy_documented": fmp_summary.get(
+                "raw_adjusted_policy_documented", False
+            ),
+            "dividend_split_policy_documented": fmp_summary.get(
+                "dividend_split_policy_documented", False
+            ),
+            "available_time_contract_present": fmp_summary.get(
+                "available_time_contract_present", False
+            ),
+            "remaining_pit_gaps": _fmp_remaining_pit_gaps(fmp),
+        },
+        marketstack_reconciliation={
+            **_marketstack_reconciliation_summary(
+                marketstack=marketstack,
+                price_diff_report=price_diff_report,
+                split_dividend_report=split_dividend_report,
+            )
+        },
+        forward_evidence_reclassification={
+            "requirement_id": _mapping(forward.get("source_requirement")).get("requirement_id"),
+            "reclassification": forward.get("reclassification"),
+            "requires_new_paid_source_for_forward_archive": _mapping(forward.get("summary")).get(
+                "requires_new_paid_source_for_forward_archive"
+            ),
+            "broker_action": forward.get("broker_action", "none"),
+        },
+        acceptance_v2={
+            "minimum_research_readiness_level": readiness_level,
+            "promotion_candidate_after_qualification_count": acceptance_summary.get(
+                "promotion_candidate_after_qualification_count", 0
+            ),
+            "diagnostic_only_count": acceptance_summary.get("diagnostic_only_count", 0),
+            "blocked_until_qualified_count": acceptance_summary.get(
+                "blocked_until_qualified_count", 0
+            ),
+            "current_view_only_count": acceptance_summary.get("current_view_only_count", 0),
+            "research_label_only_count": acceptance_summary.get("research_label_only_count", 0),
+            "lookahead_violation_count": acceptance_summary.get("lookahead_violation_count", 0),
+        },
+        controlled_strategy_pilot=_controlled_pilot_summary(controlled_artifacts),
+        candidate_decisions=candidate_decisions,
+        conclusion_boundary={
+            "allowed_conclusions": ["diagnostic-only", "controlled-research-only", "blocked"],
+            "promotion_review_allowed": False,
+            "paper_shadow_review_allowed": False,
+            "production_review_allowed": False,
+        },
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="current_subscription_source_qualification_batch_review",
+    )
+    return payload
+
+
+def _acceptance_source_status_counts(
+    *,
+    source_inputs: Mapping[str, Mapping[str, Any]],
+    base_acceptance: Mapping[str, Any],
+) -> dict[str, int]:
+    matrix = _mapping(source_inputs.get("qualification_matrix_updated"))
+    matrix_summary = _mapping(matrix.get("summary"))
+    matrix_counts = _mapping(matrix.get("source_qualification_matrix"))
+    base_summary = _mapping(base_acceptance.get("summary"))
+    fmp = _mapping(source_inputs.get("fmp_price_corporate_action"))
+    promotion_candidate_count = 1 if bool(fmp.get("promotion_candidate_after_qualification")) else 0
+    return {
+        "promotion_candidate_after_qualification_count": promotion_candidate_count,
+        "diagnostic_only_count": _first_int(
+            matrix_summary.get("diagnostic_only_count"),
+            matrix_counts.get("DIAGNOSTIC_ONLY"),
+            base_summary.get("diagnostic_only_count"),
+        ),
+        "blocked_until_qualified_count": _first_int(
+            matrix_summary.get("blocked_until_qualified_count"),
+            matrix_counts.get("BLOCKED_UNTIL_QUALIFIED"),
+            base_summary.get("blocked_until_qualified_count"),
+        ),
+        "current_view_only_count": _first_int(
+            matrix_summary.get("current_view_only_count"),
+            matrix_counts.get("CURRENT_VIEW_ONLY"),
+            base_summary.get("current_view_only_count"),
+        ),
+        "research_label_only_count": _first_int(
+            matrix_summary.get("research_label_only_count"),
+            matrix_counts.get("RESEARCH_LABEL_ONLY"),
+            base_summary.get("research_label_only_count"),
+        ),
+    }
+
+
+def _artifact_ref_map(**payloads: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        key: {
+            "report_type": payload.get("report_type", "MISSING"),
+            "status": payload.get("status", "MISSING"),
+            "json_path": _mapping(payload.get("artifact_paths")).get("json_path"),
+            "markdown_path": _mapping(payload.get("artifact_paths")).get("markdown_path"),
+            "production_effect": payload.get("production_effect"),
+            "promotion_gate_allowed": payload.get("promotion_gate_allowed"),
+        }
+        for key, payload in payloads.items()
+    }
+
+
+def _fmp_remaining_pit_gaps(fmp: Mapping[str, Any]) -> list[str]:
+    endpoint_rows = _records(fmp.get("endpoint_status"))
+    gaps: list[str] = []
+    if any(row.get("provider_timestamp_if_available") is None for row in endpoint_rows):
+        gaps.append("provider_timestamp_not_available")
+    if any(row.get("available_time_rule") == "conservative_assumption" for row in endpoint_rows):
+        gaps.append("available_time_uses_conservative_assumption")
+    if str(fmp.get("qualification_status")) == "promotion_candidate_after_qualification":
+        gaps.append("as_of_snapshot_and_lineage_owner_review_required")
+    if any(row.get("endpoint_name") == "delisted_companies" for row in endpoint_rows):
+        gaps.append("delisted_membership_validation_pending")
+    return gaps
+
+
+def _marketstack_reconciliation_summary(
+    *,
+    marketstack: Mapping[str, Any],
+    price_diff_report: Mapping[str, Any],
+    split_dividend_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    endpoint_rows = _records(marketstack.get("marketstack_endpoint_status"))
+    universe = [str(item) for item in marketstack.get("representative_universe", [])]
+    price_endpoint = next(
+        (row for row in endpoint_rows if row.get("endpoint_name") == "eod_historical_price"),
+        {},
+    )
+    coverage = _mapping(price_endpoint.get("coverage_for_representative_universe"))
+    probed = {str(item) for item in coverage.get("probed", [])}
+    covered = {str(item) for item in coverage.get("covered", [])}
+    universe_set = set(universe)
+    row_snapshot_covered = sorted(universe_set & (probed | covered))
+    row_snapshot_ratio = round(len(row_snapshot_covered) / len(universe), 6) if universe else 0.0
+    price_summary = _price_discrepancy_summary(price_diff_report)
+    split_dividend_summary = _split_dividend_discrepancy_summary(split_dividend_report)
+    return {
+        "representative_universe": universe,
+        "provider_reported_coverage_ratio": coverage.get("coverage_ratio_observed"),
+        "row_snapshot_coverage_ratio": row_snapshot_ratio,
+        "row_snapshot_covered": row_snapshot_covered,
+        "row_snapshot_missing": sorted(universe_set - set(row_snapshot_covered)),
+        "price_discrepancy_summary": price_summary,
+        "split_dividend_discrepancy_summary": split_dividend_summary,
+        "marketstack_primary_source_allowed": False,
+        "marketstack_source_role": "second_source_only",
+        "marketstack_second_source_only": True,
+    }
+
+
+def _price_discrepancy_summary(price_diff_report: Mapping[str, Any]) -> dict[str, Any]:
+    rows = _records(price_diff_report.get("price_diffs"))
+    data_required_count = sum(
+        1
+        for row in rows
+        if row.get("max_abs_close_diff") is None
+        or str(row.get("status", "")).upper().endswith("SOURCE_SNAPSHOTS")
+    )
+    numeric_diffs = [
+        float(row["max_abs_close_diff"])
+        for row in rows
+        if isinstance(row.get("max_abs_close_diff"), int | float)
+    ]
+    return {
+        "row_count": len(rows),
+        "data_required_count": data_required_count,
+        "max_abs_close_diff": max(numeric_diffs) if numeric_diffs else None,
+        "status": "DATA_REQUIRED" if data_required_count else "PASS",
+    }
+
+
+def _split_dividend_discrepancy_summary(
+    split_dividend_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _records(split_dividend_report.get("crosscheck_rows"))
+    data_required_count = sum(
+        1
+        for row in rows
+        if "SOURCE_SNAPSHOT_REQUIRED"
+        in {str(row.get("split_status")), str(row.get("dividend_status"))}
+    )
+    return {
+        "row_count": len(rows),
+        "data_required_count": data_required_count,
+        "status": "DATA_REQUIRED" if data_required_count else "PASS",
+    }
+
+
+def _controlled_pilot_summary(
+    controlled_artifacts: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    benchmark = _mapping(controlled_artifacts.get("benchmark_controls"))
+    benchmark_results = _records(benchmark.get("benchmark_results"))
+    negative_control_ids = {"random_signal", "date_shuffle", "future_leakage_trap"}
+    positive_controls = [
+        row.get("benchmark_id")
+        for row in benchmark_results
+        if row.get("benchmark_id") not in negative_control_ids
+    ]
+    negative_controls = [
+        row.get("benchmark_id")
+        for row in benchmark_results
+        if row.get("benchmark_id") in negative_control_ids
+    ]
+    reverse = _mapping(controlled_artifacts.get("reverse_diagnostics"))
+    regret = _mapping(controlled_artifacts.get("regret_casebook"))
+    return {
+        "pilot_ran": bool(controlled_artifacts),
+        "benchmark_batch_status": benchmark.get("status", "NOT_RUN"),
+        "positive_controls": positive_controls,
+        "negative_controls": negative_controls,
+        "selected_reverse_diagnostic": _records(reverse.get("decision_delta_trace"))[:1],
+        "regret_casebook_status": regret.get("status", "NOT_RUN"),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _first_batch_candidate_decisions(
+    *,
+    fmp: Mapping[str, Any],
+    marketstack: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    readiness_level: str,
+    controlled_artifacts: Mapping[str, Mapping[str, Any]],
+    price_diff_report: Mapping[str, Any],
+    split_dividend_report: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    price_summary = _price_discrepancy_summary(price_diff_report)
+    split_dividend_summary = _split_dividend_discrepancy_summary(split_dividend_report)
+    marketstack_decision = (
+        "DATA_REQUIRED"
+        if price_summary["status"] == "DATA_REQUIRED"
+        or split_dividend_summary["status"] == "DATA_REQUIRED"
+        else "WATCHLIST"
+    )
+    decisions = [
+        _batch_decision(
+            "fmp_price_corporate_action",
+            "WATCHLIST" if fmp.get("promotion_candidate_after_qualification") else "DATA_REQUIRED",
+            "diagnostic-only",
+            "source_manifest_and_policy_recorded_but_owner_review_required",
+        ),
+        _batch_decision(
+            "marketstack_reconciliation",
+            marketstack_decision,
+            "blocked" if marketstack_decision == "DATA_REQUIRED" else "diagnostic-only",
+            (
+                "row_level_fmp_marketstack_snapshots_required"
+                if marketstack_decision == "DATA_REQUIRED"
+                else "second_source_reconciliation_contract_recorded"
+            ),
+        ),
+        _batch_decision(
+            "forward_evidence_archive",
+            (
+                "CONTINUE"
+                if forward.get("reclassification") == "internal_capture_requirement"
+                else "DATA_REQUIRED"
+            ),
+            "diagnostic-only",
+            "internal_capture_requirement_recorded_no_broker_order_triggered",
+        ),
+    ]
+    if readiness_level in {"DIAGNOSTIC_ONLY_READY", "CONTROLLED_RESEARCH_READY"}:
+        decisions.extend(
+            [
+                _batch_decision(
+                    "benchmark_controls",
+                    "CONTINUE",
+                    "controlled-research-only",
+                    "benchmark_and_positive_negative_controls_recorded",
+                ),
+                _batch_decision(
+                    "strategy_pair_reverse_diagnostic",
+                    (
+                        "WATCHLIST"
+                        if controlled_artifacts.get("reverse_diagnostics")
+                        else "DATA_REQUIRED"
+                    ),
+                    "controlled-research-only",
+                    "one_reverse_diagnostic_available_for_hypothesis_generation_only",
+                ),
+                _batch_decision(
+                    "regret_casebook_pilot",
+                    "WATCHLIST" if controlled_artifacts.get("regret_casebook") else "DATA_REQUIRED",
+                    "controlled-research-only",
+                    "regret_taxonomy_available_but_not_promotion_evidence",
+                ),
+            ]
+        )
+    else:
+        decisions.extend(
+            [
+                _batch_decision(
+                    "benchmark_controls",
+                    "DATA_REQUIRED",
+                    "blocked",
+                    "acceptance_v2_not_ready",
+                ),
+                _batch_decision(
+                    "strategy_pair_reverse_diagnostic",
+                    "DATA_REQUIRED",
+                    "blocked",
+                    "acceptance_v2_not_ready",
+                ),
+                _batch_decision(
+                    "regret_casebook_pilot",
+                    "DATA_REQUIRED",
+                    "blocked",
+                    "acceptance_v2_not_ready",
+                ),
+            ]
+        )
+    return decisions
+
+
+def _batch_decision(
+    candidate_id: str,
+    decision: str,
+    conclusion_scope: str,
+    reason: str,
+) -> dict[str, Any]:
+    if decision not in ALLOWED_BATCH_REVIEW_DECISIONS:
+        raise ValueError(f"Unsupported TRADING-759 batch decision: {decision}")
+    return {
+        "candidate_id": candidate_id,
+        "decision": decision,
+        "conclusion_scope": conclusion_scope,
+        "reason": reason,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+        "broker_action": "none",
+    }
+
+
+def _first_int(*values: Any) -> int:
+    for value in values:
+        if value is None:
+            continue
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            continue
+    return 0
 
 
 def _usage_policy_row(row: Mapping[str, Any], policy: Mapping[str, Any]) -> dict[str, Any]:

@@ -11142,6 +11142,23 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: current_subscription_source_qualification_batch_review
+    title: Current Subscription Source Qualification Batch Review
+    group: data_quality
+    cadence: ad_hoc
+    audience: operator
+    owner: data_foundation
+    command: aits data source-qualification first-batch
+    artifact_globs:
+      - outputs/data_quality/current_subscription_source_qualification_batch/current_subscription_source_qualification_batch_review.json
+      - outputs/data_quality/current_subscription_source_qualification_batch/current_subscription_source_qualification_batch_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Batch review should be regenerated when current subscription coverage, source qualification, or acceptance v2 artifacts change.
+    owner_action: review_data_required_items_before_expanding_controlled_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: strategy_research_readiness_board
     title: Strategy Research Readiness Board
     group: research

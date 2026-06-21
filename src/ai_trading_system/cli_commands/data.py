@@ -37,6 +37,7 @@ from ai_trading_system.current_subscription_qualification import (
     DEFAULT_ASSET_MASTER_QUALIFICATION_CONFIG_PATH,
     DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
     DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT,
     DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH,
     DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH,
     DEFAULT_MACRO_RISK_CONFIG_PATH,
@@ -47,6 +48,7 @@ from ai_trading_system.current_subscription_qualification import (
     run_data_foundation_acceptance_v2,
     run_data_source_usage_guardrails,
     run_data_vendor_decision_gate,
+    run_first_current_subscription_source_qualification_batch,
     run_fmp_price_corporate_action_qualification,
     run_macro_risk_source_qualification,
     run_marketstack_reconciliation_qualification,
@@ -441,6 +443,49 @@ def source_qualification_vendor_decision_gate_command(
     ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
 ) -> None:
     payload = run_data_vendor_decision_gate(output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("first-batch")
+def source_qualification_first_batch_command(
+    subscription_coverage: Annotated[
+        Path,
+        typer.Option("--subscription-coverage", help="TRADING-738 coverage matrix JSON。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH,
+    source_requirement_matrix: Annotated[
+        Path,
+        typer.Option("--source-requirement-matrix", help="TRADING-737 requirement matrix JSON。"),
+    ] = DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    qualification_matrix_updated: Annotated[
+        Path,
+        typer.Option("--qualification-matrix-updated", help="TRADING-736 updated matrix JSON。"),
+    ] = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_UPDATED_PATH,
+    source_output_root: Annotated[
+        Path,
+        typer.Option("--source-output-root", help="TRADING-739～747 source artifacts 输出目录。"),
+    ] = DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT,
+    acceptance_output_root: Annotated[
+        Path,
+        typer.Option("--acceptance-output-root", help="TRADING-748 acceptance v2 输出目录。"),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    controlled_output_root: Annotated[
+        Path,
+        typer.Option("--controlled-output-root", help="小型 controlled strategy pilot 输出目录。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-759 batch review 输出目录。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_current_subscription_source_qualification_batch(
+        subscription_coverage_path=subscription_coverage,
+        source_requirement_matrix_path=source_requirement_matrix,
+        qualification_matrix_updated_path=qualification_matrix_updated,
+        source_output_root=source_output_root,
+        acceptance_output_root=acceptance_output_root,
+        controlled_output_root=controlled_output_root,
+        output_root=output_root,
+    )
     _print_foundation_payload(payload)
 
 

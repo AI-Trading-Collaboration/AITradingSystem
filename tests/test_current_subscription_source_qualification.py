@@ -17,6 +17,7 @@ from ai_trading_system.current_subscription_qualification import (
     run_data_foundation_acceptance_v2,
     run_data_source_usage_guardrails,
     run_data_vendor_decision_gate,
+    run_first_current_subscription_source_qualification_batch,
     run_fmp_price_corporate_action_qualification,
     run_gbdt_action_utility_baseline,
     run_horizon_conditioned_value_surface_prototype,
@@ -167,6 +168,38 @@ def test_current_subscription_source_qualification_contracts(tmp_path: Path) -> 
     ):
         _assert_safety(payload)
 
+    batch = run_first_current_subscription_source_qualification_batch(
+        subscription_coverage_path=coverage_path,
+        source_requirement_matrix_path=requirements_path,
+        qualification_matrix_updated_path=updated_matrix_path,
+        source_output_root=tmp_path / "batch_source",
+        acceptance_output_root=tmp_path / "batch_acceptance",
+        controlled_output_root=tmp_path / "batch_controlled",
+        output_root=tmp_path / "batch_review",
+    )
+    _assert_safety(batch)
+    assert batch["report_type"] == "current_subscription_source_qualification_batch_review"
+    assert batch["summary"]["current_view_only_strategy_input_violation_count"] == 0
+    assert batch["summary"]["research_label_only_promotion_violation_count"] == 0
+    assert batch["summary"]["blocked_until_qualified_promotion_violation_count"] == 0
+    assert batch["fmp_price_corporate_action"]["source_manifest_generated"] is True
+    assert "delisted_companies" in batch["fmp_price_corporate_action"]["covered_endpoints"]
+    assert batch["forward_evidence_reclassification"]["reclassification"] == (
+        "internal_capture_requirement"
+    )
+    assert batch["acceptance_v2"]["promotion_candidate_after_qualification_count"] == 1
+    assert batch["marketstack_reconciliation"]["marketstack_second_source_only"] is True
+    assert batch["marketstack_reconciliation"]["price_discrepancy_summary"]["status"] == (
+        "DATA_REQUIRED"
+    )
+    decisions = {item["candidate_id"]: item for item in batch["candidate_decisions"]}
+    assert decisions["marketstack_reconciliation"]["decision"] == "DATA_REQUIRED"
+    assert decisions["benchmark_controls"]["decision"] == "CONTINUE"
+    assert decisions["regret_casebook_pilot"]["decision"] == "WATCHLIST"
+    assert (
+        tmp_path / "batch_review" / "current_subscription_source_qualification_batch_review.json"
+    ).exists()
+
 
 def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> None:
     coverage_path = _write_coverage(tmp_path)
@@ -218,6 +251,25 @@ def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> 
             "--output-root",
             str(research_root),
         ],
+        [
+            "data",
+            "source-qualification",
+            "first-batch",
+            "--subscription-coverage",
+            str(coverage_path),
+            "--source-requirement-matrix",
+            str(requirements_path),
+            "--qualification-matrix-updated",
+            str(updated_matrix_path),
+            "--source-output-root",
+            str(source_root / "batch_source"),
+            "--acceptance-output-root",
+            str(tmp_path / "batch_acceptance"),
+            "--controlled-output-root",
+            str(research_root / "batch_controlled"),
+            "--output-root",
+            str(tmp_path / "batch_review"),
+        ],
     ]
 
     for command in commands:
@@ -229,6 +281,9 @@ def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> 
     assert (source_root / "forward_evidence_requirement_reclassification.json").exists()
     assert (research_root / "strategy_research_readiness_board.json").exists()
     assert (research_root / "data_vendor_decision_gate.json").exists()
+    assert (
+        tmp_path / "batch_review" / "current_subscription_source_qualification_batch_review.json"
+    ).exists()
 
 
 def test_current_subscription_source_qualification_registry_catalog_schema_and_tiers() -> None:
@@ -245,6 +300,7 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
         "strategy_research_readiness_board",
         "benchmark_controls_real_data_batch",
         "data_vendor_decision_gate",
+        "current_subscription_source_qualification_batch_review",
     }:
         assert report_id in report_ids
         assert report_ids[report_id]["artifact_selection_policy"] == "latest_available"
@@ -253,10 +309,12 @@ def test_current_subscription_source_qualification_registry_catalog_schema_and_t
     catalog = (PROJECT_ROOT / "docs" / "artifact_catalog.md").read_text(encoding="utf-8")
     assert "data_source_usage_policy_audit.json/md" in catalog
     assert "strategy_research_readiness_board.json/md" in catalog
+    assert "current_subscription_source_qualification_batch_review.json/md" in catalog
     assert "DO_NOT_BUY_NEW_SOURCE_YET" in catalog
 
     system_flow = (PROJECT_ROOT / "docs" / "system_flow.md").read_text(encoding="utf-8")
     assert "TRADING-739～748" in system_flow
+    assert "TRADING-759" in system_flow
     assert "aits research strategy-pilot readiness-board" in system_flow
 
     assert (
