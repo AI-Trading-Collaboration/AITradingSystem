@@ -77,6 +77,11 @@ from ai_trading_system.data_source_fallback_policy import (
     resolve_data_source_fallback_policy_path,
     validate_data_source_fallback_policy_artifact,
 )
+from ai_trading_system.data_source_subscription_audit import (
+    DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_OUTPUT_ROOT,
+    DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    run_current_subscription_data_coverage_audit,
+)
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
 )
@@ -229,6 +234,32 @@ def source_qualification_requirements_command(
         remediation_item_results_path=remediation_item_results,
         qualification_matrix_updated_path=qualification_matrix_updated,
         output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("subscription-audit")
+def source_qualification_subscription_audit_command(
+    source_requirement_matrix: Annotated[
+        Path,
+        typer.Option(
+            "--source-requirement-matrix",
+            help="TRADING-737 source requirement matrix JSON。",
+        ),
+    ] = DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-738 subscription coverage 输出目录。"),
+    ] = DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_OUTPUT_ROOT,
+    timeout_seconds: Annotated[
+        float,
+        typer.Option("--timeout-seconds", help="单个 endpoint probe HTTP timeout 秒数。"),
+    ] = 10.0,
+) -> None:
+    payload = run_current_subscription_data_coverage_audit(
+        source_requirement_matrix_path=source_requirement_matrix,
+        output_root=output_root,
+        timeout_seconds=timeout_seconds,
     )
     _print_foundation_payload(payload)
 

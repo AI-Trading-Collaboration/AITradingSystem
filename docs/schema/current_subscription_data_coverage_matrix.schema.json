@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Current Subscription Data Coverage Matrix",
+  "type": "object",
+  "required": [
+    "report_type",
+    "status",
+    "summary",
+    "provider_key_statuses",
+    "endpoint_coverage_matrix",
+    "requirement_subscription_matches",
+    "api_key_material_recorded",
+    "status_upgrade_attempted",
+    "production_effect",
+    "broker_action",
+    "promotion_gate_allowed",
+    "paper_shadow_change_allowed",
+    "production_weight_change_allowed",
+    "lookahead_violation_count"
+  ],
+  "properties": {
+    "report_type": {"const": "current_subscription_data_coverage_matrix"},
+    "api_key_material_recorded": {"const": false},
+    "status_upgrade_attempted": {"const": false},
+    "production_effect": {"const": "none"},
+    "broker_action": {"const": "none"},
+    "promotion_gate_allowed": {"const": false},
+    "paper_shadow_change_allowed": {"const": false},
+    "production_weight_change_allowed": {"const": false},
+    "lookahead_violation_count": {"const": 0},
+    "summary": {
+      "type": "object",
+      "required": [
+        "provider_count",
+        "endpoint_probe_count",
+        "accessible_endpoint_count",
+        "key_present_provider_count",
+        "representative_universe",
+        "requirement_match_count",
+        "status_upgrade_attempted",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "status_upgrade_attempted": {"const": false},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    },
+    "provider_key_statuses": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/providerKeyStatus"},
+      "minItems": 1
+    },
+    "endpoint_coverage_matrix": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/endpointCoverage"},
+      "minItems": 1
+    },
+    "requirement_subscription_matches": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/requirementMatch"},
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "allowedUse": {
+      "enum": [
+        "promotion_candidate_after_qualification",
+        "diagnostic_only",
+        "research_label_only",
+        "blocked_until_qualified"
+      ]
+    },
+    "providerKeyStatus": {
+      "type": "object",
+      "required": [
+        "provider",
+        "key_present",
+        "endpoint_accessible",
+        "plan_or_limit_info_if_available",
+        "sanitized_error_class",
+        "allowed_uses_candidate"
+      ]
+    },
+    "endpointCoverage": {
+      "type": "object",
+      "required": [
+        "provider",
+        "endpoint_name",
+        "accessible",
+        "coverage_for_representative_universe",
+        "historical_depth_observed",
+        "raw_price_supported",
+        "adjusted_price_supported",
+        "splits_supported",
+        "dividends_supported",
+        "delisted_supported",
+        "fundamentals_supported",
+        "event_calendar_supported",
+        "available_time_supported",
+        "source_manifest_possible",
+        "current_view_only_risk",
+        "PIT_qualification_gap",
+        "likely_allowed_use",
+        "plan_or_limit_info_if_available",
+        "sanitized_error_class"
+      ],
+      "properties": {
+        "likely_allowed_use": {"$ref": "#/$defs/allowedUse"},
+        "status_upgrade_attempted": {"const": false},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    },
+    "requirementMatch": {
+      "type": "object",
+      "required": [
+        "requirement_id",
+        "can_current_subscription_cover",
+        "provider_candidate",
+        "endpoint_candidate",
+        "remaining_gap",
+        "requires_new_paid_source",
+        "status_upgrade_attempted",
+        "promotion_gate_allowed",
+        "production_effect",
+        "broker_action"
+      ],
+      "properties": {
+        "can_current_subscription_cover": {"enum": ["true", "false", "unknown"]},
+        "status_upgrade_attempted": {"const": false},
+        "promotion_gate_allowed": {"const": false},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"}
+      }
+    }
+  }
+}

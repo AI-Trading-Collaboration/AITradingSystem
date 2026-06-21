@@ -6136,6 +6136,27 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: current_subscription_data_coverage_matrix
+    title: Current Subscription Data Coverage Matrix
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data source-qualification subscription-audit
+    artifact_globs:
+      - outputs/data_quality/current_subscription_data_coverage/current_subscription_data_coverage_matrix.json
+      - outputs/data_quality/current_subscription_data_coverage/current_subscription_data_coverage_matrix.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-738 entitlement and coverage audit must be refreshed after any
+      API subscription, provider key, endpoint entitlement, source requirement,
+      PIT availability proof, source manifest, or as-of snapshot contract
+      change. API key material must never be written to artifacts.
+    owner_action: review_subscription_coverage_and_remaining_source_gaps_without_relaxing_PIT_data_quality_or_lineage_gates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
