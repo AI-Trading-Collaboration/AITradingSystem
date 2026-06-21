@@ -44,6 +44,11 @@ from ai_trading_system.controlled_strategy_batch import (
     run_simple_strategy_selector_pilot,
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
+    run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_fallback_trigger_precision_recall_audit,
+    run_tail_risk_forward_evidence_integration,
+    run_tail_risk_opportunity_cost_upside_capture_review,
+    run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
@@ -1005,6 +1010,120 @@ def test_tail_risk_policy_family_controlled_review_decision_enum(tmp_path: Path)
         "DATA_REQUIRED",
     }
     assert payload["review_decision"]["promotion_gate_allowed"] is False
+
+
+def test_tail_risk_benchmark_fallback_robustness_expansion(tmp_path: Path) -> None:
+    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+    payload = run_tail_risk_benchmark_fallback_robustness_expansion(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        fallback_path=paths["fallback"],
+        output_root=tmp_path / "tail_robustness_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_benchmark_fallback_robustness_expansion"
+    assert payload["summary"]["robustness_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "KILL",
+        "DATA_REQUIRED",
+    }
+    assert "fallback_trigger_count" in payload["summary"]
+    assert "upside_capture" in payload["summary"]
+    assert payload["by_asset"]
+    assert payload["by_horizon"]
+    assert payload["by_regime"]
+    assert payload["by_cluster"]
+
+
+def test_tail_risk_fallback_trigger_precision_recall_audit(tmp_path: Path) -> None:
+    paths = _run_tail_risk_robustness_inputs(tmp_path)
+    payload = run_tail_risk_fallback_trigger_precision_recall_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_precision_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_fallback_trigger_precision_recall_audit"
+    assert "fallback_precision" in payload["summary"]
+    assert "fallback_recall" in payload["summary"]
+    assert "false_positive" in payload["confusion_matrix"]
+    assert "false_negative" in payload["confusion_matrix"]
+    assert "tail_loss_from_false_negative" in payload["summary"]
+
+
+def test_tail_risk_opportunity_cost_upside_capture_review(tmp_path: Path) -> None:
+    paths = _run_tail_risk_robustness_inputs(tmp_path)
+    payload = run_tail_risk_opportunity_cost_upside_capture_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_opportunity_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_opportunity_cost_upside_capture_review"
+    assert "benchmark_upside_case_count" in payload["summary"]
+    assert "upside_capture_ratio" in payload["summary"]
+    assert "missed_upside_cost" in payload["summary"]
+    assert "opportunity_cost_condition_met" in payload["summary"]
+    assert (
+        payload["missed_upside_concentration"]["by_regime"]["summary"]["promotion_gate_allowed"]
+        is False
+    )
+
+
+def test_tail_risk_forward_evidence_integration_pending_only(tmp_path: Path) -> None:
+    paths = _run_tail_risk_robustness_inputs(tmp_path)
+    payload = run_tail_risk_forward_evidence_integration(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        ledger_path=tmp_path / "tail_forward" / "ledger.jsonl",
+        output_root=tmp_path / "tail_forward",
+        as_of_date=TEST_AS_OF,
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_forward_evidence_integration"
+    assert payload["summary"]["future_outcome_status"] == "pending_maturity"
+    assert payload["summary"]["append_only_integrity_pass"] is True
+    assert payload["forward_records"]
+    assert (
+        payload["forward_records"][0]["actual_future_outcome_after_maturity"]["status"]
+        == "pending_maturity"
+    )
+    assert (
+        payload["forward_records"][0]["benchmark_output"]["realized_future_return_included"]
+        is False
+    )
+
+
+def test_tail_risk_policy_controlled_review_board_decision_enum(tmp_path: Path) -> None:
+    paths = _run_tail_risk_review_board_inputs(tmp_path)
+    payload = run_tail_risk_policy_controlled_review_board(
+        robustness_path=paths["robustness"],
+        precision_recall_path=paths["precision"],
+        opportunity_cost_path=paths["opportunity"],
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "tail_board_check",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_risk_policy_controlled_review_board"
+    assert payload["summary"]["tail_risk_controlled_decision"] in {
+        "CONTROLLED_RESEARCH_CONTINUE",
+        "WATCHLIST_FORWARD_MATURITY",
+        "WATCHLIST",
+        "PIVOT_OVERCONSERVATIVE",
+        "KILL",
+        "DATA_REQUIRED",
+    }
+    assert payload["review_decision"]["promotion_gate_allowed"] is False
+    assert payload["review_decision"]["paper_shadow_change_allowed"] is False
 
 
 def test_regret_state_machine_schema(tmp_path: Path) -> None:
@@ -2075,6 +2194,91 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "tail-risk-benchmark-fallback-robustness-expansion",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--fallback",
+            str(tmp_path / "cli_warning" / "benchmark_fallback_drawdown_guard_prototype.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-trigger-precision-recall-audit",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-opportunity-cost-upside-capture-review",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-forward-evidence-integration",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--ledger-path",
+            str(tmp_path / "cli_forward_tail" / "tail_risk_ledger.jsonl"),
+            "--output-root",
+            str(tmp_path / "cli_forward_tail"),
+            "--as-of-date",
+            TEST_AS_OF.isoformat(),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-policy-controlled-review-board",
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--precision-recall",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
+            ),
+            "--opportunity-cost",
+            str(tmp_path / "cli_warning" / "tail_risk_opportunity_cost_upside_capture_review.json"),
+            "--forward-integration",
+            str(
+                tmp_path
+                / "cli_forward_tail"
+                / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -2131,6 +2335,21 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (tmp_path / "cli_warning" / "conservative_horizon_risk_filter.json").exists()
     assert (tmp_path / "cli_warning" / "benchmark_fallback_drawdown_guard_prototype.json").exists()
     assert (tmp_path / "cli_warning" / "tail_risk_policy_family_controlled_review.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+    ).exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
+    ).exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_opportunity_cost_upside_capture_review.json"
+    ).exists()
+    assert (
+        tmp_path
+        / "cli_forward_tail"
+        / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -2210,6 +2429,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "conservative_horizon_risk_filter",
         "benchmark_fallback_drawdown_guard_prototype",
         "tail_risk_policy_family_controlled_review",
+        "tail_risk_benchmark_fallback_robustness_expansion",
+        "tail_risk_fallback_trigger_precision_recall_audit",
+        "tail_risk_opportunity_cost_upside_capture_review",
+        "tail_risk_forward_evidence_integration",
+        "tail_risk_policy_controlled_review_board",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -2244,6 +2468,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "conservative_horizon_risk_filter.json/md" in catalog
     assert "benchmark_fallback_drawdown_guard_prototype.json/md" in catalog
     assert "tail_risk_policy_family_controlled_review.json/md" in catalog
+    assert "tail_risk_benchmark_fallback_robustness_expansion.json/md" in catalog
+    assert "tail_risk_fallback_trigger_precision_recall_audit.json/md" in catalog
+    assert "tail_risk_opportunity_cost_upside_capture_review.json/md" in catalog
+    assert "tail_risk_benchmark_fallback_forward_evidence_integration.json/md" in catalog
+    assert "tail_risk_policy_controlled_review_board.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -2266,6 +2495,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-800～804" in system_flow
     assert "TRADING-805～809" in system_flow
     assert "TRADING-810～815" in system_flow
+    assert "TRADING-816～820" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -2298,6 +2528,17 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies conservative-horizon-risk-filter" in system_flow
     assert "aits research strategies benchmark-fallback-drawdown-guard-prototype" in system_flow
     assert "aits research strategies tail-risk-policy-family-controlled-review" in system_flow
+    assert (
+        "aits research strategies tail-risk-benchmark-fallback-robustness-expansion" in system_flow
+    )
+    assert (
+        "aits research strategies tail-risk-fallback-trigger-precision-recall-audit" in system_flow
+    )
+    assert (
+        "aits research strategies tail-risk-opportunity-cost-upside-capture-review" in system_flow
+    )
+    assert "aits research strategies tail-risk-forward-evidence-integration" in system_flow
+    assert "aits research strategies tail-risk-policy-controlled-review-board" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
@@ -2608,6 +2849,50 @@ def _run_tail_risk_policy_full_inputs(tmp_path: Path) -> dict[str, Path]:
         **paths,
         "horizon_filter": Path(horizon_filter["artifact_paths"]["json_path"]),
         "fallback": Path(fallback["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_tail_risk_robustness_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+    robustness = run_tail_risk_benchmark_fallback_robustness_expansion(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        fallback_path=paths["fallback"],
+        output_root=tmp_path / "tail_robustness",
+    )
+    return {
+        **paths,
+        "robustness": Path(robustness["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_tail_risk_review_board_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_tail_risk_robustness_inputs(tmp_path)
+    precision = run_tail_risk_fallback_trigger_precision_recall_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_precision",
+    )
+    opportunity = run_tail_risk_opportunity_cost_upside_capture_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_opportunity",
+    )
+    forward = run_tail_risk_forward_evidence_integration(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        ledger_path=tmp_path / "tail_forward" / "ledger.jsonl",
+        output_root=tmp_path / "tail_forward",
+        as_of_date=TEST_AS_OF,
+    )
+    return {
+        **paths,
+        "precision": Path(precision["artifact_paths"]["json_path"]),
+        "opportunity": Path(opportunity["artifact_paths"]["json_path"]),
+        "forward": Path(forward["artifact_paths"]["json_path"]),
     }
 
 

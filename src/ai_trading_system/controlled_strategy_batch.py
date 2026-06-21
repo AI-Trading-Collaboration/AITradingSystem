@@ -173,6 +173,25 @@ DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH = (
 DEFAULT_TAIL_RISK_POLICY_FAMILY_CONTROLLED_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_policy_family_controlled_review.json"
 )
+DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_benchmark_fallback_robustness_expansion.json"
+)
+DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_fallback_trigger_precision_recall_audit.json"
+)
+DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_opportunity_cost_upside_capture_review.json"
+)
+DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH = (
+    DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH.parent
+    / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+)
+DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_policy_controlled_review_board.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -3555,6 +3574,318 @@ def run_tail_risk_policy_family_controlled_review(
         payload,
         output_root=output_root,
         artifact_id="tail_risk_policy_family_controlled_review",
+    )
+    return payload
+
+
+def run_tail_risk_benchmark_fallback_robustness_expansion(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    fallback_path: Path = DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    fallback = _read_json_or_empty(fallback_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _tail_risk_benchmark_fallback_robustness_expansion(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_benchmark_fallback_robustness_expansion",
+        title="Tail-risk benchmark fallback robustness expansion",
+        status="TAIL_RISK_FALLBACK_ROBUSTNESS_EXPANDED",
+        summary={
+            "robustness_decision": review["summary"]["robustness_decision"],
+            "fallback_trigger_count": review["summary"]["fallback_trigger_count"],
+            "fallback_frequency": review["summary"]["fallback_frequency"],
+            "tail_loss_reduction": review["summary"]["tail_loss_reduction"],
+            "mean_delta_vs_benchmark": review["fallback_metric"].get("mean_delta_vs_benchmark"),
+            "upside_capture": review["summary"]["upside_capture"],
+            "missed_upside_count": review["summary"]["missed_upside_count"],
+            "false_fallback_count": review["summary"]["false_fallback_count"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        robustness_policy=_next_stage_section(
+            config, "tail_risk_benchmark_fallback_robustness_expansion"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        fallback_source=_artifact_status(fallback, fallback_path),
+        original_metric=review["original_metric"],
+        fallback_metric=review["fallback_metric"],
+        robustness_summary=review["summary"],
+        by_asset=review["by_asset"],
+        by_horizon=review["by_horizon"],
+        by_regime=review["by_regime"],
+        by_cluster=review["by_cluster"],
+        fallback_cases=review["fallback_cases"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_benchmark_fallback_robustness_expansion",
+    )
+    return payload
+
+
+def run_tail_risk_fallback_trigger_precision_recall_audit(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    audit = _tail_risk_fallback_trigger_precision_recall_audit(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_fallback_trigger_precision_recall_audit",
+        title="Tail-risk fallback trigger precision / recall audit",
+        status="TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_AUDITED",
+        summary={
+            "fallback_precision": audit["summary"]["fallback_precision"],
+            "fallback_recall": audit["summary"]["fallback_recall"],
+            "false_positive_rate": audit["summary"]["false_positive_rate"],
+            "false_negative_rate": audit["summary"]["false_negative_rate"],
+            "missed_upside_from_false_positive": audit["summary"][
+                "missed_upside_from_false_positive"
+            ],
+            "tail_loss_from_false_negative": audit["summary"]["tail_loss_from_false_negative"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        trigger_audit_policy=_next_stage_section(
+            config, "tail_risk_fallback_trigger_precision_recall_audit"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        robustness_source=_artifact_status(robustness, robustness_path),
+        confusion_matrix=audit["confusion_matrix"],
+        trigger_audit_summary=audit["summary"],
+        trigger_case_samples=audit["trigger_case_samples"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_fallback_trigger_precision_recall_audit",
+    )
+    return payload
+
+
+def run_tail_risk_opportunity_cost_upside_capture_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    review = _tail_risk_opportunity_cost_upside_capture_review(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_opportunity_cost_upside_capture_review",
+        title="Tail-risk opportunity cost / upside capture review",
+        status="TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_REVIEWED",
+        summary={
+            "benchmark_upside_case_count": review["summary"]["benchmark_upside_case_count"],
+            "strategy_participation": review["summary"]["strategy_participation"],
+            "upside_capture_ratio": review["summary"]["upside_capture_ratio"],
+            "missed_upside_count": review["summary"]["missed_upside_count"],
+            "missed_upside_cost": review["summary"]["missed_upside_cost"],
+            "tail_loss_to_missed_upside_ratio": review["summary"][
+                "tail_loss_to_missed_upside_ratio"
+            ],
+            "opportunity_cost_condition_met": review["summary"]["opportunity_cost_condition_met"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        opportunity_cost_policy=_next_stage_section(
+            config, "tail_risk_opportunity_cost_upside_capture_review"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        robustness_source=_artifact_status(robustness, robustness_path),
+        opportunity_cost_summary=review["summary"],
+        missed_upside_cases=review["missed_upside_cases"],
+        missed_upside_concentration=review["missed_upside_concentration"],
+        upside_capture_by_regime=review["upside_capture_by_regime"],
+        upside_capture_by_horizon=review["upside_capture_by_horizon"],
+        upside_capture_by_asset=review["upside_capture_by_asset"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_opportunity_cost_upside_capture_review",
+    )
+    return payload
+
+
+def run_tail_risk_forward_evidence_integration(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    ledger_path: Path = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    output_root: Path = DEFAULT_FORWARD_DRY_RUN_ARCHIVE_PATH.parent,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    integration = _tail_risk_forward_evidence_integration(
+        selected_cases=selected_cases,
+        config=config,
+        classifier=classifier,
+        as_of_date=as_of_date,
+        ledger_path=ledger_path,
+        output_root=output_root,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_forward_evidence_integration",
+        title="Tail-risk policy forward evidence integration",
+        status="TAIL_RISK_FORWARD_EVIDENCE_INTEGRATED",
+        summary={
+            "forward_record_count": integration["summary"]["forward_record_count"],
+            "fallback_trigger_count": integration["summary"]["fallback_trigger_count"],
+            "ledger_append_status": integration["summary"]["ledger_append_status"],
+            "future_outcome_status": integration["summary"]["future_outcome_status"],
+            "append_only_integrity_pass": integration["summary"]["append_only_integrity_pass"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        forward_integration_policy=_next_stage_section(
+            config, "tail_risk_forward_evidence_integration"
+        ),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        classifier_source=_artifact_status(classifier, classifier_path),
+        robustness_source=_artifact_status(robustness, robustness_path),
+        as_of=integration["as_of"],
+        archive_id=integration["archive_id"],
+        forward_records=integration["forward_records"],
+        evidence_ledger_path=str(ledger_path),
+        evidence_ledger_event=integration["ledger_event"],
+        integration_summary=integration["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_benchmark_fallback_forward_evidence_integration",
+    )
+    return payload
+
+
+def run_tail_risk_policy_controlled_review_board(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall_path: Path = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    opportunity_cost_path: Path = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    forward_integration_path: Path = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    robustness = _read_json_or_empty(robustness_path)
+    precision = _read_json_or_empty(precision_recall_path)
+    opportunity = _read_json_or_empty(opportunity_cost_path)
+    forward = _read_json_or_empty(forward_integration_path)
+    review = _tail_risk_policy_controlled_review_board(
+        config=config,
+        robustness=robustness,
+        precision=precision,
+        opportunity=opportunity,
+        forward=forward,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_policy_controlled_review_board",
+        title="Tail-risk policy controlled review board",
+        status="TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_COMPLETE",
+        summary={
+            "tail_risk_controlled_decision": review["review_decision"]["decision"],
+            "robustness_condition_met": review["review_decision"]["robustness_condition_met"],
+            "trigger_quality_condition_met": review["review_decision"][
+                "trigger_quality_condition_met"
+            ],
+            "opportunity_cost_condition_met": review["review_decision"][
+                "opportunity_cost_condition_met"
+            ],
+            "forward_integration_condition_met": review["review_decision"][
+                "forward_integration_condition_met"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        review_board_policy=_next_stage_section(config, "tail_risk_policy_controlled_review_board"),
+        robustness_source=_artifact_status(robustness, robustness_path),
+        precision_recall_source=_artifact_status(precision, precision_recall_path),
+        opportunity_cost_source=_artifact_status(opportunity, opportunity_cost_path),
+        forward_integration_source=_artifact_status(forward, forward_integration_path),
+        review_decision=review["review_decision"],
+        evidence_summary=review["evidence_summary"],
+        disallowed_actions=[
+            "promotion",
+            "paper_shadow_start",
+            "production_weight_change",
+            "broker_order",
+            "treat_forward_pending_outcome_as_mature_evidence",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_policy_controlled_review_board",
     )
     return payload
 
@@ -8553,6 +8884,685 @@ def _tail_risk_policy_family_controlled_review(
     }
 
 
+def _tail_risk_benchmark_fallback_robustness_expansion(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_benchmark_fallback_robustness_expansion")
+    fallback_rows = _tail_risk_benchmark_fallback_rows(selected_cases, classifier)
+    original_metric = _v2_variant_metric_row("original_value_surface", selected_cases, config)
+    fallback_metric = _add_variant_deltas(
+        _v2_variant_metric_row(str(policy.get("target_variant")), fallback_rows, config),
+        original_metric,
+    )
+    upside = _upside_capture_summary(selected_cases, fallback_rows)
+    fallback_count = sum(1 for row in fallback_rows if row.get("fallback_triggered"))
+    false_fallback_count = sum(
+        1
+        for row in fallback_rows
+        if row.get("fallback_triggered") and _float(row.get("original_delta_vs_benchmark")) > 0
+    )
+    max_drawdown_delta = _round(
+        _case_max_drawdown(fallback_rows) - _case_max_drawdown(selected_cases)
+    )
+    fallback_metric["max_drawdown_delta"] = max_drawdown_delta
+    fallback_metric["upside_capture"] = upside["upside_capture_ratio"]
+    fallback_metric["missed_upside_count"] = upside["missed_upside_count"]
+    fallback_metric["false_fallback_count"] = false_fallback_count
+    tail_loss_reduction = _tail_loss_reduction(original_metric, fallback_metric)
+    decision, reason = _tail_risk_robustness_decision(
+        policy=policy,
+        fallback_metric=fallback_metric,
+        tail_loss_reduction=tail_loss_reduction,
+        upside_capture=_float(upside.get("upside_capture_ratio"), 0.0),
+    )
+    summary = {
+        "robustness_decision": decision,
+        "decision_reason": reason,
+        "fallback_trigger_count": fallback_count,
+        "fallback_frequency": _round(fallback_count / len(fallback_rows) if fallback_rows else 0.0),
+        "tail_loss_reduction": _round(tail_loss_reduction),
+        "mean_delta_vs_benchmark": fallback_metric.get("mean_delta_vs_benchmark"),
+        "median_delta_vs_benchmark": fallback_metric.get("median_delta_vs_benchmark"),
+        "upside_capture": upside["upside_capture_ratio"],
+        "missed_upside_count": upside["missed_upside_count"],
+        "false_fallback_count": false_fallback_count,
+        "turnover_delta": fallback_metric.get("turnover_delta"),
+        "cost_delta": fallback_metric.get("cost_delta"),
+        "max_drawdown_delta": max_drawdown_delta,
+        "promotion_gate_allowed": False,
+    }
+    return {
+        "summary": summary,
+        "original_metric": original_metric,
+        "fallback_metric": fallback_metric,
+        "by_asset": _tail_risk_fallback_group_breakdown(
+            selected_cases, fallback_rows, "asset", config
+        ),
+        "by_horizon": _tail_risk_fallback_group_breakdown(
+            selected_cases, fallback_rows, "horizon", config
+        ),
+        "by_regime": _tail_risk_fallback_group_breakdown(
+            selected_cases, fallback_rows, "regime_segment", config
+        ),
+        "by_cluster": _tail_risk_fallback_group_breakdown(
+            selected_cases, fallback_rows, "asset_cluster", config
+        ),
+        "fallback_cases": [row for row in fallback_rows if row.get("fallback_triggered")][:100],
+    }
+
+
+def _tail_risk_robustness_decision(
+    *,
+    policy: Mapping[str, Any],
+    fallback_metric: Mapping[str, Any],
+    tail_loss_reduction: float,
+    upside_capture: float,
+) -> tuple[str, str]:
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    tail_ok = tail_loss_reduction >= _float(policy.get("tail_loss_reduction_floor"), 0.20)
+    mean_ok = _float(fallback_metric.get("mean_delta_vs_benchmark"), -999.0) >= (
+        _float(policy.get("mean_delta_floor_bps"), 0.0) / 10_000.0
+    )
+    upside_ok = upside_capture >= _float(policy.get("upside_capture_floor"), 0.70)
+    cost_ok = (
+        _float(fallback_metric.get("turnover_delta"), 0.0) <= 0
+        and _float(fallback_metric.get("cost_delta"), 0.0) <= 0
+    )
+    if not fallback_metric:
+        decision = "DATA_REQUIRED"
+        reason = "fallback_metric_missing"
+    elif tail_ok and mean_ok and upside_ok and cost_ok:
+        decision = "CONTINUE"
+        reason = "fallback_robustness_passed_tail_mean_upside_cost_conditions"
+    elif tail_ok and (upside_ok or mean_ok):
+        decision = "WATCHLIST"
+        reason = "tail_loss_improves_but_some_robustness_conditions_need_review"
+    else:
+        decision = "KILL"
+        reason = "fallback_robustness_conditions_failed"
+    if allowed and decision not in allowed:
+        return "WATCHLIST", "computed_decision_not_allowed_by_policy"
+    return decision, reason
+
+
+def _tail_risk_fallback_trigger_precision_recall_audit(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_fallback_trigger_precision_recall_audit")
+    positive_fields = [str(item) for item in policy.get("positive_label_fields", [])]
+    false_positive_floor = (
+        _float(policy.get("false_positive_original_delta_floor_bps"), 0.0) / 10_000.0
+    )
+    false_negative_tail_floor = _float(
+        policy.get("tail_loss_from_false_negative_delta_floor"), -0.05
+    )
+    rows = _tail_risk_benchmark_fallback_rows(selected_cases, classifier)
+    confusion_rows = []
+    for row in rows:
+        actual_tail_loss = any(bool(row.get(field)) for field in positive_fields)
+        fallback_triggered = bool(row.get("fallback_triggered"))
+        original_delta = _float(row.get("original_delta_vs_benchmark"), 0.0)
+        true_positive = fallback_triggered and actual_tail_loss
+        false_positive = fallback_triggered and original_delta > false_positive_floor
+        false_negative = (not fallback_triggered) and actual_tail_loss
+        true_negative = (not fallback_triggered) and not actual_tail_loss
+        confusion_rows.append(
+            {
+                "case_key": row.get("case_key"),
+                "date": row.get("date"),
+                "asset": row.get("asset"),
+                "horizon": row.get("horizon"),
+                "regime_segment": row.get("regime_segment"),
+                "fallback_triggered": fallback_triggered,
+                "actual_tail_loss": actual_tail_loss,
+                "true_positive": true_positive,
+                "false_positive": false_positive,
+                "false_negative": false_negative,
+                "true_negative": true_negative,
+                "missed_upside": row.get("missed_upside"),
+                "false_negative_tail_loss": (
+                    abs(original_delta)
+                    if false_negative and original_delta <= false_negative_tail_floor
+                    else 0.0
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    tp = _count_true(confusion_rows, "true_positive")
+    fp = _count_true(confusion_rows, "false_positive")
+    fn = _count_true(confusion_rows, "false_negative")
+    tn = _count_true(confusion_rows, "true_negative")
+    triggered_count = sum(1 for row in rows if row.get("fallback_triggered"))
+    risk_downshift_non_tail_negative_count = sum(
+        1
+        for row in rows
+        if row.get("fallback_triggered")
+        and not any(bool(row.get(field)) for field in positive_fields)
+        and _float(row.get("original_delta_vs_benchmark"), 0.0) <= false_positive_floor
+    )
+    summary = {
+        "true_positive_count": tp,
+        "false_positive_count": fp,
+        "false_negative_count": fn,
+        "true_negative_count": tn,
+        "fallback_precision": _round(tp / (tp + fp) if (tp + fp) else 0.0),
+        "fallback_recall": _round(tp / (tp + fn) if (tp + fn) else 0.0),
+        "false_positive_rate": _round(fp / (fp + tn) if (fp + tn) else 0.0),
+        "false_negative_rate": _round(fn / (fn + tp) if (fn + tp) else 0.0),
+        "missed_upside_from_false_positive": _round(
+            sum(
+                _float(row.get("missed_upside"), 0.0)
+                for row in confusion_rows
+                if row["false_positive"]
+            )
+        ),
+        "tail_loss_from_false_negative": _round(
+            sum(_float(row.get("false_negative_tail_loss"), 0.0) for row in confusion_rows)
+        ),
+        "fallback_trigger_count": triggered_count,
+        "risk_downshift_non_tail_negative_count": risk_downshift_non_tail_negative_count,
+        "promotion_gate_allowed": False,
+    }
+    return {
+        "summary": summary,
+        "confusion_matrix": {
+            "true_positive": tp,
+            "false_positive": fp,
+            "false_negative": fn,
+            "true_negative": tn,
+            "risk_downshift_non_tail_negative_count": risk_downshift_non_tail_negative_count,
+            "promotion_gate_allowed": False,
+        },
+        "trigger_case_samples": confusion_rows[:250],
+    }
+
+
+def _tail_risk_opportunity_cost_upside_capture_review(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_opportunity_cost_upside_capture_review")
+    rows = _tail_risk_benchmark_fallback_rows(selected_cases, classifier)
+    upside_floor = _float(policy.get("benchmark_upside_floor_bps"), 0.0) / 10_000.0
+    upside_cases = [
+        row for row in rows if _float(row.get("benchmark_realized_net_return"), 0.0) > upside_floor
+    ]
+    benchmark_upside_sum = sum(
+        _float(row.get("benchmark_realized_net_return"), 0.0) for row in upside_cases
+    )
+    captured_upside = sum(
+        max(0.0, _float(row.get("selected_realized_net_return"), 0.0)) for row in upside_cases
+    )
+    participation_count = sum(
+        1 for row in upside_cases if _float(row.get("selected_realized_net_return"), 0.0) > 0
+    )
+    missed_cases = [row for row in rows if _float(row.get("missed_upside"), 0.0) > 0]
+    missed_cost = sum(_float(row.get("missed_upside"), 0.0) for row in missed_cases)
+    avoided_tail_loss = sum(_float(row.get("avoided_tail_loss"), 0.0) for row in rows)
+    required_ratio = _float(policy.get("tail_loss_to_missed_upside_min_ratio"), 2.0)
+    ratio = avoided_tail_loss / missed_cost if missed_cost else None
+    opportunity_ok = (missed_cost == 0 and avoided_tail_loss > 0) or (
+        ratio is not None and ratio >= required_ratio
+    )
+    summary = {
+        "benchmark_upside_case_count": len(upside_cases),
+        "strategy_participation_count": participation_count,
+        "strategy_participation": _round(
+            participation_count / len(upside_cases) if upside_cases else 0.0
+        ),
+        "upside_capture_ratio": _round(
+            captured_upside / benchmark_upside_sum if benchmark_upside_sum else 0.0
+        ),
+        "missed_upside_count": len(missed_cases),
+        "missed_upside_cost": _round(missed_cost),
+        "avoided_tail_loss": _round(avoided_tail_loss),
+        "tail_loss_to_missed_upside_ratio": _round(ratio) if ratio is not None else None,
+        "opportunity_cost_condition_met": opportunity_ok,
+        "promotion_gate_allowed": False,
+    }
+    return {
+        "summary": summary,
+        "missed_upside_cases": missed_cases[:100],
+        "missed_upside_concentration": {
+            "by_regime": _missed_upside_concentration(missed_cases, "regime_segment"),
+            "by_horizon": _missed_upside_concentration(missed_cases, "horizon"),
+            "by_asset": _missed_upside_concentration(missed_cases, "asset"),
+        },
+        "upside_capture_by_regime": _upside_capture_group_rows(rows, "regime_segment"),
+        "upside_capture_by_horizon": _upside_capture_group_rows(rows, "horizon"),
+        "upside_capture_by_asset": _upside_capture_group_rows(rows, "asset"),
+    }
+
+
+def _tail_risk_forward_evidence_integration(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+    as_of_date: date | None,
+    ledger_path: Path,
+    output_root: Path,
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_forward_evidence_integration")
+    resolved_as_of = as_of_date or date.today()
+    archive_id = f"tail_risk_benchmark_fallback:{resolved_as_of.isoformat()}"
+    artifact_path = output_root / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+    rows = _tail_risk_benchmark_fallback_rows(selected_cases, classifier)
+    max_records = _first_int(policy.get("max_forward_records")) or 250
+    selected_rows = sorted(
+        rows,
+        key=lambda row: (str(row.get("date")), str(row.get("asset")), str(row.get("horizon"))),
+        reverse=True,
+    )[:max_records]
+    future_status = str(policy.get("future_outcome_status", "pending_maturity"))
+    maturity_horizons = [str(item) for item in policy.get("maturity_horizons", [])]
+    forward_records = [
+        _tail_risk_forward_record(
+            row=row,
+            archive_id=archive_id,
+            as_of=resolved_as_of,
+            maturity_horizons=maturity_horizons,
+            future_status=future_status,
+        )
+        for row in selected_rows
+    ]
+    ledger_event = {
+        "archive_id": archive_id,
+        "as_of": resolved_as_of.isoformat(),
+        "archive_path": str(artifact_path),
+        "candidate_id": "tail_risk_benchmark_fallback",
+        "forward_record_count": len(forward_records),
+        "fallback_trigger_count": sum(
+            1 for row in forward_records if row.get("fallback_triggered")
+        ),
+        "outcome_status": future_status,
+        "outcome_append_only": True,
+        "broker_action": "none",
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    ledger_status = _append_jsonl_once(ledger_path, ledger_event, unique_key="archive_id")
+    return {
+        "as_of": resolved_as_of.isoformat(),
+        "archive_id": archive_id,
+        "forward_records": forward_records,
+        "ledger_event": ledger_event,
+        "summary": {
+            "forward_record_count": len(forward_records),
+            "fallback_trigger_count": ledger_event["fallback_trigger_count"],
+            "ledger_append_status": ledger_status,
+            "future_outcome_status": future_status,
+            "append_only_integrity_pass": ledger_status in {"APPENDED", "ALREADY_RECORDED"},
+            "broker_action": "none",
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _tail_risk_policy_controlled_review_board(
+    *,
+    config: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    precision: Mapping[str, Any],
+    opportunity: Mapping[str, Any],
+    forward: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_policy_controlled_review_board")
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    robust_summary = _nested_mapping(robustness, "robustness_summary", "summary")
+    precision_summary = _nested_mapping(precision, "trigger_audit_summary", "summary")
+    opportunity_summary = _nested_mapping(opportunity, "opportunity_cost_summary", "summary")
+    forward_summary = _nested_mapping(forward, "integration_summary", "summary")
+    robustness_condition = robust_summary.get("robustness_decision") == "CONTINUE" and _float(
+        robust_summary.get("tail_loss_reduction"), 0.0
+    ) >= _float(policy.get("tail_loss_reduction_floor"), 0.20)
+    trigger_condition = _float(precision_summary.get("fallback_precision"), 0.0) >= _float(
+        policy.get("precision_floor"), 0.60
+    ) and _float(precision_summary.get("fallback_recall"), 0.0) >= _float(
+        policy.get("recall_floor"), 0.60
+    )
+    opportunity_condition = bool(
+        opportunity_summary.get("opportunity_cost_condition_met")
+    ) and _float(opportunity_summary.get("upside_capture_ratio"), 0.0) >= _float(
+        policy.get("upside_capture_floor"), 0.70
+    )
+    forward_condition = _first_int(forward_summary.get("forward_record_count")) >= _first_int(
+        policy.get("forward_record_count_floor")
+    ) and bool(forward_summary.get("append_only_integrity_pass"))
+    missing = not all([robustness, precision, opportunity, forward])
+    if missing:
+        decision = "DATA_REQUIRED"
+        reason = "required_tail_risk_review_artifact_missing"
+    elif robustness_condition and trigger_condition and opportunity_condition and forward_condition:
+        decision = "CONTROLLED_RESEARCH_CONTINUE"
+        reason = "continue_to_longer_controlled_walk_forward_and_forward_maturity_tracking"
+    elif robustness_condition and trigger_condition and opportunity_condition:
+        decision = "WATCHLIST_FORWARD_MATURITY"
+        reason = "historical_conditions_pass_but_forward_archive_not_ready"
+    elif robustness_condition and not opportunity_condition:
+        decision = "PIVOT_OVERCONSERVATIVE"
+        reason = "tail_loss_reduction_may_be_purchased_by_upside_sacrifice"
+    elif not robustness_condition:
+        decision = "KILL"
+        reason = "fallback_robustness_failed"
+    else:
+        decision = "WATCHLIST"
+        reason = "mixed_tail_risk_policy_evidence"
+    if allowed and decision not in allowed:
+        decision = "WATCHLIST"
+        reason = "computed_decision_not_allowed_by_policy"
+    review_decision = {
+        "decision": decision,
+        "reason": reason,
+        "allowed_decisions": allowed,
+        "robustness_condition_met": robustness_condition,
+        "trigger_quality_condition_met": trigger_condition,
+        "opportunity_cost_condition_met": opportunity_condition,
+        "forward_integration_condition_met": forward_condition,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    return {
+        "review_decision": review_decision,
+        "evidence_summary": {
+            "robustness_status": robustness.get("status"),
+            "robustness_decision": robust_summary.get("robustness_decision"),
+            "tail_loss_reduction": robust_summary.get("tail_loss_reduction"),
+            "precision_status": precision.get("status"),
+            "fallback_precision": precision_summary.get("fallback_precision"),
+            "fallback_recall": precision_summary.get("fallback_recall"),
+            "opportunity_status": opportunity.get("status"),
+            "upside_capture_ratio": opportunity_summary.get("upside_capture_ratio"),
+            "missed_upside_cost": opportunity_summary.get("missed_upside_cost"),
+            "forward_status": forward.get("status"),
+            "forward_record_count": forward_summary.get("forward_record_count"),
+            "future_outcome_status": forward_summary.get("future_outcome_status"),
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _tail_risk_benchmark_fallback_rows(
+    selected_cases: list[dict[str, Any]],
+    classifier: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    label_map = _classifier_label_map(classifier)
+    output = []
+    for row in selected_cases:
+        original = dict(row)
+        labels = label_map.get(_case_key(original), {})
+        trigger_labels = [
+            label
+            for label in [
+                "large_loss_case",
+                "tail_loss_case",
+                "benchmark_underperformance_case",
+                "long_horizon_failure_case",
+            ]
+            if bool(labels.get(label))
+        ]
+        triggered = bool(labels.get("tail_risk_signal_high"))
+        item = (
+            _fallback_case_to_benchmark(dict(original), "tail_risk_benchmark_fallback")
+            if triggered
+            else dict(original)
+        )
+        original_delta = _float(original.get("delta_vs_benchmark"), 0.0)
+        original_return = _float(original.get("selected_realized_net_return"), 0.0)
+        fallback_return = _float(item.get("selected_realized_net_return"), 0.0)
+        item.update(
+            {
+                "case_key": _case_key(original),
+                "fallback_triggered": triggered,
+                "trigger_reason": ",".join(trigger_labels) if trigger_labels else "not_triggered",
+                "trigger_labels": trigger_labels,
+                "tail_risk_signal_high": triggered,
+                "original_selected_action": original.get("selected_action"),
+                "original_selected_realized_net_return": original.get(
+                    "selected_realized_net_return"
+                ),
+                "original_delta_vs_benchmark": _round(original_delta),
+                "original_selected_estimated_cost": original.get("selected_estimated_cost"),
+                "original_selected_turnover_cost_assumption": original.get(
+                    "selected_turnover_cost_assumption"
+                ),
+                "missed_upside": _round(
+                    max(0.0, original_return - fallback_return) if triggered else 0.0
+                ),
+                "avoided_tail_loss": _round(max(0.0, -original_delta) if triggered else 0.0),
+                "promotion_gate_allowed": False,
+            }
+        )
+        for label in [
+            "large_loss_case",
+            "tail_loss_case",
+            "benchmark_underperformance_case",
+            "long_horizon_failure_case",
+        ]:
+            item[label] = bool(labels.get(label))
+        if not triggered:
+            item["guardrail_action"] = "keep_benchmark_first_candidate"
+        output.append(item)
+    return output
+
+
+def _tail_risk_fallback_group_breakdown(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+    group_key: str,
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    values = sorted({str(row.get(group_key, "unknown")) for row in original_rows})
+    rows = []
+    for value in values:
+        original_subset = [
+            row for row in original_rows if str(row.get(group_key, "unknown")) == value
+        ]
+        fallback_subset = [
+            row for row in fallback_rows if str(row.get(group_key, "unknown")) == value
+        ]
+        original_metric = _v2_variant_metric_row("original_group", original_subset, config)
+        fallback_metric = _add_variant_deltas(
+            _v2_variant_metric_row("fallback_group", fallback_subset, config),
+            original_metric,
+        )
+        fallback_count = sum(1 for row in fallback_subset if row.get("fallback_triggered"))
+        rows.append(
+            {
+                "group_key": group_key,
+                "group_value": value,
+                "case_count": len(original_subset),
+                "fallback_trigger_count": fallback_count,
+                "fallback_frequency": _round(
+                    fallback_count / len(original_subset) if original_subset else 0.0
+                ),
+                "tail_loss_reduction": _round(
+                    _tail_loss_reduction(original_metric, fallback_metric)
+                ),
+                "mean_delta_vs_benchmark": fallback_metric.get("mean_delta_vs_benchmark"),
+                "median_delta_vs_benchmark": fallback_metric.get("median_delta_vs_benchmark"),
+                "turnover_delta": fallback_metric.get("turnover_delta"),
+                "cost_delta": fallback_metric.get("cost_delta"),
+                "upside_capture": _upside_capture_summary(original_subset, fallback_subset).get(
+                    "upside_capture_ratio"
+                ),
+                "missed_upside_count": sum(
+                    1 for row in fallback_subset if _float(row.get("missed_upside"), 0.0) > 0
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _upside_capture_summary(
+    original_rows: list[dict[str, Any]],
+    fallback_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    paired = list(zip(original_rows, fallback_rows, strict=False))
+    benchmark_upside = [
+        (original, fallback)
+        for original, fallback in paired
+        if _float(original.get("benchmark_realized_net_return"), 0.0) > 0
+    ]
+    benchmark_sum = sum(
+        _float(original.get("benchmark_realized_net_return"), 0.0)
+        for original, _fallback in benchmark_upside
+    )
+    captured_sum = sum(
+        max(0.0, _float(fallback.get("selected_realized_net_return"), 0.0))
+        for _original, fallback in benchmark_upside
+    )
+    participation = sum(
+        1
+        for _original, fallback in benchmark_upside
+        if _float(fallback.get("selected_realized_net_return"), 0.0) > 0
+    )
+    missed_count = sum(1 for row in fallback_rows if _float(row.get("missed_upside"), 0.0) > 0)
+    return {
+        "benchmark_upside_case_count": len(benchmark_upside),
+        "strategy_participation": _round(
+            participation / len(benchmark_upside) if benchmark_upside else 0.0
+        ),
+        "upside_capture_ratio": _round(captured_sum / benchmark_sum if benchmark_sum else 0.0),
+        "missed_upside_count": missed_count,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _upside_capture_group_rows(rows: list[dict[str, Any]], group_key: str) -> list[dict[str, Any]]:
+    output = []
+    for value in sorted({str(row.get(group_key, "unknown")) for row in rows}):
+        subset = [row for row in rows if str(row.get(group_key, "unknown")) == value]
+        benchmark_upside_sum = sum(
+            _float(row.get("benchmark_realized_net_return"), 0.0)
+            for row in subset
+            if _float(row.get("benchmark_realized_net_return"), 0.0) > 0
+        )
+        captured = sum(
+            max(0.0, _float(row.get("selected_realized_net_return"), 0.0))
+            for row in subset
+            if _float(row.get("benchmark_realized_net_return"), 0.0) > 0
+        )
+        output.append(
+            {
+                "group_key": group_key,
+                "group_value": value,
+                "benchmark_upside_case_count": sum(
+                    1 for row in subset if _float(row.get("benchmark_realized_net_return"), 0.0) > 0
+                ),
+                "upside_capture_ratio": _round(
+                    captured / benchmark_upside_sum if benchmark_upside_sum else 0.0
+                ),
+                "missed_upside_count": sum(
+                    1 for row in subset if _float(row.get("missed_upside"), 0.0) > 0
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    return output
+
+
+def _missed_upside_concentration(
+    rows: list[dict[str, Any]],
+    group_key: str,
+) -> dict[str, Any]:
+    total = sum(_float(row.get("missed_upside"), 0.0) for row in rows)
+    groups = []
+    for value in sorted({str(row.get(group_key, "unknown")) for row in rows}):
+        subset = [row for row in rows if str(row.get(group_key, "unknown")) == value]
+        group_cost = sum(_float(row.get("missed_upside"), 0.0) for row in subset)
+        groups.append(
+            {
+                "group_key": group_key,
+                "group_value": value,
+                "missed_upside_count": len(subset),
+                "missed_upside_cost": _round(group_cost),
+                "missed_upside_share": _round(group_cost / total if total else 0.0),
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "summary": {
+            "group_key": group_key,
+            "missed_upside_case_count": len(rows),
+            "total_missed_upside": _round(total),
+            "promotion_gate_allowed": False,
+        },
+        "groups": sorted(groups, key=lambda row: _float(row["missed_upside_share"]), reverse=True),
+    }
+
+
+def _tail_risk_forward_record(
+    *,
+    row: Mapping[str, Any],
+    archive_id: str,
+    as_of: date,
+    maturity_horizons: list[str],
+    future_status: str,
+) -> dict[str, Any]:
+    trigger_labels = [str(item) for item in row.get("trigger_labels", [])]
+    expected_risk = len(trigger_labels) / 4 if trigger_labels else 0.0
+    return {
+        "record_id": f"{archive_id}:{row.get('case_key')}",
+        "archive_id": archive_id,
+        "as_of": as_of.isoformat(),
+        "source_case_key": row.get("case_key"),
+        "asset": row.get("asset"),
+        "horizon": row.get("horizon"),
+        "regime_segment": row.get("regime_segment"),
+        "asset_cluster": row.get("asset_cluster"),
+        "benchmark_output": {
+            "benchmark_action": row.get("benchmark_action"),
+            "benchmark_estimated_cost": row.get("benchmark_estimated_cost"),
+            "realized_future_return_included": False,
+        },
+        "tail_risk_fallback_signal": {
+            "signal_id": "tail_risk_benchmark_fallback",
+            "signal_mode": "controlled_dry_run_pending_forward_maturity",
+            "tail_risk_signal_high": bool(row.get("tail_risk_signal_high")),
+            "trigger_labels": trigger_labels,
+        },
+        "fallback_triggered": bool(row.get("fallback_triggered")),
+        "trigger_reason": row.get("trigger_reason"),
+        "expected_avoided_risk": _round(expected_risk),
+        "actual_future_outcome_after_maturity": {
+            "status": future_status,
+            "maturity_horizons": maturity_horizons,
+            "outcome_append_only": True,
+        },
+        "broker_action": "none",
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _case_max_drawdown(rows: list[Mapping[str, Any]]) -> float:
+    return max((_float(row.get("selected_drawdown_proxy"), 0.0) for row in rows), default=0.0)
+
+
+def _nested_mapping(payload: Mapping[str, Any], preferred: str, fallback: str) -> Mapping[str, Any]:
+    value = payload.get(preferred)
+    if isinstance(value, Mapping):
+        return value
+    value = payload.get(fallback)
+    return value if isinstance(value, Mapping) else {}
+
+
 def _case_key(row: Mapping[str, Any]) -> str:
     return f"{row.get('date')}|{row.get('asset')}|{row.get('horizon')}"
 
@@ -9826,6 +10836,26 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _append_jsonl_once(path: Path, payload: Mapping[str, Any], *, unique_key: str) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    unique_value = payload.get(unique_key)
+    if path.exists():
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    existing = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(existing, Mapping) and existing.get(unique_key) == unique_value:
+                    return "ALREADY_RECORDED"
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(dict(payload), ensure_ascii=False, sort_keys=True) + "\n")
+    return "APPENDED"
 
 
 def _configured_cost_bps() -> float:

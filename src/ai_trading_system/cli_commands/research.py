@@ -21,6 +21,7 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
     DEFAULT_COST_AWARE_HORIZON_HYSTERESIS_PATH,
     DEFAULT_COST_TURNOVER_AWARE_VALUE_SURFACE_PATH,
+    DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
     DEFAULT_FORWARD_EVIDENCE_CONTINUITY_EXTENSION_PATH,
     DEFAULT_FORWARD_MATURITY_OUTPUT_ROOT,
     DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
@@ -48,6 +49,10 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
     DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
     DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
@@ -90,6 +95,11 @@ from ai_trading_system.controlled_strategy_batch import (
     run_simple_strategy_selector_pilot,
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
+    run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_fallback_trigger_precision_recall_audit,
+    run_tail_risk_forward_evidence_integration,
+    run_tail_risk_opportunity_cost_upside_capture_review,
+    run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
@@ -1993,6 +2003,204 @@ def strategies_tail_risk_policy_family_controlled_review_command(
         )
     )
     _print_strategy_pilot_payload("Tail-risk policy family controlled review", payload)
+
+
+@strategies_app.command("tail-risk-benchmark-fallback-robustness-expansion")
+def strategies_tail_risk_benchmark_fallback_robustness_expansion_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-816 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    fallback: Annotated[
+        Path,
+        typer.Option("--fallback", help="TRADING-814 fallback/drawdown JSON。"),
+    ] = DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-816 robustness 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_benchmark_fallback_robustness_expansion(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            fallback_path=fallback,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk benchmark fallback robustness", payload)
+
+
+@strategies_app.command("tail-risk-fallback-trigger-precision-recall-audit")
+def strategies_tail_risk_fallback_trigger_precision_recall_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-817 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-817 precision/recall 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_trigger_precision_recall_audit(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback trigger precision/recall", payload)
+
+
+@strategies_app.command("tail-risk-opportunity-cost-upside-capture-review")
+def strategies_tail_risk_opportunity_cost_upside_capture_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-818 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-818 opportunity cost 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_opportunity_cost_upside_capture_review(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk opportunity cost/upside capture", payload)
+
+
+@strategies_app.command("tail-risk-forward-evidence-integration")
+def strategies_tail_risk_forward_evidence_integration_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-819 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="TRADING-812 classifier prototype JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    ledger_path: Annotated[
+        Path,
+        typer.Option("--ledger-path", help="TRADING-819 forward evidence ledger JSONL。"),
+    ] = DEFAULT_FORWARD_DAILY_DRY_RUN_LEDGER_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-819 forward integration 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH.parent,
+    as_of_date: Annotated[
+        str | None,
+        typer.Option("--as-of-date", help="TRADING-819 forward dry-run as-of date。"),
+    ] = None,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_forward_evidence_integration(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            ledger_path=ledger_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of_date),
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk forward evidence integration", payload)
+
+
+@strategies_app.command("tail-risk-policy-controlled-review-board")
+def strategies_tail_risk_policy_controlled_review_board_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-820 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall: Annotated[
+        Path,
+        typer.Option("--precision-recall", help="TRADING-817 precision/recall JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    opportunity_cost: Annotated[
+        Path,
+        typer.Option("--opportunity-cost", help="TRADING-818 opportunity cost JSON。"),
+    ] = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    forward_integration: Annotated[
+        Path,
+        typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-820 controlled review board 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_policy_controlled_review_board(
+            config_path=config_path,
+            robustness_path=robustness,
+            precision_recall_path=precision_recall,
+            opportunity_cost_path=opportunity_cost,
+            forward_integration_path=forward_integration,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk policy controlled review board", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

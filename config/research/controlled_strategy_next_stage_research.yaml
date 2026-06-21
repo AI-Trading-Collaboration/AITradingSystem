@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_815
+policy_id: controlled_strategy_research_next_stage_775_820
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -15,9 +15,11 @@ rationale: >
   maturity, pivot GBDT by design, run residual diagnostics, and keep regret
   state-machine expansion gated until enough cases exist. After TRADING-809
   kills value surface as an action policy, downgrade it to diagnostics and move
-  the main research line to benchmark-first tail-risk avoidance. This policy
-  does not validate utility boundaries and does not permit promotion,
-  paper-shadow, production weight, or broker changes.
+  the main research line to benchmark-first tail-risk avoidance. After
+  TRADING-815 continues the tail-risk fallback family, expand robustness,
+  trigger quality, opportunity cost, and forward evidence tracking without
+  promotion. This policy does not validate utility boundaries and does not
+  permit promotion, paper-shadow, production weight, or broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -772,3 +774,92 @@ tail_risk_policy_family_controlled_review:
     The family can continue only when tail loss is reduced, turnover/cost do not
     worsen, holdout evidence is acceptable, simple benchmark comparison remains
     favorable, and the policy is interpretable.
+tail_risk_benchmark_fallback_robustness_expansion:
+  task_id: TRADING-816
+  target_variant: tail_risk_benchmark_fallback
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  mean_delta_floor_bps: 0
+  upside_capture_floor: 0.70
+  missed_upside_cost_ceiling: 0.02
+  cost_turnover_not_worse_required: true
+  concentration_dimensions:
+    - asset
+    - horizon
+    - regime_segment
+    - asset_cluster
+  rationale: >
+    Robustness expansion checks whether the best fallback variant remains
+    stable across asset, horizon, regime, and cluster while preserving upside
+    capture and not worsening cost or turnover.
+tail_risk_fallback_trigger_precision_recall_audit:
+  task_id: TRADING-817
+  positive_label_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  false_positive_original_delta_floor_bps: 0
+  tail_loss_from_false_negative_delta_floor: -0.05
+  rationale: >
+    Trigger audit separates smart tail-risk avoidance from crude under-trading
+    by measuring true/false positives and false negatives using controlled
+    labels and realized benchmark-relative deltas.
+tail_risk_opportunity_cost_upside_capture_review:
+  task_id: TRADING-818
+  benchmark_upside_floor_bps: 0
+  tail_loss_to_missed_upside_min_ratio: 2.0
+  concentration_dimensions:
+    - regime_segment
+    - horizon
+    - asset
+  rationale: >
+    Opportunity-cost review tests whether fallback sacrifices too much upside.
+    Passing does not require zero missed upside; tail-loss reduction must exceed
+    missed-upside cost by the configured diagnostic ratio.
+tail_risk_forward_evidence_integration:
+  task_id: TRADING-819
+  archive_id: tail_risk_benchmark_fallback
+  maturity_horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  max_forward_records: 250
+  append_only_integrity_required: true
+  future_outcome_status: pending_maturity
+  required_record_fields:
+    - benchmark_output
+    - tail_risk_fallback_signal
+    - fallback_triggered
+    - trigger_reason
+    - expected_avoided_risk
+    - actual_future_outcome_after_maturity
+  rationale: >
+    Forward integration records the fallback signal in the dry-run evidence
+    path with pending maturity outcomes. It remains broker_action=none and does
+    not start paper-shadow.
+tail_risk_policy_controlled_review_board:
+  task_id: TRADING-820
+  allowed_decisions:
+    - CONTROLLED_RESEARCH_CONTINUE
+    - WATCHLIST_FORWARD_MATURITY
+    - WATCHLIST
+    - PIVOT_OVERCONSERVATIVE
+    - KILL
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  precision_floor: 0.60
+  recall_floor: 0.60
+  upside_capture_floor: 0.70
+  tail_loss_to_missed_upside_min_ratio: 2.0
+  forward_record_count_floor: 1
+  promotion_allowed: false
+  rationale: >
+    The review board can only continue controlled research, wait for forward
+    maturity, watchlist, pivot, kill, or request data. Even strong results do
+    not permit paper-shadow, production weights, or broker action.
