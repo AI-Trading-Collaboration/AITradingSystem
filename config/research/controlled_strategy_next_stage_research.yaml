@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_794
+policy_id: controlled_strategy_research_next_stage_775_799
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -349,3 +349,88 @@ value_surface_direction_review:
     Direction review must not default to continuing. Negative benchmark-relative
     delta, tail loss concentration, horizon cliffs, and broad distribution risk
     decide whether to local-fix, watchlist, pivot, or kill the current version.
+regime_conditioned_value_surface_design:
+  task_id: TRADING-795
+  tail_loss_regime_share_floor: 0.35
+  high_risk_horizon_cliff_count_floor: 1
+  aggressive_actions:
+    - risk_on
+    - buy_and_hold
+    - no_masking
+  low_risk_actions:
+    - cash
+    - risk_off
+    - drawdown_guard
+  fallback_actions:
+    tail_risk_regime: benchmark
+    horizon_cliff_regime: shorter_horizon_or_benchmark
+    high_uncertainty_regime: benchmark
+  controlled_validation_required: true
+  rationale: >
+    Regime-conditioned design is a protocol and controlled ablation plan. It
+    can define where value surface should be suppressed, but cannot validate a
+    production boundary without out-of-sample forward evidence.
+tail_loss_guardrail_fallback_policy:
+  task_id: TRADING-796
+  tail_loss_regime_share_floor: 0.35
+  severe_loss_delta_floor_bps: -500
+  horizon_cliff_disable_days_floor: 20
+  benchmark_disagreement_requires_confirmation: true
+  loss_concentration_size_multiplier: 0.50
+  allowed_variants:
+    - original_value_surface
+    - regime_conditioned_value_surface
+    - tail_loss_guarded_value_surface
+    - benchmark_fallback_value_surface
+  rationale: >
+    Guardrail rules are retrospective controlled-research hypotheses derived
+    from failure attribution. They can reduce candidate action exposure in
+    diagnostic ablations only and require later walk-forward confirmation.
+regime_horizon_loss_attribution_matrix:
+  task_id: TRADING-797
+  broad_loss_group_share_ceiling: 0.35
+  date_window: month
+  utility_profile_mapping:
+    aggressive_return_seeking:
+      - risk_on
+      - buy_and_hold
+      - no_masking
+    risk_controlled:
+      - cash
+      - risk_off
+      - drawdown_guard
+    benchmark_like:
+      - hold_exposure
+      - static_allocation
+  rationale: >
+    The matrix explains whether losing cases are concentrated in repairable
+    regime/horizon/asset/action pockets or broadly distributed. It is not a
+    promotion or kill rule by itself.
+gbdt_residual_regime_conditioning:
+  task_id: TRADING-798
+  hypothesis_candidate_limit: 10
+  residual_sign_floor_bps: 0
+  strategy_signal_generated: false
+  rationale: >
+    GBDT residual regime conditioning uses residual diagnostics only to form
+    regime-conditioning hypotheses. It does not train a strategy or produce a
+    direct action policy.
+regime_conditioned_value_surface_controlled_review:
+  task_id: TRADING-799
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL_CURRENT_VALUE_SURFACE
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_BENCHMARK_FALLBACK
+    - DATA_REQUIRED
+  mean_delta_improvement_required_bps: 0
+  tail_loss_reduction_required_share: 0.20
+  losing_avg_improvement_required_bps: 0
+  beat_rate_retention_floor: 0.80
+  turnover_increase_ceiling_share: 0.10
+  cost_increase_ceiling_share: 0.10
+  rationale: >
+    Controlled review compares guarded variants against the original value
+    surface. It can continue research or pivot, but cannot permit promotion,
+    paper-shadow, production weight changes, or broker action.

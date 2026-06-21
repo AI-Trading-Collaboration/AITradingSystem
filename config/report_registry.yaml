@@ -11970,3 +11970,88 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: regime_conditioned_value_surface_design
+    title: Regime-Conditioned Value Surface Design
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regime-conditioned-value-surface-design
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/regime_conditioned_value_surface_design.json
+      - outputs/research_strategies/value_surface_review/regime_conditioned_value_surface_design.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-795 should be regenerated when failure attribution, horizon stabilization, residual triage, or direction review changes.
+    owner_action: review_regime_protocol_tail_loss_definitions_action_suppression_and_benchmark_fallback_rules_before_any_ablation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_loss_guardrail_fallback_policy
+    title: Tail-Loss Guardrail and Fallback Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-loss-guardrail-fallback-policy
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_loss_guardrail_fallback_policy.json
+      - outputs/research_strategies/value_surface_review/tail_loss_guardrail_fallback_policy.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-796 should be regenerated when value-surface rows, failure attribution, horizon cliffs, or regime-conditioned protocol changes.
+    owner_action: compare_original_conditioned_guarded_and_benchmark_fallback_variants_without_treating_retrospective_ablation_as_promotion_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regime_horizon_loss_attribution_matrix
+    title: Regime Horizon Loss Attribution Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regime-horizon-loss-attribution-matrix
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/regime_horizon_loss_attribution_matrix.json
+      - outputs/research_strategies/value_surface_review/regime_horizon_loss_attribution_matrix.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-797 should be regenerated when value-surface expansion or failure attribution changes.
+    owner_action: review_whether_tail_losses_are_concentrated_in_repairable_regime_horizon_asset_action_or_date_windows
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: gbdt_residual_hypothesis_regime_conditioning
+    title: GBDT Residual Hypothesis Regime Conditioning
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies gbdt-residual-hypothesis-regime-conditioning
+    artifact_globs:
+      - outputs/research_strategies/gbdt_action_utility/gbdt_residual_hypothesis_regime_conditioning.json
+      - outputs/research_strategies/gbdt_action_utility/gbdt_residual_hypothesis_regime_conditioning.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: TRADING-798 should be regenerated when residual hypotheses or value-surface rows change; it remains diagnostic-only.
+    owner_action: review_residual_regime_horizon_asset_features_and_hypotheses_without_training_or_deploying_a_gbdt_strategy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: regime_conditioned_value_surface_controlled_review
+    title: Regime-Conditioned Value Surface Controlled Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regime-conditioned-value-surface-controlled-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/regime_conditioned_value_surface_controlled_review.json
+      - outputs/research_strategies/value_surface_review/regime_conditioned_value_surface_controlled_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-799 should be regenerated after TRADING-795 through TRADING-798 artifacts change.
+    owner_action: choose_continue_watchlist_kill_or_pivot_to_tail_risk_or_benchmark_fallback_without_promotion_paper_shadow_or_production_mutation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

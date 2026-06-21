@@ -110,6 +110,19 @@ DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH = (
 DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "value_surface_direction_review.json"
 )
+DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "regime_conditioned_value_surface_design.json"
+)
+DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_loss_guardrail_fallback_policy.json"
+)
+DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "regime_horizon_loss_attribution_matrix.json"
+)
+DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_CONTROLLED_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "regime_conditioned_value_surface_controlled_review.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -153,6 +166,9 @@ DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH = (
 )
 DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH = (
     DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT / "gbdt_residual_hypothesis_triage.json"
+)
+DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH = (
+    DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT / "gbdt_residual_hypothesis_regime_conditioning.json"
 )
 DEFAULT_REGRET_CASEBOOK_EXPANSION_GATE_PATH = (
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT / "regret_casebook_expansion_gate.json"
@@ -2171,6 +2187,319 @@ def run_value_surface_direction_review(
         remaining_blockers=_common_blockers(),
     )
     _write_pair(payload, output_root=output_root, artifact_id="value_surface_direction_review")
+    return payload
+
+
+def run_regime_conditioned_value_surface_design(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    residual_triage_path: Path = DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    direction_review_path: Path = DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    residual = _read_json_or_empty(residual_triage_path)
+    direction = _read_json_or_empty(direction_review_path)
+    protocol = _regime_conditioned_design_protocol(
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        residual=residual,
+        direction=direction,
+    )
+    payload = _controlled_payload(
+        report_type="regime_conditioned_value_surface_design",
+        title="Regime-conditioned value surface design",
+        status="REGIME_CONDITIONED_PROTOCOL_DEFINED",
+        summary={
+            "regime_variable_count": len(protocol["regime_variables"]),
+            "tail_loss_regime_count": len(protocol["tail_loss_regime_definitions"]),
+            "benchmark_fallback_rule_count": len(protocol["benchmark_fallback_rules"]),
+            "disabled_or_downweighted_horizon_count": len(
+                protocol["horizons_disabled_or_downweighted"]
+            ),
+            "controlled_only_validation_plan_present": bool(
+                protocol["controlled_only_validation_plan"]
+            ),
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        design_policy=_next_stage_section(config, "regime_conditioned_value_surface_design"),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        residual_triage_source=_artifact_status(residual, residual_triage_path),
+        direction_review_source=_artifact_status(direction, direction_review_path),
+        regime_conditioned_value_surface_protocol=protocol["protocol"],
+        regime_variables=protocol["regime_variables"],
+        tail_loss_regime_definitions=protocol["tail_loss_regime_definitions"],
+        allowed_action_changes_by_regime=protocol["allowed_action_changes_by_regime"],
+        benchmark_fallback_rules=protocol["benchmark_fallback_rules"],
+        regimes_keep_value_surface=protocol["regimes_keep_value_surface"],
+        regimes_fallback_to_benchmark=protocol["regimes_fallback_to_benchmark"],
+        regimes_low_risk_action_only=protocol["regimes_low_risk_action_only"],
+        horizons_disabled_or_downweighted=protocol["horizons_disabled_or_downweighted"],
+        controlled_only_validation_plan=protocol["controlled_only_validation_plan"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="regime_conditioned_value_surface_design",
+    )
+    return payload
+
+
+def run_tail_loss_guardrail_fallback_policy(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization_path: Path = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design_path: Path = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    horizon = _read_json_or_empty(horizon_stabilization_path)
+    design = _read_json_or_empty(design_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    comparison = _guardrail_variant_comparison(
+        selected_cases=selected_cases,
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+    )
+    best_variant = comparison["summary"]["best_variant_by_mean_delta"]
+    payload = _controlled_payload(
+        report_type="tail_loss_guardrail_fallback_policy",
+        title="Tail-loss guardrail and fallback policy",
+        status="GUARDRAIL_FALLBACK_POLICY_REVIEWED",
+        summary={
+            "case_count": len(selected_cases),
+            "variant_count": len(comparison["variant_metrics"]),
+            "best_variant_by_mean_delta": best_variant,
+            "best_variant_mean_delta_vs_benchmark": comparison["summary"][
+                "best_variant_mean_delta_vs_benchmark"
+            ],
+            "original_mean_delta_vs_benchmark": comparison["summary"][
+                "original_mean_delta_vs_benchmark"
+            ],
+            "tail_loss_guarded_mean_delta_vs_benchmark": comparison["summary"][
+                "tail_loss_guarded_mean_delta_vs_benchmark"
+            ],
+            "tail_loss_guardrail_reduces_tail_loss": comparison["summary"][
+                "tail_loss_guardrail_reduces_tail_loss"
+            ],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        guardrail_policy=_next_stage_section(config, "tail_loss_guardrail_fallback_policy"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        horizon_stabilization_source=_artifact_status(horizon, horizon_stabilization_path),
+        design_source=_artifact_status(design, design_path),
+        variant_metrics=comparison["variant_metrics"],
+        variant_rules=comparison["variant_rules"],
+        variant_case_samples=comparison["variant_case_samples"],
+        guardrail_diagnostic_boundary=comparison["diagnostic_boundary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_loss_guardrail_fallback_policy",
+    )
+    return payload
+
+
+def run_regime_horizon_loss_attribution_matrix(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution_path: Path = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    failure = _read_json_or_empty(failure_attribution_path)
+    selected_cases = _selected_value_surface_cases(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    matrix = _regime_horizon_loss_matrix(selected_cases, config)
+    payload = _controlled_payload(
+        report_type="regime_horizon_loss_attribution_matrix",
+        title="Regime / horizon loss attribution matrix",
+        status="LOSS_ATTRIBUTION_MATRIX_COMPLETE",
+        summary={
+            "losing_case_count": matrix["summary"]["losing_case_count"],
+            "losing_case_average_delta": matrix["summary"]["losing_case_average_delta"],
+            "max_loss_concentration_share": matrix["summary"]["max_loss_concentration_share"],
+            "max_loss_concentration_group": matrix["summary"]["max_loss_concentration_group"],
+            "loss_distribution_assessment": matrix["summary"]["loss_distribution_assessment"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        matrix_policy=_next_stage_section(config, "regime_horizon_loss_attribution_matrix"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        failure_attribution_source=_artifact_status(failure, failure_attribution_path),
+        loss_by_regime=matrix["loss_by_regime"],
+        loss_by_asset=matrix["loss_by_asset"],
+        loss_by_horizon=matrix["loss_by_horizon"],
+        loss_by_action=matrix["loss_by_action"],
+        loss_by_cluster=matrix["loss_by_cluster"],
+        loss_by_utility_profile=matrix["loss_by_utility_profile"],
+        loss_by_date_window=matrix["loss_by_date_window"],
+        top_losing_cases=matrix["top_losing_cases"],
+        matrix_summary=matrix["summary"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="regime_horizon_loss_attribution_matrix",
+    )
+    return payload
+
+
+def run_gbdt_residual_hypothesis_regime_conditioning(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion_path: Path = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    residual_triage_path: Path = DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    output_root: Path = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    value_surface = _read_json_or_empty(value_surface_expansion_path)
+    residual_triage = _read_json_or_empty(residual_triage_path)
+    residual_rows = _value_surface_residual_rows(
+        _records(value_surface.get("value_surface")),
+        config,
+    )
+    report = _residual_regime_conditioning_report(residual_rows, config)
+    top_feature = (
+        report["top_residual_features"][0]["feature"] if report["top_residual_features"] else None
+    )
+    payload = _controlled_payload(
+        report_type="gbdt_residual_hypothesis_regime_conditioning",
+        title="GBDT residual hypothesis triage for regime conditioning",
+        status="RESIDUAL_REGIME_HYPOTHESES_TRIAGED",
+        summary={
+            "residual_case_count": len(residual_rows),
+            "large_residual_case_count": report["summary"]["large_residual_case_count"],
+            "top_residual_feature": top_feature,
+            "hypothesis_candidate_count": len(report["hypothesis_candidates"]),
+            "strategy_signal_generated": False,
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        residual_regime_policy=_next_stage_section(config, "gbdt_residual_regime_conditioning"),
+        value_surface_source=_artifact_status(value_surface, value_surface_expansion_path),
+        residual_triage_source=_artifact_status(residual_triage, residual_triage_path),
+        top_residual_features=report["top_residual_features"],
+        large_residual_regimes=report["large_residual_regimes"],
+        large_residual_horizons=report["large_residual_horizons"],
+        large_residual_assets=report["large_residual_assets"],
+        residual_sign_classification=report["residual_sign_classification"],
+        hypothesis_candidates=report["hypothesis_candidates"],
+        diagnostic_boundary={
+            "strategy_signal_generated": False,
+            "model_training_executed": False,
+            "direct_action_policy_generated": False,
+            "promotion_gate_allowed": False,
+        },
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="gbdt_residual_hypothesis_regime_conditioning",
+    )
+    return payload
+
+
+def run_regime_conditioned_value_surface_controlled_review(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    design_path: Path = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    guardrail_policy_path: Path = DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    loss_matrix_path: Path = DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
+    residual_regime_path: Path = DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    design = _read_json_or_empty(design_path)
+    guardrail = _read_json_or_empty(guardrail_policy_path)
+    loss_matrix = _read_json_or_empty(loss_matrix_path)
+    residual_regime = _read_json_or_empty(residual_regime_path)
+    decision = _regime_conditioned_controlled_review_decision(
+        config=config,
+        design=design,
+        guardrail=guardrail,
+        loss_matrix=loss_matrix,
+        residual_regime=residual_regime,
+    )
+    payload = _controlled_payload(
+        report_type="regime_conditioned_value_surface_controlled_review",
+        title="Regime-conditioned value surface controlled review",
+        status="REGIME_CONDITIONED_CONTROLLED_REVIEW_COMPLETE",
+        summary={
+            "controlled_review_decision": decision["decision"],
+            "best_variant_by_mean_delta": decision["best_variant_by_mean_delta"],
+            "mean_delta_improved": decision["mean_delta_improved"],
+            "tail_loss_reduced": decision["tail_loss_reduced"],
+            "beat_rate_retained": decision["beat_rate_retained"],
+            "turnover_cost_not_worse": decision["turnover_cost_not_worse"],
+            **_summary_safety(),
+        },
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        controlled_review_policy=_next_stage_section(
+            config, "regime_conditioned_value_surface_controlled_review"
+        ),
+        design_source=_artifact_status(design, design_path),
+        guardrail_policy_source=_artifact_status(guardrail, guardrail_policy_path),
+        loss_matrix_source=_artifact_status(loss_matrix, loss_matrix_path),
+        residual_regime_source=_artifact_status(residual_regime, residual_regime_path),
+        review_decision=decision,
+        evidence_summary=_regime_conditioned_review_evidence(
+            design=design,
+            guardrail=guardrail,
+            loss_matrix=loss_matrix,
+            residual_regime=residual_regime,
+        ),
+        disallowed_actions=[
+            "unconditional_value_surface_expansion",
+            "direct_gbdt_strategy_training",
+            "large_regret_casebook_expansion",
+            "paper_shadow_entry",
+            "beat_rate_promotion_claim",
+        ],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="regime_conditioned_value_surface_controlled_review",
+    )
     return payload
 
 
@@ -4400,6 +4729,865 @@ def _direction_evidence_summary(
         "ledger_event_count": forward.get("summary", {}).get("ledger_event_count"),
         "promotion_gate_allowed": False,
     }
+
+
+def _regime_conditioned_design_protocol(
+    *,
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    residual: Mapping[str, Any],
+    direction: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "regime_conditioned_value_surface_design")
+    share_floor = _float(policy.get("tail_loss_regime_share_floor"), 0.35)
+    aggressive_actions = [str(item) for item in policy.get("aggressive_actions", [])]
+    low_risk_actions = [str(item) for item in policy.get("low_risk_actions", [])]
+    high_loss_regimes = _high_loss_group_values(
+        failure,
+        "loss_concentration_by_regime",
+        "regime_segment",
+        share_floor,
+    )
+    high_loss_horizons = _high_loss_group_values(
+        failure,
+        "loss_concentration_by_horizon",
+        "horizon",
+        share_floor,
+    )
+    high_loss_assets = _high_loss_group_values(
+        failure,
+        "loss_concentration_by_asset",
+        "asset",
+        share_floor,
+    )
+    residual_regimes = [
+        str(row.get("regime_segment"))
+        for row in _records(residual.get("residual_by_regime"))
+        if row.get("regime_segment")
+    ][:5]
+    horizon_cliffs = _records(
+        horizon.get("utility_profile_cliff_report", {}).get("horizon_cliff_rows")
+        if isinstance(horizon.get("utility_profile_cliff_report"), Mapping)
+        else []
+    )
+    horizon_days_by_id = {str(row["horizon_id"]): int(row["days"]) for row in _horizons(config)}
+    disabled_horizons = sorted(
+        {
+            str(row.get("current_horizon") or row.get("previous_horizon"))
+            for row in horizon_cliffs
+            if row.get("horizon_cliff_for_review")
+        }
+        | set(high_loss_horizons)
+    )
+    disabled_horizons = [value for value in disabled_horizons if value and value != "None"]
+    tail_definitions = []
+    for regime in high_loss_regimes:
+        tail_definitions.append(
+            {
+                "definition_id": f"tail_loss_regime_{regime}",
+                "variable": "regime_segment",
+                "value": regime,
+                "source": "TRADING-790 loss concentration",
+                "action": "fallback_to_benchmark_or_low_risk_only",
+                "requires_out_of_sample_validation": True,
+                "promotion_gate_allowed": False,
+            }
+        )
+    for horizon_id in high_loss_horizons:
+        tail_definitions.append(
+            {
+                "definition_id": f"tail_loss_horizon_{horizon_id}",
+                "variable": "horizon",
+                "value": horizon_id,
+                "horizon_days": horizon_days_by_id.get(horizon_id),
+                "source": "TRADING-790/791 loss and cliff concentration",
+                "action": "disable_or_downweight_horizon_until_walk_forward_confirmed",
+                "requires_out_of_sample_validation": True,
+                "promotion_gate_allowed": False,
+            }
+        )
+    keep_regimes = [
+        {
+            "regime_rule": "not_in_tail_loss_regime_and_no_horizon_cliff",
+            "allowed": "retain_value_surface_ranking_for_diagnostic_review",
+            "excluded_regimes": high_loss_regimes,
+            "excluded_horizons": disabled_horizons,
+            "promotion_gate_allowed": False,
+        }
+    ]
+    fallback_regimes = [
+        {
+            "regime_variable": "regime_segment",
+            "regime_values": high_loss_regimes,
+            "fallback": "benchmark",
+            "reason": "loss concentration above diagnostic share floor",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "regime_variable": "horizon",
+            "regime_values": disabled_horizons,
+            "fallback": "shorter_horizon_or_benchmark",
+            "reason": "horizon cliff or horizon loss concentration",
+            "promotion_gate_allowed": False,
+        },
+    ]
+    low_risk_regimes = [
+        {
+            "regime_variable": "asset",
+            "regime_values": high_loss_assets,
+            "disabled_actions": aggressive_actions,
+            "allowed_actions": low_risk_actions,
+            "reason": "asset loss concentration requires lower risk action set",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "regime_variable": "residual_regime_segment",
+            "regime_values": residual_regimes,
+            "disabled_actions": aggressive_actions,
+            "allowed_actions": low_risk_actions,
+            "reason": "large residual concentration requires diagnostic action suppression",
+            "promotion_gate_allowed": False,
+        },
+    ]
+    protocol = {
+        "protocol_id": "regime_conditioned_value_surface_v0_controlled",
+        "source_direction_decision": direction.get("summary", {}).get("direction_decision"),
+        "ranking_policy": "heuristic",
+        "not_validated_utility_boundary": True,
+        "rule_source": "failure_attribution_and_residual_diagnostics",
+        "requires_walk_forward_confirmation": True,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    return {
+        "protocol": protocol,
+        "regime_variables": [
+            {
+                "variable": "regime_segment",
+                "role": "primary market regime conditioning key",
+                "source": "value surface row PIT regime segment",
+            },
+            {
+                "variable": "pit_state",
+                "role": "trend/pressure state proxy",
+                "source": "PIT returns",
+            },
+            {
+                "variable": "asset_cluster",
+                "role": "cluster concentration key",
+                "source": "controlled research config",
+            },
+            {"variable": "horizon", "role": "horizon cliff and maturity key", "source": "config"},
+            {
+                "variable": "selected_action",
+                "role": "aggressive action suppression key",
+                "source": "value surface selected action",
+            },
+            {
+                "variable": "residual_sign",
+                "role": "GBDT residual hypothesis key",
+                "source": "TRADING-792 residual diagnostics",
+            },
+        ],
+        "tail_loss_regime_definitions": tail_definitions,
+        "allowed_action_changes_by_regime": [
+            {
+                "condition": "tail_loss_regime",
+                "allowed_change": "replace aggressive value-surface action with benchmark",
+                "disabled_actions": aggressive_actions,
+                "allowed_actions": ["benchmark", *low_risk_actions],
+                "promotion_gate_allowed": False,
+            },
+            {
+                "condition": "horizon_cliff_regime",
+                "allowed_change": "disable or downweight long/cliff horizon",
+                "disabled_or_downweighted_horizons": disabled_horizons,
+                "promotion_gate_allowed": False,
+            },
+            {
+                "condition": "high_residual_regime",
+                "allowed_change": "require confirmation before deviating from benchmark",
+                "confirmation_source": "future controlled walk-forward only",
+                "promotion_gate_allowed": False,
+            },
+        ],
+        "benchmark_fallback_rules": fallback_regimes,
+        "regimes_keep_value_surface": keep_regimes,
+        "regimes_fallback_to_benchmark": fallback_regimes,
+        "regimes_low_risk_action_only": low_risk_regimes,
+        "horizons_disabled_or_downweighted": [
+            {
+                "horizon": horizon_id,
+                "horizon_days": horizon_days_by_id.get(horizon_id),
+                "reason": "loss concentration or utility cliff",
+                "fallback": "shorter_horizon_or_benchmark",
+                "promotion_gate_allowed": False,
+            }
+            for horizon_id in disabled_horizons
+        ],
+        "controlled_only_validation_plan": [
+            {
+                "step": "retrospective_ablation",
+                "purpose": "compare original, conditioned, guarded, and fallback variants",
+                "promotion_gate_allowed": False,
+            },
+            {
+                "step": "walk_forward_holdout",
+                "purpose": "verify guardrail definitions without using future outcome in decision",
+                "promotion_gate_allowed": False,
+            },
+            {
+                "step": "forward_evidence_append_only_tracking",
+                "purpose": "observe daily dry-run outcomes before any paper-shadow discussion",
+                "promotion_gate_allowed": False,
+            },
+        ],
+    }
+
+
+def _guardrail_variant_comparison(
+    *,
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    design: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_loss_guardrail_fallback_policy")
+    allowed_variants = [str(item) for item in policy.get("allowed_variants", [])] or [
+        "original_value_surface",
+        "regime_conditioned_value_surface",
+        "tail_loss_guarded_value_surface",
+        "benchmark_fallback_value_surface",
+    ]
+    risk_context = _guardrail_risk_context(
+        config=config,
+        failure=failure,
+        horizon=horizon,
+        design=design,
+    )
+    variants: dict[str, list[dict[str, Any]]] = {}
+    for variant in allowed_variants:
+        variants[variant] = [
+            _apply_guardrail_variant(row, variant, risk_context, policy) for row in selected_cases
+        ]
+    metrics = [_variant_metric_row(variant, rows, config) for variant, rows in variants.items()]
+    original = next((row for row in metrics if row["variant_id"] == "original_value_surface"), {})
+    tail_guarded = next(
+        (row for row in metrics if row["variant_id"] == "tail_loss_guarded_value_surface"),
+        {},
+    )
+    best = max(
+        metrics, key=lambda row: _float(row.get("mean_delta_vs_benchmark"), -999.0), default={}
+    )
+    original_tail = _float(original.get("tail_loss_contribution"), 0.0)
+    tail_tail = _float(tail_guarded.get("tail_loss_contribution"), 0.0)
+    return {
+        "summary": {
+            "best_variant_by_mean_delta": best.get("variant_id"),
+            "best_variant_mean_delta_vs_benchmark": best.get("mean_delta_vs_benchmark"),
+            "original_mean_delta_vs_benchmark": original.get("mean_delta_vs_benchmark"),
+            "tail_loss_guarded_mean_delta_vs_benchmark": tail_guarded.get(
+                "mean_delta_vs_benchmark"
+            ),
+            "tail_loss_guardrail_reduces_tail_loss": tail_tail < original_tail,
+            "promotion_gate_allowed": False,
+        },
+        "variant_metrics": metrics,
+        "variant_rules": _guardrail_variant_rules(risk_context, policy),
+        "variant_case_samples": {
+            variant: rows[:10]
+            for variant, rows in variants.items()
+            if variant != "original_value_surface"
+        },
+        "diagnostic_boundary": {
+            "retrospective_ablation_only": True,
+            "requires_out_of_sample_walk_forward": True,
+            "future_outcome_used_for_evaluation_only": True,
+            "promotion_gate_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_change_allowed": False,
+        },
+    }
+
+
+def _guardrail_risk_context(
+    *,
+    config: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    horizon: Mapping[str, Any],
+    design: Mapping[str, Any],
+) -> dict[str, Any]:
+    design_policy = _next_stage_section(config, "regime_conditioned_value_surface_design")
+    guardrail_policy = _next_stage_section(config, "tail_loss_guardrail_fallback_policy")
+    share_floor = _float(
+        guardrail_policy.get(
+            "tail_loss_regime_share_floor",
+            design_policy.get("tail_loss_regime_share_floor", 0.35),
+        ),
+        0.35,
+    )
+    high_loss_regimes = set(
+        _high_loss_group_values(
+            failure, "loss_concentration_by_regime", "regime_segment", share_floor
+        )
+    )
+    high_loss_horizons = set(
+        _high_loss_group_values(failure, "loss_concentration_by_horizon", "horizon", share_floor)
+    )
+    high_loss_assets = set(
+        _high_loss_group_values(failure, "loss_concentration_by_asset", "asset", share_floor)
+    )
+    design_horizons = {
+        str(row.get("horizon"))
+        for row in _records(design.get("horizons_disabled_or_downweighted"))
+        if row.get("horizon")
+    }
+    horizon_summary = horizon.get("summary") if isinstance(horizon.get("summary"), Mapping) else {}
+    aggressive_actions = set(str(item) for item in design_policy.get("aggressive_actions", []))
+    return {
+        "high_loss_regimes": high_loss_regimes,
+        "high_loss_horizons": high_loss_horizons | design_horizons,
+        "high_loss_assets": high_loss_assets,
+        "aggressive_actions": aggressive_actions,
+        "horizon_cliff_count": _first_int(horizon_summary.get("horizon_cliff_count")),
+    }
+
+
+def _apply_guardrail_variant(
+    case: Mapping[str, Any],
+    variant: str,
+    risk_context: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    output = dict(case)
+    output["variant_id"] = variant
+    output["guardrail_action"] = "keep_value_surface_action"
+    if variant == "original_value_surface":
+        return output
+    risk_match = _case_matches_risk_context(case, risk_context)
+    aggressive = str(case.get("selected_action")) in risk_context.get("aggressive_actions", set())
+    benchmark_disagreement = case.get("selected_action") != case.get("benchmark_action")
+    high_cost = _float(case.get("selected_estimated_cost"), 0.0) > _float(
+        case.get("benchmark_estimated_cost"), 0.0
+    )
+    if variant == "regime_conditioned_value_surface" and risk_match:
+        return _fallback_case_to_benchmark(output, "regime_conditioned_benchmark_fallback")
+    if variant == "tail_loss_guarded_value_surface":
+        multiplier = _float(policy.get("loss_concentration_size_multiplier"), 0.50)
+        if risk_match and aggressive:
+            return _fallback_case_to_benchmark(output, "tail_risk_aggressive_action_fallback")
+        if risk_match:
+            return _scale_case_delta(output, multiplier, "tail_risk_size_reduction")
+    if variant == "benchmark_fallback_value_surface" and (
+        risk_match or (benchmark_disagreement and high_cost)
+    ):
+        return _fallback_case_to_benchmark(output, "benchmark_confirmation_required_fallback")
+    return output
+
+
+def _case_matches_risk_context(
+    case: Mapping[str, Any],
+    risk_context: Mapping[str, Any],
+) -> bool:
+    return (
+        str(case.get("regime_segment")) in risk_context.get("high_loss_regimes", set())
+        or str(case.get("horizon")) in risk_context.get("high_loss_horizons", set())
+        or str(case.get("asset")) in risk_context.get("high_loss_assets", set())
+    )
+
+
+def _fallback_case_to_benchmark(case: dict[str, Any], reason: str) -> dict[str, Any]:
+    case["selected_action_before_guardrail"] = case.get("selected_action")
+    case["selected_action"] = case.get("benchmark_action", "benchmark")
+    case["selected_realized_net_return"] = case.get("benchmark_realized_net_return")
+    case["delta_vs_benchmark"] = 0.0
+    case["value_surface_beats_benchmark"] = True
+    case["selected_estimated_cost"] = case.get("benchmark_estimated_cost", 0.0)
+    case["selected_turnover_cost_assumption"] = case.get("benchmark_turnover_cost_assumption", 0.0)
+    case["selected_drawdown_proxy"] = case.get("benchmark_drawdown_proxy")
+    case["guardrail_action"] = reason
+    case["promotion_gate_allowed"] = False
+    return case
+
+
+def _scale_case_delta(case: dict[str, Any], multiplier: float, reason: str) -> dict[str, Any]:
+    benchmark_return = _float(case.get("benchmark_realized_net_return"), 0.0)
+    original_delta = _float(case.get("delta_vs_benchmark"), 0.0)
+    adjusted_delta = original_delta * multiplier
+    case["selected_action_before_guardrail"] = case.get("selected_action")
+    case["selected_realized_net_return"] = _round(benchmark_return + adjusted_delta)
+    case["delta_vs_benchmark"] = _round(adjusted_delta)
+    case["value_surface_beats_benchmark"] = adjusted_delta >= 0
+    case["selected_estimated_cost"] = _round(
+        _float(case.get("selected_estimated_cost"), 0.0) * multiplier
+    )
+    case["selected_turnover_cost_assumption"] = _round(
+        _float(case.get("selected_turnover_cost_assumption"), 0.0) * multiplier
+    )
+    case["guardrail_action"] = reason
+    case["promotion_gate_allowed"] = False
+    return case
+
+
+def _variant_metric_row(
+    variant_id: str,
+    rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    aggregate = _aggregate_walk_forward_cases(rows)
+    losers = [row for row in rows if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    concentration_reports = [
+        _loss_concentration(losers, "date"),
+        _loss_concentration(losers, "asset"),
+        _loss_concentration(losers, "horizon"),
+        _loss_concentration(losers, "regime_segment"),
+    ]
+    max_share = max(
+        (report["summary"]["max_loss_share"] for report in concentration_reports),
+        default=0.0,
+    )
+    tail = _tail_loss_contribution(losers, config)
+    return {
+        "variant_id": variant_id,
+        **aggregate,
+        "losing_case_count": len(losers),
+        "losing_avg": _round(_mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in losers])),
+        "tail_loss_contribution": tail["tail_loss_share"],
+        "max_loss_concentration_share": _round(max_share),
+        "turnover": _round(
+            sum(_float(row.get("selected_turnover_cost_assumption"), 0.0) for row in rows)
+        ),
+        "cost": _round(sum(_float(row.get("selected_estimated_cost"), 0.0) for row in rows)),
+        "drawdown": _round(
+            _mean([_float(row.get("selected_drawdown_proxy"), 0.0) for row in rows])
+        ),
+        "guardrail_changed_case_count": sum(
+            1 for row in rows if row.get("guardrail_action") != "keep_value_surface_action"
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _guardrail_variant_rules(
+    risk_context: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "variant_id": "original_value_surface",
+            "rule": "no guardrail; keep original top value-surface action",
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "regime_conditioned_value_surface",
+            "rule": "fallback to benchmark in failure-attributed high-loss regimes/horizons/assets",
+            "high_loss_regimes": sorted(risk_context.get("high_loss_regimes", [])),
+            "high_loss_horizons": sorted(risk_context.get("high_loss_horizons", [])),
+            "high_loss_assets": sorted(risk_context.get("high_loss_assets", [])),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "tail_loss_guarded_value_surface",
+            "rule": (
+                "fallback aggressive actions in tail-risk context and size-reduce "
+                "other concentrated cases"
+            ),
+            "size_multiplier": _float(policy.get("loss_concentration_size_multiplier"), 0.50),
+            "promotion_gate_allowed": False,
+        },
+        {
+            "variant_id": "benchmark_fallback_value_surface",
+            "rule": (
+                "require confirmation before benchmark disagreement in high-risk "
+                "or high-cost context"
+            ),
+            "promotion_gate_allowed": False,
+        },
+    ]
+
+
+def _regime_horizon_loss_matrix(
+    selected_cases: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    losers = [row for row in selected_cases if _float(row.get("delta_vs_benchmark"), 0.0) < 0]
+    enriched = [
+        {
+            **row,
+            "action": row.get("selected_action"),
+            "cluster": row.get("asset_cluster"),
+            "utility_profile": _utility_profile_for_action(str(row.get("selected_action")), config),
+            "date_window": _date_window(str(row.get("date")), config),
+        }
+        for row in losers
+    ]
+    reports = {
+        "regime": _loss_matrix_group(enriched, "regime_segment"),
+        "asset": _loss_matrix_group(enriched, "asset"),
+        "horizon": _loss_matrix_group(enriched, "horizon"),
+        "action": _loss_matrix_group(enriched, "action"),
+        "cluster": _loss_matrix_group(enriched, "cluster"),
+        "utility_profile": _loss_matrix_group(enriched, "utility_profile"),
+        "date_window": _loss_matrix_group(enriched, "date_window"),
+    }
+    max_row = _max_loss_matrix_row(reports)
+    broad_ceiling = _float(
+        _next_stage_section(config, "regime_horizon_loss_attribution_matrix").get(
+            "broad_loss_group_share_ceiling"
+        ),
+        0.35,
+    )
+    max_share = _float(max_row.get("loss_share"), 0.0)
+    assessment = "CONCENTRATED_REPAIRABLE" if max_share > broad_ceiling else "BROAD_STRUCTURAL_RISK"
+    return {
+        "summary": {
+            "losing_case_count": len(losers),
+            "losing_case_average_delta": _round(
+                _mean([_float(row.get("delta_vs_benchmark"), 0.0) for row in losers])
+            ),
+            "max_loss_concentration_share": _round(max_share),
+            "max_loss_concentration_group": max_row,
+            "loss_distribution_assessment": assessment,
+            "promotion_gate_allowed": False,
+        },
+        "loss_by_regime": reports["regime"],
+        "loss_by_asset": reports["asset"],
+        "loss_by_horizon": reports["horizon"],
+        "loss_by_action": reports["action"],
+        "loss_by_cluster": reports["cluster"],
+        "loss_by_utility_profile": reports["utility_profile"],
+        "loss_by_date_window": reports["date_window"],
+        "top_losing_cases": sorted(
+            enriched,
+            key=lambda row: _float(row.get("delta_vs_benchmark"), 0.0),
+        )[:25],
+    }
+
+
+def _loss_matrix_group(rows: list[dict[str, Any]], group_key: str) -> dict[str, Any]:
+    report = _loss_concentration(rows, group_key)
+    for row in report["groups"]:
+        row["mean_selected_realized_net_return"] = _round(
+            _mean(
+                [
+                    _float(value.get("selected_realized_net_return"), 0.0)
+                    for value in rows
+                    if str(value.get(group_key, "unknown")) == str(row.get(group_key))
+                ]
+            )
+        )
+        row["mean_benchmark_realized_net_return"] = _round(
+            _mean(
+                [
+                    _float(value.get("benchmark_realized_net_return"), 0.0)
+                    for value in rows
+                    if str(value.get(group_key, "unknown")) == str(row.get(group_key))
+                ]
+            )
+        )
+    return report
+
+
+def _max_loss_matrix_row(reports: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    candidates = []
+    for report_name, report in reports.items():
+        for row in _records(report.get("groups")):
+            candidates.append({"matrix": report_name, **row})
+    return max(candidates, key=lambda row: _float(row.get("loss_share"), 0.0), default={})
+
+
+def _utility_profile_for_action(action_id: str, config: Mapping[str, Any]) -> str:
+    mapping = _next_stage_section(config, "regime_horizon_loss_attribution_matrix").get(
+        "utility_profile_mapping",
+        {},
+    )
+    if isinstance(mapping, Mapping):
+        for profile, actions in mapping.items():
+            if action_id in [str(item) for item in actions]:
+                return str(profile)
+    if "risk" in action_id or "cash" in action_id or "guard" in action_id:
+        return "risk_controlled"
+    if "hold" in action_id or "static" in action_id:
+        return "benchmark_like"
+    return "aggressive_return_seeking"
+
+
+def _date_window(date_value: str, config: Mapping[str, Any]) -> str:
+    policy = _next_stage_section(config, "regime_horizon_loss_attribution_matrix")
+    window = str(policy.get("date_window", "month"))
+    if window == "month" and len(date_value) >= 7:
+        return date_value[:7]
+    if window == "quarter" and len(date_value) >= 7:
+        month = _first_int(date_value[5:7])
+        quarter = ((month - 1) // 3) + 1 if month else 0
+        return f"{date_value[:4]}-Q{quarter}"
+    return date_value
+
+
+def _residual_regime_conditioning_report(
+    residual_rows: list[dict[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "gbdt_residual_regime_conditioning")
+    limit = _first_int(policy.get("hypothesis_candidate_limit")) or 10
+    large = [row for row in residual_rows if row.get("large_residual_for_review")]
+    top_features = _residual_feature_importance(
+        residual_rows,
+        features=["regime_segment", "horizon", "asset", "asset_cluster", "pit_state", "action"],
+    )
+    sign = _residual_sign_classification(residual_rows)
+    hypotheses = _residual_regime_hypotheses(residual_rows, limit)
+    return {
+        "summary": {
+            "residual_case_count": len(residual_rows),
+            "large_residual_case_count": len(large),
+            "strategy_signal_generated": False,
+            "promotion_gate_allowed": False,
+        },
+        "top_residual_features": top_features,
+        "large_residual_regimes": _residual_group_result(large, "regime_segment"),
+        "large_residual_horizons": _residual_group_result(large, "horizon"),
+        "large_residual_assets": _residual_group_result(large, "asset"),
+        "residual_sign_classification": sign,
+        "hypothesis_candidates": hypotheses,
+    }
+
+
+def _residual_sign_classification(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    positive = [row for row in rows if _float(row.get("residual"), 0.0) > 0]
+    negative = [row for row in rows if _float(row.get("residual"), 0.0) < 0]
+    neutral = [row for row in rows if _float(row.get("residual"), 0.0) == 0]
+    return {
+        "positive_residual": {
+            "case_count": len(positive),
+            "interpretation": "value surface underestimated realized net outcome",
+            "mean_residual": _round(_mean([_float(row.get("residual"), 0.0) for row in positive])),
+            "promotion_gate_allowed": False,
+        },
+        "negative_residual": {
+            "case_count": len(negative),
+            "interpretation": "value surface overestimated realized net outcome",
+            "mean_residual": _round(_mean([_float(row.get("residual"), 0.0) for row in negative])),
+            "promotion_gate_allowed": False,
+        },
+        "neutral_residual": {
+            "case_count": len(neutral),
+            "promotion_gate_allowed": False,
+        },
+    }
+
+
+def _residual_regime_hypotheses(
+    residual_rows: list[dict[str, Any]],
+    limit: int,
+) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in residual_rows:
+        key = (
+            str(row.get("regime_segment", "unknown")),
+            str(row.get("horizon", "unknown")),
+            str(row.get("asset_cluster", "unknown")),
+            str(row.get("action", "unknown")),
+        )
+        grouped.setdefault(key, []).append(row)
+    candidates = []
+    for (regime, horizon, cluster, action), values in grouped.items():
+        mean_residual = _mean([_float(row.get("residual"), 0.0) for row in values])
+        mean_abs = _mean([_float(row.get("abs_residual"), 0.0) for row in values])
+        large_rate = sum(1 for row in values if row.get("large_residual_for_review")) / len(values)
+        residual_direction = (
+            "overestimated_upside" if mean_residual < 0 else "underestimated_upside"
+        )
+        candidates.append(
+            {
+                "hypothesis_id": (
+                    f"regime_{regime}_horizon_{horizon}_cluster_{cluster}_action_{action}"
+                ),
+                "regime_segment": regime,
+                "horizon": horizon,
+                "asset_cluster": cluster,
+                "action": action,
+                "case_count": len(values),
+                "mean_residual": _round(mean_residual),
+                "mean_abs_residual": _round(mean_abs),
+                "large_residual_rate": _round(large_rate),
+                "residual_direction": residual_direction,
+                "hypothesis": (
+                    f"When regime={regime}, horizon={horizon}, cluster={cluster}, "
+                    f"action={action}, value surface may have {residual_direction}."
+                ),
+                "feeds_trading_796_ablation": True,
+                "strategy_signal_generated": False,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return sorted(
+        candidates,
+        key=lambda row: (
+            _float(row.get("mean_abs_residual"), 0.0),
+            _float(row.get("large_residual_rate"), 0.0),
+        ),
+        reverse=True,
+    )[:limit]
+
+
+def _regime_conditioned_controlled_review_decision(
+    *,
+    config: Mapping[str, Any],
+    design: Mapping[str, Any],
+    guardrail: Mapping[str, Any],
+    loss_matrix: Mapping[str, Any],
+    residual_regime: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "regime_conditioned_value_surface_controlled_review")
+    allowed = [str(item) for item in policy.get("allowed_decisions", [])]
+    metrics = _records(guardrail.get("variant_metrics"))
+    original = next(
+        (row for row in metrics if row.get("variant_id") == "original_value_surface"), {}
+    )
+    tail = next(
+        (row for row in metrics if row.get("variant_id") == "tail_loss_guarded_value_surface"),
+        {},
+    )
+    fallback = next(
+        (row for row in metrics if row.get("variant_id") == "benchmark_fallback_value_surface"),
+        {},
+    )
+    best = max(
+        metrics, key=lambda row: _float(row.get("mean_delta_vs_benchmark"), -999.0), default={}
+    )
+    if not design or not guardrail or not loss_matrix or not residual_regime or not metrics:
+        decision = "DATA_REQUIRED"
+        reason = "missing_required_795_to_798_artifact"
+    else:
+        original_mean = _float(original.get("mean_delta_vs_benchmark"), 0.0)
+        best_mean = _float(best.get("mean_delta_vs_benchmark"), 0.0)
+        tail_reduction = _tail_loss_reduction(original, tail)
+        if best_mean >= 0 and best.get("variant_id") == "tail_loss_guarded_value_surface":
+            decision = "CONTINUE"
+            reason = "tail_loss_guarded_variant_restores_nonnegative_mean_delta"
+        elif _float(fallback.get("mean_delta_vs_benchmark"), -999.0) >= 0:
+            decision = "PIVOT_TO_BENCHMARK_FALLBACK"
+            reason = "benchmark_fallback_variant_restores_nonnegative_mean_delta"
+        elif tail_reduction >= _float(policy.get("tail_loss_reduction_required_share"), 0.20):
+            decision = "PIVOT_TO_TAIL_RISK_POLICY"
+            reason = "tail_loss_guard_reduces_tail_without_full_mean_recovery"
+        elif (
+            best_mean <= original_mean
+            and loss_matrix.get("matrix_summary", {}).get("loss_distribution_assessment")
+            == "BROAD_STRUCTURAL_RISK"
+        ):
+            decision = "KILL_CURRENT_VALUE_SURFACE"
+            reason = "guardrails_do_not_improve_broad_structural_loss"
+        else:
+            decision = "WATCHLIST"
+            reason = "improvement_incomplete_or_requires_more_forward_evidence"
+        if allowed and decision not in allowed:
+            decision = "WATCHLIST"
+            reason = "computed_decision_not_allowed_by_policy"
+    best_variant = best.get("variant_id")
+    original_mean = _float(original.get("mean_delta_vs_benchmark"), 0.0)
+    best_mean = _float(best.get("mean_delta_vs_benchmark"), 0.0)
+    return {
+        "decision": decision,
+        "reason": reason,
+        "allowed_decisions": allowed,
+        "best_variant_by_mean_delta": best_variant,
+        "original_mean_delta_vs_benchmark": _round(original_mean),
+        "best_variant_mean_delta_vs_benchmark": _round(best_mean),
+        "mean_delta_improved": best_mean > original_mean,
+        "tail_loss_reduced": _tail_loss_reduction(original, best) > 0,
+        "losing_avg_improved": _float(best.get("losing_avg"), -999.0)
+        > _float(original.get("losing_avg"), 0.0),
+        "beat_rate_retained": _beat_rate_retention(original, best)
+        >= _float(policy.get("beat_rate_retention_floor"), 0.80),
+        "turnover_cost_not_worse": _relative_increase_ok(
+            original.get("turnover"),
+            best.get("turnover"),
+            _float(policy.get("turnover_increase_ceiling_share"), 0.10),
+        )
+        and _relative_increase_ok(
+            original.get("cost"),
+            best.get("cost"),
+            _float(policy.get("cost_increase_ceiling_share"), 0.10),
+        ),
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _tail_loss_reduction(original: Mapping[str, Any], candidate: Mapping[str, Any]) -> float:
+    original_tail = _float(original.get("tail_loss_contribution"), 0.0)
+    candidate_tail = _float(candidate.get("tail_loss_contribution"), 0.0)
+    return (original_tail - candidate_tail) / original_tail if original_tail else 0.0
+
+
+def _beat_rate_retention(original: Mapping[str, Any], candidate: Mapping[str, Any]) -> float:
+    original_rate = _float(original.get("value_surface_beats_benchmark_rate"), 0.0)
+    candidate_rate = _float(candidate.get("value_surface_beats_benchmark_rate"), 0.0)
+    return candidate_rate / original_rate if original_rate else 0.0
+
+
+def _relative_increase_ok(original: Any, candidate: Any, ceiling: float) -> bool:
+    original_value = abs(_float(original, 0.0))
+    candidate_value = abs(_float(candidate, 0.0))
+    if original_value == 0:
+        return candidate_value == 0
+    return (candidate_value - original_value) / original_value <= ceiling
+
+
+def _regime_conditioned_review_evidence(
+    *,
+    design: Mapping[str, Any],
+    guardrail: Mapping[str, Any],
+    loss_matrix: Mapping[str, Any],
+    residual_regime: Mapping[str, Any],
+) -> dict[str, Any]:
+    guardrail_summary = (
+        guardrail.get("summary") if isinstance(guardrail.get("summary"), Mapping) else {}
+    )
+    matrix_summary = (
+        loss_matrix.get("matrix_summary")
+        if isinstance(loss_matrix.get("matrix_summary"), Mapping)
+        else loss_matrix.get("summary", {})
+    )
+    return {
+        "design_status": design.get("status"),
+        "tail_loss_regime_count": design.get("summary", {}).get("tail_loss_regime_count"),
+        "guardrail_status": guardrail.get("status"),
+        "best_variant_by_mean_delta": guardrail_summary.get("best_variant_by_mean_delta"),
+        "tail_loss_guardrail_reduces_tail_loss": guardrail_summary.get(
+            "tail_loss_guardrail_reduces_tail_loss"
+        ),
+        "loss_matrix_status": loss_matrix.get("status"),
+        "loss_distribution_assessment": matrix_summary.get("loss_distribution_assessment"),
+        "residual_regime_status": residual_regime.get("status"),
+        "top_residual_feature": residual_regime.get("summary", {}).get("top_residual_feature"),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _high_loss_group_values(
+    failure: Mapping[str, Any],
+    report_key: str,
+    group_key: str,
+    share_floor: float,
+) -> list[str]:
+    report = failure.get(report_key) if isinstance(failure.get(report_key), Mapping) else {}
+    groups = _records(report.get("groups"))
+    selected = [
+        str(row.get(group_key))
+        for row in groups
+        if row.get(group_key) is not None and _float(row.get("loss_share"), 0.0) >= share_floor
+    ]
+    if selected:
+        return selected
+    top = max(groups, key=lambda row: _float(row.get("loss_share"), 0.0), default={})
+    return [str(top.get(group_key))] if top.get(group_key) is not None else []
 
 
 def _run_data_quality_gate(

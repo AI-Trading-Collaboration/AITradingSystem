@@ -22,8 +22,11 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_GBDT_PIVOT_REVIEW_PATH,
     DEFAULT_GBDT_PIVOT_SELECTION_PATH,
     DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH,
     DEFAULT_GBDT_VALUE_SURFACE_RESIDUAL_DIAGNOSTIC_PATH,
     DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
     DEFAULT_REGRET_ACTIVATION_INPUTS_PATH,
     DEFAULT_REGRET_CASEBOOK_EXPANSION_GATE_PATH,
     DEFAULT_REGRET_STATE_MACHINE_OUTPUT_ROOT,
@@ -31,8 +34,10 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_SIMPLE_ENSEMBLE_OUTPUT_ROOT,
     DEFAULT_SIMPLE_STRATEGY_SELECTOR_PATH,
     DEFAULT_STATE_TRANSITION_CASEBOOK_PATH,
+    DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
+    DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
     DEFAULT_VALUE_SURFACE_EXPANSION_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
     DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
@@ -44,14 +49,19 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_VALUE_SURFACE_WARNING_TRIAGE_PATH,
     run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
+    run_gbdt_residual_hypothesis_regime_conditioning,
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_regime_conditioned_value_surface_controlled_review,
+    run_regime_conditioned_value_surface_design,
+    run_regime_horizon_loss_attribution_matrix,
     run_regret_activation_inputs_from_value_surface_failures,
     run_regret_casebook_activation_recheck,
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_tail_loss_guardrail_fallback_policy,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
@@ -1129,6 +1139,192 @@ def strategies_value_surface_direction_review_command(
         )
     )
     _print_strategy_pilot_payload("Value surface direction review", payload)
+
+
+@strategies_app.command("regime-conditioned-value-surface-design")
+def strategies_regime_conditioned_value_surface_design_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-795 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    residual_triage: Annotated[
+        Path,
+        typer.Option("--residual-triage", help="TRADING-792 residual triage JSON。"),
+    ] = DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    direction_review: Annotated[
+        Path,
+        typer.Option("--direction-review", help="TRADING-794 direction review JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-795 regime-conditioned design 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regime_conditioned_value_surface_design(
+            config_path=config_path,
+            failure_attribution_path=failure_attribution,
+            horizon_stabilization_path=horizon_stabilization,
+            residual_triage_path=residual_triage,
+            direction_review_path=direction_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regime-conditioned value surface design", payload)
+
+
+@strategies_app.command("tail-loss-guardrail-fallback-policy")
+def strategies_tail_loss_guardrail_fallback_policy_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-796 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    horizon_stabilization: Annotated[
+        Path,
+        typer.Option("--horizon-stabilization", help="TRADING-791 stabilization JSON。"),
+    ] = DEFAULT_HORIZON_CLIFF_STABILIZATION_REVIEW_PATH,
+    design: Annotated[
+        Path,
+        typer.Option("--design", help="TRADING-795 regime-conditioned design JSON。"),
+    ] = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-796 guardrail/fallback 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_loss_guardrail_fallback_policy(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            horizon_stabilization_path=horizon_stabilization,
+            design_path=design,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-loss guardrail fallback policy", payload)
+
+
+@strategies_app.command("regime-horizon-loss-attribution-matrix")
+def strategies_regime_horizon_loss_attribution_matrix_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-797 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    failure_attribution: Annotated[
+        Path,
+        typer.Option("--failure-attribution", help="TRADING-790 failure attribution JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_FAILURE_ATTRIBUTION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-797 loss attribution matrix 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regime_horizon_loss_attribution_matrix(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            failure_attribution_path=failure_attribution,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regime horizon loss attribution matrix", payload)
+
+
+@strategies_app.command("gbdt-residual-hypothesis-regime-conditioning")
+def strategies_gbdt_residual_hypothesis_regime_conditioning_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-798 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option(
+            "--value-surface-expansion", help="TRADING-775 value surface expansion JSON。"
+        ),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    residual_triage: Annotated[
+        Path,
+        typer.Option("--residual-triage", help="TRADING-792 residual triage JSON。"),
+    ] = DEFAULT_GBDT_RESIDUAL_HYPOTHESIS_TRIAGE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-798 residual regime hypotheses 输出目录。"),
+    ] = DEFAULT_GBDT_ACTION_UTILITY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_gbdt_residual_hypothesis_regime_conditioning(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            residual_triage_path=residual_triage,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("GBDT residual regime conditioning", payload)
+
+
+@strategies_app.command("regime-conditioned-value-surface-controlled-review")
+def strategies_regime_conditioned_value_surface_controlled_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-799 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    design: Annotated[
+        Path,
+        typer.Option("--design", help="TRADING-795 design JSON。"),
+    ] = DEFAULT_REGIME_CONDITIONED_VALUE_SURFACE_DESIGN_PATH,
+    guardrail_policy: Annotated[
+        Path,
+        typer.Option("--guardrail-policy", help="TRADING-796 guardrail/fallback JSON。"),
+    ] = DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
+    loss_matrix: Annotated[
+        Path,
+        typer.Option("--loss-matrix", help="TRADING-797 loss matrix JSON。"),
+    ] = DEFAULT_REGIME_HORIZON_LOSS_ATTRIBUTION_MATRIX_PATH,
+    residual_regime: Annotated[
+        Path,
+        typer.Option("--residual-regime", help="TRADING-798 residual regime JSON。"),
+    ] = DEFAULT_GBDT_RESIDUAL_REGIME_CONDITIONING_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-799 controlled review 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_regime_conditioned_value_surface_controlled_review(
+            config_path=config_path,
+            design_path=design,
+            guardrail_policy_path=guardrail_policy,
+            loss_matrix_path=loss_matrix,
+            residual_regime_path=residual_regime,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Regime-conditioned value surface controlled review", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

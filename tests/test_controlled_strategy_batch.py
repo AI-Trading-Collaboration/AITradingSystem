@@ -18,14 +18,19 @@ from ai_trading_system.controlled_strategy_batch import (
     run_gbdt_action_utility_baseline,
     run_gbdt_pivot_direction_selection,
     run_gbdt_pivot_review,
+    run_gbdt_residual_hypothesis_regime_conditioning,
     run_gbdt_residual_hypothesis_triage,
     run_gbdt_value_surface_residual_diagnostic_prototype,
     run_horizon_cliff_utility_ranking_stabilization_review,
+    run_regime_conditioned_value_surface_controlled_review,
+    run_regime_conditioned_value_surface_design,
+    run_regime_horizon_loss_attribution_matrix,
     run_regret_activation_inputs_from_value_surface_failures,
     run_regret_casebook_activation_recheck,
     run_regret_casebook_expansion_gate,
     run_regret_state_machine_controlled_prototype,
     run_simple_strategy_selector_pilot,
+    run_tail_loss_guardrail_fallback_policy,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
@@ -510,6 +515,133 @@ def test_value_surface_direction_review_does_not_default_continue(tmp_path: Path
         "PIVOT_TO_TAIL_RISK_FILTER",
         "KILL_CURRENT_VALUE_SURFACE_VERSION",
     }
+
+
+def test_regime_conditioned_value_surface_design_protocol(tmp_path: Path) -> None:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    payload = run_regime_conditioned_value_surface_design(
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        residual_triage_path=paths["residual_triage"],
+        direction_review_path=paths["direction"],
+        output_root=tmp_path / "regime_design",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regime_conditioned_value_surface_design"
+    assert payload["summary"]["regime_variable_count"] > 0
+    assert payload["regimes_keep_value_surface"]
+    assert payload["regimes_fallback_to_benchmark"]
+    assert payload["controlled_only_validation_plan"]
+
+
+def test_tail_loss_guardrail_fallback_policy_compares_variants(tmp_path: Path) -> None:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    design = run_regime_conditioned_value_surface_design(
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        residual_triage_path=paths["residual_triage"],
+        direction_review_path=paths["direction"],
+        output_root=tmp_path / "guardrail",
+    )
+    payload = run_tail_loss_guardrail_fallback_policy(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=Path(design["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "guardrail",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "tail_loss_guardrail_fallback_policy"
+    variant_ids = {row["variant_id"] for row in payload["variant_metrics"]}
+    assert {
+        "original_value_surface",
+        "regime_conditioned_value_surface",
+        "tail_loss_guarded_value_surface",
+        "benchmark_fallback_value_surface",
+    }.issubset(variant_ids)
+    assert "mean_delta_vs_benchmark" in payload["variant_metrics"][0]
+    assert payload["guardrail_diagnostic_boundary"]["retrospective_ablation_only"] is True
+
+
+def test_regime_horizon_loss_attribution_matrix(tmp_path: Path) -> None:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    payload = run_regime_horizon_loss_attribution_matrix(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        output_root=tmp_path / "loss_matrix",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regime_horizon_loss_attribution_matrix"
+    assert payload["summary"]["losing_case_count"] >= 0
+    assert "max_loss_concentration_group" in payload["summary"]
+    assert payload["loss_by_regime"]["summary"]["promotion_gate_allowed"] is False
+    assert payload["loss_by_utility_profile"]["groups"] is not None
+
+
+def test_gbdt_residual_regime_conditioning_no_strategy(tmp_path: Path) -> None:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    payload = run_gbdt_residual_hypothesis_regime_conditioning(
+        value_surface_expansion_path=paths["value_expansion"],
+        residual_triage_path=paths["residual_triage"],
+        output_root=tmp_path / "residual_regime",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "gbdt_residual_hypothesis_regime_conditioning"
+    assert payload["summary"]["residual_case_count"] > 0
+    assert payload["summary"]["strategy_signal_generated"] is False
+    assert payload["top_residual_features"]
+    assert payload["diagnostic_boundary"]["direct_action_policy_generated"] is False
+
+
+def test_regime_conditioned_controlled_review_decision_enum(tmp_path: Path) -> None:
+    paths = _run_regime_conditioning_inputs(tmp_path)
+    design = run_regime_conditioned_value_surface_design(
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        residual_triage_path=paths["residual_triage"],
+        direction_review_path=paths["direction"],
+        output_root=tmp_path / "controlled_review",
+    )
+    guardrail = run_tail_loss_guardrail_fallback_policy(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=Path(design["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "controlled_review",
+    )
+    matrix = run_regime_horizon_loss_attribution_matrix(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        output_root=tmp_path / "controlled_review",
+    )
+    residual = run_gbdt_residual_hypothesis_regime_conditioning(
+        value_surface_expansion_path=paths["value_expansion"],
+        residual_triage_path=paths["residual_triage"],
+        output_root=tmp_path / "controlled_review",
+    )
+    payload = run_regime_conditioned_value_surface_controlled_review(
+        design_path=Path(design["artifact_paths"]["json_path"]),
+        guardrail_policy_path=Path(guardrail["artifact_paths"]["json_path"]),
+        loss_matrix_path=Path(matrix["artifact_paths"]["json_path"]),
+        residual_regime_path=Path(residual["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "controlled_review",
+    )
+
+    _assert_safety(payload)
+    assert payload["report_type"] == "regime_conditioned_value_surface_controlled_review"
+    assert payload["summary"]["controlled_review_decision"] in {
+        "CONTINUE",
+        "WATCHLIST",
+        "KILL_CURRENT_VALUE_SURFACE",
+        "PIVOT_TO_TAIL_RISK_POLICY",
+        "PIVOT_TO_BENCHMARK_FALLBACK",
+        "DATA_REQUIRED",
+    }
+    assert payload["review_decision"]["promotion_gate_allowed"] is False
 
 
 def test_regret_state_machine_schema(tmp_path: Path) -> None:
@@ -1255,6 +1387,77 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "regime-conditioned-value-surface-design",
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--residual-triage",
+            str(tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_triage.json"),
+            "--direction-review",
+            str(tmp_path / "cli_warning" / "value_surface_direction_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-loss-guardrail-fallback-policy",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--horizon-stabilization",
+            str(
+                tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
+            ),
+            "--design",
+            str(tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regime-horizon-loss-attribution-matrix",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--failure-attribution",
+            str(tmp_path / "cli_warning" / "value_surface_failure_attribution.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "gbdt-residual-hypothesis-regime-conditioning",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--residual-triage",
+            str(tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_triage.json"),
+            "--output-root",
+            str(tmp_path / "cli_gbdt"),
+        ],
+        [
+            "research",
+            "strategies",
+            "regime-conditioned-value-surface-controlled-review",
+            "--design",
+            str(tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json"),
+            "--guardrail-policy",
+            str(tmp_path / "cli_warning" / "tail_loss_guardrail_fallback_policy.json"),
+            "--loss-matrix",
+            str(tmp_path / "cli_warning" / "regime_horizon_loss_attribution_matrix.json"),
+            "--residual-regime",
+            str(tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_regime_conditioning.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -1283,6 +1486,12 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     ).exists()
     assert (tmp_path / "cli_warning" / "value_surface_failure_attribution.json").exists()
     assert (tmp_path / "cli_warning" / "value_surface_direction_review.json").exists()
+    assert (tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_loss_guardrail_fallback_policy.json").exists()
+    assert (tmp_path / "cli_warning" / "regime_horizon_loss_attribution_matrix.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "regime_conditioned_value_surface_controlled_review.json"
+    ).exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1299,6 +1508,7 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         tmp_path / "cli_gbdt" / "gbdt_value_surface_residual_diagnostic_prototype.json"
     ).exists()
     assert (tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_triage.json").exists()
+    assert (tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_regime_conditioning.json").exists()
     assert (tmp_path / "cli_state" / "regret_casebook_expansion_gate.json").exists()
     assert (
         tmp_path / "cli_state" / "regret_activation_inputs_from_value_surface_failures.json"
@@ -1340,6 +1550,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "value_surface_controlled_walk_forward_expansion",
         "value_surface_failure_attribution",
         "value_surface_direction_review",
+        "regime_conditioned_value_surface_design",
+        "tail_loss_guardrail_fallback_policy",
+        "regime_horizon_loss_attribution_matrix",
+        "gbdt_residual_hypothesis_regime_conditioning",
+        "regime_conditioned_value_surface_controlled_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1353,6 +1568,11 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "value_surface_controlled_walk_forward_expansion.json/md" in catalog
     assert "value_surface_failure_attribution.json/md" in catalog
     assert "value_surface_direction_review.json/md" in catalog
+    assert "regime_conditioned_value_surface_design.json/md" in catalog
+    assert "tail_loss_guardrail_fallback_policy.json/md" in catalog
+    assert "regime_horizon_loss_attribution_matrix.json/md" in catalog
+    assert "gbdt_residual_hypothesis_regime_conditioning.json/md" in catalog
+    assert "regime_conditioned_value_surface_controlled_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1371,12 +1591,20 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-780～784" in system_flow
     assert "TRADING-785～789" in system_flow
     assert "TRADING-790～794" in system_flow
+    assert "TRADING-795～799" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
     assert "aits research strategies value-surface-controlled-walk-forward-expansion" in system_flow
     assert "aits research strategies value-surface-failure-attribution" in system_flow
     assert "aits research strategies value-surface-direction-review" in system_flow
+    assert "aits research strategies regime-conditioned-value-surface-design" in system_flow
+    assert "aits research strategies tail-loss-guardrail-fallback-policy" in system_flow
+    assert "aits research strategies regime-horizon-loss-attribution-matrix" in system_flow
+    assert "aits research strategies gbdt-residual-hypothesis-regime-conditioning" in system_flow
+    assert (
+        "aits research strategies regime-conditioned-value-surface-controlled-review" in system_flow
+    )
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
@@ -1460,6 +1688,54 @@ def _run_direction_review_inputs(tmp_path: Path) -> dict[str, Path]:
         "walk_forward": Path(walk_forward["artifact_paths"]["json_path"]),
         "utility_pareto": Path(utility_pareto["artifact_paths"]["json_path"]),
         "residual_diagnostic": Path(residual["artifact_paths"]["json_path"]),
+    }
+
+
+def _run_regime_conditioning_inputs(tmp_path: Path) -> dict[str, Path]:
+    paths = _run_direction_review_inputs(tmp_path)
+    failure = run_value_surface_failure_attribution(
+        prices_path=paths["prices"],
+        marketstack_prices_path=paths["marketstack"],
+        rates_path=paths["rates"],
+        value_surface_expansion_path=paths["value_expansion"],
+        walk_forward_path=paths["walk_forward"],
+        output_root=tmp_path / "regime_failure",
+        as_of_date=TEST_AS_OF,
+    )
+    horizon = run_horizon_cliff_utility_ranking_stabilization_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        utility_pareto_ranking_path=paths["utility_pareto"],
+        output_root=tmp_path / "regime_horizon",
+    )
+    residual_triage = run_gbdt_residual_hypothesis_triage(
+        value_surface_expansion_path=paths["value_expansion"],
+        residual_diagnostic_path=paths["residual_diagnostic"],
+        output_root=tmp_path / "regime_residual_triage",
+    )
+    forward = run_forward_evidence_continuity_extension(
+        prices_path=paths["prices"],
+        marketstack_prices_path=paths["marketstack"],
+        rates_path=paths["rates"],
+        ledger_path=paths["ledger"],
+        value_surface_expansion_path=paths["value_expansion"],
+        output_root=tmp_path / "regime_forward",
+        as_of_date=TEST_AS_OF,
+    )
+    direction = run_value_surface_direction_review(
+        failure_attribution_path=Path(failure["artifact_paths"]["json_path"]),
+        horizon_stabilization_path=Path(horizon["artifact_paths"]["json_path"]),
+        residual_triage_path=Path(residual_triage["artifact_paths"]["json_path"]),
+        forward_continuity_extension_path=Path(forward["artifact_paths"]["json_path"]),
+        walk_forward_path=paths["walk_forward"],
+        output_root=tmp_path / "regime_direction",
+    )
+    return {
+        **paths,
+        "failure": Path(failure["artifact_paths"]["json_path"]),
+        "horizon": Path(horizon["artifact_paths"]["json_path"]),
+        "residual_triage": Path(residual_triage["artifact_paths"]["json_path"]),
+        "forward": Path(forward["artifact_paths"]["json_path"]),
+        "direction": Path(direction["artifact_paths"]["json_path"]),
     }
 
 
