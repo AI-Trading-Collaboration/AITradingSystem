@@ -1,0 +1,108 @@
+schema_version: 1
+acceptance_id: data_foundation_acceptance_trading_734_v1
+safety_boundary:
+  validation_only: true
+  observe_only: true
+  production_effect: none
+  broker_action: none
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+market_regime:
+  id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+representative_universe:
+  universe_id: data_foundation_acceptance_representative
+  requested_tickers: [SPY, QQQ, SMH, MSFT, GOOGL, NVDA, AMD, TSM, CASH]
+  requested_asset_ids:
+    - ETF_SPY
+    - ETF_QQQ
+    - ETF_SMH
+    - STOCK_MSFT
+    - STOCK_GOOGL
+    - STOCK_NVDA
+    - STOCK_AMD
+    - STOCK_TSM
+    - CASH_USD
+date_windows:
+  normal_trend_window:
+    start: 2025-05-19
+    end: 2025-06-13
+    purpose: normal trend window covered by local diagnostic price cache when available
+  drawdown_window:
+    start: 2024-07-11
+    end: 2024-08-05
+    purpose: drawdown window
+  high_volatility_window:
+    start: 2024-08-01
+    end: 2024-08-09
+    purpose: high volatility window
+  earnings_ai_semiconductor_event_window:
+    start: 2024-05-22
+    end: 2024-05-24
+    purpose: earnings / AI / semiconductor event window
+  recent_forward_like_decision_date:
+    date: 2026-06-18
+    purpose: recent forward-like dry-run decision date
+  expected_pit_fail_closed_date:
+    date: 2030-01-02
+    purpose: deliberately future-dated PIT fail-closed probe
+pit_acceptance:
+  snapshot_as_of_date: 2025-06-13
+  decision_time: 2025-06-13T21:00:00Z
+local_source_candidates:
+  price_cache:
+    path: data/cache/trading080_validation/prices.csv
+    quality_report: data/cache/trading080_validation/data_quality.md
+    source_type: local_diagnostic_cache
+    promotion_grade_allowed: false
+  sec_pit_shadow_observe:
+    glob: outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_*.json
+    source_type: shadow_observe_diagnostic
+    promotion_grade_allowed: false
+  marketstack_reconciliation:
+    glob: outputs/dry_runs/signal_calibration/reports/data_quality_*_marketstack_reconciliation.csv
+    source_type: diagnostic_reconciliation
+    promotion_grade_allowed: false
+source_qualification_policy:
+  - feature_family: price
+    source_key: price_cache
+    required_for_promotion: true
+  - feature_family: trend
+    source_key: price_cache
+    required_for_promotion: true
+  - feature_family: SEC
+    source_key: sec_pit_shadow_observe
+    required_for_promotion: true
+  - feature_family: fundamental
+    source_key: sec_pit_shadow_observe
+    required_for_promotion: true
+  - feature_family: valuation
+    source_key: valuation_source_manifest_required
+    required_for_promotion: true
+representative_rebalance_actions:
+  low_turnover:
+    - asset_id: ETF_SPY
+      side: buy
+      notional: 10000
+      turnover: 0.05
+  high_turnover:
+    - asset_id: ETF_SPY
+      side: buy
+      notional: 10000
+      turnover: 0.05
+    - asset_id: ETF_QQQ
+      side: sell
+      notional: 40000
+      turnover: 0.20
+    - asset_id: ETF_SMH
+      side: buy
+      notional: 50000
+      turnover: 0.25
+run_registry_acceptance:
+  research_id: data_foundation_acceptance
+  benchmark_strategy_id: benchmark_equal_weight_representative_universe
+  diagnostic_strategy_id: candidate_ai_semiconductor_diagnostic
+  oracle_strategy_id: reverse_oracle_diagnostic_teacher

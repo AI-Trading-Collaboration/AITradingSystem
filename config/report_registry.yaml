@@ -6042,6 +6042,55 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: data_foundation_acceptance
+    title: Data Foundation Acceptance Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data foundation-acceptance run
+    artifact_globs:
+      - outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.json
+      - outputs/data_quality/data_foundation_acceptance/data_foundation_acceptance_report.md
+      - outputs/data_quality/data_foundation_acceptance/component_artifacts/**/*
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-734 acceptance must be refreshed when representative universe,
+      PIT source manifests, local data caches, cost/liquidity assumptions,
+      label definitions, run registry contract, forward archive, or case library
+      definitions change.
+    owner_action: review_source_qualification_before_using_data_foundation_outputs_for_research_conclusions
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: data_source_qualification_remediation
+    title: Data Source Qualification Remediation
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data source-qualification remediate
+    artifact_globs:
+      - outputs/data_quality/data_source_qualification/data_source_qualification_matrix.json
+      - outputs/data_quality/data_source_qualification/data_source_qualification_matrix.md
+      - outputs/data_quality/data_source_qualification/data_foundation_remediation_plan.json
+      - outputs/data_quality/data_source_qualification/data_foundation_remediation_plan.md
+      - outputs/data_quality/data_source_qualification/data_foundation_acceptance_summary_updated.json
+      - outputs/data_quality/data_source_qualification/data_foundation_acceptance_summary_updated.md
+      - outputs/data_quality/data_source_qualification/data_source_qualification_remediation.json
+      - outputs/data_quality/data_source_qualification/data_source_qualification_remediation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-735 remediation planning must be refreshed after each
+      TRADING-734 acceptance run or any source qualification, PIT availability,
+      lineage, data-quality, cost/liquidity, asset master, event label, forward
+      archive, or case-library qualification change.
+    owner_action: execute_P0_source_remediation_without_relaxing_PIT_data_quality_or_lineage_gates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

@@ -6,10 +6,10 @@ safety_boundary:
 label_version: cluster_labels_v1
 static_clusters:
   market_index: [ETF_SPY, ETF_QQQ]
-  mega_cap_tech: [STOCK_NVDA]
-  semiconductor: [ETF_SMH, STOCK_NVDA]
-  AI_infrastructure: [ETF_SMH, STOCK_NVDA]
-  cloud_software: []
+  mega_cap_tech: [STOCK_NVDA, STOCK_MSFT, STOCK_GOOGL]
+  semiconductor: [ETF_SMH, STOCK_NVDA, STOCK_AMD, STOCK_TSM]
+  AI_infrastructure: [ETF_SMH, STOCK_NVDA, STOCK_AMD, STOCK_TSM, STOCK_MSFT, STOCK_GOOGL]
+  cloud_software: [STOCK_MSFT, STOCK_GOOGL]
   defensive: []
   cash_like: [CASH_USD]
   bond_duration: []

@@ -5,6 +5,26 @@ safety_boundary:
   production_effect: none
   broker_action: none
 cases:
+  - case_id: ai_semiconductor_event_follow_through_acceptance
+    case_type: AI_theme_momentum
+    research_ids: [data_foundation_acceptance]
+    date_range:
+      start: 2024-05-22
+      end: 2024-05-24
+    assets: [ETF_SMH, STOCK_NVDA, STOCK_AMD, STOCK_TSM]
+    regime_labels: [trend_regime, volatility_regime]
+    event_labels: [NVDA_event, semiconductor_theme_event]
+    cluster_labels: [semiconductor, AI_infrastructure]
+    baseline_strategy: benchmark_equal_weight
+    comparison_strategy: candidate_ai_semiconductor_diagnostic
+    teacher_type: none
+    expected_behavior: validation_only_forward_case_for_event_window_diagnostics
+    known_outcome: outcome_required
+    regret_type: none
+    allowed_uses: [diagnostic, hypothesis_generation, casebook_query]
+    promotion_gate_allowed: false
+    source_evidence_ids: [FORWARD_EVIDENCE_REQUIRED]
+    notes: TRADING-734 forward case acceptance placeholder; not promotion evidence.
   - case_id: baseline_false_risk_off_placeholder
     case_type: known_false_risk_off
     research_ids: [dynamic_trend_thresholds]

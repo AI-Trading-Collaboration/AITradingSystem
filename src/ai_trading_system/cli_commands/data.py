@@ -35,12 +35,17 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data_foundation import (
     DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
+    DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH,
+    DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT,
     DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
     audit_pit_feature_snapshot,
     audit_universe,
     build_pit_feature_snapshot,
     build_tradability_calendar,
     query_pit_feature,
+    run_data_foundation_acceptance,
+    run_data_source_qualification_remediation,
     show_universe,
     validate_asset_master,
 )
@@ -99,12 +104,45 @@ cache_catalog_app = typer.Typer(help="Checksum and cache catalog 治理报告。
 pit_feature_store_app = typer.Typer(help="PIT feature store and snapshot registry。")
 asset_master_app = typer.Typer(help="Asset master and tradability calendar。")
 universe_app = typer.Typer(help="Research universe as-of view and audit。")
+foundation_acceptance_app = typer.Typer(help="TRADING-734 data foundation acceptance。")
+source_qualification_app = typer.Typer(help="Data source qualification remediation。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
 data_app.add_typer(fallback_policy_app, name="fallback-policy")
 data_app.add_typer(cache_catalog_app, name="cache-catalog")
 data_app.add_typer(pit_feature_store_app, name="pit-feature-store")
 data_app.add_typer(asset_master_app, name="asset-master")
 data_app.add_typer(universe_app, name="universe")
+data_app.add_typer(foundation_acceptance_app, name="foundation-acceptance")
+data_app.add_typer(source_qualification_app, name="source-qualification")
+
+
+@foundation_acceptance_app.command("run")
+def foundation_acceptance_run_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Data foundation acceptance 输出目录。"),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_foundation_acceptance(output_root=output_root)
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("remediate")
+def source_qualification_remediate_command(
+    acceptance_report: Annotated[
+        Path,
+        typer.Option("--acceptance-report", help="TRADING-734 acceptance report JSON。"),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Source qualification remediation 输出目录。"),
+    ] = DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_source_qualification_remediation(
+        acceptance_report_path=acceptance_report,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
 
 
 @pit_feature_store_app.command("build-snapshot")

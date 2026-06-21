@@ -58,6 +58,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_etf_cli_aliases.py",
             "tests/test_research_master_roadmap.py",
             "tests/test_data_foundation_roadmap.py",
+            "tests/test_data_foundation_acceptance.py",
+            "tests/test_data_source_qualification_remediation.py",
         ),
     ),
     "contract-validation": TierSpec(
@@ -88,6 +90,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_flip_rotation_event_casebook.py",
             "tests/test_research_master_roadmap.py",
             "tests/test_data_foundation_roadmap.py",
+            "tests/test_data_foundation_acceptance.py",
+            "tests/test_data_source_qualification_remediation.py",
         ),
     ),
     "report-validation": TierSpec(

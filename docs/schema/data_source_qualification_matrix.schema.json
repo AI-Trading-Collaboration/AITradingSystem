@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data Source Qualification Matrix",
+  "type": "object",
+  "required": [
+    "report_type",
+    "status",
+    "summary",
+    "qualification_categories",
+    "module_level_qualification",
+    "remediation_items",
+    "source_qualification_matrix",
+    "source_acceptance_report_path",
+    "production_effect",
+    "broker_action",
+    "promotion_gate_allowed",
+    "paper_shadow_change_allowed",
+    "production_weight_change_allowed",
+    "lookahead_violation_count"
+  ],
+  "properties": {
+    "report_type": {"const": "data_source_qualification_matrix"},
+    "production_effect": {"const": "none"},
+    "broker_action": {"const": "none"},
+    "promotion_gate_allowed": {"const": false},
+    "paper_shadow_change_allowed": {"const": false},
+    "production_weight_change_allowed": {"const": false},
+    "lookahead_violation_count": {"const": 0},
+    "summary": {
+      "type": "object",
+      "required": [
+        "module_count",
+        "remediation_item_count",
+        "promotion_grade_ready_count",
+        "diagnostic_only_count",
+        "blocked_until_qualified_count",
+        "research_label_only_count",
+        "current_view_only_count",
+        "unknown_requires_manual_review_count",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    },
+    "qualification_categories": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/qualificationCategory"},
+      "minItems": 6
+    },
+    "module_level_qualification": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/moduleQualification"},
+      "minItems": 9
+    },
+    "remediation_items": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/remediationItem"}
+    },
+    "source_qualification_matrix": {
+      "type": "object",
+      "required": [
+        "PROMOTION_GRADE_READY",
+        "DIAGNOSTIC_ONLY",
+        "BLOCKED_UNTIL_QUALIFIED",
+        "RESEARCH_LABEL_ONLY",
+        "CURRENT_VIEW_ONLY",
+        "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+      ],
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    }
+  },
+  "$defs": {
+    "qualificationCategory": {
+      "type": "object",
+      "required": ["category", "meaning", "promotion_gate_allowed"],
+      "properties": {
+        "category": {
+          "enum": [
+            "PROMOTION_GRADE_READY",
+            "DIAGNOSTIC_ONLY",
+            "BLOCKED_UNTIL_QUALIFIED",
+            "RESEARCH_LABEL_ONLY",
+            "CURRENT_VIEW_ONLY",
+            "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+          ]
+        },
+        "promotion_gate_allowed": {"const": false}
+      }
+    },
+    "moduleQualification": {
+      "type": "object",
+      "required": [
+        "component",
+        "current_status",
+        "qualification_category",
+        "qualification_reason",
+        "priority",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "component": {
+          "enum": [
+            "pit_feature_store",
+            "asset_master",
+            "tradable_universe",
+            "cost_liquidity_model",
+            "regime_event_cluster_labels",
+            "run_registry",
+            "execution_cache",
+            "forward_evidence_archive",
+            "research_case_library"
+          ]
+        },
+        "qualification_category": {
+          "enum": [
+            "PROMOTION_GRADE_READY",
+            "DIAGNOSTIC_ONLY",
+            "BLOCKED_UNTIL_QUALIFIED",
+            "RESEARCH_LABEL_ONLY",
+            "CURRENT_VIEW_ONLY",
+            "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+          ]
+        },
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    },
+    "remediationItem": {
+      "type": "object",
+      "required": [
+        "component",
+        "current_status",
+        "blocked_reason",
+        "missing_contract",
+        "missing_source_manifest",
+        "missing_available_time",
+        "current_view_only_risk",
+        "lineage_gap",
+        "PIT_risk",
+        "repairable_without_relaxing_gate",
+        "required_fix",
+        "expected_promotion_grade_gain_if_fixed",
+        "production_effect",
+        "broker_action",
+        "promotion_gate_allowed",
+        "paper_shadow_change_allowed",
+        "production_weight_change_allowed",
+        "lookahead_violation_count"
+      ],
+      "properties": {
+        "current_status": {
+          "enum": [
+            "PROMOTION_GRADE_READY",
+            "DIAGNOSTIC_ONLY",
+            "BLOCKED_UNTIL_QUALIFIED",
+            "RESEARCH_LABEL_ONLY",
+            "CURRENT_VIEW_ONLY",
+            "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+          ]
+        },
+        "PIT_risk": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "production_effect": {"const": "none"},
+        "broker_action": {"const": "none"},
+        "promotion_gate_allowed": {"const": false},
+        "paper_shadow_change_allowed": {"const": false},
+        "production_weight_change_allowed": {"const": false},
+        "lookahead_violation_count": {"const": 0}
+      }
+    }
+  }
+}

@@ -95,6 +95,90 @@ assets:
       - benchmark: AI_mega_cap_satellite
         start_date: 2022-12-01
         end_date: null
+  - asset_id: STOCK_MSFT
+    primary_ticker: MSFT
+    ticker_history:
+      - ticker: MSFT
+        start_date: 1986-03-13
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: stock
+    listing_date: 1986-03-13
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: software_cloud
+    theme_tags: [mega_cap_tech, AI_platform, cloud_software]
+    country: US
+    corporate_actions_source: market_data_vendor_and_sec
+    benchmark_memberships:
+      - benchmark: AI_mega_cap_satellite
+        start_date: 2022-12-01
+        end_date: null
+  - asset_id: STOCK_GOOGL
+    primary_ticker: GOOGL
+    ticker_history:
+      - ticker: GOOGL
+        start_date: 2004-08-19
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: stock
+    listing_date: 2004-08-19
+    delisting_date: null
+    tradability_status: tradable
+    sector: communication_services
+    industry: internet_platforms
+    theme_tags: [mega_cap_tech, AI_platform, cloud_software]
+    country: US
+    corporate_actions_source: market_data_vendor_and_sec
+    benchmark_memberships:
+      - benchmark: AI_mega_cap_satellite
+        start_date: 2022-12-01
+        end_date: null
+  - asset_id: STOCK_AMD
+    primary_ticker: AMD
+    ticker_history:
+      - ticker: AMD
+        start_date: 1972-09-27
+        end_date: null
+    exchange: NASDAQ
+    currency: USD
+    asset_type: stock
+    listing_date: 1972-09-27
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: semiconductors
+    theme_tags: [semiconductor, AI_infrastructure]
+    country: US
+    corporate_actions_source: market_data_vendor_and_sec
+    benchmark_memberships:
+      - benchmark: AI_mega_cap_satellite
+        start_date: 2022-12-01
+        end_date: null
+  - asset_id: STOCK_TSM
+    primary_ticker: TSM
+    ticker_history:
+      - ticker: TSM
+        start_date: 1997-10-08
+        end_date: null
+    exchange: NYSE
+    currency: USD
+    asset_type: adr
+    listing_date: 1997-10-08
+    delisting_date: null
+    tradability_status: tradable
+    sector: technology
+    industry: semiconductors
+    theme_tags: [semiconductor, AI_infrastructure, foundry]
+    country: TW
+    corporate_actions_source: market_data_vendor_and_sec
+    benchmark_memberships:
+      - benchmark: AI_mega_cap_satellite
+        start_date: 2022-12-01
+        end_date: null
   - asset_id: CASH_USD
     primary_ticker: CASH
     ticker_history:

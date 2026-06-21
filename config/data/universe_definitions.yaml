@@ -9,7 +9,19 @@ universes:
     asset_ids: [ETF_SPY, ETF_QQQ, ETF_SMH, CASH_USD]
   ai_mega_cap_satellite:
     description: Initial AI mega-cap satellite universe for research diagnostics.
-    asset_ids: [STOCK_NVDA]
+    asset_ids: [STOCK_NVDA, STOCK_MSFT, STOCK_GOOGL, STOCK_AMD, STOCK_TSM]
   data_foundation_minimum:
     description: Minimum combined universe for TRADING-726 to TRADING-733 baseline tests.
     asset_ids: [ETF_SPY, ETF_QQQ, ETF_SMH, STOCK_NVDA, CASH_USD]
+  data_foundation_acceptance_representative:
+    description: Representative TRADING-734 validation-only universe for real-data acceptance.
+    asset_ids:
+      - ETF_SPY
+      - ETF_QQQ
+      - ETF_SMH
+      - STOCK_MSFT
+      - STOCK_GOOGL
+      - STOCK_NVDA
+      - STOCK_AMD
+      - STOCK_TSM
+      - CASH_USD

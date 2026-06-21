@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data Foundation Acceptance Report",
+  "type": "object",
+  "required": [
+    "report_type",
+    "status",
+    "summary",
+    "requested_universe",
+    "requested_tickers",
+    "requested_date_windows",
+    "pit_checks",
+    "feature_risk_classification",
+    "source_qualification_summary",
+    "production_effect",
+    "broker_action",
+    "promotion_gate_allowed",
+    "paper_shadow_change_allowed",
+    "production_weight_change_allowed"
+  ],
+  "properties": {
+    "report_type": {"const": "data_foundation_acceptance_report"},
+    "production_effect": {"const": "none"},
+    "broker_action": {"const": "none"},
+    "promotion_gate_allowed": {"const": false},
+    "paper_shadow_change_allowed": {"const": false},
+    "production_weight_change_allowed": {"const": false},
+    "summary": {
+      "type": "object",
+      "required": [
+        "pit_feature_store_status",
+        "asset_master_status",
+        "cost_liquidity_status",
+        "label_store_status",
+        "run_registry_status",
+        "execution_cache_status",
+        "forward_evidence_status",
+        "case_library_status",
+        "source_qualification_summary",
+        "promotion_grade_ready_count",
+        "diagnostic_only_count",
+        "blocked_until_qualified_count",
+        "lookahead_violation_count",
+        "production_effect"
+      ]
+    }
+  }
+}
