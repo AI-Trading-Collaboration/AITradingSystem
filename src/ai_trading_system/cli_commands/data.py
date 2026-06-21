@@ -37,7 +37,11 @@ from ai_trading_system.data_foundation import (
     DEFAULT_ASSET_MASTER_OUTPUT_ROOT,
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH,
+    DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH,
+    DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH,
+    DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_PATH,
     DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT,
+    DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT,
     DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT,
     audit_pit_feature_snapshot,
     audit_universe,
@@ -46,6 +50,7 @@ from ai_trading_system.data_foundation import (
     query_pit_feature,
     run_data_foundation_acceptance,
     run_data_source_qualification_remediation,
+    run_data_source_remediation_execution,
     show_universe,
     validate_asset_master,
 )
@@ -140,6 +145,50 @@ def source_qualification_remediate_command(
 ) -> None:
     payload = run_data_source_qualification_remediation(
         acceptance_report_path=acceptance_report,
+        output_root=output_root,
+    )
+    _print_foundation_payload(payload)
+
+
+@source_qualification_app.command("execute-remediation")
+def source_qualification_execute_remediation_command(
+    acceptance_report: Annotated[
+        Path,
+        typer.Option("--acceptance-report", help="TRADING-734 acceptance report JSON。"),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH,
+    qualification_matrix: Annotated[
+        Path,
+        typer.Option("--qualification-matrix", help="TRADING-735 qualification matrix JSON。"),
+    ] = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_PATH,
+    remediation_plan: Annotated[
+        Path,
+        typer.Option("--remediation-plan", help="TRADING-735 remediation plan JSON。"),
+    ] = DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH,
+    updated_acceptance_summary: Annotated[
+        Path,
+        typer.Option(
+            "--updated-acceptance-summary",
+            help="TRADING-735 updated acceptance summary JSON。",
+        ),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH,
+    acceptance_output_root: Annotated[
+        Path,
+        typer.Option(
+            "--acceptance-output-root",
+            help="重新运行 data foundation acceptance 的输出目录。",
+        ),
+    ] = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-736 remediation execution 输出目录。"),
+    ] = DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT,
+) -> None:
+    payload = run_data_source_remediation_execution(
+        acceptance_report_path=acceptance_report,
+        qualification_matrix_path=qualification_matrix,
+        remediation_plan_path=remediation_plan,
+        updated_acceptance_summary_path=updated_acceptance_summary,
+        acceptance_output_root=acceptance_output_root,
         output_root=output_root,
     )
     _print_foundation_payload(payload)

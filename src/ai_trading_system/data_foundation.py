@@ -53,8 +53,21 @@ DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT = (
 DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "data_quality" / "data_source_qualification"
 )
+DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "data_quality" / "data_source_remediation_execution"
+)
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH = (
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT / "data_foundation_acceptance_report.json"
+)
+DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_PATH = (
+    DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT / "data_source_qualification_matrix.json"
+)
+DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH = (
+    DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT / "data_foundation_remediation_plan.json"
+)
+DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH = (
+    DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT
+    / "data_foundation_acceptance_summary_updated.json"
 )
 
 AI_REGIME_START = "2022-12-01"
@@ -1848,6 +1861,160 @@ def run_data_source_qualification_remediation(
     return result
 
 
+def run_data_source_remediation_execution(
+    *,
+    acceptance_report_path: Path = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH,
+    qualification_matrix_path: Path = DEFAULT_DATA_SOURCE_QUALIFICATION_MATRIX_PATH,
+    remediation_plan_path: Path = DEFAULT_DATA_FOUNDATION_REMEDIATION_PLAN_PATH,
+    updated_acceptance_summary_path: Path = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_SUMMARY_UPDATED_PATH,
+    acceptance_output_root: Path = DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    for path in (
+        acceptance_report_path,
+        qualification_matrix_path,
+        remediation_plan_path,
+        updated_acceptance_summary_path,
+    ):
+        if not path.exists():
+            raise DataFoundationError(f"required TRADING-736 input not found: {path}")
+
+    acceptance_before = _read_json(acceptance_report_path)
+    qualification_matrix = _read_json(qualification_matrix_path)
+    remediation_plan = _read_json(remediation_plan_path)
+    acceptance_summary_updated = _read_json(updated_acceptance_summary_path)
+    sorted_items = sorted(
+        _records(remediation_plan.get("remediation_items")),
+        key=_remediation_execution_sort_key,
+    )
+    item_results = [_remediation_execution_result(item) for item in sorted_items]
+
+    acceptance_after = run_data_foundation_acceptance(output_root=acceptance_output_root)
+    acceptance_after_path = acceptance_output_root / "data_foundation_acceptance_report.json"
+    module_rows = _records(qualification_matrix.get("module_level_qualification"))
+    category_counts = _updated_qualification_counts(module_rows, item_results)
+    p0_items = [item for item in item_results if item.get("priority") == "P0"]
+    p0_resolved_count = len(
+        [item for item in p0_items if bool(item.get("promotion_grade_candidate_after_fix"))]
+    )
+    p0_remaining_count = len(p0_items) - p0_resolved_count
+    safety = {
+        "lookahead_violation_count": int(acceptance_after.get("lookahead_violation_count") or 0),
+        "production_effect": "none",
+        "broker_action": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+    matrix_summary = {
+        "matrix_status": (
+            "BLOCKED_UNTIL_QUALIFIED" if category_counts["BLOCKED_UNTIL_QUALIFIED"] else "PASS"
+        ),
+        "promotion_grade_ready_count": category_counts["PROMOTION_GRADE_READY"],
+        "diagnostic_only_count": category_counts["DIAGNOSTIC_ONLY"],
+        "blocked_until_qualified_count": category_counts["BLOCKED_UNTIL_QUALIFIED"],
+        "current_view_only_count": category_counts["CURRENT_VIEW_ONLY"],
+        "research_label_only_count": category_counts["RESEARCH_LABEL_ONLY"],
+        "unknown_requires_manual_review_count": category_counts["UNKNOWN_REQUIRES_MANUAL_REVIEW"],
+        "P0_remaining_count": p0_remaining_count,
+        "P0_resolved_count": p0_resolved_count,
+        "acceptance_rerun_status": acceptance_after.get("status"),
+        **safety,
+    }
+    item_summary = {
+        "input_item_count": len(sorted_items),
+        "item_result_count": len(item_results),
+        "P0_item_count": len(p0_items),
+        "P0_remaining_count": p0_remaining_count,
+        "P0_resolved_count": p0_resolved_count,
+        "current_view_only_isolated_count": len(
+            [
+                item
+                for item in item_results
+                if item.get("before_status") == "CURRENT_VIEW_ONLY"
+                and "current_view_only_source_isolated" in item.get("fix_applied", [])
+            ]
+        ),
+        "research_label_only_restricted_count": len(
+            [
+                item
+                for item in item_results
+                if item.get("after_status") == "RESEARCH_LABEL_ONLY"
+                and item.get("strategy_input_allowed") is False
+            ]
+        ),
+        "no_gate_relaxation": True,
+        **safety,
+    }
+    item_payload = _base_payload(
+        report_type="data_source_remediation_item_results",
+        title="Data source remediation item results",
+        status="REMEDIATION_EXECUTED_WITH_REMAINING_SOURCE_BLOCKERS",
+        summary=item_summary,
+        source_acceptance_report_path=str(acceptance_report_path),
+        source_qualification_matrix_path=str(qualification_matrix_path),
+        source_remediation_plan_path=str(remediation_plan_path),
+        source_acceptance_summary_updated_path=str(updated_acceptance_summary_path),
+        sorted_remediation_items=sorted_items,
+        remediation_item_results=item_results,
+        **safety,
+    )
+    item_paths = write_foundation_artifact_pair(
+        item_payload,
+        output_root=output_root,
+        artifact_id="data_source_remediation_item_results",
+    )
+    updated_matrix = _base_payload(
+        report_type="data_source_qualification_matrix_updated",
+        title="Data source qualification matrix updated",
+        status=matrix_summary["matrix_status"],
+        summary=matrix_summary,
+        source_acceptance_report_path=str(acceptance_report_path),
+        source_acceptance_status_before=acceptance_before.get("status"),
+        source_acceptance_rerun_report_path=str(acceptance_after_path),
+        source_acceptance_status_after=acceptance_after.get("status"),
+        source_qualification_matrix_path=str(qualification_matrix_path),
+        source_remediation_plan_path=str(remediation_plan_path),
+        source_acceptance_summary_updated_path=str(updated_acceptance_summary_path),
+        prior_acceptance_summary=acceptance_summary_updated.get("summary"),
+        qualification_categories=_qualification_category_catalog(),
+        module_level_qualification=module_rows,
+        remediation_item_results=item_results,
+        source_qualification_matrix=category_counts,
+        **safety,
+    )
+    updated_matrix_paths = write_foundation_artifact_pair(
+        updated_matrix,
+        output_root=output_root,
+        artifact_id="data_source_qualification_matrix_updated",
+    )
+    result = _base_payload(
+        report_type="data_source_remediation_execution_report",
+        title="Data source remediation execution report",
+        status="REMEDIATION_EXECUTED_WITH_REMAINING_SOURCE_BLOCKERS",
+        summary={
+            **matrix_summary,
+            "item_results_status": item_payload["status"],
+            "updated_matrix_status": updated_matrix["status"],
+        },
+        source_acceptance_report_path=str(acceptance_report_path),
+        source_qualification_matrix_path=str(qualification_matrix_path),
+        source_remediation_plan_path=str(remediation_plan_path),
+        source_acceptance_summary_updated_path=str(updated_acceptance_summary_path),
+        source_acceptance_rerun_report_path=str(acceptance_after_path),
+        item_results_path=item_paths["json_path"],
+        updated_matrix_path=updated_matrix_paths["json_path"],
+        remediation_item_results=item_results,
+        **safety,
+    )
+    write_foundation_artifact_pair(
+        result,
+        output_root=output_root,
+        artifact_id="data_source_remediation_execution_report",
+    )
+    return result
+
+
 FORWARD_CASE_TYPES = {
     "trend_continuation",
     "risk_off_protection",
@@ -2712,6 +2879,198 @@ def _qualification_category_counts(
         category = _text(item.get("current_status"), "UNKNOWN_REQUIRES_MANUAL_REVIEW")
         counts[category] = counts.get(category, 0) + 1
     return counts
+
+
+def _updated_qualification_counts(
+    module_rows: Sequence[Mapping[str, Any]],
+    item_results: Sequence[Mapping[str, Any]],
+) -> dict[str, int]:
+    categories = [item["category"] for item in _qualification_category_catalog()]
+    counts = {category: 0 for category in categories}
+    for item in module_rows:
+        category = _text(item.get("qualification_category"), "UNKNOWN_REQUIRES_MANUAL_REVIEW")
+        counts[category] = counts.get(category, 0) + 1
+    for item in item_results:
+        category = _text(item.get("after_status"), "UNKNOWN_REQUIRES_MANUAL_REVIEW")
+        counts[category] = counts.get(category, 0) + 1
+    return counts
+
+
+def _remediation_execution_sort_key(item: Mapping[str, Any]) -> tuple[int, int, int, int, str]:
+    priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(_text(item.get("priority")), 9)
+    status_rank = {
+        "BLOCKED_UNTIL_QUALIFIED": 0,
+        "CURRENT_VIEW_ONLY": 1,
+        "DIAGNOSTIC_ONLY": 2,
+        "RESEARCH_LABEL_ONLY": 3,
+    }.get(_text(item.get("current_status")), 9)
+    current_view_rank = 0 if bool(item.get("current_view_only_risk")) else 1
+    pit_rank = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(_text(item.get("PIT_risk")), 9)
+    return (
+        priority_rank,
+        status_rank,
+        current_view_rank,
+        pit_rank,
+        _text(item.get("blocked_reason")),
+    )
+
+
+def _remediation_execution_result(item: Mapping[str, Any]) -> dict[str, Any]:
+    before_status = _text(item.get("current_status"), "UNKNOWN_REQUIRES_MANUAL_REVIEW")
+    after_status = _remediation_after_status(item)
+    remaining_gap = _remediation_remaining_gap(item, after_status)
+    fix_applied = _remediation_minimum_fixes(item, after_status)
+    allowed_uses = _remediation_allowed_uses(item, after_status)
+    strategy_input_allowed = False
+    promotion_evidence_allowed = False
+    promotion_grade_candidate_after_fix = (
+        not remaining_gap
+        and after_status == "PROMOTION_GRADE_READY"
+        and not bool(item.get("current_view_only_risk"))
+    )
+    return {
+        "component": _text(item.get("component")),
+        "priority": _text(item.get("priority"), "P3"),
+        "before_status": before_status,
+        "after_status": after_status,
+        "blocked_reason": _text(item.get("blocked_reason")),
+        "fix_applied": fix_applied,
+        "remaining_gap": remaining_gap,
+        "repairable_without_relaxing_gate": bool(item.get("repairable_without_relaxing_gate")),
+        "promotion_grade_candidate_after_fix": promotion_grade_candidate_after_fix,
+        "allowed_uses": allowed_uses,
+        "strategy_input_allowed": strategy_input_allowed,
+        "promotion_evidence_allowed": promotion_evidence_allowed,
+        "source_input_allowed": False,
+        "gate_relaxation_allowed": False,
+        "missing_contract": bool(item.get("missing_contract")),
+        "missing_source_manifest": bool(item.get("missing_source_manifest")),
+        "missing_available_time": bool(item.get("missing_available_time")),
+        "current_view_only_risk": bool(item.get("current_view_only_risk")),
+        "lineage_gap": bool(item.get("lineage_gap")),
+        "PIT_risk": _text(item.get("PIT_risk"), "UNKNOWN"),
+        "required_fix": _text(item.get("required_fix")),
+        "expected_promotion_grade_gain_if_fixed": int(
+            item.get("expected_promotion_grade_gain_if_fixed") or 0
+        ),
+        "lookahead_violation_count": 0,
+        "production_effect": "none",
+        "broker_action": "none",
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+    }
+
+
+def _remediation_after_status(item: Mapping[str, Any]) -> str:
+    before_status = _text(item.get("current_status"), "UNKNOWN_REQUIRES_MANUAL_REVIEW")
+    if bool(item.get("current_view_only_risk")) or before_status == "CURRENT_VIEW_ONLY":
+        return "CURRENT_VIEW_ONLY"
+    if before_status == "RESEARCH_LABEL_ONLY":
+        return "RESEARCH_LABEL_ONLY"
+    if before_status == "BLOCKED_UNTIL_QUALIFIED":
+        return "BLOCKED_UNTIL_QUALIFIED"
+    if before_status == "DIAGNOSTIC_ONLY":
+        return "DIAGNOSTIC_ONLY"
+    return "UNKNOWN_REQUIRES_MANUAL_REVIEW"
+
+
+def _remediation_minimum_fixes(item: Mapping[str, Any], after_status: str) -> list[str]:
+    fixes = ["remediation_result_recorded", "no_gate_relaxation_enforced"]
+    component = _text(item.get("component"))
+    if after_status == "CURRENT_VIEW_ONLY":
+        fixes.extend(
+            [
+                "current_view_only_source_isolated",
+                "strategy_input_disabled",
+                "promotion_evidence_disabled",
+                "pit_contract_required_for_future_use",
+            ]
+        )
+    elif after_status == "RESEARCH_LABEL_ONLY":
+        fixes.extend(
+            [
+                "research_label_only_usage_policy_applied",
+                "strategy_input_disabled",
+                "promotion_evidence_disabled",
+            ]
+        )
+    elif after_status == "BLOCKED_UNTIL_QUALIFIED":
+        fixes.extend(
+            [
+                "source_manifest_requirement_recorded",
+                "available_time_requirement_recorded",
+                "blocked_status_preserved_until_source_proof",
+            ]
+        )
+    elif after_status == "DIAGNOSTIC_ONLY":
+        fixes.extend(
+            [
+                "diagnostic_only_usage_policy_applied",
+                "promotion_evidence_disabled",
+            ]
+        )
+    if component == "pit_feature_store":
+        fixes.append("pit_snapshot_proof_requirement_recorded")
+    elif component in {"asset_master", "tradable_universe"}:
+        fixes.append("asset_tradability_source_contract_requirement_recorded")
+    elif component == "cost_liquidity_model":
+        fixes.append("cost_liquidity_source_version_requirement_recorded")
+    elif component == "forward_evidence_archive":
+        fixes.append("append_only_forward_maturity_requirement_recorded")
+    elif component == "research_case_library":
+        fixes.append("oracle_reverse_promotion_exclusion_recorded")
+    return fixes
+
+
+def _remediation_remaining_gap(item: Mapping[str, Any], after_status: str) -> list[str]:
+    gaps: list[str] = []
+    if bool(item.get("missing_contract")):
+        gaps.append("qualification_contract_missing")
+    if bool(item.get("missing_source_manifest")):
+        gaps.append("qualified_source_manifest_missing")
+    if bool(item.get("missing_available_time")):
+        gaps.append("as_of_available_time_missing")
+    if bool(item.get("lineage_gap")):
+        gaps.append("lineage_proof_gap")
+    if bool(item.get("current_view_only_risk")) or after_status == "CURRENT_VIEW_ONLY":
+        gaps.append("current_view_only_as_of_snapshot_missing")
+    if after_status == "BLOCKED_UNTIL_QUALIFIED":
+        gaps.append("source_remains_blocked_until_qualified")
+    elif after_status == "DIAGNOSTIC_ONLY":
+        gaps.append("source_remains_diagnostic_only")
+    elif after_status == "RESEARCH_LABEL_ONLY":
+        gaps.append("research_label_only_not_strategy_input")
+    return _unique_strings(gaps)
+
+
+def _remediation_allowed_uses(item: Mapping[str, Any], after_status: str) -> list[str]:
+    component = _text(item.get("component"))
+    if after_status == "CURRENT_VIEW_ONLY":
+        return ["diagnostic", "research_label"]
+    if after_status == "RESEARCH_LABEL_ONLY":
+        return ["analysis", "casebook", "stratified_reporting"]
+    if after_status == "BLOCKED_UNTIL_QUALIFIED":
+        return ["qualification_planning", "blocked_source_review"]
+    if component == "cost_liquidity_model":
+        return ["diagnostic", "gross_net_demo", "sensitivity_analysis"]
+    if component in {"asset_master", "tradable_universe"}:
+        return ["diagnostic", "universe_audit"]
+    if component == "forward_evidence_archive":
+        return ["diagnostic", "forward_observation_archive"]
+    if component == "research_case_library":
+        return ["diagnostic", "casebook"]
+    return ["diagnostic", "research_report"]
+
+
+def _unique_strings(values: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
 
 
 def _p0_source_remediation_priorities() -> list[dict[str, Any]]:

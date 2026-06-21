@@ -6091,6 +6091,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: data_source_remediation_execution
+    title: Data Source Remediation Execution
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits data source-qualification execute-remediation
+    artifact_globs:
+      - outputs/data_quality/data_source_remediation_execution/data_source_remediation_execution_report.json
+      - outputs/data_quality/data_source_remediation_execution/data_source_remediation_execution_report.md
+      - outputs/data_quality/data_source_remediation_execution/data_source_remediation_item_results.json
+      - outputs/data_quality/data_source_remediation_execution/data_source_remediation_item_results.md
+      - outputs/data_quality/data_source_remediation_execution/data_source_qualification_matrix_updated.json
+      - outputs/data_quality/data_source_remediation_execution/data_source_qualification_matrix_updated.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-736 execution reporting must be refreshed after each TRADING-735
+      remediation-plan update, P0 source repair, acceptance rerun, current-view
+      isolation change, or research-label usage policy change.
+    owner_action: review_remaining_P0_source_gaps_before_using_data_foundation_outputs_for_strategy_inputs
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
