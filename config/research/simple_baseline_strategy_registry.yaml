@@ -1,0 +1,367 @@
+schema_version: 1
+policy_id: simple_baseline_strategy_registry_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Establish auditable QQQ / TQQQ / SGOV simple baseline and portfolio-control
+    research after the tail-risk fallback line was blocked by trigger/label
+    coupling and baseline dominance concerns.
+  intended_effect: >
+    Compare simple static, trend-filtered, volatility-targeted, capped-leverage,
+    and dynamic allocation policies before considering any paper-shadow review.
+  validation_evidence: >
+    Focused tests and CLI smoke cover registry review, data-gated backtests,
+    PIT boundary checks, ranking, cost/regime review, forward aging, readiness,
+    dry-run mapping, master review, and options gate artifacts.
+  review_condition: >
+    Review after real QQQ/TQQQ/SGOV cache coverage is validated and forward
+    aging has enough matured samples for owner review.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+research_policy:
+  annualization_trading_days: 252
+  monthly_trading_days: 21
+  quarterly_trading_days: 63
+  required_price_tickers:
+    - QQQ
+    - TQQQ
+    - SGOV
+  required_rate_series:
+    - DGS2
+    - DGS10
+    - DTWEXBGS
+  moving_average_windows:
+    short: 100
+    long: 200
+  realized_vol_windows:
+    short: 20
+    medium: 60
+    long: 120
+  rolling_high_windows:
+    short: 60
+    medium: 120
+    long: 252
+  volatility_target:
+    annual_vol_target: 0.18
+    min_qqq_weight: 0.20
+    max_qqq_weight: 1.00
+    defensive_asset: SGOV
+  tqqq_volatility_cap:
+    annual_vol_cap: 0.35
+    min_tqqq_weight: 0.00
+    max_tqqq_weight: 0.50
+    defensive_asset: SGOV
+  tqqq_drawdown_cap:
+    qqq_drawdown_warning: -0.08
+    qqq_drawdown_block: -0.15
+    warning_tqqq_weight: 0.25
+    block_tqqq_weight: 0.00
+    defensive_asset: SGOV
+  equal_risk:
+    min_weight: 0.10
+    max_weight: 0.90
+  dynamic_policy_search:
+    max_tqqq_weight: 0.50
+    max_single_rebalance_turnover: 0.50
+    trend_states:
+      - qqq_above_100dma
+      - qqq_above_200dma
+      - qqq_100dma_above_200dma
+    volatility_percentile_thresholds:
+      - 0.60
+      - 0.80
+    drawdown_thresholds:
+      - -0.05
+      - -0.10
+    candidate_allocations:
+      - policy_id: dyn_qqq_trend_defensive
+        risk_on_weights: {QQQ: 0.90, SGOV: 0.10}
+        risk_off_weights: {QQQ: 0.30, SGOV: 0.70}
+      - policy_id: dyn_tqqq_capped_trend
+        risk_on_weights: {TQQQ: 0.33, SGOV: 0.67}
+        risk_off_weights: {QQQ: 0.20, SGOV: 0.80}
+      - policy_id: dyn_balanced_qqq_tqqq_sgov
+        risk_on_weights: {QQQ: 0.50, TQQQ: 0.20, SGOV: 0.30}
+        risk_off_weights: {QQQ: 0.20, SGOV: 0.80}
+  regime_review:
+    trend_return_threshold_60d: 0.05
+    drawdown_state_threshold: -0.08
+    low_vol_quantile: 0.33
+    high_vol_quantile: 0.66
+  cost_scenarios:
+    zero_cost:
+      cost_bps: 0.0
+    low_cost:
+      cost_bps: 1.0
+    medium_cost:
+      cost_bps: 5.0
+    high_cost:
+      cost_bps: 15.0
+  readiness_rules:
+    min_forward_mature_20d_samples: 20
+    max_regime_concentration_score: 0.65
+    max_cost_sensitivity_score: 0.40
+    max_turnover: 1.50
+    qqq_drawdown_improvement_required: 0.10
+  dry_run:
+    default_hypothetical_portfolio_value: 100000
+    cash_buffer_weight: 0.01
+  options_gate:
+    minimum_forward_mature_60d_samples: 60
+    minimum_master_review_status:
+      - NARROW_TO_TOP_CANDIDATES
+      - PAPER_SHADOW_REVIEWABLE_LATER
+strategies:
+  - strategy_id: qqq_100_static
+    display_name: 100% QQQ
+    asset_universe: [QQQ]
+    target_weights: {QQQ: 1.00}
+    rebalance_frequency: monthly
+    risk_control_rule: none
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_80_sgov_20
+    display_name: 80% QQQ + 20% SGOV
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 0.80, SGOV: 0.20}
+    rebalance_frequency: monthly
+    risk_control_rule: static_defensive_allocation
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_70_sgov_30
+    display_name: 70% QQQ + 30% SGOV
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 0.70, SGOV: 0.30}
+    rebalance_frequency: monthly
+    risk_control_rule: static_defensive_allocation
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_60_sgov_40
+    display_name: 60% QQQ + 40% SGOV
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 0.60, SGOV: 0.40}
+    rebalance_frequency: monthly
+    risk_control_rule: static_defensive_allocation
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_50_sgov_50
+    display_name: 50% QQQ + 50% SGOV
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    risk_control_rule: static_defensive_allocation
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_25_sgov_75
+    display_name: 25% TQQQ + 75% SGOV
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.25, SGOV: 0.75}
+    rebalance_frequency: monthly
+    risk_control_rule: capped_leverage_static
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.25
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_33_sgov_67
+    display_name: 33% TQQQ + 67% SGOV
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.33, SGOV: 0.67}
+    rebalance_frequency: monthly
+    risk_control_rule: capped_leverage_static
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.33
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_40_sgov_60
+    display_name: 40% TQQQ + 60% SGOV
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.40, SGOV: 0.60}
+    rebalance_frequency: monthly
+    risk_control_rule: capped_leverage_static
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.40
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_50_sgov_50
+    display_name: 50% TQQQ + 50% SGOV
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    risk_control_rule: capped_leverage_static
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.50
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_sgov_quarterly
+    display_name: TQQQ + SGOV quarterly rebalance
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.33, SGOV: 0.67}
+    rebalance_frequency: quarterly
+    risk_control_rule: capped_leverage_static
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.33
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_200dma_risk_off
+    display_name: QQQ 200DMA risk-off
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 1.00, SGOV: 0.00}
+    rebalance_frequency: daily_signal_monthly_rebalance
+    risk_control_rule: move_to_sgov_below_long_dma
+    trend_filter_rule: qqq_close_above_200dma
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_100_200dma_trend_filter
+    display_name: QQQ 100DMA / 200DMA trend filter
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 1.00, SGOV: 0.00}
+    rebalance_frequency: daily_signal_monthly_rebalance
+    risk_control_rule: partial_sgov_when_short_trend_weak
+    trend_filter_rule: qqq_100dma_200dma_state
+    volatility_filter_rule: none
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: qqq_volatility_target
+    display_name: QQQ volatility target
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 1.00, SGOV: 0.00}
+    rebalance_frequency: monthly
+    risk_control_rule: annualized_volatility_target
+    trend_filter_rule: none
+    volatility_filter_rule: qqq_realized_vol_60d_target
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_volatility_capped
+    display_name: TQQQ volatility capped
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    risk_control_rule: cap_tqqq_by_realized_volatility
+    trend_filter_rule: none
+    volatility_filter_rule: tqqq_realized_vol_60d_cap
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.50
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: tqqq_drawdown_capped
+    display_name: TQQQ drawdown capped
+    asset_universe: [TQQQ, SGOV]
+    target_weights: {TQQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    risk_control_rule: cap_tqqq_by_qqq_drawdown
+    trend_filter_rule: none
+    volatility_filter_rule: none
+    drawdown_filter_rule: qqq_252d_rolling_high_drawdown_cap
+    max_turnover: 1.00
+    max_tqqq_weight: 0.50
+    uses_leverage_etf: true
+    uses_options: false
+    production_effect: none
+    broker_action: none
+  - strategy_id: equal_risk_qqq_sgov
+    display_name: equal-risk QQQ / SGOV
+    asset_universe: [QQQ, SGOV]
+    target_weights: {QQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    risk_control_rule: inverse_vol_equal_risk
+    trend_filter_rule: none
+    volatility_filter_rule: qqq_sgov_realized_vol_60d
+    drawdown_filter_rule: none
+    max_turnover: 1.00
+    max_tqqq_weight: 0.00
+    uses_leverage_etf: false
+    uses_options: false
+    production_effect: none
+    broker_action: none

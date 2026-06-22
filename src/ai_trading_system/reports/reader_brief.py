@@ -264,6 +264,7 @@ def build_reader_brief_payload(
     etf_dynamic_v3_real_snapshot_review = _etf_dynamic_v3_real_snapshot_review_summary(report_index)
     etf_dynamic_v3_system_target = _etf_dynamic_v3_system_target_summary(report_index)
     tail_risk_fallback_status = _tail_risk_daily_reading_safety_summary()
+    portfolio_control_research = _portfolio_control_research_summary()
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -451,6 +452,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_real_snapshot_review": etf_dynamic_v3_real_snapshot_review,
         "etf_dynamic_v3_system_target": etf_dynamic_v3_system_target,
         "tail_risk_fallback_status": tail_risk_fallback_status,
+        "portfolio_control_research": portfolio_control_research,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -826,6 +828,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     etf_dynamic_v3_system_target = _mapping(payload.get("etf_dynamic_v3_system_target"))
     tail_risk_fallback_status = _mapping(payload.get("tail_risk_fallback_status"))
+    portfolio_control_research = _mapping(payload.get("portfolio_control_research"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -993,6 +996,32 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("source_artifact", tail_risk_fallback_status.get("source_artifact")),
                     ("production_effect", tail_risk_fallback_status.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Portfolio Control Research",
+            _definition_table(
+                [
+                    ("status", portfolio_control_research.get("status")),
+                    (
+                        "top_simple_baseline_candidate",
+                        portfolio_control_research.get("top_simple_baseline_candidate"),
+                    ),
+                    (
+                        "research_only_target_weights",
+                        portfolio_control_research.get("research_only_target_weights"),
+                    ),
+                    ("promotion_allowed", portfolio_control_research.get("promotion_allowed")),
+                    (
+                        "paper_shadow_allowed",
+                        portfolio_control_research.get("paper_shadow_allowed"),
+                    ),
+                    ("production_allowed", portfolio_control_research.get("production_allowed")),
+                    ("broker_action", portfolio_control_research.get("broker_action")),
+                    ("major_blocker_count", portfolio_control_research.get("major_blocker_count")),
+                    ("source_artifact", portfolio_control_research.get("source_artifact")),
+                    ("production_effect", portfolio_control_research.get("production_effect")),
                 ]
             ),
         ),
@@ -24127,6 +24156,57 @@ def _tail_risk_daily_reading_safety_summary() -> dict[str, Any]:
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "summary_sentence": (
             f"Tail-risk fallback research_status={research_status}; "
+            "promotion/paper-shadow/production remain disabled; broker_action=none."
+        ),
+    }
+
+
+def _portfolio_control_research_summary() -> dict[str, Any]:
+    path = (
+        PROJECT_ROOT
+        / "outputs"
+        / "research_strategies"
+        / "simple_baselines"
+        / "daily_reader_portfolio_control_safety_summary.json"
+    )
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "top_simple_baseline_candidate": "MISSING",
+            "research_only_target_weights": {},
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "major_blockers": [],
+            "major_blocker_count": 0,
+            "source_artifact": str(path),
+            "production_effect": PRODUCTION_EFFECT,
+            "summary_sentence": (
+                "Portfolio control research summary is missing; Reader Brief does not run "
+                "simple-baseline research CLIs."
+            ),
+        }
+    status = _mapping(payload.get("portfolio_control_research_status"))
+    blockers = _records(status.get("major_blockers"))
+    candidate = _text(status.get("top_simple_baseline_candidate"), "UNKNOWN")
+    return {
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "top_simple_baseline_candidate": candidate,
+        "research_only_target_weights": _mapping(
+            status.get("current_research_only_target_weights")
+        ),
+        "promotion_allowed": bool(status.get("promotion_allowed")),
+        "paper_shadow_allowed": bool(status.get("paper_shadow_allowed")),
+        "production_allowed": bool(status.get("production_allowed")),
+        "broker_action": _text(status.get("broker_action"), "none"),
+        "major_blockers": blockers,
+        "major_blocker_count": len(blockers),
+        "source_artifact": str(path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"Portfolio control research candidate={candidate}; research-only / observe-only; "
             "promotion/paper-shadow/production remain disabled; broker_action=none."
         ),
     }

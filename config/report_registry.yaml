@@ -13043,3 +13043,242 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: simple_baseline_strategy_registry_review
+    title: Simple Baseline Strategy Registry Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-registry-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_strategy_registry_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_strategy_registry_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-865 should be regenerated when simple baseline strategy registry changes.
+    owner_action: review_simple_baseline_registry_before_backtests
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: qqq_sgov_baseline_backtest
+    title: QQQ / SGOV Baseline Backtest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-sgov-baseline-backtest
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/qqq_sgov_baseline_backtest.json
+      - outputs/research_strategies/simple_baselines/qqq_sgov_baseline_backtest.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-866 should be regenerated after QQQ/SGOV cache, registry, or data quality policy changes.
+    owner_action: review_qqq_sgov_baselines_before_complex_strategy_comparison
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tqqq_sgov_risk_controlled_baseline
+    title: TQQQ / SGOV Risk-Controlled Baseline
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tqqq-sgov-risk-controlled-baseline
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/tqqq_sgov_risk_controlled_baseline.json
+      - outputs/research_strategies/simple_baselines/tqqq_sgov_risk_controlled_baseline.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-867 should be regenerated after TQQQ/SGOV cache, registry, or data quality policy changes.
+    owner_action: review_tqqq_leverage_and_path_dependency_before_mainline_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: trend_vol_allocation_policy_search
+    title: Trend / Volatility Allocation Policy Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies trend-vol-allocation-policy-search
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/trend_vol_allocation_policy_search.json
+      - outputs/research_strategies/simple_baselines/trend_vol_allocation_policy_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-868 should be regenerated after registry, cache, or dynamic policy search space changes.
+    owner_action: review_dynamic_allocation_candidates_against_static_baselines
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_dominance_ranking
+    title: Simple Baseline Dominance Ranking
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-dominance-ranking
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_dominance_ranking.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_dominance_ranking.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-869 should be regenerated after any simple baseline backtest or policy search artifact changes.
+    owner_action: review_pareto_frontier_and_dominated_strategy_list
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_pit_boundary_audit
+    title: Simple Baseline PIT Boundary Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-pit-boundary-audit
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_pit_boundary_audit.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_pit_boundary_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-870 should be regenerated after strategy signal inputs, rebalance logic, or PIT policy changes.
+    owner_action: block_interpretation_if_pit_boundary_not_passed
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_cost_sensitivity
+    title: Simple Baseline Cost Sensitivity
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-cost-sensitivity
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_cost_sensitivity.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_cost_sensitivity.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-871 should be regenerated after transaction cost assumptions, cache, or rebalance policy changes.
+    owner_action: review_cost_robustness_before_readiness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_regime_review
+    title: Simple Baseline Regime Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-regime-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_regime_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_regime_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-872 should be regenerated after cache, regime policy, or strategy registry changes.
+    owner_action: review_regime_concentration_before_readiness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_forward_aging_tracker
+    title: Simple Baseline Forward Aging Tracker
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-tracker
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_tracker.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_tracker.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-873 should be regenerated after cache refresh or selected candidate changes.
+    owner_action: review_forward_maturity_before_paper_shadow_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_paper_shadow_readiness
+    title: Simple Baseline Paper-Shadow Readiness
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-paper-shadow-readiness
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_paper_shadow_readiness.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_paper_shadow_readiness.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-874 should be regenerated after PIT, ranking, regime, cost, or forward aging artifacts change.
+    owner_action: manual_review_only_before_any_paper_shadow_request
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: daily_reader_portfolio_control_safety_summary
+    title: Daily Reader Portfolio Control Safety Summary
+    group: research
+    cadence: ad_hoc
+    audience: investor
+    owner: research_governance
+    command: aits research strategies daily-reader-portfolio-control-safety-summary
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/daily_reader_portfolio_control_safety_summary.json
+      - outputs/research_strategies/simple_baselines/daily_reader_portfolio_control_safety_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-875 should be regenerated after ranking or paper-shadow readiness changes.
+    owner_action: read_portfolio_control_status_as_research_only
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_portfolio_dry_run_mapper
+    title: Simple Baseline Portfolio Dry-Run Mapper
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-portfolio-dry-run-mapper
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_portfolio_dry_run_mapper.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_portfolio_dry_run_mapper.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-876 should be regenerated when dry-run strategy id or hypothetical value changes.
+    owner_action: review_hypothetical_mapping_without_broker_or_order
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: simple_baseline_master_review
+    title: Simple Baseline Portfolio Control Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-master-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_master_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_master_review.md
+      - docs/research/simple_baseline_portfolio_control_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-877 should be regenerated after ranking, regime, cost, forward aging, or readiness artifacts change.
+    owner_action: review_master_decision_before_narrowing_or_pausing_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: options_next_stage_gate
+    title: Options Next-Stage Gate for LEAPS / Wheel
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies options-next-stage-gate
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/options_next_stage_gate.json
+      - outputs/research_strategies/simple_baselines/options_next_stage_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-878 should be regenerated after master review, forward aging, or options data contract readiness changes.
+    owner_action: keep_options_research_blocked_until_gate_conditions_pass
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
