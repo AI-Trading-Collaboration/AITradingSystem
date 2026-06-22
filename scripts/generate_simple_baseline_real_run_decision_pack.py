@@ -195,24 +195,35 @@ def _build_pr_readiness_summary() -> dict[str, Any]:
     head_short = _git(["rev-parse", "--short", "HEAD"])
     remote_ref = _git(["ls-remote", "origin", f"refs/heads/{BRANCH_NAME}"])
     status_short = _git(["status", "--short"])
-    remote_commit = remote_ref.split()[0][:8] if remote_ref else ""
-    pushed = remote_commit == CHECKED_COMMIT
+    remote_commit_full = remote_ref.split()[0] if remote_ref else ""
+    remote_commit = remote_commit_full[:8] if remote_commit_full else ""
+    checked_commit_on_remote = bool(remote_commit_full) and _git_exit(
+        ["merge-base", "--is-ancestor", CHECKED_COMMIT, remote_commit_full]
+    )
+    remote_head_matches_local_head = remote_commit == head_short
     summary = {
         "branch": branch,
         "checked_commit": CHECKED_COMMIT,
         "head_short_now": head_short,
         "commit_exists": commit_type == "commit",
+        "checked_commit_reachable_from_remote": checked_commit_on_remote,
         "pre_push_git_status_clean": True,
         "pre_push_git_status_short": "",
         "current_git_status_clean_after_research_artifacts": status_short == "",
         "remote_branch": f"origin/{BRANCH_NAME}",
         "remote_commit_short": remote_commit,
-        "pushed_to_origin": pushed,
+        "remote_head_matches_local_head": remote_head_matches_local_head,
+        "pushed_to_origin": checked_commit_on_remote and remote_head_matches_local_head,
         "merge_main_performed": False,
         "production_config_modified": False,
     }
     status = "PR_READINESS_PUSHED"
-    if branch != BRANCH_NAME or not summary["commit_exists"] or not pushed:
+    if (
+        branch != BRANCH_NAME
+        or not summary["commit_exists"]
+        or not checked_commit_on_remote
+        or not remote_head_matches_local_head
+    ):
         status = "PR_READINESS_BLOCKED"
     elif status_short:
         status = "PR_READINESS_PUSHED_WITH_LOCAL_RESEARCH_ARTIFACTS"
@@ -956,6 +967,17 @@ def _git(args: list[str]) -> str:
         text=True,
     )
     return (result.stdout or "").strip()
+
+
+def _git_exit(args: list[str]) -> bool:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
 
 
 def _safety_projection(payload: Mapping[str, Any]) -> dict[str, Any]:
