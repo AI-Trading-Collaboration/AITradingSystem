@@ -15,6 +15,14 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
+from ai_trading_system.simple_baseline_candidate_validation import (
+    run_dynamic_vs_static_edge_significance_review,
+    run_equal_risk_qqq_sgov_deep_dive,
+    run_simple_baseline_drawdown_episode_review,
+    run_simple_baseline_period_split_validation,
+    run_simple_baseline_watchlist_owner_decision,
+    run_tqqq_heavy_pause_rationale_report,
+)
 from ai_trading_system.simple_baseline_portfolio_control import (
     run_options_next_stage_gate,
     run_qqq_sgov_baseline_backtest,
@@ -48,6 +56,12 @@ SIMPLE_BASELINE_REPORT_IDS = {
     "simple_baseline_portfolio_dry_run_mapper",
     "simple_baseline_master_review",
     "options_next_stage_gate",
+    "equal_risk_qqq_sgov_deep_dive",
+    "simple_baseline_period_split_validation",
+    "simple_baseline_drawdown_episode_review",
+    "dynamic_vs_static_edge_significance_review",
+    "tqqq_heavy_pause_rationale_report",
+    "simple_baseline_watchlist_owner_decision",
 }
 
 
@@ -106,6 +120,53 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
     mapper = run_simple_baseline_portfolio_dry_run_mapper(output_root=output_root)
     master = run_simple_baseline_master_review(output_root=output_root, master_doc_path=docs_path)
     options = run_options_next_stage_gate(output_root=output_root)
+    _write_minimal_real_run_support(output_root)
+    deep_dive = run_equal_risk_qqq_sgov_deep_dive(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    period = run_simple_baseline_period_split_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    episode = run_simple_baseline_drawdown_episode_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    edge = run_dynamic_vs_static_edge_significance_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    pause = run_tqqq_heavy_pause_rationale_report(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    owner_decision_path = (
+        tmp_path / "docs" / "research" / "simple_baseline_watchlist_owner_decision.md"
+    )
+    owner_decision = run_simple_baseline_watchlist_owner_decision(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        docs_path=owner_decision_path,
+        as_of_date=TEST_AS_OF,
+    )
 
     payloads = [
         registry,
@@ -122,6 +183,12 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
         mapper,
         master,
         options,
+        deep_dive,
+        period,
+        episode,
+        edge,
+        pause,
+        owner_decision,
     ]
     assert {payload["report_type"] for payload in payloads} == SIMPLE_BASELINE_REPORT_IDS
     assert registry["status"] == "BASELINE_REGISTRY_READY"
@@ -146,6 +213,25 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
     assert master["master_review_doc_path"] == str(docs_path)
     assert docs_path.exists()
     assert options["options_research_allowed"] is False
+    assert deep_dive["status"] == "EQUAL_RISK_DEEP_DIVE_READY"
+    assert deep_dive["output_metrics"]["strategy_id"] == "equal_risk_qqq_sgov"
+    assert period["period_results"]
+    assert any(
+        row["coverage_status"] == "INSUFFICIENT_PRICE_COVERAGE" for row in period["period_results"]
+    )
+    assert episode["episode_results"]
+    assert edge["status"] in {
+        "DYNAMIC_EDGE_REVIEWABLE_LATER",
+        "DYNAMIC_EDGE_NOT_MATERIAL",
+        "DYNAMIC_EDGE_REGIME_CONCENTRATED",
+    }
+    assert pause["status"] == "TQQQ_HEAVY_PAUSE_CONFIRMED"
+    assert owner_decision["status"] == "OWNER_DECISION_READY"
+    assert owner_decision_path.exists()
+    assert (
+        owner_decision["final_required_answers"]["1_equal_risk_primary_forward_aging_candidate"]
+        is True
+    )
 
     for payload in payloads:
         assert payload["market_regime"] == "ai_after_chatgpt"
@@ -237,6 +323,25 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ["research", "strategies", "options-next-stage-gate", "--output-root", str(output_root)],
     ]
     for command in commands:
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0, result.output
+    _write_minimal_real_run_support(output_root)
+    new_commands = [
+        ["research", "strategies", "equal-risk-qqq-sgov-deep-dive", *data_args],
+        ["research", "strategies", "simple-baseline-period-split-validation", *data_args],
+        ["research", "strategies", "simple-baseline-drawdown-episode-review", *data_args],
+        ["research", "strategies", "dynamic-vs-static-edge-significance-review", *data_args],
+        ["research", "strategies", "tqqq-heavy-pause-rationale-report", *data_args],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-watchlist-owner-decision",
+            *data_args,
+            "--docs-path",
+            str(tmp_path / "docs" / "research" / "simple_baseline_watchlist_owner_decision.md"),
+        ],
+    ]
+    for command in new_commands:
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
 
@@ -347,3 +452,68 @@ def _business_dates(start: date, count: int) -> list[date]:
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _write_minimal_real_run_support(output_root: Path) -> None:
+    _write_json(
+        output_root / "simple_baseline_real_run_summary.json",
+        {
+            "report_type": "simple_baseline_real_run_summary",
+            "status": "REAL_RUN_COMPLETED",
+            "summary": {"top_recommended_candidate": "equal_risk_qqq_sgov"},
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "manual_review_required": True,
+        },
+    )
+    _write_json(
+        output_root / "simple_baseline_owner_decision_pack.json",
+        {
+            "report_type": "simple_baseline_owner_decision_pack",
+            "status": "OWNER_DECISION_REQUIRED",
+            "summary": {"owner_next_action": "narrow_to_watchlist_without_activation"},
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "manual_review_required": True,
+        },
+    )
+    _write_json(
+        output_root / "simple_baseline_paper_shadow_watchlist.json",
+        {
+            "report_type": "simple_baseline_paper_shadow_watchlist",
+            "status": "WATCHLIST_CREATED_NO_ACTIVATION",
+            "summary": {
+                "watchlist_count": 5,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+            },
+            "watchlist": [
+                {
+                    "candidate_strategy_id": strategy_id,
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                }
+                for strategy_id in (
+                    "equal_risk_qqq_sgov",
+                    "dyn_tqqq_capped_trend",
+                    "qqq_200dma_risk_off",
+                    "dyn_balanced_qqq_tqqq_sgov",
+                    "qqq_50_sgov_50",
+                )
+            ],
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "manual_review_required": True,
+        },
+    )

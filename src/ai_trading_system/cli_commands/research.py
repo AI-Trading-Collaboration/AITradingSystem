@@ -358,6 +358,15 @@ from ai_trading_system.research_governance import (
     ingest_evidence_ledger,
     write_research_artifact_pair,
 )
+from ai_trading_system.simple_baseline_candidate_validation import (
+    DEFAULT_SIMPLE_BASELINE_WATCHLIST_OWNER_DECISION_DOC_PATH,
+    run_dynamic_vs_static_edge_significance_review,
+    run_equal_risk_qqq_sgov_deep_dive,
+    run_simple_baseline_drawdown_episode_review,
+    run_simple_baseline_period_split_validation,
+    run_simple_baseline_watchlist_owner_decision,
+    run_tqqq_heavy_pause_rationale_report,
+)
 from ai_trading_system.simple_baseline_portfolio_control import (
     DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
 )
@@ -4119,6 +4128,261 @@ def strategies_options_next_stage_gate_command(
     _print_simple_baseline_payload("Options next-stage gate", payload)
 
 
+@strategies_app.command("equal-risk-qqq-sgov-deep-dive")
+def strategies_equal_risk_qqq_sgov_deep_dive_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="分析开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选分析结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_equal_risk_qqq_sgov_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Equal-risk QQQ / SGOV deep dive", payload)
+
+
+@strategies_app.command("simple-baseline-period-split-validation")
+def strategies_simple_baseline_period_split_validation_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_simple_baseline_period_split_validation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("Simple baseline period split validation", payload)
+
+
+@strategies_app.command("simple-baseline-drawdown-episode-review")
+def strategies_simple_baseline_drawdown_episode_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_simple_baseline_drawdown_episode_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("Simple baseline drawdown episode review", payload)
+
+
+@strategies_app.command("dynamic-vs-static-edge-significance-review")
+def strategies_dynamic_vs_static_edge_significance_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_dynamic_vs_static_edge_significance_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("Dynamic vs static edge significance review", payload)
+
+
+@strategies_app.command("tqqq-heavy-pause-rationale-report")
+def strategies_tqqq_heavy_pause_rationale_report_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tqqq_heavy_pause_rationale_report(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("TQQQ-heavy pause rationale report", payload)
+
+
+@strategies_app.command("simple-baseline-watchlist-owner-decision")
+def strategies_simple_baseline_watchlist_owner_decision_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path", help="Owner decision Markdown path。"),
+    ] = DEFAULT_SIMPLE_BASELINE_WATCHLIST_OWNER_DECISION_DOC_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_simple_baseline_watchlist_owner_decision(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            docs_path=docs_path,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("Simple baseline watchlist owner decision", payload)
+
+
 @strategy_pilot_app.command("readiness-board")
 def strategy_pilot_readiness_board_command(
     output_root: Annotated[
@@ -4573,8 +4837,7 @@ def acceleration_reverse_diagnostics_activation_gate_command(
     controlled_review: Annotated[
         Path,
         typer.Option("--controlled-review", help="TRADING-764 review board JSON。"),
-    ] = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT
-    / "controlled_research_batch_review.json",
+    ] = DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT / "controlled_research_batch_review.json",
     output_root: Annotated[
         Path,
         typer.Option("--output-root", help="TRADING-769 activation gate 输出目录。"),

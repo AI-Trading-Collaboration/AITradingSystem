@@ -13282,3 +13282,118 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: equal_risk_qqq_sgov_deep_dive
+    title: Equal-Risk QQQ / SGOV Deep Dive
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-qqq-sgov-deep-dive
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_qqq_sgov_deep_dive.json
+      - outputs/research_strategies/simple_baselines/equal_risk_qqq_sgov_deep_dive.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-888 should be regenerated after 865-887 real-run inputs, cache, or candidate status changes.
+    owner_action: review_equal_risk_primary_candidate_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_period_split_validation
+    title: Simple Baseline Period Split Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-period-split-validation
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_period_split_validation.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_period_split_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-889 should be regenerated after cache, regime period, or candidate set changes.
+    owner_action: review_period_split_and_regime_dependency_before_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_drawdown_episode_review
+    title: Simple Baseline Drawdown Episode Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-drawdown-episode-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_drawdown_episode_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_drawdown_episode_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-890 should be regenerated after cache or candidate set changes.
+    owner_action: review_drawdown_episode_behavior_before_candidate_narrowing
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_vs_static_edge_significance_review
+    title: Dynamic vs Static Edge Significance Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-vs-static-edge-significance-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/dynamic_vs_static_edge_significance_review.json
+      - outputs/research_strategies/simple_baselines/dynamic_vs_static_edge_significance_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-891 should be regenerated after ranking, period split, drawdown, or cost artifacts change.
+    owner_action: review_dynamic_edge_materiality_before_accepting_complexity
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: tqqq_heavy_pause_rationale_report
+    title: TQQQ-Heavy Pause Rationale Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tqqq-heavy-pause-rationale-report
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/tqqq_heavy_pause_rationale_report.json
+      - outputs/research_strategies/simple_baselines/tqqq_heavy_pause_rationale_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-892 should be regenerated after TQQQ-heavy evidence or master review status changes.
+    owner_action: keep_tqqq_heavy_paused_until_reopen_conditions_pass
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_watchlist_owner_decision
+    title: Simple Baseline Watchlist Owner Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-watchlist-owner-decision
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_watchlist_owner_decision.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_watchlist_owner_decision.md
+      - docs/research/simple_baseline_watchlist_owner_decision.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-893 should be regenerated after 888-892 validation artifacts or watchlist inputs change.
+    owner_action: review_primary_challenger_watchlist_decision_before_any_paper_shadow_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
