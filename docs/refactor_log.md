@@ -27,7 +27,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。一次本轮自有机械迁移初稿因旧索引造成 `research.py` 局部错位；已在提交前恢复本轮自有改动并改用原文切片重做，随后 compile、Ruff、CLI help 和 pytest 均通过。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `controlled_strategy_batch.py` 超大模块和 `research.py` 中 tail-risk / controlled strategy wrapper 边界，但不得在同一低风险切片中扩大范围。
-- 本轮重构实现提交 SHA：待提交后回填。
+- 本轮重构实现提交 SHA：`4523ad8c69eacb5c49a2799ed98dedcb605130aa`。
 
 ## 2026-06-21 Daily Incremental Refactor
 
