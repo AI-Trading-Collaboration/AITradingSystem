@@ -50,8 +50,12 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
     DEFAULT_TAIL_LOSS_GUARDRAIL_FALLBACK_POLICY_PATH,
     DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK_PATH,
     DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
+    DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
     DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_DAILY_READING_SAFETY_SUMMARY_PATH,
     DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
     DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
     DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
@@ -61,19 +65,33 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
     DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
     DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    DEFAULT_TAIL_RISK_HARD_BLOCK_MUTATION_TESTS_PATH,
+    DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
     DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
     DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
     DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    DEFAULT_TAIL_RISK_NEXT_DECISION_DOC_PATH,
+    DEFAULT_TAIL_RISK_NEXT_DECISION_PATH,
     DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
     DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH,
+    DEFAULT_TAIL_RISK_POST_MERGE_EVIDENCE_REVIEW_PATH,
     DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
+    DEFAULT_TAIL_RISK_REAL_DATA_VALIDATION_AUDIT_PATH,
     DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
     DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_REPORT_REGISTRY_INTEGRITY_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH,
+    DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
     DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_DOC_PATH,
+    DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_PATH,
     DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
     DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
     DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
     DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_TRIGGER_V2_INPUT_QUALITY_REVIEW_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
@@ -116,7 +134,11 @@ from ai_trading_system.controlled_strategy_batch import (
     run_simple_strategy_selector_pilot,
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
+    run_tail_risk_artifact_determinism_check,
+    run_tail_risk_baseline_dominance_gate,
     run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_counterfactual_baseline_result_review,
+    run_tail_risk_daily_reading_safety_summary,
     run_tail_risk_decision_time_boundary_audit,
     run_tail_risk_evidence_maturity_gate,
     run_tail_risk_fallback_anti_leakage_audit,
@@ -131,16 +153,27 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_risk_forward_aging_tracker,
     run_tail_risk_forward_evidence_integration,
     run_tail_risk_forward_outcome_contract_audit,
+    run_tail_risk_governance_artifact_snapshot,
+    run_tail_risk_hard_block_mutation_tests,
+    run_tail_risk_independent_forward_outcome_result_review,
     run_tail_risk_independent_forward_outcome_validation,
     run_tail_risk_independent_trigger_v2_builder,
+    run_tail_risk_independent_trigger_v2_input_quality_review,
     run_tail_risk_leakage_stress_suite,
+    run_tail_risk_next_decision_document,
     run_tail_risk_opportunity_cost_upside_capture_review,
     run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
+    run_tail_risk_post_merge_evidence_review,
     run_tail_risk_promotion_readiness_gate,
+    run_tail_risk_real_data_validation_audit,
     run_tail_risk_regime_stratified_forward_outcome_review,
+    run_tail_risk_report_registry_integrity_review,
     run_tail_risk_research_master_review,
+    run_tail_risk_research_readiness_score,
+    run_tail_risk_status_matrix,
     run_tail_risk_tainted_metric_quarantine,
+    run_tail_risk_task_coverage_map,
     run_tail_risk_threshold_sensitivity_review,
     run_tail_risk_trigger_feature_availability_catalog,
     run_tail_risk_trigger_label_independence_audit,
@@ -3100,6 +3133,417 @@ def strategies_tail_risk_research_master_review_command(
         )
     )
     _print_strategy_pilot_payload("Tail-risk research master review", payload)
+
+
+@strategies_app.command("tail-risk-post-merge-evidence-review")
+def strategies_tail_risk_post_merge_evidence_review_command(
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    quarantine: Annotated[
+        Path,
+        typer.Option("--quarantine", help="TRADING-831 quarantine JSON。"),
+    ] = DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    regime_review: Annotated[
+        Path,
+        typer.Option("--regime-review", help="TRADING-833 regime review JSON。"),
+    ] = DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    sensitivity_review: Annotated[
+        Path,
+        typer.Option("--sensitivity-review", help="TRADING-834 sensitivity JSON。"),
+    ] = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    error_cost: Annotated[
+        Path,
+        typer.Option("--error-cost", help="TRADING-835 error cost JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_ERROR_COST_LEDGER_PATH,
+    evidence_gate: Annotated[
+        Path,
+        typer.Option("--evidence-gate", help="TRADING-836 evidence gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    aging_tracker: Annotated[
+        Path,
+        typer.Option("--aging-tracker", help="TRADING-837 aging tracker JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_AGING_TRACKER_PATH,
+    leakage_stress: Annotated[
+        Path,
+        typer.Option("--leakage-stress", help="TRADING-838 leakage stress JSON。"),
+    ] = DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    promotion_gate: Annotated[
+        Path,
+        typer.Option("--promotion-gate", help="TRADING-839 promotion gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
+    trigger_v2: Annotated[
+        Path,
+        typer.Option("--trigger-v2", help="TRADING-840 trigger v2 JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    feature_catalog: Annotated[
+        Path,
+        typer.Option("--feature-catalog", help="TRADING-841 feature catalog JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    master_review: Annotated[
+        Path,
+        typer.Option("--master-review", help="TRADING-842 master review JSON。"),
+    ] = DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Post-merge evidence review 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_POST_MERGE_EVIDENCE_REVIEW_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_post_merge_evidence_review(
+            trigger_label_audit_path=trigger_label_audit,
+            independent_forward_path=independent_forward,
+            contract_audit_path=contract_audit,
+            boundary_audit_path=boundary_audit,
+            quarantine_path=quarantine,
+            counterfactual_path=counterfactual,
+            regime_review_path=regime_review,
+            sensitivity_review_path=sensitivity_review,
+            error_cost_path=error_cost,
+            evidence_gate_path=evidence_gate,
+            aging_tracker_path=aging_tracker,
+            leakage_stress_path=leakage_stress,
+            promotion_gate_path=promotion_gate,
+            trigger_v2_path=trigger_v2,
+            feature_catalog_path=feature_catalog,
+            master_review_path=master_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk post-merge evidence review", payload)
+
+
+@strategies_app.command("tail-risk-governance-artifact-snapshot")
+def strategies_tail_risk_governance_artifact_snapshot_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-843 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_governance_artifact_snapshot(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Tail-risk governance artifact snapshot", payload)
+
+
+@strategies_app.command("tail-risk-status-matrix")
+def strategies_tail_risk_status_matrix_command(
+    snapshot: Annotated[
+        Path,
+        typer.Option("--snapshot", help="TRADING-843 snapshot JSON。"),
+    ] = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-844 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_status_matrix(snapshot_path=snapshot, output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Tail-risk status matrix", payload)
+
+
+@strategies_app.command("tail-risk-real-data-validation-audit")
+def strategies_tail_risk_real_data_validation_audit_command(
+    snapshot: Annotated[
+        Path,
+        typer.Option("--snapshot", help="TRADING-843 snapshot JSON。"),
+    ] = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-845 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_REAL_DATA_VALIDATION_AUDIT_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_real_data_validation_audit(
+            snapshot_path=snapshot,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk real data validation audit", payload)
+
+
+@strategies_app.command("tail-risk-independent-forward-outcome-result-review")
+def strategies_tail_risk_independent_forward_outcome_result_review_command(
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-846 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_independent_forward_outcome_result_review(
+            independent_forward_path=independent_forward,
+            contract_audit_path=contract_audit,
+            boundary_audit_path=boundary_audit,
+            counterfactual_path=counterfactual,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk independent forward outcome result review", payload)
+
+
+@strategies_app.command("tail-risk-counterfactual-baseline-result-review")
+def strategies_tail_risk_counterfactual_baseline_result_review_command(
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-847 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_counterfactual_baseline_result_review(
+            counterfactual_path=counterfactual,
+            independent_forward_path=independent_forward,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk counterfactual baseline result review", payload)
+
+
+@strategies_app.command("tail-risk-artifact-determinism-check")
+def strategies_tail_risk_artifact_determinism_check_command(
+    snapshot: Annotated[
+        Path,
+        typer.Option("--snapshot", help="TRADING-843 snapshot JSON。"),
+    ] = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-848 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_artifact_determinism_check(
+            snapshot_path=snapshot,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk artifact determinism check", payload)
+
+
+@strategies_app.command("tail-risk-task-coverage-map")
+def strategies_tail_risk_task_coverage_map_command(
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path", help="TRADING-850 coverage map Markdown path。"),
+    ] = DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_DOC_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-850 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_task_coverage_map(
+            output_root=output_root,
+            docs_path=docs_path,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk task coverage map", payload)
+
+
+@strategies_app.command("tail-risk-hard-block-mutation-tests")
+def strategies_tail_risk_hard_block_mutation_tests_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-851 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_HARD_BLOCK_MUTATION_TESTS_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_hard_block_mutation_tests(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Tail-risk hard-block mutation tests", payload)
+
+
+@strategies_app.command("tail-risk-report-registry-integrity-review")
+def strategies_tail_risk_report_registry_integrity_review_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-852 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_REPORT_REGISTRY_INTEGRITY_REVIEW_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_report_registry_integrity_review(output_root=output_root)
+    )
+    _print_strategy_pilot_payload("Tail-risk report registry integrity review", payload)
+
+
+@strategies_app.command("tail-risk-daily-reading-safety-summary")
+def strategies_tail_risk_daily_reading_safety_summary_command(
+    status_matrix: Annotated[
+        Path,
+        typer.Option("--status-matrix", help="TRADING-844 status matrix JSON。"),
+    ] = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    master_review: Annotated[
+        Path,
+        typer.Option("--master-review", help="TRADING-842 master review JSON。"),
+    ] = DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-853 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_DAILY_READING_SAFETY_SUMMARY_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_daily_reading_safety_summary(
+            status_matrix_path=status_matrix,
+            master_review_path=master_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk daily reading safety summary", payload)
+
+
+@strategies_app.command("tail-risk-independent-trigger-v2-input-quality-review")
+def strategies_tail_risk_independent_trigger_v2_input_quality_review_command(
+    feature_catalog: Annotated[
+        Path,
+        typer.Option("--feature-catalog", help="TRADING-841 feature catalog JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-854 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_V2_INPUT_QUALITY_REVIEW_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_independent_trigger_v2_input_quality_review(
+            feature_catalog_path=feature_catalog,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk trigger v2 input quality review", payload)
+
+
+@strategies_app.command("tail-risk-baseline-dominance-gate")
+def strategies_tail_risk_baseline_dominance_gate_command(
+    baseline_review: Annotated[
+        Path,
+        typer.Option("--baseline-review", help="TRADING-847 baseline review JSON。"),
+    ] = DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-856 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_baseline_dominance_gate(
+            baseline_review_path=baseline_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk baseline dominance gate", payload)
+
+
+@strategies_app.command("tail-risk-research-readiness-score")
+def strategies_tail_risk_research_readiness_score_command(
+    status_matrix: Annotated[
+        Path,
+        typer.Option("--status-matrix", help="TRADING-844 status matrix JSON。"),
+    ] = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    forward_review: Annotated[
+        Path,
+        typer.Option("--forward-review", help="TRADING-846 forward review JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
+    baseline_gate: Annotated[
+        Path,
+        typer.Option("--baseline-gate", help="TRADING-856 baseline gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-857 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_research_readiness_score(
+            status_matrix_path=status_matrix,
+            forward_review_path=forward_review,
+            baseline_gate_path=baseline_gate,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk research readiness score", payload)
+
+
+@strategies_app.command("tail-risk-next-decision-document")
+def strategies_tail_risk_next_decision_document_command(
+    status_matrix: Annotated[
+        Path,
+        typer.Option("--status-matrix", help="TRADING-844 status matrix JSON。"),
+    ] = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    forward_review: Annotated[
+        Path,
+        typer.Option("--forward-review", help="TRADING-846 forward review JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
+    baseline_review: Annotated[
+        Path,
+        typer.Option("--baseline-review", help="TRADING-847 baseline review JSON。"),
+    ] = DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    baseline_gate: Annotated[
+        Path,
+        typer.Option("--baseline-gate", help="TRADING-856 baseline gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
+    readiness: Annotated[
+        Path,
+        typer.Option("--readiness", help="TRADING-857 readiness JSON。"),
+    ] = DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path", help="TRADING-858 decision Markdown path。"),
+    ] = DEFAULT_TAIL_RISK_NEXT_DECISION_DOC_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-858 输出目录。"),
+    ] = DEFAULT_TAIL_RISK_NEXT_DECISION_PATH.parent,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_next_decision_document(
+            status_matrix_path=status_matrix,
+            forward_review_path=forward_review,
+            baseline_review_path=baseline_review,
+            baseline_gate_path=baseline_gate,
+            readiness_path=readiness,
+            output_root=output_root,
+            docs_path=docs_path,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk next decision document", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

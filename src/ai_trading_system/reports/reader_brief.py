@@ -263,6 +263,7 @@ def build_reader_brief_payload(
     )
     etf_dynamic_v3_real_snapshot_review = _etf_dynamic_v3_real_snapshot_review_summary(report_index)
     etf_dynamic_v3_system_target = _etf_dynamic_v3_system_target_summary(report_index)
+    tail_risk_fallback_status = _tail_risk_daily_reading_safety_summary()
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -449,6 +450,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_manual_execution_review": etf_dynamic_v3_manual_execution_review,
         "etf_dynamic_v3_real_snapshot_review": etf_dynamic_v3_real_snapshot_review,
         "etf_dynamic_v3_system_target": etf_dynamic_v3_system_target,
+        "tail_risk_fallback_status": tail_risk_fallback_status,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -823,6 +825,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         payload.get("etf_dynamic_v3_real_snapshot_review")
     )
     etf_dynamic_v3_system_target = _mapping(payload.get("etf_dynamic_v3_system_target"))
+    tail_risk_fallback_status = _mapping(payload.get("tail_risk_fallback_status"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -967,6 +970,31 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             )
             + _records_table(_records(report_index.get("problem_reports"))),
+        ),
+        _section(
+            "Tail-Risk Fallback Status",
+            _definition_table(
+                [
+                    ("research_status", tail_risk_fallback_status.get("research_status")),
+                    ("promotion_allowed", tail_risk_fallback_status.get("promotion_allowed")),
+                    (
+                        "paper_shadow_allowed",
+                        tail_risk_fallback_status.get("paper_shadow_allowed"),
+                    ),
+                    ("production_allowed", tail_risk_fallback_status.get("production_allowed")),
+                    ("broker_action", tail_risk_fallback_status.get("broker_action")),
+                    (
+                        "latest_master_review_status",
+                        tail_risk_fallback_status.get("latest_master_review_status"),
+                    ),
+                    (
+                        "current_blocker_count",
+                        tail_risk_fallback_status.get("current_blocker_count"),
+                    ),
+                    ("source_artifact", tail_risk_fallback_status.get("source_artifact")),
+                    ("production_effect", tail_risk_fallback_status.get("production_effect")),
+                ]
+            ),
         ),
         _section(
             "Report Index Waiver Inventory",
@@ -24052,6 +24080,55 @@ def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
             False,
         ),
         "summary_sentence": sentence,
+    }
+
+
+def _tail_risk_daily_reading_safety_summary() -> dict[str, Any]:
+    path = (
+        PROJECT_ROOT
+        / "outputs"
+        / "research_strategies"
+        / "value_surface_review"
+        / "tail_risk_daily_reading_safety_summary.json"
+    )
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "research_status": "MISSING",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "current_blockers": [],
+            "current_blocker_count": 0,
+            "latest_master_review_status": "MISSING",
+            "source_artifact": str(path),
+            "production_effect": PRODUCTION_EFFECT,
+            "summary_sentence": (
+                "Tail-risk fallback safety summary is missing; Reader Brief does not run "
+                "tail-risk governance CLIs."
+            ),
+        }
+    status = _mapping(payload.get("tail_risk_fallback_status"))
+    blockers = _records(status.get("current_blockers"))
+    research_status = _text(status.get("research_status"), "UNKNOWN")
+    return {
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "research_status": research_status,
+        "promotion_allowed": bool(status.get("promotion_allowed")),
+        "paper_shadow_allowed": bool(status.get("paper_shadow_allowed")),
+        "production_allowed": bool(status.get("production_allowed")),
+        "broker_action": _text(payload.get("broker_action"), "none"),
+        "current_blockers": blockers,
+        "current_blocker_count": len(blockers),
+        "latest_master_review_status": _text(status.get("latest_master_review_status"), "UNKNOWN"),
+        "source_artifact": str(path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"Tail-risk fallback research_status={research_status}; "
+            "promotion/paper-shadow/production remain disabled; broker_action=none."
+        ),
     }
 
 

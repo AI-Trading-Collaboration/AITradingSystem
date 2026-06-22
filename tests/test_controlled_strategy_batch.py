@@ -1335,6 +1335,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "tail_risk_independent_trigger_v2_builder",
         "tail_risk_trigger_feature_availability_catalog",
         "tail_risk_research_master_review",
+        "tail_risk_post_merge_evidence_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1396,6 +1397,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "tail_risk_independent_trigger_v2_builder.json/md" in catalog
     assert "tail_risk_trigger_feature_availability_catalog.json/md" in catalog
     assert "tail_risk_research_master_review.json/md" in catalog
+    assert "tail_risk_post_merge_evidence_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1494,6 +1496,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies tail-risk-independent-trigger-v2-builder" in system_flow
     assert "aits research strategies tail-risk-trigger-feature-availability-catalog" in system_flow
     assert "aits research strategies tail-risk-research-master-review" in system_flow
+    assert "aits research strategies tail-risk-post-merge-evidence-review" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow

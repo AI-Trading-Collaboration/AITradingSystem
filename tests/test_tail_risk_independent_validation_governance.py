@@ -1,33 +1,52 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 from controlled_strategy_batch_helpers import (
     TEST_AS_OF,
+    CliRunner,
     _assert_safety,
     _run_tail_risk_falsification_inputs,
+    app,
 )
 
 from ai_trading_system.controlled_strategy_batch import (
+    run_tail_risk_artifact_determinism_check,
+    run_tail_risk_baseline_dominance_gate,
+    run_tail_risk_counterfactual_baseline_result_review,
+    run_tail_risk_daily_reading_safety_summary,
     run_tail_risk_decision_time_boundary_audit,
     run_tail_risk_evidence_maturity_gate,
     run_tail_risk_fallback_counterfactual_validation,
     run_tail_risk_fallback_error_cost_ledger,
     run_tail_risk_forward_aging_tracker,
     run_tail_risk_forward_outcome_contract_audit,
+    run_tail_risk_governance_artifact_snapshot,
+    run_tail_risk_hard_block_mutation_tests,
+    run_tail_risk_independent_forward_outcome_result_review,
     run_tail_risk_independent_forward_outcome_validation,
     run_tail_risk_independent_trigger_v2_builder,
+    run_tail_risk_independent_trigger_v2_input_quality_review,
     run_tail_risk_leakage_stress_suite,
+    run_tail_risk_next_decision_document,
+    run_tail_risk_post_merge_evidence_review,
     run_tail_risk_promotion_readiness_gate,
+    run_tail_risk_real_data_validation_audit,
     run_tail_risk_regime_stratified_forward_outcome_review,
+    run_tail_risk_report_registry_integrity_review,
     run_tail_risk_research_master_review,
+    run_tail_risk_research_readiness_score,
+    run_tail_risk_status_matrix,
     run_tail_risk_tainted_metric_quarantine,
+    run_tail_risk_task_coverage_map,
     run_tail_risk_threshold_sensitivity_review,
     run_tail_risk_trigger_feature_availability_catalog,
     run_tail_risk_trigger_label_independence_audit,
 )
+from ai_trading_system.reports import reader_brief
 
 
 @pytest.fixture(scope="module")
@@ -192,6 +211,155 @@ def tail_risk_governance(tmp_path_factory: pytest.TempPathFactory) -> dict[str, 
             output_root=output_root,
         ),
     )
+    paths["post_merge"] = record(
+        "POST_MERGE",
+        run_tail_risk_post_merge_evidence_review(
+            trigger_label_audit_path=paths["trigger_label"],
+            independent_forward_path=paths["independent_forward"],
+            contract_audit_path=paths["contract"],
+            boundary_audit_path=paths["boundary"],
+            quarantine_path=paths["quarantine"],
+            counterfactual_path=paths["counterfactual"],
+            regime_review_path=paths["regime_review"],
+            sensitivity_review_path=paths["sensitivity_review"],
+            error_cost_path=paths["error_cost"],
+            evidence_gate_path=paths["evidence_gate"],
+            aging_tracker_path=paths["aging_tracker"],
+            leakage_stress_path=paths["leakage_stress"],
+            promotion_gate_path=paths["promotion_gate"],
+            trigger_v2_path=paths["trigger_v2"],
+            feature_catalog_path=paths["feature_catalog"],
+            master_review_path=paths["master"],
+            output_root=output_root,
+        ),
+    )
+    governance_task_paths = {
+        "TRADING-827": paths["trigger_label"],
+        "TRADING-828": paths["independent_forward"],
+        "TRADING-829": paths["contract"],
+        "TRADING-830": paths["boundary"],
+        "TRADING-831": paths["quarantine"],
+        "TRADING-832": paths["counterfactual"],
+        "TRADING-833": paths["regime_review"],
+        "TRADING-834": paths["sensitivity_review"],
+        "TRADING-835": paths["error_cost"],
+        "TRADING-836": paths["evidence_gate"],
+        "TRADING-837": paths["aging_tracker"],
+        "TRADING-838": paths["leakage_stress"],
+        "TRADING-839": paths["promotion_gate"],
+        "TRADING-840": paths["trigger_v2"],
+        "TRADING-841": paths["feature_catalog"],
+        "TRADING-842": paths["master"],
+    }
+    paths["snapshot"] = record(
+        "TRADING-843",
+        run_tail_risk_governance_artifact_snapshot(
+            artifact_paths=governance_task_paths,
+            output_root=output_root,
+        ),
+    )
+    paths["status_matrix"] = record(
+        "TRADING-844",
+        run_tail_risk_status_matrix(
+            snapshot_path=paths["snapshot"],
+            output_root=output_root,
+        ),
+    )
+    paths["real_data_audit"] = record(
+        "TRADING-845",
+        run_tail_risk_real_data_validation_audit(
+            snapshot_path=paths["snapshot"],
+            output_root=output_root,
+        ),
+    )
+    paths["forward_result_review"] = record(
+        "TRADING-846",
+        run_tail_risk_independent_forward_outcome_result_review(
+            independent_forward_path=paths["independent_forward"],
+            contract_audit_path=paths["contract"],
+            boundary_audit_path=paths["boundary"],
+            counterfactual_path=paths["counterfactual"],
+            output_root=output_root,
+        ),
+    )
+    paths["baseline_result_review"] = record(
+        "TRADING-847",
+        run_tail_risk_counterfactual_baseline_result_review(
+            counterfactual_path=paths["counterfactual"],
+            independent_forward_path=paths["independent_forward"],
+            output_root=output_root,
+        ),
+    )
+    paths["determinism"] = record(
+        "TRADING-848",
+        run_tail_risk_artifact_determinism_check(
+            snapshot_path=paths["snapshot"],
+            output_root=output_root,
+        ),
+    )
+    paths["coverage_map"] = record(
+        "TRADING-850",
+        run_tail_risk_task_coverage_map(
+            output_root=output_root,
+            docs_path=tmp_path / "docs" / "tail_risk_coverage_map.md",
+        ),
+    )
+    paths["mutation_tests"] = record(
+        "TRADING-851",
+        run_tail_risk_hard_block_mutation_tests(output_root=output_root),
+    )
+    paths["registry_integrity"] = record(
+        "TRADING-852",
+        run_tail_risk_report_registry_integrity_review(output_root=output_root),
+    )
+    paths["daily_safety"] = record(
+        "TRADING-853",
+        run_tail_risk_daily_reading_safety_summary(
+            status_matrix_path=paths["status_matrix"],
+            master_review_path=paths["master"],
+            output_root=output_root,
+        ),
+    )
+    paths["trigger_v2_input_quality"] = record(
+        "TRADING-854",
+        run_tail_risk_independent_trigger_v2_input_quality_review(
+            feature_catalog_path=paths["feature_catalog"],
+            output_root=output_root,
+        ),
+    )
+    paths["baseline_dominance"] = record(
+        "TRADING-856",
+        run_tail_risk_baseline_dominance_gate(
+            baseline_review_path=paths["baseline_result_review"],
+            output_root=output_root,
+        ),
+    )
+    paths["readiness"] = record(
+        "TRADING-857",
+        run_tail_risk_research_readiness_score(
+            status_matrix_path=paths["status_matrix"],
+            forward_review_path=paths["forward_result_review"],
+            baseline_gate_path=paths["baseline_dominance"],
+            evidence_gate_path=paths["evidence_gate"],
+            regime_review_path=paths["regime_review"],
+            sensitivity_review_path=paths["sensitivity_review"],
+            output_root=output_root,
+        ),
+    )
+    paths["next_decision"] = record(
+        "TRADING-858",
+        run_tail_risk_next_decision_document(
+            status_matrix_path=paths["status_matrix"],
+            forward_review_path=paths["forward_result_review"],
+            baseline_review_path=paths["baseline_result_review"],
+            baseline_gate_path=paths["baseline_dominance"],
+            readiness_path=paths["readiness"],
+            master_review_path=paths["master"],
+            quarantine_path=paths["quarantine"],
+            output_root=output_root,
+            docs_path=tmp_path / "docs" / "tail_risk_next_decision.md",
+        ),
+    )
     return {"paths": paths, "payloads": payloads}
 
 
@@ -269,6 +437,15 @@ def test_tail_risk_contract_boundary_quarantine_and_counterfactual(
         "no_fallback_baseline",
         "static_allocation_baseline",
         "existing_best_baseline_if_available",
+        "simple_trend_baseline",
+        "qqq_100_baseline",
+        "qqq_60_sgov_40_baseline",
+        "qqq_70_sgov_30_baseline",
+        "tqqq_50_sgov_50_baseline",
+        "tqqq_25_sgov_75_baseline",
+        "simple_200dma_risk_off_baseline",
+        "simple_volatility_target_baseline",
+        "equal_risk_qqq_sgov_baseline",
     } <= {row["policy_id"] for row in counterfactual["baseline_comparison"]}
 
 
@@ -398,3 +575,266 @@ def test_tail_risk_leakage_promotion_trigger_v2_catalog_and_master_review(
     assert {"precision", "recall", "f1"} <= set(master["invalidated_metrics"])
     assert master["whether_shadow_possible_later"] is False
     assert master["whether_production_possible_later"] is False
+
+
+def test_tail_risk_post_merge_evidence_review(
+    tail_risk_governance: dict[str, Any],
+    tmp_path: Path,
+) -> None:
+    post_merge = tail_risk_governance["payloads"]["POST_MERGE"]
+    _assert_safety(post_merge)
+    assert post_merge["status"] == "POST_MERGE_EVIDENCE_REVIEW_BLOCKED"
+    assert post_merge["final_status"] == "POST_MERGE_EVIDENCE_REVIEW_BLOCKED"
+    assert post_merge["promotion_allowed"] is False
+    assert post_merge["paper_shadow_allowed"] is False
+    assert post_merge["production_allowed"] is False
+    assert post_merge["broker_action"] == "none"
+    assert len(post_merge["artifact_summaries"]) == 15
+    assert post_merge["dependency_artifact_summaries"]["TRADING-827"]["final_status"] == "BLOCKED"
+    by_task = {row["task_id"]: row for row in post_merge["artifact_summaries"]}
+    assert by_task["TRADING-828"]["final_status"] == "INDEPENDENT_FORWARD_VALIDATED"
+    assert by_task["TRADING-828"]["sample_count"] > 0
+    assert by_task["TRADING-831"]["final_status"] == "TAINTED_METRIC_QUARANTINED"
+    assert by_task["TRADING-839"]["promotion_allowed"] is False
+    assert by_task["TRADING-839"]["paper_shadow_allowed"] is False
+    assert by_task["TRADING-839"]["production_allowed"] is False
+    assert by_task["TRADING-842"]["sample_count"] == 15
+    assert post_merge["template_only_artifacts"] == []
+    assert post_merge["zero_sample_positive_artifacts"] == []
+    assert post_merge["safety_violations"] == []
+    checks = {row["check_id"]: row["passed"] for row in post_merge["special_checks"]}
+    assert checks == {
+        "trading_827_blocked_status_inherited": True,
+        "trading_831_old_metrics_quarantined": True,
+        "trading_839_hard_blocks_promotion": True,
+        "trading_842_aggregates_827_through_841": True,
+        "no_template_only_artifacts": True,
+        "no_zero_sample_positive_conclusions": True,
+        "independent_forward_validation_has_evidence_maturity": True,
+    }
+    assert {"TRADING-827", "TRADING-830", "TRADING-838", "TRADING-839"} == {
+        row["task_id"] for row in post_merge["current_hard_blockers"]
+    }
+
+    paths = tail_risk_governance["paths"]
+    output_root = tmp_path / "post_merge_cli"
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "tail-risk-post-merge-evidence-review",
+            "--trigger-label-audit",
+            str(paths["trigger_label"]),
+            "--independent-forward",
+            str(paths["independent_forward"]),
+            "--contract-audit",
+            str(paths["contract"]),
+            "--boundary-audit",
+            str(paths["boundary"]),
+            "--quarantine",
+            str(paths["quarantine"]),
+            "--counterfactual",
+            str(paths["counterfactual"]),
+            "--regime-review",
+            str(paths["regime_review"]),
+            "--sensitivity-review",
+            str(paths["sensitivity_review"]),
+            "--error-cost",
+            str(paths["error_cost"]),
+            "--evidence-gate",
+            str(paths["evidence_gate"]),
+            "--aging-tracker",
+            str(paths["aging_tracker"]),
+            "--leakage-stress",
+            str(paths["leakage_stress"]),
+            "--promotion-gate",
+            str(paths["promotion_gate"]),
+            "--trigger-v2",
+            str(paths["trigger_v2"]),
+            "--feature-catalog",
+            str(paths["feature_catalog"]),
+            "--master-review",
+            str(paths["master"]),
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output_root / "tail_risk_post_merge_evidence_review.json").exists()
+    assert (output_root / "tail_risk_post_merge_evidence_review.md").exists()
+
+
+def test_tail_risk_followup_governance_artifacts(
+    tail_risk_governance: dict[str, Any],
+    tmp_path: Path,
+) -> None:
+    payloads = tail_risk_governance["payloads"]
+    paths = tail_risk_governance["paths"]
+    followup_ids = {
+        "TRADING-843",
+        "TRADING-844",
+        "TRADING-845",
+        "TRADING-846",
+        "TRADING-847",
+        "TRADING-848",
+        "TRADING-850",
+        "TRADING-851",
+        "TRADING-852",
+        "TRADING-853",
+        "TRADING-854",
+        "TRADING-856",
+        "TRADING-857",
+        "TRADING-858",
+    }
+    for task_id in followup_ids:
+        payload = payloads[task_id]
+        _assert_safety(payload)
+        assert payload["task_id"] == task_id
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    snapshot = payloads["TRADING-843"]
+    assert snapshot["status"] == "TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_BLOCKED"
+    assert snapshot["metrics"]["artifact_count"] == 16
+    assert snapshot["metrics"]["hard_blocker_count"] == 4
+    assert snapshot["metrics"]["missing_artifact_count"] == 0
+
+    status_matrix = payloads["TRADING-844"]
+    assert status_matrix["status"] == "TAIL_RISK_RESEARCH_BLOCKED"
+    assert status_matrix["overall_status"] == "TAIL_RISK_RESEARCH_BLOCKED"
+    assert status_matrix["metrics"]["matrix_row_count"] == 16
+    assert {row["task_id"] for row in status_matrix["current_hard_blockers"]} == {
+        "TRADING-827",
+        "TRADING-830",
+        "TRADING-838",
+        "TRADING-839",
+    }
+
+    real_data = payloads["TRADING-845"]
+    assert real_data["status"] == "REAL_DATA_READY"
+    assert real_data["metrics"]["fixture_fallback_count"] == 0
+    assert real_data["metrics"]["input_missing_count"] == 0
+    assert real_data["metrics"]["suspicious_result_count"] == 0
+
+    forward_review = payloads["TRADING-846"]
+    assert forward_review["status"] == "FORWARD_OUTCOME_USABLE_FOR_RESEARCH"
+    assert forward_review["metrics"]["sample_count"] > 0
+    assert forward_review["forbidden_dependency_check"]["status"] == "PASS"
+    assert forward_review["baseline_comparison_available"] is True
+    assert forward_review["metrics"]["promotion_allowed"] is False
+
+    baseline_review = payloads["TRADING-847"]
+    assert baseline_review["status"] == "COUNTERFACTUAL_BASELINE_DOMINATED"
+    assert baseline_review["baseline_dominance_flag"] is True
+    assert {
+        "simple_trend_baseline",
+        "equal_risk_qqq_sgov_baseline",
+        "tqqq_50_sgov_50_baseline",
+        "simple_volatility_target_baseline",
+    } <= {row["policy_id"] for row in baseline_review["baseline_reviews"]}
+
+    determinism = payloads["TRADING-848"]
+    assert determinism["status"] == "DETERMINISTIC_PASS"
+    assert determinism["metrics"]["stable_hash_match"] is True
+    assert determinism["metrics"]["stable_sort_order"] is True
+    assert determinism["first_stable_hash"] == determinism["second_stable_hash"]
+
+    coverage_map = payloads["TRADING-850"]
+    assert coverage_map["status"] == "TAIL_RISK_TASK_COVERAGE_MAP_COMPLETE"
+    assert coverage_map["metrics"]["covered_task_count"] == 30
+    assert Path(coverage_map["docs_path"]).exists()
+
+    mutation = payloads["TRADING-851"]
+    assert mutation["status"] == "HARD_BLOCK_MUTATION_PASS"
+    assert mutation["metrics"]["failed_case_count"] == 0
+    assert mutation["metrics"]["mutation_case_count"] == 7
+    assert all(
+        case["blocked"] and case["actual_status"] == case["expected_status"]
+        for case in mutation["mutation_cases"]
+    )
+
+    registry = payloads["TRADING-852"]
+    assert registry["status"] == "REPORT_REGISTRY_INTEGRITY_PASS"
+    assert registry["metrics"]["failed_entry_count"] == 0
+    assert registry["metrics"]["checked_entry_count"] >= 30
+
+    daily = payloads["TRADING-853"]
+    assert daily["status"] == "TAIL_RISK_DAILY_READING_SUMMARY_BLOCKED"
+    assert daily["tail_risk_fallback_status"]["research_status"] == "TAIL_RISK_RESEARCH_BLOCKED"
+    assert daily["tail_risk_fallback_status"]["promotion_allowed"] is False
+    assert daily["broker_action"] == "none"
+
+    input_quality = payloads["TRADING-854"]
+    assert input_quality["status"] == "TRIGGER_V2_INPUT_QUALITY_PARTIAL"
+    assert input_quality["metrics"]["partial_feature_count"] == 3
+    assert {
+        "market_breadth_proxy",
+        "credit_liquidity_proxy",
+        "vix_vxn_level_proxy",
+    } <= {row["feature_name"] for row in input_quality["warnings"]}
+
+    baseline_gate = payloads["TRADING-856"]
+    assert baseline_gate["status"] == "BASELINE_DOMINATED_BLOCKED"
+    assert baseline_gate["metrics"]["dominant_baseline_count"] > 0
+    assert {row["policy_id"] for row in baseline_gate["blockers"]} >= {
+        "simple_trend_baseline",
+        "tqqq_50_sgov_50_baseline",
+    }
+
+    readiness = payloads["TRADING-857"]
+    assert readiness["status"] == "TAIL_RISK_READINESS_RESEARCH_ONLY"
+    assert readiness["readiness_score"] == 58
+    assert readiness["readiness_band"]["label"] == "research-only"
+
+    next_decision = payloads["TRADING-858"]
+    assert next_decision["status"] == "TAIL_RISK_NEXT_DECISION_BLOCKED"
+    assert next_decision["decision_answers"]["owner_next_action"] == "pause"
+    assert next_decision["decision_answers"]["worth_building_trigger_v2"] is False
+    assert Path(next_decision["docs_path"]).exists()
+
+    output_root = tmp_path / "status_matrix_cli"
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "tail-risk-status-matrix",
+            "--snapshot",
+            str(paths["snapshot"]),
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output_root / "tail_risk_status_matrix.json").exists()
+    assert (output_root / "tail_risk_status_matrix.md").exists()
+
+
+def test_reader_brief_tail_risk_safety_summary_renders_broker_action(
+    tail_risk_governance: dict[str, Any],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    daily = tail_risk_governance["payloads"]["TRADING-853"]
+    daily_path = (
+        tmp_path
+        / "outputs"
+        / "research_strategies"
+        / "value_surface_review"
+        / "tail_risk_daily_reading_safety_summary.json"
+    )
+    daily_path.parent.mkdir(parents=True)
+    daily_path.write_text(json.dumps(daily), encoding="utf-8")
+
+    monkeypatch.setattr(reader_brief, "PROJECT_ROOT", tmp_path)
+    status = reader_brief._tail_risk_daily_reading_safety_summary()
+    assert status["broker_action"] == "none"
+
+    html = reader_brief.render_reader_brief_html({"tail_risk_fallback_status": status})
+    assert "Tail-Risk Fallback Status" in html
+    assert "broker_action" in html
+    assert "none" in html

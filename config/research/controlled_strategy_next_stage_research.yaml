@@ -1257,3 +1257,148 @@ tail_risk_research_master_review:
   rationale: >
     The master review aggregates 827 to 841 and recommends next research action
     while preserving the no-promotion safety boundary.
+tail_risk_governance_artifact_snapshot:
+  task_id: TRADING-843
+  required_task_range: TRADING-827..TRADING-842
+  no_state_mutation: true
+  rationale: >
+    Snapshot generation only reads or regenerates governance artifacts and
+    records paths, mtimes, statuses, blockers, and warnings. It cannot change
+    promotion, paper-shadow, production, or broker state.
+tail_risk_status_matrix:
+  task_id: TRADING-844
+  hard_block_overall_status: TAIL_RISK_RESEARCH_BLOCKED
+  rationale: >
+    Any inherited hard blocker keeps the whole tail-risk fallback line blocked
+    for promotion, paper-shadow, production, and broker action.
+tail_risk_real_data_validation_audit:
+  task_id: TRADING-845
+  blocked_statuses:
+    - FIXTURE_ONLY_BLOCKED
+    - INPUT_MISSING_BLOCKED
+  rationale: >
+    A structurally valid artifact is not enough; missing inputs, fixture-only
+    execution, placeholder payloads, and zero-sample positive conclusions must
+    fail closed.
+tail_risk_independent_forward_outcome_result_review:
+  task_id: TRADING-846
+  min_total_decision_count: 30
+  min_valid_20d_count: 20
+  rationale: >
+    Independent forward outcomes may become usable for research only, but this
+    never authorizes promotion, paper-shadow, production, or broker action.
+tail_risk_counterfactual_baseline_result_review:
+  task_id: TRADING-847
+  required_baselines:
+    - fallback_policy
+    - no_fallback_baseline
+    - static_allocation_baseline
+    - simple_trend_baseline
+    - equal_risk_qqq_sgov_baseline
+  rationale: >
+    Fallback research must be compared against simple transparent baselines.
+    A complex fallback that does not beat simple rules should not be optimized
+    further.
+tail_risk_artifact_determinism_check:
+  task_id: TRADING-848
+  ignored_volatile_fields:
+    - generated_at
+    - runtime
+    - runtime_seconds
+    - mtime
+    - artifact_paths
+  rationale: >
+    Determinism checks compare stable artifact content and ignore fields that
+    are expected to vary between runs.
+tail_risk_task_coverage_map:
+  task_id: TRADING-850
+  output_doc: docs/research/tail_risk_fallback_governance_task_coverage_map.md
+  rationale: >
+    The coverage map compensates for grouped tail-risk governance commits by
+    mapping each task to implementation files, CLI entrypoints, registry
+    entries, artifacts, tests, docs, and shared components.
+tail_risk_hard_block_mutation_tests:
+  task_id: TRADING-851
+  warn_only_release_allowed: false
+  rationale: >
+    Mutated leakage, overlap, future-input, zero-sample, and promotion-allowed
+    payloads must be blocked rather than downgraded to warnings.
+tail_risk_report_registry_integrity_review:
+  task_id: TRADING-852
+  required_for_daily_reading_expected: false
+  artifact_selection_policy: latest_available
+  rationale: >
+    Tail-risk governance reports remain owner-review artifacts. They must be
+    registered and discoverable, but not required daily reading inputs.
+tail_risk_daily_reading_safety_summary:
+  task_id: TRADING-853
+  body_policy: summary_only
+  rationale: >
+    Reader Brief should disclose the blocked/safety state without embedding all
+    governance reports in the daily body.
+tail_risk_independent_trigger_v2_input_quality_review:
+  task_id: TRADING-854
+  allowed_feature_families:
+    - price_trend
+    - drawdown_from_recent_high
+    - realized_volatility
+    - volatility_expansion
+    - moving_average_distance
+    - VIX_VXN_proxy
+    - market_breadth_proxy
+    - credit_liquidity_proxy
+    - rate_regime_proxy
+  rationale: >
+    Trigger v2 inputs must be reviewed for PIT quality, missingness, history,
+    trigger usability, and leakage risk before validation.
+tail_risk_simple_baseline_expansion:
+  task_id: TRADING-855
+  baseline_proxy_policy: diagnostic_proxy_only
+  baselines:
+    - qqq_100_baseline
+    - qqq_60_sgov_40_baseline
+    - qqq_70_sgov_30_baseline
+    - tqqq_50_sgov_50_baseline
+    - tqqq_25_sgov_75_baseline
+    - simple_200dma_risk_off_baseline
+    - simple_volatility_target_baseline
+    - equal_risk_qqq_sgov_baseline
+  rationale: >
+    These simple baseline rows are transparent diagnostic proxies based on the
+    independent forward rows and existing defensive/static baseline. They are
+    not production benchmark substitutions and do not authorize promotion.
+tail_risk_baseline_dominance_gate:
+  task_id: TRADING-856
+  majority_criteria:
+    - return
+    - max_drawdown
+    - sharpe_proxy
+    - turnover
+    - false_positive_cost
+  rationale: >
+    If simple baselines win most available criteria, fallback research remains
+    blocked from promotion-oriented continuation.
+tail_risk_research_readiness_score:
+  task_id: TRADING-857
+  component_weights:
+    anti_leakage_cleanliness: 25
+    forward_outcome_independence: 20
+    sample_maturity: 15
+    regime_robustness: 15
+    sensitivity_stability: 10
+    baseline_competitiveness: 10
+    operational_safety: 5
+  rationale: >
+    The score is a research maturity summary. Even high scores still require
+    manual approval and cannot auto-promote.
+tail_risk_next_decision:
+  task_id: TRADING-858
+  allowed_owner_next_actions:
+    - continue
+    - rebuild
+    - pause
+    - deprecate
+  output_doc: docs/research/tail_risk_fallback_next_decision.md
+  rationale: >
+    The final decision document answers whether to continue tail-risk fallback
+    research while preserving manual review and no-production boundaries.

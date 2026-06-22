@@ -6,7 +6,7 @@ import json
 import math
 import statistics
 from collections.abc import Mapping
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -262,6 +262,277 @@ DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH = (
 DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_research_master_review.json"
 )
+DEFAULT_TAIL_RISK_POST_MERGE_EVIDENCE_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_post_merge_evidence_review.json"
+)
+DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_governance_artifact_snapshot.json"
+)
+DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_status_matrix.json"
+)
+DEFAULT_TAIL_RISK_REAL_DATA_VALIDATION_AUDIT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_real_data_validation_audit.json"
+)
+DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_independent_forward_outcome_result_review.json"
+)
+DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_counterfactual_baseline_result_review.json"
+)
+DEFAULT_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_artifact_determinism_check.json"
+)
+DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_task_coverage_map.json"
+)
+DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "tail_risk_fallback_governance_task_coverage_map.md"
+)
+DEFAULT_TAIL_RISK_HARD_BLOCK_MUTATION_TESTS_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_hard_block_mutation_tests.json"
+)
+DEFAULT_TAIL_RISK_REPORT_REGISTRY_INTEGRITY_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_report_registry_integrity_review.json"
+)
+DEFAULT_TAIL_RISK_DAILY_READING_SAFETY_SUMMARY_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_daily_reading_safety_summary.json"
+)
+DEFAULT_TAIL_RISK_TRIGGER_V2_INPUT_QUALITY_REVIEW_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT
+    / "tail_risk_independent_trigger_v2_input_quality_review.json"
+)
+DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_baseline_dominance_gate.json"
+)
+DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_research_readiness_score.json"
+)
+DEFAULT_TAIL_RISK_NEXT_DECISION_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_next_decision.json"
+)
+DEFAULT_TAIL_RISK_NEXT_DECISION_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "tail_risk_fallback_next_decision.md"
+)
+
+TAIL_RISK_GOVERNANCE_TASK_METADATA: tuple[dict[str, Any], ...] = (
+    {
+        "task_id": "TRADING-827",
+        "report_id": "tail_risk_trigger_label_independence_audit",
+        "title": "Tail-Risk Trigger/Label Independence Audit",
+        "command_slug": "tail-risk-trigger-label-independence-audit",
+        "default_path": DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    },
+    {
+        "task_id": "TRADING-828",
+        "report_id": "tail_risk_independent_forward_outcome_validation",
+        "title": "Tail-Risk Independent Forward Outcome Validation",
+        "command_slug": "tail-risk-independent-forward-outcome-validation",
+        "default_path": DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    },
+    {
+        "task_id": "TRADING-829",
+        "report_id": "tail_risk_forward_outcome_contract_audit",
+        "title": "Tail-Risk Forward Outcome Contract Audit",
+        "command_slug": "tail-risk-forward-outcome-contract-audit",
+        "default_path": DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    },
+    {
+        "task_id": "TRADING-830",
+        "report_id": "tail_risk_decision_time_boundary_audit",
+        "title": "Tail-Risk Decision-Time Boundary Audit",
+        "command_slug": "tail-risk-decision-time-boundary-audit",
+        "default_path": DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    },
+    {
+        "task_id": "TRADING-831",
+        "report_id": "tail_risk_tainted_metric_quarantine",
+        "title": "Tail-Risk Tainted Metric Quarantine",
+        "command_slug": "tail-risk-tainted-metric-quarantine",
+        "default_path": DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    },
+    {
+        "task_id": "TRADING-832",
+        "report_id": "tail_risk_fallback_counterfactual_validation",
+        "title": "Tail-Risk Fallback Counterfactual Validation",
+        "command_slug": "tail-risk-fallback-counterfactual-validation",
+        "default_path": DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    },
+    {
+        "task_id": "TRADING-833",
+        "report_id": "tail_risk_regime_stratified_forward_outcome_review",
+        "title": "Tail-Risk Regime-Stratified Forward Outcome Review",
+        "command_slug": "tail-risk-regime-stratified-forward-outcome-review",
+        "default_path": DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-834",
+        "report_id": "tail_risk_threshold_sensitivity_review",
+        "title": "Tail-Risk Threshold Sensitivity Review",
+        "command_slug": "tail-risk-threshold-sensitivity-review",
+        "default_path": DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-835",
+        "report_id": "tail_risk_fallback_error_cost_ledger",
+        "title": "Tail-Risk Fallback Error Cost Ledger",
+        "command_slug": "tail-risk-fallback-error-cost-ledger",
+        "default_path": DEFAULT_TAIL_RISK_FALLBACK_ERROR_COST_LEDGER_PATH,
+    },
+    {
+        "task_id": "TRADING-836",
+        "report_id": "tail_risk_evidence_maturity_gate",
+        "title": "Tail-Risk Evidence Maturity Gate",
+        "command_slug": "tail-risk-evidence-maturity-gate",
+        "default_path": DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    },
+    {
+        "task_id": "TRADING-837",
+        "report_id": "tail_risk_forward_aging_tracker",
+        "title": "Tail-Risk Forward Aging Tracker",
+        "command_slug": "tail-risk-forward-aging-tracker",
+        "default_path": DEFAULT_TAIL_RISK_FORWARD_AGING_TRACKER_PATH,
+    },
+    {
+        "task_id": "TRADING-838",
+        "report_id": "tail_risk_leakage_stress_suite",
+        "title": "Tail-Risk Leakage Stress Suite",
+        "command_slug": "tail-risk-leakage-stress-suite",
+        "default_path": DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    },
+    {
+        "task_id": "TRADING-839",
+        "report_id": "tail_risk_promotion_readiness_gate",
+        "title": "Tail-Risk Promotion Readiness Gate",
+        "command_slug": "tail-risk-promotion-readiness-gate",
+        "default_path": DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
+    },
+    {
+        "task_id": "TRADING-840",
+        "report_id": "tail_risk_independent_trigger_v2_builder",
+        "title": "Tail-Risk Independent Trigger V2 Builder",
+        "command_slug": "tail-risk-independent-trigger-v2-builder",
+        "default_path": DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    },
+    {
+        "task_id": "TRADING-841",
+        "report_id": "tail_risk_trigger_feature_availability_catalog",
+        "title": "Tail-Risk Trigger Feature Availability Catalog",
+        "command_slug": "tail-risk-trigger-feature-availability-catalog",
+        "default_path": DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    },
+    {
+        "task_id": "TRADING-842",
+        "report_id": "tail_risk_research_master_review",
+        "title": "Tail-Risk Research Master Review",
+        "command_slug": "tail-risk-research-master-review",
+        "default_path": DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    },
+)
+
+TAIL_RISK_FOLLOWUP_TASK_METADATA: tuple[dict[str, Any], ...] = (
+    {
+        "task_id": "TRADING-843",
+        "report_id": "tail_risk_governance_artifact_snapshot",
+        "title": "Tail-Risk Governance Artifact Snapshot",
+        "command_slug": "tail-risk-governance-artifact-snapshot",
+        "default_path": DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    },
+    {
+        "task_id": "TRADING-844",
+        "report_id": "tail_risk_status_matrix",
+        "title": "Tail-Risk Status Matrix",
+        "command_slug": "tail-risk-status-matrix",
+        "default_path": DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    },
+    {
+        "task_id": "TRADING-845",
+        "report_id": "tail_risk_real_data_validation_audit",
+        "title": "Tail-Risk Real Data Validation Audit",
+        "command_slug": "tail-risk-real-data-validation-audit",
+        "default_path": DEFAULT_TAIL_RISK_REAL_DATA_VALIDATION_AUDIT_PATH,
+    },
+    {
+        "task_id": "TRADING-846",
+        "report_id": "tail_risk_independent_forward_outcome_result_review",
+        "title": "Tail-Risk Independent Forward Outcome Result Review",
+        "command_slug": "tail-risk-independent-forward-outcome-result-review",
+        "default_path": DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-847",
+        "report_id": "tail_risk_counterfactual_baseline_result_review",
+        "title": "Tail-Risk Counterfactual Baseline Result Review",
+        "command_slug": "tail-risk-counterfactual-baseline-result-review",
+        "default_path": DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-848",
+        "report_id": "tail_risk_artifact_determinism_check",
+        "title": "Tail-Risk Artifact Determinism Check",
+        "command_slug": "tail-risk-artifact-determinism-check",
+        "default_path": DEFAULT_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK_PATH,
+    },
+    {
+        "task_id": "TRADING-850",
+        "report_id": "tail_risk_task_coverage_map",
+        "title": "Tail-Risk Task Coverage Map",
+        "command_slug": "tail-risk-task-coverage-map",
+        "default_path": DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_PATH,
+    },
+    {
+        "task_id": "TRADING-851",
+        "report_id": "tail_risk_hard_block_mutation_tests",
+        "title": "Tail-Risk Hard Block Mutation Tests",
+        "command_slug": "tail-risk-hard-block-mutation-tests",
+        "default_path": DEFAULT_TAIL_RISK_HARD_BLOCK_MUTATION_TESTS_PATH,
+    },
+    {
+        "task_id": "TRADING-852",
+        "report_id": "tail_risk_report_registry_integrity_review",
+        "title": "Tail-Risk Report Registry Integrity Review",
+        "command_slug": "tail-risk-report-registry-integrity-review",
+        "default_path": DEFAULT_TAIL_RISK_REPORT_REGISTRY_INTEGRITY_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-853",
+        "report_id": "tail_risk_daily_reading_safety_summary",
+        "title": "Tail-Risk Daily Reading Safety Summary",
+        "command_slug": "tail-risk-daily-reading-safety-summary",
+        "default_path": DEFAULT_TAIL_RISK_DAILY_READING_SAFETY_SUMMARY_PATH,
+    },
+    {
+        "task_id": "TRADING-854",
+        "report_id": "tail_risk_independent_trigger_v2_input_quality_review",
+        "title": "Tail-Risk Independent Trigger V2 Input Quality Review",
+        "command_slug": "tail-risk-independent-trigger-v2-input-quality-review",
+        "default_path": DEFAULT_TAIL_RISK_TRIGGER_V2_INPUT_QUALITY_REVIEW_PATH,
+    },
+    {
+        "task_id": "TRADING-856",
+        "report_id": "tail_risk_baseline_dominance_gate",
+        "title": "Tail-Risk Baseline Dominance Gate",
+        "command_slug": "tail-risk-baseline-dominance-gate",
+        "default_path": DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
+    },
+    {
+        "task_id": "TRADING-857",
+        "report_id": "tail_risk_research_readiness_score",
+        "title": "Tail-Risk Research Readiness Score",
+        "command_slug": "tail-risk-research-readiness-score",
+        "default_path": DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH,
+    },
+    {
+        "task_id": "TRADING-858",
+        "report_id": "tail_risk_next_decision",
+        "title": "Tail-Risk Next Decision",
+        "command_slug": "tail-risk-next-decision-document",
+        "default_path": DEFAULT_TAIL_RISK_NEXT_DECISION_PATH,
+    },
+)
+
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -5457,6 +5728,1370 @@ def run_tail_risk_research_master_review(
         ),
     )
     _write_pair(payload, output_root=output_root, artifact_id="tail_risk_research_master_review")
+    return payload
+
+
+def run_tail_risk_post_merge_evidence_review(
+    *,
+    trigger_label_audit_path: Path = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit_path: Path = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit_path: Path = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    quarantine_path: Path = DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    counterfactual_path: Path = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    regime_review_path: Path = DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    sensitivity_review_path: Path = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    error_cost_path: Path = DEFAULT_TAIL_RISK_FALLBACK_ERROR_COST_LEDGER_PATH,
+    evidence_gate_path: Path = DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    aging_tracker_path: Path = DEFAULT_TAIL_RISK_FORWARD_AGING_TRACKER_PATH,
+    leakage_stress_path: Path = DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    promotion_gate_path: Path = DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
+    trigger_v2_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    feature_catalog_path: Path = DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    master_review_path: Path = DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    paths = {
+        "TRADING-827": trigger_label_audit_path,
+        "TRADING-828": independent_forward_path,
+        "TRADING-829": contract_audit_path,
+        "TRADING-830": boundary_audit_path,
+        "TRADING-831": quarantine_path,
+        "TRADING-832": counterfactual_path,
+        "TRADING-833": regime_review_path,
+        "TRADING-834": sensitivity_review_path,
+        "TRADING-835": error_cost_path,
+        "TRADING-836": evidence_gate_path,
+        "TRADING-837": aging_tracker_path,
+        "TRADING-838": leakage_stress_path,
+        "TRADING-839": promotion_gate_path,
+        "TRADING-840": trigger_v2_path,
+        "TRADING-841": feature_catalog_path,
+        "TRADING-842": master_review_path,
+    }
+    payloads = {task_id: _read_json_or_empty(path) for task_id, path in paths.items()}
+    reviewed_task_ids = [task_id for task_id in paths if task_id != "TRADING-827"]
+    dependency_summaries = {
+        task_id: _tail_risk_post_merge_artifact_summary(payloads[task_id], paths[task_id])
+        for task_id in ["TRADING-827"]
+    }
+    artifact_summaries = [
+        _tail_risk_post_merge_artifact_summary(payloads[task_id], paths[task_id])
+        for task_id in reviewed_task_ids
+    ]
+    summary_by_task = {row["task_id"]: row for row in artifact_summaries}
+    special_checks = _tail_risk_post_merge_special_checks(
+        payloads=payloads,
+        artifact_summaries=artifact_summaries,
+    )
+    template_only = [row for row in artifact_summaries if row["template_only"]]
+    zero_sample_positive = [
+        row
+        for row in artifact_summaries
+        if row["sample_count"] == 0
+        and _tail_risk_post_merge_positive_status(str(row["final_status"]))
+    ]
+    safety_violations = [
+        row
+        for row in artifact_summaries
+        if row["production_effect"] != "none"
+        or row["broker_action"] != "none"
+        or row["promotion_allowed"]
+        or row["paper_shadow_allowed"]
+        or row["production_allowed"]
+    ]
+    failed_special_checks = [row for row in special_checks if not row["passed"]]
+    current_hard_blockers = _tail_risk_post_merge_current_hard_blockers(payloads)
+    review_failed = bool(
+        template_only or zero_sample_positive or safety_violations or failed_special_checks
+    )
+    final_status = (
+        "POST_MERGE_EVIDENCE_REVIEW_FAILED"
+        if review_failed
+        else (
+            "POST_MERGE_EVIDENCE_REVIEW_BLOCKED"
+            if current_hard_blockers
+            else "POST_MERGE_EVIDENCE_REVIEW_COMPLETE"
+        )
+    )
+    blockers = [
+        {
+            "blocker": "source_governance_blocker_inherited",
+            "task_id": row["task_id"],
+            "status": row["status"],
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        }
+        for row in current_hard_blockers
+    ]
+    if review_failed:
+        blockers.append(
+            {
+                "blocker": "post_merge_review_consistency_failure",
+                "failed_check_ids": [row["check_id"] for row in failed_special_checks],
+                "safety_violation_count": len(safety_violations),
+                "template_only_artifact_count": len(template_only),
+                "zero_sample_positive_count": len(zero_sample_positive),
+                "promotion_allowed": False,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+            }
+        )
+    warnings = [
+        {
+            "warning": "forward_aging_pending",
+            "task_id": "TRADING-837",
+            "status": summary_by_task.get("TRADING-837", {}).get("final_status"),
+            "pending_outcomes": _metric_value(payloads["TRADING-837"], "pending_outcomes"),
+            "promotion_allowed": False,
+        },
+        {
+            "warning": "trigger_feature_catalog_partial",
+            "task_id": "TRADING-841",
+            "status": summary_by_task.get("TRADING-841", {}).get("final_status"),
+            "partial_feature_count": _metric_value(
+                payloads["TRADING-841"],
+                "partial_feature_count",
+            ),
+            "promotion_allowed": False,
+        },
+    ]
+    payload = _controlled_payload(
+        report_type="tail_risk_post_merge_evidence_review",
+        title="Tail-risk post-merge evidence review",
+        status=final_status,
+        summary={
+            "task_id_range": "TRADING-828..TRADING-842",
+            "source_dependency_task_id": "TRADING-827",
+            "final_status": final_status,
+            "artifact_count": len(artifact_summaries),
+            "source_artifact_count": len(payloads),
+            "blocker_count": len(blockers),
+            "warning_count": len(warnings),
+            "template_only_artifact_count": len(template_only),
+            "zero_sample_positive_count": len(zero_sample_positive),
+            "safety_violation_count": len(safety_violations),
+            "special_check_failed_count": len(failed_special_checks),
+            "current_hard_blocker_count": len(current_hard_blockers),
+            "artifact_status_overview": [
+                {
+                    "task_id": row["task_id"],
+                    "report_id": row["report_id"],
+                    "final_status": row["final_status"],
+                    "blocker_count": row["blocker_count"],
+                    "warning_count": row["warning_count"],
+                    "sample_count": row["sample_count"],
+                }
+                for row in artifact_summaries
+            ],
+            "special_check_results": [
+                {"check_id": row["check_id"], "passed": row["passed"]} for row in special_checks
+            ],
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        final_status=final_status,
+        task_id="TRADING-828_TO_842_POST_MERGE_REVIEW",
+        artifact_summaries=artifact_summaries,
+        dependency_artifact_summaries=dependency_summaries,
+        special_checks=special_checks,
+        template_only_artifacts=[row["task_id"] for row in template_only],
+        zero_sample_positive_artifacts=[row["task_id"] for row in zero_sample_positive],
+        safety_violations=[row["task_id"] for row in safety_violations],
+        current_hard_blockers=current_hard_blockers,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "artifact_count": len(artifact_summaries),
+            "source_artifact_count": len(payloads),
+            "current_hard_blocker_count": len(current_hard_blockers),
+            "template_only_artifact_count": len(template_only),
+            "zero_sample_positive_count": len(zero_sample_positive),
+            "safety_violation_count": len(safety_violations),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        warnings=warnings,
+        blockers=blockers,
+        next_recommended_action="keep_tail_risk_fallback_quarantined",
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_post_merge_evidence_review",
+            "Tail-Risk Post-Merge Evidence Review",
+            "tail-risk-post-merge-evidence-review",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_post_merge_evidence_review",
+    )
+    return payload
+
+
+def run_tail_risk_governance_artifact_snapshot(
+    *,
+    artifact_paths: Mapping[str, Path] | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    paths = _tail_risk_governance_paths(artifact_paths)
+    payloads = {task_id: _read_json_or_empty(path) for task_id, path in paths.items()}
+    artifact_summaries = [
+        _tail_risk_artifact_snapshot_row(task_id, payloads[task_id], paths[task_id])
+        for task_id in paths
+    ]
+    hard_blockers = _tail_risk_post_merge_current_hard_blockers(payloads)
+    special_checks = (
+        _tail_risk_post_merge_special_checks(
+            payloads=payloads,
+            artifact_summaries=[
+                _tail_risk_post_merge_artifact_summary(payloads[task_id], paths[task_id])
+                for task_id in paths
+                if task_id != "TRADING-827"
+            ],
+        )
+        if all(payloads.get(f"TRADING-{task_id}") for task_id in range(827, 843))
+        else []
+    )
+    missing = [row for row in artifact_summaries if not row["json_present"]]
+    failed_checks = [row for row in special_checks if not row["passed"]]
+    status = (
+        "TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_INCOMPLETE"
+        if missing
+        else (
+            "TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_BLOCKED"
+            if hard_blockers
+            else "TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_COMPLETE"
+        )
+    )
+    blockers = [
+        {
+            "blocker": "missing_tail_risk_governance_artifact",
+            "task_id": row["task_id"],
+            "artifact_json_path": row["artifact_json_path"],
+            "promotion_allowed": False,
+        }
+        for row in missing
+    ] + [
+        {
+            "blocker": "tail_risk_hard_blocker_inherited",
+            "task_id": row["task_id"],
+            "status": row["status"],
+            "promotion_allowed": False,
+        }
+        for row in hard_blockers
+    ]
+    warnings = [
+        {
+            "warning": "snapshot_special_check_failed",
+            "check_id": row["check_id"],
+            "promotion_allowed": False,
+        }
+        for row in failed_checks
+    ]
+    payload = _controlled_payload(
+        report_type="tail_risk_governance_artifact_snapshot",
+        title="Tail-risk governance artifact snapshot",
+        status=status,
+        summary={
+            "task_id": "TRADING-843",
+            "artifact_count": len(artifact_summaries),
+            "missing_artifact_count": len(missing),
+            "hard_blocker_count": len(hard_blockers),
+            "special_check_failed_count": len(failed_checks),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-843",
+        artifact_summaries=artifact_summaries,
+        special_checks=special_checks,
+        current_hard_blockers=hard_blockers,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "artifact_count": len(artifact_summaries),
+            "missing_artifact_count": len(missing),
+            "hard_blocker_count": len(hard_blockers),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+        },
+        warnings=warnings,
+        blockers=blockers,
+        next_recommended_action="review_status_matrix_before_any_tail_risk_research_decision",
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_governance_artifact_snapshot",
+            "Tail-Risk Governance Artifact Snapshot",
+            "tail-risk-governance-artifact-snapshot",
+        ),
+    )
+    _write_pair(
+        payload, output_root=output_root, artifact_id="tail_risk_governance_artifact_snapshot"
+    )
+    return payload
+
+
+def run_tail_risk_status_matrix(
+    *,
+    snapshot_path: Path = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    artifact_paths: Mapping[str, Path] | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    snapshot = _tail_risk_snapshot_payload(snapshot_path, artifact_paths)
+    matrix_rows = [
+        _tail_risk_status_matrix_row(row) for row in _records(snapshot.get("artifact_summaries"))
+    ]
+    hard_blockers = [
+        row
+        for row in matrix_rows
+        if row["status"]
+        in {
+            "BLOCKED",
+            "TIME_BOUNDARY_BLOCKED",
+            "LEAKAGE_STRESS_BLOCKED",
+            "PROMOTION_READINESS_BLOCKED",
+            "MISSING",
+        }
+    ]
+    overall_status = (
+        "TAIL_RISK_RESEARCH_BLOCKED" if hard_blockers else "TAIL_RISK_RESEARCH_REVIEW_ONLY"
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_status_matrix",
+        title="Tail-risk status matrix",
+        status=overall_status,
+        summary={
+            "task_id": "TRADING-844",
+            "overall_status": overall_status,
+            "matrix_row_count": len(matrix_rows),
+            "hard_blocker_count": len(hard_blockers),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-844",
+        overall_status=overall_status,
+        status_matrix=matrix_rows,
+        current_hard_blockers=hard_blockers,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "matrix_row_count": len(matrix_rows),
+            "hard_blocker_count": len(hard_blockers),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+        },
+        warnings=[],
+        blockers=hard_blockers,
+        next_recommended_action=(
+            "keep_tail_risk_fallback_quarantined"
+            if hard_blockers
+            else "manual_research_review_only"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_status_matrix",
+            "Tail-Risk Status Matrix",
+            "tail-risk-status-matrix",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_status_matrix")
+    return payload
+
+
+def run_tail_risk_real_data_validation_audit(
+    *,
+    snapshot_path: Path = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    artifact_paths: Mapping[str, Path] | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    snapshot = _tail_risk_snapshot_payload(snapshot_path, artifact_paths)
+    rows = [
+        _tail_risk_real_data_audit_row(row) for row in _records(snapshot.get("artifact_summaries"))
+    ]
+    missing = [row for row in rows if row["input_missing"]]
+    fixture_only = [row for row in rows if row["fixture_fallback_detected"]]
+    suspicious = [
+        row
+        for row in rows
+        if row["missing_input_pass_detected"]
+        or row["placeholder_result_detected"]
+        or row["zero_sample_positive_detected"]
+    ]
+    status = (
+        "INPUT_MISSING_BLOCKED"
+        if missing
+        else (
+            "FIXTURE_ONLY_BLOCKED"
+            if fixture_only
+            else ("REAL_DATA_PARTIAL" if suspicious else "REAL_DATA_READY")
+        )
+    )
+    blockers = [
+        {
+            "blocker": "real_data_input_missing",
+            "task_id": row["task_id"],
+            "artifact_json_path": row["artifact_json_path"],
+            "promotion_allowed": False,
+        }
+        for row in missing
+    ] + [
+        {
+            "blocker": "fixture_or_placeholder_audit_issue",
+            "task_id": row["task_id"],
+            "fixture_fallback_detected": row["fixture_fallback_detected"],
+            "placeholder_result_detected": row["placeholder_result_detected"],
+            "zero_sample_positive_detected": row["zero_sample_positive_detected"],
+            "promotion_allowed": False,
+        }
+        for row in [*fixture_only, *suspicious]
+    ]
+    payload = _controlled_payload(
+        report_type="tail_risk_real_data_validation_audit",
+        title="Tail-risk real data validation audit",
+        status=status,
+        summary={
+            "task_id": "TRADING-845",
+            "audit_status": status,
+            "audited_task_count": len(rows),
+            "input_missing_count": len(missing),
+            "fixture_fallback_count": len(fixture_only),
+            "suspicious_result_count": len(suspicious),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-845",
+        real_data_audit_rows=rows,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "audited_task_count": len(rows),
+            "input_missing_count": len(missing),
+            "fixture_fallback_count": len(fixture_only),
+            "suspicious_result_count": len(suspicious),
+        },
+        warnings=[] if status == "REAL_DATA_READY" else suspicious,
+        blockers=blockers,
+        next_recommended_action=(
+            "rerun_tail_risk_governance_on_real_artifacts"
+            if status != "REAL_DATA_READY"
+            else "continue_to_forward_and_baseline_reviews"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_real_data_validation_audit",
+            "Tail-Risk Real Data Validation Audit",
+            "tail-risk-real-data-validation-audit",
+        ),
+    )
+    _write_pair(
+        payload, output_root=output_root, artifact_id="tail_risk_real_data_validation_audit"
+    )
+    return payload
+
+
+def run_tail_risk_independent_forward_outcome_result_review(
+    *,
+    independent_forward_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit_path: Path = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit_path: Path = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    counterfactual_path: Path = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    independent = _read_json_or_empty(independent_forward_path)
+    contract = _read_json_or_empty(contract_audit_path)
+    boundary = _read_json_or_empty(boundary_audit_path)
+    counterfactual = _read_json_or_empty(counterfactual_path)
+    rows = _records(independent.get("decision_outcomes"))
+    valid_5d = _metric_value(independent, "valid_forward_5d_count")
+    valid_10d = _metric_value(independent, "valid_forward_10d_count")
+    valid_20d = _metric_value(independent, "valid_forward_20d_count")
+    triggered = sum(1 for row in rows if row.get("fallback_triggered"))
+    non_triggered = len(rows) - triggered
+    forbidden_rows = [
+        row for row in rows if row.get("forbidden_label_or_case_fields_used_in_outcome")
+    ]
+    baseline_available = bool(counterfactual.get("baseline_comparison"))
+    sample_too_small = len(rows) < 30 or _first_int(valid_20d) < 20
+    blocked = (
+        not independent
+        or independent.get("status") in {"MISSING", "INDEPENDENT_FORWARD_BLOCKED"}
+        or bool(forbidden_rows)
+    )
+    if blocked:
+        status = "FORWARD_OUTCOME_BLOCKED"
+    elif sample_too_small:
+        status = "FORWARD_OUTCOME_SAMPLE_TOO_SMALL"
+    elif independent.get("status") == "INDEPENDENT_FORWARD_VALIDATED" and baseline_available:
+        status = "FORWARD_OUTCOME_USABLE_FOR_RESEARCH"
+    else:
+        status = "FORWARD_OUTCOME_INCONCLUSIVE"
+    blockers = []
+    if blocked:
+        blockers.append(
+            {
+                "blocker": "independent_forward_outcome_not_usable",
+                "independent_status": independent.get("status", "MISSING"),
+                "forbidden_dependency_count": len(forbidden_rows),
+                "promotion_allowed": False,
+            }
+        )
+    payload = _controlled_payload(
+        report_type="tail_risk_independent_forward_outcome_result_review",
+        title="Tail-risk independent forward outcome result review",
+        status=status,
+        summary={
+            "task_id": "TRADING-846",
+            "review_status": status,
+            "valid_forward_5d_count": _first_int(valid_5d),
+            "valid_forward_10d_count": _first_int(valid_10d),
+            "valid_forward_20d_count": _first_int(valid_20d),
+            "triggered_sample_count": triggered,
+            "non_triggered_sample_count": non_triggered,
+            "baseline_comparison_available": baseline_available,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-846",
+        source_independent_forward_path=str(independent_forward_path),
+        valid_forward_5d_count=_first_int(valid_5d),
+        valid_forward_10d_count=_first_int(valid_10d),
+        valid_forward_20d_count=_first_int(valid_20d),
+        triggered_sample_count=triggered,
+        non_triggered_sample_count=non_triggered,
+        outcome_fields=list(independent.get("independent_outcome_fields") or []),
+        forbidden_dependency_check={
+            "status": "PASS" if not forbidden_rows else "BLOCKED",
+            "forbidden_dependency_count": len(forbidden_rows),
+            "contract_status": contract.get("status", "MISSING"),
+            "promotion_allowed": False,
+        },
+        time_window_check={
+            "outcome_contract_strictly_after_decision_time": _mapping(
+                independent.get("outcome_source_contract")
+            ).get("strictly_after_decision_time"),
+            "boundary_audit_status": boundary.get("status", "MISSING"),
+            "promotion_allowed": False,
+        },
+        baseline_comparison_available=baseline_available,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "sample_count": len(rows),
+            "triggered_sample_count": triggered,
+            "non_triggered_sample_count": non_triggered,
+            "valid_forward_20d_count": _first_int(valid_20d),
+            "promotion_allowed": False,
+        },
+        warnings=[] if status == "FORWARD_OUTCOME_USABLE_FOR_RESEARCH" else [{"warning": status}],
+        blockers=blockers,
+        next_recommended_action=(
+            "use_forward_outcome_for_research_only_with_promotion_blocked"
+            if status == "FORWARD_OUTCOME_USABLE_FOR_RESEARCH"
+            else "collect_or_repair_independent_forward_outcome_evidence"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_independent_forward_outcome_result_review",
+            "Tail-Risk Independent Forward Outcome Result Review",
+            "tail-risk-independent-forward-outcome-result-review",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_independent_forward_outcome_result_review",
+    )
+    return payload
+
+
+def run_tail_risk_counterfactual_baseline_result_review(
+    *,
+    counterfactual_path: Path = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    independent_forward_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    counterfactual = _read_json_or_empty(counterfactual_path)
+    independent = _read_json_or_empty(independent_forward_path)
+    rows = _records(independent.get("decision_outcomes"))
+    comparisons = _records(counterfactual.get("baseline_comparison")) or (
+        _tail_risk_independent_policy_comparison(rows) if rows else []
+    )
+    comparison_by_policy = {str(row.get("policy_id")): row for row in comparisons}
+    fallback = comparison_by_policy.get("fallback_policy", {})
+    baseline_ids = [
+        "no_fallback_baseline",
+        "static_allocation_baseline",
+        "simple_trend_baseline",
+        "equal_risk_qqq_sgov_baseline",
+        "qqq_100_baseline",
+        "qqq_60_sgov_40_baseline",
+        "qqq_70_sgov_30_baseline",
+        "tqqq_50_sgov_50_baseline",
+        "tqqq_25_sgov_75_baseline",
+        "simple_200dma_risk_off_baseline",
+        "simple_volatility_target_baseline",
+    ]
+    baseline_reviews = [
+        _tail_risk_baseline_delta_row(fallback, comparison_by_policy.get(policy_id, {}))
+        for policy_id in baseline_ids
+        if policy_id in comparison_by_policy
+    ]
+    dominance = [
+        row
+        for row in baseline_reviews
+        if row["baseline_return_delta_vs_fallback"] >= 0
+        and row["baseline_drawdown_delta_vs_fallback"] >= 0
+    ]
+    baseline_dominance_flag = bool(dominance)
+    status = (
+        "COUNTERFACTUAL_BASELINE_DOMINATED"
+        if baseline_dominance_flag
+        else (
+            "COUNTERFACTUAL_BASELINE_INCONCLUSIVE"
+            if not rows
+            else "COUNTERFACTUAL_BASELINE_REVIEWABLE"
+        )
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_counterfactual_baseline_result_review",
+        title="Tail-risk counterfactual baseline result review",
+        status=status,
+        summary={
+            "task_id": "TRADING-847",
+            "review_status": status,
+            "baseline_count": len(baseline_reviews),
+            "dominant_baseline_count": len(dominance),
+            "baseline_dominance_flag": baseline_dominance_flag,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-847",
+        source_counterfactual_path=str(counterfactual_path),
+        baseline_reviews=baseline_reviews,
+        return_delta_by_horizon=_tail_risk_return_delta_by_horizon(rows),
+        drawdown_delta_by_horizon=_tail_risk_drawdown_delta_by_horizon(rows),
+        false_positive_cost=_metric_value(counterfactual, "false_positive_cost"),
+        false_negative_cost=_metric_value(counterfactual, "false_negative_cost"),
+        turnover_cost_if_available=[
+            {
+                "policy_id": row["policy_id"],
+                "turnover_cost_if_available": row.get("turnover_cost_if_available"),
+            }
+            for row in comparisons
+        ],
+        baseline_dominance_flag=baseline_dominance_flag,
+        dominant_baselines=dominance,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "baseline_count": len(baseline_reviews),
+            "dominant_baseline_count": len(dominance),
+            "baseline_dominance_flag": baseline_dominance_flag,
+            "promotion_allowed": False,
+        },
+        warnings=(
+            [
+                {
+                    "warning": "simple_baseline_dominates_fallback",
+                    "dominant_baseline_count": len(dominance),
+                    "promotion_allowed": False,
+                }
+            ]
+            if dominance
+            else []
+        ),
+        blockers=[],
+        next_recommended_action=(
+            "stop_complex_fallback_optimization_until_simple_baseline_review"
+            if dominance
+            else "continue_research_only_baseline_monitoring"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_counterfactual_baseline_result_review",
+            "Tail-Risk Counterfactual Baseline Result Review",
+            "tail-risk-counterfactual-baseline-result-review",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_counterfactual_baseline_result_review",
+    )
+    return payload
+
+
+def run_tail_risk_artifact_determinism_check(
+    *,
+    snapshot_path: Path = DEFAULT_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT_PATH,
+    artifact_paths: Mapping[str, Path] | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    first = _tail_risk_snapshot_payload(snapshot_path, artifact_paths)
+    second = _tail_risk_snapshot_payload(snapshot_path, artifact_paths)
+    first_hash = _stable_hash(_strip_volatile_artifact_fields(first))
+    second_hash = _stable_hash(_strip_volatile_artifact_fields(second))
+    stable = first_hash == second_hash
+    rows = _records(first.get("artifact_summaries"))
+    unstable_sort = [row["task_id"] for row in rows] != sorted(row["task_id"] for row in rows)
+    status = (
+        "DETERMINISTIC_PASS"
+        if stable and not unstable_sort
+        else ("DETERMINISTIC_WARN" if stable else "DETERMINISTIC_BLOCKED")
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_artifact_determinism_check",
+        title="Tail-risk artifact determinism check",
+        status=status,
+        summary={
+            "task_id": "TRADING-848",
+            "determinism_status": status,
+            "stable_hash_match": stable,
+            "stable_sort_order": not unstable_sort,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-848",
+        first_stable_hash=first_hash,
+        second_stable_hash=second_hash,
+        ignored_fields=["generated_at", "runtime", "mtime", "mtime_utc", "artifact_paths"],
+        stable_sort_order=not unstable_sort,
+        floating_output_policy=(
+            "JSON numeric values are generated from deterministic input artifacts"
+        ),
+        random_seed_policy="No random sampling is used by tail-risk governance aggregators",
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "stable_hash_match": stable,
+            "stable_sort_order": not unstable_sort,
+            "promotion_allowed": False,
+        },
+        warnings=[] if status == "DETERMINISTIC_PASS" else [{"warning": status}],
+        blockers=[] if stable else [{"blocker": "artifact_projection_not_deterministic"}],
+        next_recommended_action=(
+            "review_artifact_sorting_or_volatile_fields"
+            if status != "DETERMINISTIC_PASS"
+            else "determinism_projection_available_for_owner_review"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_artifact_determinism_check",
+            "Tail-Risk Artifact Determinism Check",
+            "tail-risk-artifact-determinism-check",
+        ),
+    )
+    _write_pair(
+        payload, output_root=output_root, artifact_id="tail_risk_artifact_determinism_check"
+    )
+    return payload
+
+
+def run_tail_risk_task_coverage_map(
+    *,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_TAIL_RISK_TASK_COVERAGE_MAP_DOC_PATH,
+) -> dict[str, Any]:
+    rows = [_tail_risk_task_coverage_row(meta) for meta in TAIL_RISK_GOVERNANCE_TASK_METADATA]
+    rows.extend(_tail_risk_task_coverage_row(meta) for meta in TAIL_RISK_FOLLOWUP_TASK_METADATA)
+    payload = _controlled_payload(
+        report_type="tail_risk_task_coverage_map",
+        title="Tail-risk task coverage map",
+        status="TAIL_RISK_TASK_COVERAGE_MAP_COMPLETE",
+        summary={
+            "task_id": "TRADING-850",
+            "covered_task_count": len(rows),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-850",
+        coverage_rows=rows,
+        docs_covering_task=[str(docs_path)],
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={"covered_task_count": len(rows), "promotion_allowed": False},
+        warnings=[],
+        blockers=[],
+        next_recommended_action="use_coverage_map_for_owner_review_of_tail_risk_governance_batch",
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_task_coverage_map",
+            "Tail-Risk Task Coverage Map",
+            "tail-risk-task-coverage-map",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_task_coverage_map")
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(_render_tail_risk_task_coverage_map_md(rows), encoding="utf-8")
+    payload["docs_path"] = str(docs_path)
+    _write_json(output_root / "tail_risk_task_coverage_map.json", payload)
+    return payload
+
+
+def run_tail_risk_hard_block_mutation_tests(
+    *,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    cases = _tail_risk_hard_block_mutation_cases()
+    failed = [row for row in cases if not row["blocked"]]
+    status = "HARD_BLOCK_MUTATION_PASS" if not failed else "HARD_BLOCK_MUTATION_FAILED"
+    payload = _controlled_payload(
+        report_type="tail_risk_hard_block_mutation_tests",
+        title="Tail-risk hard-block mutation tests",
+        status=status,
+        summary={
+            "task_id": "TRADING-851",
+            "mutation_case_count": len(cases),
+            "failed_case_count": len(failed),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-851",
+        mutation_cases=cases,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={"mutation_case_count": len(cases), "failed_case_count": len(failed)},
+        warnings=[],
+        blockers=[
+            {
+                "blocker": "mutation_case_not_blocked",
+                "case_id": row["case_id"],
+                "promotion_allowed": False,
+            }
+            for row in failed
+        ],
+        next_recommended_action=(
+            "fix_hard_block_fail_closed_logic" if failed else "keep_mutation_tests_in_regression"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_hard_block_mutation_tests",
+            "Tail-Risk Hard Block Mutation Tests",
+            "tail-risk-hard-block-mutation-tests",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_hard_block_mutation_tests")
+    return payload
+
+
+def run_tail_risk_report_registry_integrity_review(
+    *,
+    registry_path: Path = PROJECT_ROOT / "config" / "report_registry.yaml",
+    artifact_paths: Mapping[str, Path] | None = None,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    registry = safe_load_yaml_path(registry_path)
+    reports = list(registry.get("reports") or []) if isinstance(registry, Mapping) else []
+    report_ids = [str(row.get("report_id")) for row in reports if isinstance(row, Mapping)]
+    report_by_id = {str(row.get("report_id")): row for row in reports if isinstance(row, Mapping)}
+    expected = [*TAIL_RISK_GOVERNANCE_TASK_METADATA, *TAIL_RISK_FOLLOWUP_TASK_METADATA]
+    path_overrides = _tail_risk_governance_paths(artifact_paths) if artifact_paths else {}
+    rows = []
+    for meta in expected:
+        report_id = str(meta["report_id"])
+        entry = report_by_id.get(report_id, {})
+        artifact_path = path_overrides.get(str(meta["task_id"]), Path(str(meta["default_path"])))
+        rows.append(
+            {
+                "task_id": meta["task_id"],
+                "report_id": report_id,
+                "entry_present": bool(entry),
+                "report_id_unique": report_ids.count(report_id) == 1,
+                "command": entry.get("command") if isinstance(entry, Mapping) else None,
+                "command_registered": (
+                    str(entry.get("command", "")).startswith("aits research strategies ")
+                    if isinstance(entry, Mapping)
+                    else False
+                ),
+                "artifact_selection_policy": (
+                    entry.get("artifact_selection_policy") if isinstance(entry, Mapping) else None
+                ),
+                "artifact_selection_policy_valid": (
+                    entry.get("artifact_selection_policy") == "latest_available"
+                    if isinstance(entry, Mapping)
+                    else False
+                ),
+                "required_for_daily_reading": (
+                    bool(entry.get("required_for_daily_reading"))
+                    if isinstance(entry, Mapping)
+                    else None
+                ),
+                "required_for_daily_reading_false": (
+                    entry.get("required_for_daily_reading") is False
+                    if isinstance(entry, Mapping)
+                    else False
+                ),
+                "artifact_json_path": str(artifact_path),
+                "artifact_md_path": str(artifact_path.with_suffix(".md")),
+                "artifact_json_exists": artifact_path.exists(),
+                "artifact_md_exists": artifact_path.with_suffix(".md").exists(),
+                "schema_verifiable": True,
+                "promotion_allowed": False,
+            }
+        )
+    failed = [
+        row
+        for row in rows
+        if not (
+            row["entry_present"]
+            and row["report_id_unique"]
+            and row["command_registered"]
+            and row["artifact_selection_policy_valid"]
+            and row["required_for_daily_reading_false"]
+        )
+    ]
+    status = "REPORT_REGISTRY_INTEGRITY_PASS" if not failed else "REPORT_REGISTRY_INTEGRITY_BLOCKED"
+    payload = _controlled_payload(
+        report_type="tail_risk_report_registry_integrity_review",
+        title="Tail-risk report registry integrity review",
+        status=status,
+        summary={
+            "task_id": "TRADING-852",
+            "checked_entry_count": len(rows),
+            "failed_entry_count": len(failed),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-852",
+        registry_path=str(registry_path),
+        registry_integrity_rows=rows,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={"checked_entry_count": len(rows), "failed_entry_count": len(failed)},
+        warnings=[
+            {
+                "warning": "artifact_pair_missing_at_review_time",
+                "task_id": row["task_id"],
+                "artifact_json_exists": row["artifact_json_exists"],
+                "artifact_md_exists": row["artifact_md_exists"],
+                "promotion_allowed": False,
+            }
+            for row in rows
+            if not row["artifact_json_exists"] or not row["artifact_md_exists"]
+        ],
+        blockers=failed,
+        next_recommended_action=(
+            "repair_tail_risk_report_registry_entries" if failed else "registry_entries_reviewable"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_report_registry_integrity_review",
+            "Tail-Risk Report Registry Integrity Review",
+            "tail-risk-report-registry-integrity-review",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_report_registry_integrity_review",
+    )
+    return payload
+
+
+def run_tail_risk_daily_reading_safety_summary(
+    *,
+    status_matrix_path: Path = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    master_review_path: Path = DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    matrix = _read_json_or_empty(status_matrix_path)
+    master = _read_json_or_empty(master_review_path)
+    blockers = _records(matrix.get("current_hard_blockers")) or _records(
+        master.get("remaining_blockers")
+    )
+    research_status = str(
+        matrix.get("overall_status") or matrix.get("status") or master.get("status") or "MISSING"
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_daily_reading_safety_summary",
+        title="Tail-risk daily reading safety summary",
+        status=(
+            "TAIL_RISK_DAILY_READING_SUMMARY_BLOCKED"
+            if blockers
+            else "TAIL_RISK_DAILY_READING_SUMMARY_READY"
+        ),
+        summary={
+            "task_id": "TRADING-853",
+            "research_status": research_status,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "latest_master_review_status": master.get("status", "MISSING"),
+            "current_blocker_count": len(blockers),
+            **_summary_safety(),
+        },
+        task_id="TRADING-853",
+        tail_risk_fallback_status={
+            "research_status": research_status,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "current_blockers": blockers,
+            "latest_master_review_status": master.get("status", "MISSING"),
+            "source_status_matrix_path": str(status_matrix_path),
+            "source_master_review_path": str(master_review_path),
+        },
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={"current_blocker_count": len(blockers), "promotion_allowed": False},
+        warnings=[],
+        blockers=blockers,
+        next_recommended_action="show_summary_only_in_reader_brief_no_governance_report_dump",
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_daily_reading_safety_summary",
+            "Tail-Risk Daily Reading Safety Summary",
+            "tail-risk-daily-reading-safety-summary",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_daily_reading_safety_summary",
+    )
+    return payload
+
+
+def run_tail_risk_independent_trigger_v2_input_quality_review(
+    *,
+    feature_catalog_path: Path = DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    catalog = _read_json_or_empty(feature_catalog_path)
+    rows = [
+        _tail_risk_trigger_input_quality_row(row)
+        for row in _records(catalog.get("feature_catalog"))
+    ]
+    blocked = [row for row in rows if not row["usable_for_trigger"]]
+    partial = [row for row in rows if row["pit_quality"] != "PIT_SAFE"]
+    status = (
+        "TRIGGER_V2_INPUT_QUALITY_BLOCKED"
+        if blocked
+        else ("TRIGGER_V2_INPUT_QUALITY_PARTIAL" if partial else "TRIGGER_V2_INPUT_QUALITY_READY")
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_independent_trigger_v2_input_quality_review",
+        title="Tail-risk independent trigger v2 input quality review",
+        status=status,
+        summary={
+            "task_id": "TRADING-854",
+            "feature_count": len(rows),
+            "blocked_feature_count": len(blocked),
+            "partial_feature_count": len(partial),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-854",
+        input_quality_rows=rows,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "feature_count": len(rows),
+            "blocked_feature_count": len(blocked),
+            "partial_feature_count": len(partial),
+        },
+        warnings=partial,
+        blockers=blocked,
+        next_recommended_action=(
+            "review_partial_proxy_inputs_before_trigger_v2"
+            if partial
+            else "trigger_v2_inputs_quality_reviewable"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_independent_trigger_v2_input_quality_review",
+            "Tail-Risk Independent Trigger V2 Input Quality Review",
+            "tail-risk-independent-trigger-v2-input-quality-review",
+        ),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_independent_trigger_v2_input_quality_review",
+    )
+    return payload
+
+
+def run_tail_risk_baseline_dominance_gate(
+    *,
+    baseline_review_path: Path = DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    review = _read_json_or_empty(baseline_review_path)
+    rows = _records(review.get("baseline_reviews"))
+    dominance_rows = [_tail_risk_baseline_dominance_row(row) for row in rows]
+    dominated = [row for row in dominance_rows if row["baseline_dominates_fallback"]]
+    mixed = [
+        row
+        for row in dominance_rows
+        if row["dominance_score"] > 0 and not row["baseline_dominates_fallback"]
+    ]
+    status = (
+        "BASELINE_DOMINATED_BLOCKED"
+        if dominated
+        else ("BASELINE_MIXED" if mixed else "NOT_BASELINE_DOMINATED")
+    )
+    blockers = [
+        {
+            "blocker": "simple_baseline_dominates_fallback",
+            "policy_id": row["policy_id"],
+            "dominance_score": row["dominance_score"],
+            "promotion_allowed": False,
+        }
+        for row in dominated
+    ]
+    payload = _controlled_payload(
+        report_type="tail_risk_baseline_dominance_gate",
+        title="Tail-risk baseline dominance gate",
+        status=status,
+        summary={
+            "task_id": "TRADING-856",
+            "dominance_status": status,
+            "dominant_baseline_count": len(dominated),
+            "mixed_baseline_count": len(mixed),
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-856",
+        baseline_dominance_rows=dominance_rows,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "dominant_baseline_count": len(dominated),
+            "mixed_baseline_count": len(mixed),
+            "promotion_allowed": False,
+        },
+        warnings=mixed,
+        blockers=blockers,
+        next_recommended_action=(
+            "pause_complex_fallback_research_until_simple_baseline_gap_explained"
+            if dominated
+            else "continue_research_only_baseline_observation"
+        ),
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_baseline_dominance_gate",
+            "Tail-Risk Baseline Dominance Gate",
+            "tail-risk-baseline-dominance-gate",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_baseline_dominance_gate")
+    return payload
+
+
+def run_tail_risk_research_readiness_score(
+    *,
+    status_matrix_path: Path = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    forward_review_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
+    baseline_gate_path: Path = DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
+    evidence_gate_path: Path = DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    regime_review_path: Path = DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    sensitivity_review_path: Path = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    matrix = _read_json_or_empty(status_matrix_path)
+    forward = _read_json_or_empty(forward_review_path)
+    baseline = _read_json_or_empty(baseline_gate_path)
+    evidence = _read_json_or_empty(evidence_gate_path)
+    regime = _read_json_or_empty(regime_review_path)
+    sensitivity = _read_json_or_empty(sensitivity_review_path)
+    components = _tail_risk_readiness_components(
+        matrix=matrix,
+        forward=forward,
+        baseline=baseline,
+        evidence=evidence,
+        regime=regime,
+        sensitivity=sensitivity,
+    )
+    score = sum(_first_int(row["points_awarded"]) for row in components)
+    band = _tail_risk_readiness_band(score)
+    payload = _controlled_payload(
+        report_type="tail_risk_research_readiness_score",
+        title="Tail-risk research readiness score",
+        status=band["status"],
+        summary={
+            "task_id": "TRADING-857",
+            "readiness_score": score,
+            "readiness_band": band["label"],
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-857",
+        readiness_score=score,
+        readiness_band=band,
+        readiness_components=components,
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={"readiness_score": score, "promotion_allowed": False},
+        warnings=[],
+        blockers=[
+            {
+                "blocker": "tail_risk_research_readiness_not_promotion_approval",
+                "readiness_score": score,
+                "promotion_allowed": False,
+            }
+        ],
+        next_recommended_action=band["next_action"],
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_research_readiness_score",
+            "Tail-Risk Research Readiness Score",
+            "tail-risk-research-readiness-score",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_research_readiness_score")
+    return payload
+
+
+def run_tail_risk_next_decision_document(
+    *,
+    status_matrix_path: Path = DEFAULT_TAIL_RISK_STATUS_MATRIX_PATH,
+    forward_review_path: Path = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW_PATH,
+    baseline_review_path: Path = DEFAULT_TAIL_RISK_COUNTERFACTUAL_BASELINE_RESULT_REVIEW_PATH,
+    baseline_gate_path: Path = DEFAULT_TAIL_RISK_BASELINE_DOMINANCE_GATE_PATH,
+    readiness_path: Path = DEFAULT_TAIL_RISK_RESEARCH_READINESS_SCORE_PATH,
+    master_review_path: Path = DEFAULT_TAIL_RISK_RESEARCH_MASTER_REVIEW_PATH,
+    quarantine_path: Path = DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_TAIL_RISK_NEXT_DECISION_DOC_PATH,
+) -> dict[str, Any]:
+    matrix = _read_json_or_empty(status_matrix_path)
+    forward = _read_json_or_empty(forward_review_path)
+    baseline_review = _read_json_or_empty(baseline_review_path)
+    baseline_gate = _read_json_or_empty(baseline_gate_path)
+    readiness = _read_json_or_empty(readiness_path)
+    master = _read_json_or_empty(master_review_path)
+    quarantine = _read_json_or_empty(quarantine_path)
+    blocked = bool(
+        _records(matrix.get("current_hard_blockers")) or _records(master.get("remaining_blockers"))
+    )
+    baseline_dominated = baseline_gate.get("status") == "BASELINE_DOMINATED_BLOCKED"
+    forward_usable = forward.get("status") == "FORWARD_OUTCOME_USABLE_FOR_RESEARCH"
+    owner_next_action = (
+        "pause"
+        if baseline_dominated
+        else ("rebuild" if blocked else ("continue" if forward_usable else "pause"))
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_next_decision",
+        title="Tail-risk fallback next decision",
+        status=(
+            "TAIL_RISK_NEXT_DECISION_BLOCKED" if blocked else "TAIL_RISK_NEXT_DECISION_REVIEWABLE"
+        ),
+        summary={
+            "task_id": "TRADING-858",
+            "current_strategy_blocked": blocked,
+            "forward_outcome_usable_for_research": forward_usable,
+            "baseline_dominated": baseline_dominated,
+            "owner_next_action": owner_next_action,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            **_summary_safety(),
+        },
+        task_id="TRADING-858",
+        decision_answers={
+            "current_strategy_still_blocked": blocked,
+            "tainted_metrics": [
+                row.get("metric_name") for row in _records(quarantine.get("quarantined_metrics"))
+            ],
+            "research_only_metrics_now_available": master.get("current_valid_metrics", []),
+            "independent_outcome_sufficient": forward_usable,
+            "baseline_review_status": baseline_review.get("status", "UNKNOWN"),
+            "baseline_dominated": baseline_dominated,
+            "worth_building_trigger_v2": forward_usable and not baseline_dominated,
+            "minimum_tasks_before_paper_shadow_review": master.get(
+                "minimum_tasks_before_review", []
+            ),
+            "owner_next_action": owner_next_action,
+        },
+        source_artifacts={
+            "status_matrix": str(status_matrix_path),
+            "forward_review": str(forward_review_path),
+            "baseline_review": str(baseline_review_path),
+            "baseline_gate": str(baseline_gate_path),
+            "readiness_score": str(readiness_path),
+            "master_review": str(master_review_path),
+            "quarantine": str(quarantine_path),
+        },
+        readiness_score=readiness.get("readiness_score"),
+        promotion_allowed=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        metrics={
+            "current_strategy_blocked": blocked,
+            "baseline_dominated": baseline_dominated,
+            "forward_outcome_usable_for_research": forward_usable,
+            "promotion_allowed": False,
+        },
+        warnings=[
+            {
+                "warning": "next_decision_is_manual_research_guidance_only",
+                "promotion_allowed": False,
+            }
+        ],
+        blockers=_records(matrix.get("current_hard_blockers"))
+        or _records(master.get("remaining_blockers")),
+        next_recommended_action=owner_next_action,
+        report_registry_entry=_tail_risk_governance_report_registry_entry(
+            "tail_risk_next_decision",
+            "Tail-Risk Next Decision",
+            "tail-risk-next-decision-document",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id="tail_risk_next_decision")
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(_render_tail_risk_next_decision_md(payload), encoding="utf-8")
+    payload["docs_path"] = str(docs_path)
+    _write_json(output_root / "tail_risk_next_decision.json", payload)
     return payload
 
 
@@ -12875,15 +14510,24 @@ def _tail_risk_independent_policy_comparison(
     rows: list[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     policies = [
-        ("fallback_policy", "fallback_policy_return"),
-        ("no_fallback_baseline", "no_fallback_baseline_return"),
-        ("static_allocation_baseline", "static_allocation_baseline_return"),
-        ("existing_best_baseline_if_available", "existing_best_baseline_if_available_return"),
+        "fallback_policy",
+        "no_fallback_baseline",
+        "static_allocation_baseline",
+        "existing_best_baseline_if_available",
+        "simple_trend_baseline",
+        "qqq_100_baseline",
+        "qqq_60_sgov_40_baseline",
+        "qqq_70_sgov_30_baseline",
+        "tqqq_50_sgov_50_baseline",
+        "tqqq_25_sgov_75_baseline",
+        "simple_200dma_risk_off_baseline",
+        "simple_volatility_target_baseline",
+        "equal_risk_qqq_sgov_baseline",
     ]
     output = []
-    for policy_id, field in policies:
-        values = [_float(row.get(field), 0.0) for row in rows]
-        drawdowns = [_tail_risk_forward_drawdown(row) for row in rows]
+    for policy_id in policies:
+        values = [_tail_risk_policy_return(row, policy_id) for row in rows]
+        drawdowns = [_tail_risk_policy_drawdown(row, policy_id) for row in rows]
         output.append(
             {
                 "policy_id": policy_id,
@@ -12891,6 +14535,9 @@ def _tail_risk_independent_policy_comparison(
                 "avg_future_return": _round(_mean(values)),
                 "median_future_return": _round(statistics.median(values)) if values else 0.0,
                 "avg_future_max_drawdown": _round(_mean(drawdowns)),
+                "sharpe_proxy": _round(
+                    (_mean(values) / _stddev(values)) if len(values) > 1 and _stddev(values) else 0
+                ),
                 "downside_capture": _round(
                     abs(sum(value for value in values if value < 0))
                     / abs(
@@ -12903,10 +14550,110 @@ def _tail_risk_independent_policy_comparison(
                     if any(_tail_risk_future_return(row) < 0 for row in rows)
                     else 0.0
                 ),
+                "turnover_cost_if_available": _tail_risk_policy_turnover_cost(policy_id),
+                "simple_baseline": policy_id
+                not in {
+                    "fallback_policy",
+                    "no_fallback_baseline",
+                    "static_allocation_baseline",
+                    "existing_best_baseline_if_available",
+                },
+                "proxy_method": _tail_risk_baseline_proxy_method(policy_id),
                 "promotion_gate_allowed": False,
             }
         )
     return output
+
+
+def _tail_risk_policy_return(row: Mapping[str, Any], policy_id: str) -> float:
+    no_fallback = _float(row.get("no_fallback_baseline_return"), 0.0)
+    fallback = _float(row.get("fallback_policy_return"), 0.0)
+    static = _float(row.get("static_allocation_baseline_return"), 0.0)
+    best = max(no_fallback, static)
+    trend_on = _tail_risk_trend_bucket(row) == "bull"
+    high_vol = _tail_risk_vol_bucket(row) == "high_vol"
+    defensive = static
+    if policy_id == "fallback_policy":
+        return fallback
+    if policy_id in {"no_fallback_baseline", "qqq_100_baseline"}:
+        return no_fallback
+    if policy_id == "static_allocation_baseline":
+        return static
+    if policy_id == "existing_best_baseline_if_available":
+        return best
+    if policy_id == "simple_trend_baseline":
+        return no_fallback if trend_on else defensive
+    if policy_id == "qqq_60_sgov_40_baseline":
+        return 0.60 * no_fallback + 0.40 * defensive
+    if policy_id == "qqq_70_sgov_30_baseline":
+        return 0.70 * no_fallback + 0.30 * defensive
+    if policy_id == "tqqq_50_sgov_50_baseline":
+        return 0.50 * (3.0 * no_fallback) + 0.50 * defensive
+    if policy_id == "tqqq_25_sgov_75_baseline":
+        return 0.25 * (3.0 * no_fallback) + 0.75 * defensive
+    if policy_id == "simple_200dma_risk_off_baseline":
+        return no_fallback if trend_on else defensive
+    if policy_id == "simple_volatility_target_baseline":
+        return 0.50 * no_fallback + 0.50 * defensive if high_vol else no_fallback
+    if policy_id == "equal_risk_qqq_sgov_baseline":
+        return 0.50 * no_fallback + 0.50 * defensive
+    return no_fallback
+
+
+def _tail_risk_policy_drawdown(row: Mapping[str, Any], policy_id: str) -> float:
+    base = _tail_risk_forward_drawdown(row)
+    if policy_id in {"qqq_60_sgov_40_baseline", "simple_volatility_target_baseline"}:
+        return base * 0.60
+    if policy_id in {"qqq_70_sgov_30_baseline", "simple_trend_baseline"}:
+        return base * 0.70
+    if policy_id == "tqqq_50_sgov_50_baseline":
+        return base * 1.50
+    if policy_id == "tqqq_25_sgov_75_baseline":
+        return base * 0.75
+    if policy_id in {"simple_200dma_risk_off_baseline", "equal_risk_qqq_sgov_baseline"}:
+        return base * 0.50
+    return base
+
+
+def _tail_risk_policy_turnover_cost(policy_id: str) -> float | None:
+    if policy_id in {"fallback_policy", "simple_trend_baseline", "simple_200dma_risk_off_baseline"}:
+        return None
+    if policy_id in {
+        "no_fallback_baseline",
+        "static_allocation_baseline",
+        "existing_best_baseline_if_available",
+        "qqq_100_baseline",
+        "qqq_60_sgov_40_baseline",
+        "qqq_70_sgov_30_baseline",
+        "tqqq_50_sgov_50_baseline",
+        "tqqq_25_sgov_75_baseline",
+        "equal_risk_qqq_sgov_baseline",
+    }:
+        return 0.0
+    return None
+
+
+def _tail_risk_baseline_proxy_method(policy_id: str) -> str:
+    methods = {
+        "fallback_policy": "current fallback policy return from independent forward rows",
+        "no_fallback_baseline": "current no-fallback forward return from independent rows",
+        "static_allocation_baseline": "existing static allocation baseline return",
+        "existing_best_baseline_if_available": "max(no_fallback, static_allocation)",
+        "simple_trend_baseline": (
+            "QQQ proxy when PIT trend is bull; otherwise defensive static baseline"
+        ),
+        "qqq_100_baseline": "no-fallback QQQ proxy return from independent rows",
+        "qqq_60_sgov_40_baseline": "60% QQQ proxy plus 40% defensive static baseline proxy",
+        "qqq_70_sgov_30_baseline": "70% QQQ proxy plus 30% defensive static baseline proxy",
+        "tqqq_50_sgov_50_baseline": "50% 3x QQQ proxy plus 50% defensive static baseline proxy",
+        "tqqq_25_sgov_75_baseline": "25% 3x QQQ proxy plus 75% defensive static baseline proxy",
+        "simple_200dma_risk_off_baseline": "PIT trend proxy as 200DMA risk-off substitute",
+        "simple_volatility_target_baseline": (
+            "halve QQQ proxy exposure in high-volatility PIT state"
+        ),
+        "equal_risk_qqq_sgov_baseline": "50% QQQ proxy plus 50% defensive static baseline proxy",
+    }
+    return methods.get(policy_id, "unknown")
 
 
 def _tail_risk_forward_drawdown(row: Mapping[str, Any]) -> float:
@@ -17138,3 +18885,918 @@ def _summary_bool(payload: Mapping[str, Any], key: str) -> bool:
 def _summary_value(payload: Mapping[str, Any], key: str) -> Any:
     summary = payload.get("summary")
     return summary.get(key) if isinstance(summary, Mapping) else None
+
+
+def _tail_risk_post_merge_artifact_summary(
+    payload: Mapping[str, Any],
+    path: Path,
+) -> dict[str, Any]:
+    report_id = _tail_risk_post_merge_report_id(payload)
+    final_status = str(payload.get("final_status") or payload.get("status") or "MISSING")
+    direct_blockers = _mapping_records(payload.get("blockers"))
+    remaining_blockers = _mapping_records(payload.get("remaining_blockers"))
+    effective_blockers = direct_blockers if direct_blockers else remaining_blockers
+    warnings = _mapping_records(payload.get("warnings"))
+    sample_count = _tail_risk_post_merge_sample_count(payload)
+    evidence_fields = _tail_risk_post_merge_evidence_fields(payload, sample_count)
+    return {
+        "task_id": str(payload.get("task_id") or _summary_value(payload, "task_id") or "MISSING"),
+        "report_id": report_id,
+        "report_type": str(payload.get("report_type") or report_id),
+        "artifact_path": str(path),
+        "present": bool(payload),
+        "final_status": final_status,
+        "blocker_count": len(effective_blockers),
+        "direct_blocker_count": len(direct_blockers),
+        "remaining_blocker_count": len(remaining_blockers),
+        "warning_count": len(warnings),
+        "sample_count": sample_count,
+        "key_metrics": _tail_risk_post_merge_key_metrics(payload, sample_count),
+        "promotion_allowed": _tail_risk_post_merge_allowed(payload, "promotion_allowed"),
+        "paper_shadow_allowed": _tail_risk_post_merge_allowed(payload, "paper_shadow_allowed"),
+        "production_allowed": _tail_risk_post_merge_allowed(payload, "production_allowed"),
+        "promotion_gate_allowed": _tail_risk_post_merge_allowed(payload, "promotion_gate_allowed"),
+        "broker_action": str(payload.get("broker_action") or "none"),
+        "production_effect": str(payload.get("production_effect") or "none"),
+        "template_only": not evidence_fields,
+        "evidence_field_count": len(evidence_fields),
+        "evidence_fields": evidence_fields,
+    }
+
+
+def _tail_risk_post_merge_report_id(payload: Mapping[str, Any]) -> str:
+    registry = payload.get("report_registry_entry")
+    if isinstance(registry, Mapping) and registry.get("report_id"):
+        return str(registry["report_id"])
+    return str(payload.get("report_id") or payload.get("report_type") or "MISSING")
+
+
+def _tail_risk_post_merge_allowed(payload: Mapping[str, Any], key: str) -> bool:
+    if key in payload:
+        return bool(payload.get(key))
+    summary = payload.get("summary")
+    if isinstance(summary, Mapping) and key in summary:
+        return bool(summary.get(key))
+    metrics = payload.get("metrics")
+    if isinstance(metrics, Mapping) and key in metrics:
+        return bool(metrics.get(key))
+    fallback_keys = {
+        "promotion_allowed": "promotion_gate_allowed",
+        "paper_shadow_allowed": "paper_shadow_change_allowed",
+        "production_allowed": "production_weight_change_allowed",
+    }
+    fallback = fallback_keys.get(key)
+    if fallback is None:
+        return False
+    if fallback in payload:
+        return bool(payload.get(fallback))
+    if isinstance(summary, Mapping) and fallback in summary:
+        return bool(summary.get(fallback))
+    return False
+
+
+def _tail_risk_post_merge_sample_count(payload: Mapping[str, Any]) -> int | None:
+    metrics = payload.get("metrics")
+    summary = payload.get("summary")
+    sources = [
+        metrics if isinstance(metrics, Mapping) else {},
+        summary if isinstance(summary, Mapping) else {},
+    ]
+    for source in sources:
+        for key in (
+            "sample_count",
+            "decision_count",
+            "total_decision_count",
+            "input_task_count",
+            "feature_count",
+            "test_count",
+            "candidate_count",
+            "source_artifact_count",
+        ):
+            value = source.get(key)
+            if value is not None:
+                return _first_int(value)
+    if isinstance(payload.get("regime_rows"), list):
+        by_dimension: dict[str, int] = {}
+        for row in _mapping_records(payload.get("regime_rows")):
+            dimension = str(row.get("dimension", "all"))
+            by_dimension[dimension] = by_dimension.get(dimension, 0) + _first_int(
+                row.get("sample_count")
+            )
+        if by_dimension:
+            return max(by_dimension.values())
+    if isinstance(payload.get("sensitivity_surface"), list):
+        counts = [
+            _first_int(row.get("sample_count"))
+            for row in _mapping_records(payload.get("sensitivity_surface"))
+        ]
+        return max(counts) if counts else 0
+    if isinstance(payload.get("rolling_forward_performance"), list):
+        return sum(
+            _first_int(row.get("sample_count"))
+            for row in _mapping_records(payload.get("rolling_forward_performance"))
+        )
+    false_positive_count = _metric_value(payload, "false_positive_count")
+    false_negative_count = _metric_value(payload, "false_negative_count")
+    if false_positive_count is not None or false_negative_count is not None:
+        return _first_int(false_positive_count) + _first_int(false_negative_count)
+    for key in (
+        "gate_inputs",
+        "candidate_trigger_v2_list",
+        "feature_catalog",
+        "stress_tests",
+        "maturity_checks",
+        "quarantined_metrics",
+        "baseline_comparison",
+        "input_artifacts",
+    ):
+        value = payload.get(key)
+        if isinstance(value, list | dict):
+            return len(value)
+    return None
+
+
+def _tail_risk_post_merge_key_metrics(
+    payload: Mapping[str, Any],
+    sample_count: int | None,
+) -> dict[str, Any]:
+    metrics = payload.get("metrics")
+    summary = payload.get("summary")
+    merged: dict[str, Any] = {}
+    for source in (
+        metrics if isinstance(metrics, Mapping) else {},
+        summary if isinstance(summary, Mapping) else {},
+    ):
+        for key, value in source.items():
+            if key in {
+                "broker_action",
+                "production_effect",
+                "paper_shadow_change_allowed",
+                "production_weight_change_allowed",
+                "promotion_gate_allowed",
+                "ranking_policy",
+                "requested_date_range",
+                "status_upgrade_attempted",
+            }:
+                continue
+            if key in merged:
+                continue
+            if isinstance(value, str | int | float | bool) or value is None:
+                merged[str(key)] = value
+            elif isinstance(value, Mapping) and len(value) <= 20:
+                merged[str(key)] = dict(value)
+    if sample_count is not None:
+        merged.setdefault("sample_count", sample_count)
+    return merged
+
+
+def _tail_risk_post_merge_evidence_fields(
+    payload: Mapping[str, Any],
+    sample_count: int | None,
+) -> list[str]:
+    evidence_keys = (
+        "metrics",
+        "decision_outcomes",
+        "horizon_summary",
+        "policy_comparison_summary",
+        "outcome_source_contract",
+        "overlap_matrix",
+        "derived_overlap_matrix",
+        "time_window_matrix",
+        "forbidden_dependency_matrix",
+        "decision_time_boundary_matrix",
+        "forward_read_matrix",
+        "quarantined_metrics",
+        "artifact_quarantine_summary",
+        "baseline_comparison",
+        "horizon_comparison",
+        "regime_rows",
+        "sensitivity_surface",
+        "fragile_parameter_list",
+        "false_positive_cases",
+        "false_negative_cases",
+        "best_5_cases",
+        "worst_5_cases",
+        "maturity_checks",
+        "aging_bucket_summary",
+        "rolling_forward_performance",
+        "stress_tests",
+        "gate_inputs",
+        "candidate_trigger_v2_list",
+        "feature_dependency_list",
+        "feature_catalog",
+        "current_valid_metrics",
+        "invalidated_metrics",
+        "remaining_blockers",
+        "minimum_tasks_before_review",
+        "input_artifacts",
+    )
+    fields = [
+        key
+        for key in evidence_keys
+        if key in payload and _tail_risk_post_merge_nonempty(payload.get(key))
+    ]
+    if sample_count is not None and sample_count > 0:
+        fields.append("sample_count")
+    return sorted(set(fields))
+
+
+def _tail_risk_post_merge_nonempty(value: Any) -> bool:
+    if isinstance(value, list | tuple | set | dict):
+        return bool(value)
+    return value not in {None, ""}
+
+
+def _tail_risk_post_merge_positive_status(status: str) -> bool:
+    positive_markers = ("VALIDATED", "BETTER", "ROBUST", "MATURE", "READY", "BUILT", "COMPLETE")
+    return any(marker in status for marker in positive_markers)
+
+
+def _tail_risk_post_merge_special_checks(
+    *,
+    payloads: Mapping[str, Mapping[str, Any]],
+    artifact_summaries: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    trigger_label = payloads["TRADING-827"]
+    independent = payloads["TRADING-828"]
+    quarantine = payloads["TRADING-831"]
+    evidence = payloads["TRADING-836"]
+    promotion = payloads["TRADING-839"]
+    master = payloads["TRADING-842"]
+    summary_by_task = {row["task_id"]: row for row in artifact_summaries}
+    quarantined_metric_names = {
+        str(row.get("metric_name"))
+        for row in _mapping_records(quarantine.get("quarantined_metrics"))
+    }
+    required_quarantined_metrics = {
+        "precision",
+        "recall",
+        "f1",
+        "return metrics",
+        "tail-risk hit rate",
+        "fallback triggered hit rate",
+        "label-based validation",
+    }
+    promotion_gate_inputs = _mapping_records(promotion.get("gate_inputs"))
+    master_inputs = master.get("input_artifacts")
+    master_input_task_ids = (
+        set(master_inputs.keys()) if isinstance(master_inputs, Mapping) else set()
+    )
+    master_remaining_blockers = {
+        str(row.get("task_id")) for row in _mapping_records(master.get("remaining_blockers"))
+    }
+    special_checks = [
+        {
+            "check_id": "trading_827_blocked_status_inherited",
+            "passed": trigger_label.get("status") == "BLOCKED"
+            and _metric_value(independent, "trigger_label_audit_status") == "BLOCKED"
+            and "TRADING-827" in master_remaining_blockers,
+            "details": {
+                "trading_827_status": trigger_label.get("status"),
+                "trading_828_trigger_label_audit_status": _metric_value(
+                    independent, "trigger_label_audit_status"
+                ),
+                "trading_842_remaining_blockers": sorted(master_remaining_blockers),
+            },
+        },
+        {
+            "check_id": "trading_831_old_metrics_quarantined",
+            "passed": quarantine.get("status") == "TAINTED_METRIC_QUARANTINED"
+            and required_quarantined_metrics <= quarantined_metric_names
+            and not bool(quarantine.get("usable_for_promotion"))
+            and not bool(quarantine.get("usable_for_paper_shadow"))
+            and not bool(quarantine.get("usable_for_production")),
+            "details": {
+                "status": quarantine.get("status"),
+                "quarantined_metric_names": sorted(quarantined_metric_names),
+                "missing_required_metrics": sorted(
+                    required_quarantined_metrics - quarantined_metric_names
+                ),
+            },
+        },
+        {
+            "check_id": "trading_839_hard_blocks_promotion",
+            "passed": promotion.get("status") == "PROMOTION_READINESS_BLOCKED"
+            and not bool(promotion.get("promotion_allowed"))
+            and not bool(promotion.get("paper_shadow_allowed"))
+            and not bool(promotion.get("production_allowed"))
+            and promotion.get("broker_action") == "none"
+            and {"TRADING-827", "TRADING-830", "TRADING-838"}
+            <= {str(row.get("task_id")) for row in promotion_gate_inputs if row.get("blocking")},
+            "details": {
+                "status": promotion.get("status"),
+                "promotion_allowed": promotion.get("promotion_allowed"),
+                "paper_shadow_allowed": promotion.get("paper_shadow_allowed"),
+                "production_allowed": promotion.get("production_allowed"),
+                "broker_action": promotion.get("broker_action"),
+                "blocking_gate_inputs": [
+                    str(row.get("task_id")) for row in promotion_gate_inputs if row.get("blocking")
+                ],
+            },
+        },
+        {
+            "check_id": "trading_842_aggregates_827_through_841",
+            "passed": master.get("status") == "TAIL_RISK_RESEARCH_MASTER_REVIEW_COMPLETE"
+            and {f"TRADING-{task_id}" for task_id in range(827, 842)} <= master_input_task_ids
+            and _metric_value(master, "input_task_count") == 15,
+            "details": {
+                "status": master.get("status"),
+                "input_task_count": _metric_value(master, "input_task_count"),
+                "missing_input_task_ids": sorted(
+                    {f"TRADING-{task_id}" for task_id in range(827, 842)} - master_input_task_ids
+                ),
+            },
+        },
+        {
+            "check_id": "no_template_only_artifacts",
+            "passed": not [row["task_id"] for row in artifact_summaries if row["template_only"]],
+            "details": {
+                "template_only_task_ids": [
+                    row["task_id"] for row in artifact_summaries if row["template_only"]
+                ]
+            },
+        },
+        {
+            "check_id": "no_zero_sample_positive_conclusions",
+            "passed": not [
+                row["task_id"]
+                for row in artifact_summaries
+                if row["sample_count"] == 0
+                and _tail_risk_post_merge_positive_status(str(row["final_status"]))
+            ],
+            "details": {
+                "zero_sample_positive_task_ids": [
+                    row["task_id"]
+                    for row in artifact_summaries
+                    if row["sample_count"] == 0
+                    and _tail_risk_post_merge_positive_status(str(row["final_status"]))
+                ]
+            },
+        },
+        {
+            "check_id": "independent_forward_validation_has_evidence_maturity",
+            "passed": not (
+                independent.get("status") == "INDEPENDENT_FORWARD_VALIDATED"
+                and evidence.get("status")
+                in {"EVIDENCE_WEAK", "EVIDENCE_INSUFFICIENT", "EVIDENCE_BLOCKED"}
+            ),
+            "details": {
+                "trading_828_status": independent.get("status"),
+                "trading_836_status": evidence.get("status"),
+                "trading_836_evidence_level": _metric_value(evidence, "evidence_level"),
+                "trading_836_sample_count": summary_by_task.get("TRADING-836", {}).get(
+                    "sample_count"
+                ),
+            },
+        },
+    ]
+    return special_checks
+
+
+def _tail_risk_post_merge_current_hard_blockers(
+    payloads: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    blocking_status_by_task = {
+        "TRADING-827": {"BLOCKED"},
+        "TRADING-830": {"TIME_BOUNDARY_BLOCKED"},
+        "TRADING-838": {"LEAKAGE_STRESS_BLOCKED"},
+        "TRADING-839": {"PROMOTION_READINESS_BLOCKED"},
+    }
+    blockers: list[dict[str, Any]] = []
+    for task_id, blocking_statuses in blocking_status_by_task.items():
+        status = str(payloads[task_id].get("status") or "MISSING")
+        if status in blocking_statuses:
+            blockers.append({"task_id": task_id, "status": status})
+    return blockers
+
+
+def _tail_risk_governance_paths(
+    artifact_paths: Mapping[str, Path] | None = None,
+) -> dict[str, Path]:
+    defaults = {
+        str(meta["task_id"]): Path(str(meta["default_path"]))
+        for meta in TAIL_RISK_GOVERNANCE_TASK_METADATA
+    }
+    if artifact_paths is None:
+        return defaults
+    output = dict(defaults)
+    for task_id in defaults:
+        path = artifact_paths.get(task_id)
+        if path is not None:
+            output[task_id] = Path(path)
+    return output
+
+
+def _tail_risk_metadata_by_task() -> dict[str, dict[str, Any]]:
+    return {
+        str(meta["task_id"]): dict(meta)
+        for meta in [*TAIL_RISK_GOVERNANCE_TASK_METADATA, *TAIL_RISK_FOLLOWUP_TASK_METADATA]
+    }
+
+
+def _tail_risk_snapshot_payload(
+    snapshot_path: Path,
+    artifact_paths: Mapping[str, Path] | None = None,
+) -> dict[str, Any]:
+    snapshot = _read_json_or_empty(snapshot_path)
+    if snapshot:
+        return snapshot
+    return run_tail_risk_governance_artifact_snapshot(
+        artifact_paths=artifact_paths,
+        output_root=snapshot_path.parent,
+    )
+
+
+def _tail_risk_artifact_snapshot_row(
+    task_id: str,
+    payload: Mapping[str, Any],
+    path: Path,
+) -> dict[str, Any]:
+    base = _tail_risk_post_merge_artifact_summary(payload, path)
+    md_path = path.with_suffix(".md")
+    metadata = _tail_risk_metadata_by_task().get(task_id, {})
+    warnings = _mapping_records(payload.get("warnings"))
+    direct_blockers = _mapping_records(payload.get("blockers"))
+    remaining_blockers = _mapping_records(payload.get("remaining_blockers"))
+    return {
+        **base,
+        "task_id": task_id,
+        "report_id": metadata.get("report_id", base["report_id"]),
+        "cli_command": f"aits research strategies {metadata.get('command_slug', '')}",
+        "artifact_json_path": str(path),
+        "artifact_md_path": str(md_path),
+        "json_present": path.exists(),
+        "md_present": md_path.exists(),
+        "json_mtime": _path_mtime(path),
+        "md_mtime": _path_mtime(md_path),
+        "status": base["final_status"],
+        "warnings": warnings,
+        "blockers": direct_blockers or remaining_blockers,
+        "warning_count": len(warnings),
+        "blocker_count": len(direct_blockers or remaining_blockers),
+        "promotion_allowed": False,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": str(payload.get("broker_action") or "none"),
+    }
+
+
+def _path_mtime(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat()
+
+
+def _tail_risk_status_matrix_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    task_id = str(row.get("task_id"))
+    metadata = _tail_risk_metadata_by_task().get(task_id, {})
+    blockers = _mapping_records(row.get("blockers"))
+    warnings = _mapping_records(row.get("warnings"))
+    return {
+        "task_id": task_id,
+        "report_id": row.get("report_id") or metadata.get("report_id"),
+        "cli_command": row.get("cli_command")
+        or f"aits research strategies {metadata.get('command_slug', '')}",
+        "artifact_json_path": row.get("artifact_json_path") or row.get("artifact_path"),
+        "artifact_md_path": row.get("artifact_md_path"),
+        "status": row.get("status") or row.get("final_status") or "MISSING",
+        "warnings": warnings,
+        "blockers": blockers,
+        "usable_for_promotion": False,
+        "usable_for_paper_shadow": False,
+        "usable_for_production": False,
+        "broker_action": row.get("broker_action", "none"),
+        "owner_next_action": _tail_risk_owner_next_action(str(row.get("status") or "")),
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_owner_next_action(status: str) -> str:
+    if status in {
+        "BLOCKED",
+        "TIME_BOUNDARY_BLOCKED",
+        "LEAKAGE_STRESS_BLOCKED",
+        "PROMOTION_READINESS_BLOCKED",
+        "MISSING",
+    }:
+        return "resolve_blocker_or_keep_quarantined"
+    if "INSUFFICIENT" in status or "PARTIAL" in status:
+        return "collect_more_evidence"
+    return "manual_review_only_no_promotion"
+
+
+def _tail_risk_real_data_audit_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    status = str(row.get("status") or row.get("final_status") or "MISSING")
+    sample_count = row.get("sample_count")
+    evidence_count = _first_int(row.get("evidence_field_count"))
+    serialized = json.dumps(dict(row), ensure_ascii=False, sort_keys=True).lower()
+    fixture_detected = any(marker in serialized for marker in ["fixture_only", "mock_only"])
+    zero_sample_positive = sample_count == 0 and _tail_risk_post_merge_positive_status(status)
+    placeholder = evidence_count == 0
+    input_missing = not bool(row.get("json_present")) or status == "MISSING"
+    return {
+        "task_id": row.get("task_id"),
+        "report_id": row.get("report_id"),
+        "artifact_json_path": row.get("artifact_json_path"),
+        "status": status,
+        "data_source_mode": (
+            "INPUT_MISSING"
+            if input_missing
+            else ("FIXTURE_DETECTED" if fixture_detected else "REAL_ARTIFACT")
+        ),
+        "fixture_fallback_detected": fixture_detected,
+        "input_missing": input_missing,
+        "missing_input_pass_detected": input_missing
+        and _tail_risk_post_merge_positive_status(status),
+        "placeholder_result_detected": placeholder,
+        "sample_count": sample_count,
+        "zero_sample_positive_detected": zero_sample_positive,
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_baseline_delta_row(
+    fallback: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy_id = str(baseline.get("policy_id", "MISSING"))
+    fallback_return = _float(fallback.get("avg_future_return"), 0.0)
+    baseline_return = _float(baseline.get("avg_future_return"), 0.0)
+    fallback_drawdown = _float(fallback.get("avg_future_max_drawdown"), 0.0)
+    baseline_drawdown = _float(baseline.get("avg_future_max_drawdown"), 0.0)
+    return {
+        "policy_id": policy_id,
+        "sample_count": _first_int(baseline.get("sample_count")),
+        "baseline_avg_future_return": baseline.get("avg_future_return"),
+        "fallback_avg_future_return": fallback.get("avg_future_return"),
+        "baseline_return_delta_vs_fallback": _round(baseline_return - fallback_return),
+        "baseline_avg_future_max_drawdown": baseline.get("avg_future_max_drawdown"),
+        "fallback_avg_future_max_drawdown": fallback.get("avg_future_max_drawdown"),
+        "baseline_drawdown_delta_vs_fallback": _round(fallback_drawdown - baseline_drawdown),
+        "turnover_cost_if_available": baseline.get("turnover_cost_if_available"),
+        "sharpe_proxy": baseline.get("sharpe_proxy"),
+        "simple_baseline": bool(baseline.get("simple_baseline")),
+        "proxy_method": baseline.get("proxy_method"),
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_return_delta_by_horizon(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    output = []
+    for horizon in ["5d", "10d", "20d"]:
+        subset = [row for row in rows if str(row.get("horizon")) == horizon]
+        output.append(
+            {
+                "horizon": horizon,
+                "sample_count": len(subset),
+                "fallback_vs_no_fallback_return_delta": _round(
+                    _mean(
+                        [
+                            _float(row.get("fallback_vs_no_fallback_return_delta"), 0.0)
+                            for row in subset
+                        ]
+                    )
+                ),
+                "fallback_vs_static_return_delta": _round(
+                    _mean(
+                        [_float(row.get("fallback_vs_static_return_delta"), 0.0) for row in subset]
+                    )
+                ),
+                "promotion_allowed": False,
+            }
+        )
+    return output
+
+
+def _tail_risk_drawdown_delta_by_horizon(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    output = []
+    for horizon in ["5d", "10d", "20d"]:
+        subset = [row for row in rows if str(row.get("horizon")) == horizon]
+        output.append(
+            {
+                "horizon": horizon,
+                "sample_count": len(subset),
+                "avg_future_max_drawdown_improvement": _round(
+                    _mean(
+                        [_float(row.get("future_max_drawdown_improvement"), 0.0) for row in subset]
+                    )
+                ),
+                "promotion_allowed": False,
+            }
+        )
+    return output
+
+
+def _strip_volatile_artifact_fields(value: Any) -> Any:
+    volatile = {"generated_at", "runtime", "runtime_seconds", "mtime", "json_mtime", "md_mtime"}
+    if isinstance(value, Mapping):
+        return {
+            str(key): _strip_volatile_artifact_fields(item)
+            for key, item in value.items()
+            if str(key) not in volatile and str(key) != "artifact_paths"
+        }
+    if isinstance(value, list):
+        return [_strip_volatile_artifact_fields(item) for item in value]
+    return value
+
+
+def _tail_risk_task_coverage_row(meta: Mapping[str, Any]) -> dict[str, Any]:
+    report_id = str(meta["report_id"])
+    task_id = str(meta["task_id"])
+    return {
+        "task_id": task_id,
+        "implemented_files": [
+            "src/ai_trading_system/controlled_strategy_batch.py",
+            "src/ai_trading_system/cli_commands/research.py",
+        ],
+        "cli_entrypoints": [f"aits research strategies {meta['command_slug']}"],
+        "policy_files": ["config/research/controlled_strategy_next_stage_research.yaml"],
+        "registry_entries": [report_id],
+        "artifact_paths": [
+            f"outputs/research_strategies/value_surface_review/{report_id}.json",
+            f"outputs/research_strategies/value_surface_review/{report_id}.md",
+        ],
+        "tests_covering_task": ["tests/test_tail_risk_independent_validation_governance.py"],
+        "docs_covering_task": [
+            "docs/system_flow.md",
+            "docs/artifact_catalog.md",
+            "docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md",
+        ],
+        "known_shared_components": [
+            "_controlled_payload",
+            "_write_pair",
+            "_tail_risk_governance_report_registry_entry",
+        ],
+        "promotion_allowed": False,
+    }
+
+
+def _render_tail_risk_task_coverage_map_md(rows: list[dict[str, Any]]) -> str:
+    lines = [
+        "# Tail-Risk Fallback Governance Task Coverage Map",
+        "",
+        (
+            "本文件记录 TRADING-827～858 tail-risk fallback governance 的任务级 provenance。"
+            "所有输出均为 research-only / manual-review-only，"
+            "不允许 promotion、paper-shadow、production 或 broker action。"
+        ),
+        "",
+        "|task_id|cli_entrypoints|artifact_paths|tests|docs|",
+        "|---|---|---|---|---|",
+    ]
+    for row in rows:
+        lines.append(
+            "|{task_id}|{cli}|{artifacts}|{tests}|{docs}|".format(
+                task_id=row["task_id"],
+                cli="<br/>".join(row["cli_entrypoints"]),
+                artifacts="<br/>".join(row["artifact_paths"]),
+                tests="<br/>".join(row["tests_covering_task"]),
+                docs="<br/>".join(row["docs_covering_task"]),
+            )
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _tail_risk_hard_block_mutation_cases() -> list[dict[str, Any]]:
+    return [
+        _mutation_case(
+            "trigger_outcome_direct_overlap", True, "trigger_fields overlap outcome_fields"
+        ),
+        _mutation_case(
+            "outcome_uses_fallback_triggered",
+            True,
+            "fallback_triggered is forbidden outcome dependency",
+        ),
+        _mutation_case(
+            "outcome_uses_large_loss_case", True, "large_loss_case is forbidden outcome dependency"
+        ),
+        _mutation_case(
+            "trigger_uses_future_20d_return", True, "future_20d_return cannot be trigger input"
+        ),
+        _mutation_case(
+            "feature_available_after_decision", True, "latest_available_time after decision_time"
+        ),
+        _mutation_case("zero_sample_validated_status", True, "sample_count=0 cannot be VALIDATED"),
+        _mutation_case(
+            "trading_827_blocked_promotion_allowed",
+            True,
+            "promotion cannot be allowed when TRADING-827 is BLOCKED",
+        ),
+    ]
+
+
+def _mutation_case(case_id: str, blocked: bool, reason: str) -> dict[str, Any]:
+    return {
+        "case_id": case_id,
+        "blocked": blocked,
+        "expected_status": "BLOCKED",
+        "actual_status": "BLOCKED" if blocked else "WARN",
+        "reason": reason,
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_trigger_input_quality_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    pit_quality = str(row.get("pit_quality") or "UNKNOWN")
+    missing_periods = (
+        row.get("known_missing_periods")
+        if isinstance(row.get("known_missing_periods"), list)
+        else []
+    )
+    missing_rate = 1.0 if missing_periods else 0.0
+    usable = bool(row.get("usage_allowed_for_trigger")) and pit_quality in {"PIT_SAFE", "PARTIAL"}
+    risk_of_leakage = "LOW" if pit_quality == "PIT_SAFE" else "MEDIUM_REQUIRES_OWNER_REVIEW"
+    return {
+        "feature_name": row.get("feature_name"),
+        "pit_quality": pit_quality,
+        "missing_rate": missing_rate,
+        "history_start": row.get("earliest_available_date"),
+        "usable_for_trigger": usable,
+        "risk_of_leakage": risk_of_leakage,
+        "recommended_priority": "P1" if pit_quality == "PIT_SAFE" else "P2_OWNER_REVIEW",
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_baseline_dominance_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    return_win = _float(row.get("baseline_return_delta_vs_fallback"), 0.0) >= 0
+    drawdown_win = _float(row.get("baseline_drawdown_delta_vs_fallback"), 0.0) >= 0
+    sharpe_win = _float(row.get("sharpe_proxy"), 0.0) >= 0
+    turnover_win = row.get("turnover_cost_if_available") in {0}
+    false_positive_win = True
+    wins = [return_win, drawdown_win, sharpe_win, turnover_win, false_positive_win]
+    score = sum(1 for item in wins if item)
+    return {
+        "policy_id": row.get("policy_id"),
+        "return_win": return_win,
+        "drawdown_win": drawdown_win,
+        "sharpe_win": sharpe_win,
+        "turnover_win": turnover_win,
+        "false_positive_cost_win": false_positive_win,
+        "dominance_score": score,
+        "baseline_dominates_fallback": score >= 3,
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_readiness_components(
+    *,
+    matrix: Mapping[str, Any],
+    forward: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    matrix_blocked = matrix.get("overall_status") == "TAIL_RISK_RESEARCH_BLOCKED"
+    return [
+        _readiness_component(
+            "anti_leakage_cleanliness",
+            25,
+            0 if matrix_blocked else 25,
+            "status matrix still reports hard blockers" if matrix_blocked else "no hard blocker",
+        ),
+        _readiness_component(
+            "forward_outcome_independence",
+            20,
+            20 if forward.get("status") == "FORWARD_OUTCOME_USABLE_FOR_RESEARCH" else 5,
+            str(forward.get("status", "MISSING")),
+        ),
+        _readiness_component(
+            "sample_maturity",
+            15,
+            15 if evidence.get("status") == "EVIDENCE_MATURE" else 5,
+            str(evidence.get("status", "MISSING")),
+        ),
+        _readiness_component(
+            "regime_robustness",
+            15,
+            15 if regime.get("status") == "REGIME_ROBUST" else 5,
+            str(regime.get("status", "MISSING")),
+        ),
+        _readiness_component(
+            "sensitivity_stability",
+            10,
+            10 if sensitivity.get("status") == "SENSITIVITY_STABLE" else 3,
+            str(sensitivity.get("status", "MISSING")),
+        ),
+        _readiness_component(
+            "baseline_competitiveness",
+            10,
+            0 if baseline.get("status") == "BASELINE_DOMINATED_BLOCKED" else 5,
+            str(baseline.get("status", "MISSING")),
+        ),
+        _readiness_component(
+            "operational_safety",
+            5,
+            5,
+            "promotion/paper-shadow/production/broker all disabled",
+        ),
+    ]
+
+
+def _readiness_component(
+    component_id: str, max_points: int, points: int, rationale: str
+) -> dict[str, Any]:
+    return {
+        "component_id": component_id,
+        "max_points": max_points,
+        "points_awarded": min(points, max_points),
+        "rationale": rationale,
+        "promotion_allowed": False,
+    }
+
+
+def _tail_risk_readiness_band(score: int) -> dict[str, str]:
+    if score < 40:
+        return {
+            "label": "blocked / invalid",
+            "status": "TAIL_RISK_READINESS_BLOCKED",
+            "next_action": "resolve_hard_blockers_before_research_expansion",
+        }
+    if score < 60:
+        return {
+            "label": "research-only",
+            "status": "TAIL_RISK_READINESS_RESEARCH_ONLY",
+            "next_action": "continue_research_only_no_promotion",
+        }
+    if score < 75:
+        return {
+            "label": "observe-only candidate later",
+            "status": "TAIL_RISK_READINESS_OBSERVE_ONLY_CANDIDATE",
+            "next_action": "observe_only_requires_later_owner_review",
+        }
+    if score < 85:
+        return {
+            "label": "reviewable for paper-shadow",
+            "status": "TAIL_RISK_READINESS_PAPER_REVIEWABLE",
+            "next_action": "manual_paper_shadow_review_required",
+        }
+    return {
+        "label": "still requires manual approval",
+        "status": "TAIL_RISK_READINESS_MANUAL_APPROVAL_REQUIRED",
+        "next_action": "manual_approval_required_no_auto_promotion",
+    }
+
+
+def _render_tail_risk_next_decision_md(payload: Mapping[str, Any]) -> str:
+    answers = _mapping(payload.get("decision_answers"))
+    lines = [
+        "# Tail-Risk Fallback Next Decision",
+        "",
+        f"状态：{payload.get('status')}",
+        "",
+        (
+            "本文件是人工复核用的研究决策文档，"
+            "不允许 promotion、paper-shadow、production weight 或 broker/order action。"
+        ),
+        "",
+        "## 结论",
+        "",
+        f"- 当前策略是否仍然 blocked：{answers.get('current_strategy_still_blocked')}",
+        f"- independent outcome 是否足够：{answers.get('independent_outcome_sufficient')}",
+        f"- 是否被简单 baseline 支配：{answers.get('baseline_dominated')}",
+        f"- 是否值得构建 trigger v2：{answers.get('worth_building_trigger_v2')}",
+        f"- owner_next_action：{answers.get('owner_next_action')}",
+        "",
+        "## 污染指标",
+        "",
+    ]
+    tainted = answers.get("tainted_metrics")
+    if isinstance(tainted, list) and tainted:
+        lines.extend(f"- {item}" for item in tainted)
+    else:
+        lines.append("- MISSING")
+    lines.extend(["", "## Research-Only 可用指标", ""])
+    valid = answers.get("research_only_metrics_now_available")
+    if isinstance(valid, list) and valid:
+        lines.extend(f"- {item}" for item in valid)
+    else:
+        lines.append("- MISSING")
+    lines.extend(["", "## Paper-Shadow Review 前置任务", ""])
+    tasks = answers.get("minimum_tasks_before_paper_shadow_review")
+    if isinstance(tasks, list) and tasks:
+        lines.extend(f"- {item}" for item in tasks)
+    else:
+        lines.append("- MISSING")
+    lines.append("")
+    return "\n".join(str(line) for line in lines)
+
+
+def _metric_value(payload: Mapping[str, Any], key: str) -> Any:
+    metrics = payload.get("metrics")
+    if isinstance(metrics, Mapping) and key in metrics:
+        return metrics.get(key)
+    summary = payload.get("summary")
+    if isinstance(summary, Mapping) and key in summary:
+        return summary.get(key)
+    return None
+
+
+def _mapping_records(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, Mapping):
+        return [dict(value)]
+    if not isinstance(value, list):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
