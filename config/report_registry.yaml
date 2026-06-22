@@ -12514,3 +12514,20 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: tail_risk_trigger_label_independence_audit
+    title: Tail-Risk Trigger/Label Independence Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-trigger-label-independence-audit
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_trigger_label_independence_audit.json
+      - outputs/research_strategies/value_surface_review/tail_risk_trigger_label_independence_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-827 should be regenerated after fallback trigger fields, label fields, derived trigger logic, or independent forward outcome definitions change.
+    owner_action: review_trigger_label_overlap_time_window_and_derived_dependency_matrices_before_trusting_tail_risk_return_metrics
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

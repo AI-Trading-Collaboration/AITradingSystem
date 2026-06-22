@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_826
+policy_id: controlled_strategy_research_next_stage_775_827
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -23,9 +23,11 @@ rationale: >
   coupling, perturb thresholds/lags/horizons/benchmarks/costs, segment by
   regime, and monitor forward maturity. TRADING-826 adds a read-only blocker
   diagnostic over the latest controlled review board and the TRADING-821 to
-  TRADING-825 input artifacts. This policy does not validate utility boundaries
-  and does not permit promotion, paper-shadow, production weight, or broker
-  changes.
+  TRADING-825 input artifacts. TRADING-827 adds a read-only trigger/label
+  independence audit to verify whether fallback trigger inputs also define
+  validation labels or share derived risk logic. This policy does not validate
+  utility boundaries and does not permit promotion, paper-shadow, production
+  weight, or broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -1024,3 +1026,62 @@ tail_risk_fallback_blocker_diagnostic:
     decoupling, more forward maturity, sensitivity investigation, or segment
     evidence collection, but it must never recommend promotion, paper-shadow,
     production weights, or broker action.
+tail_risk_trigger_label_independence_audit:
+  task_id: TRADING-827
+  owner_suggested_task_id: TRADING-826
+  read_only: true
+  trigger_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  trigger_derived_fields:
+    - tail_risk_signal_high
+    - fallback_triggered
+    - trigger_labels
+    - trigger_reason
+    - trigger_score
+  label_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  label_derived_fields:
+    - tail_risk_validation_label
+    - precision_recall_confusion_matrix
+    - future_outcome_after_maturity
+  validation_outcome_fields:
+    - selected_realized_net_return
+    - benchmark_realized_net_return
+    - delta_vs_benchmark
+    - missed_upside
+    - avoided_tail_loss
+    - fallback_precision
+    - fallback_recall
+    - confusion_matrix
+  independent_forward_outcome_fields:
+    - future_5d_max_drawdown
+    - future_10d_max_drawdown
+    - future_20d_max_drawdown
+    - future_20d_realized_vol
+    - future_20d_underperform_vs_static
+    - future_20d_recovery_failure
+    - future_gap_down_event
+  required_matrices:
+    - overlap_matrix
+    - time_window_matrix
+    - derived_dependency_matrix
+  block_on_direct_overlap: true
+  block_on_derived_overlap: true
+  require_trigger_decision_time_visible: true
+  require_label_after_decision_window: true
+  forbidden_recommendations:
+    - promotion
+    - paper_shadow
+    - production_weight_change
+    - broker_action
+  rationale: >
+    This read-only audit answers whether the fallback currently uses the same
+    risk definition to trigger fallback and validate it. If trigger and label
+    share core fields or derived logic, the audit must output BLOCKED and mark
+    return metrics as temporarily untrustworthy until independent forward
+    outcomes are validated.

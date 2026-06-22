@@ -872,6 +872,31 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "tail-risk-trigger-label-independence-audit",
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--precision-recall",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
+            ),
+            "--anti-leakage",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_anti_leakage_audit.json"),
+            "--forward-integration",
+            str(
+                tmp_path
+                / "cli_forward_tail"
+                / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -955,6 +980,7 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     ).exists()
     assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
     assert (tmp_path / "cli_warning" / "tail_risk_fallback_blocker_diagnostic.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1052,6 +1078,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "tail_risk_fallback_forward_maturity_scoreboard",
         "tail_risk_policy_controlled_review_board",
         "tail_risk_fallback_blocker_diagnostic",
+        "tail_risk_trigger_label_independence_audit",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1097,6 +1124,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "tail_risk_fallback_forward_maturity_scoreboard.json/md" in catalog
     assert "tail_risk_policy_controlled_review_board.json/md" in catalog
     assert "tail_risk_fallback_blocker_diagnostic.json/md" in catalog
+    assert "tail_risk_trigger_label_independence_audit.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1122,6 +1150,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-816～820" in system_flow
     assert "TRADING-821～825" in system_flow
     assert "TRADING-826" in system_flow
+    assert "TRADING-827" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1173,6 +1202,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies tail-risk-fallback-forward-maturity-scoreboard" in system_flow
     assert "aits research strategies tail-risk-policy-controlled-review-board" in system_flow
     assert "aits research strategies tail-risk-fallback-blocker-diagnostic" in system_flow
+    assert "aits research strategies tail-risk-trigger-label-independence-audit" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow

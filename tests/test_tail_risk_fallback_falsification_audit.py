@@ -15,6 +15,7 @@ from controlled_strategy_batch_helpers import (
     run_tail_risk_fallback_regime_segmented_robustness,
     run_tail_risk_fallback_threshold_sensitivity,
     run_tail_risk_policy_controlled_review_board,
+    run_tail_risk_trigger_label_independence_audit,
 )
 
 
@@ -213,3 +214,45 @@ def test_tail_risk_fallback_blocker_diagnostic_sorts_root_causes(
     ]
     assert all("promotion" not in payload["next_recommended_action"] for _ in [None])
     assert payload["report_registry_entry"]["report_id"] == "tail_risk_fallback_blocker_diagnostic"
+
+
+def test_tail_risk_trigger_label_independence_audit_blocks_shared_risk_definition(
+    tmp_path: Path,
+) -> None:
+    paths = _run_tail_risk_falsification_inputs(tmp_path)
+    payload = run_tail_risk_trigger_label_independence_audit(
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        precision_recall_path=paths["precision"],
+        anti_leakage_path=paths["anti_leakage"],
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "trigger_label_independence",
+    )
+
+    _assert_safety(payload)
+    assert payload["task_id"] == "TRADING-827"
+    assert payload["owner_suggested_task_id"] == "TRADING-826"
+    assert payload["status"] == "BLOCKED"
+    assert payload["summary"]["same_risk_definition_used_for_trigger_and_validation"] is True
+    assert payload["summary"]["return_metrics_temporarily_trustworthy"] is False
+    assert payload["overlap_matrix"]
+    assert payload["time_window_matrix"]
+    assert payload["derived_dependency_matrix"]
+    direct_overlap = {
+        row["trigger_field"] for row in payload["overlap_matrix"] if row["direct_field_overlap"]
+    }
+    assert {"large_loss_case", "tail_loss_case"} <= direct_overlap
+    assert any(
+        row["derived_field"] == "tail_risk_signal_high"
+        for row in payload["derived_dependency_matrix"]
+    )
+    assert any(
+        blocker["blocker"] == "trigger_label_direct_field_overlap"
+        for blocker in payload["blockers"]
+    )
+    assert payload["independence_answer"]["answer"] == "YES"
+    assert "promotion" not in payload["next_recommended_action"]
+    assert (
+        payload["report_registry_entry"]["report_id"]
+        == "tail_risk_trigger_label_independence_audit"
+    )

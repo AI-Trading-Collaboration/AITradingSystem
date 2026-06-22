@@ -57,6 +57,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_risk_opportunity_cost_upside_capture_review,
     run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
+    run_tail_risk_trigger_label_independence_audit,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,

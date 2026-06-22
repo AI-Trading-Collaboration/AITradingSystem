@@ -212,6 +212,9 @@ DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH = (
 DEFAULT_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC_PATH = (
     DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_fallback_blocker_diagnostic.json"
 )
+DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH = (
+    DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT / "tail_risk_trigger_label_independence_audit.json"
+)
 DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH = (
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT / "utility_boundary_ranking_policy_audit.json"
 )
@@ -4373,6 +4376,96 @@ def run_tail_risk_fallback_blocker_diagnostic(
         payload,
         output_root=output_root,
         artifact_id="tail_risk_fallback_blocker_diagnostic",
+    )
+    return payload
+
+
+def run_tail_risk_trigger_label_independence_audit(
+    *,
+    config_path: Path = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    classifier_path: Path = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness_path: Path = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall_path: Path = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    anti_leakage_path: Path = DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    forward_integration_path: Path = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Path = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_next_stage_config(config_path)
+    classifier = _read_json_or_empty(classifier_path)
+    robustness = _read_json_or_empty(robustness_path)
+    precision = _read_json_or_empty(precision_recall_path)
+    anti_leakage = _read_json_or_empty(anti_leakage_path)
+    forward = _read_json_or_empty(forward_integration_path)
+    audit = _tail_risk_trigger_label_independence_audit(
+        config=config,
+        classifier=classifier,
+        robustness=robustness,
+        precision=precision,
+        anti_leakage=anti_leakage,
+        forward=forward,
+    )
+    payload = _controlled_payload(
+        report_type="tail_risk_trigger_label_independence_audit",
+        title="Tail-risk fallback trigger/label independence audit",
+        status=audit["status"],
+        summary={
+            "task_id": "TRADING-827",
+            "owner_suggested_task_id": audit["owner_suggested_task_id"],
+            "audit_status": audit["status"],
+            "same_risk_definition_used_for_trigger_and_validation": audit[
+                "same_risk_definition_used_for_trigger_and_validation"
+            ],
+            "return_metrics_temporarily_trustworthy": audit[
+                "return_metrics_temporarily_trustworthy"
+            ],
+            "direct_overlap_count": audit["metrics"]["direct_overlap_count"],
+            "derived_overlap_count": audit["metrics"]["derived_overlap_count"],
+            "time_window_blocker_count": audit["metrics"]["time_window_blocker_count"],
+            "next_recommended_action": audit["next_recommended_action"],
+            **_summary_safety(),
+        },
+        task_id="TRADING-827",
+        owner_suggested_task_id=audit["owner_suggested_task_id"],
+        config_path=str(config_path),
+        policy_version=str(config.get("policy_id", "controlled_strategy_research_next_stage")),
+        heuristic_policy_version=_heuristic_policy_version(config),
+        trigger_label_independence_policy=_next_stage_section(
+            config, "tail_risk_trigger_label_independence_audit"
+        ),
+        input_artifacts={
+            "classifier": _artifact_status(classifier, classifier_path),
+            "robustness": _artifact_status(robustness, robustness_path),
+            "precision_recall": _artifact_status(precision, precision_recall_path),
+            "anti_leakage": _artifact_status(anti_leakage, anti_leakage_path),
+            "forward_integration": _artifact_status(forward, forward_integration_path),
+        },
+        input_config_hash=_stable_hash(
+            _next_stage_section(config, "tail_risk_trigger_label_independence_audit")
+        ),
+        data_window=audit["data_window"],
+        controlled_only=True,
+        promotion_gate_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_weight_change_allowed=False,
+        broker_action="none",
+        trigger_fields=audit["trigger_fields"],
+        label_outcome_fields=audit["label_outcome_fields"],
+        forward_outcome_fields=audit["forward_outcome_fields"],
+        overlap_matrix=audit["overlap_matrix"],
+        time_window_matrix=audit["time_window_matrix"],
+        derived_dependency_matrix=audit["derived_dependency_matrix"],
+        independence_answer=audit["independence_answer"],
+        report_registry_entry=audit["report_registry_entry"],
+        metrics=audit["metrics"],
+        warnings=audit["warnings"],
+        blockers=audit["blockers"],
+        next_recommended_action=audit["next_recommended_action"],
+        remaining_blockers=_common_blockers(),
+    )
+    _write_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="tail_risk_trigger_label_independence_audit",
     )
     return payload
 
@@ -10877,6 +10970,649 @@ def _tail_risk_blocker_report_registry_entry() -> dict[str, Any]:
             "tail_risk_fallback_blocker_diagnostic.json",
             "outputs/research_strategies/value_surface_review/"
             "tail_risk_fallback_blocker_diagnostic.md",
+        ],
+        "artifact_selection_policy": "latest_available",
+        "required_for_daily_reading": False,
+        "production_effect": "none",
+    }
+
+
+def _tail_risk_trigger_label_independence_audit(
+    *,
+    config: Mapping[str, Any],
+    classifier: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    precision: Mapping[str, Any],
+    anti_leakage: Mapping[str, Any],
+    forward: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _next_stage_section(config, "tail_risk_trigger_label_independence_audit")
+    anti_policy = _next_stage_section(config, "tail_risk_fallback_anti_leakage_audit")
+    precision_policy = _next_stage_section(
+        config, "tail_risk_fallback_trigger_precision_recall_audit"
+    )
+    trigger_fields = _policy_string_list(
+        policy,
+        "trigger_input_fields",
+        anti_policy.get(
+            "trigger_input_fields",
+            [
+                "large_loss_case",
+                "tail_loss_case",
+                "benchmark_underperformance_case",
+                "long_horizon_failure_case",
+            ],
+        ),
+    )
+    trigger_derived_fields = _policy_string_list(
+        policy,
+        "trigger_derived_fields",
+        [
+            "tail_risk_signal_high",
+            "fallback_triggered",
+            "trigger_labels",
+            "trigger_reason",
+            "trigger_score",
+        ],
+    )
+    label_fields = _policy_string_list(
+        policy,
+        "label_input_fields",
+        anti_policy.get(
+            "label_input_fields",
+            precision_policy.get(
+                "positive_label_fields",
+                ["large_loss_case", "tail_loss_case", "long_horizon_failure_case"],
+            ),
+        ),
+    )
+    validation_outcome_fields = _policy_string_list(
+        policy,
+        "validation_outcome_fields",
+        [
+            "selected_realized_net_return",
+            "benchmark_realized_net_return",
+            "delta_vs_benchmark",
+            "missed_upside",
+            "avoided_tail_loss",
+            "fallback_precision",
+            "fallback_recall",
+            "confusion_matrix",
+        ],
+    )
+    forward_outcome_fields = _policy_string_list(
+        policy,
+        "independent_forward_outcome_fields",
+        [
+            "future_5d_max_drawdown",
+            "future_10d_max_drawdown",
+            "future_20d_max_drawdown",
+            "future_20d_realized_vol",
+            "future_20d_underperform_vs_static",
+            "future_20d_recovery_failure",
+            "future_gap_down_event",
+        ],
+    )
+    label_derived_fields = _policy_string_list(
+        policy,
+        "label_derived_fields",
+        [
+            "tail_risk_validation_label",
+            "precision_recall_confusion_matrix",
+            "future_outcome_after_maturity",
+        ],
+    )
+    dependencies = _tail_risk_dependency_map(
+        trigger_fields=trigger_fields,
+        trigger_derived_fields=trigger_derived_fields,
+        label_fields=label_fields,
+        validation_outcome_fields=validation_outcome_fields,
+        forward_outcome_fields=forward_outcome_fields,
+        label_derived_fields=label_derived_fields,
+    )
+    overlap_matrix = _tail_risk_overlap_matrix(
+        trigger_fields=trigger_fields,
+        trigger_derived_fields=trigger_derived_fields,
+        label_fields=label_fields,
+        validation_outcome_fields=validation_outcome_fields,
+        forward_outcome_fields=forward_outcome_fields,
+        dependencies=dependencies,
+    )
+    time_window_matrix = _tail_risk_time_window_matrix(
+        trigger_fields=trigger_fields,
+        trigger_derived_fields=trigger_derived_fields,
+        label_fields=label_fields,
+        validation_outcome_fields=validation_outcome_fields,
+        forward_outcome_fields=forward_outcome_fields,
+        dependencies=dependencies,
+    )
+    derived_dependency_matrix = _tail_risk_derived_dependency_matrix(
+        trigger_fields=trigger_fields,
+        trigger_derived_fields=trigger_derived_fields,
+        label_fields=label_fields,
+        label_derived_fields=label_derived_fields,
+        forward_outcome_fields=forward_outcome_fields,
+        dependencies=dependencies,
+    )
+    direct_overlap_rows = [row for row in overlap_matrix if row["direct_field_overlap"]]
+    derived_overlap_rows = [row for row in overlap_matrix if row["derived_overlap"]]
+    time_window_blockers = [
+        row
+        for row in time_window_matrix
+        if row["field_role"].startswith("trigger") and not row["decision_time_visible"]
+    ]
+    derived_blockers = [row for row in derived_dependency_matrix if row["blocking"]]
+    status = (
+        "BLOCKED"
+        if direct_overlap_rows or derived_overlap_rows or time_window_blockers or derived_blockers
+        else "PASS"
+    )
+    same_definition = status == "BLOCKED"
+    blockers = []
+    if direct_overlap_rows:
+        blockers.append(
+            {
+                "blocker": "trigger_label_direct_field_overlap",
+                "shared_fields": sorted({row["trigger_field"] for row in direct_overlap_rows}),
+                "impact": "trigger inputs also define the validation label",
+                "promotion_gate_allowed": False,
+            }
+        )
+    if derived_overlap_rows or derived_blockers:
+        blockers.append(
+            {
+                "blocker": "trigger_label_shared_derived_logic",
+                "shared_core_fields": sorted(
+                    {
+                        field
+                        for row in derived_overlap_rows
+                        for field in row.get("shared_core_fields", [])
+                    }
+                ),
+                "impact": (
+                    "fallback trigger and validation label are built from the same risk cases"
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    if time_window_blockers:
+        blockers.append(
+            {
+                "blocker": "trigger_inputs_not_decision_time_visible",
+                "affected_fields": sorted({row["field_name"] for row in time_window_blockers}),
+                "impact": (
+                    "trigger depends on label-proxy fields not proven visible at decision_time"
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    warnings = [
+        {
+            "warning": "independent_forward_outcome_validation_not_yet_present",
+            "required_fields": forward_outcome_fields,
+            "impact": (
+                "return metrics and precision/recall remain diagnostic until objective "
+                "forward outcomes are validated"
+            ),
+            "promotion_gate_allowed": False,
+        }
+    ]
+    return {
+        "status": status,
+        "owner_suggested_task_id": str(policy.get("owner_suggested_task_id", "TRADING-826")),
+        "trigger_fields": {
+            "input_fields": trigger_fields,
+            "derived_fields": trigger_derived_fields,
+        },
+        "label_outcome_fields": {
+            "label_input_fields": label_fields,
+            "validation_outcome_fields": validation_outcome_fields,
+        },
+        "forward_outcome_fields": forward_outcome_fields,
+        "overlap_matrix": overlap_matrix,
+        "time_window_matrix": time_window_matrix,
+        "derived_dependency_matrix": derived_dependency_matrix,
+        "same_risk_definition_used_for_trigger_and_validation": same_definition,
+        "return_metrics_temporarily_trustworthy": not same_definition,
+        "independence_answer": {
+            "question": "current_strategy_uses_same_risk_definition_for_trigger_and_validation",
+            "answer": "YES" if same_definition else "NO",
+            "return_metrics_temporarily_trustworthy": not same_definition,
+            "reason": (
+                "Trigger and validation share core tail-risk case fields and derived "
+                "tail_risk_signal_high/fallback logic."
+                if same_definition
+                else "No direct or derived trigger/label overlap was detected."
+            ),
+            "promotion_gate_allowed": False,
+        },
+        "data_window": _tail_risk_independence_data_window(
+            robustness=robustness,
+            precision=precision,
+            anti_leakage=anti_leakage,
+            forward=forward,
+        ),
+        "report_registry_entry": _tail_risk_trigger_label_report_registry_entry(),
+        "metrics": {
+            "trigger_input_field_count": len(trigger_fields),
+            "trigger_derived_field_count": len(trigger_derived_fields),
+            "label_input_field_count": len(label_fields),
+            "validation_outcome_field_count": len(validation_outcome_fields),
+            "independent_forward_outcome_field_count": len(forward_outcome_fields),
+            "direct_overlap_count": len(direct_overlap_rows),
+            "derived_overlap_count": len(derived_overlap_rows),
+            "time_window_blocker_count": len(time_window_blockers),
+            "derived_blocker_count": len(derived_blockers),
+            "same_risk_definition_used_for_trigger_and_validation": same_definition,
+            "return_metrics_temporarily_trustworthy": not same_definition,
+            "promotion_gate_allowed": False,
+        },
+        "warnings": warnings,
+        "blockers": blockers,
+        "next_recommended_action": (
+            "define_independent_forward_outcome_validation_before_using_return_metrics"
+            if status == "BLOCKED"
+            else "continue_read_only_monitoring_without_promotion"
+        ),
+    }
+
+
+def _policy_string_list(policy: Mapping[str, Any], key: str, default: Any) -> list[str]:
+    raw = policy.get(key, default)
+    if not isinstance(raw, list):
+        raw = default if isinstance(default, list) else []
+    return [str(item) for item in raw if str(item)]
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    output: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            output.append(value)
+    return output
+
+
+def _tail_risk_dependency_map(
+    *,
+    trigger_fields: list[str],
+    trigger_derived_fields: list[str],
+    label_fields: list[str],
+    validation_outcome_fields: list[str],
+    forward_outcome_fields: list[str],
+    label_derived_fields: list[str],
+) -> dict[str, dict[str, Any]]:
+    dependencies: dict[str, dict[str, Any]] = {}
+    for field in trigger_fields:
+        dependencies[field] = {
+            "field_role": "trigger_input",
+            "derived_from": [field],
+            "core_fields": [field],
+        }
+    for field in label_fields:
+        dependencies.setdefault(
+            field,
+            {
+                "field_role": "label_input",
+                "derived_from": [field],
+                "core_fields": [field],
+            },
+        )
+    for field in validation_outcome_fields:
+        dependencies.setdefault(
+            field,
+            {
+                "field_role": "validation_outcome",
+                "derived_from": [field],
+                "core_fields": [field],
+            },
+        )
+    for field in forward_outcome_fields:
+        dependencies[field] = {
+            "field_role": "independent_forward_outcome_candidate",
+            "derived_from": [field],
+            "core_fields": [field],
+        }
+    derived_map = {
+        "tail_risk_signal_high": trigger_fields,
+        "fallback_triggered": ["tail_risk_signal_high"],
+        "trigger_labels": trigger_fields,
+        "trigger_reason": ["trigger_labels"],
+        "trigger_score": ["trigger_labels"],
+        "tail_risk_validation_label": label_fields,
+        "precision_recall_confusion_matrix": ["fallback_triggered", "tail_risk_validation_label"],
+        "future_outcome_after_maturity": forward_outcome_fields,
+        "expected_avoided_risk": ["trigger_labels"],
+    }
+    for field in [*trigger_derived_fields, *label_derived_fields, "expected_avoided_risk"]:
+        source_fields = [str(item) for item in derived_map.get(field, [])]
+        dependencies[field] = {
+            "field_role": "derived",
+            "derived_from": source_fields,
+            "core_fields": _tail_risk_dependency_core_fields(dependencies, source_fields),
+        }
+    return dependencies
+
+
+def _tail_risk_dependency_core_fields(
+    dependencies: Mapping[str, Mapping[str, Any]],
+    fields: list[str],
+) -> list[str]:
+    output: list[str] = []
+    for field in fields:
+        source = dependencies.get(field, {})
+        core_fields = source.get("core_fields") or [field]
+        output.extend(str(item) for item in core_fields)
+    return _unique_strings(output)
+
+
+def _tail_risk_overlap_matrix(
+    *,
+    trigger_fields: list[str],
+    trigger_derived_fields: list[str],
+    label_fields: list[str],
+    validation_outcome_fields: list[str],
+    forward_outcome_fields: list[str],
+    dependencies: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    trigger_all = [*trigger_fields, *trigger_derived_fields]
+    label_all = _unique_strings(
+        [*label_fields, *validation_outcome_fields, *forward_outcome_fields]
+    )
+    rows = []
+    label_core = set(label_fields)
+    for trigger_field in trigger_all:
+        trigger_core = set(dependencies.get(trigger_field, {}).get("core_fields", []))
+        for label_field in label_all:
+            label_source_core = set(dependencies.get(label_field, {}).get("core_fields", []))
+            shared_core = sorted(trigger_core & label_core & (label_source_core | {label_field}))
+            direct = trigger_field == label_field and label_field in label_fields
+            derived = bool(shared_core) and (trigger_field in trigger_derived_fields or not direct)
+            time_overlap = direct or bool(shared_core)
+            if direct:
+                overlap_type = "direct_field_overlap"
+            elif derived:
+                overlap_type = "shared_core_risk_definition"
+            elif time_overlap:
+                overlap_type = "time_window_overlap"
+            else:
+                overlap_type = "none"
+            severity = "CRITICAL" if direct or derived else ("MEDIUM" if time_overlap else "LOW")
+            rows.append(
+                {
+                    "trigger_field": trigger_field,
+                    "trigger_field_role": (
+                        "trigger_derived"
+                        if trigger_field in trigger_derived_fields
+                        else "trigger_input"
+                    ),
+                    "label_or_outcome_field": label_field,
+                    "label_or_outcome_role": _tail_risk_label_field_role(
+                        label_field=label_field,
+                        label_fields=label_fields,
+                        validation_outcome_fields=validation_outcome_fields,
+                    ),
+                    "direct_field_overlap": direct,
+                    "shared_core_fields": shared_core,
+                    "derived_overlap": derived,
+                    "time_window_overlap": time_overlap,
+                    "overlap_type": overlap_type,
+                    "severity": severity,
+                    "blocking": severity == "CRITICAL",
+                    "promotion_gate_allowed": False,
+                }
+            )
+    return rows
+
+
+def _tail_risk_label_field_role(
+    *,
+    label_field: str,
+    label_fields: list[str],
+    validation_outcome_fields: list[str],
+) -> str:
+    if label_field in label_fields:
+        return "label_input"
+    if label_field in validation_outcome_fields:
+        return "validation_outcome"
+    return "independent_forward_outcome_candidate"
+
+
+def _tail_risk_time_window_matrix(
+    *,
+    trigger_fields: list[str],
+    trigger_derived_fields: list[str],
+    label_fields: list[str],
+    validation_outcome_fields: list[str],
+    forward_outcome_fields: list[str],
+    dependencies: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for field in trigger_fields:
+        visible = not field.endswith("_case")
+        rows.append(
+            _tail_risk_time_window_row(
+                field_name=field,
+                field_role="trigger_input",
+                source_window=(
+                    "controlled_historical_label_proxy" if not visible else "decision_time_feature"
+                ),
+                expected_window="decision_time_or_earlier",
+                decision_time_visible=visible,
+                label_strictly_after_decision=False,
+                derived_from=[field],
+                blocking=not visible,
+            )
+        )
+    for field in trigger_derived_fields:
+        core_fields = [str(item) for item in dependencies.get(field, {}).get("core_fields", [])]
+        visible = not any(item.endswith("_case") for item in core_fields)
+        rows.append(
+            _tail_risk_time_window_row(
+                field_name=field,
+                field_role="trigger_derived",
+                source_window="derived_from_trigger_inputs",
+                expected_window="decision_time_or_earlier",
+                decision_time_visible=visible,
+                label_strictly_after_decision=False,
+                derived_from=[
+                    str(item) for item in dependencies.get(field, {}).get("derived_from", [])
+                ],
+                blocking=not visible,
+            )
+        )
+    for field in label_fields:
+        rows.append(
+            _tail_risk_time_window_row(
+                field_name=field,
+                field_role="label_input",
+                source_window="evaluation_or_forward_realized_label",
+                expected_window="strictly_after_decision_time",
+                decision_time_visible=False,
+                label_strictly_after_decision=False,
+                derived_from=[field],
+                blocking=field in trigger_fields,
+            )
+        )
+    for field in validation_outcome_fields:
+        rows.append(
+            _tail_risk_time_window_row(
+                field_name=field,
+                field_role="validation_outcome",
+                source_window="realized_evaluation_window",
+                expected_window="strictly_after_decision_time",
+                decision_time_visible=False,
+                label_strictly_after_decision=False,
+                derived_from=[field],
+                blocking=False,
+            )
+        )
+    for field in forward_outcome_fields:
+        rows.append(
+            _tail_risk_time_window_row(
+                field_name=field,
+                field_role="independent_forward_outcome_candidate",
+                source_window="forward_window_t_plus_1_to_t_plus_20",
+                expected_window="strictly_after_decision_time",
+                decision_time_visible=False,
+                label_strictly_after_decision=True,
+                derived_from=[field],
+                blocking=False,
+            )
+        )
+    return rows
+
+
+def _tail_risk_time_window_row(
+    *,
+    field_name: str,
+    field_role: str,
+    source_window: str,
+    expected_window: str,
+    decision_time_visible: bool,
+    label_strictly_after_decision: bool,
+    derived_from: list[str],
+    blocking: bool,
+) -> dict[str, Any]:
+    return {
+        "field_name": field_name,
+        "field_role": field_role,
+        "source_window": source_window,
+        "expected_window": expected_window,
+        "decision_time_visible": decision_time_visible,
+        "label_strictly_after_decision": label_strictly_after_decision,
+        "derived_from": derived_from,
+        "time_window_overlap": blocking,
+        "blocking": blocking,
+        "visibility_status": "PASS" if not blocking else "BLOCKING_TIME_WINDOW_OR_VISIBILITY_RISK",
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_derived_dependency_matrix(
+    *,
+    trigger_fields: list[str],
+    trigger_derived_fields: list[str],
+    label_fields: list[str],
+    label_derived_fields: list[str],
+    forward_outcome_fields: list[str],
+    dependencies: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    label_core = set(label_fields)
+    trigger_core = set(trigger_fields)
+    for field in trigger_derived_fields:
+        core_fields = [str(item) for item in dependencies.get(field, {}).get("core_fields", [])]
+        shared = sorted(set(core_fields) & label_core)
+        rows.append(
+            _tail_risk_derived_row(
+                derived_field=field,
+                dependency_role="trigger_derived",
+                derived_from=[
+                    str(item) for item in dependencies.get(field, {}).get("derived_from", [])
+                ],
+                core_fields=core_fields,
+                shared_with="tail_risk_validation_label" if shared else None,
+                shared_core_fields=shared,
+                shared_derived_logic=bool(shared),
+                blocking=bool(shared),
+            )
+        )
+    for field in label_derived_fields:
+        core_fields = [str(item) for item in dependencies.get(field, {}).get("core_fields", [])]
+        shared = sorted(set(core_fields) & trigger_core)
+        rows.append(
+            _tail_risk_derived_row(
+                derived_field=field,
+                dependency_role="label_or_validation_derived",
+                derived_from=[
+                    str(item) for item in dependencies.get(field, {}).get("derived_from", [])
+                ],
+                core_fields=core_fields,
+                shared_with="tail_risk_signal_high" if shared else None,
+                shared_core_fields=shared,
+                shared_derived_logic=bool(shared),
+                blocking=bool(shared),
+            )
+        )
+    rows.append(
+        _tail_risk_derived_row(
+            derived_field="independent_forward_outcome_validation",
+            dependency_role="planned_independent_validation",
+            derived_from=forward_outcome_fields,
+            core_fields=forward_outcome_fields,
+            shared_with=None,
+            shared_core_fields=[],
+            shared_derived_logic=False,
+            blocking=False,
+        )
+    )
+    return rows
+
+
+def _tail_risk_derived_row(
+    *,
+    derived_field: str,
+    dependency_role: str,
+    derived_from: list[str],
+    core_fields: list[str],
+    shared_with: str | None,
+    shared_core_fields: list[str],
+    shared_derived_logic: bool,
+    blocking: bool,
+) -> dict[str, Any]:
+    return {
+        "derived_field": derived_field,
+        "dependency_role": dependency_role,
+        "derived_from": derived_from,
+        "core_fields": core_fields,
+        "shared_with": shared_with,
+        "shared_core_fields": shared_core_fields,
+        "shared_derived_logic": shared_derived_logic,
+        "severity": "CRITICAL" if blocking else "LOW",
+        "blocking": blocking,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _tail_risk_independence_data_window(
+    *,
+    robustness: Mapping[str, Any],
+    precision: Mapping[str, Any],
+    anti_leakage: Mapping[str, Any],
+    forward: Mapping[str, Any],
+) -> dict[str, Any]:
+    for payload in [anti_leakage, precision, robustness, forward]:
+        data_window = payload.get("data_window")
+        if isinstance(data_window, Mapping):
+            return dict(data_window)
+        summary = payload.get("summary")
+        if isinstance(summary, Mapping) and summary.get("requested_date_range"):
+            return {
+                "date_start": AI_REGIME_START,
+                "date_end": "open",
+                "requested_date_range": summary.get("requested_date_range"),
+                "market_regime": "ai_after_chatgpt",
+            }
+    return {
+        "date_start": AI_REGIME_START,
+        "date_end": "open",
+        "requested_date_range": f"{AI_REGIME_START}..open",
+        "market_regime": "ai_after_chatgpt",
+    }
+
+
+def _tail_risk_trigger_label_report_registry_entry() -> dict[str, Any]:
+    return {
+        "report_id": "tail_risk_trigger_label_independence_audit",
+        "title": "Tail-Risk Trigger/Label Independence Audit",
+        "command": "aits research strategies tail-risk-trigger-label-independence-audit",
+        "artifact_globs": [
+            "outputs/research_strategies/value_surface_review/"
+            "tail_risk_trigger_label_independence_audit.json",
+            "outputs/research_strategies/value_surface_review/"
+            "tail_risk_trigger_label_independence_audit.md",
         ],
         "artifact_selection_policy": "latest_available",
         "required_for_daily_reading": False,

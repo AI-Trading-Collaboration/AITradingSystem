@@ -113,6 +113,7 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_risk_opportunity_cost_upside_capture_review,
     run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
+    run_tail_risk_trigger_label_independence_audit,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
     run_value_surface_controlled_expansion,
@@ -2474,6 +2475,51 @@ def strategies_tail_risk_fallback_blocker_diagnostic_command(
         )
     )
     _print_strategy_pilot_payload("Tail-risk fallback blocker diagnostic", payload)
+
+
+@strategies_app.command("tail-risk-trigger-label-independence-audit")
+def strategies_tail_risk_trigger_label_independence_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-827 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="Tail-loss classifier JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    precision_recall: Annotated[
+        Path,
+        typer.Option("--precision-recall", help="TRADING-817 precision/recall JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    anti_leakage: Annotated[
+        Path,
+        typer.Option("--anti-leakage", help="TRADING-822 anti-leakage JSON。"),
+    ] = DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
+    forward_integration: Annotated[
+        Path,
+        typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-827 independence audit 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_trigger_label_independence_audit(
+            config_path=config_path,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            precision_recall_path=precision_recall,
+            anti_leakage_path=anti_leakage,
+            forward_integration_path=forward_integration,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk trigger/label independence audit", payload)
 
 
 @strategy_pilot_app.command("readiness-board")
