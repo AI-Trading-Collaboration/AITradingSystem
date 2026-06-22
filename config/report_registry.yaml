@@ -12531,3 +12531,258 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: tail_risk_independent_forward_outcome_validation
+    title: Tail-Risk Independent Forward Outcome Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-independent-forward-outcome-validation
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_independent_forward_outcome_validation.json
+      - outputs/research_strategies/value_surface_review/tail_risk_independent_forward_outcome_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-828 should be regenerated after value-surface forward market path rows, classifier trigger labels, or independent outcome field policy changes.
+    owner_action: review_independent_forward_outcomes_before_interpreting_any_tail_risk_fallback_performance
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_forward_outcome_contract_audit
+    title: Tail-Risk Forward Outcome Contract Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-forward-outcome-contract-audit
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_forward_outcome_contract_audit.json
+      - outputs/research_strategies/value_surface_review/tail_risk_forward_outcome_contract_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-829 should be regenerated when trigger fields, outcome fields, dependency contracts, or decision-time windows change.
+    owner_action: review_outcome_contract_overlap_and_forbidden_dependency_matrix_before_using_forward_outcomes
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_decision_time_boundary_audit
+    title: Tail-Risk Decision-Time Boundary Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-decision-time-boundary-audit
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_decision_time_boundary_audit.json
+      - outputs/research_strategies/value_surface_review/tail_risk_decision_time_boundary_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-830 should be regenerated whenever trigger inputs, feature availability evidence, or rolling-window boundary policy changes.
+    owner_action: keep_tail_risk_fallback_quarantined_if_any_trigger_feature_is_not_decision_time_visible
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_tainted_metric_quarantine
+    title: Tail-Risk Tainted Metric Quarantine
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-tainted-metric-quarantine
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_tainted_metric_quarantine.json
+      - outputs/research_strategies/value_surface_review/tail_risk_tainted_metric_quarantine.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-831 should be regenerated after TRADING-827, precision/recall, robustness, or opportunity-cost artifacts change.
+    owner_action: treat_pre_independent_validation_precision_recall_return_and_hit_rate_metrics_as_unusable_for_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_fallback_counterfactual_validation
+    title: Tail-Risk Fallback Counterfactual Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-fallback-counterfactual-validation
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_counterfactual_validation.json
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_counterfactual_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-832 should be regenerated after independent forward outcome rows or baseline comparison policy changes.
+    owner_action: compare_fallback_policy_against_no_fallback_static_and_best_baselines_on_independent_outcomes_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_regime_stratified_forward_outcome_review
+    title: Tail-Risk Regime-Stratified Forward Outcome Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-regime-stratified-forward-outcome-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_regime_stratified_forward_outcome_review.json
+      - outputs/research_strategies/value_surface_review/tail_risk_regime_stratified_forward_outcome_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-833 should be regenerated after independent outcomes, counterfactual baselines, or regime segmentation logic changes.
+    owner_action: review_regime_concentration_and_unavailable_rate_or_liquidity_segments_before_calling_fallback_robust
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_threshold_sensitivity_review
+    title: Tail-Risk Threshold Sensitivity Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-threshold-sensitivity-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_threshold_sensitivity_review.json
+      - outputs/research_strategies/value_surface_review/tail_risk_threshold_sensitivity_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-834 should be regenerated after independent outcomes, counterfactual baselines, or sensitivity policy thresholds change.
+    owner_action: review_fragile_parameter_list_before_any_owner_review_of_tail_risk_fallback
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_fallback_error_cost_ledger
+    title: Tail-Risk Fallback Error Cost Ledger
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-fallback-error-cost-ledger
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_error_cost_ledger.json
+      - outputs/research_strategies/value_surface_review/tail_risk_fallback_error_cost_ledger.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-835 should be regenerated after independent outcome rows or false-positive/false-negative cost policy changes.
+    owner_action: review_false_positive_and_false_negative_cost_asymmetry_before_treating_fallback_as_useful
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_evidence_maturity_gate
+    title: Tail-Risk Evidence Maturity Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-evidence-maturity-gate
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_evidence_maturity_gate.json
+      - outputs/research_strategies/value_surface_review/tail_risk_evidence_maturity_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-836 should be regenerated after independent outcomes mature or regime-stratified sample coverage changes.
+    owner_action: cap_tail_risk_conclusions_to_evidence_level_and_sample_coverage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_forward_aging_tracker
+    title: Tail-Risk Forward Aging Tracker
+    group: research
+    cadence: daily
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-forward-aging-tracker
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_forward_aging_tracker.json
+      - outputs/research_strategies/value_surface_review/tail_risk_forward_aging_tracker.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-837 should be regenerated as forward records age from pending to 5d, 10d, and 20d mature outcomes.
+    owner_action: monitor_pending_and_matured_forward_outcomes_without_opening_paper_shadow_or_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_leakage_stress_suite
+    title: Tail-Risk Leakage Stress Suite
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-leakage-stress-suite
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_leakage_stress_suite.json
+      - outputs/research_strategies/value_surface_review/tail_risk_leakage_stress_suite.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-838 should be regenerated after trigger-label, outcome contract, decision-time boundary, or independent outcome validation changes.
+    owner_action: keep_tail_risk_fallback_quarantined_when_any_leakage_stress_test_is_blocked
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_promotion_readiness_gate
+    title: Tail-Risk Promotion Readiness Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-promotion-readiness-gate
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_promotion_readiness_gate.json
+      - outputs/research_strategies/value_surface_review/tail_risk_promotion_readiness_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-839 should be regenerated after any TRADING-827, 828, 829, 830, or 838 gate artifact changes.
+    owner_action: enforce_promotion_paper_shadow_production_and_broker_action_false_when_any_required_tail_risk_gate_blocks
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_independent_trigger_v2_builder
+    title: Tail-Risk Independent Trigger V2 Builder
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-independent-trigger-v2-builder
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_independent_trigger_v2_builder.json
+      - outputs/research_strategies/value_surface_review/tail_risk_independent_trigger_v2_builder.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-840 should be regenerated after selected value-surface cases, old boundary blockers, or trigger-v2 feature policy changes.
+    owner_action: review_candidate_trigger_v2_feature_dependencies_before_any_v2_validation_work
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_trigger_feature_availability_catalog
+    title: Tail-Risk Trigger Feature Availability Catalog
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-trigger-feature-availability-catalog
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_trigger_feature_availability_catalog.json
+      - outputs/research_strategies/value_surface_review/tail_risk_trigger_feature_availability_catalog.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-841 should be regenerated after trigger-v2 dependency rows or point-in-time feature availability evidence changes.
+    owner_action: resolve_partial_proxy_feature_availability_before_trigger_v2_backtests_or_owner_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: tail_risk_research_master_review
+    title: Tail-Risk Research Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tail-risk-research-master-review
+    artifact_globs:
+      - outputs/research_strategies/value_surface_review/tail_risk_research_master_review.json
+      - outputs/research_strategies/value_surface_review/tail_risk_research_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-842 should be regenerated after any TRADING-827 through TRADING-841 input artifact changes.
+    owner_action: choose_continue_research_rebuild_trigger_keep_quarantined_pause_or_deprecate_without_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

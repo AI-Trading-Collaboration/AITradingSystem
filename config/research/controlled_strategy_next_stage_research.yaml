@@ -1,5 +1,5 @@
 schema_version: "1.0"
-policy_id: controlled_strategy_research_next_stage_775_827
+policy_id: controlled_strategy_research_next_stage_775_842
 status: next_stage_controlled_baseline
 owner: research_governance
 heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
@@ -25,9 +25,11 @@ rationale: >
   diagnostic over the latest controlled review board and the TRADING-821 to
   TRADING-825 input artifacts. TRADING-827 adds a read-only trigger/label
   independence audit to verify whether fallback trigger inputs also define
-  validation labels or share derived risk logic. This policy does not validate
-  utility boundaries and does not permit promotion, paper-shadow, production
-  weight, or broker changes.
+  validation labels or share derived risk logic. TRADING-828 to TRADING-842
+  rebuild independent forward validation, quarantine tainted metrics, add
+  contract/boundary/leakage hard gates, and draft a non-promotional trigger v2
+  candidate path. This policy does not validate utility boundaries and does not
+  permit promotion, paper-shadow, production weight, or broker changes.
 controlled_scope:
   validation_only: true
   observe_only: true
@@ -1085,3 +1087,173 @@ tail_risk_trigger_label_independence_audit:
     share core fields or derived logic, the audit must output BLOCKED and mark
     return metrics as temporarily untrustworthy until independent forward
     outcomes are validated.
+tail_risk_independent_forward_outcome_validation:
+  task_id: TRADING-828
+  min_total_decision_count: 30
+  min_valid_20d_count: 20
+  outcome_fields:
+    - future_5d_return
+    - future_10d_return
+    - future_20d_return
+    - future_5d_max_drawdown
+    - future_10d_max_drawdown
+    - future_20d_max_drawdown
+    - future_20d_realized_vol
+    - future_20d_underperform_vs_static
+    - future_20d_recovery_failure
+    - future_gap_down_event
+  forbidden_outcome_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+    - tail_risk_signal_high
+    - fallback_triggered
+  rationale: >
+    Independent validation must use only post-decision market-path outcome
+    fields. Sample floors are conservative research-evidence floors, not
+    promotion gates or production thresholds.
+tail_risk_forward_outcome_contract_audit:
+  task_id: TRADING-829
+  block_on_direct_overlap: true
+  block_on_derived_overlap: true
+  block_on_forbidden_dependency: true
+  rationale: >
+    The contract audit prevents trigger fields, label cases, and future outcome
+    fields from sharing direct or derived dependencies. Passing this audit does
+    not permit promotion.
+tail_risk_decision_time_boundary_audit:
+  task_id: TRADING-830
+  rolling_window_rule: closed_at_decision_time
+  block_on_label_proxy_trigger_input: true
+  rationale: >
+    Trigger and policy inputs must be visible at decision_time. Historical
+    label proxy fields remain blocking until replaced by decision-time market
+    features.
+tail_risk_tainted_metric_quarantine:
+  task_id: TRADING-831
+  metric_status: TAINTED_BY_TRIGGER_LABEL_COUPLING
+  usable_for_promotion: false
+  usable_for_paper_shadow: false
+  usable_for_production: false
+  rationale: >
+    Metrics produced before independent forward validation are retained for
+    audit lineage but cannot support promotion, paper-shadow, or production.
+tail_risk_fallback_counterfactual_validation:
+  task_id: TRADING-832
+  min_sample_count: 30
+  comparison_policies:
+    - fallback_policy
+    - no_fallback_baseline
+    - static_allocation_baseline
+    - existing_best_baseline_if_available
+  rationale: >
+    Counterfactual comparison must use independent forward outcomes rather than
+    label hit rate. Status remains review-only.
+tail_risk_regime_stratified_forward_outcome_review:
+  task_id: TRADING-833
+  min_regime_sample_count: 20
+  concentration_score_floor: 0.60
+  rationale: >
+    Regime stratification checks sample concentration and mixed market states.
+    The concentration floor is an owner-review diagnostic threshold.
+tail_risk_threshold_sensitivity_review:
+  task_id: TRADING-834
+  fragile_degradation_floor: 0.02
+  perturbations:
+    trigger_threshold: [-0.10, -0.05, 0.05, 0.10]
+    risk_score_cutoff: [-0.10, -0.05, 0.05, 0.10]
+    lookback_window: [-0.20, 0.20]
+    fallback_allocation_intensity: [-0.10, 0.10]
+  rationale: >
+    Sensitivity perturbations are robustness diagnostics for review only. They
+    cannot update production trigger thresholds or fallback intensity.
+tail_risk_fallback_error_cost_ledger:
+  task_id: TRADING-835
+  min_sample_count: 30
+  unacceptable_asymmetry_floor: 3.0
+  rationale: >
+    Error-cost asymmetry quantifies false-positive and false-negative impact on
+    independent outcomes. The asymmetry floor is a triage threshold, not a
+    promotion rule.
+tail_risk_evidence_maturity_gate:
+  task_id: TRADING-836
+  initial_triggered_floor: 30
+  weak_triggered_floor: 60
+  moderate_triggered_floor: 100
+  regime_min_sample_floor: 20
+  rationale: >
+    Evidence maturity floors prevent over-strong conclusions from small samples.
+    They are conservative research-readiness floors only.
+tail_risk_forward_aging_tracker:
+  task_id: TRADING-837
+  horizons:
+    - 5d
+    - 10d
+    - 20d
+  rationale: >
+    Aging tracks pending and matured forward outcomes without creating
+    paper-shadow or production effects.
+tail_risk_leakage_stress_suite:
+  task_id: TRADING-838
+  required_tests:
+    - signal_lag_test
+    - label_permutation_test
+    - timestamp_boundary_test
+    - feature_availability_test
+    - forward_window_overlap_test
+    - trigger_outcome_overlap_test
+    - randomized_decision_time_test
+    - shuffled_outcome_sanity_test
+  rationale: >
+    Leakage stress tests are fail-closed safety checks. Any blocked stress test
+    keeps promotion and paper-shadow unavailable.
+tail_risk_promotion_readiness_gate:
+  task_id: TRADING-839
+  hard_block_statuses:
+    TRADING-827: BLOCKED
+    TRADING-828: INDEPENDENT_FORWARD_BLOCKED
+    TRADING-829: BLOCKED
+    TRADING-830: TIME_BOUNDARY_BLOCKED
+    TRADING-838: LEAKAGE_STRESS_BLOCKED
+  rationale: >
+    The readiness gate is a hard blocker integration. REVIEWABLE means manual
+    review only and never automatic promotion.
+tail_risk_independent_trigger_v2_builder:
+  task_id: TRADING-840
+  allowed_input_families:
+    - price_trend
+    - drawdown_from_recent_high
+    - realized_volatility
+    - volatility_expansion
+    - moving_average_distance
+    - market_breadth_proxy
+    - credit_liquidity_proxy
+    - vix_vxn_level_proxy
+  forbidden_inputs:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+    - future_outcome
+  rationale: >
+    Trigger v2 is a non-promotional candidate builder using decision-time
+    market features only. It does not repair or promote the old fallback by
+    itself.
+tail_risk_trigger_feature_availability_catalog:
+  task_id: TRADING-841
+  allow_partial_proxy_catalog: true
+  usage_allowed_for_outcome: false
+  rationale: >
+    The catalog documents feature availability and PIT quality. Partial proxy
+    features require owner review before any v2 validation.
+tail_risk_research_master_review:
+  task_id: TRADING-842
+  allowed_recommendations:
+    - CONTINUE_RESEARCH
+    - REBUILD_TRIGGER
+    - REBUILD_OUTCOME
+    - KEEP_QUARANTINED
+    - PAUSE_RESEARCH
+    - DEPRECATE_CANDIDATE
+  rationale: >
+    The master review aggregates 827 to 841 and recommends next research action
+    while preserving the no-promotion safety boundary.

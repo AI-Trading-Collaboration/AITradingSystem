@@ -52,13 +52,28 @@ from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_TAIL_RISK_ANTI_LEAKAGE_AUDIT_PATH,
     DEFAULT_TAIL_RISK_AUDIT_UNIVERSE_RECONCILIATION_PATH,
     DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    DEFAULT_TAIL_RISK_FALLBACK_ERROR_COST_LEDGER_PATH,
     DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    DEFAULT_TAIL_RISK_FORWARD_AGING_TRACKER_PATH,
     DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
     DEFAULT_TAIL_RISK_FORWARD_MATURITY_SCOREBOARD_PATH,
+    DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
     DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
     DEFAULT_TAIL_RISK_POLICY_CONTROLLED_REVIEW_BOARD_PATH,
+    DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
     DEFAULT_TAIL_RISK_REGIME_SEGMENTED_ROBUSTNESS_PATH,
+    DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
     DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_PATH,
+    DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_AUDIT_PATH,
     DEFAULT_UTILITY_BOUNDARY_OUTPUT_ROOT,
     DEFAULT_VALUE_SURFACE_DIRECTION_REVIEW_PATH,
@@ -102,17 +117,32 @@ from ai_trading_system.controlled_strategy_batch import (
     run_tail_loss_avoidance_classifier_prototype,
     run_tail_loss_guardrail_fallback_policy,
     run_tail_risk_benchmark_fallback_robustness_expansion,
+    run_tail_risk_decision_time_boundary_audit,
+    run_tail_risk_evidence_maturity_gate,
     run_tail_risk_fallback_anti_leakage_audit,
     run_tail_risk_fallback_audit_universe_reconciliation,
     run_tail_risk_fallback_blocker_diagnostic,
+    run_tail_risk_fallback_counterfactual_validation,
+    run_tail_risk_fallback_error_cost_ledger,
     run_tail_risk_fallback_forward_maturity_scoreboard,
     run_tail_risk_fallback_regime_segmented_robustness,
     run_tail_risk_fallback_threshold_sensitivity,
     run_tail_risk_fallback_trigger_precision_recall_audit,
+    run_tail_risk_forward_aging_tracker,
     run_tail_risk_forward_evidence_integration,
+    run_tail_risk_forward_outcome_contract_audit,
+    run_tail_risk_independent_forward_outcome_validation,
+    run_tail_risk_independent_trigger_v2_builder,
+    run_tail_risk_leakage_stress_suite,
     run_tail_risk_opportunity_cost_upside_capture_review,
     run_tail_risk_policy_controlled_review_board,
     run_tail_risk_policy_family_controlled_review,
+    run_tail_risk_promotion_readiness_gate,
+    run_tail_risk_regime_stratified_forward_outcome_review,
+    run_tail_risk_research_master_review,
+    run_tail_risk_tainted_metric_quarantine,
+    run_tail_risk_threshold_sensitivity_review,
+    run_tail_risk_trigger_feature_availability_catalog,
     run_tail_risk_trigger_label_independence_audit,
     run_utility_boundary_ranking_policy_audit,
     run_utility_ranking_robustness_pareto_audit,
@@ -2520,6 +2550,556 @@ def strategies_tail_risk_trigger_label_independence_audit_command(
         )
     )
     _print_strategy_pilot_payload("Tail-risk trigger/label independence audit", payload)
+
+
+@strategies_app.command("tail-risk-independent-forward-outcome-validation")
+def strategies_tail_risk_independent_forward_outcome_validation_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-828 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option("--value-surface-expansion", help="Value surface expansion JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    classifier: Annotated[
+        Path,
+        typer.Option("--classifier", help="Tail-loss classifier JSON。"),
+    ] = DEFAULT_TAIL_LOSS_AVOIDANCE_CLASSIFIER_PROTOTYPE_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-828 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_independent_forward_outcome_validation(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            classifier_path=classifier,
+            robustness_path=robustness,
+            trigger_label_audit_path=trigger_label_audit,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk independent forward outcome validation", payload)
+
+
+@strategies_app.command("tail-risk-forward-outcome-contract-audit")
+def strategies_tail_risk_forward_outcome_contract_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-829 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-829 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_forward_outcome_contract_audit(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            independent_forward_path=independent_forward,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk forward outcome contract audit", payload)
+
+
+@strategies_app.command("tail-risk-decision-time-boundary-audit")
+def strategies_tail_risk_decision_time_boundary_audit_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-830 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-830 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_decision_time_boundary_audit(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            contract_audit_path=contract_audit,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk decision-time boundary audit", payload)
+
+
+@strategies_app.command("tail-risk-tainted-metric-quarantine")
+def strategies_tail_risk_tainted_metric_quarantine_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-831 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    precision_recall: Annotated[
+        Path,
+        typer.Option("--precision-recall", help="TRADING-817 precision/recall JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_TRIGGER_PRECISION_RECALL_PATH,
+    robustness: Annotated[
+        Path,
+        typer.Option("--robustness", help="TRADING-816 robustness JSON。"),
+    ] = DEFAULT_TAIL_RISK_BENCHMARK_FALLBACK_ROBUSTNESS_PATH,
+    opportunity_cost: Annotated[
+        Path,
+        typer.Option("--opportunity-cost", help="TRADING-818 opportunity cost JSON。"),
+    ] = DEFAULT_TAIL_RISK_OPPORTUNITY_COST_UPSIDE_CAPTURE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-831 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_tainted_metric_quarantine(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            precision_recall_path=precision_recall,
+            robustness_path=robustness,
+            opportunity_cost_path=opportunity_cost,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk tainted metric quarantine", payload)
+
+
+@strategies_app.command("tail-risk-fallback-counterfactual-validation")
+def strategies_tail_risk_fallback_counterfactual_validation_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-832 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-832 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_counterfactual_validation(
+            config_path=config_path,
+            independent_forward_path=independent_forward,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback counterfactual validation", payload)
+
+
+@strategies_app.command("tail-risk-regime-stratified-forward-outcome-review")
+def strategies_tail_risk_regime_stratified_forward_outcome_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-833 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-833 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_regime_stratified_forward_outcome_review(
+            config_path=config_path,
+            independent_forward_path=independent_forward,
+            counterfactual_path=counterfactual,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk regime-stratified forward outcome review", payload)
+
+
+@strategies_app.command("tail-risk-threshold-sensitivity-review")
+def strategies_tail_risk_threshold_sensitivity_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-834 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-834 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_threshold_sensitivity_review(
+            config_path=config_path,
+            independent_forward_path=independent_forward,
+            counterfactual_path=counterfactual,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk threshold sensitivity review", payload)
+
+
+@strategies_app.command("tail-risk-fallback-error-cost-ledger")
+def strategies_tail_risk_fallback_error_cost_ledger_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-835 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-835 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_fallback_error_cost_ledger(
+            config_path=config_path,
+            independent_forward_path=independent_forward,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk fallback error cost ledger", payload)
+
+
+@strategies_app.command("tail-risk-evidence-maturity-gate")
+def strategies_tail_risk_evidence_maturity_gate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-836 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    regime_review: Annotated[
+        Path,
+        typer.Option("--regime-review", help="TRADING-833 regime review JSON。"),
+    ] = DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-836 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_evidence_maturity_gate(
+            config_path=config_path,
+            independent_forward_path=independent_forward,
+            regime_review_path=regime_review,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk evidence maturity gate", payload)
+
+
+@strategies_app.command("tail-risk-forward-aging-tracker")
+def strategies_tail_risk_forward_aging_tracker_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-837 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    forward_integration: Annotated[
+        Path,
+        typer.Option("--forward-integration", help="TRADING-819 forward integration JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_EVIDENCE_INTEGRATION_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    as_of_date: Annotated[
+        str | None,
+        typer.Option("--as-of-date", help="TRADING-837 aging tracker as-of date。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-837 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_forward_aging_tracker(
+            config_path=config_path,
+            forward_integration_path=forward_integration,
+            independent_forward_path=independent_forward,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of_date),
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk forward aging tracker", payload)
+
+
+@strategies_app.command("tail-risk-leakage-stress-suite")
+def strategies_tail_risk_leakage_stress_suite_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-838 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-838 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_leakage_stress_suite(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            independent_forward_path=independent_forward,
+            contract_audit_path=contract_audit,
+            boundary_audit_path=boundary_audit,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk leakage stress suite", payload)
+
+
+@strategies_app.command("tail-risk-promotion-readiness-gate")
+def strategies_tail_risk_promotion_readiness_gate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-839 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    leakage_stress: Annotated[
+        Path,
+        typer.Option("--leakage-stress", help="TRADING-838 leakage stress JSON。"),
+    ] = DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-839 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_promotion_readiness_gate(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            independent_forward_path=independent_forward,
+            contract_audit_path=contract_audit,
+            boundary_audit_path=boundary_audit,
+            leakage_stress_path=leakage_stress,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk promotion readiness gate", payload)
+
+
+@strategies_app.command("tail-risk-independent-trigger-v2-builder")
+def strategies_tail_risk_independent_trigger_v2_builder_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-840 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    value_surface_expansion: Annotated[
+        Path,
+        typer.Option("--value-surface-expansion", help="Value surface expansion JSON。"),
+    ] = DEFAULT_VALUE_SURFACE_EXPANSION_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-840 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_independent_trigger_v2_builder(
+            config_path=config_path,
+            value_surface_expansion_path=value_surface_expansion,
+            boundary_audit_path=boundary_audit,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk independent trigger v2 builder", payload)
+
+
+@strategies_app.command("tail-risk-trigger-feature-availability-catalog")
+def strategies_tail_risk_trigger_feature_availability_catalog_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-841 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_v2: Annotated[
+        Path,
+        typer.Option("--trigger-v2", help="TRADING-840 trigger v2 builder JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-841 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_trigger_feature_availability_catalog(
+            config_path=config_path,
+            trigger_v2_path=trigger_v2,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk trigger feature availability catalog", payload)
+
+
+@strategies_app.command("tail-risk-research-master-review")
+def strategies_tail_risk_research_master_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="TRADING-842 next-stage controlled config。"),
+    ] = DEFAULT_CONTROLLED_STRATEGY_NEXT_STAGE_CONFIG_PATH,
+    trigger_label_audit: Annotated[
+        Path,
+        typer.Option("--trigger-label-audit", help="TRADING-827 trigger/label audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT_PATH,
+    independent_forward: Annotated[
+        Path,
+        typer.Option("--independent-forward", help="TRADING-828 independent forward JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_FORWARD_OUTCOME_VALIDATION_PATH,
+    contract_audit: Annotated[
+        Path,
+        typer.Option("--contract-audit", help="TRADING-829 contract audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_OUTCOME_CONTRACT_AUDIT_PATH,
+    boundary_audit: Annotated[
+        Path,
+        typer.Option("--boundary-audit", help="TRADING-830 boundary audit JSON。"),
+    ] = DEFAULT_TAIL_RISK_DECISION_TIME_BOUNDARY_AUDIT_PATH,
+    quarantine: Annotated[
+        Path,
+        typer.Option("--quarantine", help="TRADING-831 quarantine JSON。"),
+    ] = DEFAULT_TAIL_RISK_TAINTED_METRIC_QUARANTINE_PATH,
+    counterfactual: Annotated[
+        Path,
+        typer.Option("--counterfactual", help="TRADING-832 counterfactual JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_COUNTERFACTUAL_VALIDATION_PATH,
+    regime_review: Annotated[
+        Path,
+        typer.Option("--regime-review", help="TRADING-833 regime review JSON。"),
+    ] = DEFAULT_TAIL_RISK_REGIME_STRATIFIED_FORWARD_OUTCOME_REVIEW_PATH,
+    sensitivity_review: Annotated[
+        Path,
+        typer.Option("--sensitivity-review", help="TRADING-834 sensitivity JSON。"),
+    ] = DEFAULT_TAIL_RISK_THRESHOLD_SENSITIVITY_REVIEW_PATH,
+    error_cost: Annotated[
+        Path,
+        typer.Option("--error-cost", help="TRADING-835 error cost JSON。"),
+    ] = DEFAULT_TAIL_RISK_FALLBACK_ERROR_COST_LEDGER_PATH,
+    evidence_gate: Annotated[
+        Path,
+        typer.Option("--evidence-gate", help="TRADING-836 evidence gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_EVIDENCE_MATURITY_GATE_PATH,
+    aging_tracker: Annotated[
+        Path,
+        typer.Option("--aging-tracker", help="TRADING-837 aging tracker JSON。"),
+    ] = DEFAULT_TAIL_RISK_FORWARD_AGING_TRACKER_PATH,
+    leakage_stress: Annotated[
+        Path,
+        typer.Option("--leakage-stress", help="TRADING-838 leakage stress JSON。"),
+    ] = DEFAULT_TAIL_RISK_LEAKAGE_STRESS_SUITE_PATH,
+    promotion_gate: Annotated[
+        Path,
+        typer.Option("--promotion-gate", help="TRADING-839 promotion gate JSON。"),
+    ] = DEFAULT_TAIL_RISK_PROMOTION_READINESS_GATE_PATH,
+    trigger_v2: Annotated[
+        Path,
+        typer.Option("--trigger-v2", help="TRADING-840 trigger v2 JSON。"),
+    ] = DEFAULT_TAIL_RISK_INDEPENDENT_TRIGGER_V2_BUILDER_PATH,
+    feature_catalog: Annotated[
+        Path,
+        typer.Option("--feature-catalog", help="TRADING-841 feature catalog JSON。"),
+    ] = DEFAULT_TAIL_RISK_TRIGGER_FEATURE_AVAILABILITY_CATALOG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="TRADING-842 输出目录。"),
+    ] = DEFAULT_VALUE_SURFACE_REVIEW_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_tail_risk_research_master_review(
+            config_path=config_path,
+            trigger_label_audit_path=trigger_label_audit,
+            independent_forward_path=independent_forward,
+            contract_audit_path=contract_audit,
+            boundary_audit_path=boundary_audit,
+            quarantine_path=quarantine,
+            counterfactual_path=counterfactual,
+            regime_review_path=regime_review,
+            sensitivity_review_path=sensitivity_review,
+            error_cost_path=error_cost,
+            evidence_gate_path=evidence_gate,
+            aging_tracker_path=aging_tracker,
+            leakage_stress_path=leakage_stress,
+            promotion_gate_path=promotion_gate,
+            trigger_v2_path=trigger_v2,
+            feature_catalog_path=feature_catalog,
+            output_root=output_root,
+        )
+    )
+    _print_strategy_pilot_payload("Tail-risk research master review", payload)
 
 
 @strategy_pilot_app.command("readiness-board")

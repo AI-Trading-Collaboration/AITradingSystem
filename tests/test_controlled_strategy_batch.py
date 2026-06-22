@@ -897,6 +897,225 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
         [
             "research",
+            "strategies",
+            "tail-risk-independent-forward-outcome-validation",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--classifier",
+            str(tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json"),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-forward-outcome-contract-audit",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-decision-time-boundary-audit",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--contract-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-tainted-metric-quarantine",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--precision-recall",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
+            ),
+            "--robustness",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
+            ),
+            "--opportunity-cost",
+            str(tmp_path / "cli_warning" / "tail_risk_opportunity_cost_upside_capture_review.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-counterfactual-validation",
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-regime-stratified-forward-outcome-review",
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--counterfactual",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_counterfactual_validation.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-threshold-sensitivity-review",
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--counterfactual",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_counterfactual_validation.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-fallback-error-cost-ledger",
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-evidence-maturity-gate",
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--regime-review",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_regime_stratified_forward_outcome_review.json"
+            ),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-forward-aging-tracker",
+            "--forward-integration",
+            str(
+                tmp_path
+                / "cli_forward_tail"
+                / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
+            ),
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--as-of-date",
+            TEST_AS_OF.isoformat(),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-leakage-stress-suite",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--contract-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json"),
+            "--boundary-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-promotion-readiness-gate",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--contract-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json"),
+            "--boundary-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json"),
+            "--leakage-stress",
+            str(tmp_path / "cli_warning" / "tail_risk_leakage_stress_suite.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-independent-trigger-v2-builder",
+            "--value-surface-expansion",
+            str(tmp_path / "cli_value_expansion" / "value_surface_controlled_expansion.json"),
+            "--boundary-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-trigger-feature-availability-catalog",
+            "--trigger-v2",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_trigger_v2_builder.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
+            "strategies",
+            "tail-risk-research-master-review",
+            "--trigger-label-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json"),
+            "--independent-forward",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"),
+            "--contract-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json"),
+            "--boundary-audit",
+            str(tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json"),
+            "--quarantine",
+            str(tmp_path / "cli_warning" / "tail_risk_tainted_metric_quarantine.json"),
+            "--counterfactual",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_counterfactual_validation.json"),
+            "--regime-review",
+            str(
+                tmp_path / "cli_warning" / "tail_risk_regime_stratified_forward_outcome_review.json"
+            ),
+            "--sensitivity-review",
+            str(tmp_path / "cli_warning" / "tail_risk_threshold_sensitivity_review.json"),
+            "--error-cost",
+            str(tmp_path / "cli_warning" / "tail_risk_fallback_error_cost_ledger.json"),
+            "--evidence-gate",
+            str(tmp_path / "cli_warning" / "tail_risk_evidence_maturity_gate.json"),
+            "--aging-tracker",
+            str(tmp_path / "cli_warning" / "tail_risk_forward_aging_tracker.json"),
+            "--leakage-stress",
+            str(tmp_path / "cli_warning" / "tail_risk_leakage_stress_suite.json"),
+            "--promotion-gate",
+            str(tmp_path / "cli_warning" / "tail_risk_promotion_readiness_gate.json"),
+            "--trigger-v2",
+            str(tmp_path / "cli_warning" / "tail_risk_independent_trigger_v2_builder.json"),
+            "--feature-catalog",
+            str(tmp_path / "cli_warning" / "tail_risk_trigger_feature_availability_catalog.json"),
+            "--output-root",
+            str(tmp_path / "cli_warning"),
+        ],
+        [
+            "research",
             "ops",
             "controlled-strategy-batch-review",
             "--value-surface",
@@ -981,6 +1200,27 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
     assert (tmp_path / "cli_warning" / "tail_risk_fallback_blocker_diagnostic.json").exists()
     assert (tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_tainted_metric_quarantine.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_fallback_counterfactual_validation.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_regime_stratified_forward_outcome_review.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_threshold_sensitivity_review.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_fallback_error_cost_ledger.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_evidence_maturity_gate.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_forward_aging_tracker.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_leakage_stress_suite.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_promotion_readiness_gate.json").exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_independent_trigger_v2_builder.json").exists()
+    assert (
+        tmp_path / "cli_warning" / "tail_risk_trigger_feature_availability_catalog.json"
+    ).exists()
+    assert (tmp_path / "cli_warning" / "tail_risk_research_master_review.json").exists()
     assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
     assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
     assert (
@@ -1013,6 +1253,7 @@ def test_controlled_strategy_batch_validation_tiers() -> None:
         "tests/test_controlled_strategy_candidate_batch.py",
         "tests/test_controlled_strategy_batch.py",
         "tests/test_tail_risk_fallback_falsification_audit.py",
+        "tests/test_tail_risk_independent_validation_governance.py",
     }
     assert controlled_strategy_paths.issubset(set(TIER_SPECS["fast-unit"].paths))
     assert controlled_strategy_paths.issubset(set(TIER_SPECS["contract-validation"].paths))
@@ -1079,6 +1320,21 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
         "tail_risk_policy_controlled_review_board",
         "tail_risk_fallback_blocker_diagnostic",
         "tail_risk_trigger_label_independence_audit",
+        "tail_risk_independent_forward_outcome_validation",
+        "tail_risk_forward_outcome_contract_audit",
+        "tail_risk_decision_time_boundary_audit",
+        "tail_risk_tainted_metric_quarantine",
+        "tail_risk_fallback_counterfactual_validation",
+        "tail_risk_regime_stratified_forward_outcome_review",
+        "tail_risk_threshold_sensitivity_review",
+        "tail_risk_fallback_error_cost_ledger",
+        "tail_risk_evidence_maturity_gate",
+        "tail_risk_forward_aging_tracker",
+        "tail_risk_leakage_stress_suite",
+        "tail_risk_promotion_readiness_gate",
+        "tail_risk_independent_trigger_v2_builder",
+        "tail_risk_trigger_feature_availability_catalog",
+        "tail_risk_research_master_review",
         "controlled_strategy_batch_review",
     }:
         assert report_id in report_ids
@@ -1125,6 +1381,21 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "tail_risk_policy_controlled_review_board.json/md" in catalog
     assert "tail_risk_fallback_blocker_diagnostic.json/md" in catalog
     assert "tail_risk_trigger_label_independence_audit.json/md" in catalog
+    assert "tail_risk_independent_forward_outcome_validation.json/md" in catalog
+    assert "tail_risk_forward_outcome_contract_audit.json/md" in catalog
+    assert "tail_risk_decision_time_boundary_audit.json/md" in catalog
+    assert "tail_risk_tainted_metric_quarantine.json/md" in catalog
+    assert "tail_risk_fallback_counterfactual_validation.json/md" in catalog
+    assert "tail_risk_regime_stratified_forward_outcome_review.json/md" in catalog
+    assert "tail_risk_threshold_sensitivity_review.json/md" in catalog
+    assert "tail_risk_fallback_error_cost_ledger.json/md" in catalog
+    assert "tail_risk_evidence_maturity_gate.json/md" in catalog
+    assert "tail_risk_forward_aging_tracker.json/md" in catalog
+    assert "tail_risk_leakage_stress_suite.json/md" in catalog
+    assert "tail_risk_promotion_readiness_gate.json/md" in catalog
+    assert "tail_risk_independent_trigger_v2_builder.json/md" in catalog
+    assert "tail_risk_trigger_feature_availability_catalog.json/md" in catalog
+    assert "tail_risk_research_master_review.json/md" in catalog
     assert "value_surface_utility_pareto_ranking_review.json/md" in catalog
     assert "horizon_cliff_utility_ranking_stabilization_review.json/md" in catalog
     assert "forward_evidence_maturity_tracker.json/md" in catalog
@@ -1151,6 +1422,7 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "TRADING-821～825" in system_flow
     assert "TRADING-826" in system_flow
     assert "TRADING-827" in system_flow
+    assert "TRADING-828～842" in system_flow
     assert "aits research strategies value-surface-controlled-prototype" in system_flow
     assert "aits research strategies value-surface-controlled-expansion" in system_flow
     assert "aits research strategies value-surface-warning-triage-review" in system_flow
@@ -1203,6 +1475,25 @@ def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:
     assert "aits research strategies tail-risk-policy-controlled-review-board" in system_flow
     assert "aits research strategies tail-risk-fallback-blocker-diagnostic" in system_flow
     assert "aits research strategies tail-risk-trigger-label-independence-audit" in system_flow
+    assert (
+        "aits research strategies tail-risk-independent-forward-outcome-validation" in system_flow
+    )
+    assert "aits research strategies tail-risk-forward-outcome-contract-audit" in system_flow
+    assert "aits research strategies tail-risk-decision-time-boundary-audit" in system_flow
+    assert "aits research strategies tail-risk-tainted-metric-quarantine" in system_flow
+    assert "aits research strategies tail-risk-fallback-counterfactual-validation" in system_flow
+    assert (
+        "aits research strategies tail-risk-regime-stratified-forward-outcome-review" in system_flow
+    )
+    assert "aits research strategies tail-risk-threshold-sensitivity-review" in system_flow
+    assert "aits research strategies tail-risk-fallback-error-cost-ledger" in system_flow
+    assert "aits research strategies tail-risk-evidence-maturity-gate" in system_flow
+    assert "aits research strategies tail-risk-forward-aging-tracker" in system_flow
+    assert "aits research strategies tail-risk-leakage-stress-suite" in system_flow
+    assert "aits research strategies tail-risk-promotion-readiness-gate" in system_flow
+    assert "aits research strategies tail-risk-independent-trigger-v2-builder" in system_flow
+    assert "aits research strategies tail-risk-trigger-feature-availability-catalog" in system_flow
+    assert "aits research strategies tail-risk-research-master-review" in system_flow
     assert "aits research strategies value-surface-utility-pareto-ranking-review" in system_flow
     assert (
         "aits research strategies horizon-cliff-utility-ranking-stabilization-review" in system_flow
