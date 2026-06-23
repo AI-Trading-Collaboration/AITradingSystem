@@ -213,6 +213,8 @@ def test_configured_price_tickers_defaults_to_core_universe() -> None:
         "SOXX",
         "TLT",
         "SHY",
+        "TQQQ",
+        "SGOV",
         "^VIX",
         "MSFT",
         "GOOG",

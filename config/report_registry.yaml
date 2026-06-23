@@ -13722,3 +13722,231 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: simple_baseline_data_source_inventory
+    title: Simple Baseline Data Source Inventory
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-data-source-inventory
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_data_source_inventory.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_data_source_inventory.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-911 should be regenerated after QQQ/TQQQ/SGOV cache, secondary source, or manifest changes.
+    owner_action: review_simple_baseline_data_source_inventory_before_repair
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: tqqq_cache_rebuild_validation
+    title: TQQQ Cache Rebuild Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tqqq-cache-rebuild-and-validation
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/tqqq_cache_rebuild_validation.json
+      - outputs/research_strategies/simple_baselines/tqqq_cache_rebuild_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-912 should be regenerated after TQQQ primary cache repair or validate-data policy changes.
+    owner_action: review_tqqq_repair_manifest_and_validate_data_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: sgov_total_return_data_contract
+    title: SGOV Total-Return Data Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies sgov-total-return-data-contract
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/sgov_total_return_data_contract.json
+      - outputs/research_strategies/simple_baselines/sgov_total_return_data_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-913 defines SGOV adjusted-close / total-return interpretation before QQQ/SGOV conclusions.
+    owner_action: review_sgov_total_return_contract_before_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: market_data_repair_manifest_audit
+    title: Market Data Repair Manifest Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies market-data-repair-manifest-audit
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/market_data_repair_manifest_audit.json
+      - outputs/research_strategies/simple_baselines/market_data_repair_manifest_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-914 should be regenerated after QQQ/TQQQ/SGOV manifest or repair output changes.
+    owner_action: review_manifest_audit_before_interpreting_repaired_cache
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_validate_data_hardening
+    title: Simple Baseline Validate-Data Hardening
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-validate-data-hardening
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_validate_data_hardening.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_validate_data_hardening.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-915 classifies critical vs optional simple baseline data quality blockers.
+    owner_action: stop_or_warn_by_strategy_group_before_post_repair_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_post_data_repair_real_run
+    title: Simple Baseline Post-Data-Repair Real Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies rerun-simple-baseline-real-cli-after-data-repair
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_post_data_repair_real_run.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_post_data_repair_real_run.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-916 reruns 865-910 after data repair without writing a formal first observation.
+    owner_action: review_post_repair_real_run_before_readiness_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_result_recompute_after_data_repair
+    title: Equal-Risk Result Recompute After Data Repair
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-result-recompute-after-data-repair
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_result_recompute_after_data_repair.json
+      - outputs/research_strategies/simple_baselines/equal_risk_result_recompute_after_data_repair.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-917 compares equal-risk metrics before and after cache repair.
+    owner_action: review_equal_risk_rank_and_metric_delta_after_repair
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: tqqq_challenger_revalidation_after_cache_fix
+    title: TQQQ Challenger Revalidation After Cache Fix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies tqqq-challenger-revalidation-after-cache-fix
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/tqqq_challenger_revalidation_after_cache_fix.json
+      - outputs/research_strategies/simple_baselines/tqqq_challenger_revalidation_after_cache_fix.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-918 revalidates dyn_tqqq_capped_trend after TQQQ cache repair.
+    owner_action: keep_tqqq_challenger_paused_unless_owner_reopens_later
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: forward_aging_unblock_readiness_review
+    title: Forward-Aging Unblock Readiness Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies forward-aging-unblock-readiness-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/forward_aging_unblock_readiness_review.json
+      - outputs/research_strategies/simple_baselines/forward_aging_unblock_readiness_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-919 gates research-only forward aging after data repair and policy locks.
+    owner_action: review_readiness_before_any_forward_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_forward_aging_observation_dry_run
+    title: First Forward-Aging Observation Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies first-forward-aging-observation-dry-run
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/first_forward_aging_observation_dry_run.json
+      - outputs/research_strategies/simple_baselines/first_forward_aging_observation_dry_run.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-920 validates first observation inputs without writing the formal observation artifact.
+    owner_action: review_dry_run_before_formal_observation_write
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: reader_brief_forward_aging_safe_preview
+    title: Reader Brief Forward-Aging Safe Preview
+    group: research
+    cadence: ad_hoc
+    audience: investor
+    owner: research_governance
+    command: aits research strategies reader-brief-forward-aging-safe-preview
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/reader_brief_forward_aging_safe_preview.json
+      - outputs/research_strategies/simple_baselines/reader_brief_forward_aging_safe_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-921 previews minimal Reader Brief wording and forbids trading recommendation phrases.
+    owner_action: review_reader_brief_preview_as_research_only
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: data_repair_owner_decision_pack
+    title: Data Repair Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies data-repair-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/data_repair_owner_decision_pack.json
+      - outputs/research_strategies/simple_baselines/data_repair_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: TRADING-922 summarizes owner questions and final forward-aging approval boundary.
+    owner_action: decide_forward_aging_after_data_repair_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

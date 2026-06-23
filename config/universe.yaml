@@ -8,6 +8,9 @@ market:
   defensive:
     - TLT
     - SHY
+  simple_baseline_research:
+    - TQQQ
+    - SGOV
 
 macro:
   volatility:

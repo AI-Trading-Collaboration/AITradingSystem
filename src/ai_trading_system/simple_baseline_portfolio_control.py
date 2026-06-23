@@ -148,6 +148,7 @@ def run_qqq_sgov_baseline_backtest(
         rates_path=rates_path,
         config=config,
         as_of_date=as_of_date,
+        expected_tickers=["QQQ", "SGOV"],
     )
     if not data_gate["passed"]:
         payload = _blocked_data_payload(
@@ -170,6 +171,7 @@ def run_qqq_sgov_baseline_backtest(
         config=config,
         start_date=start_date,
         end_date=end_date,
+        required_tickers=["QQQ", "SGOV"],
     )
     status = "QQQ_SGOV_BASELINE_READY" if results else "QQQ_SGOV_BASELINE_INCONCLUSIVE"
     payload = _payload(
@@ -1174,13 +1176,13 @@ def _data_quality_gate(
     rates_path: Path,
     config: Mapping[str, Any],
     as_of_date: date | None,
+    expected_tickers: list[str] | None = None,
 ) -> dict[str, Any]:
     resolved_as_of = as_of_date or _max_price_date(prices_path)
-    expected_tickers = _required_tickers(config)
     report = validate_data_cache(
         prices_path=prices_path,
         rates_path=rates_path,
-        expected_price_tickers=expected_tickers,
+        expected_price_tickers=expected_tickers or _required_tickers(config),
         expected_rate_series=_required_rate_series(config),
         quality_config=load_data_quality(),
         as_of=resolved_as_of,
@@ -1245,8 +1247,9 @@ def _run_backtest_set(
     start_date: date,
     end_date: date | None,
     cost_bps: float = 0.0,
+    required_tickers: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    prices = _load_price_matrix(prices_path, _required_tickers(config))
+    prices = _load_price_matrix(prices_path, required_tickers or _required_tickers(config))
     prices = _slice_prices(prices, start_date=start_date, end_date=end_date)
     annualization = _research_policy_int(config, "annualization_trading_days")
     results = []

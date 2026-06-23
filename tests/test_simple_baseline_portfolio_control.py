@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import math
 from datetime import date, timedelta
@@ -22,6 +23,20 @@ from ai_trading_system.simple_baseline_candidate_validation import (
     run_simple_baseline_period_split_validation,
     run_simple_baseline_watchlist_owner_decision,
     run_tqqq_heavy_pause_rationale_report,
+)
+from ai_trading_system.simple_baseline_data_repair import (
+    run_data_repair_owner_decision_pack,
+    run_equal_risk_result_recompute_after_data_repair,
+    run_first_forward_aging_observation_dry_run,
+    run_forward_aging_unblock_readiness_review,
+    run_market_data_repair_manifest_audit,
+    run_reader_brief_forward_aging_safe_preview,
+    run_sgov_total_return_data_contract,
+    run_simple_baseline_data_source_inventory,
+    run_simple_baseline_post_data_repair_real_run,
+    run_simple_baseline_validate_data_hardening,
+    run_tqqq_cache_rebuild_validation,
+    run_tqqq_challenger_revalidation_after_cache_fix,
 )
 from ai_trading_system.simple_baseline_forward_aging import (
     run_daily_reader_forward_aging_summary,
@@ -100,6 +115,20 @@ FORWARD_AGING_REPORT_IDS = {
     "simple_baseline_forward_aging_owner_review_pack",
     "simple_baseline_forward_aging_automation_readiness",
     "simple_baseline_forward_aging_master_review",
+}
+DATA_REPAIR_REPORT_IDS = {
+    "simple_baseline_data_source_inventory",
+    "tqqq_cache_rebuild_validation",
+    "sgov_total_return_data_contract",
+    "market_data_repair_manifest_audit",
+    "simple_baseline_validate_data_hardening",
+    "simple_baseline_post_data_repair_real_run",
+    "equal_risk_result_recompute_after_data_repair",
+    "tqqq_challenger_revalidation_after_cache_fix",
+    "forward_aging_unblock_readiness_review",
+    "first_forward_aging_observation_dry_run",
+    "reader_brief_forward_aging_safe_preview",
+    "data_repair_owner_decision_pack",
 }
 
 
@@ -284,6 +313,7 @@ def test_simple_baseline_research_functions_write_auditable_artifacts(tmp_path: 
 
 def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    manifest_path = _write_simple_baseline_manifest(tmp_path, prices_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
     docs_path = tmp_path / "docs" / "research" / "simple_baseline_master_review.md"
     runner = CliRunner()
@@ -300,6 +330,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         "--output-root",
         str(output_root),
     ]
+    manifest_args = ["--manifest-path", str(manifest_path)]
     commands = [
         [
             "research",
@@ -487,10 +518,45 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     for command in forward_commands:
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
+    repair_commands = [
+        [
+            "research",
+            "strategies",
+            "simple-baseline-data-source-inventory",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            *manifest_args,
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "tqqq-cache-rebuild-and-validation",
+            *data_args,
+            *manifest_args,
+            "--no-execute-repair",
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-validate-data-hardening",
+            *data_args,
+            *manifest_args,
+        ],
+    ]
+    for command in repair_commands:
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0, result.output
 
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     registered = {item["report_id"] for item in registry["reports"]}
-    assert SIMPLE_BASELINE_REPORT_IDS | FORWARD_AGING_REPORT_IDS <= registered
+    expected_registry_ids = (
+        SIMPLE_BASELINE_REPORT_IDS | FORWARD_AGING_REPORT_IDS | DATA_REPAIR_REPORT_IDS
+    )
+    assert expected_registry_ids <= registered
     daily_entry = next(
         item
         for item in registry["reports"]
@@ -638,6 +704,199 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
 
+def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    manifest_path = _write_simple_baseline_manifest(tmp_path, prices_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+    _write_simple_baseline_prerequisites(
+        prices_path=prices_path,
+        marketstack_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        docs_root=tmp_path / "docs" / "research",
+    )
+
+    inventory = run_simple_baseline_data_source_inventory(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    tqqq_rebuild = run_tqqq_cache_rebuild_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        execute_repair=False,
+    )
+    sgov_contract = run_sgov_total_return_data_contract(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    manifest_audit = run_market_data_repair_manifest_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    hardening = run_simple_baseline_validate_data_hardening(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    post_run = run_simple_baseline_post_data_repair_real_run(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        docs_root=tmp_path / "docs" / "research",
+        as_of_date=TEST_AS_OF,
+    )
+    equal_recompute = run_equal_risk_result_recompute_after_data_repair(
+        prices_path=prices_path,
+        output_root=output_root,
+    )
+    challenger = run_tqqq_challenger_revalidation_after_cache_fix(
+        prices_path=prices_path,
+        output_root=output_root,
+    )
+    readiness = run_forward_aging_unblock_readiness_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    dry_run = run_first_forward_aging_observation_dry_run(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
+    preview = run_reader_brief_forward_aging_safe_preview(output_root=output_root)
+    owner_pack = run_data_repair_owner_decision_pack(output_root=output_root)
+
+    payloads = [
+        inventory,
+        tqqq_rebuild,
+        sgov_contract,
+        manifest_audit,
+        hardening,
+        post_run,
+        equal_recompute,
+        challenger,
+        readiness,
+        dry_run,
+        preview,
+        owner_pack,
+    ]
+    assert {payload["report_type"] for payload in payloads} == DATA_REPAIR_REPORT_IDS
+    assert inventory["status"] == "DATA_SOURCE_INVENTORY_READY"
+    assert tqqq_rebuild["status"] == "TQQQ_CACHE_REBUILT"
+    assert tqqq_rebuild["repair_summary"]["repair_executed"] is False
+    assert tqqq_rebuild["repair_summary"]["used_fixture"] is False
+    assert tqqq_rebuild["repair_summary"]["new_unconfigured_source_used"] is False
+    assert sgov_contract["status"] == "SGOV_TOTAL_RETURN_CONTRACT_READY"
+    assert manifest_audit["status"] == "REPAIR_MANIFEST_PASS"
+    assert hardening["status"] == "VALIDATE_DATA_HARDENED"
+    assert hardening["summary"]["qqq_sgov_strategy_status"] == "READY"
+    assert hardening["summary"]["tqqq_challenger_status"] == "READY"
+    assert post_run["status"] in {"POST_REPAIR_REAL_RUN_PASS", "POST_REPAIR_REAL_RUN_WARN"}
+    assert post_run["summary"]["formal_observation_written"] is False
+    assert equal_recompute["status"] in {
+        "EQUAL_RISK_RECOMPUTED",
+        "CANDIDATE_CHANGED_AFTER_DATA_REPAIR",
+    }
+    assert challenger["status"] in {
+        "TQQQ_CHALLENGER_REVALIDATED",
+        "TQQQ_CHALLENGER_STILL_PAUSED",
+    }
+    assert readiness["status"] in {
+        "FORWARD_AGING_READY",
+        "FORWARD_AGING_READY_WITH_WARNINGS",
+    }
+    assert dry_run["summary"]["dry_run_only"] is True
+    assert dry_run["summary"]["observation_written"] is False
+    assert preview["status"] == "READER_FORWARD_PREVIEW_SAFE"
+    assert preview["reader_brief_preview"]["paper_shadow_allowed"] is False
+    assert preview["reader_brief_preview"]["production_allowed"] is False
+    assert preview["reader_brief_preview"]["broker_action"] == "none"
+    assert not preview["forbidden_phrase_hits"]
+    assert owner_pack["status"] == "OWNER_APPROVE_FORWARD_AGING"
+
+    for payload in payloads:
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+
+def test_simple_baseline_tqqq_missing_blocks_challenger_only(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    prices_without_tqqq = _write_symbol_filtered_cache(
+        prices_path,
+        tmp_path / "prices_daily_no_tqqq.csv",
+        excluded_symbol="TQQQ",
+    )
+    marketstack_qqq_only = _write_symbol_filtered_cache(
+        marketstack_path,
+        tmp_path / "prices_marketstack_qqq_only.csv",
+        included_symbol="QQQ",
+    )
+    manifest_path = _write_simple_baseline_manifest(
+        tmp_path,
+        prices_without_tqqq,
+        symbols=("QQQ", "SGOV"),
+    )
+    output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+
+    hardening = run_simple_baseline_validate_data_hardening(
+        prices_path=prices_without_tqqq,
+        marketstack_prices_path=marketstack_qqq_only,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    qqq_sgov = run_qqq_sgov_baseline_backtest(
+        prices_path=prices_without_tqqq,
+        marketstack_prices_path=marketstack_qqq_only,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    tqqq = run_tqqq_sgov_risk_controlled_baseline(
+        prices_path=prices_without_tqqq,
+        marketstack_prices_path=marketstack_qqq_only,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+
+    assert hardening["status"] == "VALIDATE_DATA_WARN"
+    assert hardening["summary"]["data_quality_status"] == "PASS_WITH_WARNINGS"
+    assert hardening["summary"]["qqq_sgov_strategy_status"] in {"READY", "WARN"}
+    assert hardening["summary"]["tqqq_challenger_status"] == "BLOCKED"
+    assert qqq_sgov["status"] == "QQQ_SGOV_BASELINE_READY"
+    assert qqq_sgov["data_quality"]["passed"] is True
+    assert tqqq["status"] == "TQQQ_BASELINE_BLOCKED"
+
+
 def test_reader_brief_renders_portfolio_control_research_summary(
     tmp_path: Path,
     monkeypatch: Any,
@@ -740,9 +999,10 @@ def _write_simple_baseline_caches(tmp_path: Path) -> tuple[Path, Path, Path]:
         levels["SGOV"] *= 1.0 + 0.00015
         for ticker in ("QQQ", "TQQQ", "SGOV"):
             close = levels[ticker]
+            adj_close = close + (0.01 if ticker == "SGOV" else 0.0)
             row = (
                 f"{row_date.isoformat()},{ticker},{close * 0.999:.4f},{close * 1.002:.4f},"
-                f"{close * 0.998:.4f},{close:.4f},{close:.4f},{1000000 + day_index}\n"
+                f"{close * 0.998:.4f},{close:.4f},{adj_close:.4f},{1000000 + day_index}\n"
             )
             price_rows.append(row)
             secondary_rows.append(row)
@@ -755,6 +1015,91 @@ def _write_simple_baseline_caches(tmp_path: Path) -> tuple[Path, Path, Path]:
     marketstack_path.write_text("".join(secondary_rows), encoding="utf-8")
     rates_path.write_text("".join(rate_rows), encoding="utf-8")
     return prices_path, marketstack_path, rates_path
+
+
+def _write_simple_baseline_manifest(
+    tmp_path: Path,
+    prices_path: Path,
+    *,
+    symbols: tuple[str, ...] = ("QQQ", "TQQQ", "SGOV"),
+) -> Path:
+    manifest_path = tmp_path / "download_manifest.csv"
+    dates = _cache_dates(prices_path)
+    row_counts = _price_row_counts(prices_path)
+    with manifest_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "downloaded_at",
+                "source_id",
+                "provider",
+                "endpoint",
+                "request_parameters",
+                "output_path",
+                "row_count",
+                "checksum_sha256",
+            ],
+        )
+        writer.writeheader()
+        for symbol in symbols:
+            params = {
+                "symbols": [symbol],
+                "start": min(dates).isoformat(),
+                "end": max(dates).isoformat(),
+                "interval": "1d",
+                "repair_mode": "price_only" if symbol == "TQQQ" else "download",
+                "symbol_mapping": {
+                    symbol: {"source_symbol": symbol, "canonical_symbol": symbol}
+                },
+            }
+            writer.writerow(
+                {
+                    "downloaded_at": "2024-07-10T00:00:00Z",
+                    "source_id": "fmp_eod_daily_prices",
+                    "provider": "Financial Modeling Prep",
+                    "endpoint": "/stable/historical-price-eod/full",
+                    "request_parameters": json.dumps(params, sort_keys=True),
+                    "output_path": str(prices_path),
+                    "row_count": row_counts.get(symbol, 0),
+                    "checksum_sha256": f"fixture-{symbol.lower()}",
+                }
+            )
+    return manifest_path
+
+
+def _write_symbol_filtered_cache(
+    source_path: Path,
+    target_path: Path,
+    *,
+    included_symbol: str | None = None,
+    excluded_symbol: str | None = None,
+) -> Path:
+    lines = source_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    filtered = [lines[0]]
+    for line in lines[1:]:
+        symbol = line.split(",", maxsplit=3)[1]
+        if included_symbol and symbol != included_symbol:
+            continue
+        if excluded_symbol and symbol == excluded_symbol:
+            continue
+        filtered.append(line)
+    target_path.write_text("".join(filtered), encoding="utf-8")
+    return target_path
+
+
+def _cache_dates(path: Path) -> list[date]:
+    dates: set[date] = set()
+    for line in path.read_text(encoding="utf-8").splitlines()[1:]:
+        dates.add(date.fromisoformat(line.split(",", maxsplit=1)[0]))
+    return sorted(dates)
+
+
+def _price_row_counts(path: Path) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for line in path.read_text(encoding="utf-8").splitlines()[1:]:
+        symbol = line.split(",", maxsplit=3)[1]
+        counts[symbol] = counts.get(symbol, 0) + 1
+    return counts
 
 
 def _business_dates(start: date, count: int) -> list[date]:

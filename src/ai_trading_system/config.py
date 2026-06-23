@@ -36,6 +36,7 @@ class MarketUniverse(BaseModel):
     decision_frequency: str = "daily"
     benchmarks: list[str] = Field(default_factory=list)
     defensive: list[str] = Field(default_factory=list)
+    simple_baseline_research: list[str] = Field(default_factory=list)
 
 
 class MacroUniverse(BaseModel):
@@ -1233,6 +1234,7 @@ def configured_price_tickers(
     tickers: list[str] = []
     tickers.extend(config.market.benchmarks)
     tickers.extend(config.market.defensive)
+    tickers.extend(config.market.simple_baseline_research)
     tickers.extend(config.macro.volatility)
     tickers.extend(config.macro.currency)
     tickers.extend(config.ai_chain.get("core_watchlist", []))
