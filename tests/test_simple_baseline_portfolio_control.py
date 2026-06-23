@@ -23,6 +23,25 @@ from ai_trading_system.simple_baseline_candidate_validation import (
     run_simple_baseline_watchlist_owner_decision,
     run_tqqq_heavy_pause_rationale_report,
 )
+from ai_trading_system.simple_baseline_forward_aging import (
+    run_daily_reader_forward_aging_summary,
+    run_equal_risk_qqq_sgov_policy_definition_lock,
+    run_simple_baseline_absolute_return_gap_review,
+    run_simple_baseline_candidate_role_assignment,
+    run_simple_baseline_comparator_definition_lock,
+    run_simple_baseline_forward_aging_automation_readiness,
+    run_simple_baseline_forward_aging_candidate_freeze,
+    run_simple_baseline_forward_aging_contract,
+    run_simple_baseline_forward_aging_data_quality_gate,
+    run_simple_baseline_forward_aging_master_review,
+    run_simple_baseline_forward_aging_owner_review_pack,
+    run_simple_baseline_forward_aging_scoreboard,
+    run_simple_baseline_forward_aging_update_maturity,
+    run_simple_baseline_forward_aging_write_observation,
+    run_simple_baseline_paper_shadow_threshold_contract,
+    run_simple_baseline_real_result_reconciliation,
+    run_simple_baseline_risk_budget_review,
+)
 from ai_trading_system.simple_baseline_portfolio_control import (
     run_options_next_stage_gate,
     run_qqq_sgov_baseline_backtest,
@@ -62,6 +81,25 @@ SIMPLE_BASELINE_REPORT_IDS = {
     "dynamic_vs_static_edge_significance_review",
     "tqqq_heavy_pause_rationale_report",
     "simple_baseline_watchlist_owner_decision",
+}
+FORWARD_AGING_REPORT_IDS = {
+    "simple_baseline_real_result_reconciliation",
+    "simple_baseline_forward_aging_candidate_freeze",
+    "simple_baseline_forward_aging_contract",
+    "simple_baseline_forward_aging_write_observation",
+    "simple_baseline_forward_aging_update_maturity",
+    "simple_baseline_forward_aging_scoreboard",
+    "equal_risk_qqq_sgov_policy_definition_lock",
+    "simple_baseline_comparator_definition_lock",
+    "simple_baseline_forward_aging_data_quality_gate",
+    "simple_baseline_paper_shadow_threshold_contract",
+    "daily_reader_forward_aging_summary",
+    "simple_baseline_risk_budget_review",
+    "simple_baseline_absolute_return_gap_review",
+    "simple_baseline_candidate_role_assignment",
+    "simple_baseline_forward_aging_owner_review_pack",
+    "simple_baseline_forward_aging_automation_readiness",
+    "simple_baseline_forward_aging_master_review",
 }
 
 
@@ -344,10 +382,115 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     for command in new_commands:
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
+    forward_commands = [
+        [
+            "research",
+            "strategies",
+            "simple-baseline-real-result-reconciliation",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-candidate-freeze",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-contract",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "equal-risk-qqq-sgov-policy-definition-lock",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-comparator-definition-lock",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-candidate-role-assignment",
+            "--output-root",
+            str(output_root),
+        ],
+        ["research", "strategies", "simple-baseline-forward-aging-data-quality-gate", *data_args],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-write-observation",
+            *data_args,
+            "--decision-date",
+            "2023-10-10",
+        ],
+        ["research", "strategies", "simple-baseline-forward-aging-update-maturity", *data_args],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-scoreboard",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-paper-shadow-threshold-contract",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "daily-reader-forward-aging-summary",
+            "--output-root",
+            str(output_root),
+        ],
+        ["research", "strategies", "simple-baseline-risk-budget-review", *data_args],
+        ["research", "strategies", "simple-baseline-absolute-return-gap-review", *data_args],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-owner-review-pack",
+            "--output-root",
+            str(output_root),
+            "--docs-path",
+            str(tmp_path / "docs" / "research" / "simple_baseline_forward_owner_pack.md"),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-automation-readiness",
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "simple-baseline-forward-aging-master-review",
+            "--output-root",
+            str(output_root),
+            "--docs-path",
+            str(tmp_path / "docs" / "research" / "simple_baseline_forward_master.md"),
+        ],
+    ]
+    for command in forward_commands:
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0, result.output
 
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     registered = {item["report_id"] for item in registry["reports"]}
-    assert SIMPLE_BASELINE_REPORT_IDS <= registered
+    assert SIMPLE_BASELINE_REPORT_IDS | FORWARD_AGING_REPORT_IDS <= registered
     daily_entry = next(
         item
         for item in registry["reports"]
@@ -355,6 +498,144 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     )
     assert daily_entry["include_in_reader_brief"] is True
     assert daily_entry["required_for_daily_reading"] is False
+
+
+def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+    _write_simple_baseline_prerequisites(
+        prices_path=prices_path,
+        marketstack_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        docs_root=tmp_path / "docs" / "research",
+    )
+
+    reconciliation = run_simple_baseline_real_result_reconciliation(output_root=output_root)
+    freeze = run_simple_baseline_forward_aging_candidate_freeze(output_root=output_root)
+    contract = run_simple_baseline_forward_aging_contract(output_root=output_root)
+    policy_lock = run_equal_risk_qqq_sgov_policy_definition_lock(output_root=output_root)
+    comparator_lock = run_simple_baseline_comparator_definition_lock(output_root=output_root)
+    role_assignment = run_simple_baseline_candidate_role_assignment(output_root=output_root)
+    data_quality = run_simple_baseline_forward_aging_data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    observation = run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
+    duplicate_observation = run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
+    maturity = run_simple_baseline_forward_aging_update_maturity(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    scoreboard = run_simple_baseline_forward_aging_scoreboard(output_root=output_root)
+    threshold = run_simple_baseline_paper_shadow_threshold_contract(output_root=output_root)
+    daily_forward = run_daily_reader_forward_aging_summary(output_root=output_root)
+    risk_budget = run_simple_baseline_risk_budget_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    return_gap = run_simple_baseline_absolute_return_gap_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    owner_pack_path = tmp_path / "docs" / "research" / "forward_owner.md"
+    owner_pack = run_simple_baseline_forward_aging_owner_review_pack(
+        output_root=output_root,
+        docs_path=owner_pack_path,
+    )
+    automation = run_simple_baseline_forward_aging_automation_readiness(output_root=output_root)
+    master_path = tmp_path / "docs" / "research" / "forward_master.md"
+    master = run_simple_baseline_forward_aging_master_review(
+        output_root=output_root,
+        docs_path=master_path,
+    )
+
+    assert reconciliation["status"] == "RECONCILED"
+    assert freeze["status"] == "CANDIDATES_FROZEN"
+    assert contract["status"] == "FORWARD_AGING_CONTRACT_READY"
+    assert policy_lock["status"] == "POLICY_DEFINITION_LOCKED"
+    assert policy_lock["policy_definition_hash"]
+    assert comparator_lock["status"] == "COMPARATOR_DEFINITIONS_LOCKED"
+    assert role_assignment["status"] == "ROLE_ASSIGNMENT_READY"
+    assert data_quality["status"] in {"DATA_QUALITY_PASS", "DATA_QUALITY_PASS_WITH_WARNINGS"}
+    assert observation["status"] == "OBSERVATION_WRITTEN"
+    assert duplicate_observation["status"] == "OBSERVATION_ALREADY_EXISTS"
+    assert observation["observations"][0]["strategy_id"] == "equal_risk_qqq_sgov"
+    assert maturity["status"] in {"MATURITY_UPDATED", "MATURITY_PARTIAL"}
+    assert scoreboard["status"] == "FORWARD_SCOREBOARD_INSUFFICIENT"
+    primary_score = next(
+        row for row in scoreboard["scoreboard"] if row["strategy_id"] == "equal_risk_qqq_sgov"
+    )
+    assert primary_score["matured_120d_count"] == 1
+    assert threshold["status"] == "THRESHOLD_CONTRACT_READY"
+    assert threshold["paper_shadow_allowed"] is False
+    assert daily_forward["status"] == "DAILY_FORWARD_SUMMARY_SAFE"
+    assert risk_budget["status"] in {"RISK_BUDGET_REVIEW_READY", "RISK_BUDGET_REVIEW_MIXED"}
+    assert return_gap["role_recommendation"] in {
+        "DEFENSIVE_CORE",
+        "BALANCED_CORE",
+        "GROWTH_INSUFFICIENT",
+    }
+    assert owner_pack["status"] == "OWNER_REVIEW_READY"
+    assert owner_pack_path.exists()
+    assert automation["status"] == "AUTOMATION_READY_FOR_OBSERVATION_ONLY"
+    assert master["status"] == "START_FORWARD_AGING"
+    assert master_path.exists()
+
+    payloads = [
+        reconciliation,
+        freeze,
+        contract,
+        policy_lock,
+        comparator_lock,
+        role_assignment,
+        data_quality,
+        observation,
+        maturity,
+        scoreboard,
+        threshold,
+        daily_forward,
+        risk_budget,
+        return_gap,
+        owner_pack,
+        automation,
+        master,
+    ]
+    assert {payload["report_type"] for payload in payloads} == FORWARD_AGING_REPORT_IDS
+    for payload in payloads:
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
 
 def test_reader_brief_renders_portfolio_control_research_summary(
@@ -386,10 +667,43 @@ def test_reader_brief_renders_portfolio_control_research_summary(
             },
         },
     )
+    forward_path = (
+        tmp_path
+        / "outputs"
+        / "research_strategies"
+        / "simple_baselines"
+        / "daily_reader_forward_aging_summary.json"
+    )
+    _write_json(
+        forward_path,
+        {
+            "report_type": "daily_reader_forward_aging_summary",
+            "status": "DAILY_FORWARD_SUMMARY_SAFE",
+            "production_effect": "none",
+            "broker_action": "none",
+            "portfolio_control_forward_aging": {
+                "primary_candidate": "equal_risk_qqq_sgov",
+                "challenger_candidate": "dyn_tqqq_capped_trend",
+                "latest_observation_date": "2023-10-10",
+                "matured_20d_count": 3,
+                "matured_60d_count": 2,
+                "matured_120d_count": 1,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+            },
+        },
+    )
     monkeypatch.setattr(reader_brief, "PROJECT_ROOT", tmp_path)
 
     summary = reader_brief._portfolio_control_research_summary()
-    html = render_reader_brief_html({"portfolio_control_research": summary})
+    forward_summary = reader_brief._portfolio_control_forward_aging_summary()
+    html = render_reader_brief_html(
+        {
+            "portfolio_control_research": summary,
+            "portfolio_control_forward_aging": forward_summary,
+        }
+    )
 
     assert summary["status"] == "DAILY_SUMMARY_SAFE"
     assert summary["top_simple_baseline_candidate"] == "qqq_80_sgov_20"
@@ -400,6 +714,10 @@ def test_reader_brief_renders_portfolio_control_research_summary(
     assert summary["major_blocker_count"] == 1
     assert "Portfolio Control Research" in html
     assert "qqq_80_sgov_20" in html
+    assert forward_summary["primary_candidate"] == "equal_risk_qqq_sgov"
+    assert forward_summary["matured_120d_count"] == 1
+    assert "Portfolio Control Forward Aging" in html
+    assert "dyn_tqqq_capped_trend" in html
     assert "broker_action" in html
 
 
@@ -468,6 +786,161 @@ def _write_minimal_real_run_support(output_root: Path) -> None:
             "production_allowed": False,
             "manual_review_required": True,
         },
+    )
+    _write_json(
+        output_root / "simple_baseline_owner_decision_pack.json",
+        {
+            "report_type": "simple_baseline_owner_decision_pack",
+            "status": "OWNER_DECISION_REQUIRED",
+            "summary": {"owner_next_action": "narrow_to_watchlist_without_activation"},
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "manual_review_required": True,
+        },
+    )
+    _write_json(
+        output_root / "simple_baseline_paper_shadow_watchlist.json",
+        {
+            "report_type": "simple_baseline_paper_shadow_watchlist",
+            "status": "WATCHLIST_CREATED_NO_ACTIVATION",
+            "summary": {
+                "watchlist_count": 5,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+            },
+            "watchlist": [
+                {
+                    "candidate_strategy_id": strategy_id,
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                }
+                for strategy_id in (
+                    "equal_risk_qqq_sgov",
+                    "dyn_tqqq_capped_trend",
+                    "qqq_200dma_risk_off",
+                    "dyn_balanced_qqq_tqqq_sgov",
+                    "qqq_50_sgov_50",
+                )
+            ],
+            "production_effect": "none",
+            "broker_action": "none",
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "manual_review_required": True,
+        },
+    )
+
+
+def _write_simple_baseline_prerequisites(
+    *,
+    prices_path: Path,
+    marketstack_path: Path,
+    rates_path: Path,
+    output_root: Path,
+    docs_root: Path,
+) -> None:
+    run_simple_baseline_registry_review(output_root=output_root)
+    run_qqq_sgov_baseline_backtest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_tqqq_sgov_risk_controlled_baseline(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_trend_vol_allocation_policy_search(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_dominance_ranking(output_root=output_root)
+    run_simple_baseline_pit_boundary_audit(output_root=output_root)
+    run_simple_baseline_cost_sensitivity(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_regime_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_forward_aging_tracker(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_paper_shadow_readiness(output_root=output_root)
+    run_simple_baseline_daily_reader_safety_summary(output_root=output_root)
+    run_simple_baseline_portfolio_dry_run_mapper(output_root=output_root)
+    run_simple_baseline_master_review(
+        output_root=output_root,
+        master_doc_path=docs_root / "simple_baseline_master_review.md",
+    )
+    run_options_next_stage_gate(output_root=output_root)
+    _write_minimal_real_run_support(output_root)
+    run_equal_risk_qqq_sgov_deep_dive(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_period_split_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_drawdown_episode_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_dynamic_vs_static_edge_significance_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_tqqq_heavy_pause_rationale_report(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    run_simple_baseline_watchlist_owner_decision(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        docs_path=docs_root / "simple_baseline_watchlist_owner_decision.md",
+        as_of_date=TEST_AS_OF,
     )
     _write_json(
         output_root / "simple_baseline_owner_decision_pack.json",

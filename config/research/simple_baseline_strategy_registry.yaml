@@ -116,6 +116,41 @@ research_policy:
     max_cost_sensitivity_score: 0.40
     max_turnover: 1.50
     qqq_drawdown_improvement_required: 0.10
+  forward_aging:
+    policy_id: simple_baseline_forward_aging_contract_v1
+    rationale: >
+      Freeze the next observation stage around one primary candidate, three static
+      comparators, and one dynamic challenger so forward-aging evidence measures
+      convergence quality rather than an expanding strategy pool.
+    candidate_freeze:
+      max_primary_candidates: 1
+      max_challenger_candidates: 1
+      max_static_comparators: 3
+      primary:
+        - equal_risk_qqq_sgov
+      static_comparators:
+        - qqq_50_sgov_50
+        - qqq_60_sgov_40
+        - 100_qqq
+      challenger:
+        - dyn_tqqq_capped_trend
+      forbidden_expansions:
+        - LEAPS
+        - Wheel
+        - tail-risk fallback
+        - TQQQ-heavy strategy without owner approval
+    public_strategy_aliases:
+      100_qqq: qqq_100_static
+    observation_windows_trading_days:
+      5d: 5
+      10d: 10
+      20d: 20
+      60d: 60
+      120d: 120
+    minimum_20d_matured_observations_for_initial_review: 20
+    minimum_60d_matured_observations_for_weak_review: 20
+    minimum_120d_matured_observations_for_paper_shadow_review: 20
+    score_formula_id: descriptive_return_drawdown_balance_v1
   dry_run:
     default_hypothetical_portfolio_value: 100000
     cash_buffer_weight: 0.01

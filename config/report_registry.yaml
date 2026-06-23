@@ -13397,3 +13397,328 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: simple_baseline_real_result_reconciliation
+    title: Simple Baseline Real Result Reconciliation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-real-result-reconciliation
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_real_result_reconciliation.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_real_result_reconciliation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-894 should be regenerated after 865-893 real-run artifacts change.
+    owner_action: review_simple_baseline_reconciled_research_state
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_candidate_freeze
+    title: Simple Baseline Forward Aging Candidate Freeze
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-candidate-freeze
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_candidate_freeze.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_candidate_freeze.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-895 should be regenerated after owner decision or candidate policy changes.
+    owner_action: review_frozen_forward_aging_candidate_set
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_contract
+    title: Simple Baseline Forward Aging Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-contract
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_contract.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-896 should be regenerated after forward-aging contract policy changes.
+    owner_action: review_forward_aging_contract_before_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_write_observation
+    title: Simple Baseline Forward Aging Observation Writer
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-write-observation
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/forward_aging_observations/simple_baseline_forward_aging_observation_*.json
+      - outputs/research_strategies/simple_baselines/forward_aging_observations/simple_baseline_forward_aging_observation_*.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-897 writes one research-only observation per decision date after data quality passes.
+    owner_action: review_forward_aging_observation_without_trade_action
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_update_maturity
+    title: Simple Baseline Forward Aging Maturity Update
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-update-maturity
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_maturity_update.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_maturity_update.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-898 should be regenerated after price cache or observation artifacts mature.
+    owner_action: review_matured_forward_windows_before_scoreboard
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_scoreboard
+    title: Simple Baseline Forward Aging Scoreboard
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-scoreboard
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_scoreboard.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_scoreboard.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-899 should be regenerated after observations or maturity updates change.
+    owner_action: review_forward_scoreboard_before_any_paper_shadow_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_qqq_sgov_policy_definition_lock
+    title: Equal-Risk QQQ / SGOV Policy Definition Lock
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-qqq-sgov-policy-definition-lock
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_qqq_sgov_policy_definition_lock.json
+      - outputs/research_strategies/simple_baselines/equal_risk_qqq_sgov_policy_definition_lock.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-900 should be regenerated after equal-risk policy config changes.
+    owner_action: review_equal_risk_policy_hash_before_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_comparator_definition_lock
+    title: Simple Baseline Comparator Definition Lock
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-comparator-definition-lock
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_comparator_definition_lock.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_comparator_definition_lock.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-901 should be regenerated after comparator policy config changes.
+    owner_action: review_comparator_policy_hashes_before_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_data_quality_gate
+    title: Simple Baseline Forward Aging Data Quality Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-data-quality-gate
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_data_quality_gate.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_data_quality_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-902 should be regenerated after cached QQQ/TQQQ/SGOV or rates data changes.
+    owner_action: stop_forward_aging_conclusions_if_data_quality_blocks
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_paper_shadow_threshold_contract
+    title: Simple Baseline Paper-Shadow Threshold Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-paper-shadow-threshold-contract
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_paper_shadow_threshold_contract.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_paper_shadow_threshold_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-903 defines future paper-shadow review prerequisites without activating paper-shadow.
+    owner_action: review_future_paper_shadow_review_thresholds_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: daily_reader_forward_aging_summary
+    title: Daily Reader Forward Aging Summary
+    group: research
+    cadence: ad_hoc
+    audience: investor
+    owner: research_governance
+    command: aits research strategies daily-reader-forward-aging-summary
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/daily_reader_forward_aging_summary.json
+      - outputs/research_strategies/simple_baselines/daily_reader_forward_aging_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-904 should be regenerated after forward-aging scoreboard or candidate freeze changes.
+    owner_action: read_forward_aging_status_as_research_only
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_risk_budget_review
+    title: Simple Baseline Risk Budget Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-risk-budget-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_risk_budget_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_risk_budget_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-905 should be regenerated after cache or candidate policy changes.
+    owner_action: review_risk_budget_before_return_only_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_absolute_return_gap_review
+    title: Simple Baseline Absolute Return Gap Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-absolute-return-gap-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_absolute_return_gap_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_absolute_return_gap_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-906 should be regenerated after cache or return comparison policy changes.
+    owner_action: review_equal_risk_growth_shortfall_role
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_candidate_role_assignment
+    title: Simple Baseline Candidate Role Assignment
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-candidate-role-assignment
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_candidate_role_assignment.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_candidate_role_assignment.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-907 should be regenerated after candidate freeze or owner decision changes.
+    owner_action: review_candidate_roles_before_forward_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_owner_review_pack
+    title: Simple Baseline Forward Aging Owner Review Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-owner-review-pack
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_owner_review_pack.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_owner_review_pack.md
+      - docs/research/simple_baseline_forward_aging_owner_review_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-908 should be regenerated after locks, data quality, roles, or threshold contract changes.
+    owner_action: review_and_approve_research_only_forward_aging_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_automation_readiness
+    title: Simple Baseline Forward Aging Automation Readiness
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-automation-readiness
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_automation_readiness.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_automation_readiness.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-909 checks observation-only readiness and does not create trading automation.
+    owner_action: review_observation_only_automation_readiness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: simple_baseline_forward_aging_master_review
+    title: Simple Baseline Forward Aging Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies simple-baseline-forward-aging-master-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_master_review.json
+      - outputs/research_strategies/simple_baselines/simple_baseline_forward_aging_master_review.md
+      - docs/research/simple_baseline_forward_aging_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-910 should be regenerated after owner pack, scoreboard, thresholds, or readiness state changes.
+    owner_action: review_final_research_only_forward_aging_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
