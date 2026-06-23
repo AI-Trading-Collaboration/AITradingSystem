@@ -1,4 +1,5 @@
 # TRADING-827: Tail-Risk Trigger/Label Independence Audit
+最后更新：2026-06-23
 
 ## Context
 

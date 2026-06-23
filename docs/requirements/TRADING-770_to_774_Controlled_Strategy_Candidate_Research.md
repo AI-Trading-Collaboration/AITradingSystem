@@ -1,4 +1,5 @@
 # TRADING-770 to TRADING-774: Controlled Strategy Candidate Research
+最后更新：2026-06-23
 
 ## Background
 

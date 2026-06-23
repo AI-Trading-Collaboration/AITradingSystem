@@ -1,4 +1,5 @@
 # TRADING-795 to TRADING-799: Regime-Conditioned Value Surface
+最后更新：2026-06-23
 
 ## Context
 

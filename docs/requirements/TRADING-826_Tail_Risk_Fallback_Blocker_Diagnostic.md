@@ -1,4 +1,5 @@
 # TRADING-826: Tail-Risk Fallback Blocker Diagnostic
+最后更新：2026-06-23
 
 ## Context
 

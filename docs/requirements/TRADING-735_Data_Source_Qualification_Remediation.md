@@ -1,4 +1,5 @@
 # TRADING-735 Data Source Qualification Remediation
+最后更新：2026-06-23
 
 ## 状态
 

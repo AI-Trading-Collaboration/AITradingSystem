@@ -1,4 +1,5 @@
 # TRADING-765 to TRADING-769: Controlled Research Expansion and Forward Schedule
+最后更新：2026-06-23
 
 ## 背景
 

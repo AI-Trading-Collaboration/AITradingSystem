@@ -1,4 +1,5 @@
 # TRADING-737 Source-Level Qualification Requirements
+最后更新：2026-06-23
 
 ## 状态
 

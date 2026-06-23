@@ -1,4 +1,5 @@
 # TRADING-821: Validation Runtime Controlled Strategy Split
+最后更新：2026-06-23
 
 ## Context
 

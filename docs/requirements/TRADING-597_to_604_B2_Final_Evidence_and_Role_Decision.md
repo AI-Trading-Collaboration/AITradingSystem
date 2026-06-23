@@ -1,4 +1,5 @@
 # TRADING-597 to 604 B2 Final Evidence and Role Decision
+最后更新：2026-06-23
 
 ## 背景
 

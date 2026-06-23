@@ -1,4 +1,5 @@
 # TRADING-805 to TRADING-809: Horizon Selector Controlled Research
+最后更新：2026-06-23
 
 ## Context
 

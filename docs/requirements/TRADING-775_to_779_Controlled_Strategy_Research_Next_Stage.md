@@ -1,4 +1,5 @@
 # TRADING-775 to TRADING-779: Controlled Strategy Research Next Stage
+最后更新：2026-06-23
 
 ## Background
 

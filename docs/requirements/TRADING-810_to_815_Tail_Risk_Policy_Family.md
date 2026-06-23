@@ -1,4 +1,5 @@
 # TRADING-810 to TRADING-815: Tail-Risk Policy Family
+最后更新：2026-06-23
 
 ## Context
 

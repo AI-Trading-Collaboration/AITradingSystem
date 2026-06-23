@@ -1,4 +1,5 @@
 # TRADING-739 to TRADING-758: Current-Subscription-First Source Qualification and Controlled Strategy Research
+最后更新：2026-06-23
 
 ## 背景
 

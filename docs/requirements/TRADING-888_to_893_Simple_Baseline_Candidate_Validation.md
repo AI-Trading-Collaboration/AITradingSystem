@@ -1,4 +1,5 @@
 # TRADING-888～893 Simple Baseline Candidate Validation
+最后更新：2026-06-23
 
 ## 背景
 

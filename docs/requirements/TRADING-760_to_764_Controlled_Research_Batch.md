@@ -1,4 +1,5 @@
 # TRADING-760 to TRADING-764: Controlled Research Batch
+最后更新：2026-06-23
 
 ## 背景
 

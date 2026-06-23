@@ -1,4 +1,5 @@
 # TRADING-631 to 640 Research Campaign Execution Adapters
+最后更新：2026-06-23
 
 版本：2026-06-19
 

@@ -1,4 +1,5 @@
 # TRADING-879～887 Simple Baseline Real Run Decision Pack
+最后更新：2026-06-23
 
 ## 背景
 

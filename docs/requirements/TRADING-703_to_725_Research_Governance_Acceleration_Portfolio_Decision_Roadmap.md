@@ -1,4 +1,5 @@
 # TRADING-703 to TRADING-725 Research Governance, Acceleration, and Portfolio Decision Roadmap
+最后更新：2026-06-23
 
 ## 状态
 

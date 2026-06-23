@@ -1,4 +1,5 @@
 # TRADING-759: First Current-Subscription Source Qualification Batch
+最后更新：2026-06-23
 
 ## 背景
 

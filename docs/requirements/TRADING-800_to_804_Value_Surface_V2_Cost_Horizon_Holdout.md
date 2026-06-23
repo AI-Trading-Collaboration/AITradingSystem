@@ -1,4 +1,5 @@
 # TRADING-800 to TRADING-804: Value Surface v2 Cost / Horizon / Holdout Review
+最后更新：2026-06-23
 
 ## Context
 

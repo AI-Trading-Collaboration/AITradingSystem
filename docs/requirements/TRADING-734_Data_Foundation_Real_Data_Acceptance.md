@@ -1,4 +1,5 @@
 # TRADING-734 Data Foundation Real-Data Acceptance
+最后更新：2026-06-23
 
 ## 状态
 

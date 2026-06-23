@@ -1,4 +1,5 @@
 # TRADING-641 to 648 Research Campaign B2 Full Compute Coverage
+最后更新：2026-06-23
 
 版本：2026-06-19
 

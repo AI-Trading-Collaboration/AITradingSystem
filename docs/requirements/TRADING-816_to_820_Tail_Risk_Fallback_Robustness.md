@@ -1,4 +1,5 @@
 # TRADING-816 to TRADING-820: Tail-Risk Fallback Robustness
+最后更新：2026-06-23
 
 ## Context
 

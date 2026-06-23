@@ -1,4 +1,5 @@
 # TRADING-821 to TRADING-825: Tail-Risk Fallback Falsification Audit
+最后更新：2026-06-23
 
 ## Context
 
