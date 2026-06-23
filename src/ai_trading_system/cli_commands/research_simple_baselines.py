@@ -8,6 +8,25 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.qqq_plus_growth_challenger import (
+    DEFAULT_QQQ_OUTPERFORMANCE_OWNER_DECISION_DOC_PATH,
+    DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    run_controlled_tqqq_overlay_search,
+    run_drawdown_guarded_growth_policy_search,
+    run_growth_candidate_forward_aging_watchlist,
+    run_growth_edge_significance_review,
+    run_growth_vs_defensive_role_allocation_review,
+    run_qqq_outperformance_drawdown_replay,
+    run_qqq_outperformance_objective_contract,
+    run_qqq_outperformance_owner_decision_pack,
+    run_qqq_outperformance_period_split_validation,
+    run_qqq_outperformance_ranking_report,
+    run_qqq_plus_growth_candidate_registry,
+    run_qqq_plus_risk_budget_review,
+    run_trend_gated_leverage_policy_search,
+    run_volatility_targeted_growth_policy_search,
+)
 from ai_trading_system.research_governance import ResearchGovernanceError
 from ai_trading_system.simple_baseline_candidate_validation import (
     DEFAULT_SIMPLE_BASELINE_WATCHLIST_OWNER_DECISION_DOC_PATH,
@@ -1670,6 +1689,513 @@ def strategies_data_repair_owner_decision_pack_command(
     _print_simple_baseline_payload("Data repair owner decision pack", payload)
 
 
+
+def strategies_qqq_outperformance_objective_contract_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_outperformance_objective_contract(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("QQQ outperformance objective contract", payload)
+
+
+def strategies_qqq_plus_growth_candidate_registry_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_plus_growth_candidate_registry(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("QQQ-plus growth candidate registry", payload)
+
+
+def strategies_controlled_tqqq_overlay_search_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_tqqq_overlay_search(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Controlled TQQQ overlay search", payload)
+
+
+def strategies_trend_gated_leverage_policy_search_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_trend_gated_leverage_policy_search(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Trend-gated leverage policy search", payload)
+
+
+def strategies_volatility_targeted_growth_policy_search_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_volatility_targeted_growth_policy_search(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Volatility-targeted growth policy search", payload)
+
+
+def strategies_drawdown_guarded_growth_policy_search_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_drawdown_guarded_growth_policy_search(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Drawdown-guarded growth policy search", payload)
+
+
+def strategies_qqq_outperformance_ranking_report_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_outperformance_ranking_report(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("QQQ outperformance ranking report", payload)
+
+
+def strategies_qqq_outperformance_period_split_validation_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_outperformance_period_split_validation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("QQQ outperformance period split validation", payload)
+
+
+def strategies_qqq_outperformance_drawdown_replay_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_outperformance_drawdown_replay(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("QQQ outperformance drawdown replay", payload)
+
+
+def strategies_growth_edge_significance_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_growth_edge_significance_review(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Growth edge significance review", payload)
+
+
+def strategies_growth_candidate_forward_aging_watchlist_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_growth_candidate_forward_aging_watchlist(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Growth candidate forward-aging watchlist", payload)
+
+
+def strategies_qqq_plus_risk_budget_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="回测开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选回测结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_plus_risk_budget_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("QQQ-plus risk budget review", payload)
+
+
+def strategies_growth_vs_defensive_role_allocation_review_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="QQQ-plus growth candidate registry YAML。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_growth_vs_defensive_role_allocation_review(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Growth vs defensive role allocation review", payload)
+
+
+def strategies_qqq_outperformance_owner_decision_pack_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path", help="Owner decision Markdown 输出路径。"),
+    ] = DEFAULT_QQQ_OUTPERFORMANCE_OWNER_DECISION_DOC_PATH,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_qqq_outperformance_owner_decision_pack(
+            output_root=output_root,
+            docs_path=docs_path,
+        )
+    )
+    _print_simple_baseline_payload("QQQ outperformance owner decision pack", payload)
+
+
 _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     ("simple-baseline-registry-review", strategies_simple_baseline_registry_review_command),
     ("qqq-sgov-baseline-backtest", strategies_qqq_sgov_baseline_backtest_command),
@@ -1824,6 +2350,62 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     (
         "data-repair-owner-decision-pack",
         strategies_data_repair_owner_decision_pack_command,
+    ),
+    (
+        "qqq-outperformance-objective-contract",
+        strategies_qqq_outperformance_objective_contract_command,
+    ),
+    (
+        "qqq-plus-growth-candidate-registry",
+        strategies_qqq_plus_growth_candidate_registry_command,
+    ),
+    (
+        "controlled-tqqq-overlay-search",
+        strategies_controlled_tqqq_overlay_search_command,
+    ),
+    (
+        "trend-gated-leverage-policy-search",
+        strategies_trend_gated_leverage_policy_search_command,
+    ),
+    (
+        "volatility-targeted-growth-policy-search",
+        strategies_volatility_targeted_growth_policy_search_command,
+    ),
+    (
+        "drawdown-guarded-growth-policy-search",
+        strategies_drawdown_guarded_growth_policy_search_command,
+    ),
+    (
+        "qqq-outperformance-ranking-report",
+        strategies_qqq_outperformance_ranking_report_command,
+    ),
+    (
+        "qqq-outperformance-period-split-validation",
+        strategies_qqq_outperformance_period_split_validation_command,
+    ),
+    (
+        "qqq-outperformance-drawdown-replay",
+        strategies_qqq_outperformance_drawdown_replay_command,
+    ),
+    (
+        "growth-edge-significance-review",
+        strategies_growth_edge_significance_review_command,
+    ),
+    (
+        "growth-candidate-forward-aging-watchlist",
+        strategies_growth_candidate_forward_aging_watchlist_command,
+    ),
+    (
+        "qqq-plus-risk-budget-review",
+        strategies_qqq_plus_risk_budget_review_command,
+    ),
+    (
+        "growth-vs-defensive-role-allocation-review",
+        strategies_growth_vs_defensive_role_allocation_review_command,
+    ),
+    (
+        "qqq-outperformance-owner-decision-pack",
+        strategies_qqq_outperformance_owner_decision_pack_command,
     ),
 )
 

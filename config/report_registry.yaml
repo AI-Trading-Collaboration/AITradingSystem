@@ -13950,3 +13950,270 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: qqq_outperformance_objective_contract
+    title: QQQ Outperformance Objective Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-outperformance-objective-contract
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_objective_contract.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_objective_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-933 defines the research-only QQQ outperformance objective and safety boundary.
+    owner_action: review_growth_objective_contract_before_candidate_search
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_plus_growth_candidate_registry
+    title: QQQ Plus Growth Candidate Registry
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-plus-growth-candidate-registry
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_plus_growth_candidate_registry.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_plus_growth_candidate_registry.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-934 records the governed growth-candidate search space and constraints.
+    owner_action: review_growth_candidate_registry_constraints
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: controlled_tqqq_overlay_search
+    title: Controlled TQQQ Overlay Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies controlled-tqqq-overlay-search
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/controlled_tqqq_overlay_search.json
+      - outputs/research_strategies/qqq_plus_growth/controlled_tqqq_overlay_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-935 evaluates capped TQQQ overlays against QQQ without production effect.
+    owner_action: review_controlled_tqqq_overlay_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: trend_gated_leverage_policy_search
+    title: Trend-Gated Leverage Policy Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies trend-gated-leverage-policy-search
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/trend_gated_leverage_policy_search.json
+      - outputs/research_strategies/qqq_plus_growth/trend_gated_leverage_policy_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-936 evaluates trend-gated leverage candidates with explicit caps and gates.
+    owner_action: review_trend_gated_growth_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: volatility_targeted_growth_policy_search
+    title: Volatility-Targeted Growth Policy Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies volatility-targeted-growth-policy-search
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/volatility_targeted_growth_policy_search.json
+      - outputs/research_strategies/qqq_plus_growth/volatility_targeted_growth_policy_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-937 evaluates volatility-targeted QQQ/TQQQ/SGOV policies.
+    owner_action: review_volatility_targeted_growth_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: drawdown_guarded_growth_policy_search
+    title: Drawdown-Guarded Growth Policy Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies drawdown-guarded-growth-policy-search
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/drawdown_guarded_growth_policy_search.json
+      - outputs/research_strategies/qqq_plus_growth/drawdown_guarded_growth_policy_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-938 evaluates drawdown-guarded growth policies with TQQQ caps.
+    owner_action: review_drawdown_guarded_growth_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_outperformance_ranking_report
+    title: QQQ Outperformance Ranking Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-outperformance-ranking-report
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_ranking_report.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_ranking_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-939 ranks QQQ-plus growth candidates against QQQ and defensive comparators.
+    owner_action: review_growth_candidate_ranking
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_outperformance_period_split_validation
+    title: QQQ Outperformance Period Split Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-outperformance-period-split-validation
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_period_split_validation.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_period_split_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-940 checks whether outperformance survives period splits or is regime concentrated.
+    owner_action: review_growth_period_stability
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_outperformance_drawdown_replay
+    title: QQQ Outperformance Drawdown Replay
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-outperformance-drawdown-replay
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_drawdown_replay.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_drawdown_replay.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-941 replays stress and recovery episodes before any watchlist interpretation.
+    owner_action: review_growth_drawdown_episode_replay
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_edge_significance_review
+    title: Growth Edge Significance Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-edge-significance-review
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/growth_edge_significance_review.json
+      - outputs/research_strategies/qqq_plus_growth/growth_edge_significance_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-942 tests whether QQQ outperformance remains material after risk and complexity penalties.
+    owner_action: review_growth_edge_materiality
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_candidate_forward_aging_watchlist
+    title: Growth Candidate Forward-Aging Watchlist
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-candidate-forward-aging-watchlist
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/growth_candidate_forward_aging_watchlist.json
+      - outputs/research_strategies/qqq_plus_growth/growth_candidate_forward_aging_watchlist.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-943 proposes at most two research-only growth challengers for future forward-aging observation.
+    owner_action: review_growth_watchlist_before_any_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_plus_risk_budget_review
+    title: QQQ Plus Risk Budget Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-plus-risk-budget-review
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_plus_risk_budget_review.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_plus_risk_budget_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-944 attributes whether growth edge is mostly beta, TQQQ risk, SGOV carry, or policy timing.
+    owner_action: review_growth_risk_budget
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_vs_defensive_role_allocation_review
+    title: Growth vs Defensive Role Allocation Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-vs-defensive-role-allocation-review
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/growth_vs_defensive_role_allocation_review.json
+      - outputs/research_strategies/qqq_plus_growth/growth_vs_defensive_role_allocation_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-945 keeps equal_risk_qqq_sgov as defensive primary while separating optional growth-challenger roles.
+    owner_action: review_growth_vs_defensive_role_allocation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: qqq_outperformance_owner_decision_pack
+    title: QQQ Outperformance Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies qqq-outperformance-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_owner_decision_pack.json
+      - outputs/research_strategies/qqq_plus_growth/qqq_outperformance_owner_decision_pack.md
+      - docs/research/qqq_outperformance_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-946 answers the owner decision questions without paper-shadow, production, or broker approval.
+    owner_action: review_owner_decision_pack_before_any_growth_watchlist_launch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
