@@ -38,6 +38,7 @@ from ai_trading_system.simple_baseline_portfolio_control import (
     _target_weight_frame,
     _turnover_series,
 )
+from ai_trading_system.trading_calendar import us_equity_market_session
 
 DEFAULT_FORWARD_AGING_OBSERVATION_ROOT = (
     DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT / "forward_aging_observations"
@@ -271,11 +272,21 @@ def run_simple_baseline_forward_aging_write_observation(
     observation_root = output_root / "forward_aging_observations"
     artifact_id = f"simple_baseline_forward_aging_observation_{resolved_date.isoformat()}"
     json_path = observation_root / f"{artifact_id}.json"
+    previous_invalid_artifact: dict[str, Any] | None = None
     if json_path.exists():
         existing = _read_json_or_empty(json_path)
-        existing["status"] = "OBSERVATION_ALREADY_EXISTS"
-        existing["idempotency_status"] = "already_exists_no_rewrite"
-        return existing
+        if _is_written_observation_payload(existing):
+            existing["status"] = "OBSERVATION_ALREADY_EXISTS"
+            existing["idempotency_status"] = "already_exists_no_rewrite"
+            return existing
+        previous_invalid_artifact = {
+            "path": str(json_path),
+            "previous_status": existing.get("status"),
+            "previous_observation_count": len(_records(existing.get("observations"))),
+            "previous_data_quality_status": _mapping(existing.get("data_quality")).get(
+                "status"
+            ),
+        }
 
     if not bool(data_gate.get("passed")):
         payload = _payload(
@@ -286,8 +297,10 @@ def run_simple_baseline_forward_aging_write_observation(
                 "decision_date": resolved_date.isoformat(),
                 "data_quality_status": data_gate.get("status"),
                 "observation_count": 0,
+                "replaced_invalid_existing_artifact": False,
             },
             data_quality=data_gate,
+            previous_invalid_artifact=previous_invalid_artifact,
             observations=[],
             blockers=["validate_data_cache_failed"],
             input_artifacts={"config": str(config_path), "prices": str(prices_path)},
@@ -323,9 +336,11 @@ def run_simple_baseline_forward_aging_write_observation(
             "observation_count": len(observations),
             "candidate_count": len(observations),
             "data_quality_status": data_gate.get("status"),
+            "replaced_invalid_existing_artifact": previous_invalid_artifact is not None,
         },
         decision_date=decision_ts.date().isoformat(),
         data_quality=data_gate,
+        previous_invalid_artifact=previous_invalid_artifact,
         observations=observations,
         input_artifacts={"config": str(config_path), "prices": str(prices_path)},
         report_registry_entry=_report_registry_entry(
@@ -498,6 +513,417 @@ def run_simple_baseline_forward_aging_scoreboard(
             "Simple Baseline Forward Aging Scoreboard",
             "aits research strategies simple-baseline-forward-aging-scoreboard",
             "simple_baseline_forward_aging_scoreboard",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_first_forward_aging_observation_write(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    decision_date: date | None = None,
+    owner_approved: bool = True,
+) -> dict[str, Any]:
+    approval = _owner_launch_approval(output_root, owner_approved)
+    if not approval["approved"]:
+        payload = _payload(
+            report_type="first_forward_aging_observation_write",
+            title="First Forward Aging Observation Write",
+            status="FIRST_OBSERVATION_BLOCKED",
+            summary={
+                "observation_written": False,
+                "owner_approved": False,
+                "broker_action": "none",
+            },
+            approval=approval,
+            observations=[],
+            blockers=["owner_approval_missing"],
+            report_registry_entry=_report_registry_entry(
+                "first_forward_aging_observation_write",
+                "First Forward Aging Observation Write",
+                "aits research strategies first-forward-aging-observation-write",
+                "first_forward_aging_observation_write",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    writer = run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        decision_date=decision_date,
+    )
+    if writer.get("status") == "OBSERVATION_WRITTEN":
+        status = "FIRST_OBSERVATION_WRITTEN"
+    elif writer.get("status") == "OBSERVATION_ALREADY_EXISTS":
+        status = "FIRST_OBSERVATION_ALREADY_EXISTS"
+    else:
+        status = "FIRST_OBSERVATION_BLOCKED"
+    data_quality = _mapping(writer.get("data_quality"))
+    observations = _records(writer.get("observations"))
+    payload = _payload(
+        report_type="first_forward_aging_observation_write",
+        title="First Forward Aging Observation Write",
+        status=status,
+        summary={
+            "decision_date": writer.get("decision_date")
+            or _mapping(writer.get("summary")).get("decision_date"),
+            "observation_written": writer.get("status") == "OBSERVATION_WRITTEN",
+            "writer_status": writer.get("status"),
+            "observation_count": len(observations),
+            "data_quality_status": data_quality.get("status"),
+            "warning_count": data_quality.get("warning_count", 0),
+            "broker_action": "none",
+        },
+        approval=approval,
+        data_quality=data_quality,
+        observations=observations,
+        warnings=[
+            str(issue.get("message"))
+            for issue in _records(data_quality.get("issues"))
+            if str(issue.get("severity")).upper() != "ERROR"
+        ],
+        writer_artifact_paths=writer.get("artifact_paths"),
+        report_registry_entry=_report_registry_entry(
+            "first_forward_aging_observation_write",
+            "First Forward Aging Observation Write",
+            "aits research strategies first-forward-aging-observation-write",
+            "first_forward_aging_observation_write",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_forward_aging_idempotency_and_duplicate_guard(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    decision_date: date | None = None,
+) -> dict[str, Any]:
+    resolved_date = decision_date or _latest_observation_payload_date(output_root)
+    if resolved_date is None:
+        payload = _payload(
+            report_type="forward_aging_idempotency_and_duplicate_guard",
+            title="Forward Aging Idempotency and Duplicate Guard",
+            status="FORWARD_IDEMPOTENCY_GUARD_BLOCKED",
+            summary={"decision_date": None, "duplicate_guard_passed": False},
+            blockers=["existing_observation_missing"],
+            report_registry_entry=_report_registry_entry(
+                "forward_aging_idempotency_and_duplicate_guard",
+                "Forward Aging Idempotency and Duplicate Guard",
+                "aits research strategies forward-aging-idempotency-and-duplicate-guard",
+                "forward_aging_idempotency_and_duplicate_guard",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    observation_path = _observation_path(output_root, resolved_date)
+    before_payload = _read_json_or_empty(observation_path)
+    before_hash = _stable_hash(before_payload)
+    before_core = _observation_core_hashes(before_payload)
+    duplicate = run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        decision_date=resolved_date,
+    )
+    after_payload = _read_json_or_empty(observation_path)
+    after_hash = _stable_hash(after_payload)
+    after_core = _observation_core_hashes(after_payload)
+    checks = [
+        _guard_check(
+            "second_run_returns_already_exists",
+            duplicate.get("status") == "OBSERVATION_ALREADY_EXISTS",
+        ),
+        _guard_check("observation_file_hash_unchanged", before_hash == after_hash),
+        _guard_check(
+            "target_weights_unchanged",
+            before_core.get("target_weights_hash") == after_core.get("target_weights_hash"),
+        ),
+        _guard_check(
+            "signal_inputs_unchanged",
+            before_core.get("signal_inputs_hash") == after_core.get("signal_inputs_hash"),
+        ),
+        _guard_check(
+            "definition_hash_unchanged",
+            before_core.get("policy_definition_hash") == after_core.get("policy_definition_hash"),
+        ),
+    ]
+    blockers = [row["check_id"] for row in checks if row["status"] == "FAIL"]
+    status = "FORWARD_IDEMPOTENCY_GUARD_PASS" if not blockers else "FORWARD_IDEMPOTENCY_GUARD_FAIL"
+    payload = _payload(
+        report_type="forward_aging_idempotency_and_duplicate_guard",
+        title="Forward Aging Idempotency and Duplicate Guard",
+        status=status,
+        summary={
+            "decision_date": resolved_date.isoformat(),
+            "duplicate_writer_status": duplicate.get("status"),
+            "duplicate_guard_passed": not blockers,
+            "blocker_count": len(blockers),
+        },
+        idempotency_checks=checks,
+        before_core_hashes=before_core,
+        after_core_hashes=after_core,
+        blockers=blockers,
+        input_artifacts={"observation": str(observation_path)},
+        report_registry_entry=_report_registry_entry(
+            "forward_aging_idempotency_and_duplicate_guard",
+            "Forward Aging Idempotency and Duplicate Guard",
+            "aits research strategies forward-aging-idempotency-and-duplicate-guard",
+            "forward_aging_idempotency_and_duplicate_guard",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_forward_aging_scheduler_dry_run(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    decision_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    resolved_date = decision_date or as_of_date or date.fromisoformat(str(data_gate.get("as_of")))
+    session = us_equity_market_session(resolved_date)
+    observation_path = _observation_path(output_root, resolved_date)
+    has_price_date = _price_cache_has_date(prices_path, resolved_date)
+    blockers: list[str] = []
+    if not session.is_trading_day:
+        status = "FORWARD_AGING_SCHEDULER_SKIPPED_NON_TRADING_DAY"
+    elif not bool(data_gate.get("passed")):
+        status = "FORWARD_AGING_SCHEDULER_BLOCKED_DATA_QUALITY"
+        blockers.append("validate_data_cache_failed")
+    elif not has_price_date:
+        status = "FORWARD_AGING_SCHEDULER_BLOCKED_DATA_MISSING"
+        blockers.append("as_of_price_row_missing")
+    elif observation_path.exists():
+        status = "FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS"
+    else:
+        status = "FORWARD_AGING_SCHEDULER_DRY_RUN_READY"
+    planned_actions = []
+    if status == "FORWARD_AGING_SCHEDULER_DRY_RUN_READY":
+        planned_actions.append(
+            {
+                "action": "write_research_only_forward_aging_observation",
+                "decision_date": resolved_date.isoformat(),
+                "actual_write_performed": False,
+                "broker_action": "none",
+            }
+        )
+    payload = _payload(
+        report_type="forward_aging_scheduler_dry_run",
+        title="Forward Aging Scheduler Dry Run",
+        status=status,
+        summary={
+            "as_of": resolved_date.isoformat(),
+            "data_quality_as_of": data_gate.get("as_of"),
+            "is_trading_day": session.is_trading_day,
+            "data_quality_status": data_gate.get("status"),
+            "price_row_for_as_of_exists": has_price_date,
+            "observation_written": False,
+            "broker_action": "none",
+        },
+        cadence="daily_trading_day",
+        scheduler_boundary={
+            "external_entry_point": "aits ops daily-run",
+            "dry_run_only": True,
+            "daily_preflight_attachable": True,
+            "non_trading_day_writes_observation": False,
+            "broker_connected": False,
+        },
+        market_session={
+            "session_status": session.session_status,
+            "session_kind": session.session_kind,
+            "reason": session.reason,
+            "previous_trading_day": session.previous_trading_day.isoformat(),
+        },
+        data_quality=data_gate,
+        planned_actions=planned_actions,
+        blockers=blockers,
+        input_artifacts={
+            "prices": str(prices_path),
+            "secondary_prices": str(marketstack_prices_path),
+            "rates": str(rates_path),
+        },
+        report_registry_entry=_report_registry_entry(
+            "forward_aging_scheduler_dry_run",
+            "Forward Aging Scheduler Dry Run",
+            "aits research strategies forward-aging-scheduler-dry-run",
+            "forward_aging_scheduler_dry_run",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_paper_shadow_blocker_status_report(
+    *,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    scoreboard = _read_json_or_empty(output_root / "simple_baseline_forward_aging_scoreboard.json")
+    rows = _scoreboard_lookup(scoreboard)
+    primary = rows.get(PRIMARY_CANDIDATE_ID, {})
+    min_120d = _int(
+        _forward_policy(config).get("minimum_120d_matured_observations_for_paper_shadow_review")
+    )
+    matured_120d = _int(primary.get("matured_120d_count"))
+    remaining = max(min_120d - matured_120d, 0)
+    payload = _payload(
+        report_type="paper_shadow_blocker_status_report",
+        title="Paper Shadow Blocker Status Report",
+        status="PAPER_SHADOW_BLOCKED",
+        summary={
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "minimum_120d_matured_observations_remaining": remaining,
+            "manual_review_required": True,
+        },
+        blocker_status={
+            "primary_candidate": PRIMARY_CANDIDATE_ID,
+            "matured_20d_count": _int(primary.get("matured_20d_count")),
+            "matured_60d_count": _int(primary.get("matured_60d_count")),
+            "matured_120d_count": matured_120d,
+            "minimum_required_120d_matured_observations": min_120d,
+            "minimum_120d_matured_observations_remaining": remaining,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        input_artifacts={
+            "scoreboard": str(output_root / "simple_baseline_forward_aging_scoreboard.json")
+        },
+        report_registry_entry=_report_registry_entry(
+            "paper_shadow_blocker_status_report",
+            "Paper Shadow Blocker Status Report",
+            "aits research strategies paper-shadow-blocker-status-report",
+            "paper_shadow_blocker_status_report",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_forward_aging_owner_launch_pack(
+    *,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    first = _read_json_or_empty(output_root / "first_forward_aging_observation_write.json")
+    data_quality = _read_json_or_empty(
+        output_root / "simple_baseline_forward_aging_data_quality_gate.json"
+    )
+    marketstack = _read_json_or_empty(output_root / "marketstack_ssl_failure_triage.json")
+    sgov = _read_json_or_empty(output_root / "sgov_total_return_proxy_quality_review.json")
+    scheduler = _read_json_or_empty(output_root / "forward_aging_scheduler_dry_run.json")
+    reader = _read_json_or_empty(output_root / "daily_reader_forward_aging_summary.json")
+    blocker = _read_json_or_empty(output_root / "paper_shadow_blocker_status_report.json")
+    first_written = first.get("status") in {
+        "FIRST_OBSERVATION_WRITTEN",
+        "FIRST_OBSERVATION_ALREADY_EXISTS",
+    }
+    data_quality_status = _mapping(data_quality.get("summary")).get("data_quality_status")
+    answers = {
+        "1_first_observation_written": first_written,
+        "2_data_quality_is_pass_with_warnings": data_quality_status == "PASS_WITH_WARNINGS",
+        "3_marketstack_warning_acceptable": marketstack.get("status")
+        == "MARKETSTACK_FAIL_CLOSED_ACCEPTED",
+        "4_sgov_proxy_warning_acceptable": sgov.get("status")
+        in {"SGOV_PROXY_ACCEPTABLE", "SGOV_PROXY_WARN"},
+        "5_scheduler_dry_run_allowed": scheduler.get("status")
+        in {
+            "FORWARD_AGING_SCHEDULER_DRY_RUN_READY",
+            "FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS",
+            "FORWARD_AGING_SCHEDULER_SKIPPED_NON_TRADING_DAY",
+        },
+        "6_reader_brief_minimal_summary_allowed": reader.get("status")
+        == "DAILY_FORWARD_SUMMARY_SAFE",
+        "7_paper_shadow_still_blocked": _mapping(blocker.get("summary")).get(
+            "paper_shadow_allowed"
+        )
+        is False,
+        "8_production_still_blocked": _mapping(blocker.get("summary")).get(
+            "production_allowed"
+        )
+        is False,
+    }
+    readiness_passed = (
+        first_written
+        and data_quality_status in {"PASS", "PASS_WITH_WARNINGS"}
+        and answers["3_marketstack_warning_acceptable"]
+        and answers["4_sgov_proxy_warning_acceptable"]
+        and answers["5_scheduler_dry_run_allowed"]
+        and answers["6_reader_brief_minimal_summary_allowed"]
+        and answers["7_paper_shadow_still_blocked"]
+        and answers["8_production_still_blocked"]
+    )
+    status = (
+        "FORWARD_AGING_OWNER_LAUNCH_PACK_READY"
+        if readiness_passed
+        else "FORWARD_AGING_OWNER_LAUNCH_PACK_BLOCKED"
+    )
+    payload = _payload(
+        report_type="forward_aging_owner_launch_pack",
+        title="Forward Aging Owner Launch Pack",
+        status=status,
+        summary={
+            "first_observation_written": first_written,
+            "data_quality_status": data_quality_status,
+            "scheduler_dry_run_status": scheduler.get("status"),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        required_answers=answers,
+        input_artifacts={
+            "first_observation": str(output_root / "first_forward_aging_observation_write.json"),
+            "data_quality": str(
+                output_root / "simple_baseline_forward_aging_data_quality_gate.json"
+            ),
+            "marketstack": str(output_root / "marketstack_ssl_failure_triage.json"),
+            "sgov": str(output_root / "sgov_total_return_proxy_quality_review.json"),
+            "scheduler": str(output_root / "forward_aging_scheduler_dry_run.json"),
+            "reader": str(output_root / "daily_reader_forward_aging_summary.json"),
+            "paper_shadow_blocker": str(output_root / "paper_shadow_blocker_status_report.json"),
+        },
+        report_registry_entry=_report_registry_entry(
+            "forward_aging_owner_launch_pack",
+            "Forward Aging Owner Launch Pack",
+            "aits research strategies forward-aging-owner-launch-pack",
+            "forward_aging_owner_launch_pack",
         ),
     )
     _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
@@ -732,6 +1158,9 @@ def run_daily_reader_forward_aging_summary(
         output_root / "simple_baseline_forward_aging_candidate_freeze.json"
     )
     scoreboard = _read_json_or_empty(output_root / "simple_baseline_forward_aging_scoreboard.json")
+    data_quality = _read_json_or_empty(
+        output_root / "simple_baseline_forward_aging_data_quality_gate.json"
+    )
     observations = _load_observations(
         sorted(
             (output_root / "forward_aging_observations").glob(
@@ -752,6 +1181,9 @@ def run_daily_reader_forward_aging_summary(
         "primary_candidate": PRIMARY_CANDIDATE_ID,
         "challenger_candidate": CHALLENGER_CANDIDATE_ID,
         "latest_observation_date": latest_observation_date,
+        "data_quality_status": _mapping(data_quality.get("summary")).get(
+            "data_quality_status"
+        ),
         "matured_20d_count": _int(primary.get("matured_20d_count")),
         "matured_60d_count": _int(primary.get("matured_60d_count")),
         "matured_120d_count": _int(primary.get("matured_120d_count")),
@@ -770,6 +1202,9 @@ def run_daily_reader_forward_aging_summary(
                 output_root / "simple_baseline_forward_aging_candidate_freeze.json"
             ),
             "scoreboard": str(output_root / "simple_baseline_forward_aging_scoreboard.json"),
+            "data_quality": str(
+                output_root / "simple_baseline_forward_aging_data_quality_gate.json"
+            ),
         },
         report_registry_entry=_report_registry_entry(
             "daily_reader_forward_aging_summary",
@@ -1715,6 +2150,90 @@ def _scoreboard_lookup(scoreboard: Mapping[str, Any]) -> dict[str, dict[str, Any
         str(row.get("strategy_id")): dict(row)
         for row in _records(scoreboard.get("scoreboard"))
     }
+
+
+def _owner_launch_approval(output_root: Path, explicit_owner_approved: bool) -> dict[str, Any]:
+    data_repair_owner = _read_json_or_empty(output_root / "data_repair_owner_decision_pack.json")
+    forward_owner = _read_json_or_empty(
+        output_root / "simple_baseline_forward_aging_owner_review_pack.json"
+    )
+    approved_by_repair_pack = data_repair_owner.get("status") == "OWNER_APPROVE_FORWARD_AGING"
+    approved_by_forward_pack = bool(
+        _mapping(forward_owner.get("required_answers")).get(
+            "11_owner_approved_start_forward_aging_observation"
+        )
+    )
+    return {
+        "approved": explicit_owner_approved
+        and (approved_by_repair_pack or approved_by_forward_pack),
+        "explicit_owner_approved": explicit_owner_approved,
+        "data_repair_owner_pack_status": data_repair_owner.get("status"),
+        "forward_owner_pack_status": forward_owner.get("status"),
+    }
+
+
+def _observation_path(output_root: Path, decision_date: date) -> Path:
+    artifact_id = f"simple_baseline_forward_aging_observation_{decision_date.isoformat()}"
+    return output_root / "forward_aging_observations" / f"{artifact_id}.json"
+
+
+def _is_written_observation_payload(payload: Mapping[str, Any]) -> bool:
+    return (
+        payload.get("report_type") == "simple_baseline_forward_aging_write_observation"
+        and payload.get("status") == "OBSERVATION_WRITTEN"
+        and bool(_records(payload.get("observations")))
+    )
+
+
+def _latest_observation_payload_date(output_root: Path) -> date | None:
+    paths = sorted(
+        (output_root / "forward_aging_observations").glob(
+            "simple_baseline_forward_aging_observation_*.json"
+        )
+    )
+    for path in reversed(paths):
+        payload = _read_json_or_empty(path)
+        raw = payload.get("decision_date") or _mapping(payload.get("summary")).get(
+            "decision_date"
+        )
+        try:
+            return date.fromisoformat(str(raw))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _observation_core_hashes(payload: Mapping[str, Any]) -> dict[str, str | None]:
+    observations = _records(payload.get("observations"))
+    primary = next(
+        (row for row in observations if row.get("strategy_id") == PRIMARY_CANDIDATE_ID),
+        observations[0] if observations else {},
+    )
+    return {
+        "target_weights_hash": _stable_hash(primary.get("target_weights")),
+        "signal_inputs_hash": _stable_hash(primary.get("signal_inputs_used")),
+        "policy_definition_hash": str(primary.get("policy_definition_hash") or ""),
+    }
+
+
+def _guard_check(check_id: str, passed: object) -> dict[str, Any]:
+    return {"check_id": check_id, "status": "PASS" if bool(passed) else "FAIL"}
+
+
+def _price_cache_has_date(path: Path, target_date: date) -> bool:
+    if not path.exists():
+        return False
+    try:
+        frame = pd.read_csv(path, usecols=["date", "ticker"])
+    except Exception:
+        return False
+    if frame.empty:
+        return False
+    rows = frame.loc[
+        (frame["date"].astype(str) == target_date.isoformat())
+        & (frame["ticker"].astype(str) == "QQQ")
+    ]
+    return not rows.empty
 
 
 def _paper_shadow_threshold_blockers(

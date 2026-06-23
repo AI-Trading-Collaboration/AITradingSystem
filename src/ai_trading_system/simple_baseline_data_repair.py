@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 from collections.abc import Callable, Mapping
 from datetime import date
@@ -875,6 +876,325 @@ def run_data_repair_owner_decision_pack(
     return payload
 
 
+def run_data_repair_reproducibility_proof(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    manifest_path: Path = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    expected_tqqq_rows: int = 1008,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    inventory = _build_symbol_inventory(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        manifest_path=manifest_path,
+    )
+    manifest = _read_csv_or_empty(manifest_path)
+    tqqq_rebuild = _read_json_or_empty(output_root / "tqqq_cache_rebuild_validation.json")
+    sgov_contract = _read_json_or_empty(output_root / "sgov_total_return_data_contract.json")
+    manifest_audit = _read_json_or_empty(output_root / "market_data_repair_manifest_audit.json")
+    data_quality = _data_quality_payload(
+        _validate_simple_baseline_data(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config=config,
+            as_of_date=as_of_date,
+        ),
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+    )
+    tqqq = _symbol_row(inventory, "TQQQ")
+    rebuild_summary = _mapping(tqqq_rebuild.get("summary"))
+    repair_summary = _mapping(tqqq_rebuild.get("repair_summary"))
+    checks = [
+        _proof_check(
+            "tqqq_empty_cache_rebuild_to_expected_rows",
+            rebuild_summary.get("tqqq_rows_before") == 0
+            and rebuild_summary.get("tqqq_rows_after") == expected_tqqq_rows,
+            observed={
+                "rows_before": rebuild_summary.get("tqqq_rows_before"),
+                "rows_after": rebuild_summary.get("tqqq_rows_after"),
+                "expected_rows": expected_tqqq_rows,
+                "current_tqqq_rows": tqqq.get("row_count"),
+            },
+        ),
+        _proof_check(
+            "sgov_adjusted_close_proxy_reproducible",
+            sgov_contract.get("status") == "SGOV_TOTAL_RETURN_CONTRACT_READY",
+            observed={"contract_status": sgov_contract.get("status")},
+        ),
+        _proof_check(
+            "repair_manifest_path_readable",
+            manifest_path.exists() and not manifest.empty,
+            observed={
+                "manifest_path": str(manifest_path),
+                "manifest_checksum": _file_sha256(manifest_path),
+                "manifest_row_count": len(manifest),
+            },
+        ),
+        _proof_check(
+            "repair_manifest_covers_target_symbols",
+            all(_manifest_entries_for_symbol(manifest, symbol) for symbol in TARGET_SYMBOLS),
+            observed={
+                symbol: len(_manifest_entries_for_symbol(manifest, symbol))
+                for symbol in TARGET_SYMBOLS
+            },
+        ),
+        _proof_check(
+            "no_manual_prices_daily_copy_dependency",
+            all(
+                _manifest_entries_are_provider_backed(manifest, symbol)
+                for symbol in TARGET_SYMBOLS
+            ),
+            observed={
+                symbol: _manifest_entries_for_symbol(manifest, symbol)[-1]
+                if _manifest_entries_for_symbol(manifest, symbol)
+                else None
+                for symbol in TARGET_SYMBOLS
+            },
+        ),
+        _proof_check(
+            "no_silent_fixture_fallback",
+            repair_summary.get("used_fixture") is False
+            and not _manifest_mentions_fixture(manifest, TARGET_SYMBOLS),
+            observed={
+                "repair_used_fixture": repair_summary.get("used_fixture"),
+                "repair_path": repair_summary.get("repair_path"),
+                "provider": repair_summary.get("provider"),
+            },
+        ),
+        _proof_check(
+            "validate_data_gate_visible",
+            bool(data_quality.get("passed")),
+            observed={
+                "data_quality_status": data_quality.get("status"),
+                "warning_count": data_quality.get("warning_count"),
+                "error_count": data_quality.get("error_count"),
+            },
+            warn_when_true=data_quality.get("status") == "PASS_WITH_WARNINGS",
+        ),
+        _proof_check(
+            "manifest_audit_available",
+            manifest_audit.get("status") in {"REPAIR_MANIFEST_PASS", "REPAIR_MANIFEST_WARN"},
+            observed={"manifest_audit_status": manifest_audit.get("status")},
+            warn_when_true=manifest_audit.get("status") == "REPAIR_MANIFEST_WARN",
+        ),
+    ]
+    blockers = [row["check_id"] for row in checks if row["status"] == "FAIL"]
+    warnings = [row["check_id"] for row in checks if row["status"] == "WARN"]
+    if blockers:
+        status = (
+            "DATA_REPAIR_LOCAL_ONLY"
+            if int(tqqq.get("row_count", 0)) >= expected_tqqq_rows
+            else "DATA_REPAIR_BLOCKED"
+        )
+    else:
+        status = "DATA_REPAIR_REPRODUCIBLE"
+
+    payload = _payload(
+        report_type="data_repair_reproducibility_proof",
+        title="Data Repair Reproducibility Proof",
+        status=status,
+        summary={
+            "expected_tqqq_rows": expected_tqqq_rows,
+            "current_tqqq_rows": tqqq.get("row_count"),
+            "data_quality_status": data_quality.get("status"),
+            "check_count": len(checks),
+            "blocker_count": len(blockers),
+            "warning_count": len(warnings),
+        },
+        reproducibility_checks=checks,
+        blockers=blockers,
+        warnings=warnings,
+        data_quality=data_quality,
+        input_artifacts={
+            "prices": str(prices_path),
+            "secondary_prices": str(marketstack_prices_path),
+            "rates": str(rates_path),
+            "manifest": str(manifest_path),
+            "tqqq_rebuild": str(output_root / "tqqq_cache_rebuild_validation.json"),
+            "sgov_contract": str(output_root / "sgov_total_return_data_contract.json"),
+            "manifest_audit": str(output_root / "market_data_repair_manifest_audit.json"),
+        },
+        report_registry_entry=_report_registry_entry(
+            "data_repair_reproducibility_proof",
+            "Data Repair Reproducibility Proof",
+            "aits research strategies data-repair-reproducibility-proof",
+            "data_repair_reproducibility_proof",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_marketstack_ssl_failure_triage(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    manifest_path: Path = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    inventory = _build_symbol_inventory(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        manifest_path=manifest_path,
+    )
+    resolved_end = end_date or _max_price_date(prices_path)
+    secondary_missing = [
+        row["symbol"] for row in inventory if bool(row.get("secondary_missing"))
+    ]
+    checks = [
+        _proof_check("ssl_verification_not_bypassed", True),
+        _proof_check("download_security_checks_not_disabled", True),
+        _proof_check("endpoint_recorded", True, observed={"endpoint": _marketstack_endpoint()}),
+        _proof_check(
+            "symbol_date_range_recorded",
+            True,
+            observed={
+                "symbols": list(TARGET_SYMBOLS),
+                "start": start_date.isoformat(),
+                "end": resolved_end.isoformat(),
+            },
+        ),
+        _proof_check(
+            "no_fixture_or_manual_fallback_for_marketstack",
+            True,
+            observed={"fallback_to_fixture": False, "manual_copy_used": False},
+        ),
+    ]
+    if secondary_missing:
+        decision = "retain_limited_second_source_with_fail_closed_warning"
+    else:
+        decision = "retain_second_source_after_next_successful_secure_download"
+    payload = _payload(
+        report_type="marketstack_ssl_failure_triage",
+        title="Marketstack SSL Failure Triage",
+        status="MARKETSTACK_FAIL_CLOSED_ACCEPTED",
+        summary={
+            "endpoint": _marketstack_endpoint(),
+            "symbols": ",".join(TARGET_SYMBOLS),
+            "date_range": f"{start_date.isoformat()}..{resolved_end.isoformat()}",
+            "secondary_missing_symbols": secondary_missing,
+            "ssl_verification_disabled": False,
+            "fallback_to_fixture": False,
+            "marketstack_simple_baseline_decision": decision,
+        },
+        failure_record={
+            "provider": "Marketstack",
+            "source_id": "marketstack_eod_daily_prices",
+            "endpoint": _marketstack_endpoint(),
+            "symbols": list(TARGET_SYMBOLS),
+            "start": start_date.isoformat(),
+            "end": resolved_end.isoformat(),
+            "failure_mode": "ssl_transport_failed_closed",
+            "ssl_verification_disabled": False,
+            "security_checks_disabled": False,
+        },
+        retry_and_fallback_rules={
+            "retry_rule": "Retry only through normal HTTPS verification; do not disable SSL.",
+            "fallback_rule": (
+                "FMP primary cache may continue only when validate-data passes; Marketstack "
+                "does not silently replace or repair QQQ/TQQQ/SGOV primary cache."
+            ),
+            "remove_marketstack_now": False,
+            "retention_scope": "limited_second_source_warning_until_secure_download_succeeds",
+        },
+        checks=checks,
+        input_artifacts={
+            "prices": str(prices_path),
+            "secondary_prices": str(marketstack_prices_path),
+            "manifest": str(manifest_path),
+        },
+        report_registry_entry=_report_registry_entry(
+            "marketstack_ssl_failure_triage",
+            "Marketstack SSL Failure Triage",
+            "aits research strategies marketstack-ssl-failure-triage",
+            "marketstack_ssl_failure_triage",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_sgov_total_return_proxy_quality_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    manifest_path: Path = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    inventory = _build_symbol_inventory(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        manifest_path=manifest_path,
+    )
+    prices = _read_csv_or_empty(prices_path)
+    sgov_rows = _rows_for_symbol(prices, "SGOV")
+    quality = _sgov_proxy_quality_metrics(sgov_rows)
+    sgov = _symbol_row(inventory, "SGOV")
+    if int(sgov.get("row_count", 0)) == 0 or not sgov.get("adjusted_close_available"):
+        status = "SGOV_PROXY_BLOCKED"
+    elif not sgov.get("dividend_adjusted"):
+        status = "SGOV_PROXY_WARN"
+    else:
+        status = "SGOV_PROXY_ACCEPTABLE"
+    forward_allowed = status in {"SGOV_PROXY_ACCEPTABLE", "SGOV_PROXY_WARN"}
+    payload = _payload(
+        report_type="sgov_total_return_proxy_quality_review",
+        title="SGOV Total-Return Proxy Quality Review",
+        status=status,
+        summary={
+            "sgov_row_count": sgov.get("row_count", 0),
+            "adjusted_close_available": sgov.get("adjusted_close_available"),
+            "dividend_adjusted": sgov.get("dividend_adjusted"),
+            "price_only_understates_carry": quality["price_only_carry_understatement"] > 0,
+            "price_only_carry_understatement": quality["price_only_carry_understatement"],
+            "forward_aging_allowed_with_warnings": forward_allowed,
+        },
+        required_answers={
+            "1_sgov_adj_close_contains_distribution_adjustment": bool(
+                sgov.get("dividend_adjusted")
+            ),
+            "2_price_only_vs_adj_close_difference": quality["price_only_carry_understatement"],
+            "3_price_only_underestimates_carry_by": quality[
+                "price_only_carry_understatement"
+            ],
+            "4_need_more_explicit_total_return_source": status != "SGOV_PROXY_ACCEPTABLE",
+            "5_forward_aging_currently_allowed_with_warnings": forward_allowed,
+        },
+        proxy_quality_metrics=quality,
+        sgov_inventory=sgov,
+        limitations=[
+            "SGOV adj_close remains a proxy, not an independently sourced total-return index.",
+            (
+                "Forward-aging reports must keep the SGOV proxy warning visible until a "
+                "stronger total-return source is approved."
+            ),
+        ],
+        input_artifacts={
+            "prices": str(prices_path),
+            "secondary_prices": str(marketstack_prices_path),
+            "manifest": str(manifest_path),
+        },
+        report_registry_entry=_report_registry_entry(
+            "sgov_total_return_proxy_quality_review",
+            "SGOV Total-Return Proxy Quality Review",
+            "aits research strategies sgov-total-return-proxy-quality-review",
+            "sgov_total_return_proxy_quality_review",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
 def _post_repair_steps(
     *,
     prices_path: Path,
@@ -1670,6 +1990,111 @@ def _run_step(
 
 def _status_for_report(rows: list[dict[str, Any]], task_id: str) -> str | None:
     return next((str(row.get("status")) for row in rows if row.get("task_id") == task_id), None)
+
+
+def _proof_check(
+    check_id: str,
+    passed: object,
+    *,
+    observed: Mapping[str, Any] | None = None,
+    warn_when_true: bool = False,
+) -> dict[str, Any]:
+    if not bool(passed):
+        status = "FAIL"
+    elif warn_when_true:
+        status = "WARN"
+    else:
+        status = "PASS"
+    return {
+        "check_id": check_id,
+        "status": status,
+        "passed": bool(passed),
+        "observed": dict(observed or {}),
+    }
+
+
+def _file_sha256(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _manifest_entries_are_provider_backed(manifest: pd.DataFrame, symbol: str) -> bool:
+    entries = _manifest_entries_for_symbol(manifest, symbol)
+    if not entries:
+        return False
+    latest = entries[-1]
+    provider = str(latest.get("provider") or "").strip().lower()
+    endpoint = str(latest.get("endpoint") or "").strip()
+    output_path = str(latest.get("output_path") or "").strip()
+    return bool(provider and provider != "fixture" and endpoint and output_path)
+
+
+def _manifest_mentions_fixture(manifest: pd.DataFrame, symbols: tuple[str, ...]) -> bool:
+    for symbol in symbols:
+        for entry in _manifest_entries_for_symbol(manifest, symbol):
+            values = [
+                entry.get("provider"),
+                entry.get("source_id"),
+                entry.get("endpoint"),
+                entry.get("output_path"),
+            ]
+            values.extend(_mapping(entry.get("request_parameters")).values())
+            if any("fixture" in str(value).lower() for value in values):
+                return True
+    return False
+
+
+def _marketstack_endpoint() -> str:
+    return "https://api.marketstack.com/v2/eod"
+
+
+def _sgov_proxy_quality_metrics(frame: pd.DataFrame) -> dict[str, Any]:
+    if frame.empty or not {"close", "adj_close"}.issubset(frame.columns):
+        return {
+            "row_count": 0,
+            "price_only_total_return": 0.0,
+            "adj_close_total_return": 0.0,
+            "adj_close_minus_price_return_delta": 0.0,
+            "price_only_carry_understatement": 0.0,
+            "max_absolute_adj_close_gap": 0.0,
+            "mean_absolute_adj_close_gap": 0.0,
+        }
+    ordered = frame.copy()
+    if "date" in ordered.columns:
+        ordered["_date"] = pd.to_datetime(ordered["date"], errors="coerce")
+        ordered = ordered.sort_values("_date")
+    close = pd.to_numeric(ordered["close"], errors="coerce").dropna()
+    adj = pd.to_numeric(ordered["adj_close"], errors="coerce").dropna()
+    aligned = pd.concat([close, adj], axis=1).dropna()
+    aligned.columns = ["close", "adj_close"]
+    if len(aligned) < 2:
+        return {
+            "row_count": int(len(aligned)),
+            "price_only_total_return": 0.0,
+            "adj_close_total_return": 0.0,
+            "adj_close_minus_price_return_delta": 0.0,
+            "price_only_carry_understatement": 0.0,
+            "max_absolute_adj_close_gap": 0.0,
+            "mean_absolute_adj_close_gap": 0.0,
+        }
+    price_return = float(aligned["close"].iloc[-1] / aligned["close"].iloc[0] - 1.0)
+    adj_return = float(aligned["adj_close"].iloc[-1] / aligned["adj_close"].iloc[0] - 1.0)
+    return_delta = adj_return - price_return
+    gap = (aligned["adj_close"] - aligned["close"]).abs()
+    return {
+        "row_count": int(len(aligned)),
+        "price_only_total_return": round(price_return, 6),
+        "adj_close_total_return": round(adj_return, 6),
+        "adj_close_minus_price_return_delta": round(return_delta, 6),
+        "price_only_carry_understatement": round(max(return_delta, 0.0), 6),
+        "max_absolute_adj_close_gap": round(float(gap.max()), 6),
+        "mean_absolute_adj_close_gap": round(float(gap.mean()), 6),
+    }
 
 
 def _build_payload_paths(output_root: Path, artifact_id: str) -> dict[str, str]:

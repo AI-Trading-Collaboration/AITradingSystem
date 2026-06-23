@@ -40,12 +40,15 @@ from ai_trading_system.simple_baseline_candidate_validation import (
 from ai_trading_system.simple_baseline_data_repair import (
     DEFAULT_DOWNLOAD_MANIFEST_PATH,
     run_data_repair_owner_decision_pack,
+    run_data_repair_reproducibility_proof,
     run_equal_risk_result_recompute_after_data_repair,
     run_first_forward_aging_observation_dry_run,
     run_forward_aging_unblock_readiness_review,
     run_market_data_repair_manifest_audit,
+    run_marketstack_ssl_failure_triage,
     run_reader_brief_forward_aging_safe_preview,
     run_sgov_total_return_data_contract,
+    run_sgov_total_return_proxy_quality_review,
     run_simple_baseline_data_source_inventory,
     run_simple_baseline_post_data_repair_real_run,
     run_simple_baseline_validate_data_hardening,
@@ -57,6 +60,11 @@ from ai_trading_system.simple_baseline_forward_aging import (
     DEFAULT_FORWARD_AGING_OWNER_REVIEW_DOC_PATH,
     run_daily_reader_forward_aging_summary,
     run_equal_risk_qqq_sgov_policy_definition_lock,
+    run_first_forward_aging_observation_write,
+    run_forward_aging_idempotency_and_duplicate_guard,
+    run_forward_aging_owner_launch_pack,
+    run_forward_aging_scheduler_dry_run,
+    run_paper_shadow_blocker_status_report,
     run_simple_baseline_absolute_return_gap_review,
     run_simple_baseline_candidate_role_assignment,
     run_simple_baseline_comparator_definition_lock,
@@ -1689,6 +1697,293 @@ def strategies_data_repair_owner_decision_pack_command(
     _print_simple_baseline_payload("Data repair owner decision pack", payload)
 
 
+def strategies_data_repair_reproducibility_proof_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest-path", help="下载/repair manifest CSV。"),
+    ] = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    expected_tqqq_rows: Annotated[
+        int,
+        typer.Option("--expected-tqqq-rows", help="TQQQ repaired expected row count。"),
+    ] = 1008,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_data_repair_reproducibility_proof(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            manifest_path=manifest_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            expected_tqqq_rows=expected_tqqq_rows,
+        )
+    )
+    _print_simple_baseline_payload("Data repair reproducibility proof", payload)
+
+
+def strategies_marketstack_ssl_failure_triage_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest-path", help="下载/repair manifest CSV。"),
+    ] = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="Marketstack failed request start date。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="Marketstack failed request end date。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_marketstack_ssl_failure_triage(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            manifest_path=manifest_path,
+            output_root=output_root,
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Marketstack SSL failure triage", payload)
+
+
+def strategies_sgov_total_return_proxy_quality_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest-path", help="下载/repair manifest CSV。"),
+    ] = DEFAULT_DOWNLOAD_MANIFEST_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_sgov_total_return_proxy_quality_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            manifest_path=manifest_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("SGOV total-return proxy quality review", payload)
+
+
+def strategies_first_forward_aging_observation_write_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    decision_date: Annotated[
+        str | None,
+        typer.Option("--decision-date", help="Formal observation decision date。"),
+    ] = None,
+    owner_approved: Annotated[
+        bool,
+        typer.Option(
+            "--owner-approved/--no-owner-approved",
+            help="Owner approved research-only observation。",
+        ),
+    ] = True,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_first_forward_aging_observation_write(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            decision_date=_parse_optional_date(decision_date),
+            owner_approved=owner_approved,
+        )
+    )
+    _print_simple_baseline_payload("First forward-aging observation write", payload)
+
+
+def strategies_forward_aging_idempotency_and_duplicate_guard_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    decision_date: Annotated[
+        str | None,
+        typer.Option("--decision-date", help="Observation decision date to duplicate-check。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_forward_aging_idempotency_and_duplicate_guard(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            decision_date=_parse_optional_date(decision_date),
+        )
+    )
+    _print_simple_baseline_payload("Forward aging idempotency guard", payload)
+
+
+def strategies_forward_aging_scheduler_dry_run_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="Scheduler dry-run data-quality as-of date。"),
+    ] = None,
+    decision_date: Annotated[
+        str | None,
+        typer.Option("--decision-date", help="Scheduler dry-run observation decision date。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_forward_aging_scheduler_dry_run(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            decision_date=_parse_optional_date(decision_date),
+        )
+    )
+    _print_simple_baseline_payload("Forward aging scheduler dry-run", payload)
+
+
+def strategies_paper_shadow_blocker_status_report_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_paper_shadow_blocker_status_report(
+            config_path=config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Paper-shadow blocker status report", payload)
+
+
+def strategies_forward_aging_owner_launch_pack_command(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_forward_aging_owner_launch_pack(output_root=output_root)
+    )
+    _print_simple_baseline_payload("Forward aging owner launch pack", payload)
+
 
 def strategies_qqq_outperformance_objective_contract_command(
     config_path: Annotated[
@@ -2350,6 +2645,38 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     (
         "data-repair-owner-decision-pack",
         strategies_data_repair_owner_decision_pack_command,
+    ),
+    (
+        "data-repair-reproducibility-proof",
+        strategies_data_repair_reproducibility_proof_command,
+    ),
+    (
+        "marketstack-ssl-failure-triage",
+        strategies_marketstack_ssl_failure_triage_command,
+    ),
+    (
+        "sgov-total-return-proxy-quality-review",
+        strategies_sgov_total_return_proxy_quality_review_command,
+    ),
+    (
+        "first-forward-aging-observation-write",
+        strategies_first_forward_aging_observation_write_command,
+    ),
+    (
+        "forward-aging-idempotency-and-duplicate-guard",
+        strategies_forward_aging_idempotency_and_duplicate_guard_command,
+    ),
+    (
+        "forward-aging-scheduler-dry-run",
+        strategies_forward_aging_scheduler_dry_run_command,
+    ),
+    (
+        "paper-shadow-blocker-status-report",
+        strategies_paper_shadow_blocker_status_report_command,
+    ),
+    (
+        "forward-aging-owner-launch-pack",
+        strategies_forward_aging_owner_launch_pack_command,
     ),
     (
         "qqq-outperformance-objective-contract",

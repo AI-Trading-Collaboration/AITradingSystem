@@ -26,12 +26,15 @@ from ai_trading_system.simple_baseline_candidate_validation import (
 )
 from ai_trading_system.simple_baseline_data_repair import (
     run_data_repair_owner_decision_pack,
+    run_data_repair_reproducibility_proof,
     run_equal_risk_result_recompute_after_data_repair,
     run_first_forward_aging_observation_dry_run,
     run_forward_aging_unblock_readiness_review,
     run_market_data_repair_manifest_audit,
+    run_marketstack_ssl_failure_triage,
     run_reader_brief_forward_aging_safe_preview,
     run_sgov_total_return_data_contract,
+    run_sgov_total_return_proxy_quality_review,
     run_simple_baseline_data_source_inventory,
     run_simple_baseline_post_data_repair_real_run,
     run_simple_baseline_validate_data_hardening,
@@ -41,6 +44,11 @@ from ai_trading_system.simple_baseline_data_repair import (
 from ai_trading_system.simple_baseline_forward_aging import (
     run_daily_reader_forward_aging_summary,
     run_equal_risk_qqq_sgov_policy_definition_lock,
+    run_first_forward_aging_observation_write,
+    run_forward_aging_idempotency_and_duplicate_guard,
+    run_forward_aging_owner_launch_pack,
+    run_forward_aging_scheduler_dry_run,
+    run_paper_shadow_blocker_status_report,
     run_simple_baseline_absolute_return_gap_review,
     run_simple_baseline_candidate_role_assignment,
     run_simple_baseline_comparator_definition_lock,
@@ -115,6 +123,11 @@ FORWARD_AGING_REPORT_IDS = {
     "simple_baseline_forward_aging_owner_review_pack",
     "simple_baseline_forward_aging_automation_readiness",
     "simple_baseline_forward_aging_master_review",
+    "first_forward_aging_observation_write",
+    "forward_aging_idempotency_and_duplicate_guard",
+    "forward_aging_scheduler_dry_run",
+    "paper_shadow_blocker_status_report",
+    "forward_aging_owner_launch_pack",
 }
 DATA_REPAIR_REPORT_IDS = {
     "simple_baseline_data_source_inventory",
@@ -129,6 +142,9 @@ DATA_REPAIR_REPORT_IDS = {
     "first_forward_aging_observation_dry_run",
     "reader_brief_forward_aging_safe_preview",
     "data_repair_owner_decision_pack",
+    "data_repair_reproducibility_proof",
+    "marketstack_ssl_failure_triage",
+    "sgov_total_return_proxy_quality_review",
 }
 
 
@@ -518,6 +534,46 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     for command in forward_commands:
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
+    _write_json(
+        output_root / "data_repair_owner_decision_pack.json",
+        {"status": "OWNER_APPROVE_FORWARD_AGING"},
+    )
+    forward_launch_commands = [
+        [
+            "research",
+            "strategies",
+            "first-forward-aging-observation-write",
+            *data_args,
+            "--decision-date",
+            "2023-10-10",
+        ],
+        [
+            "research",
+            "strategies",
+            "forward-aging-idempotency-and-duplicate-guard",
+            *data_args,
+            "--decision-date",
+            "2023-10-10",
+        ],
+        [
+            "research",
+            "strategies",
+            "forward-aging-scheduler-dry-run",
+            *data_args,
+            "--decision-date",
+            "2023-10-10",
+        ],
+        [
+            "research",
+            "strategies",
+            "paper-shadow-blocker-status-report",
+            "--output-root",
+            str(output_root),
+        ],
+    ]
+    for command in forward_launch_commands:
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0, result.output
     repair_commands = [
         [
             "research",
@@ -542,14 +598,82 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         [
             "research",
             "strategies",
+            "sgov-total-return-data-contract",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            *manifest_args,
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "market-data-repair-manifest-audit",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            *manifest_args,
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
             "simple-baseline-validate-data-hardening",
             *data_args,
             *manifest_args,
+        ],
+        [
+            "research",
+            "strategies",
+            "data-repair-reproducibility-proof",
+            *data_args,
+            *manifest_args,
+            "--expected-tqqq-rows",
+            "420",
+        ],
+        [
+            "research",
+            "strategies",
+            "marketstack-ssl-failure-triage",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            *manifest_args,
+            "--output-root",
+            str(output_root),
+        ],
+        [
+            "research",
+            "strategies",
+            "sgov-total-return-proxy-quality-review",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            *manifest_args,
+            "--output-root",
+            str(output_root),
         ],
     ]
     for command in repair_commands:
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
+    result = runner.invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "forward-aging-owner-launch-pack",
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
 
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     registered = {item["report_id"] for item in registry["reports"]}
@@ -566,8 +690,53 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     assert daily_entry["required_for_daily_reading"] is False
 
 
+def test_forward_aging_writer_replaces_failed_placeholder_after_data_recovery(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+    observation_root = output_root / "forward_aging_observations"
+    failed_path = observation_root / "simple_baseline_forward_aging_observation_2023-10-10.json"
+    _write_json(
+        failed_path,
+        {
+            "report_type": "simple_baseline_forward_aging_write_observation",
+            "status": "MARKET_DATA_MISSING",
+            "summary": {
+                "decision_date": "2023-10-10",
+                "data_quality_status": "FAIL",
+                "observation_count": 0,
+            },
+            "data_quality": {"status": "FAIL"},
+            "observations": [],
+        },
+    )
+    _write_json(
+        output_root / "data_repair_owner_decision_pack.json",
+        {"status": "OWNER_APPROVE_FORWARD_AGING"},
+    )
+
+    first_write = run_first_forward_aging_observation_write(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
+    written = json.loads(failed_path.read_text(encoding="utf-8"))
+
+    assert first_write["status"] == "FIRST_OBSERVATION_WRITTEN"
+    assert first_write["summary"]["observation_written"] is True
+    assert written["status"] == "OBSERVATION_WRITTEN"
+    assert written["summary"]["replaced_invalid_existing_artifact"] is True
+    assert written["previous_invalid_artifact"]["previous_status"] == "MARKET_DATA_MISSING"
+    assert written["observations"]
+
+
 def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
+    manifest_path = _write_simple_baseline_manifest(tmp_path, prices_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
     _write_simple_baseline_prerequisites(
         prices_path=prices_path,
@@ -590,7 +759,11 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         output_root=output_root,
         as_of_date=TEST_AS_OF,
     )
-    observation = run_simple_baseline_forward_aging_write_observation(
+    _write_json(
+        output_root / "data_repair_owner_decision_pack.json",
+        {"status": "OWNER_APPROVE_FORWARD_AGING"},
+    )
+    first_write = run_first_forward_aging_observation_write(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,
         rates_path=rates_path,
@@ -599,6 +772,14 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         decision_date=date(2023, 10, 10),
     )
     duplicate_observation = run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
+    idempotency = run_forward_aging_idempotency_and_duplicate_guard(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,
         rates_path=rates_path,
@@ -616,6 +797,14 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
     scoreboard = run_simple_baseline_forward_aging_scoreboard(output_root=output_root)
     threshold = run_simple_baseline_paper_shadow_threshold_contract(output_root=output_root)
     daily_forward = run_daily_reader_forward_aging_summary(output_root=output_root)
+    scheduler = run_forward_aging_scheduler_dry_run(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        decision_date=date(2023, 10, 10),
+    )
     risk_budget = run_simple_baseline_risk_budget_review(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,
@@ -641,6 +830,20 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         output_root=output_root,
         docs_path=master_path,
     )
+    marketstack = run_marketstack_ssl_failure_triage(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    sgov_proxy = run_sgov_total_return_proxy_quality_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    blocker_report = run_paper_shadow_blocker_status_report(output_root=output_root)
+    launch_pack = run_forward_aging_owner_launch_pack(output_root=output_root)
 
     assert reconciliation["status"] == "RECONCILED"
     assert freeze["status"] == "CANDIDATES_FROZEN"
@@ -650,9 +853,11 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
     assert comparator_lock["status"] == "COMPARATOR_DEFINITIONS_LOCKED"
     assert role_assignment["status"] == "ROLE_ASSIGNMENT_READY"
     assert data_quality["status"] in {"DATA_QUALITY_PASS", "DATA_QUALITY_PASS_WITH_WARNINGS"}
-    assert observation["status"] == "OBSERVATION_WRITTEN"
+    assert first_write["status"] == "FIRST_OBSERVATION_WRITTEN"
+    assert first_write["summary"]["observation_written"] is True
     assert duplicate_observation["status"] == "OBSERVATION_ALREADY_EXISTS"
-    assert observation["observations"][0]["strategy_id"] == "equal_risk_qqq_sgov"
+    assert idempotency["status"] == "FORWARD_IDEMPOTENCY_GUARD_PASS"
+    assert first_write["observations"][0]["strategy_id"] == "equal_risk_qqq_sgov"
     assert maturity["status"] in {"MATURITY_UPDATED", "MATURITY_PARTIAL"}
     assert scoreboard["status"] == "FORWARD_SCOREBOARD_INSUFFICIENT"
     primary_score = next(
@@ -662,6 +867,8 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
     assert threshold["status"] == "THRESHOLD_CONTRACT_READY"
     assert threshold["paper_shadow_allowed"] is False
     assert daily_forward["status"] == "DAILY_FORWARD_SUMMARY_SAFE"
+    assert daily_forward["portfolio_control_forward_aging"]["data_quality_status"] == "PASS"
+    assert scheduler["status"] == "FORWARD_AGING_SCHEDULER_OBSERVATION_ALREADY_EXISTS"
     assert risk_budget["status"] in {"RISK_BUDGET_REVIEW_READY", "RISK_BUDGET_REVIEW_MIXED"}
     assert return_gap["role_recommendation"] in {
         "DEFENSIVE_CORE",
@@ -673,6 +880,12 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
     assert automation["status"] == "AUTOMATION_READY_FOR_OBSERVATION_ONLY"
     assert master["status"] == "START_FORWARD_AGING"
     assert master_path.exists()
+    assert marketstack["status"] == "MARKETSTACK_FAIL_CLOSED_ACCEPTED"
+    assert sgov_proxy["status"] == "SGOV_PROXY_ACCEPTABLE"
+    assert blocker_report["summary"]["paper_shadow_allowed"] is False
+    assert blocker_report["summary"]["minimum_120d_matured_observations_remaining"] >= 19
+    assert launch_pack["status"] == "FORWARD_AGING_OWNER_LAUNCH_PACK_READY"
+    assert launch_pack["required_answers"]["7_paper_shadow_still_blocked"] is True
 
     payloads = [
         reconciliation,
@@ -682,16 +895,21 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         comparator_lock,
         role_assignment,
         data_quality,
-        observation,
+        first_write,
+        duplicate_observation,
+        idempotency,
         maturity,
         scoreboard,
         threshold,
         daily_forward,
+        scheduler,
         risk_budget,
         return_gap,
         owner_pack,
         automation,
         master,
+        blocker_report,
+        launch_pack,
     ]
     assert {payload["report_type"] for payload in payloads} == FORWARD_AGING_REPORT_IDS
     for payload in payloads:
@@ -787,6 +1005,34 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
     )
     preview = run_reader_brief_forward_aging_safe_preview(output_root=output_root)
     owner_pack = run_data_repair_owner_decision_pack(output_root=output_root)
+    proof_source = dict(tqqq_rebuild)
+    proof_source["summary"] = {
+        **proof_source["summary"],
+        "tqqq_rows_before": 0,
+        "tqqq_rows_after": 420,
+    }
+    _write_json(output_root / "tqqq_cache_rebuild_validation.json", proof_source)
+    reproducibility = run_data_repair_reproducibility_proof(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+        expected_tqqq_rows=420,
+    )
+    marketstack = run_marketstack_ssl_failure_triage(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
+    sgov_proxy = run_sgov_total_return_proxy_quality_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+    )
 
     payloads = [
         inventory,
@@ -801,6 +1047,9 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
         dry_run,
         preview,
         owner_pack,
+        reproducibility,
+        marketstack,
+        sgov_proxy,
     ]
     assert {payload["report_type"] for payload in payloads} == DATA_REPAIR_REPORT_IDS
     assert inventory["status"] == "DATA_SOURCE_INVENTORY_READY"
@@ -835,6 +1084,12 @@ def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: P
     assert preview["reader_brief_preview"]["broker_action"] == "none"
     assert not preview["forbidden_phrase_hits"]
     assert owner_pack["status"] == "OWNER_APPROVE_FORWARD_AGING"
+    assert reproducibility["status"] == "DATA_REPAIR_REPRODUCIBLE"
+    assert reproducibility["summary"]["current_tqqq_rows"] == 420
+    assert marketstack["status"] == "MARKETSTACK_FAIL_CLOSED_ACCEPTED"
+    assert marketstack["failure_record"]["ssl_verification_disabled"] is False
+    assert sgov_proxy["status"] == "SGOV_PROXY_ACCEPTABLE"
+    assert sgov_proxy["required_answers"]["5_forward_aging_currently_allowed_with_warnings"]
 
     for payload in payloads:
         assert payload["production_effect"] == "none"
