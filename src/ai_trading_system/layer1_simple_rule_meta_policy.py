@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from collections import defaultdict
 from collections.abc import Mapping
@@ -40,6 +42,12 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "layer1_simple_rule_selector_registry.yaml"
+)
+DEFAULT_LAYER1_SELECTOR_OWNER_WATCHLIST_REVIEW_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "layer1_selector_owner_watchlist_review.md"
+)
+DEFAULT_LAYER1_SELECTOR_RESULT_REVIEW_MASTER_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "layer1_selector_result_review_master.md"
 )
 
 BlendPath = dict[str, dict[str, float]]
@@ -1146,6 +1154,1573 @@ def run_layer1_simple_rule_selector_master_review(
     )
     _write_pair(payload, output_root)
     return payload
+
+
+def run_layer1_selector_real_result_summary(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_real_result_summary",
+            "Layer-1 Selector Real Result Summary",
+            "LAYER1_SELECTOR_RESULT_SUMMARY_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    top = _top_simple_rule_selector_row(context, registry)
+    period = run_layer1_selector_period_split_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    sensitivity = run_layer1_selector_overfit_sensitivity_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    watchlist = run_layer1_selector_forward_aging_watchlist_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    owner = run_layer1_selector_owner_decision_pack(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    if not top:
+        status = "LAYER1_SELECTOR_RESULT_SUMMARY_BLOCKED"
+    elif _cost_after_edge_exists(top):
+        status = "LAYER1_SELECTOR_RESULT_SUMMARY_READY"
+    else:
+        status = "LAYER1_SELECTOR_RESULT_SUMMARY_INCONCLUSIVE"
+    top_summary = _top_selector_summary_fields(top)
+    top_summary.update(
+        {
+            "period_split_status": period.get("status"),
+            "sensitivity_status": sensitivity.get("status"),
+            "watchlist_status": watchlist.get("status"),
+            "owner_review_status": owner.get("status"),
+        }
+    )
+    payload = _payload(
+        report_type="layer1_selector_real_result_summary",
+        title="Layer-1 Selector Real Result Summary",
+        status=status,
+        summary={
+            **top_summary,
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "selector_registry_version": registry.get("registry_version"),
+            "cost_after_edge_exists": _cost_after_edge_exists(top),
+            "outperforms_always_equal_risk": _float(
+                top.get("relative_vs_always_equal_risk")
+            )
+            > 0.0,
+            "outperforms_always_100_qqq": _float(top.get("relative_vs_always_100_qqq"))
+            > 0.0,
+            "turnover_acceptable": _turnover_acceptable(context, registry, top),
+            "watchlist_candidate_available": _mapping(watchlist.get("summary")).get(
+                "selector_id"
+            )
+            is not None,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        result_summary=top_summary,
+        selector_result_ranking=_simple_rule_selector_rows(context, registry),
+        required_answers=_real_result_required_answers(top, watchlist),
+        source_artifacts={
+            "period_split_validation": period.get("artifact_paths", {}),
+            "sensitivity_review": sensitivity.get("artifact_paths", {}),
+            "watchlist_gate": watchlist.get("artifact_paths", {}),
+            "owner_decision_pack": owner.get("artifact_paths", {}),
+            "required_upstream_reports": _layer1_result_review_required_sources(output_root),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_history_coverage_gap_audit(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_history_coverage_gap_audit",
+            "Layer-1 Selector History Coverage Gap Audit",
+            "HISTORY_COVERAGE_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    coverage = _history_coverage_summary(context, registry, prices_path)
+    status = str(coverage["research_conclusion_strength"])
+    payload = _payload(
+        report_type="layer1_selector_history_coverage_gap_audit",
+        title="Layer-1 Selector History Coverage Gap Audit",
+        status=status,
+        summary={
+            "available_start_date": coverage["available_start_date"],
+            "available_end_date": coverage["available_end_date"],
+            "expected_start_date": coverage["expected_start_date"],
+            "coverage_gap_days": coverage["coverage_gap_days"],
+            "coverage_gap_reason": coverage["coverage_gap_reason"],
+            "affected_features": coverage["affected_features"],
+            "affected_components": coverage["affected_components"],
+            "can_backfill_to_2012": coverage["can_backfill_to_2012"],
+            "backfill_requirements": coverage["backfill_requirements"],
+            "research_conclusion_strength": coverage["research_conclusion_strength"],
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        coverage_gap_audit=coverage,
+        source_artifacts=context.get("source_artifacts", {}),
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_recent_regime_risk_disclosure(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_recent_regime_risk_disclosure",
+            "Layer-1 Selector Recent Regime Risk Disclosure",
+            "RECENT_REGIME_RISK_BLOCKED",
+            context,
+            output_root,
+        )
+    disclosure = _recent_regime_disclosure(context)
+    status = (
+        "RECENT_REGIME_RISK_MATERIAL"
+        if disclosure["missing_regime_list"]
+        else "RECENT_REGIME_RISK_DISCLOSED"
+    )
+    payload = _payload(
+        report_type="layer1_selector_recent_regime_risk_disclosure",
+        title="Layer-1 Selector Recent Regime Risk Disclosure",
+        status=status,
+        summary={
+            "regime_coverage_summary": disclosure["regime_coverage_summary"],
+            "missing_regime_list": disclosure["missing_regime_list"],
+            "risk_of_overstating_selector_edge": disclosure[
+                "risk_of_overstating_selector_edge"
+            ],
+            "risk_of_ai_rally_bias": disclosure["risk_of_ai_rally_bias"],
+            "risk_of_high_rate_sgov_bias": disclosure["risk_of_high_rate_sgov_bias"],
+            "recommended_disclosure": disclosure["recommended_disclosure"],
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        recent_regime_risk_disclosure=disclosure,
+        required_answers=_recent_regime_required_answers(disclosure),
+        source_artifacts=context.get("source_artifacts", {}),
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_owner_watchlist_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+    owner_doc_path: Path = DEFAULT_LAYER1_SELECTOR_OWNER_WATCHLIST_REVIEW_DOC_PATH,
+) -> dict[str, Any]:
+    result = run_layer1_selector_real_result_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    coverage = run_layer1_selector_history_coverage_gap_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    recent = run_layer1_selector_recent_regime_risk_disclosure(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    registry = _load_registry(registry_config_path)
+    review = _owner_watchlist_review_payload(result, coverage, recent, registry)
+    payload = _payload(
+        report_type="layer1_selector_owner_watchlist_review",
+        title="Layer-1 Selector Owner Watchlist Review",
+        status=review["status"],
+        summary={
+            "data_quality_status": _mapping(result.get("summary")).get("data_quality_status"),
+            "candidate_selector_id": review["candidate_selector_id"],
+            "watchlist_recommendation": review["watchlist_recommendation"],
+            "watchlist_role": review["watchlist_role"],
+            "required_forward_days": review["required_forward_days"],
+            "history_coverage_warning": review["history_coverage_warning"],
+            "recent_regime_warning": review["recent_regime_warning"],
+            "blocking_reasons": review["blocking_reasons"],
+            "owner_required_actions": review["owner_required_actions"],
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        owner_watchlist_review=review,
+        source_artifacts={
+            "real_result_summary": result.get("artifact_paths", {}),
+            "history_coverage_gap_audit": coverage.get("artifact_paths", {}),
+            "recent_regime_risk_disclosure": recent.get("artifact_paths", {}),
+        },
+        owner_review_doc_path=str(owner_doc_path),
+    )
+    _write_pair(payload, output_root)
+    _copy_markdown_artifact(payload, owner_doc_path)
+    return payload
+
+
+def run_layer1_selector_forward_aging_dry_run(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_forward_aging_dry_run",
+            "Layer-1 Selector Forward-Aging Dry Run",
+            "LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    owner = run_layer1_selector_owner_watchlist_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    candidate_id = _mapping(owner.get("summary")).get("candidate_selector_id")
+    if not candidate_id:
+        payload = _payload(
+            report_type="layer1_selector_forward_aging_dry_run",
+            title="Layer-1 Selector Forward-Aging Dry Run",
+            status="LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED",
+            summary={
+                "decision_date": _actual_date_range(context)["end"],
+                "selector_id": None,
+                "selected_component": None,
+                "data_quality_status": context.get("data_quality_status"),
+                "observation_written": False,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+                "blocked_reason": "no_owner_watchlist_candidate",
+            },
+            blockers=["no_owner_watchlist_candidate"],
+            source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+        )
+        _write_pair(payload, output_root)
+        return payload
+    decision_date = str(_actual_date_range(context)["end"])
+    path = _selector_path(context, registry, str(candidate_id))
+    component_blend = dict(path.get(decision_date) or {})
+    asset_result = _asset_weights_for_selector_blend(context, decision_date, component_blend)
+    if not asset_result["available"]:
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED"
+    elif owner.get("status") == "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING":
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_PASS"
+    else:
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN"
+    selector = _selector_by_id(registry, str(candidate_id))
+    payload = _payload(
+        report_type="layer1_selector_forward_aging_dry_run",
+        title="Layer-1 Selector Forward-Aging Dry Run",
+        status=status,
+        summary={
+            "decision_date": decision_date,
+            "selector_id": candidate_id,
+            "selected_component": _selected_component_label(component_blend),
+            "component_blend_weights": component_blend,
+            "final_target_weight_qqq": asset_result["weights"]["QQQ"],
+            "final_target_weight_tqqq": asset_result["weights"]["TQQQ"],
+            "final_target_weight_sgov": asset_result["weights"]["SGOV"],
+            "data_quality_status": context.get("data_quality_status"),
+            "observation_written": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        decision_date=decision_date,
+        selector_id=candidate_id,
+        selected_component=_selected_component_label(component_blend),
+        component_blend_weights=component_blend,
+        final_target_weight_qqq=asset_result["weights"]["QQQ"],
+        final_target_weight_tqqq=asset_result["weights"]["TQQQ"],
+        final_target_weight_sgov=asset_result["weights"]["SGOV"],
+        data_quality_status=context.get("data_quality_status"),
+        policy_definition_hash=asset_result["policy_definition_hash"],
+        selector_definition_hash=_selector_definition_hash(selector),
+        observation_written=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_watchlist_blocker_report(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    owner = run_layer1_selector_owner_watchlist_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    summary = _mapping(owner.get("summary"))
+    blocker = _watchlist_blocker_summary(owner)
+    payload = _payload(
+        report_type="layer1_selector_watchlist_blocker_report",
+        title="Layer-1 Selector Watchlist Blocker Report",
+        status="WATCHLIST_BLOCKER_REPORT_READY",
+        summary={
+            "watchlist_allowed": blocker["watchlist_allowed"],
+            "watchlist_candidate": summary.get("candidate_selector_id"),
+            "blocking_reasons": blocker["blocking_reasons"],
+            "warning_reasons": blocker["warning_reasons"],
+            "history_backfill_required": blocker["history_backfill_required"],
+            "minimum_forward_observations_required": summary.get("required_forward_days"),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        watchlist_allowed=blocker["watchlist_allowed"],
+        watchlist_candidate=summary.get("candidate_selector_id"),
+        blocking_reasons=blocker["blocking_reasons"],
+        warning_reasons=blocker["warning_reasons"],
+        history_backfill_required=blocker["history_backfill_required"],
+        minimum_forward_observations_required=summary.get("required_forward_days"),
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        manual_review_required=True,
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_reader_brief_preview(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    owner = run_layer1_selector_owner_watchlist_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    preview = _reader_brief_preview(owner)
+    status = (
+        "LAYER1_SELECTOR_READER_PREVIEW_SAFE"
+        if preview["safe_to_display"]
+        else "LAYER1_SELECTOR_READER_PREVIEW_AMBIGUOUS"
+    )
+    payload = _payload(
+        report_type="layer1_selector_reader_brief_preview",
+        title="Layer-1 Selector Reader Brief Preview",
+        status=status,
+        summary={
+            "preview_title": preview["preview_title"],
+            "top_selector": preview["top_selector"],
+            "watchlist_status": preview["watchlist_status"],
+            "history_coverage_warning": preview["history_coverage_warning"],
+            "recent_regime_warning": preview["recent_regime_warning"],
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "safe_to_display": preview["safe_to_display"],
+        },
+        reader_brief_preview=preview,
+        prohibited_phrase_hits=preview["prohibited_phrase_hits"],
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_result_review_master(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+    owner_doc_path: Path = DEFAULT_LAYER1_SELECTOR_OWNER_WATCHLIST_REVIEW_DOC_PATH,
+    master_doc_path: Path = DEFAULT_LAYER1_SELECTOR_RESULT_REVIEW_MASTER_DOC_PATH,
+) -> dict[str, Any]:
+    result = run_layer1_selector_real_result_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    coverage = run_layer1_selector_history_coverage_gap_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    recent = run_layer1_selector_recent_regime_risk_disclosure(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        registry_config_path=registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+        layer2_output_root=layer2_output_root,
+    )
+    registry = _load_registry(registry_config_path)
+    owner = _write_owner_watchlist_review_artifact(
+        result=result,
+        coverage=coverage,
+        recent=recent,
+        registry=registry,
+        output_root=output_root,
+        owner_doc_path=owner_doc_path,
+    )
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    dry_run = _write_forward_aging_dry_run_artifact(
+        context=context,
+        registry=registry,
+        owner=owner,
+        output_root=output_root,
+    )
+    blocker = _write_watchlist_blocker_report_artifact(owner=owner, output_root=output_root)
+    preview = _write_reader_brief_preview_artifact(owner=owner, output_root=output_root)
+    status = _result_review_master_status(result, coverage, owner, dry_run)
+    answers = _result_review_master_answers(result, coverage, recent, owner, dry_run, blocker)
+    payload = _payload(
+        report_type="layer1_selector_result_review_master",
+        title="Layer-1 Selector Result Review Master",
+        status=status,
+        summary={
+            "data_quality_status": _mapping(result.get("summary")).get("data_quality_status"),
+            "top_selector_id": _mapping(result.get("summary")).get("top_selector_id"),
+            "cost_after_edge_exists": _mapping(result.get("summary")).get(
+                "cost_after_edge_exists"
+            ),
+            "research_conclusion_strength": _mapping(coverage.get("summary")).get(
+                "research_conclusion_strength"
+            ),
+            "recent_regime_status": recent.get("status"),
+            "watchlist_recommendation": _mapping(owner.get("summary")).get(
+                "watchlist_recommendation"
+            ),
+            "dry_run_status": dry_run.get("status"),
+            "reader_preview_status": preview.get("status"),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+            "next_minimum_task": answers[-1]["answer"],
+        },
+        required_answers=answers,
+        source_artifacts={
+            "real_result_summary": result.get("artifact_paths", {}),
+            "history_coverage_gap_audit": coverage.get("artifact_paths", {}),
+            "recent_regime_risk_disclosure": recent.get("artifact_paths", {}),
+            "owner_watchlist_review": owner.get("artifact_paths", {}),
+            "forward_aging_dry_run": dry_run.get("artifact_paths", {}),
+            "watchlist_blocker_report": blocker.get("artifact_paths", {}),
+            "reader_brief_preview": preview.get("artifact_paths", {}),
+        },
+        master_review_doc_path=str(master_doc_path),
+    )
+    _write_pair(payload, output_root)
+    _copy_markdown_artifact(payload, master_doc_path)
+    return payload
+
+
+def _write_owner_watchlist_review_artifact(
+    *,
+    result: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    recent: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    output_root: Path,
+    owner_doc_path: Path,
+) -> dict[str, Any]:
+    review = _owner_watchlist_review_payload(result, coverage, recent, registry)
+    payload = _payload(
+        report_type="layer1_selector_owner_watchlist_review",
+        title="Layer-1 Selector Owner Watchlist Review",
+        status=review["status"],
+        summary={
+            "data_quality_status": _mapping(result.get("summary")).get("data_quality_status"),
+            "candidate_selector_id": review["candidate_selector_id"],
+            "watchlist_recommendation": review["watchlist_recommendation"],
+            "watchlist_role": review["watchlist_role"],
+            "required_forward_days": review["required_forward_days"],
+            "history_coverage_warning": review["history_coverage_warning"],
+            "recent_regime_warning": review["recent_regime_warning"],
+            "blocking_reasons": review["blocking_reasons"],
+            "owner_required_actions": review["owner_required_actions"],
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        owner_watchlist_review=review,
+        source_artifacts={
+            "real_result_summary": result.get("artifact_paths", {}),
+            "history_coverage_gap_audit": coverage.get("artifact_paths", {}),
+            "recent_regime_risk_disclosure": recent.get("artifact_paths", {}),
+        },
+        owner_review_doc_path=str(owner_doc_path),
+    )
+    _write_pair(payload, output_root)
+    _copy_markdown_artifact(payload, owner_doc_path)
+    return payload
+
+
+def _write_forward_aging_dry_run_artifact(
+    *,
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    output_root: Path,
+) -> dict[str, Any]:
+    candidate_id = _mapping(owner.get("summary")).get("candidate_selector_id")
+    if not candidate_id:
+        payload = _payload(
+            report_type="layer1_selector_forward_aging_dry_run",
+            title="Layer-1 Selector Forward-Aging Dry Run",
+            status="LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED",
+            summary={
+                "decision_date": _actual_date_range(context)["end"],
+                "selector_id": None,
+                "selected_component": None,
+                "data_quality_status": context.get("data_quality_status"),
+                "observation_written": False,
+                "paper_shadow_allowed": False,
+                "production_allowed": False,
+                "broker_action": "none",
+                "blocked_reason": "no_owner_watchlist_candidate",
+            },
+            blockers=["no_owner_watchlist_candidate"],
+            source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+        )
+        _write_pair(payload, output_root)
+        return payload
+    decision_date = str(_actual_date_range(context)["end"])
+    path = _selector_path(context, registry, str(candidate_id))
+    component_blend = dict(path.get(decision_date) or {})
+    asset_result = _asset_weights_for_selector_blend(context, decision_date, component_blend)
+    if not asset_result["available"]:
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED"
+    elif owner.get("status") == "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING":
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_PASS"
+    else:
+        status = "LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN"
+    selector = _selector_by_id(registry, str(candidate_id))
+    payload = _payload(
+        report_type="layer1_selector_forward_aging_dry_run",
+        title="Layer-1 Selector Forward-Aging Dry Run",
+        status=status,
+        summary={
+            "decision_date": decision_date,
+            "selector_id": candidate_id,
+            "selected_component": _selected_component_label(component_blend),
+            "component_blend_weights": component_blend,
+            "final_target_weight_qqq": asset_result["weights"]["QQQ"],
+            "final_target_weight_tqqq": asset_result["weights"]["TQQQ"],
+            "final_target_weight_sgov": asset_result["weights"]["SGOV"],
+            "data_quality_status": context.get("data_quality_status"),
+            "observation_written": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        decision_date=decision_date,
+        selector_id=candidate_id,
+        selected_component=_selected_component_label(component_blend),
+        component_blend_weights=component_blend,
+        final_target_weight_qqq=asset_result["weights"]["QQQ"],
+        final_target_weight_tqqq=asset_result["weights"]["TQQQ"],
+        final_target_weight_sgov=asset_result["weights"]["SGOV"],
+        data_quality_status=context.get("data_quality_status"),
+        policy_definition_hash=asset_result["policy_definition_hash"],
+        selector_definition_hash=_selector_definition_hash(selector),
+        observation_written=False,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def _write_watchlist_blocker_report_artifact(
+    *,
+    owner: Mapping[str, Any],
+    output_root: Path,
+) -> dict[str, Any]:
+    summary = _mapping(owner.get("summary"))
+    blocker = _watchlist_blocker_summary(owner)
+    payload = _payload(
+        report_type="layer1_selector_watchlist_blocker_report",
+        title="Layer-1 Selector Watchlist Blocker Report",
+        status="WATCHLIST_BLOCKER_REPORT_READY",
+        summary={
+            "watchlist_allowed": blocker["watchlist_allowed"],
+            "watchlist_candidate": summary.get("candidate_selector_id"),
+            "blocking_reasons": blocker["blocking_reasons"],
+            "warning_reasons": blocker["warning_reasons"],
+            "history_backfill_required": blocker["history_backfill_required"],
+            "minimum_forward_observations_required": summary.get("required_forward_days"),
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        watchlist_allowed=blocker["watchlist_allowed"],
+        watchlist_candidate=summary.get("candidate_selector_id"),
+        blocking_reasons=blocker["blocking_reasons"],
+        warning_reasons=blocker["warning_reasons"],
+        history_backfill_required=blocker["history_backfill_required"],
+        minimum_forward_observations_required=summary.get("required_forward_days"),
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        manual_review_required=True,
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def _write_reader_brief_preview_artifact(
+    *,
+    owner: Mapping[str, Any],
+    output_root: Path,
+) -> dict[str, Any]:
+    preview = _reader_brief_preview(owner)
+    status = (
+        "LAYER1_SELECTOR_READER_PREVIEW_SAFE"
+        if preview["safe_to_display"]
+        else "LAYER1_SELECTOR_READER_PREVIEW_AMBIGUOUS"
+    )
+    payload = _payload(
+        report_type="layer1_selector_reader_brief_preview",
+        title="Layer-1 Selector Reader Brief Preview",
+        status=status,
+        summary={
+            "preview_title": preview["preview_title"],
+            "top_selector": preview["top_selector"],
+            "watchlist_status": preview["watchlist_status"],
+            "history_coverage_warning": preview["history_coverage_warning"],
+            "recent_regime_warning": preview["recent_regime_warning"],
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "safe_to_display": preview["safe_to_display"],
+        },
+        reader_brief_preview=preview,
+        prohibited_phrase_hits=preview["prohibited_phrase_hits"],
+        source_artifacts={"owner_watchlist_review": owner.get("artifact_paths", {})},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def _simple_rule_selector_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    rows = []
+    for selector_id in _ranking_selector_ids(registry):
+        if selector_id.startswith("always_"):
+            continue
+        selector = _selector_by_id(registry, selector_id)
+        metrics = _evaluate_blend_path(context, _selector_path(context, registry, selector_id))
+        rows.append(
+            {
+                "selector_id": selector_id,
+                "selector_type": _selector_family(selector_id, selector),
+                "net_return_after_cost": _round(metrics["net_return_after_cost"]),
+                "max_drawdown": _round(metrics["max_drawdown"]),
+                "sharpe": _round(metrics["sharpe"]),
+                "calmar": _round(metrics["calmar"]),
+                "turnover": _round(metrics["turnover"]),
+                "switch_count": metrics["switch_count"],
+                "avg_holding_period": _round(metrics["avg_holding_period"]),
+                "relative_vs_always_equal_risk": _round(metrics["relative_vs_equal_risk"]),
+                "relative_vs_always_100_qqq": _round(metrics["relative_vs_100_qqq"]),
+                "regret_vs_best_component": _round(metrics["regret_vs_best_component"]),
+                "selected_component_distribution": metrics["selected_component_distribution"],
+            }
+        )
+    rows.sort(
+        key=lambda row: (
+            _float(row["net_return_after_cost"]),
+            _float(row["calmar"]),
+            -_float(row["turnover"]),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _top_simple_rule_selector_row(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _simple_rule_selector_rows(context, registry)
+    return rows[0] if rows else {}
+
+
+def _selector_family(selector_id: str, selector: Mapping[str, Any]) -> str:
+    selector_type = str(selector.get("selector_type") or "")
+    if "combined" in selector_type or "vote" in selector_id or "trend_vol_drawdown" in selector_id:
+        return "combined_rule"
+    if "vol" in selector_type or "vol" in selector_id:
+        return "volatility_rule"
+    if "drawdown" in selector_type or "drawdown" in selector_id:
+        return "drawdown_rule"
+    if "trend" in selector_type or "trend" in selector_id:
+        return "trend_rule"
+    return selector_type or "simple_rule"
+
+
+def _top_selector_summary_fields(top: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "top_selector_id": top.get("selector_id"),
+        "top_selector_type": top.get("selector_type"),
+        "net_return_after_cost": top.get("net_return_after_cost"),
+        "max_drawdown": top.get("max_drawdown"),
+        "sharpe": top.get("sharpe"),
+        "calmar": top.get("calmar"),
+        "turnover": top.get("turnover"),
+        "switch_count": top.get("switch_count"),
+        "avg_holding_period": top.get("avg_holding_period"),
+        "relative_vs_always_equal_risk": top.get("relative_vs_always_equal_risk"),
+        "relative_vs_always_100_qqq": top.get("relative_vs_always_100_qqq"),
+        "regret_vs_best_component": top.get("regret_vs_best_component"),
+    }
+
+
+def _cost_after_edge_exists(top: Mapping[str, Any]) -> bool:
+    if not top:
+        return False
+    return (
+        _float(top.get("relative_vs_always_equal_risk")) > 0.0
+        or _float(top.get("relative_vs_always_100_qqq")) > 0.0
+    )
+
+
+def _turnover_acceptable(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    top: Mapping[str, Any],
+) -> bool:
+    if not top:
+        return False
+    policy = _evaluation_policy(registry)
+    actual_range = _actual_date_range(context)
+    span_days = _date_span_days(actual_range)
+    annual_switches = _float(top.get("switch_count")) / max(span_days / 365.25, 1.0)
+    return (
+        annual_switches <= _float(policy.get("max_switches_per_year"), 12)
+        and _float(top.get("turnover")) <= _float(policy.get("max_turnover_warning"), 2.0)
+    )
+
+
+def _real_result_required_answers(
+    top: Mapping[str, Any],
+    watchlist: Mapping[str, Any],
+) -> list[dict[str, str]]:
+    watchlist_selector = _mapping(watchlist.get("summary")).get("selector_id")
+    return [
+        {
+            "question": "排名最高的是趋势规则、波动规则、回撤规则，还是组合规则？",
+            "answer": str(top.get("selector_type") or "none"),
+        },
+        {
+            "question": "它是否优于 always_equal_risk？",
+            "answer": "YES" if _float(top.get("relative_vs_always_equal_risk")) > 0.0 else "NO",
+        },
+        {
+            "question": "它是否优于 always_100_qqq？",
+            "answer": "YES" if _float(top.get("relative_vs_always_100_qqq")) > 0.0 else "NO",
+        },
+        {
+            "question": "它的优势是否成本后仍存在？",
+            "answer": "YES" if _cost_after_edge_exists(top) else "NO",
+        },
+        {
+            "question": "它的换手是否可接受？",
+            "answer": "SEE_TURNOVER_POLICY_CHECK",
+        },
+        {
+            "question": "当前是否有明确 watchlist candidate？",
+            "answer": str(watchlist_selector or "NO"),
+        },
+    ]
+
+
+def _layer1_result_review_required_sources(output_root: Path) -> dict[str, dict[str, str]]:
+    report_ids = [
+        "layer1_simple_rule_selector_registry_review",
+        "layer1_trend_rule_selector_backtest",
+        "layer1_volatility_rule_selector_backtest",
+        "layer1_drawdown_rule_selector_backtest",
+        "layer1_combined_simple_rule_selector_search",
+        "layer1_selector_cost_latency_stress",
+        "layer1_selector_period_split_validation",
+        "layer1_selector_drawdown_episode_review",
+        "layer1_selector_regret_attribution",
+        "layer1_selector_vs_component_baseline_ranking",
+        "layer1_selector_overfit_sensitivity_review",
+        "layer1_selector_minimum_holding_period_review",
+        "layer1_selector_forward_aging_watchlist_gate",
+        "layer1_selector_owner_decision_pack",
+        "layer1_simple_rule_selector_master_review",
+    ]
+    return {
+        report_id: {
+            "json_path": str(output_root / f"{report_id}.json"),
+            "markdown_path": str(output_root / f"{report_id}.md"),
+        }
+        for report_id in report_ids
+    }
+
+
+def _history_coverage_summary(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    prices_path: Path,
+) -> dict[str, Any]:
+    actual = _actual_date_range(context)
+    available_start = _date_or_none(actual["start"])
+    available_end = _date_or_none(actual["end"])
+    expected_start = date(2012, 1, 3)
+    gap_days = (
+        max((available_start - expected_start).days, 0)
+        if available_start is not None
+        else None
+    )
+    panel = _ensure_frame(context["panel"])
+    cube = _ensure_frame(context["cube"])
+    weight_frame = _ensure_frame(context["weight_frame"])
+    feature_frame = _feature_frame(context)
+    price_coverage = _price_coverage_by_ticker(prices_path, ("QQQ", "SGOV", "TQQQ"))
+    affected_features = sorted(
+        {
+            str(feature)
+            for selector in _selector_rows(registry)
+            for feature in selector.get("feature_inputs", [])
+        }
+    )
+    affected_components = sorted(SELECTABLE_COMPONENT_IDS)
+    can_backfill = _can_backfill_to_2012(price_coverage, expected_start)
+    if can_backfill and available_start and available_start <= expected_start:
+        strength = "FULL_HISTORY_AVAILABLE"
+        reason = "Layer-2 fact panel and selector inputs cover the requested 2012 start."
+    elif available_start and available_start <= date(2022, 12, 1):
+        strength = "RECENT_REGIME_ONLY_WARNING"
+        reason = (
+            "Layer-2 fact context defaults to ai_after_chatgpt start and the current "
+            "audited selector panel does not include pre-2022 regimes."
+        )
+    elif available_start:
+        strength = "SHORT_HISTORY_ACCEPTABLE_FOR_RESEARCH"
+        reason = "Audited selector panel starts after the configured AI-regime start."
+    else:
+        strength = "HISTORY_COVERAGE_BLOCKED"
+        reason = "Layer-2 fact panel is empty after data quality gating."
+    mature_120d = cube[
+        (cube.get("horizon") == "120d") & (cube.get("outcome_status") == "MATURED")
+    ]
+    policy_hash_missing = (
+        bool(weight_frame.get("policy_definition_hash", pd.Series(dtype=object)).isna().any())
+        if not weight_frame.empty
+        else True
+    )
+    return {
+        "available_start_date": actual["start"],
+        "available_end_date": actual["end"],
+        "expected_start_date": expected_start.isoformat(),
+        "coverage_gap_days": gap_days,
+        "coverage_gap_reason": reason,
+        "affected_features": affected_features,
+        "affected_components": affected_components,
+        "can_backfill_to_2012": can_backfill,
+        "backfill_requirements": _backfill_requirements(price_coverage, expected_start),
+        "research_conclusion_strength": strength,
+        "layer2_fact_panel_start_date": _frame_date_min(panel, "date"),
+        "feature_panel_start_date": _index_date_min(feature_frame),
+        "selector_input_features_start_date": _index_date_min(feature_frame),
+        "forward_outcome_cube_120d_mature_start_date": _frame_date_min(
+            mature_120d,
+            "decision_date",
+        ),
+        "forward_outcome_cube_120d_mature_end_date": _frame_date_max(
+            mature_120d,
+            "decision_date",
+        ),
+        "forward_120d_window_truncates_latest_samples": bool(
+            available_end
+            and _date_or_none(_frame_date_max(mature_120d, "decision_date"))
+            and _date_or_none(_frame_date_max(mature_120d, "decision_date")) < available_end
+        ),
+        "price_coverage_by_ticker": price_coverage,
+        "policy_definition_hash_missing": policy_hash_missing,
+    }
+
+
+def _price_coverage_by_ticker(path: Path, tickers: tuple[str, ...]) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {
+            ticker: {"start": None, "end": None, "row_count": 0, "missing": True}
+            for ticker in tickers
+        }
+    frame = pd.read_csv(path, usecols=["date", "ticker"])
+    result = {}
+    for ticker in tickers:
+        subset = frame[frame["ticker"] == ticker]
+        dates = sorted(str(value) for value in subset["date"].dropna().unique())
+        result[ticker] = {
+            "start": dates[0] if dates else None,
+            "end": dates[-1] if dates else None,
+            "row_count": int(len(subset)),
+            "missing": not dates,
+        }
+    return result
+
+
+def _can_backfill_to_2012(
+    price_coverage: Mapping[str, Mapping[str, Any]],
+    expected_start: date,
+) -> bool:
+    for ticker in ("QQQ", "SGOV", "TQQQ"):
+        start = _date_or_none(_mapping(price_coverage.get(ticker)).get("start"))
+        if start is None or start > expected_start:
+            return False
+    return True
+
+
+def _backfill_requirements(
+    price_coverage: Mapping[str, Mapping[str, Any]],
+    expected_start: date,
+) -> list[str]:
+    requirements = []
+    for ticker in ("QQQ", "SGOV", "TQQQ"):
+        start = _date_or_none(_mapping(price_coverage.get(ticker)).get("start"))
+        if start is None:
+            requirements.append(f"{ticker} audited price cache is missing")
+        elif start > expected_start:
+            requirements.append(
+                f"{ticker} audited price cache starts {start.isoformat()}, "
+                f"after expected {expected_start.isoformat()}"
+            )
+    requirements.extend(
+        [
+            "rebuild Layer-2 weight path / return-cost-exposure panel from the backfilled cache",
+            "rebuild independent forward outcome cube with matured 120d windows",
+            "rerun leakage, period split, sensitivity, ranking, and owner review artifacts",
+        ]
+    )
+    return requirements
+
+
+def _frame_date_min(frame: pd.DataFrame, column: str) -> str | None:
+    if frame.empty or column not in frame:
+        return None
+    values = sorted(str(value) for value in frame[column].dropna().unique())
+    return values[0] if values else None
+
+
+def _frame_date_max(frame: pd.DataFrame, column: str) -> str | None:
+    if frame.empty or column not in frame:
+        return None
+    values = sorted(str(value) for value in frame[column].dropna().unique())
+    return values[-1] if values else None
+
+
+def _index_date_min(frame: pd.DataFrame) -> str | None:
+    if frame.empty:
+        return None
+    return str(sorted(frame.index)[0])
+
+
+def _recent_regime_disclosure(context: Mapping[str, Any]) -> dict[str, Any]:
+    actual = _actual_date_range(context)
+    start = _date_or_none(actual["start"])
+    end = _date_or_none(actual["end"])
+    coverage = {
+        "2023_recovery": _period_covered(start, end, date(2023, 1, 3), date(2023, 7, 31)),
+        "2024_ai_rally": _period_covered(start, end, date(2024, 1, 2), date(2024, 12, 31)),
+        "2025_to_latest": bool(end and end >= date(2025, 1, 1)),
+        "high_rate_sgov_carry_period": _period_covered(
+            start,
+            end,
+            date(2022, 12, 1),
+            date(2026, 6, 23),
+        ),
+        "post_2022_nasdaq_recovery": bool(start and start >= date(2022, 12, 1)),
+    }
+    missing = []
+    if not _period_covered(start, end, date(2020, 2, 19), date(2020, 3, 23)):
+        missing.append("2020_COVID_crash")
+    if not _period_covered(start, end, date(2018, 10, 1), date(2018, 12, 24)):
+        missing.append("2018Q4_selloff")
+    if not _period_covered(start, end, date(2022, 1, 3), date(2022, 10, 14)):
+        missing.append("full_2022_bear_market")
+    if start is None or start > date(2020, 2, 19):
+        missing.append("complete_pre_2022_bear_or_crash_sample")
+    return {
+        "regime_coverage_summary": coverage,
+        "missing_regime_list": missing,
+        "risk_of_overstating_selector_edge": "MATERIAL" if missing else "LOW",
+        "risk_of_ai_rally_bias": "MATERIAL" if coverage["2024_ai_rally"] else "NOT_ASSESSED",
+        "risk_of_high_rate_sgov_bias": (
+            "MATERIAL" if coverage["high_rate_sgov_carry_period"] else "NOT_ASSESSED"
+        ),
+        "recommended_disclosure": (
+            "Current Layer-1 selector conclusion is recent-regime-only and mainly "
+            "covers post-ChatGPT recovery / AI rally / high-rate SGOV carry conditions."
+            if missing
+            else "Current Layer-1 selector conclusion has disclosed regime coverage."
+        ),
+        "actual_requested_date_range": actual,
+    }
+
+
+def _period_covered(
+    actual_start: date | None,
+    actual_end: date | None,
+    period_start: date,
+    period_end: date,
+) -> bool:
+    return bool(
+        actual_start
+        and actual_end
+        and actual_start <= period_start
+        and actual_end >= period_end
+    )
+
+
+def _recent_regime_required_answers(disclosure: Mapping[str, Any]) -> list[dict[str, str]]:
+    coverage = _mapping(disclosure.get("regime_coverage_summary"))
+    missing = set(disclosure.get("missing_regime_list") or [])
+    return [
+        {
+            "question": "当前 selector 是否主要在 2023/2024 科技股强势阶段有效？",
+            "answer": "YES_RECENT_REGIME_DOMINATED"
+            if coverage.get("2024_ai_rally")
+            else "NOT_ASSESSED",
+        },
+        {"question": "当前样本是否缺少完整熊市？", "answer": "YES"},
+        {
+            "question": "当前样本是否缺少 2020 COVID crash？",
+            "answer": "YES" if "2020_COVID_crash" in missing else "NO",
+        },
+        {
+            "question": "当前样本是否缺少 2018Q4 selloff？",
+            "answer": "YES" if "2018Q4_selloff" in missing else "NO",
+        },
+        {
+            "question": "当前 selector 是否可能高估 risk-on 切换能力？",
+            "answer": str(disclosure.get("risk_of_overstating_selector_edge")),
+        },
+        {
+            "question": "当前结论是否只能标记为 recent-regime-only？",
+            "answer": "YES" if missing else "NO",
+        },
+    ]
+
+
+def _owner_watchlist_review_payload(
+    result: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    recent: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> dict[str, Any]:
+    result_summary = _mapping(result.get("summary"))
+    coverage_summary = _mapping(coverage.get("summary"))
+    candidate = result_summary.get("top_selector_id")
+    blocking_reasons = []
+    if result.get("status") == "LAYER1_SELECTOR_RESULT_SUMMARY_BLOCKED":
+        blocking_reasons.append("RESULT_SUMMARY_BLOCKED")
+    if not candidate:
+        blocking_reasons.append("NO_SELECTOR_EDGE")
+    if not bool(result_summary.get("cost_after_edge_exists")):
+        blocking_reasons.append("NO_COST_ADJUSTED_EDGE")
+    if not bool(result_summary.get("turnover_acceptable")):
+        blocking_reasons.append("TOO_MUCH_TURNOVER")
+    if result_summary.get("period_split_status") == "SELECTOR_PERIOD_CONCENTRATED":
+        blocking_reasons.append("PERIOD_CONCENTRATED")
+    if result_summary.get("sensitivity_status") == "SELECTOR_FRAGILE":
+        blocking_reasons.append("SENSITIVITY_FRAGILE")
+    if coverage.get("status") == "HISTORY_COVERAGE_BLOCKED":
+        blocking_reasons.append("HISTORY_COVERAGE_BLOCKED")
+    history_warning = str(coverage_summary.get("research_conclusion_strength"))
+    recent_warning = str(recent.get("status"))
+    if "HISTORY_COVERAGE_BLOCKED" in blocking_reasons:
+        recommendation = "BLOCKED"
+    elif "NO_COST_ADJUSTED_EDGE" in blocking_reasons or "NO_SELECTOR_EDGE" in blocking_reasons:
+        recommendation = "NO_SELECTOR_EDGE"
+    elif any(
+        reason in blocking_reasons
+        for reason in {"TOO_MUCH_TURNOVER", "PERIOD_CONCENTRATED", "SENSITIVITY_FRAGILE"}
+    ):
+        recommendation = "KEEP_SELECTOR_RESEARCH_ONLY"
+    elif history_warning == "HISTORY_COVERAGE_BLOCKED":
+        recommendation = "NEED_HISTORY_BACKFILL_FIRST"
+    else:
+        recommendation = "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING"
+    status = recommendation
+    return {
+        "status": status,
+        "candidate_selector_id": candidate,
+        "watchlist_recommendation": recommendation,
+        "watchlist_role": (
+            "research_only_forward_aging_candidate"
+            if recommendation == "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING"
+            else "research_only_review_item"
+        ),
+        "required_forward_days": _evaluation_policy(registry).get("required_forward_days"),
+        "history_coverage_warning": history_warning,
+        "recent_regime_warning": recent_warning,
+        "blocking_reasons": blocking_reasons,
+        "owner_required_actions": [
+            "manual review before any formal forward-aging observation",
+            "acknowledge recent-regime-only limitation",
+            "confirm no paper-shadow, production, or broker action is authorized",
+        ],
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _asset_weights_for_selector_blend(
+    context: Mapping[str, Any],
+    decision_date: str,
+    component_blend: Mapping[str, Any],
+) -> dict[str, Any]:
+    weights = {"QQQ": 0.0, "TQQQ": 0.0, "SGOV": 0.0}
+    hashes: dict[str, str] = {}
+    frame = _ensure_frame(context["weight_frame"])
+    if frame.empty:
+        return {"available": False, "weights": weights, "policy_definition_hash": hashes}
+    day_rows = frame[frame["decision_date"].astype(str) == decision_date]
+    for component, component_weight in component_blend.items():
+        subset = day_rows[day_rows["strategy_id"].astype(str) == str(component)]
+        if subset.empty:
+            return {"available": False, "weights": weights, "policy_definition_hash": hashes}
+        row = subset.iloc[0]
+        weight = _float(component_weight)
+        weights["QQQ"] += weight * _float(row.get("target_weight_qqq"))
+        weights["TQQQ"] += weight * _float(row.get("target_weight_tqqq"))
+        weights["SGOV"] += weight * _float(row.get("target_weight_sgov"))
+        hashes[str(component)] = str(row.get("policy_definition_hash"))
+    return {
+        "available": True,
+        "weights": {key: _round(value) for key, value in weights.items()},
+        "policy_definition_hash": hashes,
+    }
+
+
+def _selected_component_label(component_blend: Mapping[str, Any]) -> str | None:
+    if not component_blend:
+        return None
+    dominant = _dominant_component({key: _float(value) for key, value in component_blend.items()})
+    if _float(component_blend.get(dominant)) >= 0.999:
+        return dominant
+    return "blend"
+
+
+def _selector_definition_hash(selector: Mapping[str, Any]) -> str:
+    encoded = json.dumps(selector, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _watchlist_blocker_summary(owner: Mapping[str, Any]) -> dict[str, Any]:
+    summary = _mapping(owner.get("summary"))
+    recommendation = str(summary.get("watchlist_recommendation"))
+    blocking = list(summary.get("blocking_reasons") or [])
+    warnings = []
+    if summary.get("history_coverage_warning") == "RECENT_REGIME_ONLY_WARNING":
+        warnings.append("SHORT_HISTORY")
+        warnings.append("RECENT_REGIME_ONLY")
+    if summary.get("recent_regime_warning") == "RECENT_REGIME_RISK_MATERIAL":
+        warnings.append("RECENT_REGIME_ONLY")
+    warnings.append("OWNER_REVIEW_REQUIRED")
+    if recommendation != "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING" and not blocking:
+        blocking.append(recommendation or "BLOCKED")
+    return {
+        "watchlist_allowed": recommendation == "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING",
+        "blocking_reasons": sorted(set(blocking)),
+        "warning_reasons": sorted(set(warnings)),
+        "history_backfill_required": summary.get("history_coverage_warning")
+        in {"RECENT_REGIME_ONLY_WARNING", "HISTORY_COVERAGE_BLOCKED"},
+    }
+
+
+def _reader_brief_preview(owner: Mapping[str, Any]) -> dict[str, Any]:
+    summary = _mapping(owner.get("summary"))
+    preview_lines = [
+        "Layer-1 selector research-only",
+        f"top selector: {summary.get('candidate_selector_id') or 'none'}",
+        f"watchlist status: {summary.get('watchlist_recommendation')}",
+        f"history coverage warning: {summary.get('history_coverage_warning')}",
+        f"recent regime warning: {summary.get('recent_regime_warning')}",
+        "paper_shadow_allowed=false",
+        "production_allowed=false",
+        "broker_action=none",
+    ]
+    text = "\n".join(preview_lines)
+    prohibited = ["建议买入", "建议卖出", "应切换策略", "目标实盘仓位", "真实交易建议"]
+    hits = [phrase for phrase in prohibited if phrase in text]
+    return {
+        "preview_title": "Layer-1 selector research-only",
+        "top_selector": summary.get("candidate_selector_id"),
+        "watchlist_status": summary.get("watchlist_recommendation"),
+        "history_coverage_warning": summary.get("history_coverage_warning"),
+        "recent_regime_warning": summary.get("recent_regime_warning"),
+        "preview_text": text,
+        "prohibited_phrase_hits": hits,
+        "safe_to_display": not hits,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+    }
+
+
+def _result_review_master_status(
+    result: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    dry_run: Mapping[str, Any],
+) -> str:
+    recommendation = _mapping(owner.get("summary")).get("watchlist_recommendation")
+    if result.get("status") == "LAYER1_SELECTOR_RESULT_SUMMARY_BLOCKED":
+        return "LAYER1_SELECTOR_BLOCKED"
+    if coverage.get("status") == "HISTORY_COVERAGE_BLOCKED":
+        return "LAYER1_SELECTOR_NEEDS_HISTORY_BACKFILL"
+    if recommendation == "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING":
+        return "LAYER1_SELECTOR_FORWARD_AGING_REVIEWABLE"
+    if dry_run.get("status") in {
+        "LAYER1_SELECTOR_FORWARD_DRY_RUN_PASS",
+        "LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN",
+    }:
+        return "LAYER1_SELECTOR_DRY_RUN_ONLY"
+    return "LAYER1_SELECTOR_RESEARCH_ONLY"
+
+
+def _result_review_master_answers(
+    result: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    recent: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    dry_run: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> list[dict[str, str]]:
+    result_summary = _mapping(result.get("summary"))
+    coverage_summary = _mapping(coverage.get("summary"))
+    owner_summary = _mapping(owner.get("summary"))
+    blocker_summary = _mapping(blocker.get("summary"))
+    return [
+        {
+            "question": "当前是否存在明确优于组件基准的 selector？",
+            "answer": str(result_summary.get("top_selector_id") or "NO"),
+        },
+        {
+            "question": "成本后优势是否成立？",
+            "answer": "YES" if result_summary.get("cost_after_edge_exists") else "NO",
+        },
+        {
+            "question": "当前历史区间是否过短？",
+            "answer": str(coverage_summary.get("research_conclusion_strength")),
+        },
+        {
+            "question": "是否需要回补更长历史？",
+            "answer": "YES" if blocker_summary.get("history_backfill_required") else "RECOMMENDED",
+        },
+        {
+            "question": "是否只允许 recent-regime-only 结论？",
+            "answer": "YES" if recent.get("status") == "RECENT_REGIME_RISK_MATERIAL" else "NO",
+        },
+        {
+            "question": "是否允许进入 research-only forward-aging watchlist？",
+            "answer": str(owner_summary.get("watchlist_recommendation")),
+        },
+        {
+            "question": "是否只允许 dry-run，不允许正式 observation？",
+            "answer": "YES; observation_written=false",
+        },
+        {"question": "是否继续禁止 ML selector？", "answer": "YES"},
+        {
+            "question": "是否继续排除 QQQ-plus growth / tail-risk fallback / LEAPS / Wheel？",
+            "answer": "YES",
+        },
+        {
+            "question": "下一阶段最小任务是什么？",
+            "answer": (
+                "owner manual review of research-only watchlist admission and dry-run output; "
+                "no formal observation before approval"
+            ),
+        },
+    ]
+
+
+def _copy_markdown_artifact(payload: Mapping[str, Any], target_path: Path) -> None:
+    paths = _mapping(payload.get("artifact_paths"))
+    markdown_path = Path(str(paths.get("markdown_path", "")))
+    if not markdown_path.exists():
+        return
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text(markdown_path.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def _build_context(

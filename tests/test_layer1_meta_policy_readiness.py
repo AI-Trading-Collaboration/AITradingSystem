@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from datetime import date, timedelta
 from pathlib import Path
@@ -19,6 +20,7 @@ from ai_trading_system.layer1_simple_rule_meta_policy import (
     run_layer1_selector_owner_decision_pack,
     run_layer1_selector_period_split_validation,
     run_layer1_selector_regret_attribution,
+    run_layer1_selector_result_review_master,
     run_layer1_selector_vs_component_baseline_ranking,
     run_layer1_simple_rule_selector_master_review,
     run_layer1_simple_rule_selector_registry_review,
@@ -46,6 +48,16 @@ NEW_REPORT_IDS = {
     "layer1_selector_forward_aging_watchlist_gate",
     "layer1_selector_owner_decision_pack",
     "layer1_simple_rule_selector_master_review",
+}
+RESULT_REVIEW_REPORT_IDS = {
+    "layer1_selector_real_result_summary",
+    "layer1_selector_history_coverage_gap_audit",
+    "layer1_selector_recent_regime_risk_disclosure",
+    "layer1_selector_owner_watchlist_review",
+    "layer1_selector_forward_aging_dry_run",
+    "layer1_selector_watchlist_blocker_report",
+    "layer1_selector_reader_brief_preview",
+    "layer1_selector_result_review_master",
 }
 
 
@@ -80,8 +92,8 @@ def test_layer1_simple_rule_selector_registry_and_report_registry(
 
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     registered = {item["report_id"] for item in registry["reports"]}
-    assert NEW_REPORT_IDS <= registered
-    for report_id in NEW_REPORT_IDS:
+    assert NEW_REPORT_IDS | RESULT_REVIEW_REPORT_IDS <= registered
+    for report_id in NEW_REPORT_IDS | RESULT_REVIEW_REPORT_IDS:
         entry = next(item for item in registry["reports"] if item["report_id"] == report_id)
         assert entry["artifact_selection_policy"] == "latest_available"
         assert entry["required_for_daily_reading"] is False
@@ -238,6 +250,133 @@ def test_layer1_simple_rule_selector_research_outputs_are_research_only(
     )
     assert result.exit_code == 0, result.output
     assert (cli_output_root / "layer1_selector_vs_component_baseline_ranking.json").exists()
+
+
+def test_layer1_selector_result_review_gate_outputs_are_research_only(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer1_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer1_meta_policy"
+    layer2_output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+    docs_root = tmp_path / "docs" / "research"
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "as_of_date": as_of,
+        "output_root": output_root,
+        "layer2_output_root": layer2_output_root,
+    }
+
+    master = run_layer1_selector_result_review_master(
+        **common,
+        owner_doc_path=docs_root / "layer1_selector_owner_watchlist_review.md",
+        master_doc_path=docs_root / "layer1_selector_result_review_master.md",
+    )
+    result = _read_json(output_root / "layer1_selector_real_result_summary.json")
+    coverage = _read_json(output_root / "layer1_selector_history_coverage_gap_audit.json")
+    recent = _read_json(output_root / "layer1_selector_recent_regime_risk_disclosure.json")
+    owner = _read_json(output_root / "layer1_selector_owner_watchlist_review.json")
+    dry_run = _read_json(output_root / "layer1_selector_forward_aging_dry_run.json")
+    blocker = _read_json(output_root / "layer1_selector_watchlist_blocker_report.json")
+    preview = _read_json(output_root / "layer1_selector_reader_brief_preview.json")
+
+    assert result["status"] in {
+        "LAYER1_SELECTOR_RESULT_SUMMARY_READY",
+        "LAYER1_SELECTOR_RESULT_SUMMARY_INCONCLUSIVE",
+    }
+    assert {
+        "top_selector_id",
+        "top_selector_type",
+        "net_return_after_cost",
+        "max_drawdown",
+        "sharpe",
+        "calmar",
+        "turnover",
+        "switch_count",
+        "avg_holding_period",
+        "relative_vs_always_equal_risk",
+        "relative_vs_always_100_qqq",
+        "regret_vs_best_component",
+        "period_split_status",
+        "sensitivity_status",
+        "watchlist_status",
+        "owner_review_status",
+    } <= set(result["summary"])
+    assert coverage["status"] in {
+        "FULL_HISTORY_AVAILABLE",
+        "SHORT_HISTORY_ACCEPTABLE_FOR_RESEARCH",
+        "RECENT_REGIME_ONLY_WARNING",
+        "HISTORY_COVERAGE_BLOCKED",
+    }
+    assert coverage["summary"]["can_backfill_to_2012"] is False
+    assert recent["status"] in {
+        "RECENT_REGIME_RISK_DISCLOSED",
+        "RECENT_REGIME_RISK_MATERIAL",
+    }
+    assert owner["status"] in {
+        "ADD_SELECTOR_TO_RESEARCH_ONLY_FORWARD_AGING",
+        "KEEP_SELECTOR_RESEARCH_ONLY",
+        "NO_SELECTOR_EDGE",
+        "NEED_HISTORY_BACKFILL_FIRST",
+        "BLOCKED",
+    }
+    assert dry_run["status"] in {
+        "LAYER1_SELECTOR_FORWARD_DRY_RUN_PASS",
+        "LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN",
+        "LAYER1_SELECTOR_FORWARD_DRY_RUN_BLOCKED",
+    }
+    assert dry_run["summary"]["observation_written"] is False
+    assert blocker["status"] == "WATCHLIST_BLOCKER_REPORT_READY"
+    assert blocker["summary"]["paper_shadow_allowed"] is False
+    assert preview["status"] == "LAYER1_SELECTOR_READER_PREVIEW_SAFE"
+    assert preview["prohibited_phrase_hits"] == []
+    assert master["status"] in {
+        "LAYER1_SELECTOR_FORWARD_AGING_REVIEWABLE",
+        "LAYER1_SELECTOR_DRY_RUN_ONLY",
+        "LAYER1_SELECTOR_NEEDS_HISTORY_BACKFILL",
+        "LAYER1_SELECTOR_RESEARCH_ONLY",
+        "LAYER1_SELECTOR_BLOCKED",
+    }
+    assert (docs_root / "layer1_selector_owner_watchlist_review.md").exists()
+    assert (docs_root / "layer1_selector_result_review_master.md").exists()
+
+    for payload in (result, coverage, recent, owner, dry_run, blocker, preview, master):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    cli_output_root = tmp_path / "cli_outputs" / "layer1_meta_policy"
+    result_cli = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "layer1-selector-real-result-summary",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(cli_output_root),
+            "--layer2-output-root",
+            str(tmp_path / "cli_outputs" / "layer2_components"),
+        ],
+    )
+    assert result_cli.exit_code == 0, result_cli.output
+    assert (cli_output_root / "layer1_selector_real_result_summary.json").exists()
+
+
+def _read_json(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _write_layer1_caches(tmp_path: Path) -> tuple[Path, Path, Path, date]:

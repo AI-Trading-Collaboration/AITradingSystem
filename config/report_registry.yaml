@@ -15399,3 +15399,157 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer1_selector_real_result_summary
+    title: Layer-1 Selector Real Result Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-real-result-summary
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_real_result_summary.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_real_result_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1001 summarizes true Layer-1 selector results after 986 to 1000.
+    owner_action: review_real_selector_result_before_watchlist_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_history_coverage_gap_audit
+    title: Layer-1 Selector History Coverage Gap Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-history-coverage-gap-audit
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_history_coverage_gap_audit.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_history_coverage_gap_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1002 audits why the current Layer-1 selector interval is short.
+    owner_action: review_history_coverage_gap_before_watchlist_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_recent_regime_risk_disclosure
+    title: Layer-1 Selector Recent Regime Risk Disclosure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-recent-regime-risk-disclosure
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_recent_regime_risk_disclosure.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_recent_regime_risk_disclosure.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1003 discloses recent-regime bias in current selector results.
+    owner_action: acknowledge_recent_regime_risk_before_watchlist_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_owner_watchlist_review
+    title: Layer-1 Selector Owner Watchlist Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-owner-watchlist-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_owner_watchlist_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_owner_watchlist_review.md
+      - docs/research/layer1_selector_owner_watchlist_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1004 packages watchlist recommendation after result and risk review.
+    owner_action: decide_research_only_forward_aging_watchlist_admission
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_forward_aging_dry_run
+    title: Layer-1 Selector Forward-Aging Dry Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-forward-aging-dry-run
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_dry_run.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_dry_run.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1005 previews forward-aging observation format without writing it.
+    owner_action: review_dry_run_before_any_formal_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_watchlist_blocker_report
+    title: Layer-1 Selector Watchlist Blocker Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-watchlist-blocker-report
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_watchlist_blocker_report.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_watchlist_blocker_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1006 records watchlist blockers and continuing paper-shadow blocks.
+    owner_action: review_watchlist_blockers_before_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_reader_brief_preview
+    title: Layer-1 Selector Reader Brief Preview
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-reader-brief-preview
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_reader_brief_preview.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_reader_brief_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1007 previews safe Reader Brief wording without daily integration.
+    owner_action: review_reader_brief_preview_before_any_daily_integration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_result_review_master
+    title: Layer-1 Selector Result Review Master
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-result-review-master
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_result_review_master.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_result_review_master.md
+      - docs/research/layer1_selector_result_review_master.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1008 summarizes Layer-1 selector result review and next gate.
+    owner_action: review_result_review_master_before_any_forward_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
