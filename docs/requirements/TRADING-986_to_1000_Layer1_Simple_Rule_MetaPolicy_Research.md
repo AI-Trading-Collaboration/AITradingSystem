@@ -1,5 +1,7 @@
 # TRADING-986 to 1000 Layer-1 Simple Rule Meta-Policy Research
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-976～985 已完成 Layer-1 meta-policy readiness gate，当前结论为：

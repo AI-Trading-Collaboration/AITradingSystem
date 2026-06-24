@@ -1,5 +1,7 @@
 # TRADING-947 to 956 QQQ-Plus Growth Closeout and Real-Run Validation
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-933 to 946 已新增 QQQ-plus growth challenger research 线，用来评估是否存在

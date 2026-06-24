@@ -1,5 +1,7 @@
 # TRADING-976 to 985 Layer-1 Meta-Policy Research Readiness Gate
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-967～970 真实运行显示 Layer-2 component pool 具备继续做

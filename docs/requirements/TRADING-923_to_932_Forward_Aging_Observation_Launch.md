@@ -1,5 +1,7 @@
 # TRADING-923 to 932 Forward-Aging Observation Launch
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-911 to 922 已把 QQQ/TQQQ/SGOV 数据修复链路推进到

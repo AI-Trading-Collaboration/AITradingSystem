@@ -1,5 +1,7 @@
 # TRADING-894 to 910 Simple Baseline Forward Aging Convergence
 
+最后更新：2026-06-25
+
 ## Status
 
 IN_PROGRESS as of 2026-06-23.

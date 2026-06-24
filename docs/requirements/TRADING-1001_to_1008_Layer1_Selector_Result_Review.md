@@ -1,5 +1,7 @@
 # TRADING-1001 to 1008 Layer-1 Selector Result Review
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-986～1000 已完成 Layer-1 simple-rule selector research-only historical study。

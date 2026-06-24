@@ -1,5 +1,7 @@
 # TRADING-911 to 922 Simple Baseline Data Repair and Forward-Aging Unblock
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-894 to 910 已经冻结 simple baseline forward-aging 候选、比较器和安全边界，但真实本地缓存仍暴露 QQQ/TQQQ/SGOV 数据质量缺口。不能因为候选冻结已经完成就开始正式 forward aging；必须先确认主价格、第二来源、repair manifest、SGOV carry 口径和 validate-data fail-closed 规则。

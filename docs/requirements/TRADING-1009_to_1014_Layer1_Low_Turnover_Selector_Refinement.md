@@ -1,5 +1,7 @@
 # TRADING-1009 to 1014 Layer-1 Low-Turnover Selector Refinement
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-1001～1008 的真实结果显示 `trend_200dma_selector` 有成本后 edge，但 owner watchlist review 因 `TOO_MUCH_TURNOVER` 保持 `KEEP_SELECTOR_RESEARCH_ONLY`。

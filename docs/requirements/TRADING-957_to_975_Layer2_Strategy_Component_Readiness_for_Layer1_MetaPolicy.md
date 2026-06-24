@@ -1,5 +1,7 @@
 # TRADING-957 to 975 Layer-2 Strategy Component Readiness for Layer-1 Meta-Policy Research
 
+最后更新：2026-06-25
+
 ## 背景
 
 本需求把已完成的 simple baseline / forward-aging / QQQ-plus growth research

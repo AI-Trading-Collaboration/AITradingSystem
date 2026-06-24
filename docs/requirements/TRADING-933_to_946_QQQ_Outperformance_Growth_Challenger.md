@@ -1,5 +1,7 @@
 # TRADING-933 to 946 QQQ Outperformance Growth Challenger
 
+最后更新：2026-06-25
+
 ## 背景
 
 TRADING-923 to 932 已启动 `equal_risk_qqq_sgov` 的 research-only

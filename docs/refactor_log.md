@@ -1,5 +1,44 @@
 # Refactor Log
 
+## 2026-06-25 Daily Incremental Refactor
+
+- 检查时间：2026-06-25 08:04 Asia/Tokyo。
+- 起始 HEAD：`f0dc817b37b3cd0868d49b81707566057efba862` (`Implement Layer-1 low-turnover selector refinement`)。
+- 最近一次合格重构基线提交：`a012e18df277d461663d7feff824419c80f32509` (`refactor: record AITradingSystem simple baseline refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `4523ad8c69eacb5c49a2799ed98dedcb605130aa`。
+- 评估范围：`a012e18df277d461663d7feff824419c80f32509..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 Layer-2 component readiness、Layer-1 meta-policy readiness、Layer-1 simple-rule selector research、Layer-1 result review、low-turnover refinement、QQQ-plus growth challenger 和 simple-baseline forward-aging/repair 增量。主要维护风险是 `src/ai_trading_system/layer1_simple_rule_meta_policy.py` 同时承载 986～1014 报告生成、path construction、ranking、owner decision 和 helper logic，模块继续膨胀。
+- 本轮变更文件：
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-1015_Daily_Incremental_Refactor_Layer1_Low_Turnover_Helper_Boundary.md`
+  - `docs/requirements/TRADING-1016_Docs_Freshness_Metadata_Restoration.md`
+  - `docs/requirements/TRADING-894_to_910_Simple_Baseline_Forward_Aging_Convergence.md`
+  - `docs/requirements/TRADING-911_to_922_Simple_Baseline_Data_Repair_Forward_Aging_Unblock.md`
+  - `docs/requirements/TRADING-923_to_932_Forward_Aging_Observation_Launch.md`
+  - `docs/requirements/TRADING-933_to_946_QQQ_Outperformance_Growth_Challenger.md`
+  - `docs/requirements/TRADING-947_to_956_QQQ_Plus_Growth_Closeout_Real_Run.md`
+  - `docs/requirements/TRADING-957_to_975_Layer2_Strategy_Component_Readiness_for_Layer1_MetaPolicy.md`
+  - `docs/requirements/TRADING-976_to_985_Layer1_MetaPolicy_Readiness_Gate.md`
+  - `docs/requirements/TRADING-986_to_1000_Layer1_Simple_Rule_MetaPolicy_Research.md`
+  - `docs/requirements/TRADING-1001_to_1008_Layer1_Selector_Result_Review.md`
+  - `docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/layer1_simple_rule_meta_policy.py`
+  - `src/ai_trading_system/layer1_low_turnover_selector_helpers.py`
+- 重构理由：TRADING-1009～1014 low-turnover ranking / owner-decision 逻辑是纯 helper / policy summarization 边界，不需要和 context build、path construction、artifact 写入继续集中在同一大模块。拆出 helper module 可降低后续 low-turnover review 维护成本，并让 research-only pilot 常量有明确归属。收尾验证还发现 10 个新增 requirements 文档缺少 `最后更新` 元数据，因此同轮补齐 docs freshness metadata，避免文档治理/CI gate 继续失败。
+- 行为影响：预期无外部行为变化；`aits research strategies layer1-selector-*` 命令路径、参数、artifact path、report schema、status enum、owner decision checks、safety fields 和 FAIL/PASS 语义保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest、daily report、threshold、score band、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、paper-shadow state、broker 或 order path；本轮未执行 cached-data dependent real report，因此未额外运行 `aits validate-data` 或生成新的 data quality sidecar。既有 data-dependent Layer-1 commands 仍按原路径调用同源 data validation 并在输出中披露 data quality。
+- `docs/system_flow.md` 更新判定：不适用。本轮只拆分内部 helper 边界，不改变 CLI、关键配置、cache schema、report output、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m pytest -n 16 --dist loadfile tests/test_layer1_meta_policy_readiness.py tests/test_documentation_contract.py tests/test_task_register_consistency.py`：PASS，14 passed。
+  - `python -m ai_trading_system.cli research strategies layer1-selector-low-turnover-ranking --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research strategies layer1-selector-low-turnover-owner-decision-pack --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，399 docs checked，0 issues。初次运行暴露 10 个新增 requirements 文档缺少 `最后更新` 元数据；已补齐并复验通过。
+  - `python -m ruff check src\ai_trading_system\layer1_simple_rule_meta_policy.py src\ai_trading_system\layer1_low_turnover_selector_helpers.py tests\test_layer1_meta_policy_readiness.py`：PASS。
+  - `python -m compileall src\ai_trading_system\layer1_simple_rule_meta_policy.py src\ai_trading_system\layer1_low_turnover_selector_helpers.py`：PASS。
+  - `git diff --check`：PASS。
+- 遇到的 blocker：无。Ruff 初次检查发现 import ordering I001；已用 Ruff 机械修正，随后 Ruff、compileall、CLI help、focused pytest 和 diff check 均通过。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `layer1_simple_rule_meta_policy.py` 中 result-review/path-construction 边界、`research_simple_baselines.py` CLI wrapper 膨胀和 Layer-2 readiness helper 边界，但不得在同一低风险切片中改变投资解释或报告契约。
+- 本轮重构实现提交 SHA：待本地提交后回填。
+
 ## 2026-06-23 Daily Incremental Refactor
 
 - 检查时间：2026-06-23 08:07 Asia/Tokyo。
