@@ -37,7 +37,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。Ruff 初次检查发现 import ordering I001；已用 Ruff 机械修正，随后 Ruff、compileall、CLI help、focused pytest 和 diff check 均通过。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `layer1_simple_rule_meta_policy.py` 中 result-review/path-construction 边界、`research_simple_baselines.py` CLI wrapper 膨胀和 Layer-2 readiness helper 边界，但不得在同一低风险切片中改变投资解释或报告契约。
-- 本轮重构实现提交 SHA：待本地提交后回填。
+- 本轮重构实现提交 SHA：`28aec62a8abef8eb223ee8c07010938c07085b26`。
 
 ## 2026-06-23 Daily Incremental Refactor
 
