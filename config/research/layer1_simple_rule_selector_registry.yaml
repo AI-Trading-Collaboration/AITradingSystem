@@ -1,0 +1,391 @@
+schema_version: 1
+registry_id: layer1_simple_rule_selector_registry
+registry_version: v1_2026_06_24_research_only
+policy_metadata:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Start the first research-only Layer-1 simple-rule selector study after
+    TRADING-976 to 985 concluded that the frozen Layer-2 component pool is
+    ready for simple-rule historical research.
+  intended_effect: >
+    Register transparent selector candidates, decision-time inputs, switching
+    constraints, and safety boundaries before running any historical selector
+    backtest or owner watchlist gate.
+  validation_evidence: >
+    TRADING-967 to 985 artifacts report material selector headroom, distinct
+    selectable components, a ready switching constraint contract, and a
+    research-only owner recommendation to start simple-rule research.
+  review_condition: >
+    Reopen before changing selector thresholds, admitting new selectable
+    components, allowing ML selectors, enabling paper-shadow, or changing any
+    production or broker boundary.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+selectable_component_ids:
+  - equal_risk_qqq_sgov
+  - 100_qqq
+reference_only_component_ids:
+  - qqq_50_sgov_50
+  - qqq_60_sgov_40
+inactive_research_reference_ids:
+  - qqq_plus_growth_research_candidate
+excluded_component_families:
+  - TQQQ-heavy
+  - tail-risk fallback
+  - LEAPS
+  - Wheel
+  - Options
+common_switching_constraint: &common_switching_constraint
+  minimum_holding_period_days: 20
+  cooldown_days: 5
+  max_switches_per_year: 12
+  max_turnover_per_switch: 1.0
+evaluation_policy:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Provide auditable first-pass thresholds for classifying selector research
+    outputs. These are not calibrated investment policy and require owner
+    review before any forward-aging admission.
+  intended_effect: >
+    Keep edge, robustness, sensitivity, and watchlist gate classification
+    deterministic and reviewable while preserving research-only safety.
+  validation_evidence: >
+    Baseline policy for TRADING-986 to 1000; focused tests verify registry,
+    CLI, report, and safety fields.
+  review_condition: >
+    Reopen before interpreting these thresholds as production promotion gates.
+  edge_net_return_threshold: 0.0
+  drawdown_worsening_tolerance: 0.02
+  sharpe_calmar_improvement_floor: 0.0
+  regret_improvement_floor: 0.0
+  period_positive_min_ratio: 0.5
+  max_switches_per_year: 12
+  max_turnover_warning: 2.0
+  overfit_metric_degradation_warn: 0.05
+  overfit_metric_degradation_block: 0.15
+  rank_stability_warn_rank: 3
+  required_forward_days: 120
+  minimum_acceptable_holding_period: 20
+  watchlist_required_checks:
+    - beats_at_least_one_static_component
+    - not_directly_dominated
+    - drawdown_not_materially_worse
+    - sharpe_or_calmar_improves
+    - switch_count_controlled
+    - holding_period_ready
+    - period_split_not_concentrated
+    - sensitivity_not_fragile
+    - manual_review_required
+selectors:
+  - selector_id: always_equal_risk
+    selector_type: static_baseline
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: []
+    decision_rule:
+      description: Always select equal_risk_qqq_sgov.
+      component: equal_risk_qqq_sgov
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: always_100_qqq
+    selector_type: static_baseline
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: []
+    decision_rule:
+      description: Always select 100_qqq.
+      component: 100_qqq
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: trend_200dma_selector
+    selector_type: hard_select_trend
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [qqq_normalized_equity, qqq_200dma]
+    decision_rule:
+      description: Select 100_qqq when QQQ normalized equity is above 200DMA.
+      risk_on_condition: qqq_normalized_equity > qqq_200dma
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: trend_100_200dma_selector
+    selector_type: hard_select_trend
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [qqq_normalized_equity, qqq_100dma, qqq_200dma]
+    decision_rule:
+      description: Select 100_qqq when QQQ is above 100DMA and 100DMA is above 200DMA.
+      risk_on_condition: qqq_normalized_equity > qqq_100dma and qqq_100dma > qqq_200dma
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: trend_distance_200dma_selector
+    selector_type: hard_select_trend
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [distance_to_200dma]
+    decision_rule:
+      description: Select 100_qqq when distance_to_200dma is above the threshold.
+      distance_threshold: 0.0
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: realized_vol_selector
+    selector_type: hard_select_volatility
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [realized_vol_20d_percentile]
+    decision_rule:
+      description: Select equal_risk when realized_vol_20d percentile is high.
+      vol_window: 20
+      high_percentile: 0.66
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: realized_vol_60d_selector
+    selector_type: hard_select_volatility
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [realized_vol_60d_percentile]
+    decision_rule:
+      description: Select equal_risk when realized_vol_60d percentile is high.
+      vol_window: 60
+      high_percentile: 0.66
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: volatility_expansion_selector
+    selector_type: hard_select_volatility
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [volatility_expansion_ratio]
+    decision_rule:
+      description: Select equal_risk when volatility_expansion_ratio is high.
+      expansion_threshold: 1.25
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: drawdown_guard_selector
+    selector_type: hard_select_drawdown_guard
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [drawdown_from_252d_high, qqq_100dma]
+    decision_rule:
+      description: Select equal_risk when drawdown is below -5%; recover above -5% and 100DMA.
+      drawdown_threshold: -0.05
+      recovery_rule: above_minus_5pct_and_100dma
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: drawdown_guard_10pct_selector
+    selector_type: hard_select_drawdown_guard
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [drawdown_from_252d_high, qqq_200dma]
+    decision_rule:
+      description: Select equal_risk when drawdown is below -10%; recover above 200DMA.
+      drawdown_threshold: -0.10
+      recovery_rule: above_200dma
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: trend_plus_vol_selector
+    selector_type: hard_select_combined_rule
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [qqq_200dma, realized_vol_20d_percentile]
+    decision_rule:
+      description: Risk-on only when trend is positive and volatility is not high.
+      high_percentile: 0.66
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: trend_plus_drawdown_selector
+    selector_type: hard_select_combined_rule
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [qqq_200dma, drawdown_from_252d_high]
+    decision_rule:
+      description: Risk-on only when trend is positive and drawdown guard is not active.
+      drawdown_threshold: -0.08
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: three_signal_vote_selector
+    selector_type: hard_select_combined_rule
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [qqq_200dma, realized_vol_20d_percentile, drawdown_from_252d_high]
+    decision_rule:
+      description: Select 100_qqq when at least two of trend, vol, and drawdown signals are risk-on.
+      vote_threshold: 2
+      high_percentile: 0.66
+      drawdown_threshold: -0.08
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: soft_blend_trend_selector
+    selector_type: soft_blend_trend
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [distance_to_200dma]
+    decision_rule:
+      description: Blend toward 100_qqq when QQQ is above 200DMA, otherwise blend defensive.
+      risk_on_weight: 0.75
+      risk_off_weight: 0.25
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: soft_blend_vol_selector
+    selector_type: soft_blend_volatility
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [realized_vol_20d_percentile]
+    decision_rule:
+      description: Blend away from 100_qqq as realized volatility percentile rises.
+      min_100qqq_weight: 0.25
+      max_100qqq_weight: 0.75
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - selector_id: soft_blend_trend_vol_drawdown_selector
+    selector_type: soft_blend_combined_rule
+    allowed_components: [equal_risk_qqq_sgov, 100_qqq]
+    feature_inputs: [distance_to_200dma, realized_vol_20d_percentile, drawdown_from_252d_high]
+    decision_rule:
+      description: Average trend, volatility, and drawdown risk-on scores into a soft blend.
+      min_100qqq_weight: 0.20
+      max_100qqq_weight: 0.85
+      drawdown_threshold: -0.08
+    switching_constraint: *common_switching_constraint
+    minimum_holding_period: 20
+    cooldown_days: 5
+    max_switches_per_year: 12
+    max_turnover_per_switch: 1.0
+    uses_future_data: false
+    uses_ml: false
+    uses_options: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none

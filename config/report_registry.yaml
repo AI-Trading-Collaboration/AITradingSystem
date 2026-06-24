@@ -15114,3 +15114,288 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer1_simple_rule_selector_registry_review
+    title: Layer-1 Simple Rule Selector Registry Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-simple-rule-selector-registry-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_registry_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_registry_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-986 validates the simple-rule selector registry before historical research.
+    owner_action: review_selector_registry_before_backtests
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_trend_rule_selector_backtest
+    title: Layer-1 Trend Rule Selector Backtest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-trend-rule-selector-backtest
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_trend_rule_selector_backtest.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_trend_rule_selector_backtest.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-987 evaluates transparent trend rules after cost.
+    owner_action: review_trend_selector_backtest_before_combined_search
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_volatility_rule_selector_backtest
+    title: Layer-1 Volatility Rule Selector Backtest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-volatility-rule-selector-backtest
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_volatility_rule_selector_backtest.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_volatility_rule_selector_backtest.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-988 evaluates realized-volatility selector rules after cost.
+    owner_action: review_volatility_selector_backtest_before_combined_search
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_drawdown_rule_selector_backtest
+    title: Layer-1 Drawdown Rule Selector Backtest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-drawdown-rule-selector-backtest
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_drawdown_rule_selector_backtest.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_drawdown_rule_selector_backtest.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-989 evaluates drawdown-guard selector rules after cost.
+    owner_action: review_drawdown_selector_backtest_before_combined_search
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_combined_simple_rule_selector_search
+    title: Layer-1 Combined Simple Rule Selector Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-combined-simple-rule-selector-search
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_combined_simple_rule_selector_search.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_combined_simple_rule_selector_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-990 searches simple combined selectors without ML or future features.
+    owner_action: review_combined_selector_candidates_before_stress
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_cost_latency_stress
+    title: Layer-1 Selector Cost and Latency Stress
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-cost-latency-stress
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_cost_latency_stress.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_cost_latency_stress.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-991 stresses selector cost, slippage, and execution latency.
+    owner_action: review_cost_latency_stress_before_watchlist_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_period_split_validation
+    title: Layer-1 Selector Period Split Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-period-split-validation
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_period_split_validation.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_period_split_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-992 checks whether selector results concentrate in one period.
+    owner_action: review_period_split_before_owner_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_drawdown_episode_review
+    title: Layer-1 Selector Drawdown Episode Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-drawdown-episode-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_drawdown_episode_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_drawdown_episode_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-993 reviews selector behavior in stress and recovery episodes.
+    owner_action: review_drawdown_episodes_before_owner_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_regret_attribution
+    title: Layer-1 Selector Regret Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-regret-attribution
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_regret_attribution.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_regret_attribution.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-994 attributes selector regret before owner watchlist review.
+    owner_action: review_regret_sources_before_owner_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_vs_component_baseline_ranking
+    title: Layer-1 Selector vs Component Baseline Ranking
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-vs-component-baseline-ranking
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_vs_component_baseline_ranking.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_vs_component_baseline_ranking.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-995 ranks selectors against selectable and reference components.
+    owner_action: review_selector_ranking_before_watchlist_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_overfit_sensitivity_review
+    title: Layer-1 Selector Overfit Sensitivity Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-overfit-sensitivity-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_overfit_sensitivity_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_overfit_sensitivity_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-996 tests selector fragility to threshold and cadence perturbations.
+    owner_action: review_sensitivity_before_watchlist_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_minimum_holding_period_review
+    title: Layer-1 Selector Minimum Holding Period Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-minimum-holding-period-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_minimum_holding_period_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_minimum_holding_period_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-997 evaluates minimum holding period effects on selector turnover.
+    owner_action: review_minimum_holding_period_before_watchlist_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_forward_aging_watchlist_gate
+    title: Layer-1 Selector Forward-Aging Watchlist Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-forward-aging-watchlist-gate
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_watchlist_gate.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_watchlist_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-998 gates research-only forward-aging watchlist candidacy.
+    owner_action: review_watchlist_gate_before_any_forward_aging_admission
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_owner_decision_pack
+    title: Layer-1 Selector Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_owner_decision_pack.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-999 packages owner questions and recommendation.
+    owner_action: decide_whether_selector_enters_research_only_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_simple_rule_selector_master_review
+    title: Layer-1 Simple Rule Selector Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-simple-rule-selector-master-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_master_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1000 summarizes Layer-1 simple-rule selector research conclusions.
+    owner_action: review_master_conclusion_before_next_layer1_research_stage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

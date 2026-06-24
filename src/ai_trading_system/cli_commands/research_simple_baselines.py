@@ -26,6 +26,24 @@ from ai_trading_system.layer1_meta_policy_readiness import (
     run_layer1_simple_rule_selector_search,
     run_layer2_best_component_label_builder,
 )
+from ai_trading_system.layer1_simple_rule_meta_policy import (
+    DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    run_layer1_combined_simple_rule_selector_search,
+    run_layer1_drawdown_rule_selector_backtest,
+    run_layer1_selector_cost_latency_stress,
+    run_layer1_selector_drawdown_episode_review,
+    run_layer1_selector_forward_aging_watchlist_gate,
+    run_layer1_selector_minimum_holding_period_review,
+    run_layer1_selector_overfit_sensitivity_review,
+    run_layer1_selector_owner_decision_pack,
+    run_layer1_selector_period_split_validation,
+    run_layer1_selector_regret_attribution,
+    run_layer1_selector_vs_component_baseline_ranking,
+    run_layer1_simple_rule_selector_master_review,
+    run_layer1_simple_rule_selector_registry_review,
+    run_layer1_trend_rule_selector_backtest,
+    run_layer1_volatility_rule_selector_backtest,
+)
 from ai_trading_system.layer2_strategy_component_readiness import (
     DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
     DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
@@ -3755,6 +3773,709 @@ def strategies_layer1_meta_policy_master_review_command(
     _print_simple_baseline_payload("Layer-1 meta-policy master review", payload)
 
 
+def strategies_layer1_simple_rule_selector_registry_review_command(
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer1_simple_rule_selector_registry_review(
+            registry_config_path=registry_config_path,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-1 simple-rule selector registry review", payload)
+
+
+def strategies_layer1_trend_rule_selector_backtest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_trend_rule_selector_backtest(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 trend rule selector backtest",
+    )
+    _print_simple_baseline_payload("Layer-1 trend rule selector backtest", payload)
+
+
+def strategies_layer1_volatility_rule_selector_backtest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_volatility_rule_selector_backtest(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 volatility rule selector backtest",
+    )
+    _print_simple_baseline_payload("Layer-1 volatility rule selector backtest", payload)
+
+
+def strategies_layer1_drawdown_rule_selector_backtest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_drawdown_rule_selector_backtest(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 drawdown rule selector backtest",
+    )
+    _print_simple_baseline_payload("Layer-1 drawdown rule selector backtest", payload)
+
+
+def strategies_layer1_combined_simple_rule_selector_search_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_combined_simple_rule_selector_search(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 combined simple-rule selector search",
+    )
+    _print_simple_baseline_payload("Layer-1 combined simple-rule selector search", payload)
+
+
+def strategies_layer1_selector_cost_latency_stress_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_cost_latency_stress(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector cost/latency stress",
+    )
+    _print_simple_baseline_payload("Layer-1 selector cost/latency stress", payload)
+
+
+def strategies_layer1_selector_period_split_validation_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_period_split_validation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector period split validation",
+    )
+    _print_simple_baseline_payload("Layer-1 selector period split validation", payload)
+
+
+def strategies_layer1_selector_drawdown_episode_review_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_drawdown_episode_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector drawdown episode review",
+    )
+    _print_simple_baseline_payload("Layer-1 selector drawdown episode review", payload)
+
+
+def strategies_layer1_selector_regret_attribution_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_regret_attribution(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector regret attribution",
+    )
+    _print_simple_baseline_payload("Layer-1 selector regret attribution", payload)
+
+
+def strategies_layer1_selector_vs_component_baseline_ranking_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_vs_component_baseline_ranking(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector vs component baseline ranking",
+    )
+    _print_simple_baseline_payload("Layer-1 selector vs component baseline ranking", payload)
+
+
+def strategies_layer1_selector_overfit_sensitivity_review_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_overfit_sensitivity_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector overfit sensitivity review",
+    )
+    _print_simple_baseline_payload("Layer-1 selector overfit sensitivity review", payload)
+
+
+def strategies_layer1_selector_minimum_holding_period_review_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_minimum_holding_period_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector minimum holding period review",
+    )
+    _print_simple_baseline_payload("Layer-1 selector minimum holding period review", payload)
+
+
+def strategies_layer1_selector_forward_aging_watchlist_gate_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_forward_aging_watchlist_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector forward-aging watchlist gate",
+    )
+    _print_simple_baseline_payload("Layer-1 selector forward-aging watchlist gate", payload)
+
+
+def strategies_layer1_selector_owner_decision_pack_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_selector_owner_decision_pack(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 selector owner decision pack",
+    )
+    _print_simple_baseline_payload("Layer-1 selector owner decision pack", payload)
+
+
+def strategies_layer1_simple_rule_selector_master_review_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path", help="主价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path", help="rates cache for validate-data gate。")
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="validate-data as-of date。")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="开始日期。")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date", help="结束日期。")] = None,
+    config_path: Annotated[
+        Path, typer.Option("--config", help="Layer-2 component pool YAML。")
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Annotated[
+        Path, typer.Option("--registry-config", help="Layer-1 selector registry YAML。")
+    ] = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Layer-1 meta-policy 输出目录。")
+    ] = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Annotated[
+        Path, typer.Option("--layer2-output-root", help="Layer-2 component 输出目录。")
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _layer1_selector_research_payload(
+        lambda: run_layer1_simple_rule_selector_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            registry_config_path=registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+            layer2_output_root=layer2_output_root,
+        ),
+        "Layer-1 simple-rule selector master review",
+    )
+    _print_simple_baseline_payload("Layer-1 simple-rule selector master review", payload)
+
+
 _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     ("simple-baseline-registry-review", strategies_simple_baseline_registry_review_command),
     ("qqq-sgov-baseline-backtest", strategies_qqq_sgov_baseline_backtest_command),
@@ -4114,6 +4835,66 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
         "layer1-meta-policy-master-review",
         strategies_layer1_meta_policy_master_review_command,
     ),
+    (
+        "layer1-simple-rule-selector-registry-review",
+        strategies_layer1_simple_rule_selector_registry_review_command,
+    ),
+    (
+        "layer1-trend-rule-selector-backtest",
+        strategies_layer1_trend_rule_selector_backtest_command,
+    ),
+    (
+        "layer1-volatility-rule-selector-backtest",
+        strategies_layer1_volatility_rule_selector_backtest_command,
+    ),
+    (
+        "layer1-drawdown-rule-selector-backtest",
+        strategies_layer1_drawdown_rule_selector_backtest_command,
+    ),
+    (
+        "layer1-combined-simple-rule-selector-search",
+        strategies_layer1_combined_simple_rule_selector_search_command,
+    ),
+    (
+        "layer1-selector-cost-latency-stress",
+        strategies_layer1_selector_cost_latency_stress_command,
+    ),
+    (
+        "layer1-selector-period-split-validation",
+        strategies_layer1_selector_period_split_validation_command,
+    ),
+    (
+        "layer1-selector-drawdown-episode-review",
+        strategies_layer1_selector_drawdown_episode_review_command,
+    ),
+    (
+        "layer1-selector-regret-attribution",
+        strategies_layer1_selector_regret_attribution_command,
+    ),
+    (
+        "layer1-selector-vs-component-baseline-ranking",
+        strategies_layer1_selector_vs_component_baseline_ranking_command,
+    ),
+    (
+        "layer1-selector-overfit-sensitivity-review",
+        strategies_layer1_selector_overfit_sensitivity_review_command,
+    ),
+    (
+        "layer1-selector-minimum-holding-period-review",
+        strategies_layer1_selector_minimum_holding_period_review_command,
+    ),
+    (
+        "layer1-selector-forward-aging-watchlist-gate",
+        strategies_layer1_selector_forward_aging_watchlist_gate_command,
+    ),
+    (
+        "layer1-selector-owner-decision-pack",
+        strategies_layer1_selector_owner_decision_pack_command,
+    ),
+    (
+        "layer1-simple-rule-selector-master-review",
+        strategies_layer1_simple_rule_selector_master_review_command,
+    ),
 )
 
 
@@ -4122,6 +4903,13 @@ def _build_research_payload(builder: Callable[[], dict[str, object]]) -> dict[st
         return builder()
     except (ResearchGovernanceError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
+
+
+def _layer1_selector_research_payload(
+    builder: Callable[[], dict[str, object]],
+    _label: str,
+) -> dict[str, object]:
+    return _build_research_payload(builder)
 
 
 def _print_simple_baseline_payload(label: str, payload: dict[str, object]) -> None:
