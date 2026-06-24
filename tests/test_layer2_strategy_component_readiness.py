@@ -9,17 +9,33 @@ import pandas as pd
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.layer1_meta_policy_readiness import (
+    run_layer1_dataset_lineage_leakage_audit,
+    run_layer1_naive_selector_baselines,
+    run_layer1_objective_outcome_contract,
+    run_layer1_policy_combiner_contract,
+    run_layer1_purged_walk_forward_split_contract,
+    run_layer1_reader_brief_safety_preview,
+    run_layer1_research_dataset_builder,
+    run_layer1_selector_cost_adjusted_evaluation,
+    run_layer1_simple_rule_selector_search,
+    run_layer2_best_component_label_builder,
+)
 from ai_trading_system.layer2_strategy_component_readiness import (
     run_layer2_anti_leakage_time_boundary_audit,
     run_layer2_common_robustness_validation,
     run_layer2_component_data_quality_check,
     run_layer2_component_definition_lock,
+    run_layer2_component_distinctiveness_review,
     run_layer2_component_pool_freeze,
     run_layer2_component_readiness_matrix,
     run_layer2_component_readiness_reconciliation,
     run_layer2_forward_outcome_cube_build,
     run_layer2_historical_weight_path_build,
     run_layer2_return_cost_exposure_panel,
+    run_layer2_selector_headroom_oracle_review,
+    run_layer2_switching_constraint_contract,
+    run_layer2_transition_cost_latency_review,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -37,6 +53,25 @@ LAYER2_REPORT_IDS = {
     "layer2_forward_outcome_cube",
     "layer2_anti_leakage_time_boundary_audit",
     "layer2_common_robustness_validation",
+    "layer2_transition_cost_latency_review",
+    "layer2_component_distinctiveness_review",
+    "layer2_selector_headroom_oracle_review",
+    "layer2_switching_constraint_contract",
+    "layer2_best_component_label_builder",
+    "layer1_policy_combiner_contract",
+    "layer1_objective_outcome_contract",
+    "layer1_purged_walk_forward_split_contract",
+    "layer1_research_dataset",
+    "layer1_dataset_lineage_leakage_audit",
+    "layer1_naive_selector_baselines",
+    "layer1_simple_rule_selector_search",
+    "layer1_selector_cost_adjusted_evaluation",
+    "layer1_selector_regime_period_validation",
+    "layer1_selector_failure_case_review",
+    "layer1_historical_research_readiness_gate",
+    "layer1_research_owner_decision_pack",
+    "layer1_reader_brief_safety_preview",
+    "layer1_meta_policy_master_review",
 }
 
 
@@ -257,6 +292,256 @@ def test_layer2_fact_and_outcome_builders_exclude_growth_and_preserve_safety(
         assert payload["manual_review_required"] is True
         assert Path(payload["artifact_paths"]["json_path"]).exists()
         assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+
+def test_layer2_selector_headroom_first_batch_preserves_research_boundary(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer2_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+
+    transition = run_layer2_transition_cost_latency_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    distinctiveness = run_layer2_component_distinctiveness_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    headroom = run_layer2_selector_headroom_oracle_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    constraints = run_layer2_switching_constraint_contract(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+
+    assert transition["status"] in {
+        "TRANSITION_COST_ACCEPTABLE",
+        "TRANSITION_COST_MATERIAL",
+        "TRANSITION_COST_TOO_HIGH",
+    }
+    assert {row["pair"] for row in transition["transition_cost_rows"]} == {
+        "equal_risk_qqq_sgov ↔ 100_qqq",
+        "equal_risk_qqq_sgov ↔ qqq_50_sgov_50",
+        "equal_risk_qqq_sgov ↔ qqq_60_sgov_40",
+        "100_qqq ↔ qqq_50_sgov_50",
+        "100_qqq ↔ qqq_60_sgov_40",
+    }
+    assert {
+        "avg_turnover",
+        "median_turnover",
+        "max_turnover",
+        "one_day_execution_lag_impact",
+        "two_day_execution_lag_impact",
+        "monthly_switch_cost",
+        "weekly_switch_cost",
+        "threshold_switch_cost",
+        "cost_adjusted_return_impact",
+        "switching_cost_commentary",
+    } <= set(transition["transition_cost_rows"][0])
+
+    assert distinctiveness["status"] in {
+        "COMPONENTS_DISTINCT",
+        "COMPONENTS_PARTIALLY_DISTINCT",
+        "COMPONENTS_REDUNDANT",
+    }
+    assert len(distinctiveness["required_answers"]) == 5
+    assert {
+        "weight_path_correlation",
+        "return_correlation",
+        "drawdown_correlation",
+        "exposure_correlation",
+        "regime_response_difference",
+        "relative_performance_dispersion",
+        "turnover_difference",
+        "risk_budget_difference",
+    } <= set(distinctiveness["distinctiveness_rows"][0])
+
+    assert headroom["status"] in {
+        "SELECTOR_HEADROOM_MATERIAL",
+        "SELECTOR_HEADROOM_MODEST",
+        "NO_SELECTOR_HEADROOM",
+    }
+    assert {row["oracle_variant"] for row in headroom["oracle_rows"]} == {
+        "oracle_best_5d_component",
+        "oracle_best_20d_component",
+        "oracle_best_60d_component",
+        "oracle_best_drawdown_reduction",
+        "oracle_best_calmar_window",
+        "cost_adjusted_oracle",
+        "min_holding_20d_oracle",
+        "min_holding_60d_oracle",
+    }
+    assert {
+        "oracle_return",
+        "oracle_max_drawdown",
+        "oracle_sharpe",
+        "oracle_calmar",
+        "turnover",
+        "cost_adjusted_oracle_return",
+        "headroom_vs_best_static_component",
+        "headroom_vs_equal_risk",
+        "headroom_vs_100_qqq",
+        "required_prediction_accuracy_to_break_even",
+    } <= set(headroom["oracle_rows"][0])
+    assert headroom["oracle_realizable_strategy"] is False
+
+    assert constraints["status"] in {
+        "SWITCHING_CONSTRAINT_READY",
+        "SWITCHING_CONSTRAINT_NEEDS_OWNER_REVIEW",
+    }
+    assert constraints["selector_transition_rules"]["minimum_holding_period"] == ("20 trading days")
+    assert constraints["selectable_component_ids"] == [
+        "equal_risk_qqq_sgov",
+        "100_qqq",
+    ]
+    assert "qqq_50_sgov_50" in constraints["reference_only_component_ids"]
+
+    for payload in (transition, distinctiveness, headroom, constraints):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "layer2-selector-headroom-oracle-review",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output_root / "layer2_selector_headroom_oracle_review.json").exists()
+
+
+def test_layer1_meta_policy_readiness_builders_are_research_only(tmp_path: Path) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer2_caches(tmp_path)
+    layer2_output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer1_meta_policy"
+
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "as_of_date": as_of,
+        "output_root": output_root,
+        "layer2_output_root": layer2_output_root,
+    }
+    labels = run_layer2_best_component_label_builder(**common)
+    combiner = run_layer1_policy_combiner_contract(output_root=output_root)
+    objective = run_layer1_objective_outcome_contract(output_root=output_root)
+    split = run_layer1_purged_walk_forward_split_contract(**common)
+    dataset = run_layer1_research_dataset_builder(**common)
+    leakage = run_layer1_dataset_lineage_leakage_audit(**common)
+    naive = run_layer1_naive_selector_baselines(**common)
+    simple = run_layer1_simple_rule_selector_search(**common)
+    cost_eval = run_layer1_selector_cost_adjusted_evaluation(**common)
+    reader = run_layer1_reader_brief_safety_preview(output_root=output_root)
+
+    assert labels["status"] in {"BEST_COMPONENT_LABELS_READY", "BEST_COMPONENT_LABELS_PARTIAL"}
+    assert combiner["status"] == "POLICY_COMBINER_CONTRACT_READY"
+    assert objective["status"] == "LAYER1_OBJECTIVE_READY"
+    assert split["status"] in {
+        "PURGED_WALK_FORWARD_CONTRACT_READY",
+        "PURGED_WALK_FORWARD_NEEDS_REVIEW",
+    }
+    assert dataset["status"] in {
+        "LAYER1_RESEARCH_DATASET_READY",
+        "LAYER1_RESEARCH_DATASET_PARTIAL",
+    }
+    assert leakage["status"] in {
+        "LAYER1_DATASET_LEAKAGE_PASS",
+        "LAYER1_DATASET_LEAKAGE_WARN",
+    }
+    assert naive["status"] == "NAIVE_SELECTOR_BASELINES_READY"
+    assert simple["status"] in {
+        "SIMPLE_RULE_SELECTOR_SEARCH_READY",
+        "SIMPLE_RULE_SELECTOR_NO_EDGE",
+    }
+    assert cost_eval["status"] == "SELECTOR_COST_EVAL_READY"
+    assert reader["status"] == "LAYER1_READER_PREVIEW_SAFE"
+
+    assert dataset["dataset_rows"]
+    first_row = dataset["dataset_rows"][0]
+    assert {
+        "decision_date",
+        "market_features_at_decision_time",
+        "selectable_component_ids",
+        "reference_component_ids",
+        "component_target_weights",
+        "component_definition_hashes",
+        "component_forward_outcomes",
+        "best_component_labels",
+        "regret_vs_best_component",
+        "data_quality_status",
+        "split_id",
+        "embargo_status",
+    } <= set(first_row)
+    assert first_row["selectable_component_ids"] == ["equal_risk_qqq_sgov", "100_qqq"]
+    assert first_row["embargo_status"] == "MATURED_LABELS_ONLY"
+
+    for payload in (
+        labels,
+        combiner,
+        objective,
+        split,
+        dataset,
+        leakage,
+        naive,
+        simple,
+        cost_eval,
+        reader,
+    ):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "layer1-reader-brief-safety-preview",
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output_root / "layer1_reader_brief_safety_preview.json").exists()
 
 
 def _write_source_artifacts(simple_output_root: Path, growth_output_root: Path) -> None:

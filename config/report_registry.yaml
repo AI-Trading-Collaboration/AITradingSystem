@@ -14753,3 +14753,364 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer2_transition_cost_latency_review
+    title: Layer-2 Transition Cost and Latency Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-transition-cost-latency-review
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_transition_cost_latency_review.json
+      - outputs/research_strategies/layer2_components/layer2_transition_cost_latency_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-967 evaluates cross-component switching turnover, cost, and latency before Layer-1 selector research.
+    owner_action: review_transition_cost_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_component_distinctiveness_review
+    title: Layer-2 Component Distinctiveness Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-distinctiveness-review
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_distinctiveness_review.json
+      - outputs/research_strategies/layer2_components/layer2_component_distinctiveness_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-968 checks whether Layer-2 components have enough behavior differences to justify Layer-1 selector research.
+    owner_action: review_component_distinctiveness_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_selector_headroom_oracle_review
+    title: Layer-2 Selector Headroom Oracle Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-selector-headroom-oracle-review
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_selector_headroom_oracle_review.json
+      - outputs/research_strategies/layer2_components/layer2_selector_headroom_oracle_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-969 estimates non-realizable selector oracle headroom before any Layer-1 model or rule search.
+    owner_action: review_oracle_headroom_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_switching_constraint_contract
+    title: Layer-2 Switching Constraint Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-switching-constraint-contract
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_switching_constraint_contract.json
+      - outputs/research_strategies/layer2_components/layer2_switching_constraint_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-970 defines minimum holding, turnover, cooldown, and selectable-only constraints for future Layer-1 selector research.
+    owner_action: review_switching_constraints_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_best_component_label_builder
+    title: Layer-2 Best Component Label Builder
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-best-component-label-builder
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer2_best_component_label_builder.json
+      - outputs/research_strategies/layer1_meta_policy/layer2_best_component_label_builder.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-971 builds research-only best-component labels from the independent Layer-2 forward outcome cube.
+    owner_action: review_label_contract_before_layer1_dataset_training
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_policy_combiner_contract
+    title: Layer-1 Policy Combiner Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-policy-combiner-contract
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_policy_combiner_contract.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_policy_combiner_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-972 defines how Layer-1 selector outputs map to final selectable component blends.
+    owner_action: review_policy_combiner_before_layer1_dataset_training
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_objective_outcome_contract
+    title: Layer-1 Objective and Outcome Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-objective-outcome-contract
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_objective_outcome_contract.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_objective_outcome_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-973 fixes the Layer-1 objective hierarchy before selector research.
+    owner_action: review_objective_contract_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_purged_walk_forward_split_contract
+    title: Layer-1 Purged Walk-Forward Split Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-purged-walk-forward-split-contract
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_purged_walk_forward_split_contract.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_purged_walk_forward_split_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-974 defines purged walk-forward splits and embargo before Layer-1 research.
+    owner_action: review_split_contract_before_layer1_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_research_dataset
+    title: Layer-1 Research Dataset
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-research-dataset-builder
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_research_dataset.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_research_dataset.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-975 builds the research-only Layer-1 dataset without model training or strategy conclusion.
+    owner_action: review_layer1_dataset_before_leakage_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_dataset_lineage_leakage_audit
+    title: Layer-1 Dataset Lineage and Leakage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-dataset-lineage-leakage-audit
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_dataset_lineage_leakage_audit.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_dataset_lineage_leakage_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-976 audits Layer-1 research dataset lineage and leakage before selector baselines.
+    owner_action: review_dataset_leakage_audit_before_selector_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_naive_selector_baselines
+    title: Layer-1 Naive Selector Baselines
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-naive-selector-baselines
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_naive_selector_baselines.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_naive_selector_baselines.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-977 establishes naive selector baselines before simple-rule search.
+    owner_action: review_naive_baselines_before_selector_search
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_simple_rule_selector_search
+    title: Layer-1 Simple Rule Selector Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-simple-rule-selector-search
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_search.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_simple_rule_selector_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-978 searches only transparent simple-rule Layer-1 selectors.
+    owner_action: review_simple_rule_search_before_cost_adjusted_evaluation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_cost_adjusted_evaluation
+    title: Layer-1 Selector Cost-Adjusted Evaluation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-cost-adjusted-evaluation
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_cost_adjusted_evaluation.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_cost_adjusted_evaluation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-979 evaluates selector baselines after switching cost and latency penalties.
+    owner_action: review_cost_adjusted_selector_evaluation_before_readiness_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_regime_period_validation
+    title: Layer-1 Selector Regime and Period Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-regime-period-validation
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_regime_period_validation.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_regime_period_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-980 checks selector concentration across periods and regimes.
+    owner_action: review_regime_validation_before_readiness_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_failure_case_review
+    title: Layer-1 Selector Failure Case Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-failure-case-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_failure_case_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_failure_case_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-981 reviews selector failure cases before readiness gate.
+    owner_action: review_failure_cases_before_readiness_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_historical_research_readiness_gate
+    title: Layer-1 Historical Research Readiness Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-historical-research-readiness-gate
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_historical_research_readiness_gate.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_historical_research_readiness_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-982 gates Layer-1 historical research to research-only scope.
+    owner_action: review_readiness_gate_before_starting_layer1_historical_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_research_owner_decision_pack
+    title: Layer-1 Research Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-research-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_research_owner_decision_pack.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_research_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-983 packages owner questions before starting Layer-1 research.
+    owner_action: decide_whether_to_start_layer1_simple_rule_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_reader_brief_safety_preview
+    title: Layer-1 Reader Brief Safety Preview
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-reader-brief-safety-preview
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_reader_brief_safety_preview.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_reader_brief_safety_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-984 previews Reader Brief wording to avoid trading advice.
+    owner_action: review_reader_brief_preview_before_public_reader_summary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_meta_policy_master_review
+    title: Layer-1 Meta-Policy Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-meta-policy-master-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_meta_policy_master_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_meta_policy_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-985 summarizes Layer-1 meta-policy research readiness and next minimum task.
+    owner_action: review_master_conclusion_before_any_layer1_research_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

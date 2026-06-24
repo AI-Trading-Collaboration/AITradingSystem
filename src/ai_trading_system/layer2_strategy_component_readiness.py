@@ -274,9 +274,7 @@ def run_layer2_component_data_quality_check(
         data_quality=data_gate,
         expected_price_tickers=expected_tickers,
         expected_rate_series=_required_rate_series(config),
-        data_quality_minimum_status=_research_policy(config).get(
-            "data_quality_minimum_status", []
-        ),
+        data_quality_minimum_status=_research_policy(config).get("data_quality_minimum_status", []),
         layer1_historical_research_allowed=False,
         input_artifacts={
             "layer2_component_pool_config": str(config_path),
@@ -385,9 +383,7 @@ def run_layer2_component_readiness_matrix(
             "audit Layer-1 dataset reproducibility before allowing historical research",
         ],
         input_artifacts={
-            "reconciliation": str(
-                output_root / "layer2_component_readiness_reconciliation.json"
-            ),
+            "reconciliation": str(output_root / "layer2_component_readiness_reconciliation.json"),
             "component_pool_freeze": str(output_root / "layer2_component_pool_freeze.json"),
             "definition_lock": str(output_root / "layer2_component_definition_lock.json"),
             "data_quality_check": str(output_root / "layer2_component_data_quality_check.json"),
@@ -843,6 +839,1051 @@ def run_layer2_common_robustness_validation(
     return payload
 
 
+def run_layer2_transition_cost_latency_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _payload(
+            report_type="layer2_transition_cost_latency_review",
+            title="Layer-2 Transition Cost and Latency Review",
+            status="TRANSITION_COST_BLOCKED",
+            summary={
+                "pair_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+                "layer1_historical_research_allowed": False,
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_transition_cost_latency_review",
+                "Layer-2 Transition Cost and Latency Review",
+                "aits research strategies layer2-transition-cost-latency-review",
+                "layer2_transition_cost_latency_review",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    rows = _transition_cost_rows(context, weight_frame, panel)
+    status = _transition_cost_status(context, rows)
+    max_impact = max(
+        (_float(row.get("cost_adjusted_return_impact")) for row in rows),
+        default=0.0,
+    )
+    payload = _payload(
+        report_type="layer2_transition_cost_latency_review",
+        title="Layer-2 Transition Cost and Latency Review",
+        status=status,
+        summary={
+            "pair_count": len(rows),
+            "max_cost_adjusted_return_impact": _round(max_impact),
+            "data_quality_status": data_quality.get("status"),
+            "start_date": _frame_min(panel, "date"),
+            "end_date": _frame_max(panel, "date"),
+            "layer1_historical_research_allowed": False,
+        },
+        transition_cost_rows=rows,
+        data_quality=data_quality,
+        component_pool_hash=context.get("component_pool_hash"),
+        input_artifacts={
+            "layer2_component_pool_config": str(config_path),
+            "prices": str(prices_path),
+            "rates": str(rates_path),
+        },
+        report_registry_entry=_report_registry_entry(
+            "layer2_transition_cost_latency_review",
+            "Layer-2 Transition Cost and Latency Review",
+            "aits research strategies layer2-transition-cost-latency-review",
+            "layer2_transition_cost_latency_review",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_layer2_component_distinctiveness_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _payload(
+            report_type="layer2_component_distinctiveness_review",
+            title="Layer-2 Component Distinctiveness Review",
+            status="COMPONENT_DISTINCTIVENESS_BLOCKED",
+            summary={
+                "pair_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+                "layer1_historical_research_allowed": False,
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_component_distinctiveness_review",
+                "Layer-2 Component Distinctiveness Review",
+                "aits research strategies layer2-component-distinctiveness-review",
+                "layer2_component_distinctiveness_review",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    rows = _distinctiveness_rows(context, weight_frame, panel)
+    answers = _distinctiveness_answers(context, rows)
+    status = _distinctiveness_status(rows, answers)
+    payload = _payload(
+        report_type="layer2_component_distinctiveness_review",
+        title="Layer-2 Component Distinctiveness Review",
+        status=status,
+        summary={
+            "pair_count": len(rows),
+            "high_similarity_pair_count": sum(
+                1 for row in rows if row.get("distinctiveness_commentary") == "高度相似"
+            ),
+            "selectable_component_count": len(_selectable_component_ids(context["config"])),
+            "data_quality_status": data_quality.get("status"),
+            "start_date": _frame_min(panel, "date"),
+            "end_date": _frame_max(panel, "date"),
+            "layer1_historical_research_allowed": False,
+        },
+        distinctiveness_rows=rows,
+        required_answers=answers,
+        data_quality=data_quality,
+        component_pool_hash=context.get("component_pool_hash"),
+        report_registry_entry=_report_registry_entry(
+            "layer2_component_distinctiveness_review",
+            "Layer-2 Component Distinctiveness Review",
+            "aits research strategies layer2-component-distinctiveness-review",
+            "layer2_component_distinctiveness_review",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_layer2_selector_headroom_oracle_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _payload(
+            report_type="layer2_selector_headroom_oracle_review",
+            title="Layer-2 Selector Headroom Oracle Review",
+            status="SELECTOR_HEADROOM_BLOCKED",
+            summary={
+                "oracle_variant_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+                "layer1_historical_research_allowed": False,
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_selector_headroom_oracle_review",
+                "Layer-2 Selector Headroom Oracle Review",
+                "aits research strategies layer2-selector-headroom-oracle-review",
+                "layer2_selector_headroom_oracle_review",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    cube = _build_forward_outcome_cube_frame(panel)
+    rows = _oracle_headroom_rows(context, weight_frame, panel, cube)
+    status = _selector_headroom_status(context, rows)
+    max_headroom = max(
+        (_float(row.get("headroom_vs_best_static_component")) for row in rows),
+        default=0.0,
+    )
+    payload = _payload(
+        report_type="layer2_selector_headroom_oracle_review",
+        title="Layer-2 Selector Headroom Oracle Review",
+        status=status,
+        summary={
+            "oracle_variant_count": len(rows),
+            "max_headroom_vs_best_static_component": _round(max_headroom),
+            "oracle_scope": "selectable_components_only",
+            "oracle_realizable_strategy": False,
+            "data_quality_status": data_quality.get("status"),
+            "start_date": _frame_min(panel, "date"),
+            "end_date": _frame_max(panel, "date"),
+            "layer1_historical_research_allowed": False,
+        },
+        oracle_rows=rows,
+        oracle_realizable_strategy=False,
+        oracle_usage_warning=("oracle 结果只能估算理论上限，不得解释为可实现策略表现或交易建议"),
+        data_quality=data_quality,
+        component_pool_hash=context.get("component_pool_hash"),
+        report_registry_entry=_report_registry_entry(
+            "layer2_selector_headroom_oracle_review",
+            "Layer-2 Selector Headroom Oracle Review",
+            "aits research strategies layer2-selector-headroom-oracle-review",
+            "layer2_selector_headroom_oracle_review",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_layer2_switching_constraint_contract(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    transition = run_layer2_transition_cost_latency_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    config = _load_config(config_path)
+    constraints = _switching_constraints(config)
+    selectable = _selectable_component_ids(config)
+    reference_only = _reference_component_ids(config)
+    inactive = [
+        str(row.get("strategy_id"))
+        for row in _components(config, INACTIVE_COMPONENT_SECTION)
+        if row.get("strategy_id")
+    ]
+    blockers = []
+    warnings = []
+    if transition.get("status") == "TRANSITION_COST_BLOCKED":
+        blockers.append("transition_cost_review_blocked")
+    if transition.get("status") == "TRANSITION_COST_TOO_HIGH":
+        warnings.append("transition_cost_too_high_requires_owner_review")
+    if len(selectable) < 2:
+        blockers.append("not_enough_selectable_components")
+
+    if blockers:
+        status = "SWITCHING_CONSTRAINT_BLOCKED"
+    elif warnings:
+        status = "SWITCHING_CONSTRAINT_NEEDS_OWNER_REVIEW"
+    else:
+        status = "SWITCHING_CONSTRAINT_READY"
+
+    payload = _payload(
+        report_type="layer2_switching_constraint_contract",
+        title="Layer-2 Switching Constraint Contract",
+        status=status,
+        summary={
+            "minimum_holding_period": constraints.get("minimum_holding_period_days"),
+            "max_component_switches_per_year": constraints.get("max_component_switches_per_year"),
+            "selectable_component_count": len(selectable),
+            "reference_only_components_not_selectable": True,
+            "inactive_reference_not_selectable": True,
+            "transition_cost_status": transition.get("status"),
+            "layer1_historical_research_allowed": False,
+        },
+        selector_transition_rules={
+            "minimum_holding_period": (
+                f"{constraints.get('minimum_holding_period_days')} trading days"
+            ),
+            "max_component_switches_per_year": constraints.get("max_component_switches_per_year"),
+            "max_turnover_per_switch": constraints.get("max_turnover_per_switch"),
+            "max_monthly_turnover": constraints.get("max_monthly_turnover"),
+            "cooldown_after_switch": (
+                f"{constraints.get('cooldown_after_switch_days')} trading days"
+            ),
+            "no_same_week_flip_flop": bool(constraints.get("no_same_week_flip_flop")),
+            "reference_only_components_not_selectable": True,
+            "inactive_reference_not_selectable": True,
+        },
+        selectable_component_ids=selectable,
+        reference_only_component_ids=reference_only,
+        inactive_reference_component_ids=inactive,
+        disallowed_selector_modes=[
+            "ML selector",
+            "QQQ-plus growth selectable",
+            "reference-only components selectable",
+            "tail-risk fallback selectable",
+            "options selectable",
+        ],
+        transition_cost_summary=transition.get("summary"),
+        blockers=blockers,
+        warnings=warnings,
+        report_registry_entry=_report_registry_entry(
+            "layer2_switching_constraint_contract",
+            "Layer-2 Switching Constraint Contract",
+            "aits research strategies layer2-switching-constraint-contract",
+            "layer2_switching_constraint_contract",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def _transition_cost_rows(
+    context: Mapping[str, Any],
+    weight_frame: pd.DataFrame,
+    panel: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    config = _mapping(context.get("config"))
+    cost = _mapping(_research_policy(config).get("cost_assumption"))
+    base_cost = _float(cost.get("base_cost_bps"), 5.0) / 10000.0
+    stress_cost = _float(cost.get("stress_cost_bps"), 15.0) / 10000.0
+    return_pivot = panel.pivot(
+        index="date",
+        columns="strategy_id",
+        values="net_return",
+    ).sort_index()
+    rows: list[dict[str, Any]] = []
+    for left, right in _transition_review_pairs():
+        turnovers = _pair_switch_turnovers(weight_frame, left, right)
+        if turnovers.empty or left not in return_pivot.columns or right not in return_pivot.columns:
+            rows.append(
+                {
+                    "pair": f"{left} ↔ {right}",
+                    "avg_turnover": None,
+                    "median_turnover": None,
+                    "max_turnover": None,
+                    "one_day_execution_lag_impact": None,
+                    "two_day_execution_lag_impact": None,
+                    "monthly_switch_cost": None,
+                    "weekly_switch_cost": None,
+                    "threshold_switch_cost": None,
+                    "cost_adjusted_return_impact": None,
+                    "switching_cost_commentary": "缺少组件权重或收益路径，无法评估",
+                }
+            )
+            continue
+        daily_gap = (return_pivot[left] - return_pivot[right]).abs().dropna()
+        two_day_left = (
+            (1.0 + return_pivot[left].fillna(0.0))
+            .rolling(2)
+            .apply(
+                lambda values: float(values.prod() - 1.0),
+                raw=True,
+            )
+        )
+        two_day_right = (
+            (1.0 + return_pivot[right].fillna(0.0))
+            .rolling(2)
+            .apply(
+                lambda values: float(values.prod() - 1.0),
+                raw=True,
+            )
+        )
+        two_day_gap = (two_day_left - two_day_right).abs().dropna()
+        median_turnover = float(turnovers.median())
+        monthly_switch_cost = median_turnover * base_cost * 12
+        weekly_switch_cost = median_turnover * base_cost * 52
+        threshold_switch_cost = float(turnovers.max()) * stress_cost
+        one_day_impact = float(daily_gap.mean()) if not daily_gap.empty else 0.0
+        two_day_impact = float(two_day_gap.mean()) if not two_day_gap.empty else 0.0
+        cost_adjusted_impact = monthly_switch_cost + one_day_impact
+        rows.append(
+            {
+                "pair": f"{left} ↔ {right}",
+                "avg_turnover": _round(float(turnovers.mean())),
+                "median_turnover": _round(median_turnover),
+                "max_turnover": _round(float(turnovers.max())),
+                "one_day_execution_lag_impact": _round(one_day_impact),
+                "two_day_execution_lag_impact": _round(two_day_impact),
+                "monthly_switch_cost": _round(monthly_switch_cost),
+                "weekly_switch_cost": _round(weekly_switch_cost),
+                "threshold_switch_cost": _round(threshold_switch_cost),
+                "cost_adjusted_return_impact": _round(cost_adjusted_impact),
+                "switching_cost_commentary": _transition_commentary(
+                    context,
+                    cost_adjusted_impact,
+                ),
+            }
+        )
+    return rows
+
+
+def _transition_cost_status(context: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
+    if not rows:
+        return "TRANSITION_COST_BLOCKED"
+    max_impact = max(
+        (
+            _float(row.get("cost_adjusted_return_impact"), default=math.inf)
+            for row in rows
+            if row.get("cost_adjusted_return_impact") is not None
+        ),
+        default=math.inf,
+    )
+    thresholds = _transition_cost_thresholds(_mapping(context.get("config")))
+    if max_impact < _float(thresholds.get("acceptable_cost_adjusted_return_impact_lt")):
+        return "TRANSITION_COST_ACCEPTABLE"
+    if max_impact >= _float(thresholds.get("too_high_cost_adjusted_return_impact_gte")):
+        return "TRANSITION_COST_TOO_HIGH"
+    return "TRANSITION_COST_MATERIAL"
+
+
+def _transition_commentary(context: Mapping[str, Any], impact: float) -> str:
+    thresholds = _transition_cost_thresholds(_mapping(context.get("config")))
+    if impact < _float(thresholds.get("acceptable_cost_adjusted_return_impact_lt")):
+        return "切换成本初步可接受，但仍需在 selector 回测中显式扣除"
+    if impact >= _float(thresholds.get("too_high_cost_adjusted_return_impact_gte")):
+        return "切换成本偏高，Layer-1 selector 不应频繁切换"
+    return "切换成本有实际影响，需要 minimum holding 与 cooldown 约束"
+
+
+def _pair_switch_turnovers(
+    weight_frame: pd.DataFrame,
+    left: str,
+    right: str,
+) -> pd.Series:
+    columns = ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
+    left_frame = (
+        weight_frame[weight_frame["strategy_id"] == left]
+        .set_index("decision_date")[columns]
+        .astype(float)
+    )
+    right_frame = (
+        weight_frame[weight_frame["strategy_id"] == right]
+        .set_index("decision_date")[columns]
+        .astype(float)
+    )
+    aligned = left_frame.join(right_frame, how="inner", lsuffix="_left", rsuffix="_right")
+    if aligned.empty:
+        return pd.Series(dtype=float)
+    diffs = []
+    for column in columns:
+        diffs.append((aligned[f"{column}_left"] - aligned[f"{column}_right"]).abs())
+    return sum(diffs) / 2.0
+
+
+def _distinctiveness_rows(
+    context: Mapping[str, Any],
+    weight_frame: pd.DataFrame,
+    panel: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    config = _mapping(context.get("config"))
+    thresholds = _distinctiveness_thresholds(config)
+    returns = panel.pivot(index="date", columns="strategy_id", values="net_return").sort_index()
+    drawdowns = _drawdown_pivot(returns)
+    exposures = panel.pivot(
+        index="date",
+        columns="strategy_id",
+        values="effective_qqq_beta",
+    ).sort_index()
+    robustness = _build_robustness_rows(context, panel)
+    total_returns = _component_total_returns(panel)
+    avg_turnover = _component_average_turnover(panel)
+    avg_beta = _component_average_beta(panel)
+    rows: list[dict[str, Any]] = []
+    component_ids = [str(row.get("strategy_id")) for row in _formal_components(config)]
+    for index, left in enumerate(component_ids):
+        for right in component_ids[index + 1 :]:
+            weight_corr = _weight_path_correlation(weight_frame, left, right)
+            return_corr = _safe_corr(returns.get(left), returns.get(right))
+            drawdown_corr = _safe_corr(drawdowns.get(left), drawdowns.get(right))
+            exposure_corr = _safe_corr(exposures.get(left), exposures.get(right))
+            regime_diff = _regime_response_difference(robustness, left, right)
+            performance_dispersion = abs(
+                _float(total_returns.get(left)) - _float(total_returns.get(right))
+            )
+            turnover_difference = abs(
+                _float(avg_turnover.get(left)) - _float(avg_turnover.get(right))
+            )
+            risk_budget_difference = abs(_float(avg_beta.get(left)) - _float(avg_beta.get(right)))
+            commentary = _pair_distinctiveness_commentary(
+                thresholds,
+                weight_corr,
+                return_corr,
+                performance_dispersion,
+                risk_budget_difference,
+            )
+            rows.append(
+                {
+                    "pair": f"{left} ↔ {right}",
+                    "weight_path_correlation": _nullable_round(weight_corr),
+                    "return_correlation": _nullable_round(return_corr),
+                    "drawdown_correlation": _nullable_round(drawdown_corr),
+                    "exposure_correlation": _nullable_round(exposure_corr),
+                    "regime_response_difference": _round(regime_diff),
+                    "relative_performance_dispersion": _round(performance_dispersion),
+                    "turnover_difference": _round(turnover_difference),
+                    "risk_budget_difference": _round(risk_budget_difference),
+                    "distinctiveness_commentary": commentary,
+                }
+            )
+    return rows
+
+
+def _distinctiveness_answers(
+    context: Mapping[str, Any],
+    rows: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_pair = {str(row.get("pair")): row for row in rows}
+    equal_vs_50 = _find_pair_row(by_pair, "equal_risk_qqq_sgov", "qqq_50_sgov_50")
+    qqq60_vs_100 = _find_pair_row(by_pair, "qqq_60_sgov_40", "100_qqq")
+    selectable_pair = _find_pair_row(by_pair, "equal_risk_qqq_sgov", "100_qqq")
+    reference_rows = [
+        row
+        for row in rows
+        if "qqq_50_sgov_50" in str(row.get("pair")) or "qqq_60_sgov_40" in str(row.get("pair"))
+    ]
+    pool_supports_research = selectable_pair.get("distinctiveness_commentary") != "高度相似"
+    return [
+        {
+            "question_id": "equal_risk_vs_qqq_50_sgov_50_similarity",
+            "answer": (
+                "YES_HIGHLY_SIMILAR"
+                if equal_vs_50.get("distinctiveness_commentary") == "高度相似"
+                else "NO_OR_ONLY_PARTIAL"
+            ),
+            "evidence": equal_vs_50,
+        },
+        {
+            "question_id": "qqq_60_sgov_40_low_beta_100_qqq",
+            "answer": (
+                "YES_LOW_BETA_VERSION"
+                if qqq60_vs_100.get("distinctiveness_commentary") in {"高度相似", "部分相似"}
+                else "NO_DISTINCT_REFERENCE"
+            ),
+            "evidence": qqq60_vs_100,
+        },
+        {
+            "question_id": "selectable_components_behavior_difference",
+            "answer": (
+                "YES_RESEARCH_ONLY"
+                if pool_supports_research
+                else "NO_SELECTABLE_COMPONENTS_TOO_SIMILAR"
+            ),
+            "evidence": selectable_pair,
+        },
+        {
+            "question_id": "reference_only_retention_value",
+            "answer": (
+                "RETAIN_FOR_REGRET_AND_DIAGNOSTIC_COMPARISON"
+                if any(
+                    row.get("distinctiveness_commentary") != "高度相似" for row in reference_rows
+                )
+                else "OWNER_REVIEW_REDUNDANCY"
+            ),
+            "evidence": reference_rows,
+        },
+        {
+            "question_id": "component_pool_supports_layer1_selector_research",
+            "answer": (
+                "YES_SIMPLE_RULE_RESEARCH_ONLY_PENDING_HEADROOM"
+                if pool_supports_research and len(_selectable_component_ids(context["config"])) >= 2
+                else "NO_COMPONENT_POOL_REDUNDANT"
+            ),
+            "evidence": {
+                "selectable_pair": selectable_pair,
+                "selectable_component_ids": _selectable_component_ids(context["config"]),
+            },
+        },
+    ]
+
+
+def _distinctiveness_status(
+    rows: list[Mapping[str, Any]],
+    answers: list[Mapping[str, Any]],
+) -> str:
+    if not rows:
+        return "COMPONENT_DISTINCTIVENESS_BLOCKED"
+    supports = any(
+        answer.get("question_id") == "component_pool_supports_layer1_selector_research"
+        and str(answer.get("answer")).startswith("YES")
+        for answer in answers
+    )
+    highly_similar_count = sum(
+        1 for row in rows if row.get("distinctiveness_commentary") == "高度相似"
+    )
+    if not supports:
+        return "COMPONENTS_REDUNDANT"
+    if highly_similar_count:
+        return "COMPONENTS_PARTIALLY_DISTINCT"
+    return "COMPONENTS_DISTINCT"
+
+
+def _oracle_headroom_rows(
+    context: Mapping[str, Any],
+    weight_frame: pd.DataFrame,
+    panel: pd.DataFrame,
+    cube: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    config = _mapping(context.get("config"))
+    selectable = _selectable_component_ids(config)
+    if not selectable:
+        return []
+    return_pivot = panel.pivot(
+        index="date",
+        columns="strategy_id",
+        values="net_return",
+    ).sort_index()
+    benchmark = (
+        return_pivot["100_qqq"] if "100_qqq" in return_pivot.columns else pd.Series(dtype=float)
+    )
+    static_metrics = {
+        strategy_id: _selector_path_metrics(return_pivot[strategy_id], benchmark)
+        for strategy_id in selectable
+        if strategy_id in return_pivot.columns
+    }
+    best_static_return = max(
+        (_float(metrics.get("return")) for metrics in static_metrics.values()),
+        default=0.0,
+    )
+    equal_risk_return = _float(static_metrics.get("equal_risk_qqq_sgov", {}).get("return"))
+    qqq_return = _float(static_metrics.get("100_qqq", {}).get("return"))
+    specs = [
+        ("oracle_best_5d_component", "future_net_return", "5d", "max", 1, False),
+        ("oracle_best_20d_component", "future_net_return", "20d", "max", 1, False),
+        ("oracle_best_60d_component", "future_net_return", "60d", "max", 1, False),
+        ("oracle_best_drawdown_reduction", "future_max_drawdown", "20d", "max", 1, False),
+        ("oracle_best_calmar_window", "future_calmar_proxy", "60d", "max", 1, False),
+        ("cost_adjusted_oracle", "future_net_return", "20d", "max", 1, True),
+        ("min_holding_20d_oracle", "future_net_return", "20d", "max", 20, True),
+        ("min_holding_60d_oracle", "future_net_return", "60d", "max", 60, True),
+    ]
+    rows = []
+    for variant_id, field, horizon, direction, min_holding, subtract_switch_cost in specs:
+        path = _oracle_selected_path(
+            context,
+            weight_frame,
+            return_pivot,
+            cube,
+            selectable,
+            field=field,
+            horizon=horizon,
+            direction=direction,
+            min_holding_days=min_holding,
+            subtract_switch_cost=subtract_switch_cost,
+        )
+        metrics = _selector_path_metrics(path["returns"], benchmark)
+        cost_metrics = _selector_path_metrics(path["cost_adjusted_returns"], benchmark)
+        headroom_vs_best = _float(metrics.get("return")) - best_static_return
+        cost_drag = _float(metrics.get("return")) - _float(cost_metrics.get("return"))
+        rows.append(
+            {
+                "oracle_variant": variant_id,
+                "oracle_return": _round(metrics.get("return")),
+                "oracle_max_drawdown": _round(metrics.get("max_drawdown")),
+                "oracle_sharpe": _round(metrics.get("sharpe")),
+                "oracle_calmar": _round(metrics.get("calmar")),
+                "turnover": _round(path["turnover"]),
+                "cost_adjusted_oracle_return": _round(cost_metrics.get("return")),
+                "headroom_vs_best_static_component": _round(headroom_vs_best),
+                "headroom_vs_equal_risk": _round(_float(metrics.get("return")) - equal_risk_return),
+                "headroom_vs_100_qqq": _round(_float(metrics.get("return")) - qqq_return),
+                "required_prediction_accuracy_to_break_even": _nullable_round(
+                    _break_even_prediction_accuracy(cost_drag, headroom_vs_best)
+                ),
+                "switch_count": path["switch_count"],
+                "min_holding_days": min_holding,
+                "oracle_scope": "selectable_components_only",
+                "oracle_realizable_strategy": False,
+            }
+        )
+    return rows
+
+
+def _oracle_selected_path(
+    context: Mapping[str, Any],
+    weight_frame: pd.DataFrame,
+    return_pivot: pd.DataFrame,
+    cube: pd.DataFrame,
+    selectable: list[str],
+    *,
+    field: str,
+    horizon: str,
+    direction: str,
+    min_holding_days: int,
+    subtract_switch_cost: bool,
+) -> dict[str, Any]:
+    config = _mapping(context.get("config"))
+    base_cost = (
+        _float(
+            _mapping(_research_policy(config).get("cost_assumption")).get("base_cost_bps"),
+            5.0,
+        )
+        / 10000.0
+    )
+    cube_rows = cube[
+        (cube["horizon"] == horizon)
+        & (cube["outcome_status"] == "MATURED")
+        & (cube["strategy_id"].isin(selectable))
+    ]
+    lookup = {
+        str(decision_date): group
+        for decision_date, group in cube_rows.groupby("decision_date", sort=False)
+    }
+    dates = list(return_pivot.index)
+    selected = None
+    held_days = 0
+    switch_count = 0
+    turnover = 0.0
+    gross_returns: list[float] = []
+    cost_adjusted_returns: list[float] = []
+    return_dates: list[str] = []
+    for index, decision_date in enumerate(dates[:-1]):
+        decision_rows = lookup.get(str(decision_date))
+        candidate = selected
+        if decision_rows is not None and (selected is None or held_days >= min_holding_days):
+            ranked = decision_rows.dropna(subset=[field]).copy()
+            if not ranked.empty:
+                ranked["oracle_score"] = ranked[field].astype(float)
+                if subtract_switch_cost and selected is not None:
+                    ranked["oracle_score"] = [
+                        _float(score)
+                        - _switch_turnover_on_date(
+                            weight_frame,
+                            selected,
+                            str(strategy_id),
+                            decision_date,
+                        )
+                        * base_cost
+                        for score, strategy_id in zip(
+                            ranked["oracle_score"],
+                            ranked["strategy_id"],
+                            strict=False,
+                        )
+                    ]
+                ascending = direction == "min"
+                ranked = ranked.sort_values("oracle_score", ascending=ascending)
+                candidate = str(ranked.iloc[0]["strategy_id"])
+        if candidate is None or candidate not in return_pivot.columns:
+            continue
+        switch_cost = 0.0
+        if selected is not None and candidate != selected:
+            switch_turnover = _switch_turnover_on_date(
+                weight_frame,
+                selected,
+                candidate,
+                decision_date,
+            )
+            turnover += switch_turnover
+            switch_count += 1
+            switch_cost = switch_turnover * base_cost
+            held_days = 0
+        selected = candidate
+        held_days += 1
+        return_date = dates[index + 1]
+        gross_return = _float(return_pivot.loc[return_date, selected])
+        gross_returns.append(gross_return)
+        cost_adjusted_returns.append(
+            gross_return - switch_cost if subtract_switch_cost else gross_return - switch_cost
+        )
+        return_dates.append(str(return_date))
+    return {
+        "returns": pd.Series(gross_returns, index=return_dates, dtype=float),
+        "cost_adjusted_returns": pd.Series(cost_adjusted_returns, index=return_dates, dtype=float),
+        "turnover": turnover,
+        "switch_count": switch_count,
+    }
+
+
+def _selector_headroom_status(
+    context: Mapping[str, Any],
+    rows: list[Mapping[str, Any]],
+) -> str:
+    if not rows:
+        return "SELECTOR_HEADROOM_BLOCKED"
+    thresholds = _headroom_thresholds(_mapping(context.get("config")))
+    max_headroom = max(
+        (_float(row.get("headroom_vs_best_static_component")) for row in rows),
+        default=0.0,
+    )
+    if max_headroom >= _float(thresholds.get("material_headroom_vs_best_static_gte")):
+        return "SELECTOR_HEADROOM_MATERIAL"
+    if max_headroom >= _float(thresholds.get("modest_headroom_vs_best_static_gte")):
+        return "SELECTOR_HEADROOM_MODEST"
+    return "NO_SELECTOR_HEADROOM"
+
+
+def _selector_path_metrics(returns: pd.Series, benchmark: pd.Series) -> dict[str, float]:
+    if returns.empty:
+        return {"return": 0.0, "max_drawdown": 0.0, "sharpe": 0.0, "calmar": 0.0}
+    metrics = _return_metrics(returns.fillna(0.0).astype(float), benchmark)
+    return {
+        "return": _compound_return(returns.fillna(0.0).astype(float)),
+        "max_drawdown": metrics["max_drawdown"],
+        "sharpe": metrics["sharpe"],
+        "calmar": metrics["calmar"],
+    }
+
+
+def _break_even_prediction_accuracy(cost_drag: float, headroom: float) -> float | None:
+    if headroom <= 0.0:
+        return None
+    return min(max(cost_drag / headroom, 0.0), 1.0)
+
+
+def _switch_turnover_on_date(
+    weight_frame: pd.DataFrame,
+    left: str,
+    right: str,
+    decision_date: str,
+) -> float:
+    left_row = weight_frame[
+        (weight_frame["strategy_id"] == left) & (weight_frame["decision_date"] == decision_date)
+    ]
+    right_row = weight_frame[
+        (weight_frame["strategy_id"] == right) & (weight_frame["decision_date"] == decision_date)
+    ]
+    if left_row.empty or right_row.empty:
+        return 0.0
+    columns = ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
+    return float(
+        sum(
+            abs(_float(left_row.iloc[0][column]) - _float(right_row.iloc[0][column]))
+            for column in columns
+        )
+        / 2.0
+    )
+
+
+def _switching_constraints(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(_selector_research_policy(config).get("switching_constraints"))
+
+
+def _transition_cost_thresholds(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(_selector_research_policy(config).get("transition_cost_status_thresholds"))
+
+
+def _distinctiveness_thresholds(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(_selector_research_policy(config).get("distinctiveness_thresholds"))
+
+
+def _headroom_thresholds(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(_selector_research_policy(config).get("headroom_thresholds"))
+
+
+def _selector_research_policy(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(_research_policy(config).get("selector_headroom_research_policy"))
+
+
+def _transition_review_pairs() -> list[tuple[str, str]]:
+    return [
+        ("equal_risk_qqq_sgov", "100_qqq"),
+        ("equal_risk_qqq_sgov", "qqq_50_sgov_50"),
+        ("equal_risk_qqq_sgov", "qqq_60_sgov_40"),
+        ("100_qqq", "qqq_50_sgov_50"),
+        ("100_qqq", "qqq_60_sgov_40"),
+    ]
+
+
+def _selectable_component_ids(config: Mapping[str, Any]) -> list[str]:
+    return [
+        str(component.get("strategy_id"))
+        for component in _components(config, "selectable_components")
+        if component.get("strategy_id")
+    ]
+
+
+def _reference_component_ids(config: Mapping[str, Any]) -> list[str]:
+    return [
+        str(component.get("strategy_id"))
+        for component in _components(config, "reference_components")
+        if component.get("strategy_id")
+    ]
+
+
+def _weight_path_correlation(
+    weight_frame: pd.DataFrame,
+    left: str,
+    right: str,
+) -> float | None:
+    columns = ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
+    left_frame = (
+        weight_frame[weight_frame["strategy_id"] == left]
+        .set_index("decision_date")[columns]
+        .astype(float)
+    )
+    right_frame = (
+        weight_frame[weight_frame["strategy_id"] == right]
+        .set_index("decision_date")[columns]
+        .astype(float)
+    )
+    aligned = left_frame.join(right_frame, how="inner", lsuffix="_left", rsuffix="_right")
+    if aligned.empty:
+        return None
+    left_values = []
+    right_values = []
+    for column in columns:
+        left_values.extend(aligned[f"{column}_left"].tolist())
+        right_values.extend(aligned[f"{column}_right"].tolist())
+    return _safe_corr(pd.Series(left_values), pd.Series(right_values))
+
+
+def _drawdown_pivot(returns: pd.DataFrame) -> pd.DataFrame:
+    result = pd.DataFrame(index=returns.index)
+    for column in returns.columns:
+        equity = (1.0 + returns[column].fillna(0.0).astype(float)).cumprod()
+        result[column] = equity / equity.cummax() - 1.0
+    return result
+
+
+def _safe_corr(left: pd.Series | None, right: pd.Series | None) -> float | None:
+    if left is None or right is None:
+        return None
+    aligned = pd.concat([left.astype(float), right.astype(float)], axis=1, join="inner").dropna()
+    if len(aligned) < 2:
+        return None
+    if float(aligned.iloc[:, 0].std(ddof=0)) == 0.0 or float(aligned.iloc[:, 1].std(ddof=0)) == 0.0:
+        return None
+    return float(aligned.iloc[:, 0].corr(aligned.iloc[:, 1]))
+
+
+def _component_total_returns(panel: pd.DataFrame) -> dict[str, float]:
+    return {
+        str(strategy_id): _compound_return(group.sort_values("date")["net_return"].astype(float))
+        for strategy_id, group in panel.groupby("strategy_id", sort=False)
+    }
+
+
+def _component_average_turnover(panel: pd.DataFrame) -> dict[str, float]:
+    return {
+        str(strategy_id): float(group["turnover"].astype(float).mean())
+        for strategy_id, group in panel.groupby("strategy_id", sort=False)
+    }
+
+
+def _component_average_beta(panel: pd.DataFrame) -> dict[str, float]:
+    return {
+        str(strategy_id): float(group["effective_qqq_beta"].astype(float).mean())
+        for strategy_id, group in panel.groupby("strategy_id", sort=False)
+    }
+
+
+def _regime_response_difference(
+    robustness_rows: list[Mapping[str, Any]],
+    left: str,
+    right: str,
+) -> float:
+    by_key = {
+        (str(row.get("strategy_id")), str(row.get("period_or_regime"))): row
+        for row in robustness_rows
+        if row.get("coverage_status") == "COVERED"
+    }
+    diffs = []
+    regimes = {
+        str(row.get("period_or_regime"))
+        for row in robustness_rows
+        if row.get("strategy_id") in {left, right}
+    }
+    for regime in regimes:
+        left_row = by_key.get((left, regime))
+        right_row = by_key.get((right, regime))
+        if left_row and right_row:
+            diffs.append(
+                abs(_float(left_row.get("annual_return")) - _float(right_row.get("annual_return")))
+            )
+    return max(diffs, default=0.0)
+
+
+def _pair_distinctiveness_commentary(
+    thresholds: Mapping[str, Any],
+    weight_corr: float | None,
+    return_corr: float | None,
+    performance_dispersion: float,
+    risk_budget_difference: float,
+) -> str:
+    high_similarity = _float(thresholds.get("high_similarity_correlation_gte"))
+    redundant_corr = _float(thresholds.get("redundant_return_correlation_gte"))
+    material_dispersion = _float(thresholds.get("material_performance_dispersion_gte"))
+    material_risk_diff = _float(thresholds.get("material_exposure_difference_gte"))
+    if (
+        weight_corr is not None
+        and return_corr is not None
+        and weight_corr >= high_similarity
+        and return_corr >= redundant_corr
+        and performance_dispersion < material_dispersion
+        and risk_budget_difference < material_risk_diff
+    ):
+        return "高度相似"
+    if (
+        return_corr is not None
+        and return_corr >= high_similarity
+        and risk_budget_difference < material_risk_diff
+    ):
+        return "部分相似"
+    return "行为差异足够进入研究对照"
+
+
+def _find_pair_row(
+    rows_by_pair: Mapping[str, Mapping[str, Any]],
+    left: str,
+    right: str,
+) -> Mapping[str, Any]:
+    return rows_by_pair.get(f"{left} ↔ {right}") or rows_by_pair.get(f"{right} ↔ {left}") or {}
+
+
 def _layer2_fact_context(
     *,
     prices_path: Path,
@@ -946,9 +1987,7 @@ def _build_weight_path_frame(context: Mapping[str, Any]) -> pd.DataFrame:
                         {
                             "strategy_id": component.get("strategy_id"),
                             "decision_date": timestamp.date().isoformat(),
-                            "policy_definition_hash": definition.get(
-                                "policy_definition_hash"
-                            ),
+                            "policy_definition_hash": definition.get("policy_definition_hash"),
                         }
                     ),
                     "data_quality_status": data_quality.get("status"),
@@ -981,9 +2020,7 @@ def _build_return_panel_frame(
     for strategy_id, group in weight_frame.groupby("strategy_id", sort=False):
         ordered = group.sort_values("decision_date").copy()
         ordered.index = pd.to_datetime(ordered["decision_date"])
-        weights = ordered[
-            ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
-        ].rename(
+        weights = ordered[["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]].rename(
             columns={
                 "target_weight_qqq": "QQQ",
                 "target_weight_tqqq": "TQQQ",
@@ -2062,9 +3099,7 @@ def _growth_owner_decision(sources: Mapping[str, Mapping[str, Any]]) -> str:
     owner = _mapping(sources.get("qqq_plus_growth_owner_decision_pack"))
     summary = _mapping(owner.get("summary"))
     return str(
-        owner.get("owner_recommendation")
-        or summary.get("owner_recommendation")
-        or "UNKNOWN"
+        owner.get("owner_recommendation") or summary.get("owner_recommendation") or "UNKNOWN"
     )
 
 

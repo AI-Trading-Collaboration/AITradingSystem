@@ -66,7 +66,15 @@ inactive research reference:
 |TRADING-964|independent forward outcome cube|BASELINE_DONE|生成 `layer2_forward_outcome_cube.parquet`、manifest 和 review；覆盖 5d/10d/20d/60d/120d，outcome 仅使用 decision_time 之后真实路径，regret/rank 只作为 outcome-side 字段。|
 |TRADING-965|anti-leakage and time-boundary audit|BASELINE_DONE|生成 `layer2_anti_leakage_time_boundary_audit.json/md`；检查 feature/outcome separation、execution lag、same-bar risk、forward window boundary、definition hash 和 component pool hash。|
 |TRADING-966|common robustness validation|BASELINE_DONE|生成 `layer2_common_robustness_validation.json/md`；按 period/regime/volatility/trend/drawdown/recovery/event windows 统一评估 formal components，缺 pre-2022 覆盖必须显式标记。|
-|TRADING-967～975|后续 selector headroom / combiner / objective / dataset / handoff stages|READY|在 962～966 验证后继续拆分实施；不得跳过 combiner contract、walk-forward embargo、Layer-1 dataset reproducibility 和 final owner handoff gate。|
+|TRADING-967|transition cost / latency review|BASELINE_DONE|`layer2_transition_cost_latency_review.json/md` 基于 PIT weight path 与 return/cost/exposure panel 评估组件间切换 turnover、1d/2d execution lag impact、monthly/weekly/threshold switch cost 和 cost-adjusted impact；真实 CLI 状态 `TRANSITION_COST_MATERIAL`。|
+|TRADING-968|component distinctiveness review|BASELINE_DONE|`layer2_component_distinctiveness_review.json/md` 输出 weight/return/drawdown/exposure correlation、regime response、relative performance dispersion、turnover/risk-budget differences，并回答组件是否冗余、reference-only 是否保留、是否足以支持 Layer-1 selector research；真实 CLI 状态 `COMPONENTS_DISTINCT`。|
+|TRADING-969|selector headroom oracle review|BASELINE_DONE|`layer2_selector_headroom_oracle_review.json/md` 仅估算 oracle 上限，覆盖 best 5d/20d/60d、drawdown reduction、Calmar、cost-adjusted、minimum holding 20d/60d variants；不得把 oracle 当作可实现策略表现；真实 CLI 状态 `SELECTOR_HEADROOM_MATERIAL`。|
+|TRADING-970|switching constraint contract|BASELINE_DONE|`layer2_switching_constraint_contract.json/md` 定义 minimum holding period、max switches/turnover/cooldown/no flip-flop/reference-only not selectable 等 Layer-1 selector research 约束；真实 CLI 状态 `SWITCHING_CONSTRAINT_READY`。|
+|TRADING-971|best component label builder|BASELINE_DONE|`layer2_best_component_label_builder.json/md` 基于 independent forward outcome cube 生成研究标签；真实 CLI 状态 `BEST_COMPONENT_LABELS_PARTIAL`，最新 forward windows 未全部成熟但成熟样本可用于 dataset。|
+|TRADING-972|policy combiner contract|VALIDATING|`layer1_policy_combiner_contract.json/md` 定义 selector output、blend weight schema、final combiner、normalization 和 turnover constraint；真实 CLI 状态 `POLICY_COMBINER_CONTRACT_READY`。|
+|TRADING-973|objective / outcome contract|VALIDATING|`layer1_objective_outcome_contract.json/md` 固定 primary/secondary/tertiary objectives；真实 CLI 状态 `LAYER1_OBJECTIVE_READY`。|
+|TRADING-974|purged walk-forward split contract|VALIDATING|`layer1_purged_walk_forward_split_contract.json/md` 定义 embargo、train/validation/test splits、market regime split 和 unmatured exclusion；真实 CLI 状态 `PURGED_WALK_FORWARD_CONTRACT_READY`。|
+|TRADING-975|research dataset builder|BASELINE_DONE|`layer1_research_dataset.json/md` 输出 831 行 research dataset；不训练模型、不输出策略结论；真实 CLI 状态 `LAYER1_RESEARCH_DATASET_READY`。|
 
 ## 957～961 实现范围
 
@@ -129,6 +137,10 @@ layer2_return_cost_exposure_panel
 layer2_forward_outcome_cube
 layer2_anti_leakage_time_boundary_audit
 layer2_common_robustness_validation
+layer2_transition_cost_latency_review
+layer2_component_distinctiveness_review
+layer2_selector_headroom_oracle_review
+layer2_switching_constraint_contract
 ```
 
 每个 entry 固定：
@@ -184,6 +196,77 @@ broker_action=none
 manual_review_required=true
 ```
 
+## 967～970 selector headroom 第一批范围
+
+新增 CLI：
+
+```bash
+aits research strategies layer2-transition-cost-latency-review
+aits research strategies layer2-component-distinctiveness-review
+aits research strategies layer2-selector-headroom-oracle-review
+aits research strategies layer2-switching-constraint-contract
+```
+
+新增 runtime artifacts：
+
+```text
+outputs/research_strategies/layer2_components/layer2_transition_cost_latency_review.json
+outputs/research_strategies/layer2_components/layer2_transition_cost_latency_review.md
+outputs/research_strategies/layer2_components/layer2_component_distinctiveness_review.json
+outputs/research_strategies/layer2_components/layer2_component_distinctiveness_review.md
+outputs/research_strategies/layer2_components/layer2_selector_headroom_oracle_review.json
+outputs/research_strategies/layer2_components/layer2_selector_headroom_oracle_review.md
+outputs/research_strategies/layer2_components/layer2_switching_constraint_contract.json
+outputs/research_strategies/layer2_components/layer2_switching_constraint_contract.md
+```
+
+第一批必须先调用同源 cached data quality gate；若 gate 失败，状态必须 fail
+closed。报告必须披露 `data_quality_status`、market regime、actual requested
+date range、source artifact lineage、component pool hash 和安全字段。
+
+本阶段输出只回答是否值得继续做 Layer-1 simple-rule research，不允许：
+
+```text
+paper_shadow_allowed=true
+production_allowed=true
+broker_action!=none
+ML selector
+QQQ-plus growth selectable
+reference-only components selectable
+```
+
+## 971～975 Layer-1 dataset contract 范围
+
+新增 CLI：
+
+```bash
+aits research strategies layer2-best-component-label-builder
+aits research strategies layer1-policy-combiner-contract
+aits research strategies layer1-objective-outcome-contract
+aits research strategies layer1-purged-walk-forward-split-contract
+aits research strategies layer1-research-dataset-builder
+```
+
+新增 runtime artifacts：
+
+```text
+outputs/research_strategies/layer1_meta_policy/layer2_best_component_label_builder.json
+outputs/research_strategies/layer1_meta_policy/layer2_best_component_label_builder.md
+outputs/research_strategies/layer1_meta_policy/layer1_policy_combiner_contract.json
+outputs/research_strategies/layer1_meta_policy/layer1_policy_combiner_contract.md
+outputs/research_strategies/layer1_meta_policy/layer1_objective_outcome_contract.json
+outputs/research_strategies/layer1_meta_policy/layer1_objective_outcome_contract.md
+outputs/research_strategies/layer1_meta_policy/layer1_purged_walk_forward_split_contract.json
+outputs/research_strategies/layer1_meta_policy/layer1_purged_walk_forward_split_contract.md
+outputs/research_strategies/layer1_meta_policy/layer1_research_dataset.json
+outputs/research_strategies/layer1_meta_policy/layer1_research_dataset.md
+```
+
+Dataset builder 不训练模型、不输出策略结论。`best_component_labels` 和
+`component_forward_outcomes` 只允许出现在 label/outcome 侧；feature 侧只能包含
+`feature_time <= decision_date` 的 market features、component ids、definition hashes
+和 decision-time target weights。
+
 ## 进展记录
 
 - 2026-06-24: 新增仓库版需求文档并进入 `IN_PROGRESS`。根据 TRADING-956
@@ -210,3 +293,30 @@ manual_review_required=true
   `layer2-common-robustness-validation` 为 `LAYER2_ROBUSTNESS_MIXED`（缺失/不足覆盖
   窗口显式披露）。Layer-1 historical research 仍保持 `false`，等待 967～975 的
   selector contract、dataset reproducibility、walk-forward embargo 和 owner handoff。
+- 2026-06-24: 967～970 第一批进入 `IN_PROGRESS`。执行范围限定为
+  transition cost / latency、component distinctiveness、selector headroom oracle
+  和 switching constraint contract；若组件冗余或 headroom 很小，后续 971～985
+  不应升级为复杂 Layer-1 research。本阶段仍固定
+  `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、
+  `manual_review_required=true`。
+- 2026-06-24: 967～970 baseline 实现完成并通过验证。新增 4 个 CLI/artifacts、
+  selector headroom research policy config、report registry entries、artifact catalog
+  row、system flow paragraph 和 focused tests。真实 CLI 运行结果：
+  `layer2-transition-cost-latency-review` 为 `TRANSITION_COST_MATERIAL`，
+  `layer2-component-distinctiveness-review` 为 `COMPONENTS_DISTINCT`，
+  `layer2-selector-headroom-oracle-review` 为 `SELECTOR_HEADROOM_MATERIAL`，
+  `layer2-switching-constraint-contract` 为 `SWITCHING_CONSTRAINT_READY`；
+  data quality 为 `PASS_WITH_WARNINGS`。由于 headroom material 但 transition cost
+  material，971～985 可以继续推进为 simple-rule research readiness，但不得自动升级为
+  复杂 ML selector、paper-shadow、production 或 broker action。
+- 2026-06-24: 971～975 进入 `IN_PROGRESS`。目标是基于 independent forward outcome
+  cube 构建 best-component labels、Layer-1 combiner contract、objective/outcome contract、
+  purged walk-forward split contract 和 research dataset；dataset 只供历史研究准备，
+  不训练模型、不输出策略结论。
+- 2026-06-24: 971～975 baseline 实现完成并通过验证。真实 CLI 结果：
+  `layer2-best-component-label-builder` 为 `BEST_COMPONENT_LABELS_PARTIAL`（831 个成熟
+  labels，最新 forward windows 未全部成熟），`layer1-policy-combiner-contract` 为
+  `POLICY_COMBINER_CONTRACT_READY`，`layer1-objective-outcome-contract` 为
+  `LAYER1_OBJECTIVE_READY`，`layer1-purged-walk-forward-split-contract` 为
+  `PURGED_WALK_FORWARD_CONTRACT_READY`（3 个 splits），`layer1-research-dataset-builder`
+  为 `LAYER1_RESEARCH_DATASET_READY`（831 rows，data quality=`PASS_WITH_WARNINGS`）。
