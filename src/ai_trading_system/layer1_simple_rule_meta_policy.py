@@ -49,6 +49,19 @@ DEFAULT_LAYER1_SELECTOR_OWNER_WATCHLIST_REVIEW_DOC_PATH = (
 DEFAULT_LAYER1_SELECTOR_RESULT_REVIEW_MASTER_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "layer1_selector_result_review_master.md"
 )
+DEFAULT_LAYER1_SELECTOR_LOW_TURNOVER_OWNER_DECISION_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "layer1_selector_low_turnover_owner_decision_pack.md"
+)
+
+# TRADING-1009 to 1014 pilot grid: research-only thresholds documented in
+# docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md.
+LOW_TURNOVER_BUFFER_GRID = (0.01, 0.02, 0.03, 0.05)
+LOW_TURNOVER_CONFIRMATION_GRID = (3, 5, 10, 20)
+LOW_TURNOVER_MIN_HOLDING_GRID = (20, 40, 60)
+LOW_TURNOVER_COOLDOWN_GRID = (5, 10, 20)
+LOW_TURNOVER_MAX_SWITCHES_GRID = (3, 4, 6)
+LOW_TURNOVER_NEAR_200DMA_BAND = 0.02
+LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE = 0.02
 
 BlendPath = dict[str, dict[str, float]]
 
@@ -1877,6 +1890,404 @@ def run_layer1_selector_result_review_master(
     return payload
 
 
+def run_layer1_selector_turnover_source_diagnosis(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_turnover_source_diagnosis",
+            "Layer-1 Selector Turnover Source Diagnosis",
+            "TURNOVER_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    path = _selector_path(context, registry, "trend_200dma_selector")
+    switch_rows = _turnover_source_rows(context, path)
+    diagnosis = _turnover_source_summary(switch_rows)
+    status = (
+        "TURNOVER_NOISE_DOMINANT"
+        if diagnosis["noise_switch_count"] > diagnosis["helpful_switch_count"]
+        else "TURNOVER_SOURCE_DIAGNOSED"
+    )
+    payload = _selector_report_payload(
+        report_type="layer1_selector_turnover_source_diagnosis",
+        title="Layer-1 Selector Turnover Source Diagnosis",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="turnover_source_rows",
+        rows=switch_rows,
+        extra_summary={
+            **diagnosis,
+            "selector_id": "trend_200dma_selector",
+            "near_200dma_band": LOW_TURNOVER_NEAR_200DMA_BAND,
+            "buffer_band_missing_likely": diagnosis["near_200dma_switch_share"] >= 0.5,
+            "trend_confirmation_insufficient_likely": (
+                diagnosis["unconfirmed_switch_share"] >= 0.5
+            ),
+            "minimum_holding_period_too_short_likely": (
+                diagnosis["short_holding_switch_share"] >= 0.5
+            ),
+        },
+        extra_payload={
+            "switch_count_by_year": _switch_count_by_year(switch_rows),
+            "helpfulness_by_year": _switch_helpfulness_by_year(switch_rows),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_buffered_200dma_variants(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_buffered_200dma_variants",
+            "Layer-1 Selector Buffered 200DMA Variants",
+            "BUFFERED_200DMA_VARIANTS_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _buffered_200dma_variant_rows(context, registry)
+    best = _best_low_turnover_row(rows)
+    payload = _selector_report_payload(
+        report_type="layer1_selector_buffered_200dma_variants",
+        title="Layer-1 Selector Buffered 200DMA Variants",
+        status="BUFFERED_200DMA_VARIANTS_REVIEWED",
+        context=context,
+        registry=registry,
+        rows_field="buffered_200dma_variant_rows",
+        rows=rows,
+        extra_summary={
+            "variant_count": len(rows),
+            "best_variant_id": best.get("variant_id"),
+            "best_variant_family": best.get("variant_family"),
+            "best_turnover_reduction": best.get("turnover_reduction"),
+            "best_net_return_after_cost": best.get("net_return_after_cost"),
+            "best_max_drawdown": best.get("max_drawdown"),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_min_holding_cooldown_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_min_holding_cooldown_review",
+            "Layer-1 Selector Minimum Holding And Cooldown Review",
+            "MIN_HOLDING_COOLDOWN_REVIEW_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _min_holding_cooldown_rows(context, registry)
+    acceptable_rows = [row for row in rows if row["turnover_acceptable"]]
+    best = _best_low_turnover_row(acceptable_rows or rows)
+    status = (
+        "MIN_HOLDING_COOLDOWN_ACCEPTABLE_FOUND"
+        if acceptable_rows
+        else "MIN_HOLDING_COOLDOWN_REVIEWED"
+    )
+    payload = _selector_report_payload(
+        report_type="layer1_selector_min_holding_cooldown_review",
+        title="Layer-1 Selector Minimum Holding And Cooldown Review",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="minimum_holding_cooldown_rows",
+        rows=rows,
+        extra_summary={
+            "variant_count": len(rows),
+            "turnover_acceptable_count": len(acceptable_rows),
+            "best_variant_id": best.get("variant_id"),
+            "best_minimum_holding_period": best.get("minimum_holding_period"),
+            "best_cooldown_after_switch": best.get("cooldown_after_switch"),
+            "best_max_switches_per_year": best.get("max_switches_per_year"),
+            "best_net_return_after_cost": best.get("net_return_after_cost"),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_soft_blend_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_soft_blend_review",
+            "Layer-1 Selector Soft Blend Review",
+            "SOFT_BLEND_REVIEW_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    path = _soft_blend_200dma_path(context, registry)
+    metrics = _evaluate_blend_path(context, path)
+    opportunity = _opportunity_costs(context, path)
+    row = _low_turnover_variant_row(
+        context,
+        "soft_blend_200dma_three_state",
+        "soft_blend_selector",
+        path,
+        _selector_path(context, registry, "trend_200dma_selector"),
+        extra={
+            "strong_risk_on_weight_100qqq": 0.80,
+            "normal_weight_100qqq": 0.50,
+            "risk_off_weight_100qqq": 0.20,
+        },
+    )
+    payload = _selector_report_payload(
+        report_type="layer1_selector_soft_blend_review",
+        title="Layer-1 Selector Soft Blend Review",
+        status="SOFT_BLEND_REVIEWED",
+        context=context,
+        registry=registry,
+        rows_field="soft_blend_rows",
+        rows=[row],
+        extra_summary={
+            "variant_id": row["variant_id"],
+            "turnover": row["turnover"],
+            "net_return_after_cost": row["net_return_after_cost"],
+            "drawdown": row["max_drawdown"],
+            "missed_upside": _round(opportunity["missed_rebound_cost"]),
+            "regret_vs_best_component": _round(metrics["regret_vs_best_component"]),
+            "blend_weight_path_sample": _blend_weight_path_sample(path),
+        },
+        extra_payload={"blend_weight_path": _blend_weight_path(path)},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_low_turnover_ranking(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_low_turnover_ranking",
+            "Layer-1 Selector Low-Turnover Ranking",
+            "LOW_TURNOVER_RANKING_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _low_turnover_ranking_rows(context, registry)
+    summary = _low_turnover_ranking_summary(rows)
+    payload = _selector_report_payload(
+        report_type="layer1_selector_low_turnover_ranking",
+        title="Layer-1 Selector Low-Turnover Ranking",
+        status="LOW_TURNOVER_SELECTOR_RANKED",
+        context=context,
+        registry=registry,
+        rows_field="low_turnover_ranking_rows",
+        rows=rows,
+        extra_summary=summary,
+        extra_payload={
+            "dominated_variants": [
+                row["variant_id"] for row in rows if row["dominance_status"] == "DOMINATED"
+            ],
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_low_turnover_owner_decision_pack(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+    owner_doc_path: Path = DEFAULT_LAYER1_SELECTOR_LOW_TURNOVER_OWNER_DECISION_DOC_PATH,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_low_turnover_owner_decision_pack",
+            "Layer-1 Selector Low-Turnover Owner Decision Pack",
+            "BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    diagnosis_rows = _turnover_source_rows(
+        context,
+        _selector_path(context, registry, "trend_200dma_selector"),
+    )
+    ranking_rows = _low_turnover_ranking_rows(context, registry)
+    recent = _recent_regime_disclosure(context)
+    recent_status = _recent_regime_status(recent)
+    decision = _low_turnover_owner_decision(context, registry, ranking_rows)
+    status = decision["status"]
+    payload = _payload(
+        report_type="layer1_selector_low_turnover_owner_decision_pack",
+        title="Layer-1 Selector Low-Turnover Owner Decision Pack",
+        status=status,
+        summary={
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "recommended_low_turnover_candidate": decision["candidate_id"],
+            "decision": status,
+            "decision_reasons": decision["decision_reasons"],
+            "original_turnover": decision["original_turnover"],
+            "candidate_turnover": decision["candidate_turnover"],
+            "candidate_switch_count": decision["candidate_switch_count"],
+            "candidate_net_return_after_cost": decision["candidate_net_return_after_cost"],
+            "candidate_relative_vs_equal_risk": decision["candidate_relative_vs_equal_risk"],
+            "candidate_relative_vs_100_qqq": decision["candidate_relative_vs_100_qqq"],
+            "recent_regime_status": recent_status,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        selector_registry_version=registry.get("registry_version"),
+        turnover_source_summary=_turnover_source_summary(diagnosis_rows),
+        low_turnover_ranking_rows=ranking_rows,
+        owner_decision_checks=decision["checks"],
+        recent_regime_disclosure={**recent, "status": recent_status},
+        source_artifacts=context.get("source_artifacts", {}),
+        owner_decision_doc_path=str(owner_doc_path),
+    )
+    _write_pair(payload, output_root)
+    _copy_markdown_artifact(payload, owner_doc_path)
+    return payload
+
+
 def _write_owner_watchlist_review_artifact(
     *,
     result: Mapping[str, Any],
@@ -2067,6 +2478,819 @@ def _write_reader_brief_preview_artifact(
     )
     _write_pair(payload, output_root)
     return payload
+
+
+def _turnover_source_rows(context: Mapping[str, Any], path: BlendPath) -> list[dict[str, Any]]:
+    returns = _returns_frame(context)
+    features = _feature_frame(context)
+    dates = sorted(day for day in path if day in returns.index)
+    if len(dates) < 2:
+        return []
+    cost_bps = _cost_bps(context)
+    rows: list[dict[str, Any]] = []
+    last_weights = path[dates[0]]
+    last_component = _dominant_component(last_weights)
+    last_switch_index = 0
+    for index, day in enumerate(dates[1:], start=1):
+        weights = path[day]
+        component = _dominant_component(weights)
+        if component == last_component:
+            continue
+        switch_turnover = _blend_turnover(last_weights, weights)
+        turnover_cost = switch_turnover * cost_bps / 10000.0
+        from_return, available_days = _future_component_return(
+            returns,
+            dates,
+            index,
+            last_component,
+            horizon=20,
+        )
+        to_return, _ = _future_component_return(
+            returns,
+            dates,
+            index,
+            component,
+            horizon=20,
+        )
+        relative_after_cost = to_return - from_return - turnover_cost
+        near_200dma = _near_200dma(features, day)
+        confirmed_5d = _trend_confirmed(features, day, component, confirmation_days=5)
+        reverted_5d = _trend_signal_reverted(features, dates, index, component, lookahead_days=5)
+        previous_holding_days = index - last_switch_index
+        switch_was_helpful = relative_after_cost > 0.0
+        switch_was_noise = (not switch_was_helpful) or (
+            near_200dma and (not confirmed_5d or reverted_5d)
+        )
+        rows.append(
+            {
+                "switch_date": day,
+                "from_component": last_component,
+                "to_component": component,
+                "market_state": _market_state(features, day),
+                "distance_to_200dma": _round(_feature_value(features, day, "distance_to_200dma")),
+                "near_200dma": near_200dma,
+                "confirmed_5d": confirmed_5d,
+                "signal_reverted_within_5d": reverted_5d,
+                "previous_holding_days": previous_holding_days,
+                "short_holding_period": previous_holding_days < 40,
+                "subsequent_20d_outcome": {
+                    "available_days": available_days,
+                    "from_component_return": _round(from_return),
+                    "to_component_return": _round(to_return),
+                    "relative_after_turnover_cost": _round(relative_after_cost),
+                },
+                "switch_was_helpful": switch_was_helpful,
+                "switch_was_noise": switch_was_noise,
+                "turnover_cost": _round(turnover_cost),
+                "switch_turnover": _round(switch_turnover),
+            }
+        )
+        last_weights = weights
+        last_component = component
+        last_switch_index = index
+    return rows
+
+
+def _recent_regime_status(disclosure: Mapping[str, Any]) -> str:
+    return (
+        "RECENT_REGIME_RISK_MATERIAL"
+        if disclosure.get("missing_regime_list")
+        else "RECENT_REGIME_RISK_DISCLOSED"
+    )
+
+
+def _turnover_source_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    switch_count = len(rows)
+    helpful = sum(1 for row in rows if bool(row.get("switch_was_helpful")))
+    noise = sum(1 for row in rows if bool(row.get("switch_was_noise")))
+    near = sum(1 for row in rows if bool(row.get("near_200dma")))
+    unconfirmed = sum(1 for row in rows if not bool(row.get("confirmed_5d")))
+    reverted = sum(1 for row in rows if bool(row.get("signal_reverted_within_5d")))
+    short_holding = sum(1 for row in rows if bool(row.get("short_holding_period")))
+    return {
+        "switch_count": switch_count,
+        "helpful_switch_count": helpful,
+        "noise_switch_count": noise,
+        "near_200dma_switch_count": near,
+        "unconfirmed_switch_count": unconfirmed,
+        "signal_reverted_switch_count": reverted,
+        "short_holding_switch_count": short_holding,
+        "noise_switch_share": _round(_ratio(noise, switch_count)),
+        "near_200dma_switch_share": _round(_ratio(near, switch_count)),
+        "unconfirmed_switch_share": _round(_ratio(unconfirmed, switch_count)),
+        "short_holding_switch_share": _round(_ratio(short_holding, switch_count)),
+        "total_turnover_cost": _round(sum(_float(row.get("turnover_cost")) for row in rows)),
+    }
+
+
+def _switch_count_by_year(rows: list[Mapping[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        year = str(pd.to_datetime(str(row.get("switch_date"))).year)
+        counts[year] += 1
+    return dict(sorted(counts.items()))
+
+
+def _switch_helpfulness_by_year(rows: list[Mapping[str, Any]]) -> dict[str, dict[str, int]]:
+    result: dict[str, dict[str, int]] = defaultdict(lambda: {"helpful": 0, "noise": 0})
+    for row in rows:
+        year = str(pd.to_datetime(str(row.get("switch_date"))).year)
+        if bool(row.get("switch_was_helpful")):
+            result[year]["helpful"] += 1
+        if bool(row.get("switch_was_noise")):
+            result[year]["noise"] += 1
+    return dict(sorted(result.items()))
+
+
+def _buffered_200dma_variant_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    rows = []
+    for buffer_pct in LOW_TURNOVER_BUFFER_GRID:
+        path = _buffered_200dma_path(context, registry, buffer_pct)
+        rows.append(
+            _low_turnover_variant_row(
+                context,
+                f"buffered_200dma_selector_buffer_{int(buffer_pct * 100)}pct",
+                "buffered_200dma_selector",
+                path,
+                original,
+                extra={"buffer": buffer_pct, "confirmation_days": None},
+            )
+        )
+    for days in LOW_TURNOVER_CONFIRMATION_GRID:
+        path = _confirmed_200dma_path(context, registry, days)
+        rows.append(
+            _low_turnover_variant_row(
+                context,
+                f"confirmed_200dma_selector_{days}d",
+                "confirmed_200dma_selector",
+                path,
+                original,
+                extra={"buffer": None, "confirmation_days": days},
+            )
+        )
+    return rows
+
+
+def _min_holding_cooldown_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    rows = []
+    for minimum_holding in LOW_TURNOVER_MIN_HOLDING_GRID:
+        for cooldown in LOW_TURNOVER_COOLDOWN_GRID:
+            for max_switches in LOW_TURNOVER_MAX_SWITCHES_GRID:
+                path = _selector_path(
+                    context,
+                    registry,
+                    "trend_200dma_selector",
+                    minimum_holding_period=minimum_holding,
+                    cooldown_days=cooldown,
+                    max_switches_per_year=max_switches,
+                )
+                rows.append(
+                    _low_turnover_variant_row(
+                        context,
+                        (
+                            "trend_200dma_min"
+                            f"{minimum_holding}_cool{cooldown}_max{max_switches}"
+                        ),
+                        "holding_cooldown_switch_cap_selector",
+                        path,
+                        original,
+                        extra={
+                            "minimum_holding_period": minimum_holding,
+                            "cooldown_after_switch": cooldown,
+                            "max_switches_per_year": max_switches,
+                        },
+                    )
+                )
+    return rows
+
+
+def _low_turnover_ranking_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    buffered_rows = _buffered_200dma_variant_rows(context, registry)
+    minimum_rows = _single_control_variant_rows(context, registry)
+    soft_path = _soft_blend_200dma_path(context, registry)
+    rows = [
+        _low_turnover_variant_row(
+            context,
+            "original_trend_200dma_selector",
+            "original trend_200dma_selector",
+            original,
+            original,
+        ),
+        _low_turnover_variant_row(
+            context,
+            "always_equal_risk",
+            "static_baseline",
+            _selector_path(context, registry, "always_equal_risk"),
+            original,
+        ),
+        _low_turnover_variant_row(
+            context,
+            "always_100_qqq",
+            "static_baseline",
+            _selector_path(context, registry, "always_100_qqq"),
+            original,
+        ),
+        _low_turnover_variant_row(
+            context,
+            "soft_blend_200dma_three_state",
+            "soft_blend_selector",
+            soft_path,
+            original,
+            extra={
+                "strong_risk_on_weight_100qqq": 0.80,
+                "normal_weight_100qqq": 0.50,
+                "risk_off_weight_100qqq": 0.20,
+            },
+        ),
+    ]
+    for family in ("buffered_200dma_selector", "confirmed_200dma_selector"):
+        family_rows = [row for row in buffered_rows if row["variant_family"] == family]
+        if family_rows:
+            rows.append(dict(_best_low_turnover_row(family_rows)))
+    for family in ("minimum_holding_selector", "cooldown_selector"):
+        family_rows = [row for row in minimum_rows if row["variant_family"] == family]
+        if family_rows:
+            rows.append(dict(_best_low_turnover_row(family_rows)))
+    for row in rows:
+        row["dominance_status"] = _low_turnover_dominance_status(row, rows)
+    rows.sort(
+        key=lambda row: (
+            _float(row.get("net_return_after_cost")),
+            _float(row.get("calmar")),
+            _float(row.get("turnover_reduction")),
+            -_float(row.get("turnover")),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _single_control_variant_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    rows = []
+    for minimum_holding in LOW_TURNOVER_MIN_HOLDING_GRID:
+        path = _selector_path(
+            context,
+            registry,
+            "trend_200dma_selector",
+            minimum_holding_period=minimum_holding,
+            cooldown_days=5,
+            max_switches_per_year=12,
+        )
+        rows.append(
+            _low_turnover_variant_row(
+                context,
+                f"minimum_holding_selector_{minimum_holding}d",
+                "minimum_holding_selector",
+                path,
+                original,
+                extra={
+                    "minimum_holding_period": minimum_holding,
+                    "cooldown_after_switch": 5,
+                    "max_switches_per_year": 12,
+                },
+            )
+        )
+    for cooldown in LOW_TURNOVER_COOLDOWN_GRID:
+        path = _selector_path(
+            context,
+            registry,
+            "trend_200dma_selector",
+            minimum_holding_period=20,
+            cooldown_days=cooldown,
+            max_switches_per_year=12,
+        )
+        rows.append(
+            _low_turnover_variant_row(
+                context,
+                f"cooldown_selector_{cooldown}d",
+                "cooldown_selector",
+                path,
+                original,
+                extra={
+                    "minimum_holding_period": 20,
+                    "cooldown_after_switch": cooldown,
+                    "max_switches_per_year": 12,
+                },
+            )
+        )
+    return rows
+
+
+def _low_turnover_variant_row(
+    context: Mapping[str, Any],
+    variant_id: str,
+    variant_family: str,
+    path: BlendPath,
+    original_path: BlendPath,
+    *,
+    extra: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    metrics = _evaluate_blend_path(context, path)
+    original = _evaluate_blend_path(context, original_path)
+    opportunity = _opportunity_costs(context, path)
+    original_turnover = _float(original["turnover"])
+    turnover = _float(metrics["turnover"])
+    switch_count = _int(metrics["switch_count"])
+    row = {
+        "rank": 0,
+        "variant_id": variant_id,
+        "variant_family": variant_family,
+        "net_return_after_cost": _round(metrics["net_return_after_cost"]),
+        "max_drawdown": _round(metrics["max_drawdown"]),
+        "sharpe": _round(metrics["sharpe"]),
+        "calmar": _round(metrics["calmar"]),
+        "turnover": _round(turnover),
+        "switch_count": switch_count,
+        "avg_holding_period": _round(metrics["avg_holding_period"]),
+        "cost_drag": _round(metrics["cost_drag"]),
+        "regret_vs_best_component": _round(metrics["regret_vs_best_component"]),
+        "relative_vs_equal_risk": _round(metrics["relative_vs_equal_risk"]),
+        "relative_vs_100_qqq": _round(metrics["relative_vs_100_qqq"]),
+        "turnover_reduction": _round(original_turnover - turnover),
+        "turnover_reduction_pct": _round(_ratio(original_turnover - turnover, original_turnover)),
+        "switch_count_reduction": _int(original["switch_count"]) - switch_count,
+        "regret_reduction": _round(
+            _float(original["regret_vs_best_component"])
+            - _float(metrics["regret_vs_best_component"])
+        ),
+        "max_drawdown_delta_vs_original": _round(
+            abs(_float(metrics["max_drawdown"])) - abs(_float(original["max_drawdown"]))
+        ),
+        "calmar_delta_vs_original": _round(
+            _float(metrics["calmar"]) - _float(original["calmar"])
+        ),
+        "missed_rebound_cost": _round(opportunity["missed_rebound_cost"]),
+        "late_risk_off_cost": _round(opportunity["late_risk_off_cost"]),
+        "turnover_acceptable": _low_turnover_acceptable(context, metrics),
+        "drawdown_control_not_materially_worse": (
+            abs(_float(metrics["max_drawdown"]))
+            <= abs(_float(original["max_drawdown"])) + LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE
+        ),
+        "dominance_status": "NOT_EVALUATED",
+    }
+    row.update(dict(extra or {}))
+    return row
+
+
+def _buffered_200dma_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    buffer_pct: float,
+) -> BlendPath:
+    features = _feature_frame(context)
+    dates = sorted(str(day) for day in features.index)
+    if not dates:
+        return {}
+    first_distance = _feature_value(features, dates[0], "distance_to_200dma")
+    current = "100_qqq" if first_distance > 0.0 else "equal_risk_qqq_sgov"
+    raw: BlendPath = {}
+    for day in dates:
+        distance = _feature_value(features, day, "distance_to_200dma")
+        if distance > buffer_pct:
+            current = "100_qqq"
+        elif distance < -buffer_pct:
+            current = "equal_risk_qqq_sgov"
+        raw[day] = _hard_weights(current)
+    return _apply_switching_constraints(raw, _trend_selector_constraints(registry))
+
+
+def _confirmed_200dma_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    confirmation_days: int,
+) -> BlendPath:
+    features = _feature_frame(context)
+    dates = sorted(str(day) for day in features.index)
+    if not dates:
+        return {}
+    current = (
+        "100_qqq"
+        if _feature_value(features, dates[0], "distance_to_200dma") > 0.0
+        else "equal_risk_qqq_sgov"
+    )
+    above_streak = 0
+    below_streak = 0
+    raw: BlendPath = {}
+    for day in dates:
+        distance = _feature_value(features, day, "distance_to_200dma")
+        above_streak = above_streak + 1 if distance > 0.0 else 0
+        below_streak = below_streak + 1 if distance < 0.0 else 0
+        if above_streak >= confirmation_days:
+            current = "100_qqq"
+        elif below_streak >= confirmation_days:
+            current = "equal_risk_qqq_sgov"
+        raw[day] = _hard_weights(current)
+    return _apply_switching_constraints(raw, _trend_selector_constraints(registry))
+
+
+def _soft_blend_200dma_path(context: Mapping[str, Any], registry: Mapping[str, Any]) -> BlendPath:
+    features = _feature_frame(context)
+    raw: BlendPath = {}
+    for day in sorted(str(value) for value in features.index):
+        distance = _feature_value(features, day, "distance_to_200dma")
+        if distance > LOW_TURNOVER_NEAR_200DMA_BAND:
+            weight = 0.80
+        elif distance < -LOW_TURNOVER_NEAR_200DMA_BAND:
+            weight = 0.20
+        else:
+            weight = 0.50
+        raw[day] = _blend_weights(weight)
+    return _apply_switching_constraints(raw, _trend_selector_constraints(registry))
+
+
+def _trend_selector_constraints(
+    registry: Mapping[str, Any],
+    *,
+    minimum_holding_period: int | None = None,
+    cooldown_days: int | None = None,
+    max_switches_per_year: int | None = None,
+) -> dict[str, Any]:
+    constraints = _selector_constraints(
+        _selector_by_id(registry, "trend_200dma_selector"),
+        minimum_holding_period=minimum_holding_period,
+        cooldown_days=cooldown_days,
+        max_switches_per_year=max_switches_per_year,
+    )
+    return constraints
+
+
+def _opportunity_costs(context: Mapping[str, Any], path: BlendPath) -> dict[str, float]:
+    returns = _returns_frame(context)
+    dates = sorted(day for day in path if day in returns.index)
+    missed_rebound_cost = 0.0
+    late_risk_off_cost = 0.0
+    for index, day in enumerate(dates):
+        qqq_return, available = _future_component_return(
+            returns,
+            dates,
+            index,
+            "100_qqq",
+            horizon=20,
+        )
+        if available <= 0:
+            continue
+        equal_return, _ = _future_component_return(
+            returns,
+            dates,
+            index,
+            "equal_risk_qqq_sgov",
+            horizon=20,
+        )
+        weight_100 = _float(path[day].get("100_qqq"))
+        if qqq_return > equal_return:
+            missed_rebound_cost += (1.0 - weight_100) * (qqq_return - equal_return)
+        elif equal_return > qqq_return:
+            late_risk_off_cost += weight_100 * (equal_return - qqq_return)
+    return {
+        "missed_rebound_cost": missed_rebound_cost,
+        "late_risk_off_cost": late_risk_off_cost,
+    }
+
+
+def _low_turnover_ranking_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    recommended = _recommended_low_turnover_candidate(rows)
+    return {
+        "variant_count": len(rows),
+        "top_by_net_return": _top_variant_id(rows, "net_return_after_cost"),
+        "top_by_calmar": _top_variant_id(rows, "calmar"),
+        "top_by_low_turnover": _top_variant_id(rows, "turnover", reverse=False),
+        "top_by_regret_reduction": _top_variant_id(rows, "regret_reduction"),
+        "dominated_variants": [
+            row["variant_id"] for row in rows if row.get("dominance_status") == "DOMINATED"
+        ],
+        "recommended_low_turnover_candidate": recommended.get("variant_id"),
+        "recommended_low_turnover_candidate_family": recommended.get("variant_family"),
+    }
+
+
+def _recommended_low_turnover_candidate(rows: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+    candidates = [
+        row
+        for row in rows
+        if row.get("variant_id")
+        not in {"original_trend_200dma_selector", "always_equal_risk", "always_100_qqq"}
+        and row.get("dominance_status") != "DOMINATED"
+        and _float(row.get("turnover_reduction")) > 0.0
+        and (
+            _float(row.get("relative_vs_equal_risk")) > 0.0
+            or _float(row.get("relative_vs_100_qqq"))
+            >= -LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE
+        )
+    ]
+    if not candidates:
+        return {}
+    return max(
+        candidates,
+        key=lambda row: (
+            bool(row.get("turnover_acceptable")),
+            _float(row.get("net_return_after_cost")),
+            _float(row.get("calmar")),
+            _float(row.get("turnover_reduction")),
+            -_float(row.get("turnover")),
+        ),
+    )
+
+
+def _top_variant_id(
+    rows: list[Mapping[str, Any]],
+    metric: str,
+    *,
+    reverse: bool = True,
+) -> str | None:
+    if not rows:
+        return None
+    ordered = sorted(rows, key=lambda row: _float(row.get(metric)), reverse=reverse)
+    return str(ordered[0].get("variant_id"))
+
+
+def _best_low_turnover_row(rows: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+    if not rows:
+        return {}
+    return max(
+        rows,
+        key=lambda row: (
+            bool(row.get("turnover_acceptable")),
+            _float(row.get("net_return_after_cost")),
+            _float(row.get("calmar")),
+            _float(row.get("turnover_reduction")),
+            -_float(row.get("turnover")),
+        ),
+    )
+
+
+def _low_turnover_dominance_status(
+    row: Mapping[str, Any],
+    rows: list[Mapping[str, Any]],
+) -> str:
+    row_id = row.get("variant_id")
+    row_return = _float(row.get("net_return_after_cost"))
+    row_drawdown = abs(_float(row.get("max_drawdown")))
+    row_turnover = _float(row.get("turnover"))
+    for other in rows:
+        if other.get("variant_id") == row_id:
+            continue
+        other_return = _float(other.get("net_return_after_cost"))
+        other_drawdown = abs(_float(other.get("max_drawdown")))
+        other_turnover = _float(other.get("turnover"))
+        if (
+            other_return >= row_return
+            and other_drawdown <= row_drawdown
+            and other_turnover <= row_turnover
+            and (
+                other_return > row_return
+                or other_drawdown < row_drawdown
+                or other_turnover < row_turnover
+            )
+        ):
+            return "DOMINATED"
+    return "NOT_DOMINATED"
+
+
+def _low_turnover_owner_decision(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    ranking_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    original = next(
+        (
+            row
+            for row in ranking_rows
+            if row.get("variant_id") == "original_trend_200dma_selector"
+        ),
+        {},
+    )
+    candidate = _recommended_low_turnover_candidate(ranking_rows)
+    if not candidate:
+        return {
+            "status": "NO_SELECTOR_EDGE",
+            "candidate_id": None,
+            "decision_reasons": ["no low-turnover variant preserved enough cost-after edge"],
+            "checks": [],
+            "original_turnover": original.get("turnover"),
+            "candidate_turnover": None,
+            "candidate_switch_count": None,
+            "candidate_net_return_after_cost": None,
+            "candidate_relative_vs_equal_risk": None,
+            "candidate_relative_vs_100_qqq": None,
+        }
+    policy = _evaluation_policy(registry)
+    annual_switches = _annualized_switches(context, candidate)
+    drawdown_tolerance = _float(
+        policy.get("drawdown_worsening_tolerance"),
+        LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE,
+    )
+    checks = [
+        _low_turnover_owner_check(
+            "cost_after_value_preserved",
+            _float(candidate.get("relative_vs_equal_risk")) > 0.0
+            or _float(candidate.get("relative_vs_100_qqq"))
+            >= -LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE,
+            "candidate is not much weaker than always_100_qqq or improves vs equal_risk",
+        ),
+        _low_turnover_owner_check(
+            "turnover_reduced_vs_original",
+            _float(candidate.get("turnover")) < _float(original.get("turnover")),
+            "turnover is below original trend_200dma_selector",
+        ),
+        _low_turnover_owner_check(
+            "switch_count_controlled",
+            bool(candidate.get("turnover_acceptable"))
+            and annual_switches <= _float(policy.get("max_switches_per_year"), 12),
+            "annualized switch count and total turnover stay within registry policy",
+        ),
+        _low_turnover_owner_check(
+            "drawdown_not_materially_worse",
+            abs(_float(candidate.get("max_drawdown")))
+            <= abs(_float(original.get("max_drawdown"))) + drawdown_tolerance,
+            "max drawdown does not materially worsen vs original trend selector",
+        ),
+        _low_turnover_owner_check(
+            "recent_regime_risk_disclosed",
+            True,
+            "recent-regime-only limitation remains disclosed",
+        ),
+        _low_turnover_owner_check(
+            "data_quality_pass_with_warnings_or_better",
+            "PASS" in str(context.get("data_quality_status", "")),
+            "cached data quality gate passed or passed with warnings",
+        ),
+        _low_turnover_owner_check(
+            "safety_boundary_preserved",
+            True,
+            "paper_shadow_allowed=false, production_allowed=false, broker_action=none",
+        ),
+    ]
+    failed = [row["check_id"] for row in checks if not row["passed"]]
+    if failed:
+        status = "KEEP_SELECTOR_DRY_RUN_ONLY"
+    else:
+        status = "LOW_TURNOVER_SELECTOR_REVIEWABLE"
+    return {
+        "status": status,
+        "candidate_id": candidate.get("variant_id"),
+        "decision_reasons": failed or ["low-turnover candidate passes research-only review gate"],
+        "checks": checks,
+        "original_turnover": original.get("turnover"),
+        "candidate_turnover": candidate.get("turnover"),
+        "candidate_switch_count": candidate.get("switch_count"),
+        "candidate_net_return_after_cost": candidate.get("net_return_after_cost"),
+        "candidate_relative_vs_equal_risk": candidate.get("relative_vs_equal_risk"),
+        "candidate_relative_vs_100_qqq": candidate.get("relative_vs_100_qqq"),
+    }
+
+
+def _low_turnover_owner_check(check_id: str, passed: bool, rationale: str) -> dict[str, Any]:
+    return {"check_id": check_id, "passed": bool(passed), "rationale": rationale}
+
+
+def _low_turnover_acceptable(context: Mapping[str, Any], metrics: Mapping[str, Any]) -> bool:
+    registry_policy = _mapping(
+        safe_load_yaml_path(DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH).get(
+            "evaluation_policy",
+            {},
+        )
+    )
+    return (
+        _annualized_switches(context, metrics)
+        <= _float(registry_policy.get("max_switches_per_year"), 12)
+        and _float(metrics.get("turnover"))
+        <= _float(registry_policy.get("max_turnover_warning"), 2.0)
+    )
+
+
+def _annualized_switches(context: Mapping[str, Any], metrics: Mapping[str, Any]) -> float:
+    span_days = _date_span_days(_actual_date_range(context))
+    return _float(metrics.get("switch_count")) / max(span_days / 365.25, 1.0)
+
+
+def _blend_weight_path(path: BlendPath) -> list[dict[str, Any]]:
+    return [
+        {
+            "date": day,
+            "equal_risk_qqq_sgov_weight": _round(weights.get("equal_risk_qqq_sgov")),
+            "100_qqq_weight": _round(weights.get("100_qqq")),
+        }
+        for day, weights in sorted(path.items())
+    ]
+
+
+def _blend_weight_path_sample(path: BlendPath) -> list[dict[str, Any]]:
+    full = _blend_weight_path(path)
+    if len(full) <= 10:
+        return full
+    return full[:5] + full[-5:]
+
+
+def _returns_frame(context: Mapping[str, Any]) -> pd.DataFrame:
+    panel = _ensure_frame(context["panel"])
+    return panel.pivot(index="date", columns="strategy_id", values="net_return").sort_index()
+
+
+def _cost_bps(context: Mapping[str, Any]) -> float:
+    return _float(
+        _mapping(_mapping(context["config"]).get("research_policy"))
+        .get("cost_assumption", {})
+        .get("base_cost_bps"),
+        5.0,
+    )
+
+
+def _future_component_return(
+    returns: pd.DataFrame,
+    dates: list[str],
+    start_index: int,
+    component: str,
+    *,
+    horizon: int,
+) -> tuple[float, int]:
+    start = start_index + 1
+    end = min(start + horizon, len(dates))
+    if start >= end or component not in returns.columns:
+        return 0.0, 0
+    window = dates[start:end]
+    series = returns.loc[window, component].fillna(0.0)
+    return _compound_return(series), len(series)
+
+
+def _market_state(features: pd.DataFrame, day: str) -> str:
+    distance = _feature_value(features, day, "distance_to_200dma")
+    if distance > LOW_TURNOVER_NEAR_200DMA_BAND:
+        return "above_200dma_outside_buffer"
+    if distance > 0.0:
+        return "above_200dma_inside_buffer"
+    if distance >= -LOW_TURNOVER_NEAR_200DMA_BAND:
+        return "below_200dma_inside_buffer"
+    return "below_200dma_outside_buffer"
+
+
+def _near_200dma(features: pd.DataFrame, day: str) -> bool:
+    return abs(_feature_value(features, day, "distance_to_200dma")) <= LOW_TURNOVER_NEAR_200DMA_BAND
+
+
+def _trend_confirmed(
+    features: pd.DataFrame,
+    day: str,
+    component: str,
+    *,
+    confirmation_days: int,
+) -> bool:
+    dates = [str(value) for value in features.index]
+    if day not in dates:
+        return False
+    index = dates.index(day)
+    start = max(0, index - confirmation_days + 1)
+    window = dates[start : index + 1]
+    if len(window) < confirmation_days:
+        return False
+    distances = [_feature_value(features, value, "distance_to_200dma") for value in window]
+    if component == "100_qqq":
+        return all(value > 0.0 for value in distances)
+    return all(value < 0.0 for value in distances)
+
+
+def _trend_signal_reverted(
+    features: pd.DataFrame,
+    dates: list[str],
+    switch_index: int,
+    component: str,
+    *,
+    lookahead_days: int,
+) -> bool:
+    end = min(switch_index + lookahead_days + 1, len(dates))
+    window = dates[switch_index + 1 : end]
+    if not window:
+        return False
+    distances = [_feature_value(features, value, "distance_to_200dma") for value in window]
+    if component == "100_qqq":
+        return any(value <= 0.0 for value in distances)
+    return any(value >= 0.0 for value in distances)
+
+
+def _feature_value(features: pd.DataFrame, day: str, column: str) -> float:
+    if column not in features.columns:
+        return 0.0
+    for key in (day, pd.to_datetime(day).date(), pd.Timestamp(day)):
+        if key in features.index:
+            return _float(features.loc[key, column])
+    return 0.0
 
 
 def _simple_rule_selector_rows(
@@ -2918,6 +4142,7 @@ def _selector_path(
     *,
     minimum_holding_period: int | None = None,
     cooldown_days: int | None = None,
+    max_switches_per_year: int | None = None,
     overrides: Mapping[str, Any] | None = None,
 ) -> BlendPath:
     selector = _selector_by_id(registry, selector_id)
@@ -2929,6 +4154,7 @@ def _selector_path(
         selector,
         minimum_holding_period=minimum_holding_period,
         cooldown_days=cooldown_days,
+        max_switches_per_year=max_switches_per_year,
     )
     return _apply_switching_constraints(raw, constraints)
 
@@ -3056,6 +4282,7 @@ def _selector_constraints(
     *,
     minimum_holding_period: int | None = None,
     cooldown_days: int | None = None,
+    max_switches_per_year: int | None = None,
 ) -> dict[str, Any]:
     constraint = dict(_mapping(selector.get("switching_constraint")))
     constraint["minimum_holding_period_days"] = (
@@ -3071,9 +4298,13 @@ def _selector_constraints(
         if cooldown_days is not None
         else _int(selector.get("cooldown_days"), _int(constraint.get("cooldown_days"), 5))
     )
-    constraint["max_switches_per_year"] = _int(
-        selector.get("max_switches_per_year"),
-        _int(constraint.get("max_switches_per_year"), 12),
+    constraint["max_switches_per_year"] = (
+        max_switches_per_year
+        if max_switches_per_year is not None
+        else _int(
+            selector.get("max_switches_per_year"),
+            _int(constraint.get("max_switches_per_year"), 12),
+        )
     )
     constraint["max_turnover_per_switch"] = _float(
         selector.get("max_turnover_per_switch"),

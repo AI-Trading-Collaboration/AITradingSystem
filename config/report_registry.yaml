@@ -15553,3 +15553,118 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer1_selector_turnover_source_diagnosis
+    title: Layer-1 Selector Turnover Source Diagnosis
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-turnover-source-diagnosis
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_turnover_source_diagnosis.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_turnover_source_diagnosis.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1009 diagnoses why trend_200dma_selector switches too often.
+    owner_action: review_turnover_source_before_low_turnover_variant_selection
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_buffered_200dma_variants
+    title: Layer-1 Selector Buffered 200DMA Variants
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-buffered-200dma-variants
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_buffered_200dma_variants.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_buffered_200dma_variants.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1010 reviews buffered and confirmed 200DMA selector variants.
+    owner_action: compare_buffered_200dma_variants_before_owner_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_min_holding_cooldown_review
+    title: Layer-1 Selector Minimum Holding And Cooldown Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-min-holding-cooldown-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_min_holding_cooldown_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_min_holding_cooldown_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1011 reviews minimum holding, cooldown, and max-switch controls.
+    owner_action: review_holding_cooldown_grid_before_low_turnover_admission
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_soft_blend_review
+    title: Layer-1 Selector Soft Blend Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-soft-blend-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_soft_blend_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_soft_blend_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1012 reviews soft-blend alternatives to hard selector switching.
+    owner_action: review_soft_blend_tradeoff_before_low_turnover_ranking
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_low_turnover_ranking
+    title: Layer-1 Selector Low-Turnover Ranking
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-low-turnover-ranking
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_ranking.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_ranking.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1013 ranks original, buffered, confirmed, holding, cooldown, soft-blend, and static variants.
+    owner_action: review_low_turnover_ranking_before_owner_decision_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_low_turnover_owner_decision_pack
+    title: Layer-1 Selector Low-Turnover Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-low-turnover-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_owner_decision_pack.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_owner_decision_pack.md
+      - docs/research/layer1_selector_low_turnover_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1014 decides whether a low-turnover selector is reviewable for forward aging.
+    owner_action: decide_low_turnover_selector_research_only_forward_aging_reviewability
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
