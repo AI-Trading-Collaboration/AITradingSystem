@@ -227,6 +227,19 @@ Opening or updating a pull request, rewriting history, force-pushing, or
 including unrelated user changes still requires an explicit project-owner
 request.
 
+This is the standard closeout workflow and does not require an extra reminder
+from the project owner. At the end of a qualifying task, Codex must:
+
+1. confirm the worktree only contains changes attributable to the completed
+   task;
+2. run and record the relevant validation;
+3. stage only the attributable files;
+4. create a local commit on the current branch after validation passes;
+5. push the current branch when a normal upstream push is available and none of
+   the no-push conditions above apply;
+6. report the commit SHA, push result, validation summary, and any reason a
+   commit or push was intentionally skipped.
+
 ## Parallel Development Discipline
 
 When multiple missing modules or feature slices can be developed independently,
