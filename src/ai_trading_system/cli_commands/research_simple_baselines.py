@@ -8,6 +8,15 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.layer2_strategy_component_readiness import (
+    DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+    DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    run_layer2_component_data_quality_check,
+    run_layer2_component_definition_lock,
+    run_layer2_component_pool_freeze,
+    run_layer2_component_readiness_matrix,
+    run_layer2_component_readiness_reconciliation,
+)
 from ai_trading_system.qqq_plus_growth_challenger import (
     DEFAULT_QQQ_OUTPERFORMANCE_OWNER_DECISION_DOC_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
@@ -2491,6 +2500,181 @@ def strategies_qqq_outperformance_owner_decision_pack_command(
     _print_simple_baseline_payload("QQQ outperformance owner decision pack", payload)
 
 
+def strategies_layer2_component_readiness_reconciliation_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_output_root: Annotated[
+        Path,
+        typer.Option("--simple-output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_component_readiness_reconciliation(
+            config_path=config_path,
+            simple_output_root=simple_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 component readiness reconciliation", payload)
+
+
+def strategies_layer2_component_pool_freeze_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_component_pool_freeze(
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 component pool freeze", payload)
+
+
+def strategies_layer2_component_definition_lock_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_component_definition_lock(
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 component definition lock", payload)
+
+
+def strategies_layer2_component_data_quality_check_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_component_data_quality_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            as_of_date=_parse_optional_date(as_of),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 component data quality check", payload)
+
+
+def strategies_layer2_component_readiness_matrix_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    simple_output_root: Annotated[
+        Path,
+        typer.Option("--simple-output-root", help="Simple baseline 输出目录。"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root", help="QQQ-plus growth 输出目录。"),
+    ] = DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_component_readiness_matrix(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            simple_output_root=simple_output_root,
+            growth_output_root=growth_output_root,
+            as_of_date=_parse_optional_date(as_of),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 component readiness matrix", payload)
+
+
 _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     ("simple-baseline-registry-review", strategies_simple_baseline_registry_review_command),
     ("qqq-sgov-baseline-backtest", strategies_qqq_sgov_baseline_backtest_command),
@@ -2733,6 +2917,26 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     (
         "qqq-outperformance-owner-decision-pack",
         strategies_qqq_outperformance_owner_decision_pack_command,
+    ),
+    (
+        "layer2-component-readiness-reconciliation",
+        strategies_layer2_component_readiness_reconciliation_command,
+    ),
+    (
+        "layer2-component-pool-freeze",
+        strategies_layer2_component_pool_freeze_command,
+    ),
+    (
+        "layer2-component-definition-lock",
+        strategies_layer2_component_definition_lock_command,
+    ),
+    (
+        "layer2-component-data-quality-check",
+        strategies_layer2_component_data_quality_check_command,
+    ),
+    (
+        "layer2-component-readiness-matrix",
+        strategies_layer2_component_readiness_matrix_command,
     ),
 )
 

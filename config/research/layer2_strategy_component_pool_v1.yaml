@@ -1,0 +1,162 @@
+schema_version: 1
+component_pool_id: layer2_strategy_component_pool_v1
+component_pool_version: v1_2026_06_24_keep_growth_research_only
+policy_metadata:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Freeze the first Layer-2 strategy component pool for future Layer-1
+    meta-policy research after TRADING-947 to 956 concluded that the QQQ-plus
+    growth line should remain research-only.
+  intended_effect: >
+    Provide stable, auditable component identities, roles, definition hashes,
+    and data-quality status before building Layer-1 selector datasets.
+  validation_evidence: >
+    TRADING-947 to 956 owner decision pack reports
+    KEEP_GROWTH_RESEARCH_ONLY; simple baseline forward-aging artifacts keep
+    equal_risk_qqq_sgov as the defensive primary.
+  review_condition: >
+    Reopen only after owner approves a new growth candidate, component role
+    change, PIT weight-path builder, or Layer-1 dataset contract update.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+layer1_permissions:
+  layer1_historical_research_allowed: false
+  layer1_forward_aging_allowed: false
+  layer1_paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+pool_constraints:
+  max_selectable_components: 3
+  max_reference_components: 2
+  max_growth_challenger_components: 1
+  formal_pool_excludes_inactive_research_reference: true
+research_policy:
+  annualization_trading_days: 252
+  required_price_tickers:
+    - QQQ
+    - TQQQ
+    - SGOV
+  required_rate_series:
+    - DGS2
+    - DGS10
+    - DTWEXBGS
+  data_quality_minimum_status:
+    - PASS
+    - PASS_WITH_WARNINGS
+  definition_change_rule: >
+    Any mapping, lookback, bound, rebalance, execution, or cost-assumption
+    change requires a new strategy_version or strategy_id; old historical
+    observations remain bound to their original policy_definition_hash.
+  common_execution_assumption:
+    decision_timestamp: close_t
+    latest_feature_timestamp: close_t
+    signal_generation_timestamp: after_close_t
+    execution_timestamp: next_trading_day_open_or_project_validated_price
+    execution_lag: t_plus_1
+    primary_execution_price: project_validated_t_plus_1_executable_price
+    stress_execution_price: t_plus_2_delay_stress_price
+    rebalance_calendar: component_defined_monthly_or_signal_triggered
+    holiday_handling: next_valid_us_equity_session
+    missing_data_handling: fail_closed_no_silent_fill
+    weight_carry_forward_rule: carry_previous_valid_holding_until_rebalance
+  cost_assumption:
+    base_cost_bps: 5.0
+    stress_cost_bps: 15.0
+selectable_components:
+  - strategy_id: equal_risk_qqq_sgov
+    registry_strategy_id: equal_risk_qqq_sgov
+    strategy_version: layer2_v1
+    strategy_role: defensive_primary
+    selectable_by_layer1: true
+    reference_only: false
+    inclusion_reason: >
+      Owner-selected defensive primary from simple baseline forward-aging
+      artifacts; suitable as the risk-control component for Layer-1 research.
+    source_report: simple_baseline_forward_aging_master_review
+    input_fields:
+      - QQQ adj_close
+      - SGOV adj_close
+      - realized volatility window
+    lookback_windows:
+      realized_volatility_days: 60
+  - strategy_id: 100_qqq
+    registry_strategy_id: qqq_100_static
+    strategy_version: layer2_v1
+    strategy_role: hard_benchmark
+    selectable_by_layer1: true
+    reference_only: false
+    inclusion_reason: >
+      Hard QQQ risk and opportunity-cost benchmark; included as a selectable
+      research component so Layer-1 can compare full-risk exposure against the
+      defensive primary.
+    source_report: simple_baseline_forward_aging_candidate_freeze
+    input_fields:
+      - QQQ adj_close
+    lookback_windows: {}
+reference_components:
+  - strategy_id: qqq_50_sgov_50
+    registry_strategy_id: qqq_50_sgov_50
+    strategy_version: layer2_v1
+    strategy_role: static_reference
+    selectable_by_layer1: false
+    reference_only: true
+    inclusion_reason: Static QQQ/SGOV reference for component comparison.
+    source_report: simple_baseline_forward_aging_candidate_freeze
+    input_fields:
+      - QQQ adj_close
+      - SGOV adj_close
+    lookback_windows: {}
+  - strategy_id: qqq_60_sgov_40
+    registry_strategy_id: qqq_60_sgov_40
+    strategy_version: layer2_v1
+    strategy_role: static_reference
+    selectable_by_layer1: false
+    reference_only: true
+    inclusion_reason: Static QQQ/SGOV reference for component comparison.
+    source_report: simple_baseline_forward_aging_candidate_freeze
+    input_fields:
+      - QQQ adj_close
+      - SGOV adj_close
+    lookback_windows: {}
+inactive_research_reference_candidates:
+  - strategy_id: qqq_plus_growth_research_candidate
+    registry_strategy_id: null
+    strategy_version: research_reference_2026_06_24
+    strategy_role: research_only_inactive_reference
+    selectable_by_layer1: false
+    reference_only: true
+    inactive_reason: >
+      TRADING-956 owner recommendation is KEEP_GROWTH_RESEARCH_ONLY;
+      growth candidate is not admitted to the formal Layer-2 component pool.
+    source_report: qqq_plus_growth_owner_decision_pack
+    owner_decision: KEEP_GROWTH_RESEARCH_ONLY
+    input_fields:
+      - QQQ adj_close
+      - TQQQ adj_close
+      - SGOV adj_close
+    lookback_windows:
+      source_research_varies_by_candidate_family: true
+excluded_components:
+  - strategy_id: dyn_tqqq_capped_trend
+    exclusion_reason: Dynamic challenger remains comparison-only and is not part of v1 formal pool.
+  - strategy_id: tqqq_heavy_variants
+    exclusion_reason: TQQQ-heavy variants remain paused by owner decision.
+  - strategy_id: tail_risk_fallback
+    exclusion_reason: Tail-risk fallback remains quarantined.
+  - strategy_id: LEAPS
+    exclusion_reason: Options research remains blocked.
+  - strategy_id: Wheel
+    exclusion_reason: Options research remains blocked.

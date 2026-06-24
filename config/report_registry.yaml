@@ -14560,3 +14560,98 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer2_component_readiness_reconciliation
+    title: Layer-2 Component Readiness Reconciliation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-readiness-reconciliation
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_readiness_reconciliation.json
+      - outputs/research_strategies/layer2_components/layer2_component_readiness_reconciliation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-957 reconciles simple-baseline and QQQ-plus growth source artifacts before freezing the Layer-2 component pool.
+    owner_action: review_layer2_component_reconciliation_before_layer1_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_component_pool_freeze
+    title: Layer-2 Component Pool Freeze
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-pool-freeze
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_pool_freeze.json
+      - outputs/research_strategies/layer2_components/layer2_component_pool_freeze.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-958 freezes the v1 formal Layer-2 component pool and keeps growth research-only inactive/reference.
+    owner_action: review_layer2_component_pool_before_layer1_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_component_definition_lock
+    title: Layer-2 Component Definition Lock
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-definition-lock
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_definition_lock.json
+      - outputs/research_strategies/layer2_components/layer2_component_definition_lock.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-959 locks policy definition hashes for formal Layer-2 components and inactive research references.
+    owner_action: review_layer2_definition_hashes_before_layer1_dataset_build
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_component_data_quality_check
+    title: Layer-2 Component Data Quality Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-data-quality-check
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_data_quality_check.json
+      - outputs/research_strategies/layer2_components/layer2_component_data_quality_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-960 runs the validate-data-equivalent gate for QQQ/TQQQ/SGOV and macro rates before downstream Layer-2 readiness conclusions.
+    owner_action: review_layer2_data_quality_warnings_before_layer1_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_component_readiness_matrix
+    title: Layer-2 Component Readiness Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-component-readiness-matrix
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_component_readiness_matrix.json
+      - outputs/research_strategies/layer2_components/layer2_component_readiness_matrix.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-961 aggregates component role, pool freeze, definition lock, data quality, and remaining blockers into one readiness matrix.
+    owner_action: review_layer2_readiness_matrix_before_authorizing_layer1_historical_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
