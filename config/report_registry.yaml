@@ -14655,3 +14655,101 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer2_historical_weight_path
+    title: Layer-2 Historical Weight Path
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-historical-weight-path-build
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_historical_weight_path.parquet
+      - outputs/research_strategies/layer2_components/layer2_historical_weight_path_manifest.json
+      - outputs/research_strategies/layer2_components/layer2_historical_weight_path_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-962 builds PIT-safe historical target weights for selectable and reference Layer-2 components only.
+    owner_action: review_pit_weight_path_before_layer1_dataset_build
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_return_cost_exposure_panel
+    title: Layer-2 Return Cost Exposure Panel
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-return-cost-exposure-panel
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel.parquet
+      - outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel_manifest.json
+      - outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-963 materializes return, cost, turnover, and exposure facts from the PIT weight path under the Layer-2 safety boundary.
+    owner_action: review_return_cost_exposure_panel_before_layer1_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_forward_outcome_cube
+    title: Layer-2 Forward Outcome Cube
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-forward-outcome-cube-build
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_forward_outcome_cube.parquet
+      - outputs/research_strategies/layer2_components/layer2_forward_outcome_cube_manifest.json
+      - outputs/research_strategies/layer2_components/layer2_forward_outcome_cube_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-964 builds independent post-decision outcome labels that are outcome-side-only and unavailable to Layer-1 features.
+    owner_action: review_forward_outcome_cube_before_selector_training
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_anti_leakage_time_boundary_audit
+    title: Layer-2 Anti-Leakage and Time-Boundary Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-anti-leakage-time-boundary-audit
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_anti_leakage_time_boundary_audit.json
+      - outputs/research_strategies/layer2_components/layer2_anti_leakage_time_boundary_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-965 verifies feature/outcome separation, post-decision outcome windows, and no same-bar execution assumption for Layer-2 facts.
+    owner_action: review_anti_leakage_audit_before_layer1_dataset_build
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_common_robustness_validation
+    title: Layer-2 Common Robustness Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-common-robustness-validation
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_common_robustness_validation.json
+      - outputs/research_strategies/layer2_components/layer2_common_robustness_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-966 records common period, event, regime, volatility, trend, drawdown, and recovery robustness slices for Layer-2 components.
+    owner_action: review_common_robustness_validation_before_layer1_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

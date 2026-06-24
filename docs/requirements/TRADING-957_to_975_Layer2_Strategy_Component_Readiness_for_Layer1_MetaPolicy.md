@@ -61,7 +61,12 @@ inactive research reference:
 |TRADING-959|policy definition lock|VALIDATING|`layer2_component_definition_lock.json/md` 为 formal components 生成稳定 `policy_definition_hash`，为 growth 生成 inactive-reference-only definition hash；变更规则要求 mapping/lookback/bounds/rebalance/execution/cost 变动必须新 version 或新 strategy_id。|
 |TRADING-960|data quality check|VALIDATING|`layer2_component_data_quality_check.json/md` 调用与 `aits validate-data` 同源的 cached data gate，检查 QQQ/TQQQ/SGOV 与 DGS2/DGS10/DTWEXBGS，披露 row count、checksum、warning/error 和 as-of。|
 |TRADING-961|component readiness matrix|VALIDATING|`layer2_component_readiness_matrix.json/md` 聚合 957～960；逐组件列出 role、selectable/reference/inactive membership、definition hash、data quality status、blockers 和 safety fields；`layer1_historical_research_allowed=false`。|
-|TRADING-962～975|后续 Layer-1 dataset / outcome / anti-leakage / handoff stages|READY|在 957～961 验证后继续拆分实施；不得跳过 PIT weight path、forward outcome cube、anti-leakage、walk-forward embargo 和 dataset reproducibility gate。|
+|TRADING-962|PIT historical weight path|BASELINE_DONE|为 selectable + reference components 生成 `layer2_historical_weight_path.parquet`、manifest 和 review；只包含 formal pool，不包含 inactive growth；逐行披露 decision date、holding date、definition hash、component pool hash、target weights、rebalance flag、data-quality status 和 warning codes。|
+|TRADING-963|return / cost / exposure panel|BASELINE_DONE|基于统一 t+1 执行假设生成 `layer2_return_cost_exposure_panel.parquet`、manifest 和 review；逐日输出 gross/net return、cost、turnover、QQQ/TQQQ/SGOV exposure、effective beta/leverage 和 active return vs QQQ。|
+|TRADING-964|independent forward outcome cube|BASELINE_DONE|生成 `layer2_forward_outcome_cube.parquet`、manifest 和 review；覆盖 5d/10d/20d/60d/120d，outcome 仅使用 decision_time 之后真实路径，regret/rank 只作为 outcome-side 字段。|
+|TRADING-965|anti-leakage and time-boundary audit|BASELINE_DONE|生成 `layer2_anti_leakage_time_boundary_audit.json/md`；检查 feature/outcome separation、execution lag、same-bar risk、forward window boundary、definition hash 和 component pool hash。|
+|TRADING-966|common robustness validation|BASELINE_DONE|生成 `layer2_common_robustness_validation.json/md`；按 period/regime/volatility/trend/drawdown/recovery/event windows 统一评估 formal components，缺 pre-2022 覆盖必须显式标记。|
+|TRADING-967～975|后续 selector headroom / combiner / objective / dataset / handoff stages|READY|在 962～966 验证后继续拆分实施；不得跳过 combiner contract、walk-forward embargo、Layer-1 dataset reproducibility 和 final owner handoff gate。|
 
 ## 957～961 实现范围
 
@@ -102,8 +107,8 @@ outputs/research_strategies/layer2_components/layer2_component_readiness_matrix.
 - `selectable_components <= 3`，当前实际为 2。
 - `reference_components <= 2`，当前实际为 2。
 - `manual_review_required=true` 必须在 JSON 和 Markdown 中可见。
-- `layer1_historical_research_allowed=false`，直到后续 PIT weight path、outcome cube、
-  anti-leakage 和 dataset reproducibility gate 完成。
+- `layer1_historical_research_allowed=false`，直到后续 Layer-1 dataset contract、
+  reproducibility gate、walk-forward embargo 和 owner handoff gate 完成。
 - `layer1_forward_aging_allowed=false`。
 - `layer1_paper_shadow_allowed=false`。
 - `production_allowed=false`。
@@ -119,6 +124,11 @@ layer2_component_pool_freeze
 layer2_component_definition_lock
 layer2_component_data_quality_check
 layer2_component_readiness_matrix
+layer2_historical_weight_path
+layer2_return_cost_exposure_panel
+layer2_forward_outcome_cube
+layer2_anti_leakage_time_boundary_audit
+layer2_common_robustness_validation
 ```
 
 每个 entry 固定：
@@ -133,6 +143,47 @@ broker_action=none
 `docs/artifact_catalog.md` 必须记录 artifact path、producer command、source inputs、
 schema contract、owner next action 和 safety boundary。
 
+## 962～966 历史事实层与独立 outcome 范围
+
+新增 CLI：
+
+```bash
+aits research strategies layer2-historical-weight-path-build
+aits research strategies layer2-return-cost-exposure-panel
+aits research strategies layer2-forward-outcome-cube-build
+aits research strategies layer2-anti-leakage-time-boundary-audit
+aits research strategies layer2-common-robustness-validation
+```
+
+新增 runtime artifacts：
+
+```text
+outputs/research_strategies/layer2_components/layer2_historical_weight_path.parquet
+outputs/research_strategies/layer2_components/layer2_historical_weight_path_manifest.json
+outputs/research_strategies/layer2_components/layer2_historical_weight_path_review.md
+outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel.parquet
+outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel_manifest.json
+outputs/research_strategies/layer2_components/layer2_return_cost_exposure_panel_review.md
+outputs/research_strategies/layer2_components/layer2_forward_outcome_cube.parquet
+outputs/research_strategies/layer2_components/layer2_forward_outcome_cube_manifest.json
+outputs/research_strategies/layer2_components/layer2_forward_outcome_cube_review.md
+outputs/research_strategies/layer2_components/layer2_anti_leakage_time_boundary_audit.json
+outputs/research_strategies/layer2_components/layer2_anti_leakage_time_boundary_audit.md
+outputs/research_strategies/layer2_components/layer2_common_robustness_validation.json
+outputs/research_strategies/layer2_components/layer2_common_robustness_validation.md
+```
+
+本阶段仍不允许 Layer-1 selector 训练：
+
+```text
+layer1_historical_research_allowed=false
+layer1_forward_aging_allowed=false
+layer1_paper_shadow_allowed=false
+production_allowed=false
+broker_action=none
+manual_review_required=true
+```
+
 ## 进展记录
 
 - 2026-06-24: 新增仓库版需求文档并进入 `IN_PROGRESS`。根据 TRADING-956
@@ -146,3 +197,16 @@ schema contract、owner next action 和 safety boundary。
   `research_only_inactive_reference`。所有输出继续
   `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、
   `manual_review_required=true`。
+- 2026-06-24: 962～966 进入 `IN_PROGRESS`，目标是为 formal selectable +
+  reference components 构建 PIT historical weight path、return/cost/exposure panel、
+  independent forward outcome cube、anti-leakage/time-boundary audit 和 common
+  robustness validation。QQQ-plus growth 继续只作为 inactive research reference，
+  不进入 selectable pool 或事实层计算。
+- 2026-06-24: 962～966 baseline 实现完成并通过验证。新增 5 个 CLI、
+  3 个 Parquet fact/outcome artifacts、2 个 JSON/Markdown audit artifacts、report
+  registry entries、artifact catalog row、system flow paragraph 和 focused tests。
+  真实 CLI 运行结果：`layer2-anti-leakage-time-boundary-audit` 为
+  `LAYER2_ANTI_LEAKAGE_WARN`（latest forward windows 未全部成熟，无 hard blocker）；
+  `layer2-common-robustness-validation` 为 `LAYER2_ROBUSTNESS_MIXED`（缺失/不足覆盖
+  窗口显式披露）。Layer-1 historical research 仍保持 `false`，等待 967～975 的
+  selector contract、dataset reproducibility、walk-forward embargo 和 owner handoff。

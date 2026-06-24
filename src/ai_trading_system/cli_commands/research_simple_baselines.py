@@ -11,11 +11,16 @@ from rich.console import Console
 from ai_trading_system.layer2_strategy_component_readiness import (
     DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
     DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    run_layer2_anti_leakage_time_boundary_audit,
+    run_layer2_common_robustness_validation,
     run_layer2_component_data_quality_check,
     run_layer2_component_definition_lock,
     run_layer2_component_pool_freeze,
     run_layer2_component_readiness_matrix,
     run_layer2_component_readiness_reconciliation,
+    run_layer2_forward_outcome_cube_build,
+    run_layer2_historical_weight_path_build,
+    run_layer2_return_cost_exposure_panel,
 )
 from ai_trading_system.qqq_plus_growth_challenger import (
     DEFAULT_QQQ_OUTPERFORMANCE_OWNER_DECISION_DOC_PATH,
@@ -2675,6 +2680,276 @@ def strategies_layer2_component_readiness_matrix_command(
     _print_simple_baseline_payload("Layer-2 component readiness matrix", payload)
 
 
+def strategies_layer2_historical_weight_path_build_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="PIT weight path 开始日期；默认 2022-12-01。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 PIT weight path 结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_historical_weight_path_build(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 historical weight path", payload)
+
+
+def strategies_layer2_return_cost_exposure_panel_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="return/cost/exposure panel 开始日期。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 return/cost/exposure panel 结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_return_cost_exposure_panel(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 return/cost/exposure panel", payload)
+
+
+def strategies_layer2_forward_outcome_cube_build_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="forward outcome cube 开始日期。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 forward outcome cube 结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_forward_outcome_cube_build(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 forward outcome cube", payload)
+
+
+def strategies_layer2_anti_leakage_time_boundary_audit_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="anti-leakage audit 开始日期。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 anti-leakage audit 结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_anti_leakage_time_boundary_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 anti-leakage/time-boundary audit", payload)
+
+
+def strategies_layer2_common_robustness_validation_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="主价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path", help="第二行情源价格缓存 CSV。"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="rates cache for validate-data gate。"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="validate-data as-of date；默认使用价格缓存最大日期。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="robustness validation 开始日期。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 robustness validation 结束日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Layer-2 component pool YAML。"),
+    ] = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Annotated[
+        Path,
+        typer.Option("--simple-registry-config", help="Simple baseline strategy registry YAML。"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Layer-2 component readiness 输出目录。"),
+    ] = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_layer2_common_robustness_validation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            simple_registry_config_path=simple_registry_config_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date),
+            end_date=_parse_optional_date(end_date),
+            output_root=output_root,
+        )
+    )
+    _print_simple_baseline_payload("Layer-2 common robustness validation", payload)
+
+
 _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     ("simple-baseline-registry-review", strategies_simple_baseline_registry_review_command),
     ("qqq-sgov-baseline-backtest", strategies_qqq_sgov_baseline_backtest_command),
@@ -2937,6 +3212,26 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     (
         "layer2-component-readiness-matrix",
         strategies_layer2_component_readiness_matrix_command,
+    ),
+    (
+        "layer2-historical-weight-path-build",
+        strategies_layer2_historical_weight_path_build_command,
+    ),
+    (
+        "layer2-return-cost-exposure-panel",
+        strategies_layer2_return_cost_exposure_panel_command,
+    ),
+    (
+        "layer2-forward-outcome-cube-build",
+        strategies_layer2_forward_outcome_cube_build_command,
+    ),
+    (
+        "layer2-anti-leakage-time-boundary-audit",
+        strategies_layer2_anti_leakage_time_boundary_audit_command,
+    ),
+    (
+        "layer2-common-robustness-validation",
+        strategies_layer2_common_robustness_validation_command,
     ),
 )
 

@@ -5,15 +5,21 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pandas as pd
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.layer2_strategy_component_readiness import (
+    run_layer2_anti_leakage_time_boundary_audit,
+    run_layer2_common_robustness_validation,
     run_layer2_component_data_quality_check,
     run_layer2_component_definition_lock,
     run_layer2_component_pool_freeze,
     run_layer2_component_readiness_matrix,
     run_layer2_component_readiness_reconciliation,
+    run_layer2_forward_outcome_cube_build,
+    run_layer2_historical_weight_path_build,
+    run_layer2_return_cost_exposure_panel,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -26,6 +32,11 @@ LAYER2_REPORT_IDS = {
     "layer2_component_definition_lock",
     "layer2_component_data_quality_check",
     "layer2_component_readiness_matrix",
+    "layer2_historical_weight_path",
+    "layer2_return_cost_exposure_panel",
+    "layer2_forward_outcome_cube",
+    "layer2_anti_leakage_time_boundary_audit",
+    "layer2_common_robustness_validation",
 }
 
 
@@ -152,6 +163,100 @@ def test_layer2_component_readiness_cli_and_report_registry(tmp_path: Path) -> N
         assert entry["required_for_daily_reading"] is False
         assert entry["production_effect"] == "none"
         assert entry["broker_action"] == "none"
+
+
+def test_layer2_fact_and_outcome_builders_exclude_growth_and_preserve_safety(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer2_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+
+    weight_path = run_layer2_historical_weight_path_build(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    return_panel = run_layer2_return_cost_exposure_panel(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    outcome_cube = run_layer2_forward_outcome_cube_build(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    leakage_audit = run_layer2_anti_leakage_time_boundary_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+    robustness = run_layer2_common_robustness_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        as_of_date=as_of,
+        output_root=output_root,
+    )
+
+    assert weight_path["status"] in {
+        "LAYER2_WEIGHT_PATH_READY",
+        "LAYER2_WEIGHT_PATH_DATA_WARN",
+    }
+    assert return_panel["status"] in {
+        "LAYER2_RETURN_PANEL_READY",
+        "LAYER2_RETURN_PANEL_WARN",
+    }
+    assert outcome_cube["status"] in {
+        "FORWARD_OUTCOME_CUBE_READY",
+        "FORWARD_OUTCOME_CUBE_PARTIAL",
+    }
+    assert leakage_audit["status"] in {
+        "LAYER2_ANTI_LEAKAGE_PASS",
+        "LAYER2_ANTI_LEAKAGE_WARN",
+    }
+    assert robustness["status"] in {
+        "LAYER2_ROBUSTNESS_READY",
+        "LAYER2_ROBUSTNESS_MIXED",
+    }
+
+    expected_components = {
+        "equal_risk_qqq_sgov",
+        "100_qqq",
+        "qqq_50_sgov_50",
+        "qqq_60_sgov_40",
+    }
+    weight_frame = pd.read_parquet(output_root / "layer2_historical_weight_path.parquet")
+    panel_frame = pd.read_parquet(output_root / "layer2_return_cost_exposure_panel.parquet")
+    cube_frame = pd.read_parquet(output_root / "layer2_forward_outcome_cube.parquet")
+
+    assert set(weight_frame["strategy_id"].unique()) == expected_components
+    assert "qqq_plus_growth_research_candidate" not in set(weight_frame["strategy_id"])
+    assert set(panel_frame["strategy_id"].unique()) == expected_components
+    assert {"net_return", "effective_qqq_beta", "transaction_cost", "slippage_cost"} <= set(
+        panel_frame.columns
+    )
+    assert {"5d", "120d"} <= set(cube_frame["horizon"].unique())
+    assert cube_frame["outcome_side_only"].all()
+    assert (cube_frame["relative_return_vs_growth_candidate"].isna()).all()
+
+    for payload in (weight_path, return_panel, outcome_cube, leakage_audit, robustness):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["promotion_allowed"] is False
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
 
 def _write_source_artifacts(simple_output_root: Path, growth_output_root: Path) -> None:

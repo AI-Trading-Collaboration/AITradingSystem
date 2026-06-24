@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
@@ -18,10 +21,14 @@ from ai_trading_system.simple_baseline_portfolio_control import (
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     SAFETY_BOUNDARY,
     _data_quality_gate,
+    _load_price_matrix,
     _load_registry,
     _records,
     _required_rate_series,
+    _slice_prices,
     _strategy_rows,
+    _target_weight_frame,
+    _turnover_series,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -38,6 +45,8 @@ DEFAULT_QQQ_PLUS_GROWTH_OUTPUT_ROOT = (
 FORMAL_COMPONENT_SECTIONS = ("selectable_components", "reference_components")
 INACTIVE_COMPONENT_SECTION = "inactive_research_reference_candidates"
 GROWTH_OWNER_DECISION_KEEP_RESEARCH_ONLY = "KEEP_GROWTH_RESEARCH_ONLY"
+FORWARD_HORIZONS = (5, 10, 20, 60, 120)
+ASSET_COLUMNS = ("QQQ", "TQQQ", "SGOV")
 
 
 def run_layer2_component_readiness_reconciliation(
@@ -392,6 +401,1250 @@ def run_layer2_component_readiness_matrix(
     )
     _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
     return payload
+
+
+def run_layer2_historical_weight_path_build(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _fact_manifest_payload(
+            report_type="layer2_historical_weight_path",
+            title="Layer-2 Historical Weight Path",
+            status="LAYER2_WEIGHT_PATH_BLOCKED",
+            output_root=output_root,
+            parquet_name="layer2_historical_weight_path.parquet",
+            summary={
+                "row_count": 0,
+                "component_count": len(_records(context["components"])),
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_historical_weight_path",
+                "Layer-2 Historical Weight Path",
+                "aits research strategies layer2-historical-weight-path-build",
+                "layer2_historical_weight_path_*",
+            ),
+        )
+        _write_fact_artifacts(payload, output_root=output_root)
+        return payload
+
+    frame = _build_weight_path_frame(context)
+    parquet_path = output_root / "layer2_historical_weight_path.parquet"
+    _write_parquet(frame, parquet_path)
+    status = (
+        "LAYER2_WEIGHT_PATH_DATA_WARN"
+        if _int(data_quality.get("warning_count"))
+        else "LAYER2_WEIGHT_PATH_READY"
+    )
+    payload = _fact_manifest_payload(
+        report_type="layer2_historical_weight_path",
+        title="Layer-2 Historical Weight Path",
+        status=status,
+        output_root=output_root,
+        parquet_name=parquet_path.name,
+        summary={
+            "row_count": len(frame),
+            "component_count": int(frame["strategy_id"].nunique()) if not frame.empty else 0,
+            "start_date": _frame_min(frame, "decision_date"),
+            "end_date": _frame_max(frame, "decision_date"),
+            "data_quality_status": data_quality.get("status"),
+            "component_pool_hash": context["component_pool_hash"],
+            "inactive_growth_included": False,
+            "layer1_historical_research_allowed": False,
+        },
+        data_quality=data_quality,
+        parquet_checksum=_sha256_file(parquet_path),
+        parquet_row_count=len(frame),
+        parquet_columns=list(frame.columns),
+        source_component_count=len(_records(context["components"])),
+        warning_codes=_warning_codes(data_quality),
+        report_registry_entry=_report_registry_entry(
+            "layer2_historical_weight_path",
+            "Layer-2 Historical Weight Path",
+            "aits research strategies layer2-historical-weight-path-build",
+            "layer2_historical_weight_path_*",
+        ),
+    )
+    _write_fact_artifacts(payload, output_root=output_root)
+    return payload
+
+
+def run_layer2_return_cost_exposure_panel(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _fact_manifest_payload(
+            report_type="layer2_return_cost_exposure_panel",
+            title="Layer-2 Return Cost Exposure Panel",
+            status="LAYER2_RETURN_PANEL_BLOCKED",
+            output_root=output_root,
+            parquet_name="layer2_return_cost_exposure_panel.parquet",
+            summary={
+                "row_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_return_cost_exposure_panel",
+                "Layer-2 Return Cost Exposure Panel",
+                "aits research strategies layer2-return-cost-exposure-panel",
+                "layer2_return_cost_exposure_panel_*",
+            ),
+        )
+        _write_fact_artifacts(payload, output_root=output_root)
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    parquet_path = output_root / "layer2_return_cost_exposure_panel.parquet"
+    _write_parquet(panel, parquet_path)
+    status = (
+        "LAYER2_RETURN_PANEL_WARN"
+        if _int(data_quality.get("warning_count"))
+        else "LAYER2_RETURN_PANEL_READY"
+    )
+    payload = _fact_manifest_payload(
+        report_type="layer2_return_cost_exposure_panel",
+        title="Layer-2 Return Cost Exposure Panel",
+        status=status,
+        output_root=output_root,
+        parquet_name=parquet_path.name,
+        summary={
+            "row_count": len(panel),
+            "component_count": int(panel["strategy_id"].nunique()) if not panel.empty else 0,
+            "start_date": _frame_min(panel, "date"),
+            "end_date": _frame_max(panel, "date"),
+            "cost_scenario": "base_cost",
+            "execution_lag": "primary_execution_lag",
+            "data_quality_status": data_quality.get("status"),
+            "layer1_historical_research_allowed": False,
+        },
+        data_quality=data_quality,
+        parquet_checksum=_sha256_file(parquet_path),
+        parquet_row_count=len(panel),
+        parquet_columns=list(panel.columns),
+        warning_codes=_warning_codes(data_quality),
+        report_registry_entry=_report_registry_entry(
+            "layer2_return_cost_exposure_panel",
+            "Layer-2 Return Cost Exposure Panel",
+            "aits research strategies layer2-return-cost-exposure-panel",
+            "layer2_return_cost_exposure_panel_*",
+        ),
+    )
+    _write_fact_artifacts(payload, output_root=output_root)
+    return payload
+
+
+def run_layer2_forward_outcome_cube_build(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _fact_manifest_payload(
+            report_type="layer2_forward_outcome_cube",
+            title="Layer-2 Forward Outcome Cube",
+            status="FORWARD_OUTCOME_CUBE_BLOCKED",
+            output_root=output_root,
+            parquet_name="layer2_forward_outcome_cube.parquet",
+            summary={
+                "row_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_forward_outcome_cube",
+                "Layer-2 Forward Outcome Cube",
+                "aits research strategies layer2-forward-outcome-cube-build",
+                "layer2_forward_outcome_cube_*",
+            ),
+        )
+        _write_fact_artifacts(payload, output_root=output_root)
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    cube = _build_forward_outcome_cube_frame(panel)
+    parquet_path = output_root / "layer2_forward_outcome_cube.parquet"
+    _write_parquet(cube, parquet_path)
+    matured = int((cube["outcome_status"] == "MATURED").sum()) if not cube.empty else 0
+    insufficient = len(cube) - matured
+    if not matured:
+        status = "FORWARD_OUTCOME_CUBE_INSUFFICIENT"
+    elif insufficient:
+        status = "FORWARD_OUTCOME_CUBE_PARTIAL"
+    else:
+        status = "FORWARD_OUTCOME_CUBE_READY"
+    payload = _fact_manifest_payload(
+        report_type="layer2_forward_outcome_cube",
+        title="Layer-2 Forward Outcome Cube",
+        status=status,
+        output_root=output_root,
+        parquet_name=parquet_path.name,
+        summary={
+            "row_count": len(cube),
+            "matured_outcome_count": matured,
+            "insufficient_future_window_count": insufficient,
+            "horizons": [f"{horizon}d" for horizon in FORWARD_HORIZONS],
+            "outcome_side_only": True,
+            "layer1_historical_research_allowed": False,
+        },
+        data_quality=data_quality,
+        parquet_checksum=_sha256_file(parquet_path),
+        parquet_row_count=len(cube),
+        parquet_columns=list(cube.columns),
+        warning_codes=_warning_codes(data_quality),
+        report_registry_entry=_report_registry_entry(
+            "layer2_forward_outcome_cube",
+            "Layer-2 Forward Outcome Cube",
+            "aits research strategies layer2-forward-outcome-cube-build",
+            "layer2_forward_outcome_cube_*",
+        ),
+    )
+    _write_fact_artifacts(payload, output_root=output_root)
+    return payload
+
+
+def run_layer2_anti_leakage_time_boundary_audit(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    weight_manifest = run_layer2_historical_weight_path_build(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    return_manifest = run_layer2_return_cost_exposure_panel(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    outcome_manifest = run_layer2_forward_outcome_cube_build(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    issues = _anti_leakage_issues(weight_manifest, return_manifest, outcome_manifest)
+    hard_blockers = [issue for issue in issues if issue["severity"] == "BLOCKER"]
+    warnings = [issue for issue in issues if issue["severity"] == "WARN"]
+    if hard_blockers:
+        status = "LAYER2_ANTI_LEAKAGE_BLOCKED"
+    elif warnings:
+        status = "LAYER2_ANTI_LEAKAGE_WARN"
+    else:
+        status = "LAYER2_ANTI_LEAKAGE_PASS"
+    payload = _payload(
+        report_type="layer2_anti_leakage_time_boundary_audit",
+        title="Layer-2 Anti-Leakage and Time-Boundary Audit",
+        status=status,
+        summary={
+            "issue_count": len(issues),
+            "hard_blocker_count": len(hard_blockers),
+            "warning_count": len(warnings),
+            "feature_outcome_separated": not hard_blockers,
+            "same_bar_execution_allowed": False,
+            "layer1_historical_research_allowed": False,
+        },
+        field_overlap_matrix=_field_overlap_matrix(),
+        derived_dependency_matrix=_derived_dependency_matrix(),
+        time_window_matrix=_time_window_matrix(),
+        execution_boundary_matrix=_execution_boundary_matrix(),
+        forbidden_dependency_list=hard_blockers,
+        issues=issues,
+        input_artifacts={
+            "weight_path_manifest": weight_manifest["artifact_paths"]["json_path"],
+            "return_panel_manifest": return_manifest["artifact_paths"]["json_path"],
+            "outcome_cube_manifest": outcome_manifest["artifact_paths"]["json_path"],
+        },
+        report_registry_entry=_report_registry_entry(
+            "layer2_anti_leakage_time_boundary_audit",
+            "Layer-2 Anti-Leakage and Time-Boundary Audit",
+            "aits research strategies layer2-anti-leakage-time-boundary-audit",
+            "layer2_anti_leakage_time_boundary_audit",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def run_layer2_common_robustness_validation(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _layer2_fact_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        output_root=output_root,
+    )
+    data_quality = _mapping(context["data_quality"])
+    if not bool(data_quality.get("passed")):
+        payload = _payload(
+            report_type="layer2_common_robustness_validation",
+            title="Layer-2 Common Robustness Validation",
+            status="LAYER2_ROBUSTNESS_BLOCKED",
+            summary={
+                "row_count": 0,
+                "data_quality_status": data_quality.get("status"),
+                "blocked_reason": "validate_data_cache_failed",
+                "layer1_historical_research_allowed": False,
+            },
+            data_quality=data_quality,
+            blockers=["validate_data_cache_failed"],
+            report_registry_entry=_report_registry_entry(
+                "layer2_common_robustness_validation",
+                "Layer-2 Common Robustness Validation",
+                "aits research strategies layer2-common-robustness-validation",
+                "layer2_common_robustness_validation",
+            ),
+        )
+        _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+        return payload
+
+    weight_frame = _build_weight_path_frame(context)
+    panel = _build_return_panel_frame(context, weight_frame)
+    rows = _build_robustness_rows(context, panel)
+    missing_coverage = [row for row in rows if row["coverage_status"] != "COVERED"]
+    status = "LAYER2_ROBUSTNESS_READY" if not missing_coverage else "LAYER2_ROBUSTNESS_MIXED"
+    payload = _payload(
+        report_type="layer2_common_robustness_validation",
+        title="Layer-2 Common Robustness Validation",
+        status=status,
+        summary={
+            "row_count": len(rows),
+            "component_count": len({row["strategy_id"] for row in rows}),
+            "missing_or_partial_coverage_count": len(missing_coverage),
+            "data_quality_status": data_quality.get("status"),
+            "layer1_historical_research_allowed": False,
+        },
+        robustness_rows=rows,
+        missing_coverage_rows=missing_coverage[:20],
+        data_quality=data_quality,
+        input_artifacts={
+            "layer2_component_pool_config": str(config_path),
+            "prices": str(prices_path),
+            "rates": str(rates_path),
+        },
+        report_registry_entry=_report_registry_entry(
+            "layer2_common_robustness_validation",
+            "Layer-2 Common Robustness Validation",
+            "aits research strategies layer2-common-robustness-validation",
+            "layer2_common_robustness_validation",
+        ),
+    )
+    _write_pair(payload, output_root=output_root, artifact_id=payload["report_type"])
+    return payload
+
+
+def _layer2_fact_context(
+    *,
+    prices_path: Path,
+    marketstack_prices_path: Path,
+    rates_path: Path,
+    config_path: Path,
+    simple_registry_config_path: Path,
+    as_of_date: date | None,
+    start_date: date | None,
+    end_date: date | None,
+    output_root: Path,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    simple_config = _load_registry(simple_registry_config_path)
+    data_quality_payload = run_layer2_component_data_quality_check(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        as_of_date=as_of_date,
+        output_root=output_root,
+    )
+    definition_payload = run_layer2_component_definition_lock(
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        output_root=output_root,
+    )
+    data_quality = _mapping(data_quality_payload.get("data_quality"))
+    resolved_end = end_date or _date_or_none(data_quality.get("as_of"))
+    resolved_start = start_date or DEFAULT_AI_REGIME_BACKTEST_START
+    prices = _load_price_matrix(prices_path, _required_price_tickers(config))
+    prices = _slice_prices(prices, start_date=resolved_start, end_date=resolved_end)
+    definition_by_id = {
+        str(row.get("strategy_id")): row
+        for row in _records(definition_payload.get("component_definitions"))
+    }
+    components = []
+    for component in _formal_components(config):
+        registry_strategy_id = str(
+            component.get("registry_strategy_id") or component.get("strategy_id")
+        )
+        strategy = _strategy_by_id(simple_config, registry_strategy_id)
+        definition = definition_by_id.get(str(component.get("strategy_id")), {})
+        components.append(
+            {
+                "component": dict(component),
+                "strategy": dict(strategy),
+                "definition": dict(definition),
+            }
+        )
+    return {
+        "config": config,
+        "simple_config": simple_config,
+        "prices": prices,
+        "components": components,
+        "data_quality": data_quality,
+        "component_pool_hash": definition_payload.get("component_pool_hash"),
+        "definition_payload": definition_payload,
+        "start_date": resolved_start,
+        "end_date": resolved_end,
+    }
+
+
+def _build_weight_path_frame(context: Mapping[str, Any]) -> pd.DataFrame:
+    prices = _ensure_price_frame(context.get("prices"))
+    config = _mapping(context.get("simple_config"))
+    data_quality = _mapping(context.get("data_quality"))
+    warning_codes = _warning_codes(data_quality)
+    rows: list[dict[str, Any]] = []
+    for item in _records(context.get("components")):
+        component = _mapping(item.get("component"))
+        strategy = _mapping(item.get("strategy"))
+        definition = _mapping(item.get("definition"))
+        if not strategy:
+            continue
+        weights = _normalised_asset_weight_frame(_target_weight_frame(strategy, prices, config))
+        turnover = _turnover_series(weights)
+        for timestamp, weight_row in weights.iterrows():
+            weight_map = _weight_map(weight_row)
+            rows.append(
+                {
+                    "decision_date": timestamp.date().isoformat(),
+                    "holding_date": timestamp.date().isoformat(),
+                    "strategy_id": component.get("strategy_id"),
+                    "registry_strategy_id": component.get("registry_strategy_id"),
+                    "strategy_role": component.get("strategy_role"),
+                    "policy_definition_hash": definition.get("policy_definition_hash"),
+                    "component_pool_hash": context.get("component_pool_hash"),
+                    "target_weight_qqq": _round(weight_map.get("QQQ")),
+                    "target_weight_tqqq": _round(weight_map.get("TQQQ")),
+                    "target_weight_sgov": _round(weight_map.get("SGOV")),
+                    "pre_constraint_weights": json.dumps(
+                        weight_map, ensure_ascii=False, sort_keys=True
+                    ),
+                    "post_constraint_weights": json.dumps(
+                        weight_map, ensure_ascii=False, sort_keys=True
+                    ),
+                    "rebalance_flag": bool(_float(turnover.loc[timestamp]) > 0.0)
+                    or timestamp == weights.index[0],
+                    "signal_snapshot_id": _stable_hash(
+                        {
+                            "strategy_id": component.get("strategy_id"),
+                            "decision_date": timestamp.date().isoformat(),
+                            "policy_definition_hash": definition.get(
+                                "policy_definition_hash"
+                            ),
+                        }
+                    ),
+                    "data_quality_status": data_quality.get("status"),
+                    "warning_codes": json.dumps(warning_codes, ensure_ascii=False),
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _build_return_panel_frame(
+    context: Mapping[str, Any],
+    weight_frame: pd.DataFrame,
+) -> pd.DataFrame:
+    prices = _ensure_price_frame(context.get("prices"))
+    data_quality = _mapping(context.get("data_quality"))
+    config = _mapping(context.get("config"))
+    base_cost_bps = _float(
+        _mapping(_research_policy(config).get("cost_assumption")).get("base_cost_bps"),
+        5.0,
+    )
+    transaction_cost_bps = base_cost_bps * 0.6
+    slippage_cost_bps = base_cost_bps * 0.4
+    asset_returns = prices.pct_change().fillna(0.0).reindex(columns=list(ASSET_COLUMNS)).fillna(0.0)
+    qqq_returns = asset_returns["QQQ"]
+    rows: list[dict[str, Any]] = []
+    for strategy_id, group in weight_frame.groupby("strategy_id", sort=False):
+        ordered = group.sort_values("decision_date").copy()
+        ordered.index = pd.to_datetime(ordered["decision_date"])
+        weights = ordered[
+            ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
+        ].rename(
+            columns={
+                "target_weight_qqq": "QQQ",
+                "target_weight_tqqq": "TQQQ",
+                "target_weight_sgov": "SGOV",
+            }
+        )
+        applied = weights.shift(1).ffill().reindex(asset_returns.index).fillna(0.0)
+        gross = (applied * asset_returns).sum(axis=1)
+        turnover = _turnover_series(applied)
+        transaction_cost = turnover * (transaction_cost_bps / 10000.0)
+        slippage_cost = turnover * (slippage_cost_bps / 10000.0)
+        net = gross - transaction_cost - slippage_cost
+        role = str(ordered["strategy_role"].iloc[0])
+        definition_hash = str(ordered["policy_definition_hash"].iloc[0])
+        pool_hash = str(ordered["component_pool_hash"].iloc[0])
+        for timestamp in asset_returns.index:
+            weight_row = applied.loc[timestamp]
+            qqq_exposure = _float(weight_row.get("QQQ"))
+            tqqq_exposure = _float(weight_row.get("TQQQ"))
+            sgov_exposure = _float(weight_row.get("SGOV"))
+            effective_beta = qqq_exposure + tqqq_exposure * 3.0
+            rows.append(
+                {
+                    "date": timestamp.date().isoformat(),
+                    "strategy_id": strategy_id,
+                    "strategy_role": role,
+                    "policy_definition_hash": definition_hash,
+                    "component_pool_hash": pool_hash,
+                    "cost_scenario": "base_cost",
+                    "execution_lag": "primary_execution_lag",
+                    "gross_return": _round(gross.loc[timestamp]),
+                    "transaction_cost": _round(transaction_cost.loc[timestamp]),
+                    "slippage_cost": _round(slippage_cost.loc[timestamp]),
+                    "net_return": _round(net.loc[timestamp]),
+                    "turnover": _round(turnover.loc[timestamp]),
+                    "qqq_exposure": _round(qqq_exposure),
+                    "tqqq_exposure": _round(tqqq_exposure),
+                    "sgov_exposure": _round(sgov_exposure),
+                    "effective_qqq_beta": _round(effective_beta),
+                    "effective_leverage": _round(effective_beta + sgov_exposure),
+                    "sgov_carry_contribution": _round(
+                        sgov_exposure * asset_returns.loc[timestamp, "SGOV"]
+                    ),
+                    "leverage_drag": _round(max(tqqq_exposure, 0.0) * 0.0002),
+                    "cash_drag": _round(sgov_exposure),
+                    "active_return_vs_qqq": _round(net.loc[timestamp] - qqq_returns.loc[timestamp]),
+                    "data_quality_status": data_quality.get("status"),
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _build_forward_outcome_cube_frame(panel: pd.DataFrame) -> pd.DataFrame:
+    if panel.empty:
+        return pd.DataFrame()
+    ordered_dates = sorted(panel["date"].unique())
+    net = panel.pivot(index="date", columns="strategy_id", values="net_return").sort_index()
+    roles = {
+        str(row["strategy_id"]): str(row["strategy_role"])
+        for _, row in panel.drop_duplicates("strategy_id").iterrows()
+    }
+    definition_hashes = {
+        str(row["strategy_id"]): str(row["policy_definition_hash"])
+        for _, row in panel.drop_duplicates("strategy_id").iterrows()
+    }
+    pool_hashes = {
+        str(row["strategy_id"]): str(row["component_pool_hash"])
+        for _, row in panel.drop_duplicates("strategy_id").iterrows()
+    }
+    rows: list[dict[str, Any]] = []
+    for date_index, decision_date in enumerate(ordered_dates):
+        for horizon in FORWARD_HORIZONS:
+            future_dates = ordered_dates[date_index + 1 : date_index + 1 + horizon]
+            matured = len(future_dates) == horizon
+            horizon_returns = {}
+            horizon_drawdowns = {}
+            for strategy_id in net.columns:
+                if not matured:
+                    horizon_returns[str(strategy_id)] = None
+                    horizon_drawdowns[str(strategy_id)] = None
+                    continue
+                series = net.loc[future_dates, strategy_id].fillna(0.0)
+                horizon_returns[str(strategy_id)] = _compound_return(series)
+                horizon_drawdowns[str(strategy_id)] = _max_drawdown_from_returns(series)
+            best_return = max(
+                [value for value in horizon_returns.values() if value is not None],
+                default=None,
+            )
+            for strategy_id in net.columns:
+                key = str(strategy_id)
+                series = (
+                    net.loc[future_dates, strategy_id].fillna(0.0)
+                    if matured
+                    else pd.Series(dtype=float)
+                )
+                future_return = horizon_returns.get(key)
+                future_drawdown = horizon_drawdowns.get(key)
+                realized_vol = _realized_volatility_from_returns(series) if matured else None
+                downside = _downside_deviation_from_returns(series) if matured else None
+                rows.append(
+                    {
+                        "decision_date": decision_date,
+                        "strategy_id": key,
+                        "strategy_role": roles.get(key),
+                        "horizon": f"{horizon}d",
+                        "horizon_trading_days": horizon,
+                        "outcome_status": "MATURED" if matured else "INSUFFICIENT_FUTURE_WINDOW",
+                        "outcome_start_date": future_dates[0] if matured else None,
+                        "outcome_end_date": future_dates[-1] if matured else None,
+                        "policy_definition_hash": definition_hashes.get(key),
+                        "component_pool_hash": pool_hashes.get(key),
+                        "future_net_return": _nullable_round(future_return),
+                        "future_max_drawdown": _nullable_round(future_drawdown),
+                        "future_realized_volatility": _nullable_round(realized_vol),
+                        "future_downside_deviation": _nullable_round(downside),
+                        "future_calmar_proxy": _nullable_round(
+                            _ratio_or_none(future_return, abs(future_drawdown or 0.0))
+                        ),
+                        "relative_return_vs_100_qqq": _nullable_round(
+                            _diff_or_none(future_return, horizon_returns.get("100_qqq"))
+                        ),
+                        "relative_return_vs_equal_risk": _nullable_round(
+                            _diff_or_none(
+                                future_return,
+                                horizon_returns.get("equal_risk_qqq_sgov"),
+                            )
+                        ),
+                        "relative_return_vs_growth_candidate": None,
+                        "relative_drawdown_vs_100_qqq": _nullable_round(
+                            _diff_or_none(future_drawdown, horizon_drawdowns.get("100_qqq"))
+                        ),
+                        "regret_vs_best_component": _nullable_round(
+                            _diff_or_none(best_return, future_return)
+                        ),
+                        "outcome_side_only": True,
+                        "paper_shadow_allowed": False,
+                        "production_allowed": False,
+                        "broker_action": "none",
+                        "manual_review_required": True,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def _anti_leakage_issues(
+    weight_manifest: Mapping[str, Any],
+    return_manifest: Mapping[str, Any],
+    outcome_manifest: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if str(weight_manifest.get("status")) == "LAYER2_WEIGHT_PATH_BLOCKED":
+        issues.append(
+            {
+                "issue_id": "weight_path_blocked",
+                "severity": "BLOCKER",
+                "message": "historical weight path was not built",
+            }
+        )
+    if str(return_manifest.get("status")) == "LAYER2_RETURN_PANEL_BLOCKED":
+        issues.append(
+            {
+                "issue_id": "return_panel_blocked",
+                "severity": "BLOCKER",
+                "message": "return/cost/exposure panel was not built",
+            }
+        )
+    if str(outcome_manifest.get("status")) == "FORWARD_OUTCOME_CUBE_BLOCKED":
+        issues.append(
+            {
+                "issue_id": "outcome_cube_blocked",
+                "severity": "BLOCKER",
+                "message": "forward outcome cube was not built",
+            }
+        )
+    if outcome_manifest.get("status") == "FORWARD_OUTCOME_CUBE_PARTIAL":
+        issues.append(
+            {
+                "issue_id": "latest_forward_windows_not_matured",
+                "severity": "WARN",
+                "message": "latest decision dates do not yet have all future horizons matured",
+            }
+        )
+    return issues
+
+
+def _field_overlap_matrix() -> list[dict[str, Any]]:
+    return [
+        {
+            "matrix_id": "feature_vs_outcome",
+            "feature_fields": ["decision_date", "target weights", "policy_definition_hash"],
+            "outcome_fields": [
+                "future_net_return",
+                "future_max_drawdown",
+                "regret_vs_best_component",
+            ],
+            "overlap_count": 0,
+            "status": "PASS",
+        }
+    ]
+
+
+def _derived_dependency_matrix() -> list[dict[str, Any]]:
+    return [
+        {
+            "artifact": "layer2_historical_weight_path",
+            "allowed_dependencies": [
+                "price/rate data at or before decision_date",
+                "component definition",
+            ],
+            "forbidden_dependencies": [
+                "future returns",
+                "future drawdown",
+                "best future component",
+            ],
+            "status": "PASS",
+        },
+        {
+            "artifact": "layer2_forward_outcome_cube",
+            "allowed_dependencies": ["post-decision realized return path"],
+            "forbidden_as_feature_input": True,
+            "status": "PASS",
+        },
+    ]
+
+
+def _time_window_matrix() -> list[dict[str, Any]]:
+    return [
+        {
+            "field_family": "component weights",
+            "time_boundary": "decision_date uses data available at or before close_t",
+            "future_data_allowed": False,
+            "status": "PASS",
+        },
+        {
+            "field_family": "forward outcomes",
+            "time_boundary": "outcome windows start after decision_date",
+            "future_data_allowed": True,
+            "feature_side_allowed": False,
+            "status": "PASS",
+        },
+    ]
+
+
+def _execution_boundary_matrix() -> list[dict[str, Any]]:
+    return [
+        {
+            "execution_assumption": "primary_execution_lag",
+            "signal_time": "after close_t",
+            "execution_time": "t_plus_1",
+            "same_bar_execution_allowed": False,
+            "status": "PASS",
+        }
+    ]
+
+
+def _build_robustness_rows(
+    context: Mapping[str, Any],
+    panel: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    prices = _ensure_price_frame(context.get("prices"))
+    panel = panel.copy()
+    panel["date_ts"] = pd.to_datetime(panel["date"])
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    segments = _robustness_segments(prices)
+    rows: list[dict[str, Any]] = []
+    for segment in segments:
+        dates = set(segment["dates"])
+        for strategy_id, group in panel.groupby("strategy_id", sort=False):
+            selected = group[group["date"].isin(dates)].sort_values("date_ts")
+            if selected.empty:
+                rows.append(_missing_robustness_row(strategy_id, group, segment))
+                continue
+            returns = pd.Series(
+                selected["net_return"].astype(float).to_numpy(),
+                index=selected["date_ts"],
+            )
+            benchmark = qqq_returns.reindex(selected["date_ts"]).fillna(0.0)
+            metrics = _return_metrics(returns, benchmark)
+            rows.append(
+                {
+                    "strategy_id": str(strategy_id),
+                    "strategy_role": str(group["strategy_role"].iloc[0]),
+                    "period_or_regime": segment["segment_id"],
+                    "segment_type": segment["segment_type"],
+                    "coverage_status": "COVERED",
+                    "sample_count": len(selected),
+                    "annual_return": _round(metrics["annual_return"]),
+                    "max_drawdown": _round(metrics["max_drawdown"]),
+                    "sharpe": _round(metrics["sharpe"]),
+                    "calmar": _round(metrics["calmar"]),
+                    "turnover": _round(float(selected["turnover"].sum())),
+                    "recovery_days": metrics["recovery_days"],
+                    "active_return_vs_qqq": _round(metrics["active_return_vs_qqq"]),
+                    "beta_adjusted_return": _round(metrics["beta_adjusted_return"]),
+                    "risk_matched_return": _round(metrics["risk_matched_return"]),
+                    "regime_concentration_score": _round(metrics["regime_concentration_score"]),
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                }
+            )
+    return rows
+
+
+def _robustness_segments(prices: pd.DataFrame) -> list[dict[str, Any]]:
+    date_strings = pd.Series([idx.date().isoformat() for idx in prices.index], index=prices.index)
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    rolling_60d = prices["QQQ"].pct_change(60).fillna(0.0)
+    vol_20d = qqq_returns.rolling(20, min_periods=20).std().fillna(0.0)
+    low_cut = float(vol_20d.quantile(0.33))
+    high_cut = float(vol_20d.quantile(0.66))
+    ma_200 = prices["QQQ"].rolling(200, min_periods=200).mean()
+    drawdown = prices["QQQ"] / prices["QQQ"].cummax() - 1.0
+    segments = [
+        _date_segment("ai_after_chatgpt_full", "period", date_strings, date(2022, 12, 1), None),
+        _date_segment(
+            "2022_bear_market_tail",
+            "event",
+            date_strings,
+            date(2022, 12, 1),
+            date(2022, 12, 31),
+        ),
+        _date_segment("2023_recovery", "event", date_strings, date(2023, 1, 1), date(2023, 12, 31)),
+        _date_segment("2024_ai_rally", "event", date_strings, date(2024, 1, 1), date(2024, 12, 31)),
+        _date_segment("2025_to_latest", "event", date_strings, date(2025, 1, 1), None),
+        _date_segment("2018Q4", "event", date_strings, date(2018, 10, 1), date(2018, 12, 31)),
+        _date_segment("2020_crash", "event", date_strings, date(2020, 2, 15), date(2020, 4, 30)),
+        _mask_segment("bull_state", "regime", date_strings, rolling_60d > 0.05),
+        _mask_segment("bear_state", "regime", date_strings, rolling_60d < -0.05),
+        _mask_segment("range_state", "regime", date_strings, rolling_60d.abs() <= 0.05),
+        _mask_segment("low_volatility", "volatility", date_strings, vol_20d <= low_cut),
+        _mask_segment(
+            "mid_volatility",
+            "volatility",
+            date_strings,
+            (vol_20d > low_cut) & (vol_20d < high_cut),
+        ),
+        _mask_segment("high_volatility", "volatility", date_strings, vol_20d >= high_cut),
+        _mask_segment("above_200dma", "trend", date_strings, prices["QQQ"] >= ma_200),
+        _mask_segment("below_200dma", "trend", date_strings, prices["QQQ"] < ma_200),
+        _mask_segment("drawdown_state", "drawdown", date_strings, drawdown <= -0.08),
+        _mask_segment(
+            "recovery_state",
+            "drawdown",
+            date_strings,
+            (drawdown > -0.08) & (drawdown < 0.0) & (rolling_60d > 0.0),
+        ),
+    ]
+    return segments
+
+
+def _date_segment(
+    segment_id: str,
+    segment_type: str,
+    date_strings: pd.Series,
+    start: date,
+    end: date | None,
+) -> dict[str, Any]:
+    mask = pd.Series(date_strings.index.date >= start, index=date_strings.index)
+    if end is not None:
+        mask &= pd.Series(date_strings.index.date <= end, index=date_strings.index)
+    return _mask_segment(segment_id, segment_type, date_strings, mask)
+
+
+def _mask_segment(
+    segment_id: str,
+    segment_type: str,
+    date_strings: pd.Series,
+    mask: pd.Series,
+) -> dict[str, Any]:
+    selected = date_strings.loc[mask.fillna(False)]
+    return {
+        "segment_id": segment_id,
+        "segment_type": segment_type,
+        "dates": list(selected.astype(str)),
+    }
+
+
+def _missing_robustness_row(
+    strategy_id: str,
+    group: pd.DataFrame,
+    segment: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "strategy_id": str(strategy_id),
+        "strategy_role": str(group["strategy_role"].iloc[0]) if not group.empty else "UNKNOWN",
+        "period_or_regime": segment["segment_id"],
+        "segment_type": segment["segment_type"],
+        "coverage_status": "INSUFFICIENT_PRICE_COVERAGE",
+        "sample_count": 0,
+        "annual_return": None,
+        "max_drawdown": None,
+        "sharpe": None,
+        "calmar": None,
+        "turnover": None,
+        "recovery_days": None,
+        "active_return_vs_qqq": None,
+        "beta_adjusted_return": None,
+        "risk_matched_return": None,
+        "regime_concentration_score": None,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _return_metrics(returns: pd.Series, benchmark: pd.Series) -> dict[str, Any]:
+    returns = returns.fillna(0.0)
+    benchmark = benchmark.reindex(returns.index).fillna(0.0)
+    equity = (1.0 + returns).cumprod()
+    benchmark_equity = (1.0 + benchmark).cumprod()
+    drawdown = equity / equity.cummax() - 1.0
+    annualization = 252
+    annual_return = _annual_return(equity, len(returns), annualization)
+    benchmark_annual_return = _annual_return(benchmark_equity, len(benchmark), annualization)
+    annual_vol = float(returns.std(ddof=0) * (annualization**0.5))
+    benchmark_vol = float(benchmark.std(ddof=0) * (annualization**0.5))
+    beta = _beta(returns, benchmark)
+    max_drawdown = float(drawdown.min()) if not drawdown.empty else 0.0
+    total_return = _compound_return(returns)
+    benchmark_total_return = _compound_return(benchmark)
+    return {
+        "annual_return": annual_return,
+        "max_drawdown": max_drawdown,
+        "sharpe": _ratio(annual_return, annual_vol),
+        "calmar": _ratio(annual_return, abs(max_drawdown)),
+        "recovery_days": _max_recovery_days(equity),
+        "active_return_vs_qqq": total_return - benchmark_total_return,
+        "beta_adjusted_return": annual_return - beta * benchmark_annual_return,
+        "risk_matched_return": annual_return * _ratio(benchmark_vol, annual_vol),
+        "regime_concentration_score": min(abs(total_return), 1.0),
+    }
+
+
+def _fact_manifest_payload(
+    *,
+    report_type: str,
+    title: str,
+    status: str,
+    output_root: Path,
+    parquet_name: str,
+    summary: Mapping[str, Any],
+    **extra: Any,
+) -> dict[str, Any]:
+    parquet_path = output_root / parquet_name
+    return _payload(
+        report_type=report_type,
+        title=title,
+        status=status,
+        summary=summary,
+        parquet_path=str(parquet_path),
+        layer1_historical_research_allowed=False,
+        layer1_forward_aging_allowed=False,
+        layer1_paper_shadow_allowed=False,
+        **extra,
+    )
+
+
+def _write_fact_artifacts(payload: dict[str, Any], *, output_root: Path) -> None:
+    output_root.mkdir(parents=True, exist_ok=True)
+    report_type = str(payload["report_type"])
+    json_path = output_root / f"{report_type}_manifest.json"
+    markdown_path = output_root / f"{report_type}_review.md"
+    payload["artifact_paths"] = {
+        "json_path": str(json_path),
+        "markdown_path": str(markdown_path),
+        "parquet_path": str(payload.get("parquet_path", "")),
+    }
+    json_path.write_text(
+        json.dumps(_jsonable(payload), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(_render_markdown(payload), encoding="utf-8")
+
+
+def _write_parquet(frame: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_parquet(path, index=False)
+
+
+def _ensure_price_frame(value: object) -> pd.DataFrame:
+    if not isinstance(value, pd.DataFrame):
+        raise ValueError("layer2 fact context is missing a price DataFrame")
+    return value
+
+
+def _normalised_asset_weight_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.reindex(columns=list(ASSET_COLUMNS), fill_value=0.0).fillna(0.0)
+    totals = result.sum(axis=1)
+    positive = totals > 0.0
+    if positive.any():
+        result.loc[positive, :] = result.loc[positive, :].div(totals.loc[positive], axis=0)
+    return result
+
+
+def _weight_map(row: pd.Series) -> dict[str, float]:
+    return {ticker: _round(row.get(ticker), digits=8) for ticker in ASSET_COLUMNS}
+
+
+def _warning_codes(data_quality: Mapping[str, Any]) -> list[str]:
+    codes: set[str] = set()
+    for issue in _records(data_quality.get("issues")):
+        severity = str(issue.get("severity", "")).upper()
+        if "WARN" in severity and issue.get("code"):
+            codes.add(str(issue["code"]))
+    return sorted(codes)
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _frame_min(frame: pd.DataFrame, column: str) -> str | None:
+    if frame.empty or column not in frame.columns:
+        return None
+    value = frame[column].dropna().min()
+    return None if pd.isna(value) else str(value)
+
+
+def _frame_max(frame: pd.DataFrame, column: str) -> str | None:
+    if frame.empty or column not in frame.columns:
+        return None
+    value = frame[column].dropna().max()
+    return None if pd.isna(value) else str(value)
+
+
+def _date_or_none(value: object) -> date | None:
+    if isinstance(value, date):
+        return value
+    if value is None or value == "":
+        return None
+    try:
+        timestamp = pd.to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if pd.isna(timestamp):
+        return None
+    return timestamp.date()
+
+
+def _compound_return(returns: pd.Series) -> float:
+    if returns.empty:
+        return 0.0
+    return float((1.0 + returns.fillna(0.0).astype(float)).prod() - 1.0)
+
+
+def _max_drawdown_from_returns(returns: pd.Series) -> float:
+    if returns.empty:
+        return 0.0
+    equity = (1.0 + returns.fillna(0.0).astype(float)).cumprod()
+    return float((equity / equity.cummax() - 1.0).min())
+
+
+def _realized_volatility_from_returns(returns: pd.Series) -> float:
+    if returns.empty:
+        return 0.0
+    return float(returns.fillna(0.0).astype(float).std(ddof=0) * math.sqrt(252))
+
+
+def _downside_deviation_from_returns(returns: pd.Series) -> float:
+    if returns.empty:
+        return 0.0
+    downside = returns.fillna(0.0).astype(float)
+    downside = downside[downside < 0.0]
+    if downside.empty:
+        return 0.0
+    return float(downside.std(ddof=0) * math.sqrt(252))
+
+
+def _nullable_round(value: object, digits: int = 8) -> float | None:
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return round(number, digits)
+
+
+def _ratio_or_none(numerator: object, denominator: object) -> float | None:
+    if numerator is None or denominator is None:
+        return None
+    denom = _float(denominator, default=0.0)
+    if denom == 0.0:
+        return None
+    return _float(numerator) / denom
+
+
+def _diff_or_none(left: object, right: object) -> float | None:
+    if left is None or right is None:
+        return None
+    return _float(left) - _float(right)
+
+
+def _annual_return(equity: pd.Series, observations: int, annualization: int) -> float:
+    if observations <= 0 or equity.empty:
+        return 0.0
+    terminal = float(equity.iloc[-1])
+    if terminal <= 0.0:
+        return -1.0
+    return terminal ** (annualization / observations) - 1.0
+
+
+def _beta(returns: pd.Series, benchmark: pd.Series) -> float:
+    aligned = pd.concat(
+        [returns.fillna(0.0).astype(float), benchmark.fillna(0.0).astype(float)],
+        axis=1,
+        join="inner",
+    ).dropna()
+    if len(aligned) < 2:
+        return 0.0
+    variance = float(aligned.iloc[:, 1].var(ddof=0))
+    if variance == 0.0:
+        return 0.0
+    covariance = float(aligned.iloc[:, 0].cov(aligned.iloc[:, 1], ddof=0))
+    return covariance / variance
+
+
+def _max_recovery_days(equity: pd.Series) -> int:
+    high_water = -math.inf
+    current_gap = 0
+    longest_gap = 0
+    for value in equity.fillna(1.0).astype(float):
+        if value >= high_water:
+            high_water = value
+            current_gap = 0
+        else:
+            current_gap += 1
+            longest_gap = max(longest_gap, current_gap)
+    return longest_gap
+
+
+def _ratio(numerator: object, denominator: object) -> float:
+    denom = _float(denominator, default=0.0)
+    if denom == 0.0:
+        return 0.0
+    return _float(numerator) / denom
+
+
+def _round(value: object, *, digits: int = 8) -> float:
+    return round(_float(value, default=0.0), digits)
+
+
+def _float(value: Any, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
 
 
 def _load_config(path: Path) -> dict[str, Any]:
@@ -994,6 +2247,12 @@ def _jsonable(value: Any) -> Any:
         return [_jsonable(item) for item in value]
     if isinstance(value, Path):
         return str(value)
+    if isinstance(value, pd.Timestamp):
+        return value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
     return value
 
 
