@@ -1,5 +1,42 @@
 # Refactor Log
 
+## 2026-06-26 Daily Incremental Refactor
+
+- 检查时间：2026-06-26 08:10 Asia/Tokyo。
+- 起始 HEAD：`536d272a921c85b4a270c1373bb51f7e24f96114` (`Add growth tilt owner docs`)。
+- 最近一次合格重构基线提交：`b601cf9860db4b93b495a5dcec24a24b3453d651` (`refactor: record AITradingSystem layer1 helper refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `28aec62a8abef8eb223ee8c07010938c07085b26`。
+- 评估范围：`b601cf9860db4b93b495a5dcec24a24b3453d651..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 Layer-1 archive / equal-risk forward-aging stabilization、Layer-2 controlled growth restart、roadmap v2 real-result convergence、equal-risk growth tilt exploration、report registry、artifact catalog、system flow 和 research-only CLI command adapters。主要维护风险是 `src/ai_trading_system/cli_commands/research_simple_baselines.py` 在上次 CLI boundary 拆分后继续增长，新增 TRADING-1065～1084 growth-tilt adapters 后再次成为 mixed research command adapter。
+- 本轮变更文件：
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`
+  - `docs/requirements/TRADING-1086_Docs_Freshness_Metadata_Restoration.md`
+  - `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`
+  - `docs/requirements/TRADING-1049_to_1056_Equal_Risk_Growth_V2_Real_Run_Result_Convergence.md`
+  - `docs/requirements/TRADING-1065_to_1084_Equal_Risk_Growth_Tilt_Exploration.md`
+  - `docs/system_flow.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/cli_commands/research_simple_baselines.py`
+  - `src/ai_trading_system/cli_commands/research_growth_tilt.py`
+- 重构理由：TRADING-1065～1084 equal-risk growth tilt exploration 新增 20 个 `aits research strategies ...` command adapters。继续把 growth-tilt factories、roadmap command 和 command registry 放在 `research_simple_baselines.py` 会削弱 simple-baseline / growth-tilt ownership 边界，并增加后续 CLI contract review 成本。拆出 `research_growth_tilt.py` 可以把 growth-tilt adapter 责任集中到独立模块，同时保留原统一 command registration 入口。
+- 行为影响：预期无外部行为变化；20 个 growth-tilt `aits research strategies ...` 命令仍注册在原 `strategies_app` 下，命令名、参数、默认路径、artifact path、report schema、status enum、safety fields、`typer.BadParameter` 转换和 FAIL 退出语义保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest、daily report、threshold、score band、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、paper-shadow state、broker 或 order path；本轮只运行 CLI help smoke 和 focused tests，未生成新的 cached-data dependent real report，因此未额外运行 `aits validate-data` 或生成新的 data quality sidecar。既有 growth-tilt data-dependent commands 仍按原路径调用同源 cached-data validation gate 并在输出中披露 data quality。
+- `docs/system_flow.md` 更新判定：已更新。本轮改变 CLI adapter 模块边界，需记录 TRADING-1065～1084 growth-tilt commands 由 `research_growth_tilt.py` 承载并继续通过 `research_simple_baselines.py` 委托注册；外部 command surface 和数据流保持兼容。
+- 验证命令与结果：
+  - `python -m pytest -n 16 --dist loadfile tests/test_equal_risk_growth_tilt.py tests/test_equal_risk_growth_research_restart.py tests/test_documentation_contract.py tests/test_task_register_consistency.py`：PASS，17 passed。
+  - `python -m ai_trading_system.cli research strategies growth-research-framing-correction --help`：PASS，output-only adapter 命令仍在原路径下可见。
+  - `python -m ai_trading_system.cli research strategies equal-risk-growth-tilt-objective-contract --help`：PASS，config adapter 参数和默认路径仍可见。
+  - `python -m ai_trading_system.cli research strategies equal-risk-cap-floor-tilt-search --help`：PASS，data adapter 参数和默认路径仍可见。
+  - `python -m ai_trading_system.cli research strategies growth-tilt-owner-decision-pack --help`：PASS，doc adapter 参数和默认路径仍可见。
+  - `python -m ai_trading_system.cli research strategies roadmap-update-after-growth-tilt-review --help`：PASS，roadmap adapter 参数和默认路径仍可见。
+  - `python -m ruff check src\ai_trading_system\cli_commands\research_simple_baselines.py src\ai_trading_system\cli_commands\research_growth_tilt.py`：PASS。
+  - `python -m compileall src\ai_trading_system\cli_commands\research_simple_baselines.py src\ai_trading_system\cli_commands\research_growth_tilt.py`：PASS。
+  - `python -m ai_trading_system.cli docs validate-freshness`：初次 FAIL，发现 3 个新增 requirements 文档缺少 `最后更新` 元数据；已登记 TRADING-1086、补齐元数据并复验 PASS，406 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py tests/test_task_register_consistency.py`：PASS，10 passed。
+  - `git diff --check`：PASS。
+- 遇到的 blocker：无。Docs freshness 初次失败属于本轮增量文档有效性缺口，已按 task register discipline 登记 TRADING-1086 并修复；未降低 docs freshness 规则，未创建 waiver。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `research_simple_baselines.py` 中 Layer-1 / Layer-2 / controlled-growth command adapter 边界、`equal_risk_growth_tilt.py` 的 search/build/report helper 边界，以及 roadmap/growth component adapter 是否需要进一步拆分；不得在同一低风险切片中改变投资解释或报告契约。
+- 本轮重构实现提交 SHA：待回填。
+
 ## 2026-06-25 Daily Incremental Refactor
 
 - 检查时间：2026-06-25 08:04 Asia/Tokyo。

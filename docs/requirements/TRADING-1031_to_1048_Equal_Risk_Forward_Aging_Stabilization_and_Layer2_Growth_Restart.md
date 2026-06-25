@@ -1,5 +1,7 @@
 # TRADING-1031 to 1048 Equal-Risk Forward-Aging Stabilization and Layer-2 Growth Restart
 
+最后更新：2026-06-26
+
 ## 背景
 
 TRADING-1024 to 1030 已将 Layer-1 simple-rule selector 归档为 dry-run only，并将

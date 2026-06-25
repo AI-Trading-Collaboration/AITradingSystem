@@ -1,5 +1,7 @@
 # TRADING-1049 to 1056 Equal-Risk Growth V2 Real-Run Result Convergence
 
+最后更新：2026-06-26
+
 ## Background
 
 TRADING-1031 to 1048 implemented the research-only equal-risk forward-aging
