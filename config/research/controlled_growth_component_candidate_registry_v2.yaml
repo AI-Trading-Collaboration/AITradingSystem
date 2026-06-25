@@ -1,0 +1,322 @@
+schema_version: 1
+policy_id: controlled_growth_component_candidate_registry_v2
+policy_metadata:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Restart Layer-2 growth component research after the Layer-1 selector archive,
+    using stricter beta, TQQQ, turnover, drawdown, period-split and owner-review
+    standards than the prior QQQ-plus growth challenger line.
+  intended_effect: >
+    Provide an auditable candidate universe and policy contract for controlled
+    growth components without admitting any candidate to paper-shadow,
+    production, broker action or the formal Layer-2 component pool.
+  validation_evidence: >
+    TRADING-1031 to 1048 focused tests cover registry review, beta-adjusted
+    edge, candidate searches, attribution, period/drawdown validation,
+    cost/turnover sensitivity, readiness gate, owner decision and roadmap
+    reports.
+  review_condition: >
+    Reopen before changing any component-ready threshold, allowing a growth
+    candidate into the formal pool, or using the results for paper-shadow or
+    production interpretation.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+  uses_options: false
+  uses_margin: false
+excluded_paths:
+  - restore_old_qqq_plus_growth_as_selectable
+  - tqqq_heavy_mainline
+  - LEAPS
+  - Wheel
+  - tail_risk_fallback
+  - options_overlay
+research_policy:
+  annualization_trading_days: 252
+  monthly_trading_days: 21
+  required_price_tickers:
+    - QQQ
+    - TQQQ
+    - SGOV
+  required_rate_series:
+    - DGS2
+    - DGS10
+    - DTWEXBGS
+  moving_average_windows:
+    short: 100
+    long: 200
+  realized_vol_windows:
+    short: 20
+    medium: 60
+    long: 120
+  rolling_high_windows:
+    long: 252
+  equal_risk:
+    min_weight: 0.10
+    max_weight: 0.90
+  objective_contract:
+    policy_id: controlled_growth_objective_contract_v2
+    primary_benchmark: 100_qqq
+    secondary_benchmarks:
+      - equal_risk_qqq_sgov
+      - qqq_60_sgov_40
+      - qqq_50_sgov_50
+    annual_return_edge_min: 0.01
+    annual_return_edge_material: 0.02
+    max_drawdown_multiplier_vs_qqq: 1.05
+    turnover_acceptability_limit: 1.00
+    max_regime_win_concentration: 0.50
+    minimum_period_observations: 20
+    rationale: >
+      Pilot research hurdle for controlled component review. It is a stricter
+      review filter than the prior QQQ-plus growth line, not a production
+      threshold.
+  candidate_limits:
+    max_tqqq_weight: 0.25
+    max_effective_qqq_exposure: 1.50
+    max_effective_qqq_beta: 1.50
+    minimum_holding_period_trading_days: 20
+    max_switches_per_year: 4
+    max_growth_watchlist_size: 1
+  beta_adjusted_edge_contract:
+    max_beta_explained_edge_share: 0.50
+    drawdown_penalty_weight: 0.50
+    turnover_penalty_weight: 0.01
+    path_dependency_penalty_weight: 0.25
+    net_edge_minimum: 0.005
+    rationale: >
+      Descriptive beta-adjusted edge scoring for research prioritization only.
+      It blocks pure beta explanations from being interpreted as material
+      component edge.
+  edge_significance:
+    annual_return_weight: 1.00
+    calmar_weight: 0.02
+    sharpe_weight: 0.01
+    drawdown_penalty_weight: 0.50
+    turnover_penalty_weight: 0.01
+    tqqq_path_dependency_penalty_weight: 0.25
+    complexity_penalty_weight: 0.25
+    material_score_threshold: 0.015
+    weak_score_threshold: 0.005
+    rationale: >
+      Pilot ranking score for review sequencing only; it is not calibrated for
+      promotion, paper-shadow or production.
+  complexity_penalties:
+    benchmark: 0.00
+    qqq_capped_tqqq_overlay: 0.10
+    volatility_targeted_qqq_tqqq_sgov: 0.25
+    drawdown_guarded_growth_allocation: 0.25
+    trend_confirmed_growth_allocation: 0.20
+    low_turnover_growth_blend: 0.15
+    risk_budgeted_growth_component: 0.15
+    other_growth: 0.20
+  trend_gated_policy:
+    volatility_percentile_window: 252
+    volatility_percentile_cutoff: 0.80
+    drawdown_warning_threshold: -0.05
+    drawdown_block_threshold: -0.10
+  volatility_targeted_search:
+    target_vol:
+      - 0.15
+      - 0.18
+      - 0.20
+      - 0.22
+    realized_vol_window:
+      - 20
+      - 60
+      - 120
+    max_tqqq_weight:
+      - 0.10
+      - 0.15
+      - 0.20
+      - 0.25
+    min_sgov_weight:
+      - 0.00
+      - 0.10
+      - 0.20
+    rebalance:
+      - monthly
+      - threshold
+    threshold_rebalance_band: 0.05
+  drawdown_guarded_policy:
+    reduce_tqqq_threshold: -0.05
+    zero_tqqq_threshold: -0.10
+    defensive_mode_threshold: -0.15
+    restore_signal:
+      - qqq_above_100dma
+      - qqq_above_200dma
+  cost_turnover_sensitivity:
+    max_annual_return_degradation: 0.01
+    cost_bps:
+      zero_cost: 0.0
+      low_cost: 1.0
+      medium_cost: 5.0
+      high_cost: 15.0
+    execution_lag_penalty:
+      one_day_lag: 0.002
+      two_day_lag: 0.004
+    rebalance_penalty:
+      monthly_rebalance: 0.000
+      threshold_rebalance: 0.002
+  readiness_gate:
+    max_drawdown_floor: -0.40
+    require_beta_adjusted_edge: true
+    require_period_not_concentrated: true
+    require_data_quality_pass: true
+candidate_types:
+  - qqq_capped_tqqq_overlay
+  - volatility_targeted_qqq_tqqq_sgov
+  - drawdown_guarded_growth_allocation
+  - trend_confirmed_growth_allocation
+  - low_turnover_growth_blend
+  - risk_budgeted_growth_component
+periods:
+  - period_id: 2022_rate_hike_bear_market
+    start: 2022-01-01
+    end: 2022-12-31
+  - period_id: 2023_recovery
+    start: 2023-01-01
+    end: 2023-12-31
+  - period_id: 2024_ai_rally
+    start: 2024-01-01
+    end: 2024-12-31
+  - period_id: 2025_to_latest
+    start: 2025-01-01
+    end: latest
+  - period_id: high_rate_sgov_carry_period
+    start: 2022-12-01
+    end: latest
+drawdown_replay_periods:
+  - episode_id: 2022_rate_hike_bear
+    start: 2022-01-03
+    end: 2022-12-30
+  - episode_id: 2023_recovery
+    start: 2023-01-03
+    end: 2023-12-29
+  - episode_id: 2024_ai_rally
+    start: 2024-01-02
+    end: 2024-12-31
+benchmarks:
+  - strategy_id: 100_qqq
+    display_name: 100% QQQ
+    candidate_role: primary_benchmark
+    candidate_type: benchmark
+    target_weights: {QQQ: 1.00}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_60_sgov_40
+    display_name: 60% QQQ + 40% SGOV
+    candidate_role: secondary_benchmark
+    candidate_type: benchmark
+    target_weights: {QQQ: 0.60, SGOV: 0.40}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_50_sgov_50
+    display_name: 50% QQQ + 50% SGOV
+    candidate_role: secondary_benchmark
+    candidate_type: benchmark
+    target_weights: {QQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+  - strategy_id: equal_risk_qqq_sgov
+    display_name: equal-risk QQQ / SGOV
+    candidate_role: defensive_primary
+    candidate_type: defensive_comparator
+    target_weights: {QQQ: 0.50, SGOV: 0.50}
+    rebalance_frequency: monthly
+    special_policy: equal_risk
+static_tqqq_sgov_baselines: []
+controlled_tqqq_overlay_candidates:
+  - strategy_id: qqq_70_tqqq_10_sgov_20
+    display_name: QQQ 70% + TQQQ 10% + SGOV 20%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.70, TQQQ: 0.10, SGOV: 0.20}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_80_tqqq_10_sgov_10
+    display_name: QQQ 80% + TQQQ 10% + SGOV 10%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.80, TQQQ: 0.10, SGOV: 0.10}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_60_tqqq_15_sgov_25
+    display_name: QQQ 60% + TQQQ 15% + SGOV 25%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.60, TQQQ: 0.15, SGOV: 0.25}
+    rebalance_frequency: monthly
+trend_gated_leverage_candidates:
+  - strategy_id: trend_confirmed_growth_blend
+    display_name: Trend-confirmed growth blend
+    candidate_role: growth_challenger
+    candidate_type: trend_confirmed_growth_allocation
+    special_policy: trend_gated_leverage
+    risk_on_weights: {QQQ: 0.65, TQQQ: 0.15, SGOV: 0.20}
+    neutral_weights: {QQQ: 0.65, SGOV: 0.35}
+    risk_off_weights: {QQQ: 0.25, SGOV: 0.75}
+    rebalance_frequency: threshold
+drawdown_guarded_growth_candidates:
+  - strategy_id: drawdown_guarded_growth_blend
+    display_name: Drawdown-guarded growth blend
+    candidate_role: growth_challenger
+    candidate_type: drawdown_guarded_growth_allocation
+    risk_on_weights: {QQQ: 0.65, TQQQ: 0.15, SGOV: 0.20}
+    warning_weights: {QQQ: 0.65, TQQQ: 0.05, SGOV: 0.30}
+    block_weights: {QQQ: 0.55, SGOV: 0.45}
+    defensive_weights: {QQQ: 0.20, SGOV: 0.80}
+    rebalance_frequency: threshold
+low_turnover_controlled_growth_candidates:
+  - strategy_id: qqq_70_tqqq_10_sgov_20
+    display_name: QQQ 70% + TQQQ 10% + SGOV 20%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.70, TQQQ: 0.10, SGOV: 0.20}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_80_tqqq_10_sgov_10
+    display_name: QQQ 80% + TQQQ 10% + SGOV 10%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.80, TQQQ: 0.10, SGOV: 0.10}
+    rebalance_frequency: monthly
+  - strategy_id: qqq_60_tqqq_15_sgov_25
+    display_name: QQQ 60% + TQQQ 15% + SGOV 25%
+    candidate_role: growth_challenger
+    candidate_type: qqq_capped_tqqq_overlay
+    target_weights: {QQQ: 0.60, TQQQ: 0.15, SGOV: 0.25}
+    rebalance_frequency: monthly
+  - strategy_id: trend_confirmed_growth_blend
+    display_name: Trend-confirmed growth blend
+    candidate_role: growth_challenger
+    candidate_type: trend_confirmed_growth_allocation
+    special_policy: trend_gated_leverage
+    risk_on_weights: {QQQ: 0.65, TQQQ: 0.15, SGOV: 0.20}
+    neutral_weights: {QQQ: 0.65, SGOV: 0.35}
+    risk_off_weights: {QQQ: 0.25, SGOV: 0.75}
+    rebalance_frequency: threshold
+  - strategy_id: volatility_capped_growth_blend
+    display_name: Volatility-capped growth blend
+    candidate_role: growth_challenger
+    candidate_type: volatility_targeted_qqq_tqqq_sgov
+    target_vol: 0.18
+    realized_vol_window: 60
+    max_tqqq_weight: 0.15
+    min_sgov_weight: 0.20
+    rebalance_frequency: threshold
+  - strategy_id: drawdown_guarded_growth_blend
+    display_name: Drawdown-guarded growth blend
+    candidate_role: growth_challenger
+    candidate_type: drawdown_guarded_growth_allocation
+    risk_on_weights: {QQQ: 0.65, TQQQ: 0.15, SGOV: 0.20}
+    warning_weights: {QQQ: 0.65, TQQQ: 0.05, SGOV: 0.30}
+    block_weights: {QQQ: 0.55, SGOV: 0.45}
+    defensive_weights: {QQQ: 0.20, SGOV: 0.80}
+    rebalance_frequency: threshold

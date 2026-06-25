@@ -30,6 +30,7 @@ from ai_trading_system.simple_baseline_forward_aging import (
     PRIMARY_CANDIDATE_ID,
     run_simple_baseline_forward_aging_scoreboard,
     run_simple_baseline_forward_aging_update_maturity,
+    run_simple_baseline_forward_aging_write_observation,
 )
 from ai_trading_system.simple_baseline_portfolio_control import (
     DEFAULT_MARKETSTACK_PRICES_PATH,
@@ -661,6 +662,439 @@ def run_equal_risk_forward_aging_scoreboard_first_window_review(
     return payload
 
 
+def run_equal_risk_forward_aging_scheduler_integration(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    decision_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    resolved_date = decision_date or _safe_date(data_gate.get("as_of")) or as_of_date
+    blockers: list[str] = []
+    warnings: list[str] = []
+    writer_payload: dict[str, Any] = {}
+    observation_write_status = "NOT_ATTEMPTED"
+    observation_written = False
+
+    if resolved_date is None:
+        blockers.append("unable_to_resolve_scheduler_date")
+    elif not us_equity_market_session(resolved_date).is_trading_day:
+        warnings.append("non_trading_day_no_observation_written")
+        observation_write_status = "NON_TRADING_DAY_SKIPPED"
+    elif not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+        observation_write_status = "DATA_QUALITY_BLOCKED"
+    else:
+        writer_payload = run_simple_baseline_forward_aging_write_observation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            decision_date=resolved_date,
+        )
+        observation_write_status = str(writer_payload.get("status") or "UNKNOWN")
+        observation_written = observation_write_status == "OBSERVATION_WRITTEN"
+        if observation_write_status == "MARKET_DATA_MISSING":
+            blockers.append("observation_writer_data_missing")
+        elif observation_write_status not in {
+            "OBSERVATION_WRITTEN",
+            "OBSERVATION_ALREADY_EXISTS",
+        }:
+            warnings.append(f"unexpected_observation_writer_status:{observation_write_status}")
+
+    if blockers:
+        status = "SCHEDULER_INTEGRATION_BLOCKED"
+    elif warnings:
+        status = "SCHEDULER_INTEGRATION_WARN"
+    else:
+        status = "SCHEDULER_INTEGRATION_READY"
+
+    payload = _payload(
+        report_type="equal_risk_forward_aging_scheduler_integration",
+        title="Equal-Risk Forward-Aging Scheduler Integration",
+        status=status,
+        summary={
+            "scheduler_integration_status": status,
+            "decision_date": resolved_date.isoformat() if resolved_date else None,
+            "is_trading_day": (
+                us_equity_market_session(resolved_date).is_trading_day
+                if resolved_date
+                else False
+            ),
+            "observation_write_status": observation_write_status,
+            "observation_written": observation_written,
+            "data_quality_status": data_gate.get("status"),
+            **_safety_summary(),
+        },
+        scheduler_integration_status=status,
+        decision_date=resolved_date.isoformat() if resolved_date else None,
+        observation_write_status=observation_write_status,
+        observation_written=observation_written,
+        idempotency_status=(
+            "already_exists_no_rewrite"
+            if observation_write_status == "OBSERVATION_ALREADY_EXISTS"
+            else "write_attempted_once" if observation_written else "no_write"
+        ),
+        data_quality=data_gate,
+        writer_artifact_paths=writer_payload.get("artifact_paths", {}),
+        warnings=warnings,
+        blockers=blockers,
+        broker_action="none",
+        report_registry_entry=_report_registry_entry(
+            "equal_risk_forward_aging_scheduler_integration",
+            "Equal-Risk Forward-Aging Scheduler Integration",
+            "aits research strategies equal-risk-forward-aging-scheduler-integration",
+            [
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_forward_aging_scheduler_integration.json",
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_forward_aging_scheduler_integration.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, "equal_risk_forward_aging_scheduler_integration")
+    return payload
+
+
+def run_equal_risk_observation_continuity_check(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    observations = _observation_payload_records(output_root)
+    actual_dates = sorted({item["decision_date"] for item in observations if item["decision_date"]})
+    latest_date = max(actual_dates) if actual_dates else None
+    price_dates = _qqq_price_dates(prices_path)
+    resolved_as_of = _safe_date(data_gate.get("as_of")) or as_of_date
+    expected_dates = _expected_observation_dates(actual_dates, price_dates, resolved_as_of)
+    missing_dates = sorted(set(expected_dates) - set(actual_dates))
+    duplicate_dates = _duplicate_observation_dates(observations)
+    invalid_artifacts = _invalid_observation_artifacts(observations)
+    replacement_count = sum(
+        1
+        for item in observations
+        if _mapping(item["payload"].get("previous_invalid_artifact"))
+    )
+    unsafe_rows = _unsafe_observation_rows(observations)
+    warnings: list[str] = []
+    blockers: list[str] = []
+    if not actual_dates:
+        warnings.append("no_observations_found")
+    if missing_dates:
+        warnings.append("missing_trading_day_observations")
+    if replacement_count:
+        warnings.append("previous_invalid_artifact_replacements_detected")
+    if duplicate_dates:
+        blockers.append("duplicate_observation_dates")
+    if invalid_artifacts:
+        blockers.append("invalid_observation_artifacts")
+    if unsafe_rows:
+        blockers.append("unsafe_observation_safety_fields")
+    if not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+
+    if blockers:
+        status = "OBSERVATION_CONTINUITY_BLOCKED"
+    elif warnings or _int(data_gate.get("warning_count")):
+        status = "OBSERVATION_CONTINUITY_WARN"
+    else:
+        status = "OBSERVATION_CONTINUITY_HEALTHY"
+
+    payload = _payload(
+        report_type="equal_risk_observation_continuity_check",
+        title="Equal-Risk Observation Continuity Check",
+        status=status,
+        summary={
+            "latest_observation_date": latest_date.isoformat() if latest_date else None,
+            "expected_trading_date_count": len(expected_dates),
+            "actual_observation_date_count": len(actual_dates),
+            "missing_observation_date_count": len(missing_dates),
+            "duplicate_observation_date_count": len(duplicate_dates),
+            "invalid_artifact_count": len(invalid_artifacts),
+            "previous_invalid_artifact_replacement_count": replacement_count,
+            "data_quality_status": data_gate.get("status"),
+            **_safety_summary(),
+        },
+        latest_observation_date=latest_date.isoformat() if latest_date else None,
+        expected_trading_dates=[item.isoformat() for item in expected_dates],
+        actual_observation_dates=[item.isoformat() for item in actual_dates],
+        missing_observation_dates=[item.isoformat() for item in missing_dates],
+        duplicate_observation_dates=[item.isoformat() for item in duplicate_dates],
+        invalid_artifact_count=len(invalid_artifacts),
+        invalid_artifacts=invalid_artifacts,
+        previous_invalid_artifact_replacement_count=replacement_count,
+        data_quality_status=data_gate.get("status"),
+        data_quality=data_gate,
+        unsafe_observation_rows=unsafe_rows,
+        warnings=warnings,
+        blockers=blockers,
+        report_registry_entry=_report_registry_entry(
+            "equal_risk_observation_continuity_check",
+            "Equal-Risk Observation Continuity Check",
+            "aits research strategies equal-risk-observation-continuity-check",
+            [
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_observation_continuity_check.json",
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_observation_continuity_check.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, "equal_risk_observation_continuity_check")
+    return payload
+
+
+def run_equal_risk_first_maturity_monitor(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    maturity = run_equal_risk_forward_aging_maturity_update_check(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+    )
+    counts = {
+        "matured_5d_count": _int(maturity.get("matured_5d_count")),
+        "matured_10d_count": _int(maturity.get("matured_10d_count")),
+        "matured_20d_count": _int(maturity.get("matured_20d_count")),
+        "matured_60d_count": _int(maturity.get("matured_60d_count")),
+        "matured_120d_count": _int(maturity.get("matured_120d_count")),
+    }
+    blockers = _text_list(maturity.get("blockers"))
+    warnings = _text_list(maturity.get("warnings"))
+    if maturity.get("status") == "MATURITY_UPDATE_BLOCKED":
+        status = "FIRST_MATURITY_BLOCKED"
+    elif blockers:
+        status = "FIRST_MATURITY_BLOCKED"
+    elif _int(maturity.get("data_missing_count")):
+        status = "FIRST_MATURITY_WARN"
+    elif _sum_matured(counts) == 0:
+        status = "FIRST_MATURITY_PENDING"
+    else:
+        status = "FIRST_MATURITY_MONITOR_READY"
+    payload = _payload(
+        report_type="equal_risk_first_maturity_monitor",
+        title="Equal-Risk First Maturity Monitor",
+        status=status,
+        summary={
+            **counts,
+            "pending_windows": _int(maturity.get("pending_window_count")),
+            "data_missing_windows": _int(maturity.get("data_missing_count")),
+            "maturity_update_status": maturity.get("status"),
+            **_safety_summary(),
+        },
+        **counts,
+        pending_windows=_int(maturity.get("pending_window_count")),
+        data_missing_windows=_int(maturity.get("data_missing_count")),
+        maturity_update_status=maturity.get("status"),
+        original_target_weights_rewritten=maturity.get("original_target_weights_rewritten"),
+        original_signal_inputs_rewritten=maturity.get("original_signal_inputs_rewritten"),
+        definition_hash_rewritten=maturity.get("definition_hash_rewritten"),
+        source_artifacts={"maturity_update_check": maturity.get("artifact_paths", {})},
+        warnings=warnings,
+        blockers=blockers,
+        report_registry_entry=_report_registry_entry(
+            "equal_risk_first_maturity_monitor",
+            "Equal-Risk First Maturity Monitor",
+            "aits research strategies equal-risk-first-maturity-monitor",
+            [
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_first_maturity_monitor.json",
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_first_maturity_monitor.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, "equal_risk_first_maturity_monitor")
+    return payload
+
+
+def run_equal_risk_forward_aging_scoreboard_safety_gate(
+    *,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    config = _load_registry(config_path)
+    scoreboard_review = run_equal_risk_forward_aging_scoreboard_first_window_review(
+        config_path=config_path,
+        output_root=output_root,
+    )
+    policy = _mapping(_mapping(config.get("research_policy")).get("forward_aging"))
+    minimums = {
+        "minimum_20d_required": _int(
+            policy.get("minimum_20d_matured_observations_for_initial_review")
+        ),
+        "minimum_60d_required": _int(
+            policy.get("minimum_60d_matured_observations_for_weak_review")
+        ),
+        "minimum_120d_required": _int(
+            policy.get("minimum_120d_matured_observations_for_paper_shadow_review")
+        ),
+    }
+    counts = {
+        "matured_5d_count": _int(scoreboard_review.get("matured_5d_count")),
+        "matured_10d_count": _int(scoreboard_review.get("matured_10d_count")),
+        "matured_20d_count": _int(scoreboard_review.get("matured_20d_count")),
+        "matured_60d_count": _int(scoreboard_review.get("matured_60d_count")),
+        "matured_120d_count": _int(scoreboard_review.get("matured_120d_count")),
+    }
+    readiness_blockers: list[str] = []
+    warning_reasons: list[str] = []
+    if counts["matured_20d_count"] < minimums["minimum_20d_required"]:
+        readiness_blockers.append("20d_matured_count_below_minimum")
+    if counts["matured_60d_count"] < minimums["minimum_60d_required"]:
+        readiness_blockers.append("medium_horizon_readiness_blocked_by_60d_sample")
+    if counts["matured_120d_count"] < minimums["minimum_120d_required"]:
+        readiness_blockers.append("paper_shadow_review_blocked_by_120d_sample")
+    if scoreboard_review.get("status") == "EQUAL_RISK_SCOREBOARD_BLOCKED":
+        readiness_blockers.append("source_scoreboard_blocked")
+    source_scoreboard_ready = (
+        scoreboard_review.get("status") == "EQUAL_RISK_SCOREBOARD_READY_FOR_RESEARCH_ONLY"
+    )
+    if not readiness_blockers and not source_scoreboard_ready:
+        warning_reasons.append("source_scoreboard_not_ready_for_research_only")
+    scoreboard_status = "INSUFFICIENT" if readiness_blockers else "RESEARCH_ONLY_READY"
+    if "source_scoreboard_blocked" in readiness_blockers:
+        status = "SCOREBOARD_SAFETY_BLOCKED"
+    elif readiness_blockers:
+        status = "SCOREBOARD_INSUFFICIENT_SAMPLE"
+    else:
+        status = "SCOREBOARD_SAFETY_PASS"
+    payload = _payload(
+        report_type="equal_risk_forward_aging_scoreboard_safety_gate",
+        title="Equal-Risk Forward-Aging Scoreboard Safety Gate",
+        status=status,
+        summary={
+            "scoreboard_status": scoreboard_status,
+            **counts,
+            **minimums,
+            "readiness_blocker_count": len(readiness_blockers),
+            **_safety_summary(),
+        },
+        scoreboard_status=scoreboard_status,
+        matured_counts=counts,
+        minimum_required_counts=minimums,
+        readiness_blockers=readiness_blockers,
+        warning_reasons=warning_reasons,
+        paper_shadow_allowed=False,
+        production_allowed=False,
+        broker_action="none",
+        source_artifacts={"scoreboard_review": scoreboard_review.get("artifact_paths", {})},
+        report_registry_entry=_report_registry_entry(
+            "equal_risk_forward_aging_scoreboard_safety_gate",
+            "Equal-Risk Forward-Aging Scoreboard Safety Gate",
+            "aits research strategies equal-risk-forward-aging-scoreboard-safety-gate",
+            [
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_forward_aging_scoreboard_safety_gate.json",
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_forward_aging_scoreboard_safety_gate.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, "equal_risk_forward_aging_scoreboard_safety_gate")
+    return payload
+
+
+def run_equal_risk_reader_brief_live_summary(
+    *,
+    config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    scoreboard_gate = run_equal_risk_forward_aging_scoreboard_safety_gate(
+        config_path=config_path,
+        output_root=output_root,
+    )
+    observations = _observation_payload_records(output_root)
+    actual_dates = sorted({item["decision_date"] for item in observations if item["decision_date"]})
+    latest_date = max(actual_dates) if actual_dates else None
+    matured_counts = _mapping(scoreboard_gate.get("matured_counts"))
+    summary_payload = {
+        "primary_candidate": PRIMARY_CANDIDATE_ID,
+        "latest_observation_date": latest_date.isoformat() if latest_date else None,
+        "matured_5d_count": _int(matured_counts.get("matured_5d_count")),
+        "matured_20d_count": _int(matured_counts.get("matured_20d_count")),
+        "matured_60d_count": _int(matured_counts.get("matured_60d_count")),
+        "matured_120d_count": _int(matured_counts.get("matured_120d_count")),
+        "scoreboard_status": scoreboard_gate.get("scoreboard_status"),
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+    }
+    prohibited_hits = _prohibited_reader_brief_hits(summary_payload)
+    blockers = []
+    warnings = []
+    if prohibited_hits:
+        blockers.append("prohibited_reader_brief_phrase_detected")
+    if not latest_date:
+        warnings.append("latest_observation_missing")
+    if scoreboard_gate.get("status") == "SCOREBOARD_SAFETY_BLOCKED":
+        blockers.append("scoreboard_safety_blocked")
+    if blockers:
+        status = "READER_BRIEF_EQUAL_RISK_SUMMARY_BLOCKED"
+    elif warnings:
+        status = "READER_BRIEF_EQUAL_RISK_SUMMARY_AMBIGUOUS"
+    else:
+        status = "READER_BRIEF_EQUAL_RISK_SUMMARY_SAFE"
+    payload = _payload(
+        report_type="equal_risk_reader_brief_live_summary",
+        title="Equal-Risk Reader Brief Live Summary",
+        status=status,
+        summary={**summary_payload, **_safety_summary()},
+        equal_risk_forward_aging_summary=summary_payload,
+        prohibited_phrase_hits=prohibited_hits,
+        warnings=warnings,
+        blockers=blockers,
+        source_artifacts={"scoreboard_safety_gate": scoreboard_gate.get("artifact_paths", {})},
+        report_registry_entry=_report_registry_entry(
+            "equal_risk_reader_brief_live_summary",
+            "Equal-Risk Reader Brief Live Summary",
+            "aits research strategies equal-risk-reader-brief-live-summary",
+            [
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_reader_brief_live_summary.json",
+                "outputs/research_strategies/simple_baselines/"
+                "equal_risk_reader_brief_live_summary.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, "equal_risk_reader_brief_live_summary")
+    return payload
+
+
 def run_layer2_growth_component_gap_review(
     *,
     config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
@@ -946,8 +1380,9 @@ def _report_registry_entry(
         "artifact_selection_policy": "latest_available",
         "freshness_sla_days": 30,
         "freshness_rationale": (
-            "TRADING-1024 to 1030 artifacts summarize research-only archive, "
-            "forward-aging health, and roadmap state after Layer-1 final gate."
+            "Research-roadmap and equal-risk stabilization artifacts summarize "
+            "research-only archive, forward-aging health, and roadmap state after "
+            "Layer-1 final gate."
         ),
         "owner_action": "review_research_only_roadmap_state",
         "include_in_reader_brief": False,
@@ -972,6 +1407,12 @@ def _safety_summary() -> dict[str, Any]:
         "broker_action": "none",
         "manual_review_required": True,
     }
+
+
+def _text_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item)]
 
 
 def _source_blocked(sources: list[Mapping[str, Any]]) -> list[str]:
@@ -1076,6 +1517,55 @@ def _missing_observation_dates(
     return sorted(expected - set(observed_dates))
 
 
+def _expected_observation_dates(
+    observed_dates: list[date],
+    price_dates: set[date],
+    as_of_date: date | None,
+) -> list[date]:
+    if not observed_dates or as_of_date is None:
+        return []
+    start = min(observed_dates)
+    return sorted(
+        item
+        for item in price_dates
+        if start <= item <= as_of_date and us_equity_market_session(item).is_trading_day
+    )
+
+
+def _duplicate_observation_dates(observations: list[Mapping[str, Any]]) -> list[date]:
+    counts = Counter(
+        item["decision_date"] for item in observations if item.get("decision_date") is not None
+    )
+    return sorted(item for item, count in counts.items() if count > 1)
+
+
+def _invalid_observation_artifacts(
+    observations: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    invalid = []
+    valid_statuses = {
+        "OBSERVATION_WRITTEN",
+        "OBSERVATION_ALREADY_EXISTS",
+    }
+    for item in observations:
+        payload = _mapping(item.get("payload"))
+        rows = _records(payload.get("observations"))
+        if (
+            payload.get("report_type") != "simple_baseline_forward_aging_write_observation"
+            or payload.get("status") not in valid_statuses
+            or not rows
+        ):
+            invalid.append(
+                {
+                    "path": str(item.get("path")),
+                    "status": payload.get("status"),
+                    "report_type": payload.get("report_type"),
+                    "observation_row_count": len(rows),
+                }
+            )
+    return invalid
+
+
 def _unsafe_observation_rows(observations: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     unsafe = []
     for item in observations:
@@ -1093,6 +1583,12 @@ def _unsafe_observation_rows(observations: list[Mapping[str, Any]]) -> list[dict
                     }
                 )
     return unsafe
+
+
+def _prohibited_reader_brief_hits(payload: Mapping[str, Any]) -> list[str]:
+    prohibited = ("建议买入", "建议卖出", "应调仓", "目标实盘仓位", "真实交易建议")
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    return [phrase for phrase in prohibited if phrase in raw]
 
 
 def _observation_core_hashes_by_path(output_root: Path) -> dict[str, dict[str, str]]:
