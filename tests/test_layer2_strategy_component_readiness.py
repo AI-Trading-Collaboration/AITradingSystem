@@ -41,6 +41,9 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
+from ai_trading_system.research_roadmap_stabilization import (
+    run_layer2_growth_component_gap_review,
+)
 
 LAYER2_REPORT_IDS = {
     "layer2_component_readiness_reconciliation",
@@ -72,6 +75,7 @@ LAYER2_REPORT_IDS = {
     "layer1_research_owner_decision_pack",
     "layer1_reader_brief_safety_preview",
     "layer1_meta_policy_master_review",
+    "layer2_growth_component_gap_review",
 }
 
 
@@ -441,6 +445,40 @@ def test_layer2_selector_headroom_first_batch_preserves_research_boundary(
     )
     assert result.exit_code == 0, result.output
     assert (output_root / "layer2_selector_headroom_oracle_review.json").exists()
+
+
+def test_layer2_growth_component_gap_review_preserves_inactive_growth_reference(
+    tmp_path: Path,
+) -> None:
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+
+    payload = run_layer2_growth_component_gap_review(output_root=output_root)
+
+    assert payload["status"] == "GROWTH_COMPONENT_GAP_CONFIRMED"
+    assert payload["growth_component_gap_status"] == "GROWTH_COMPONENT_GAP_CONFIRMED"
+    assert payload["required_answers"]["1_component_ready_growth_component_exists"] is False
+    assert payload["required_answers"]["4_need_continue_controlled_growth_component_search"] is True
+    assert payload["required_answers"]["6_continue_pause_tqqq_heavy"] is True
+    assert payload["required_answers"]["7_continue_block_leaps_wheel"] is True
+    assert payload["current_growth_candidates"]
+    assert payload["paper_shadow_allowed"] is False
+    assert payload["production_allowed"] is False
+    assert payload["broker_action"] == "none"
+    assert Path(payload["artifact_paths"]["json_path"]).exists()
+    assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "layer2-growth-component-gap-review",
+            "--output-root",
+            str(output_root),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output_root / "layer2_growth_component_gap_review.json").exists()
 
 
 def test_layer1_meta_policy_readiness_builders_are_research_only(tmp_path: Path) -> None:

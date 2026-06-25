@@ -46,6 +46,17 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
+from ai_trading_system.research_roadmap_stabilization import (
+    run_equal_risk_forward_aging_daily_run_health_check,
+    run_equal_risk_forward_aging_maturity_update_check,
+    run_equal_risk_forward_aging_scoreboard_first_window_review,
+    run_layer1_selector_dry_run_archive_report,
+    run_layer1_selector_restart_condition_contract,
+    run_research_roadmap_master_review,
+)
+from ai_trading_system.simple_baseline_forward_aging import (
+    run_simple_baseline_forward_aging_write_observation,
+)
 
 NEW_REPORT_IDS = {
     "layer1_simple_rule_selector_registry_review",
@@ -93,6 +104,14 @@ LOW_TURNOVER_FINAL_GATE_REPORT_IDS = {
     "layer1_selector_forward_aging_watchlist_final_review",
     "layer1_selector_pause_or_continue_owner_pack",
 }
+LAYER1_ARCHIVE_STABILIZATION_REPORT_IDS = {
+    "layer1_selector_dry_run_archive_report",
+    "layer1_selector_restart_condition_contract",
+    "equal_risk_forward_aging_daily_run_health_check",
+    "equal_risk_forward_aging_maturity_update_check",
+    "equal_risk_forward_aging_scoreboard_first_window_review",
+    "research_roadmap_master_review",
+}
 
 
 def test_layer1_simple_rule_selector_registry_and_report_registry(
@@ -131,6 +150,7 @@ def test_layer1_simple_rule_selector_registry_and_report_registry(
         | RESULT_REVIEW_REPORT_IDS
         | LOW_TURNOVER_REPORT_IDS
         | LOW_TURNOVER_FINAL_GATE_REPORT_IDS
+        | LAYER1_ARCHIVE_STABILIZATION_REPORT_IDS
     )
     assert expected <= registered
     for report_id in expected:
@@ -690,6 +710,120 @@ def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
     )
     assert result_cli.exit_code == 0, result_cli.output
     assert (cli_output_root / "layer1_selector_pause_or_continue_owner_pack.json").exists()
+
+
+def test_layer1_archive_and_equal_risk_forward_aging_stabilization_outputs(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer1_caches(tmp_path)
+    layer1_output_root = tmp_path / "outputs" / "research_strategies" / "layer1_meta_policy"
+    layer2_output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+    simple_output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+    roadmap_output_root = tmp_path / "outputs" / "research_strategies"
+    docs_root = tmp_path / "docs" / "research"
+
+    run_simple_baseline_forward_aging_write_observation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=simple_output_root,
+        as_of_date=as_of,
+        decision_date=as_of,
+    )
+
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "as_of_date": as_of,
+    }
+    archive = run_layer1_selector_dry_run_archive_report(
+        **common,
+        output_root=layer1_output_root,
+        layer2_output_root=layer2_output_root,
+        archive_doc_path=docs_root / "layer1_selector_dry_run_archive_report.md",
+    )
+    restart = run_layer1_selector_restart_condition_contract(
+        output_root=layer1_output_root,
+        simple_output_root=simple_output_root,
+    )
+    health = run_equal_risk_forward_aging_daily_run_health_check(
+        **common,
+        output_root=simple_output_root,
+    )
+    maturity = run_equal_risk_forward_aging_maturity_update_check(
+        **common,
+        output_root=simple_output_root,
+    )
+    scoreboard = run_equal_risk_forward_aging_scoreboard_first_window_review(
+        output_root=simple_output_root,
+    )
+    roadmap = run_research_roadmap_master_review(
+        **common,
+        layer1_output_root=layer1_output_root,
+        simple_output_root=simple_output_root,
+        layer2_output_root=layer2_output_root,
+        output_root=roadmap_output_root,
+        roadmap_doc_path=docs_root / "research_roadmap_master_review.md",
+    )
+
+    assert archive["status"] in {
+        "LAYER1_SELECTOR_ARCHIVED_DRY_RUN_ONLY",
+        "LAYER1_SELECTOR_ARCHIVE_NEEDS_REVIEW",
+    }
+    assert archive["required_answers"]["8_continue_ban_ml_selector"] is True
+    assert restart["status"] == "RESTART_NOT_ALLOWED_NOW"
+    assert restart["restart_allowed_now"] is False
+    assert health["status"] in {
+        "EQUAL_RISK_FORWARD_AGING_HEALTHY",
+        "EQUAL_RISK_FORWARD_AGING_WARN",
+    }
+    assert health["summary"]["latest_observation_date"] == as_of.isoformat()
+    assert health["summary"]["duplicate_count"] == 0
+    assert health["summary"]["paper_shadow_allowed"] is False
+    assert maturity["status"] in {
+        "MATURITY_UPDATE_HEALTHY",
+        "MATURITY_UPDATE_PENDING",
+        "MATURITY_UPDATE_WARN",
+    }
+    assert maturity["original_target_weights_rewritten"] is False
+    assert maturity["original_signal_inputs_rewritten"] is False
+    assert maturity["definition_hash_rewritten"] is False
+    assert scoreboard["status"] in {
+        "EQUAL_RISK_SCOREBOARD_PENDING",
+        "EQUAL_RISK_SCOREBOARD_INSUFFICIENT",
+    }
+    assert scoreboard["paper_shadow_readiness_output"] is False
+    assert roadmap["status"] in {"CONTINUE_EQUAL_RISK_FORWARD_AGING", "BLOCKED"}
+    assert roadmap["required_answers"]["3_selector_forward_aging_candidate_exists"] is False
+    assert roadmap["required_answers"]["10_no_paper_shadow_no_production_no_broker"] is True
+
+    for payload in (archive, restart, health, maturity, scoreboard, roadmap):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    assert (docs_root / "layer1_selector_dry_run_archive_report.md").exists()
+    assert (docs_root / "research_roadmap_master_review.md").exists()
+
+    result_cli = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "equal-risk-forward-aging-scoreboard-first-window-review",
+            "--output-root",
+            str(simple_output_root),
+        ],
+    )
+    assert result_cli.exit_code == 0, result_cli.output
+    assert (
+        simple_output_root / "equal_risk_forward_aging_scoreboard_first_window_review.json"
+    ).exists()
 
 
 def _read_json(path: Path) -> dict[str, object]:

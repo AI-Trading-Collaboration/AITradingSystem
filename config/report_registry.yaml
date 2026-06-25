@@ -15840,3 +15840,138 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer1_selector_dry_run_archive_report
+    title: Layer-1 Selector Dry-Run Archive Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-dry-run-archive-report
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_dry_run_archive_report.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_dry_run_archive_report.md
+      - docs/research/layer1_selector_dry_run_archive_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1024 formally archives Layer-1 selector as dry-run only.
+    owner_action: review_and_accept_layer1_selector_archive_dry_run_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_restart_condition_contract
+    title: Layer-1 Selector Restart Condition Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-restart-condition-contract
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_restart_condition_contract.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_restart_condition_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1025 defines when Layer-1 selector research may restart.
+    owner_action: review_restart_conditions_before_any_layer1_selector_reopen
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_forward_aging_daily_run_health_check
+    title: Equal-Risk Forward-Aging Daily Run Health Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-forward-aging-daily-run-health-check
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_daily_run_health_check.json
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_daily_run_health_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1026 checks the research-only equal-risk forward-aging observation chain.
+    owner_action: review_equal_risk_forward_aging_health_before_interpreting_observations
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_forward_aging_maturity_update_check
+    title: Equal-Risk Forward-Aging Maturity Update Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-forward-aging-maturity-update-check
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_maturity_update_check.json
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_maturity_update_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1027 checks maturity updates without rewriting original observations.
+    owner_action: review_maturity_update_health_before_scoreboard_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_forward_aging_scoreboard_first_window_review
+    title: Equal-Risk Forward-Aging Scoreboard First Window Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-forward-aging-scoreboard-first-window-review
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_scoreboard_first_window_review.json
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_scoreboard_first_window_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1028 keeps first-window scoreboard pending or insufficient when mature samples are too small.
+    owner_action: review_scoreboard_insufficient_state_before_any_research_conclusion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer2_growth_component_gap_review
+    title: Layer-2 Growth Component Gap Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer2-growth-component-gap-review
+    artifact_globs:
+      - outputs/research_strategies/layer2_components/layer2_growth_component_gap_review.json
+      - outputs/research_strategies/layer2_components/layer2_growth_component_gap_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1029 confirms the growth component gap after Layer-1 selector archive.
+    owner_action: review_layer2_growth_component_gap_before_next_growth_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: research_roadmap_master_review
+    title: Research Roadmap Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies research-roadmap-master-review
+    artifact_globs:
+      - outputs/research_strategies/research_roadmap_master_review.json
+      - outputs/research_strategies/research_roadmap_master_review.md
+      - docs/research/research_roadmap_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1030 summarizes Layer-1 archive, equal-risk forward-aging health, and Layer-2 growth direction.
+    owner_action: review_research_roadmap_before_selecting_next_layer2_growth_task
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
