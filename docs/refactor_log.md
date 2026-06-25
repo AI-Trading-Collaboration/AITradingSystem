@@ -35,7 +35,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。Docs freshness 初次失败属于本轮增量文档有效性缺口，已按 task register discipline 登记 TRADING-1086 并修复；未降低 docs freshness 规则，未创建 waiver。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `research_simple_baselines.py` 中 Layer-1 / Layer-2 / controlled-growth command adapter 边界、`equal_risk_growth_tilt.py` 的 search/build/report helper 边界，以及 roadmap/growth component adapter 是否需要进一步拆分；不得在同一低风险切片中改变投资解释或报告契约。
-- 本轮重构实现提交 SHA：待回填。
+- 本轮重构实现提交 SHA：`69d0f598cf2bafea3ebc1c7ec7d6784dd909f141`。
 
 ## 2026-06-25 Daily Incremental Refactor
 
