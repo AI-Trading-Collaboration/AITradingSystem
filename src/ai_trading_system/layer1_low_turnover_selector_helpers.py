@@ -17,6 +17,23 @@ LOW_TURNOVER_COOLDOWN_GRID = (5, 10, 20)
 LOW_TURNOVER_MAX_SWITCHES_GRID = (3, 4, 6)
 LOW_TURNOVER_NEAR_200DMA_BAND = 0.02
 LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE = 0.02
+LOW_TURNOVER_CONSTRAINED_RISK_ON_WEIGHTS = (0.70, 0.80, 0.90)
+LOW_TURNOVER_CONSTRAINED_NEUTRAL_WEIGHTS = (0.40, 0.50, 0.60)
+LOW_TURNOVER_CONSTRAINED_RISK_OFF_WEIGHTS = (0.10, 0.20, 0.30)
+LOW_TURNOVER_CONSTRAINED_BUFFER_GRID = (0.02, 0.03, 0.05)
+LOW_TURNOVER_CONSTRAINED_CONFIRMATION_GRID = (5, 10, 20)
+SWITCH_CONTROL_CONTRACT_DEFAULTS = {
+    "version": "v1_2026_06_25_research_only",
+    "max_switches_per_year": 2,
+    "max_switches_per_3y": 6,
+    "max_turnover_per_year": 1.0,
+    "min_avg_holding_period": 60,
+    "allowed_exception_cases": [
+        "initial_allocation_state_selection",
+        "owner_approved_emergency_risk_exit",
+        "data_quality_repair_recompute_without_new_decision",
+    ],
+}
 
 _BASELINE_VARIANT_IDS = {
     "original_trend_200dma_selector",
@@ -158,6 +175,11 @@ def low_turnover_owner_decision(
         policy.get("drawdown_worsening_tolerance"),
         LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE,
     )
+    switch_control = switch_count_control_result(
+        actual_date_range=actual_date_range,
+        metrics=candidate,
+        registry_policy=policy,
+    )
     checks = [
         low_turnover_owner_check(
             "cost_after_value_preserved",
@@ -173,9 +195,11 @@ def low_turnover_owner_decision(
         ),
         low_turnover_owner_check(
             "switch_count_controlled",
-            bool(candidate.get("turnover_acceptable"))
-            and annual_switches <= _float(policy.get("max_switches_per_year"), 12),
-            "annualized switch count and total turnover stay within registry policy",
+            bool(switch_control["switch_count_controlled"]),
+            (
+                "calendar-year switches, rolling 3y switches, annual turnover, "
+                "and average holding period stay within strict contract"
+            ),
         ),
         low_turnover_owner_check(
             "drawdown_not_materially_worse",
@@ -215,6 +239,8 @@ def low_turnover_owner_decision(
         "candidate_net_return_after_cost": candidate.get("net_return_after_cost"),
         "candidate_relative_vs_equal_risk": candidate.get("relative_vs_equal_risk"),
         "candidate_relative_vs_100_qqq": candidate.get("relative_vs_100_qqq"),
+        "candidate_annualized_switches": annual_switches,
+        "candidate_switch_count_control": switch_control,
     }
 
 
@@ -228,12 +254,76 @@ def low_turnover_acceptable(
     metrics: Mapping[str, Any],
     registry_policy: Mapping[str, Any],
 ) -> bool:
-    return (
-        annualized_switches(actual_date_range, metrics)
-        <= _float(registry_policy.get("max_switches_per_year"), 12)
-        and _float(metrics.get("turnover"))
-        <= _float(registry_policy.get("max_turnover_warning"), 2.0)
+    return bool(
+        switch_count_control_result(
+            actual_date_range=actual_date_range,
+            metrics=metrics,
+            registry_policy=registry_policy,
+        )["switch_count_controlled"]
     )
+
+
+def switch_count_control_contract(registry_policy: Mapping[str, Any]) -> dict[str, Any]:
+    raw = _mapping(registry_policy.get("switch_count_control_contract"))
+    contract = dict(SWITCH_CONTROL_CONTRACT_DEFAULTS)
+    contract.update({key: value for key, value in raw.items() if value is not None})
+    contract["max_switches_per_year"] = _int_value(contract.get("max_switches_per_year"), 2)
+    contract["max_switches_per_3y"] = _int_value(contract.get("max_switches_per_3y"), 6)
+    contract["max_turnover_per_year"] = _float(contract.get("max_turnover_per_year"), 1.0)
+    contract["min_avg_holding_period"] = _int_value(contract.get("min_avg_holding_period"), 60)
+    exceptions = contract.get("allowed_exception_cases")
+    if not isinstance(exceptions, list):
+        exceptions = list(SWITCH_CONTROL_CONTRACT_DEFAULTS["allowed_exception_cases"])
+    contract["allowed_exception_cases"] = [str(value) for value in exceptions]
+    return contract
+
+
+def switch_count_control_result(
+    *,
+    actual_date_range: Mapping[str, str | None],
+    metrics: Mapping[str, Any],
+    registry_policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    contract = switch_count_control_contract(registry_policy)
+    observed = {
+        "switch_count": _int_value(metrics.get("switch_count")),
+        "annualized_switches": annualized_switches(actual_date_range, metrics),
+        "max_switches_per_year": _int_value(metrics.get("max_switches_per_year_observed")),
+        "max_switches_per_3y": _int_value(metrics.get("max_switches_per_3y_observed")),
+        "max_turnover_per_year": _float(metrics.get("max_turnover_per_year_observed")),
+        "avg_holding_period": _float(metrics.get("avg_holding_period")),
+    }
+    checks = [
+        low_turnover_owner_check(
+            "max_switches_per_year",
+            observed["max_switches_per_year"] <= contract["max_switches_per_year"],
+            f"observed calendar-year switch max <= {contract['max_switches_per_year']}",
+        ),
+        low_turnover_owner_check(
+            "max_switches_per_3y",
+            observed["max_switches_per_3y"] <= contract["max_switches_per_3y"],
+            f"observed rolling 3y switch max <= {contract['max_switches_per_3y']}",
+        ),
+        low_turnover_owner_check(
+            "max_turnover_per_year",
+            observed["max_turnover_per_year"] <= contract["max_turnover_per_year"],
+            f"observed calendar-year turnover max <= {contract['max_turnover_per_year']}",
+        ),
+        low_turnover_owner_check(
+            "min_avg_holding_period",
+            observed["avg_holding_period"] >= contract["min_avg_holding_period"],
+            f"observed average holding period >= {contract['min_avg_holding_period']} trading days",
+        ),
+    ]
+    failed = [row["check_id"] for row in checks if not row["passed"]]
+    return {
+        "switch_count_controlled": not failed,
+        "contract": contract,
+        "observed": observed,
+        "checks": checks,
+        "failed_checks": failed,
+        "allowed_exception_cases": contract["allowed_exception_cases"],
+    }
 
 
 def annualized_switches(
@@ -242,6 +332,15 @@ def annualized_switches(
 ) -> float:
     span_days = _date_span_days(actual_date_range)
     return _float(metrics.get("switch_count")) / max(span_days / 365.25, 1.0)
+
+
+def _int_value(value: object, default: int = 0) -> int:
+    try:
+        if value in {None, ""}:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _date_span_days(actual_range: Mapping[str, str | None]) -> int:

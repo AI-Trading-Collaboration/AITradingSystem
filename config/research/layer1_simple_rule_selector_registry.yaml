@@ -75,6 +75,35 @@ evaluation_policy:
   period_positive_min_ratio: 0.5
   max_switches_per_year: 12
   max_turnover_warning: 2.0
+  switch_count_control_contract:
+    owner: research_governance
+    version: v1_2026_06_25_research_only
+    status: research_only_baseline
+    rationale: >
+      Define switch_count_controlled before any final low-turnover selector gate
+      so later reports cannot reinterpret turnover acceptability after seeing
+      results.
+    intended_effect: >
+      Limit Layer-1 selector candidates to low-frequency regime changes rather
+      than 200DMA chop. The contract permits at most two calendar-year switches,
+      six rolling three-year switches, roughly one full two-component turnover
+      unit per calendar year, and at least sixty trading days average holding.
+    validation_evidence: >
+      TRADING-1009 to 1014 found turnover noise dominant and identified
+      soft_blend_200dma_three_state as the only low-turnover candidate worth a
+      final constrained review.
+    review_condition: >
+      Reopen before admitting any Layer-1 selector to formal forward-aging
+      observation, paper-shadow, production, broker, or before changing any
+      low-turnover threshold.
+    max_switches_per_year: 2
+    max_switches_per_3y: 6
+    max_turnover_per_year: 1.0
+    min_avg_holding_period: 60
+    allowed_exception_cases:
+      - initial_allocation_state_selection
+      - owner_approved_emergency_risk_exit
+      - data_quality_repair_recompute_without_new_decision
   overfit_metric_degradation_warn: 0.05
   overfit_metric_degradation_block: 0.15
   rank_stability_warn_rank: 3

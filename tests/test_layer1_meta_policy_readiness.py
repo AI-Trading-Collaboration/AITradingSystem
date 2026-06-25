@@ -15,19 +15,28 @@ from ai_trading_system.layer1_simple_rule_meta_policy import (
     run_layer1_selector_buffered_200dma_variants,
     run_layer1_selector_cost_latency_stress,
     run_layer1_selector_drawdown_episode_review,
+    run_layer1_selector_forward_aging_watchlist_final_review,
     run_layer1_selector_forward_aging_watchlist_gate,
+    run_layer1_selector_hysteresis_review,
+    run_layer1_selector_low_turnover_finalist_ranking,
     run_layer1_selector_low_turnover_owner_decision_pack,
     run_layer1_selector_low_turnover_ranking,
     run_layer1_selector_min_holding_cooldown_review,
     run_layer1_selector_minimum_holding_period_review,
+    run_layer1_selector_monthly_only_review,
     run_layer1_selector_overfit_sensitivity_review,
     run_layer1_selector_owner_decision_pack,
+    run_layer1_selector_pause_or_continue_owner_pack,
     run_layer1_selector_period_split_validation,
     run_layer1_selector_regret_attribution,
     run_layer1_selector_result_review_master,
+    run_layer1_selector_soft_blend_constrained_search,
     run_layer1_selector_soft_blend_review,
+    run_layer1_selector_switch_count_threshold_contract,
+    run_layer1_selector_switch_quality_attribution,
     run_layer1_selector_turnover_source_diagnosis,
     run_layer1_selector_vs_component_baseline_ranking,
+    run_layer1_selector_vs_simple_components_final_gate,
     run_layer1_simple_rule_selector_master_review,
     run_layer1_simple_rule_selector_registry_review,
     run_layer1_trend_rule_selector_backtest,
@@ -73,6 +82,17 @@ LOW_TURNOVER_REPORT_IDS = {
     "layer1_selector_low_turnover_ranking",
     "layer1_selector_low_turnover_owner_decision_pack",
 }
+LOW_TURNOVER_FINAL_GATE_REPORT_IDS = {
+    "layer1_selector_switch_count_threshold_contract",
+    "layer1_selector_soft_blend_constrained_search",
+    "layer1_selector_monthly_only_review",
+    "layer1_selector_hysteresis_review",
+    "layer1_selector_switch_quality_attribution",
+    "layer1_selector_low_turnover_finalist_ranking",
+    "layer1_selector_vs_simple_components_final_gate",
+    "layer1_selector_forward_aging_watchlist_final_review",
+    "layer1_selector_pause_or_continue_owner_pack",
+}
 
 
 def test_layer1_simple_rule_selector_registry_and_report_registry(
@@ -106,8 +126,14 @@ def test_layer1_simple_rule_selector_registry_and_report_registry(
 
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     registered = {item["report_id"] for item in registry["reports"]}
-    assert NEW_REPORT_IDS | RESULT_REVIEW_REPORT_IDS | LOW_TURNOVER_REPORT_IDS <= registered
-    for report_id in NEW_REPORT_IDS | RESULT_REVIEW_REPORT_IDS | LOW_TURNOVER_REPORT_IDS:
+    expected = (
+        NEW_REPORT_IDS
+        | RESULT_REVIEW_REPORT_IDS
+        | LOW_TURNOVER_REPORT_IDS
+        | LOW_TURNOVER_FINAL_GATE_REPORT_IDS
+    )
+    assert expected <= registered
+    for report_id in expected:
         entry = next(item for item in registry["reports"] if item["report_id"] == report_id)
         assert entry["artifact_selection_policy"] == "latest_available"
         assert entry["required_for_daily_reading"] is False
@@ -508,6 +534,162 @@ def test_layer1_selector_low_turnover_refinement_outputs_are_research_only(
     )
     assert result_cli.exit_code == 0, result_cli.output
     assert (cli_output_root / "layer1_selector_low_turnover_ranking.json").exists()
+
+
+def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_layer1_caches(tmp_path)
+    output_root = tmp_path / "outputs" / "research_strategies" / "layer1_meta_policy"
+    layer2_output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"
+    docs_root = tmp_path / "docs" / "research"
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "as_of_date": as_of,
+        "output_root": output_root,
+        "layer2_output_root": layer2_output_root,
+    }
+
+    contract = run_layer1_selector_switch_count_threshold_contract(**common)
+    search = run_layer1_selector_soft_blend_constrained_search(**common)
+    monthly = run_layer1_selector_monthly_only_review(**common)
+    hysteresis = run_layer1_selector_hysteresis_review(**common)
+    switch_quality = run_layer1_selector_switch_quality_attribution(**common)
+    finalist = run_layer1_selector_low_turnover_finalist_ranking(**common)
+    final_gate = run_layer1_selector_vs_simple_components_final_gate(**common)
+    watchlist = run_layer1_selector_forward_aging_watchlist_final_review(**common)
+    owner = run_layer1_selector_pause_or_continue_owner_pack(
+        **common,
+        owner_doc_path=docs_root / "layer1_selector_pause_or_continue_owner_pack.md",
+    )
+
+    assert contract["status"] == "SWITCH_COUNT_CONTRACT_READY"
+    assert contract["summary"]["max_switches_per_year"] == 2
+    assert contract["summary"]["max_switches_per_3y"] == 6
+    assert contract["summary"]["max_turnover_per_year"] == 1.0
+    assert contract["summary"]["min_avg_holding_period"] == 60
+    assert contract["summary"]["allowed_exception_cases"]
+    assert search["status"] in {
+        "SOFT_BLEND_CONSTRAINED_ACCEPTABLE_FOUND",
+        "SOFT_BLEND_CONSTRAINED_SEARCH_REVIEWED",
+    }
+    assert len(search["soft_blend_constrained_search_rows"]) == 243
+    first_search_row = search["soft_blend_constrained_search_rows"][0]
+    assert {
+        "net_return_after_cost",
+        "max_drawdown",
+        "calmar",
+        "sharpe",
+        "switch_count",
+        "turnover",
+        "avg_holding_period",
+        "missed_rebound_cost",
+        "late_risk_off_cost",
+        "switch_count_controlled",
+    } <= set(first_search_row)
+    assert len(monthly["monthly_only_rows"]) == 3
+    assert {
+        "daily_signal_monthly_execution",
+        "monthly_signal_monthly_execution",
+        "threshold_signal_monthly_execution",
+    } == {row["variant_id"] for row in monthly["monthly_only_rows"]}
+    assert hysteresis["status"] == "HYSTERESIS_REVIEWED"
+    assert {
+        "switch_count_reduction",
+        "chop_reduction",
+        "late_risk_off_cost",
+        "missed_rebound_cost",
+    } <= set(hysteresis["hysteresis_rows"][0])
+    if switch_quality["switch_quality_rows"]:
+        assert {
+            "switch_date",
+            "from_state",
+            "to_state",
+            "outcome_20d_after_switch",
+            "outcome_60d_after_switch",
+            "switch_benefit_vs_not_switch",
+            "turnover_cost",
+            "net_switch_value",
+        } <= set(switch_quality["switch_quality_rows"][0])
+    assert finalist["status"] in {
+        "LOW_TURNOVER_FINALIST_FOUND",
+        "LOW_TURNOVER_NO_ACCEPTABLE_SELECTOR",
+        "LOW_TURNOVER_INCONCLUSIVE",
+    }
+    assert {
+        "original_trend_200dma_selector",
+        "soft_blend_200dma_three_state",
+        "monthly_soft_blend",
+        "hysteresis_soft_blend",
+        "confirmed_soft_blend",
+        "min_holding_soft_blend",
+    } == {row["variant_id"] for row in finalist["low_turnover_finalist_rows"]}
+    assert final_gate["status"] in {
+        "SELECTOR_FINAL_GATE_PASS",
+        "SELECTOR_FINAL_GATE_FAIL_KEEP_DRY_RUN",
+    }
+    assert {
+        "always_equal_risk",
+        "always_100_qqq",
+        "qqq_50_sgov_50",
+        "qqq_60_sgov_40",
+    } <= {row["variant_id"] for row in final_gate["selector_vs_simple_component_rows"]}
+    assert watchlist["status"] in {
+        "RESEARCH_ONLY_FORWARD_AGING_WATCHLIST_REVIEWABLE",
+        "KEEP_SELECTOR_DRY_RUN_ONLY",
+    }
+    assert owner["status"] == "LAYER1_SELECTOR_PAUSE_OR_CONTINUE_OWNER_PACK_READY"
+    assert len(owner["owner_questions"]) == 6
+    assert (docs_root / "layer1_selector_pause_or_continue_owner_pack.md").exists()
+
+    for payload in (
+        contract,
+        search,
+        monthly,
+        hysteresis,
+        switch_quality,
+        finalist,
+        final_gate,
+        watchlist,
+        owner,
+    ):
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["paper_shadow_allowed"] is False
+        assert payload["production_allowed"] is False
+        assert payload["manual_review_required"] is True
+        assert payload["summary"]["data_quality_status"]
+        actual_range = payload["summary"]["actual_requested_date_range"]
+        assert actual_range["start"] == date(2022, 12, 1).isoformat()
+        assert actual_range["end"] == as_of.isoformat()
+        assert Path(payload["artifact_paths"]["json_path"]).exists()
+        assert Path(payload["artifact_paths"]["markdown_path"]).exists()
+
+    cli_output_root = tmp_path / "cli_outputs" / "layer1_meta_policy"
+    result_cli = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "layer1-selector-pause-or-continue-owner-pack",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(cli_output_root),
+            "--layer2-output-root",
+            str(tmp_path / "cli_outputs" / "layer2_components"),
+        ],
+    )
+    assert result_cli.exit_code == 0, result_cli.output
+    assert (cli_output_root / "layer1_selector_pause_or_continue_owner_pack.json").exists()
 
 
 def _read_json(path: Path) -> dict[str, object]:

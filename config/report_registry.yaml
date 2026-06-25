@@ -15668,3 +15668,175 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: layer1_selector_switch_count_threshold_contract
+    title: Layer-1 Selector Switch Count Threshold Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-switch-count-threshold-contract
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_switch_count_threshold_contract.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_switch_count_threshold_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1015 defines switch_count_controlled before final low-turnover gates.
+    owner_action: review_switch_count_contract_before_selector_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_soft_blend_constrained_search
+    title: Layer-1 Selector Soft Blend Constrained Search
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-soft-blend-constrained-search
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_soft_blend_constrained_search.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_soft_blend_constrained_search.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1016 searches only constrained soft_blend_200dma_three_state parameters.
+    owner_action: review_constrained_soft_blend_search_before_finalist_ranking
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_monthly_only_review
+    title: Layer-1 Selector Monthly-Only Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-monthly-only-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_monthly_only_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_monthly_only_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1017 checks whether monthly-only decisions naturally reduce turnover noise.
+    owner_action: review_monthly_only_selector_before_forward_aging_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_hysteresis_review
+    title: Layer-1 Selector Hysteresis Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-hysteresis-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_hysteresis_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_hysteresis_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1018 reviews 200DMA no-flip-zone hysteresis and chop reduction.
+    owner_action: review_hysteresis_costs_before_low_turnover_finalist_selection
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_switch_quality_attribution
+    title: Layer-1 Selector Switch Quality Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-switch-quality-attribution
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_switch_quality_attribution.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_switch_quality_attribution.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1019 attributes each remaining switch to 20d/60d net value.
+    owner_action: review_switch_quality_before_selector_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_low_turnover_finalist_ranking
+    title: Layer-1 Selector Low-Turnover Finalist Ranking
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-low-turnover-finalist-ranking
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_finalist_ranking.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_low_turnover_finalist_ranking.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1020 ranks all low-turnover finalists under the strict switch contract.
+    owner_action: review_low_turnover_finalists_before_simple_component_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_vs_simple_components_final_gate
+    title: Layer-1 Selector Vs Simple Components Final Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-vs-simple-components-final-gate
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_vs_simple_components_final_gate.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_vs_simple_components_final_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1021 verifies whether the selector is worth keeping versus simple components.
+    owner_action: review_selector_vs_simple_components_before_forward_aging_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_forward_aging_watchlist_final_review
+    title: Layer-1 Selector Forward-Aging Watchlist Final Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-forward-aging-watchlist-final-review
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_watchlist_final_review.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_forward_aging_watchlist_final_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1022 allows only research-only watchlist review if final gates pass.
+    owner_action: decide_selector_forward_aging_watchlist_or_keep_dry_run_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: layer1_selector_pause_or_continue_owner_pack
+    title: Layer-1 Selector Pause Or Continue Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies layer1-selector-pause-or-continue-owner-pack
+    artifact_globs:
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_pause_or_continue_owner_pack.json
+      - outputs/research_strategies/layer1_meta_policy/layer1_selector_pause_or_continue_owner_pack.md
+      - docs/research/layer1_selector_pause_or_continue_owner_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1023 packages the pause-or-continue owner decision.
+    owner_action: decide_layer1_selector_pause_continue_or_dry_run_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

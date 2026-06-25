@@ -15,6 +15,11 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.layer1_low_turnover_selector_helpers import (
     LOW_TURNOVER_BUFFER_GRID,
     LOW_TURNOVER_CONFIRMATION_GRID,
+    LOW_TURNOVER_CONSTRAINED_BUFFER_GRID,
+    LOW_TURNOVER_CONSTRAINED_CONFIRMATION_GRID,
+    LOW_TURNOVER_CONSTRAINED_NEUTRAL_WEIGHTS,
+    LOW_TURNOVER_CONSTRAINED_RISK_OFF_WEIGHTS,
+    LOW_TURNOVER_CONSTRAINED_RISK_ON_WEIGHTS,
     LOW_TURNOVER_COOLDOWN_GRID,
     LOW_TURNOVER_MAX_SWITCHES_GRID,
     LOW_TURNOVER_MIN_HOLDING_GRID,
@@ -22,6 +27,8 @@ from ai_trading_system.layer1_low_turnover_selector_helpers import (
     LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE,
     low_turnover_acceptable,
     low_turnover_owner_decision,
+    switch_count_control_contract,
+    switch_count_control_result,
 )
 from ai_trading_system.layer1_low_turnover_selector_helpers import (
     best_low_turnover_row as _best_low_turnover_row,
@@ -71,6 +78,9 @@ DEFAULT_LAYER1_SELECTOR_RESULT_REVIEW_MASTER_DOC_PATH = (
 )
 DEFAULT_LAYER1_SELECTOR_LOW_TURNOVER_OWNER_DECISION_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "layer1_selector_low_turnover_owner_decision_pack.md"
+)
+DEFAULT_LAYER1_SELECTOR_PAUSE_OR_CONTINUE_OWNER_PACK_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "layer1_selector_pause_or_continue_owner_pack.md"
 )
 
 BlendPath = dict[str, dict[str, float]]
@@ -2303,6 +2313,657 @@ def run_layer1_selector_low_turnover_owner_decision_pack(
     return payload
 
 
+def run_layer1_selector_switch_count_threshold_contract(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_switch_count_threshold_contract",
+            "Layer-1 Selector Switch Count Threshold Contract",
+            "SWITCH_COUNT_CONTRACT_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    policy = _evaluation_policy(registry)
+    contract = switch_count_control_contract(policy)
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    soft = _soft_blend_200dma_path(context, registry)
+    rows = [
+        _low_turnover_variant_row(
+            context,
+            "original_trend_200dma_selector",
+            "original trend_200dma_selector",
+            original,
+            original,
+        ),
+        _low_turnover_variant_row(
+            context,
+            "soft_blend_200dma_three_state",
+            "soft_blend_selector",
+            soft,
+            original,
+            extra=_soft_blend_parameter_fields(0.80, 0.50, 0.20, LOW_TURNOVER_NEAR_200DMA_BAND, 1),
+        ),
+    ]
+    status = "SWITCH_COUNT_CONTRACT_READY"
+    payload = _selector_report_payload(
+        report_type="layer1_selector_switch_count_threshold_contract",
+        title="Layer-1 Selector Switch Count Threshold Contract",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="switch_count_contract_rows",
+        rows=rows,
+        extra_summary={
+            "switch_count_controlled_definition": (
+                "max calendar-year switches, rolling three-year switches, annual turnover, "
+                "and average holding period must all satisfy the configured contract"
+            ),
+            "contract_version": contract.get("version"),
+            "max_switches_per_year": contract["max_switches_per_year"],
+            "max_switches_per_3y": contract["max_switches_per_3y"],
+            "max_turnover_per_year": contract["max_turnover_per_year"],
+            "min_avg_holding_period": contract["min_avg_holding_period"],
+            "allowed_exception_cases": contract["allowed_exception_cases"],
+        },
+        extra_payload={"switch_count_control_contract": contract},
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_soft_blend_constrained_search(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_soft_blend_constrained_search",
+            "Layer-1 Selector Soft Blend Constrained Search",
+            "SOFT_BLEND_CONSTRAINED_SEARCH_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _soft_blend_constrained_search_rows(context, registry)
+    controlled = [row for row in rows if row["switch_count_controlled"]]
+    best = _best_low_turnover_row(controlled or rows)
+    status = (
+        "SOFT_BLEND_CONSTRAINED_ACCEPTABLE_FOUND"
+        if controlled
+        else "SOFT_BLEND_CONSTRAINED_SEARCH_REVIEWED"
+    )
+    payload = _selector_report_payload(
+        report_type="layer1_selector_soft_blend_constrained_search",
+        title="Layer-1 Selector Soft Blend Constrained Search",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="soft_blend_constrained_search_rows",
+        rows=rows,
+        extra_summary={
+            "search_scope": "soft_blend_200dma_three_state_only",
+            "variant_count": len(rows),
+            "switch_count_controlled_count": len(controlled),
+            "best_variant_id": best.get("variant_id"),
+            "best_net_return_after_cost": best.get("net_return_after_cost"),
+            "best_max_drawdown": best.get("max_drawdown"),
+            "best_calmar": best.get("calmar"),
+            "best_sharpe": best.get("sharpe"),
+            "best_switch_count": best.get("switch_count"),
+            "best_turnover": best.get("turnover"),
+            "best_avg_holding_period": best.get("avg_holding_period"),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_monthly_only_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_monthly_only_review",
+            "Layer-1 Selector Monthly-Only Review",
+            "MONTHLY_ONLY_REVIEW_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _monthly_only_rows(context, registry)
+    controlled = [row for row in rows if row["switch_count_controlled"]]
+    best = _best_low_turnover_row(controlled or rows)
+    payload = _selector_report_payload(
+        report_type="layer1_selector_monthly_only_review",
+        title="Layer-1 Selector Monthly-Only Review",
+        status="MONTHLY_ONLY_SELECTOR_REVIEWED",
+        context=context,
+        registry=registry,
+        rows_field="monthly_only_rows",
+        rows=rows,
+        extra_summary={
+            "scenario_count": len(rows),
+            "switch_count_controlled_count": len(controlled),
+            "monthly_execution_solves_turnover_noise": bool(controlled),
+            "best_scenario_id": best.get("variant_id"),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_hysteresis_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_hysteresis_review",
+            "Layer-1 Selector Hysteresis Review",
+            "HYSTERESIS_REVIEW_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    hysteresis = _hysteresis_soft_blend_path(context, registry)
+    row = _low_turnover_variant_row(
+        context,
+        "hysteresis_soft_blend",
+        "hysteresis_soft_blend",
+        hysteresis,
+        original,
+        extra=_soft_blend_parameter_fields(0.80, 0.50, 0.20, 0.03, 1),
+    )
+    original_summary = _turnover_source_summary(_turnover_source_rows(context, original))
+    hysteresis_summary = _turnover_source_summary(_turnover_source_rows(context, hysteresis))
+    row["switch_count_reduction"] = _int(original_summary["switch_count"]) - _int(
+        hysteresis_summary["switch_count"],
+    )
+    row["chop_reduction"] = _int(original_summary["noise_switch_count"]) - _int(
+        hysteresis_summary["noise_switch_count"],
+    )
+    payload = _selector_report_payload(
+        report_type="layer1_selector_hysteresis_review",
+        title="Layer-1 Selector Hysteresis Review",
+        status="HYSTERESIS_REVIEWED",
+        context=context,
+        registry=registry,
+        rows_field="hysteresis_rows",
+        rows=[row],
+        extra_summary={
+            "rule": (
+                "QQQ > 200DMA + 3% risk-on; QQQ < 200DMA - 3% risk-off; "
+                "no-flip zone keeps previous state"
+            ),
+            "switch_count_reduction": row["switch_count_reduction"],
+            "chop_reduction": row["chop_reduction"],
+            "late_risk_off_cost": row["late_risk_off_cost"],
+            "missed_rebound_cost": row["missed_rebound_cost"],
+            "switch_count_controlled": row["switch_count_controlled"],
+        },
+        extra_payload={
+            "original_turnover_source_summary": original_summary,
+            "hysteresis_turnover_source_summary": hysteresis_summary,
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_switch_quality_attribution(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_switch_quality_attribution",
+            "Layer-1 Selector Switch Quality Attribution",
+            "SWITCH_QUALITY_ATTRIBUTION_BLOCKED",
+            context,
+            output_root,
+    )
+    registry = _load_registry(registry_config_path)
+    finalist = _best_finalist_row(context, registry)
+    candidate_id = str(finalist.get("variant_id") or "soft_blend_200dma_three_state")
+    path = _finalist_path(context, registry, candidate_id)
+    rows = _switch_quality_rows(context, path, candidate_id)
+    positive = sum(1 for row in rows if _float(row.get("net_switch_value")) > 0.0)
+    payload = _selector_report_payload(
+        report_type="layer1_selector_switch_quality_attribution",
+        title="Layer-1 Selector Switch Quality Attribution",
+        status="SWITCH_QUALITY_ATTRIBUTION_READY",
+        context=context,
+        registry=registry,
+        rows_field="switch_quality_rows",
+        rows=rows,
+        extra_summary={
+            "candidate_id": finalist.get("variant_id") or "soft_blend_200dma_three_state",
+            "switch_count": len(rows),
+            "positive_net_switch_count": positive,
+            "noise_or_negative_switch_count": len(rows) - positive,
+            "total_net_switch_value": _round(
+                sum(_float(row.get("net_switch_value")) for row in rows),
+            ),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_low_turnover_finalist_ranking(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_low_turnover_finalist_ranking",
+            "Layer-1 Selector Low-Turnover Finalist Ranking",
+            "LOW_TURNOVER_FINALIST_BLOCKED",
+            context,
+            output_root,
+    )
+    registry = _load_registry(registry_config_path)
+    rows = _low_turnover_finalist_rows(context, registry)
+    controlled = [
+        row
+        for row in rows
+        if row["variant_id"] != "original_trend_200dma_selector"
+        and row["switch_count_controlled"]
+    ]
+    edge_rows = [
+        row
+        for row in controlled
+        if _float(row.get("relative_vs_equal_risk")) > 0.0
+        or _float(row.get("relative_vs_100_qqq")) >= -LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE
+    ]
+    if edge_rows:
+        status = "LOW_TURNOVER_FINALIST_FOUND"
+    elif controlled:
+        status = "LOW_TURNOVER_INCONCLUSIVE"
+    else:
+        status = "LOW_TURNOVER_NO_ACCEPTABLE_SELECTOR"
+    best = _best_low_turnover_row(edge_rows or controlled or rows)
+    payload = _selector_report_payload(
+        report_type="layer1_selector_low_turnover_finalist_ranking",
+        title="Layer-1 Selector Low-Turnover Finalist Ranking",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="low_turnover_finalist_rows",
+        rows=rows,
+        extra_summary={
+            "finalist_count": len(rows),
+            "switch_count_controlled_count": len(controlled),
+            "best_low_turnover_selector": best.get("variant_id"),
+            "best_net_return_after_cost": best.get("net_return_after_cost"),
+            "best_turnover": best.get("turnover"),
+            "best_switch_count": best.get("switch_count"),
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_vs_simple_components_final_gate(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_vs_simple_components_final_gate",
+            "Layer-1 Selector Vs Simple Components Final Gate",
+            "SELECTOR_FINAL_GATE_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    rows = _selector_vs_simple_component_rows(context, registry)
+    selector = next((row for row in rows if row["role"] == "best_low_turnover_selector"), {})
+    always_100 = next((row for row in rows if row["variant_id"] == "always_100_qqq"), {})
+    selector_beats_equal = _float(selector.get("relative_vs_equal_risk")) > 0.0
+    selector_beats_100 = _float(selector.get("net_return_after_cost")) > _float(
+        always_100.get("net_return_after_cost"),
+    )
+    selector_has_higher_turnover = _float(selector.get("turnover")) > _float(
+        always_100.get("turnover"),
+    )
+    selector_only_beats_equal_risk = (
+        selector_beats_equal and not selector_beats_100 and selector_has_higher_turnover
+    )
+    pass_gate = bool(selector.get("switch_count_controlled")) and selector_beats_100
+    status = "SELECTOR_FINAL_GATE_PASS" if pass_gate else "SELECTOR_FINAL_GATE_FAIL_KEEP_DRY_RUN"
+    payload = _selector_report_payload(
+        report_type="layer1_selector_vs_simple_components_final_gate",
+        title="Layer-1 Selector Vs Simple Components Final Gate",
+        status=status,
+        context=context,
+        registry=registry,
+        rows_field="selector_vs_simple_component_rows",
+        rows=rows,
+        extra_summary={
+            "best_low_turnover_selector": selector.get("variant_id"),
+            "selector_beats_equal_risk": selector_beats_equal,
+            "selector_beats_100_qqq": selector_beats_100,
+            "selector_turnover_higher_than_100_qqq": selector_has_higher_turnover,
+            "selector_only_beats_equal_risk": selector_only_beats_equal_risk,
+            "forward_aging_gate_allowed": pass_gate,
+        },
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_forward_aging_watchlist_final_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_forward_aging_watchlist_final_review",
+            "Layer-1 Selector Forward-Aging Watchlist Final Review",
+            "KEEP_SELECTOR_DRY_RUN_ONLY",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    finalist_rows = _low_turnover_finalist_rows(context, registry)
+    final_gate_rows = _selector_vs_simple_component_rows(context, registry)
+    selector = next(
+        (row for row in final_gate_rows if row["role"] == "best_low_turnover_selector"),
+        {},
+    )
+    gate_pass = (
+        bool(selector.get("switch_count_controlled"))
+        and _float(selector.get("relative_vs_100_qqq")) > 0.0
+    )
+    status = (
+        "RESEARCH_ONLY_FORWARD_AGING_WATCHLIST_REVIEWABLE"
+        if gate_pass
+        else "KEEP_SELECTOR_DRY_RUN_ONLY"
+    )
+    payload = _payload(
+        report_type="layer1_selector_forward_aging_watchlist_final_review",
+        title="Layer-1 Selector Forward-Aging Watchlist Final Review",
+        status=status,
+        summary={
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "candidate_id": selector.get("variant_id"),
+            "forward_aging_watchlist_allowed": gate_pass,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        selector_registry_version=registry.get("registry_version"),
+        low_turnover_finalist_rows=finalist_rows,
+        selector_vs_simple_component_rows=final_gate_rows,
+        watchlist_candidate={
+            "selector_id": selector.get("variant_id"),
+            "research_only": True,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        }
+        if gate_pass
+        else None,
+        source_artifacts=context.get("source_artifacts", {}),
+    )
+    _write_pair(payload, output_root)
+    return payload
+
+
+def run_layer1_selector_pause_or_continue_owner_pack(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_LAYER2_COMPONENT_POOL_CONFIG_PATH,
+    simple_registry_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    registry_config_path: Path = DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH,
+    as_of_date: date | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    output_root: Path = DEFAULT_LAYER1_META_POLICY_OUTPUT_ROOT,
+    layer2_output_root: Path = DEFAULT_LAYER2_COMPONENT_OUTPUT_ROOT,
+    owner_doc_path: Path = DEFAULT_LAYER1_SELECTOR_PAUSE_OR_CONTINUE_OWNER_PACK_DOC_PATH,
+) -> dict[str, Any]:
+    context = _build_context(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        simple_registry_config_path=simple_registry_config_path,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        layer2_output_root=layer2_output_root,
+    )
+    if not context["data_quality_passed"]:
+        return _blocked_payload(
+            "layer1_selector_pause_or_continue_owner_pack",
+            "Layer-1 Selector Pause Or Continue Owner Pack",
+            "LAYER1_SELECTOR_OWNER_PACK_BLOCKED",
+            context,
+            output_root,
+        )
+    registry = _load_registry(registry_config_path)
+    finalist_rows = _low_turnover_finalist_rows(context, registry)
+    final_gate_rows = _selector_vs_simple_component_rows(context, registry)
+    selector = next(
+        (row for row in final_gate_rows if row["role"] == "best_low_turnover_selector"),
+        {},
+    )
+    gate_pass = (
+        bool(selector.get("switch_count_controlled"))
+        and _float(selector.get("relative_vs_100_qqq")) > 0.0
+    )
+    recommendation = (
+        "CONTINUE_LAYER1_SELECTOR_RESEARCH_ONLY_FORWARD_AGING_WATCHLIST"
+        if gate_pass
+        else "KEEP_SELECTOR_DRY_RUN_ONLY_AND_CONTINUE_EQUAL_RISK_FORWARD_AGING"
+    )
+    answers = _pause_or_continue_owner_answers(gate_pass, selector, _actual_date_range(context))
+    payload = _payload(
+        report_type="layer1_selector_pause_or_continue_owner_pack",
+        title="Layer-1 Selector Pause Or Continue Owner Pack",
+        status="LAYER1_SELECTOR_PAUSE_OR_CONTINUE_OWNER_PACK_READY",
+        summary={
+            "data_quality_status": context.get("data_quality_status"),
+            "actual_requested_date_range": _actual_date_range(context),
+            "recommendation": recommendation,
+            "best_low_turnover_selector": selector.get("variant_id"),
+            "forward_aging_watchlist_allowed": gate_pass,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        selector_registry_version=registry.get("registry_version"),
+        owner_questions=answers,
+        low_turnover_finalist_rows=finalist_rows,
+        selector_vs_simple_component_rows=final_gate_rows,
+        owner_decision_doc_path=str(owner_doc_path),
+        source_artifacts=context.get("source_artifacts", {}),
+    )
+    _write_pair(payload, output_root)
+    _copy_markdown_artifact(payload, owner_doc_path)
+    return payload
+
+
 def _write_owner_watchlist_review_artifact(
     *,
     result: Mapping[str, Any],
@@ -2687,6 +3348,235 @@ def _min_holding_cooldown_rows(
     return rows
 
 
+def _soft_blend_constrained_search_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    rows = []
+    for risk_on_weight in LOW_TURNOVER_CONSTRAINED_RISK_ON_WEIGHTS:
+        for neutral_weight in LOW_TURNOVER_CONSTRAINED_NEUTRAL_WEIGHTS:
+            for risk_off_weight in LOW_TURNOVER_CONSTRAINED_RISK_OFF_WEIGHTS:
+                for buffer_pct in LOW_TURNOVER_CONSTRAINED_BUFFER_GRID:
+                    for confirmation_days in LOW_TURNOVER_CONSTRAINED_CONFIRMATION_GRID:
+                        path = _soft_blend_200dma_path(
+                            context,
+                            registry,
+                            risk_on_weight_100qqq=risk_on_weight,
+                            neutral_weight_100qqq=neutral_weight,
+                            risk_off_weight_100qqq=risk_off_weight,
+                            buffer_pct=buffer_pct,
+                            confirmation_days=confirmation_days,
+                        )
+                        rows.append(
+                            _low_turnover_variant_row(
+                                context,
+                                (
+                                    "soft_blend_200dma_three_state"
+                                    f"_on{int(risk_on_weight * 100)}"
+                                    f"_neutral{int(neutral_weight * 100)}"
+                                    f"_off{int(risk_off_weight * 100)}"
+                                    f"_buffer{int(buffer_pct * 100)}"
+                                    f"_confirm{confirmation_days}"
+                                ),
+                                "soft_blend_constrained_search",
+                                path,
+                                original,
+                                extra=_soft_blend_parameter_fields(
+                                    risk_on_weight,
+                                    neutral_weight,
+                                    risk_off_weight,
+                                    buffer_pct,
+                                    confirmation_days,
+                                ),
+                            )
+                        )
+    rows.sort(
+        key=lambda row: (
+            bool(row["switch_count_controlled"]),
+            _float(row["net_return_after_cost"]),
+            _float(row["calmar"]),
+            -_float(row["turnover"]),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _monthly_only_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    daily_signal = _soft_blend_200dma_path(context, registry)
+    threshold_signal = _soft_blend_200dma_path(
+        context,
+        registry,
+        buffer_pct=0.03,
+        confirmation_days=1,
+    )
+    scenarios = [
+        (
+            "daily_signal_monthly_execution",
+            "daily_signal_monthly_execution",
+            _monthly_execution_path(daily_signal),
+        ),
+        (
+            "monthly_signal_monthly_execution",
+            "monthly_signal_monthly_execution",
+            _monthly_signal_soft_blend_path(context, registry),
+        ),
+        (
+            "threshold_signal_monthly_execution",
+            "threshold_signal_monthly_execution",
+            _monthly_execution_path(threshold_signal),
+        ),
+    ]
+    rows = [
+        _low_turnover_variant_row(
+            context,
+            variant_id,
+            family,
+            path,
+            original,
+        )
+        for variant_id, family, path in scenarios
+    ]
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _low_turnover_finalist_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    original = _selector_path(context, registry, "trend_200dma_selector")
+    finalists = [
+        (
+            "original_trend_200dma_selector",
+            "original trend_200dma_selector",
+            original,
+            {},
+        ),
+        (
+            "soft_blend_200dma_three_state",
+            "soft_blend_selector",
+            _soft_blend_200dma_path(context, registry),
+            _soft_blend_parameter_fields(0.80, 0.50, 0.20, LOW_TURNOVER_NEAR_200DMA_BAND, 1),
+        ),
+        (
+            "monthly_soft_blend",
+            "monthly_soft_blend",
+            _monthly_execution_path(_soft_blend_200dma_path(context, registry)),
+            {"execution_frequency": "monthly"},
+        ),
+        (
+            "hysteresis_soft_blend",
+            "hysteresis_soft_blend",
+            _hysteresis_soft_blend_path(context, registry),
+            _soft_blend_parameter_fields(0.80, 0.50, 0.20, 0.03, 1),
+        ),
+        (
+            "confirmed_soft_blend",
+            "confirmed_soft_blend",
+            _soft_blend_200dma_path(
+                context,
+                registry,
+                buffer_pct=0.03,
+                confirmation_days=10,
+            ),
+            _soft_blend_parameter_fields(0.80, 0.50, 0.20, 0.03, 10),
+        ),
+        (
+            "min_holding_soft_blend",
+            "min_holding_soft_blend",
+            _soft_blend_200dma_path(
+                context,
+                registry,
+                minimum_holding_period=60,
+                cooldown_days=5,
+                max_switches_per_year=2,
+            ),
+            {
+                **_soft_blend_parameter_fields(0.80, 0.50, 0.20, LOW_TURNOVER_NEAR_200DMA_BAND, 1),
+                "minimum_holding_period": 60,
+                "cooldown_after_switch": 5,
+                "max_switches_per_year": 2,
+            },
+        ),
+    ]
+    rows = [
+        _low_turnover_variant_row(
+            context,
+            variant_id,
+            family,
+            path,
+            original,
+            extra=extra,
+        )
+        for variant_id, family, path, extra in finalists
+    ]
+    for row in rows:
+        row["dominance_status"] = _low_turnover_dominance_status(row, rows)
+    rows.sort(
+        key=lambda row: (
+            bool(row["switch_count_controlled"]),
+            _float(row["net_return_after_cost"]),
+            _float(row["calmar"]),
+            -_float(row["turnover"]),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _best_finalist_row(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    rows = [
+        row
+        for row in _low_turnover_finalist_rows(context, registry)
+        if row["variant_id"] != "original_trend_200dma_selector"
+    ]
+    controlled = [row for row in rows if row["switch_count_controlled"]]
+    return _best_low_turnover_row(controlled or rows)
+
+
+def _finalist_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    variant_id: str,
+) -> BlendPath:
+    if variant_id == "original_trend_200dma_selector":
+        return _selector_path(context, registry, "trend_200dma_selector")
+    if variant_id == "monthly_soft_blend":
+        return _monthly_execution_path(_soft_blend_200dma_path(context, registry))
+    if variant_id == "hysteresis_soft_blend":
+        return _hysteresis_soft_blend_path(context, registry)
+    if variant_id == "confirmed_soft_blend":
+        return _soft_blend_200dma_path(
+            context,
+            registry,
+            buffer_pct=0.03,
+            confirmation_days=10,
+        )
+    if variant_id == "min_holding_soft_blend":
+        return _soft_blend_200dma_path(
+            context,
+            registry,
+            minimum_holding_period=60,
+            cooldown_days=5,
+            max_switches_per_year=2,
+        )
+    return _soft_blend_200dma_path(context, registry)
+
+
 def _low_turnover_ranking_rows(
     context: Mapping[str, Any],
     registry: Mapping[str, Any],
@@ -2824,6 +3714,17 @@ def _low_turnover_variant_row(
     original_turnover = _float(original["turnover"])
     turnover = _float(metrics["turnover"])
     switch_count = _int(metrics["switch_count"])
+    registry_policy = _mapping(
+        safe_load_yaml_path(DEFAULT_LAYER1_SELECTOR_REGISTRY_CONFIG_PATH).get(
+            "evaluation_policy",
+            {},
+        )
+    )
+    switch_control = switch_count_control_result(
+        actual_date_range=_actual_date_range(context),
+        metrics=metrics,
+        registry_policy=registry_policy,
+    )
     row = {
         "rank": 0,
         "variant_id": variant_id,
@@ -2835,6 +3736,18 @@ def _low_turnover_variant_row(
         "turnover": _round(turnover),
         "switch_count": switch_count,
         "avg_holding_period": _round(metrics["avg_holding_period"]),
+        "annualized_switches": _round(
+            _float(switch_control["observed"]["annualized_switches"]),
+        ),
+        "switch_count_by_year": metrics["switch_count_by_year"],
+        "turnover_by_year": metrics["turnover_by_year"],
+        "max_switches_per_year_observed": metrics["max_switches_per_year_observed"],
+        "max_switches_per_3y_observed": metrics["max_switches_per_3y_observed"],
+        "max_turnover_per_year_observed": _round(
+            metrics["max_turnover_per_year_observed"],
+        ),
+        "switch_count_controlled": bool(switch_control["switch_count_controlled"]),
+        "switch_count_control_failed_checks": switch_control["failed_checks"],
         "cost_drag": _round(metrics["cost_drag"]),
         "regret_vs_best_component": _round(metrics["regret_vs_best_component"]),
         "relative_vs_equal_risk": _round(metrics["relative_vs_equal_risk"]),
@@ -2854,7 +3767,7 @@ def _low_turnover_variant_row(
         ),
         "missed_rebound_cost": _round(opportunity["missed_rebound_cost"]),
         "late_risk_off_cost": _round(opportunity["late_risk_off_cost"]),
-        "turnover_acceptable": _low_turnover_acceptable(context, metrics),
+        "turnover_acceptable": bool(switch_control["switch_count_controlled"]),
         "drawdown_control_not_materially_worse": (
             abs(_float(metrics["max_drawdown"]))
             <= abs(_float(original["max_drawdown"])) + LOW_TURNOVER_OWNER_QQQ_LAG_TOLERANCE
@@ -2916,19 +3829,96 @@ def _confirmed_200dma_path(
     return _apply_switching_constraints(raw, _trend_selector_constraints(registry))
 
 
-def _soft_blend_200dma_path(context: Mapping[str, Any], registry: Mapping[str, Any]) -> BlendPath:
+def _soft_blend_200dma_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    *,
+    risk_on_weight_100qqq: float = 0.80,
+    neutral_weight_100qqq: float = 0.50,
+    risk_off_weight_100qqq: float = 0.20,
+    buffer_pct: float = LOW_TURNOVER_NEAR_200DMA_BAND,
+    confirmation_days: int = 1,
+    hysteresis: bool = False,
+    minimum_holding_period: int | None = None,
+    cooldown_days: int | None = None,
+    max_switches_per_year: int | None = None,
+) -> BlendPath:
     features = _feature_frame(context)
+    dates = sorted(str(value) for value in features.index)
+    if not dates:
+        return {}
     raw: BlendPath = {}
-    for day in sorted(str(value) for value in features.index):
+    first_distance = _feature_value(features, dates[0], "distance_to_200dma")
+    if first_distance > buffer_pct:
+        current_state = "risk_on"
+    elif first_distance < -buffer_pct:
+        current_state = "risk_off"
+    else:
+        current_state = "neutral"
+    above_streak = 0
+    below_streak = 0
+    required_confirmation = max(_int(confirmation_days, 1), 1)
+    for day in dates:
         distance = _feature_value(features, day, "distance_to_200dma")
-        if distance > LOW_TURNOVER_NEAR_200DMA_BAND:
-            weight = 0.80
-        elif distance < -LOW_TURNOVER_NEAR_200DMA_BAND:
-            weight = 0.20
+        above_streak = above_streak + 1 if distance > buffer_pct else 0
+        below_streak = below_streak + 1 if distance < -buffer_pct else 0
+        if above_streak >= required_confirmation:
+            current_state = "risk_on"
+        elif below_streak >= required_confirmation:
+            current_state = "risk_off"
+        elif not hysteresis:
+            current_state = "neutral"
+        if current_state == "risk_on":
+            weight = risk_on_weight_100qqq
+        elif current_state == "risk_off":
+            weight = risk_off_weight_100qqq
         else:
-            weight = 0.50
+            weight = neutral_weight_100qqq
         raw[day] = _blend_weights(weight)
-    return _apply_switching_constraints(raw, _trend_selector_constraints(registry))
+    return _apply_switching_constraints(
+        raw,
+        _trend_selector_constraints(
+            registry,
+            minimum_holding_period=minimum_holding_period,
+            cooldown_days=cooldown_days,
+            max_switches_per_year=max_switches_per_year,
+        ),
+    )
+
+
+def _hysteresis_soft_blend_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> BlendPath:
+    return _soft_blend_200dma_path(
+        context,
+        registry,
+        buffer_pct=0.03,
+        confirmation_days=1,
+        hysteresis=True,
+    )
+
+
+def _soft_blend_parameter_fields(
+    risk_on_weight_100qqq: float,
+    neutral_weight_100qqq: float,
+    risk_off_weight_100qqq: float,
+    buffer_pct: float,
+    confirmation_days: int,
+) -> dict[str, Any]:
+    return {
+        "risk_on_weight_100qqq": _round(risk_on_weight_100qqq),
+        "risk_on_blend": f"{int(round(risk_on_weight_100qqq * 100))}/"
+        f"{int(round((1.0 - risk_on_weight_100qqq) * 100))}",
+        "neutral_weight_100qqq": _round(neutral_weight_100qqq),
+        "neutral_blend": f"{int(round(neutral_weight_100qqq * 100))}/"
+        f"{int(round((1.0 - neutral_weight_100qqq) * 100))}",
+        "risk_off_weight_100qqq": _round(risk_off_weight_100qqq),
+        "risk_off_blend": f"{int(round(risk_off_weight_100qqq * 100))}/"
+        f"{int(round((1.0 - risk_off_weight_100qqq) * 100))}",
+        "buffer": _round(buffer_pct),
+        "confirmation_days": confirmation_days,
+    }
 
 
 def _trend_selector_constraints(
@@ -4205,6 +5195,8 @@ def _evaluate_blend_path(
     net_values = []
     turnover = 0.0
     switch_count = 0
+    switch_count_by_year: dict[str, int] = defaultdict(int)
+    turnover_by_year: dict[str, float] = defaultdict(float)
     last_weights: Mapping[str, float] | None = None
     for index, day in enumerate(dates):
         future_index = index + execution_lag_days
@@ -4216,6 +5208,9 @@ def _evaluate_blend_path(
             switch_turnover = _blend_turnover(last_weights, weights)
             turnover += switch_turnover
             switch_count += 1
+            switch_year = str(pd.to_datetime(day).year)
+            switch_count_by_year[switch_year] += 1
+            turnover_by_year[switch_year] += switch_turnover
             switch_cost = switch_turnover * cost_bps / 10000.0
         future_day = dates[future_index]
         gross_return = sum(
@@ -4233,6 +5228,10 @@ def _evaluate_blend_path(
     net_return = _compound_return(net_series)
     static = _static_component_metrics(context)
     best_static = max(_float(row["net_return_after_cost"]) for row in static.values())
+    switch_count_by_year_row = dict(sorted(switch_count_by_year.items()))
+    turnover_by_year_row = {
+        year: _round(value) for year, value in sorted(turnover_by_year.items())
+    }
     return {
         "gross_return": gross_return,
         "net_return_after_cost": net_return,
@@ -4248,6 +5247,13 @@ def _evaluate_blend_path(
         - _float(static["equal_risk_qqq_sgov"]["net_return_after_cost"]),
         "relative_vs_100_qqq": net_return - _float(static["100_qqq"]["net_return_after_cost"]),
         "selected_component_distribution": _component_distribution(path),
+        "switch_count_by_year": switch_count_by_year_row,
+        "turnover_by_year": turnover_by_year_row,
+        "max_switches_per_year_observed": max(switch_count_by_year.values(), default=0),
+        "max_switches_per_3y_observed": _max_rolling_three_year_switches(
+            switch_count_by_year,
+        ),
+        "max_turnover_per_year_observed": max(turnover_by_year.values(), default=0.0),
     }
 
 
@@ -4266,7 +5272,30 @@ def _empty_metrics() -> dict[str, Any]:
         "relative_vs_equal_risk": 0.0,
         "relative_vs_100_qqq": 0.0,
         "selected_component_distribution": {},
+        "switch_count_by_year": {},
+        "turnover_by_year": {},
+        "max_switches_per_year_observed": 0,
+        "max_switches_per_3y_observed": 0,
+        "max_turnover_per_year_observed": 0.0,
     }
+
+
+def _max_rolling_three_year_switches(switch_count_by_year: Mapping[str, int]) -> int:
+    if not switch_count_by_year:
+        return 0
+    years = sorted(_int(year) for year in switch_count_by_year)
+    if not years:
+        return 0
+    first_year = years[0]
+    last_year = years[-1]
+    counts = {
+        _int(year): _int(count)
+        for year, count in switch_count_by_year.items()
+    }
+    return max(
+        sum(counts.get(year, 0) for year in range(window_start, window_start + 3))
+        for window_start in range(first_year, last_year + 1)
+    )
 
 
 def _required_metric_row(
@@ -4541,6 +5570,244 @@ def _scenario_path(path: BlendPath, scenario: str) -> BlendPath:
             current = target
         result[day] = dict(current)
     return result
+
+
+def _monthly_execution_path(path: BlendPath) -> BlendPath:
+    return _scenario_path(path, "monthly_rebalance_only")
+
+
+def _monthly_signal_soft_blend_path(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> BlendPath:
+    signal = _soft_blend_200dma_path(context, registry)
+    result: BlendPath = {}
+    current: Mapping[str, float] | None = None
+    last_period: tuple[int, int] | None = None
+    previous_day: str | None = None
+    for day in sorted(signal):
+        timestamp = pd.to_datetime(day)
+        period = (timestamp.year, timestamp.month)
+        if current is None:
+            current = signal[day]
+        elif period != last_period and previous_day is not None:
+            current = signal[previous_day]
+        result[day] = dict(current)
+        previous_day = day
+        last_period = period
+    return result
+
+
+def _switch_quality_rows(
+    context: Mapping[str, Any],
+    path: BlendPath,
+    selector_id: str,
+) -> list[dict[str, Any]]:
+    returns = _returns_frame(context)
+    dates = sorted(day for day in path if day in returns.index)
+    if len(dates) < 2:
+        return []
+    cost_bps = _cost_bps(context)
+    rows: list[dict[str, Any]] = []
+    last_weights = path[dates[0]]
+    for index, day in enumerate(dates[1:], start=1):
+        weights = path[day]
+        if _weights_close(last_weights, weights):
+            continue
+        switch_turnover = _blend_turnover(last_weights, weights)
+        turnover_cost = switch_turnover * cost_bps / 10000.0
+        old_20, available_20 = _future_weighted_return(
+            returns,
+            dates,
+            index,
+            last_weights,
+            horizon=20,
+        )
+        new_20, _ = _future_weighted_return(returns, dates, index, weights, horizon=20)
+        old_60, available_60 = _future_weighted_return(
+            returns,
+            dates,
+            index,
+            last_weights,
+            horizon=60,
+        )
+        new_60, _ = _future_weighted_return(returns, dates, index, weights, horizon=60)
+        benefit_60 = new_60 - old_60
+        rows.append(
+            {
+                "selector_id": selector_id,
+                "switch_date": day,
+                "from_state": _weight_state(last_weights),
+                "to_state": _weight_state(weights),
+                "outcome_20d_after_switch": {
+                    "available_days": available_20,
+                    "switched_return": _round(new_20),
+                    "not_switch_return": _round(old_20),
+                    "switch_benefit_vs_not_switch": _round(new_20 - old_20),
+                },
+                "outcome_60d_after_switch": {
+                    "available_days": available_60,
+                    "switched_return": _round(new_60),
+                    "not_switch_return": _round(old_60),
+                    "switch_benefit_vs_not_switch": _round(benefit_60),
+                },
+                "switch_benefit_vs_not_switch": _round(benefit_60),
+                "turnover_cost": _round(turnover_cost),
+                "switch_turnover": _round(switch_turnover),
+                "net_switch_value": _round(benefit_60 - turnover_cost),
+            }
+        )
+        last_weights = weights
+    return rows
+
+
+def _future_weighted_return(
+    returns: pd.DataFrame,
+    dates: list[str],
+    start_index: int,
+    weights: Mapping[str, float],
+    *,
+    horizon: int,
+) -> tuple[float, int]:
+    start = start_index + 1
+    end = min(start + horizon, len(dates))
+    if start >= end:
+        return 0.0, 0
+    daily = []
+    for day in dates[start:end]:
+        daily.append(
+            sum(
+                _float(weights.get(component)) * _float(returns.loc[day].get(component))
+                for component in SELECTABLE_COMPONENT_IDS
+                if component in returns.columns
+            )
+        )
+    return _compound_return(pd.Series(daily, dtype=float)), len(daily)
+
+
+def _weight_state(weights: Mapping[str, float]) -> str:
+    weight_100 = _float(weights.get("100_qqq"))
+    if weight_100 >= 0.70:
+        bucket = "risk_on"
+    elif weight_100 <= 0.30:
+        bucket = "risk_off"
+    else:
+        bucket = "neutral"
+    return f"{bucket}_{int(round(weight_100 * 100))}pct_100qqq"
+
+
+def _selector_vs_simple_component_rows(
+    context: Mapping[str, Any],
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    finalist = _best_finalist_row(context, registry)
+    rows: list[dict[str, Any]] = []
+    static = _static_component_metrics(context)
+    reference = _reference_component_metrics(context)
+    for variant_id, component_id in (
+        ("always_equal_risk", "equal_risk_qqq_sgov"),
+        ("always_100_qqq", "100_qqq"),
+    ):
+        source = static[component_id]
+        rows.append(_component_comparison_row(variant_id, "simple_component", source))
+    for variant_id in ("qqq_50_sgov_50", "qqq_60_sgov_40"):
+        if variant_id in reference:
+            rows.append(
+                _component_comparison_row(
+                    variant_id,
+                    "reference_component",
+                    reference[variant_id],
+                ),
+            )
+    if finalist:
+        selector_row = dict(finalist)
+        selector_row["role"] = "best_low_turnover_selector"
+        rows.append(selector_row)
+    best_component_return = max(
+        (
+            _float(row.get("net_return_after_cost"))
+            for row in rows
+            if row["role"] != "best_low_turnover_selector"
+        ),
+        default=0.0,
+    )
+    for row in rows:
+        row["regret_vs_best_component"] = _round(
+            best_component_return - _float(row.get("net_return_after_cost")),
+        )
+    rows.sort(
+        key=lambda row: (
+            _float(row.get("net_return_after_cost")),
+            _float(row.get("calmar")),
+            -_float(row.get("turnover")),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(rows, start=1):
+        row["rank"] = index
+    return rows
+
+
+def _component_comparison_row(
+    variant_id: str,
+    role: str,
+    source: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "rank": 0,
+        "variant_id": variant_id,
+        "variant_family": role,
+        "role": role,
+        "net_return_after_cost": _round(source.get("net_return_after_cost")),
+        "max_drawdown": _round(source.get("max_drawdown")),
+        "sharpe": _round(source.get("sharpe")),
+        "calmar": _round(source.get("calmar")),
+        "turnover": _round(source.get("turnover")),
+        "switch_count": _int(source.get("switch_count")),
+        "avg_holding_period": 0.0,
+        "relative_vs_equal_risk": 0.0,
+        "relative_vs_100_qqq": 0.0,
+        "switch_count_controlled": True,
+        "switch_count_control_failed_checks": [],
+        "regret_vs_best_component": _round(source.get("regret_vs_best_component")),
+    }
+
+
+def _pause_or_continue_owner_answers(
+    gate_pass: bool,
+    selector: Mapping[str, Any],
+    actual_range: Mapping[str, str | None],
+) -> list[dict[str, Any]]:
+    selector_id = selector.get("variant_id") or "none"
+    return [
+        {
+            "question": "是否继续 Layer-1 selector？",
+            "answer": "YES_RESEARCH_ONLY" if gate_pass else "NO_KEEP_DRY_RUN_RESEARCH_ONLY",
+        },
+        {
+            "question": "是否只保留 dry-run？",
+            "answer": "NO_LOW_TURNOVER_WATCHLIST_REVIEWABLE" if gate_pass else "YES",
+        },
+        {
+            "question": "是否有低换手候选进入 forward-aging？",
+            "answer": str(selector_id) if gate_pass else "NO",
+        },
+        {
+            "question": "是否需要回补更长历史？",
+            "answer": (
+                "YES; current audited range starts at "
+                f"{actual_range.get('start')} and remains AI-regime-only for primary conclusions"
+            ),
+        },
+        {
+            "question": "是否继续禁止 ML selector？",
+            "answer": "YES",
+        },
+        {
+            "question": "是否继续以 equal_risk forward-aging 为主线？",
+            "answer": "YES",
+        },
+    ]
 
 
 def _period_windows(context: Mapping[str, Any]) -> list[dict[str, Any]]:
