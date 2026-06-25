@@ -1,0 +1,332 @@
+schema_version: 1
+policy_id: equal_risk_growth_tilt_candidate_registry_v1
+policy_metadata:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Continue structured growth exploration after Controlled Growth V2 failed to
+    find a qualified edge, using the stable equal_risk_qqq_sgov defensive core
+    as the base rather than restarting an unconstrained growth search.
+  intended_effect: >
+    Compare modest QQQ cap/floor, risk-budget, risk-on boost, missed-upside,
+    small TQQQ overlay and volatility-target tilts while preserving auditable
+    no paper-shadow, no production and no broker boundaries.
+  validation_evidence: >
+    TRADING-1065 to 1084 focused tests validate registry review, candidate
+    searches, tiering, attribution, replay, cost sensitivity, versioning,
+    owner decision, roadmap and Reader Brief safety outputs.
+  review_condition: >
+    Reopen before changing any tier threshold, adding a candidate to a
+    forward-aging watchlist, changing max TQQQ/effective beta limits, or using
+    the results outside research-only owner review.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+  uses_options: false
+  uses_margin: false
+excluded_paths:
+  - modify_original_equal_risk_qqq_sgov
+  - paper_shadow_activation
+  - production_activation
+  - broker_connection
+  - real_trading_advice
+  - LEAPS
+  - Wheel
+  - options_overlay
+  - tail_risk_fallback
+  - layer1_selector_restart
+  - tqqq_heavy_mainline
+research_policy:
+  annualization_trading_days: 252
+  monthly_trading_days: 21
+  threshold_rebalance_band: 0.05
+  required_price_tickers:
+    - QQQ
+    - TQQQ
+    - SGOV
+  required_rate_series:
+    - DGS2
+    - DGS10
+    - DTWEXBGS
+  moving_average_windows:
+    short: 100
+    long: 200
+  realized_vol_windows:
+    short: 20
+    medium: 60
+    long: 120
+  rolling_high_windows:
+    long: 252
+  equal_risk:
+    min_weight: 0.10
+    max_weight: 0.90
+  objective_contract:
+    objective_id: equal_risk_growth_tilt_objective_v1
+    primary_benchmark: equal_risk_qqq_sgov
+    secondary_benchmark: 100_qqq
+    risk_anchor: equal_risk_qqq_sgov
+    required_comparators:
+      - equal_risk_qqq_sgov
+      - 100_qqq
+      - qqq_50_sgov_50
+      - qqq_60_sgov_40
+      - candidate_growth_tilt
+    rationale: >
+      The primary objective is annual-return improvement versus equal-risk;
+      secondary analysis checks whether the return gap versus 100% QQQ narrows
+      without losing the equal-risk drawdown advantage.
+  candidate_limits:
+    max_turnover: 1.25
+    max_switch_count: 30
+    max_tqqq_weight: 0.10
+    max_effective_qqq_beta: 1.25
+    max_effective_qqq_exposure: 1.30
+    max_drawdown_increase_vs_equal_risk: 0.08
+    max_drawdown_multiplier_vs_100_qqq: 1.05
+    min_sharpe_ratio_vs_equal_risk: 0.75
+    min_calmar_ratio_vs_equal_risk: 0.70
+    qqq_return_gap_close_ratio_for_challenger: 0.70
+    beta_adjusted_edge_minimum: 0.0025
+    max_ai_rally_return_share: 0.70
+    max_cost_degradation: 0.015
+    required_forward_days: 120
+    rationale: >
+      Pilot research-only thresholds for tiering and review sequencing. They
+      are deliberately conservative guardrails, not calibrated production or
+      promotion thresholds.
+  beta_attribution_policy:
+    max_beta_explained_edge_share: 0.70
+    risk_budget_edge_minimum: 0.0025
+    rationale: >
+      Prevent higher beta alone from being described as a growth-tilt edge.
+  cost_turnover_sensitivity:
+    cost_bps:
+      zero_cost: 0.0
+      low_cost: 1.0
+      medium_cost: 5.0
+      high_cost: 15.0
+    execution_lag_penalty:
+      one_day_lag: 0.002
+      two_day_lag: 0.004
+    rebalance_penalty:
+      monthly_rebalance: 0.000
+      threshold_rebalance: 0.002
+  trend_filter_rule:
+    qqq_above_200dma: true
+    qqq_above_100dma_and_100dma_above_200dma: true
+    realized_vol_window: 20
+    realized_vol_percentile_window: 252
+    realized_vol_percentile_cutoff: 0.80
+    drawdown_from_high_min: -0.08
+  missed_upside_policy:
+    trailing_gap_window: 60
+    thresholds:
+      - 0.03
+      - 0.05
+      - 0.08
+    compensation_amounts:
+      - 0.05
+      - 0.10
+      - 0.15
+    ramp_days:
+      - 5
+      - 10
+      - 20
+  search_grids:
+    cap_floor_tilt:
+      qqq_max_weight: [0.60, 0.70, 0.80, 0.90]
+      sgov_min_weight: [0.10, 0.20, 0.30, 0.40]
+      rebalance: [monthly, threshold]
+    risk_budget_tilt:
+      qqq_risk_budget: [0.55, 0.60, 0.65, 0.70, 0.75]
+      sgov_risk_budget: [0.45, 0.40, 0.35, 0.30, 0.25]
+      vol_lookback: [20, 60, 120]
+      rebalance: [monthly, threshold]
+    trend_on_qqq_boost:
+      boost_amount: [0.05, 0.10, 0.15, 0.20]
+      rebalance: [monthly, threshold]
+    small_tqqq_overlay:
+      max_tqqq_weight: [0.05, 0.075, 0.10]
+      rebalance: [monthly, threshold]
+    vol_target_growth_tilt:
+      target_vol_absolute: [0.12, 0.15, 0.18]
+      target_vol_additive_pp: [0.02, 0.04]
+      vol_lookback: [20, 60, 120]
+      qqq_max_weight: [0.70, 0.80, 0.90]
+      sgov_min_weight: [0.10, 0.20, 0.30]
+  periods:
+    - period_id: 2022_rate_hike_bear_market
+      start: 2022-01-01
+      end: 2022-12-31
+    - period_id: 2023_recovery
+      start: 2023-01-01
+      end: 2023-12-31
+    - period_id: 2024_ai_rally
+      start: 2024-01-01
+      end: 2024-12-31
+    - period_id: 2025_to_latest
+      start: 2025-01-01
+      end: latest
+    - period_id: high_rate_sgov_carry_period
+      start: 2022-12-01
+      end: latest
+benchmarks:
+  - strategy_id: 100_qqq
+    display_name: 100% QQQ
+    candidate_family: benchmark
+    target_weights: {QQQ: 1.00}
+    rebalance_rule: monthly
+  - strategy_id: qqq_60_sgov_40
+    display_name: 60% QQQ + 40% SGOV
+    candidate_family: benchmark
+    target_weights: {QQQ: 0.60, SGOV: 0.40}
+    rebalance_rule: monthly
+  - strategy_id: qqq_50_sgov_50
+    display_name: 50% QQQ + 50% SGOV
+    candidate_family: benchmark
+    target_weights: {QQQ: 0.50, SGOV: 0.50}
+    rebalance_rule: monthly
+  - strategy_id: equal_risk_qqq_sgov
+    display_name: equal-risk QQQ / SGOV
+    candidate_family: defensive_primary
+    special_policy: equal_risk
+    rebalance_rule: monthly
+candidate_families:
+  - strategy_id: equal_risk_growth_tilt_cap_floor_v1
+    candidate_family: cap_floor_tilt
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.80}
+      SGOV: {min: 0.20, max: 1.00}
+    risk_budget_rule: preserve_equal_risk_inverse_vol_with_cap_floor_override
+    trend_filter_rule: none
+    volatility_filter_rule: equal_risk_realized_vol_60d
+    drawdown_guard_rule: none
+    rebalance_rule: monthly
+    max_turnover: 1.25
+    max_tqqq_weight: 0.00
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - strategy_id: equal_risk_growth_tilt_risk_budget_v1
+    candidate_family: risk_budget_tilt
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.90}
+      SGOV: {min: 0.10, max: 1.00}
+    risk_budget_rule: configurable_qqq_sgov_inverse_vol_risk_budget
+    trend_filter_rule: none
+    volatility_filter_rule: 20d_60d_120d_realized_vol
+    drawdown_guard_rule: none
+    rebalance_rule: monthly_or_threshold
+    max_turnover: 1.25
+    max_tqqq_weight: 0.00
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - strategy_id: equal_risk_growth_tilt_trend_boost_v1
+    candidate_family: trend_on_qqq_boost
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.90}
+      SGOV: {min: 0.10, max: 1.00}
+    risk_budget_rule: equal_risk_output_plus_risk_on_qqq_boost
+    trend_filter_rule: qqq_100dma_200dma_vol_drawdown_risk_on
+    volatility_filter_rule: realized_vol_below_percentile_cutoff
+    drawdown_guard_rule: risk_on_disabled_when_drawdown_severe
+    rebalance_rule: monthly_or_threshold
+    max_turnover: 1.25
+    max_tqqq_weight: 0.00
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - strategy_id: equal_risk_growth_tilt_missed_upside_v1
+    candidate_family: missed_upside_compensation
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.90}
+      SGOV: {min: 0.10, max: 1.00}
+    risk_budget_rule: equal_risk_output_plus_trailing_gap_compensation
+    trend_filter_rule: qqq_strong_trend_gap_trigger
+    volatility_filter_rule: realized_vol_not_high
+    drawdown_guard_rule: compensation_disabled_when_drawdown_high
+    rebalance_rule: threshold
+    max_turnover: 1.25
+    max_tqqq_weight: 0.00
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - strategy_id: equal_risk_growth_tilt_tqqq_overlay_v1
+    candidate_family: small_tqqq_overlay
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, TQQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.90}
+      TQQQ: {min: 0.00, max: 0.10}
+      SGOV: {min: 0.00, max: 1.00}
+    risk_budget_rule: equal_risk_output_plus_small_risk_on_tqqq_overlay
+    trend_filter_rule: qqq_100dma_200dma_vol_drawdown_risk_on
+    volatility_filter_rule: realized_vol_below_percentile_cutoff
+    drawdown_guard_rule: overlay_zero_in_risk_off
+    rebalance_rule: monthly_or_threshold
+    max_turnover: 1.25
+    max_tqqq_weight: 0.10
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
+  - strategy_id: equal_risk_growth_tilt_vol_target_v1
+    candidate_family: vol_target_growth_tilt
+    base_strategy_id: equal_risk_qqq_sgov
+    asset_universe: [QQQ, SGOV]
+    weight_bounds:
+      QQQ: {min: 0.00, max: 0.90}
+      SGOV: {min: 0.10, max: 1.00}
+    risk_budget_rule: target_vol_q_q_sgov_blend
+    trend_filter_rule: none
+    volatility_filter_rule: target_vol_above_equal_risk_below_qqq
+    drawdown_guard_rule: qqq_cap_and_sgov_floor
+    rebalance_rule: monthly
+    max_turnover: 1.25
+    max_tqqq_weight: 0.00
+    max_effective_qqq_beta: 1.25
+    uses_options: false
+    uses_margin: false
+    forward_aging_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    broker_action: none
