@@ -1327,11 +1327,14 @@ def run_growth_tilt_owner_decision_pack(
         "6_only_ai_rally_effective": replay.get("status")
         == "GROWTH_TILT_REGIME_CONCENTRATED",
         "7_cost_turnover_acceptable": cost.get("status") == "GROWTH_TILT_COST_ROBUST",
-        "8_allow_research_only_forward_aging_watchlist": gate.get(
+        "8_forward_aging_watchlist_allowed_now": gate.get(
+            "forward_aging_watchlist_allowed"
+        ),
+        "9_owner_review_forward_aging_watchlist_candidate": gate.get(
             "forward_aging_reviewable_after_owner_manual_review"
         ),
-        "9_keep_original_equal_risk_defensive_primary": True,
-        "10_continue_no_paper_shadow_no_production_no_broker": True,
+        "10_keep_original_equal_risk_defensive_primary": True,
+        "11_continue_no_paper_shadow_no_production_no_broker": True,
     }
     payload = _payload(
         report_type="growth_tilt_owner_decision_pack",
