@@ -36,6 +36,11 @@ from ai_trading_system.research_roadmap_stabilization import (
     run_equal_risk_observation_continuity_check,
     run_equal_risk_reader_brief_live_summary,
 )
+from ai_trading_system.roadmap_v2_real_result_convergence import (
+    run_controlled_growth_component_final_gate,
+    run_equal_risk_forward_aging_live_health_summary,
+    run_equal_risk_growth_v2_real_cli_suite,
+)
 
 NEW_RESEARCH_REPORT_IDS = {
     "equal_risk_forward_aging_scheduler_integration",
@@ -56,6 +61,14 @@ NEW_RESEARCH_REPORT_IDS = {
     "growth_component_owner_decision_pack",
     "equal_risk_and_growth_dual_track_roadmap",
     "research_roadmap_v2_master_review",
+    "equal_risk_growth_v2_real_cli_suite_summary",
+    "equal_risk_forward_aging_live_health_summary",
+    "controlled_growth_v2_candidate_summary",
+    "controlled_growth_beta_adjusted_edge_review",
+    "controlled_growth_period_drawdown_cost_triage",
+    "controlled_growth_component_final_gate",
+    "dual_track_owner_decision_pack",
+    "roadmap_v2_real_result_master_review",
 }
 
 
@@ -272,6 +285,119 @@ def test_controlled_growth_component_restart_builders_and_cli(
         )
     )
     assert written["summary"]["broker_action"] == "none"
+
+
+def test_roadmap_v2_real_result_convergence_builders_and_cli(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_growth_caches(tmp_path)
+    simple_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
+    growth_root = tmp_path / "outputs" / "research_strategies" / "growth_components"
+    roadmap_root = tmp_path / "outputs" / "research_strategies" / "roadmap"
+    docs_root = tmp_path / "docs" / "research"
+    growth_owner_docs_path = docs_root / "growth_component_owner_decision_pack.md"
+    growth_roadmap_docs_path = docs_root / "research_roadmap_v2_master_review.md"
+
+    suite = run_equal_risk_growth_v2_real_cli_suite(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        simple_output_root=simple_root,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        growth_owner_docs_path=growth_owner_docs_path,
+        growth_roadmap_docs_path=growth_roadmap_docs_path,
+        as_of_date=as_of,
+        decision_date=date(2022, 12, 1),
+    )
+    health = run_equal_risk_forward_aging_live_health_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=simple_root,
+        as_of_date=as_of,
+    )
+    final_gate = run_controlled_growth_component_final_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=growth_root,
+        as_of_date=as_of,
+    )
+    candidate_summary = json.loads(
+        (growth_root / "controlled_growth_v2_candidate_summary.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    beta_review = json.loads(
+        (growth_root / "controlled_growth_beta_adjusted_edge_review.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    triage = json.loads(
+        (growth_root / "controlled_growth_period_drawdown_cost_triage.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert suite["status"] in {
+        "EQUAL_RISK_GROWTH_V2_REAL_RUN_PASS",
+        "EQUAL_RISK_GROWTH_V2_REAL_RUN_WARN",
+    }
+    assert suite["summary"]["source_command_count"] == 18
+    assert health["status"] in {
+        "EQUAL_RISK_FORWARD_AGING_HEALTHY",
+        "EQUAL_RISK_FORWARD_AGING_WARN",
+    }
+    assert health["duplicate_observation_count"] == 0
+    assert candidate_summary["candidate_count"] >= 1
+    assert candidate_summary["top_by_beta_adjusted_edge"]
+    assert beta_review["status"] in {
+        "BETA_ADJUSTED_EDGE_MATERIAL",
+        "BETA_EXPLAINS_EDGE",
+        "EDGE_WEAK_AFTER_PENALTY",
+        "EDGE_REGIME_CONCENTRATED",
+    }
+    assert beta_review["candidate_id"]
+    assert len(beta_review["benchmark_comparisons"]) >= 4
+    assert triage["triage_rows"]
+    assert final_gate["status"] in {
+        "GROWTH_COMPONENT_REVIEWABLE",
+        "GROWTH_COMPONENT_KEEP_RESEARCH_ONLY",
+        "NO_MATERIAL_GROWTH_EDGE",
+    }
+    assert Path(final_gate["artifact_paths"]["json_path"]).exists()
+
+    for payload in (
+        suite,
+        health,
+        candidate_summary,
+        beta_review,
+        triage,
+        final_gate,
+    ):
+        _assert_research_only_payload(payload)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "controlled-growth-component-final-gate",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
 
 
 def test_new_research_reports_are_registered_with_latest_available_policy() -> None:

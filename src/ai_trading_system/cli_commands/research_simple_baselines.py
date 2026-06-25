@@ -141,6 +141,19 @@ from ai_trading_system.research_roadmap_stabilization import (
     run_layer2_growth_component_gap_review,
     run_research_roadmap_master_review,
 )
+from ai_trading_system.roadmap_v2_real_result_convergence import (
+    DEFAULT_DUAL_TRACK_OWNER_DECISION_DOC_PATH,
+    DEFAULT_ROADMAP_V2_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
+    DEFAULT_ROADMAP_V2_REAL_RESULT_OUTPUT_ROOT,
+    run_controlled_growth_beta_adjusted_edge_review,
+    run_controlled_growth_component_final_gate,
+    run_controlled_growth_period_drawdown_cost_triage,
+    run_controlled_growth_v2_candidate_summary,
+    run_dual_track_owner_decision_pack,
+    run_equal_risk_forward_aging_live_health_summary,
+    run_equal_risk_growth_v2_real_cli_suite,
+    run_roadmap_v2_real_result_master_review,
+)
 from ai_trading_system.simple_baseline_candidate_validation import (
     DEFAULT_SIMPLE_BASELINE_WATCHLIST_OWNER_DECISION_DOC_PATH,
     run_dynamic_vs_static_edge_significance_review,
@@ -6529,6 +6542,382 @@ def strategies_research_roadmap_v2_master_review_command(
     _print_simple_baseline_payload("Research roadmap v2 master review", payload)
 
 
+def strategies_equal_risk_growth_v2_real_cli_suite_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    decision_date: Annotated[str | None, typer.Option("--decision-date")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    simple_config_path: Annotated[
+        Path,
+        typer.Option("--simple-config"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Annotated[
+        Path,
+        typer.Option("--growth-config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    simple_output_root: Annotated[
+        Path,
+        typer.Option("--simple-output-root"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_ROADMAP_V2_REAL_RESULT_OUTPUT_ROOT,
+    growth_owner_docs_path: Annotated[
+        Path,
+        typer.Option("--growth-owner-docs-path"),
+    ] = DEFAULT_GROWTH_COMPONENT_OWNER_DECISION_DOC_PATH,
+    growth_roadmap_docs_path: Annotated[
+        Path,
+        typer.Option("--growth-roadmap-docs-path"),
+    ] = DEFAULT_GROWTH_COMPONENT_ROADMAP_DOC_PATH,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_equal_risk_growth_v2_real_cli_suite(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            simple_output_root=simple_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            growth_owner_docs_path=growth_owner_docs_path,
+            growth_roadmap_docs_path=growth_roadmap_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            decision_date=_parse_optional_date(decision_date),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Equal-risk growth v2 real CLI suite", payload)
+
+
+def strategies_equal_risk_forward_aging_live_health_summary_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_equal_risk_forward_aging_live_health_summary(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_simple_baseline_payload("Equal-risk forward-aging live health summary", payload)
+
+
+def strategies_controlled_growth_v2_candidate_summary_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_growth_v2_candidate_summary(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Controlled growth v2 candidate summary", payload)
+
+
+def strategies_controlled_growth_beta_adjusted_edge_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_growth_beta_adjusted_edge_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Controlled growth beta-adjusted edge review", payload)
+
+
+def strategies_controlled_growth_period_drawdown_cost_triage_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_growth_period_drawdown_cost_triage(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Controlled growth period drawdown cost triage", payload)
+
+
+def strategies_controlled_growth_component_final_gate_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_controlled_growth_component_final_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Controlled growth component final gate", payload)
+
+
+def strategies_dual_track_owner_decision_pack_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    simple_config_path: Annotated[
+        Path,
+        typer.Option("--simple-config"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Annotated[
+        Path,
+        typer.Option("--growth-config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    simple_output_root: Annotated[
+        Path,
+        typer.Option("--simple-output-root"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_ROADMAP_V2_REAL_RESULT_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path"),
+    ] = DEFAULT_DUAL_TRACK_OWNER_DECISION_DOC_PATH,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_dual_track_owner_decision_pack(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            simple_output_root=simple_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Dual-track owner decision pack", payload)
+
+
+def strategies_roadmap_v2_real_result_master_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    decision_date: Annotated[str | None, typer.Option("--decision-date")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    simple_config_path: Annotated[
+        Path,
+        typer.Option("--simple-config"),
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Annotated[
+        Path,
+        typer.Option("--growth-config"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    simple_output_root: Annotated[
+        Path,
+        typer.Option("--simple-output-root"),
+    ] = DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_CONTROLLED_GROWTH_COMPONENT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_ROADMAP_V2_REAL_RESULT_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path"),
+    ] = DEFAULT_ROADMAP_V2_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
+    growth_owner_docs_path: Annotated[
+        Path,
+        typer.Option("--growth-owner-docs-path"),
+    ] = DEFAULT_GROWTH_COMPONENT_OWNER_DECISION_DOC_PATH,
+    growth_roadmap_docs_path: Annotated[
+        Path,
+        typer.Option("--growth-roadmap-docs-path"),
+    ] = DEFAULT_GROWTH_COMPONENT_ROADMAP_DOC_PATH,
+    dual_track_docs_path: Annotated[
+        Path,
+        typer.Option("--dual-track-docs-path"),
+    ] = DEFAULT_DUAL_TRACK_OWNER_DECISION_DOC_PATH,
+) -> None:
+    payload = _build_research_payload(
+        lambda: run_roadmap_v2_real_result_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            simple_output_root=simple_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            growth_owner_docs_path=growth_owner_docs_path,
+            growth_roadmap_docs_path=growth_roadmap_docs_path,
+            dual_track_docs_path=dual_track_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            decision_date=_parse_optional_date(decision_date),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_simple_baseline_payload("Roadmap v2 real result master review", payload)
+
+
 _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     ("simple-baseline-registry-review", strategies_simple_baseline_registry_review_command),
     ("qqq-sgov-baseline-backtest", strategies_qqq_sgov_baseline_backtest_command),
@@ -7139,6 +7528,38 @@ _SIMPLE_BASELINE_STRATEGY_COMMANDS = (
     (
         "research-roadmap-v2-master-review",
         strategies_research_roadmap_v2_master_review_command,
+    ),
+    (
+        "equal-risk-growth-v2-real-cli-suite",
+        strategies_equal_risk_growth_v2_real_cli_suite_command,
+    ),
+    (
+        "equal-risk-forward-aging-live-health-summary",
+        strategies_equal_risk_forward_aging_live_health_summary_command,
+    ),
+    (
+        "controlled-growth-v2-candidate-summary",
+        strategies_controlled_growth_v2_candidate_summary_command,
+    ),
+    (
+        "controlled-growth-beta-adjusted-edge-review",
+        strategies_controlled_growth_beta_adjusted_edge_review_command,
+    ),
+    (
+        "controlled-growth-period-drawdown-cost-triage",
+        strategies_controlled_growth_period_drawdown_cost_triage_command,
+    ),
+    (
+        "controlled-growth-component-final-gate",
+        strategies_controlled_growth_component_final_gate_command,
+    ),
+    (
+        "dual-track-owner-decision-pack",
+        strategies_dual_track_owner_decision_pack_command,
+    ),
+    (
+        "roadmap-v2-real-result-master-review",
+        strategies_roadmap_v2_real_result_master_review_command,
     ),
 )
 

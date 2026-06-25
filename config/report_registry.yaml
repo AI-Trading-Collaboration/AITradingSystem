@@ -16319,3 +16319,157 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: equal_risk_growth_v2_real_cli_suite_summary
+    title: Equal-Risk Growth V2 Real CLI Suite Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-growth-v2-real-cli-suite
+    artifact_globs:
+      - outputs/research_strategies/roadmap/equal_risk_growth_v2_real_cli_suite_summary.json
+      - outputs/research_strategies/roadmap/equal_risk_growth_v2_real_cli_suite_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1049 runs the 1031 to 1048 equal-risk and growth v2 CLI suite and summarizes source status.
+    owner_action: review_real_cli_suite_summary_before_interpreting_roadmap_v2_results
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_forward_aging_live_health_summary
+    title: Equal-Risk Forward-Aging Live Health Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-forward-aging-live-health-summary
+    artifact_globs:
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_live_health_summary.json
+      - outputs/research_strategies/simple_baselines/equal_risk_forward_aging_live_health_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1050 checks equal-risk observation continuity, maturity, scoreboard and Reader Brief safety from real run artifacts.
+    owner_action: review_equal_risk_health_before_any_forward_aging_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: controlled_growth_v2_candidate_summary
+    title: Controlled Growth V2 Candidate Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies controlled-growth-v2-candidate-summary
+    artifact_globs:
+      - outputs/research_strategies/growth_components/controlled_growth_v2_candidate_summary.json
+      - outputs/research_strategies/growth_components/controlled_growth_v2_candidate_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1051 groups controlled growth v2 candidates by return, beta-adjusted edge, drawdown, turnover and rejection status.
+    owner_action: review_candidate_summary_before_beta_adjusted_edge_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: controlled_growth_beta_adjusted_edge_review
+    title: Controlled Growth Beta-Adjusted Edge Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies controlled-growth-beta-adjusted-edge-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/controlled_growth_beta_adjusted_edge_review.json
+      - outputs/research_strategies/growth_components/controlled_growth_beta_adjusted_edge_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1052 determines whether controlled growth edge survives QQQ beta, penalties and benchmark comparison.
+    owner_action: review_beta_adjusted_edge_before_growth_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: controlled_growth_period_drawdown_cost_triage
+    title: Controlled Growth Period Drawdown Cost Triage
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies controlled-growth-period-drawdown-cost-triage
+    artifact_globs:
+      - outputs/research_strategies/growth_components/controlled_growth_period_drawdown_cost_triage.json
+      - outputs/research_strategies/growth_components/controlled_growth_period_drawdown_cost_triage.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1053 consolidates period split, drawdown episode and cost-turnover checks for growth candidates.
+    owner_action: review_triage_before_component_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: controlled_growth_component_final_gate
+    title: Controlled Growth Component Final Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies controlled-growth-component-final-gate
+    artifact_globs:
+      - outputs/research_strategies/growth_components/controlled_growth_component_final_gate.json
+      - outputs/research_strategies/growth_components/controlled_growth_component_final_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1054 decides whether a growth candidate can enter component-ready review while staying research-only.
+    owner_action: review_final_gate_before_any_component_ready_review_scope_change
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_track_owner_decision_pack
+    title: Dual-Track Owner Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-track-owner-decision-pack
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_track_owner_decision_pack.json
+      - outputs/research_strategies/roadmap/dual_track_owner_decision_pack.md
+      - docs/research/dual_track_owner_decision_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1055 packages owner decisions for equal-risk forward-aging and controlled growth v2 research.
+    owner_action: choose_continue_equal_risk_growth_research_promote_review_or_pause_growth
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: roadmap_v2_real_result_master_review
+    title: Roadmap V2 Real Result Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies roadmap-v2-real-result-master-review
+    artifact_globs:
+      - outputs/research_strategies/roadmap/roadmap_v2_real_result_master_review.json
+      - outputs/research_strategies/roadmap/roadmap_v2_real_result_master_review.md
+      - docs/research/roadmap_v2_real_result_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1056 summarizes 1049 to 1055 and records the post-real-run roadmap v2 conclusion.
+    owner_action: review_master_result_before_selecting_next_research_scope
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
