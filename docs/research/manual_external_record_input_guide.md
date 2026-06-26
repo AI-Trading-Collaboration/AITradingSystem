@@ -8,6 +8,7 @@
 - Required baselines: `100_qqq`, `qqq_50_sgov_50`, `qqq_60_sgov_40`
 - Required evidence: fill at least one of `screenshot_reference` or `export_file_path`.
 - SGOV convention must be one of `unknown`, `price_only`, `adjusted`, `total_return`, `platform_default`.
+- Rebalance should be `monthly` for multi-asset baselines. If an external platform exports `No rebalancing` for a 100% single-asset baseline such as `100_qqq`, record the platform text and explain it in `manual_notes`; ingestion will keep it as a warning rather than a general monthly-rebalance substitute.
 
 ## Metric Fields
 

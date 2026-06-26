@@ -109,6 +109,15 @@ STATIC_BASELINE_EXPECTED_WEIGHTS: dict[str, dict[str, float]] = {
     "qqq_50_sgov_50": {"QQQ": 0.5, "SGOV": 0.5},
     "qqq_60_sgov_40": {"QQQ": 0.6, "SGOV": 0.4},
 }
+SINGLE_ASSET_REBALANCE_EQUIVALENTS = {
+    "no rebalancing",
+    "no_rebalancing",
+    "none",
+    "not_applicable",
+    "not applicable",
+    "n/a",
+    "na",
+}
 MANUAL_EXTERNAL_RECORD_FIELDS = (
     "external_tool",
     "external_tool_url_or_name",
@@ -2490,6 +2499,8 @@ def run_external_validation_manual_evidence_owner_signoff(
         summary={
             "owner_recommendation": recommendation,
             "manual_input_status": manual_input.get("status"),
+            "valid_external_record_count": len(_records(manual_input.get("valid_records"))),
+            "missing_strategy_ids": manual_input.get("missing_strategy_ids", []),
             "final_reconciliation_status": final_reconciliation.get("status"),
             **_safety_summary(),
         },
@@ -3213,7 +3224,13 @@ def _manual_record_validation_errors(
         expected_weights,
     ):
         errors.append("asset_weights_do_not_match_baseline_definition")
-    if str(row.get("rebalance_frequency") or "").strip().lower() != "monthly":
+    rebalance_frequency = str(row.get("rebalance_frequency") or "").strip().lower()
+    if rebalance_frequency != "monthly" and _single_asset_rebalance_equivalent(
+        rebalance_frequency,
+        expected_weights,
+    ):
+        warnings.append("rebalance_frequency_no_rebalancing_equivalent_for_single_asset")
+    elif rebalance_frequency != "monthly":
         errors.append("rebalance_frequency_must_be_monthly_for_static_baseline")
     expected_start = start_date.isoformat()
     expected_end = end_date.isoformat() if end_date else None
@@ -3273,6 +3290,18 @@ def _asset_weights_match(actual: Mapping[str, Any], expected: Mapping[str, float
         abs(_float(actual.get(ticker)) - _float(expected.get(ticker))) <= 0.0001
         for ticker in tickers
     )
+
+
+def _single_asset_rebalance_equivalent(
+    rebalance_frequency: str,
+    expected_weights: Mapping[str, float],
+) -> bool:
+    if rebalance_frequency not in SINGLE_ASSET_REBALANCE_EQUIVALENTS:
+        return False
+    non_zero_weights = [
+        weight for weight in expected_weights.values() if abs(_float(weight)) > 0.0001
+    ]
+    return len(non_zero_weights) == 1 and abs(non_zero_weights[0] - 1.0) <= 0.0001
 
 
 def _metric_is_unavailable(value: object) -> bool:
@@ -3490,9 +3519,15 @@ def _manual_owner_required_answers(
     final_status = str(final_reconciliation.get("status"))
     metric_status = str(metric_signoff.get("status"))
     sgov_status = str(sgov_signoff.get("status"))
+    valid_external_record_count = len(_records(manual_input.get("valid_records")))
+    invalid_external_record_count = len(_records(manual_input.get("invalid_records")))
+    missing_strategy_ids = list(manual_input.get("missing_strategy_ids") or [])
     return {
         "1_real_external_platform_records_provided": manual_input.get("status")
         == "MANUAL_EXTERNAL_INPUT_RECORDED",
+        "1a_valid_external_record_count": valid_external_record_count,
+        "1b_invalid_external_record_count": invalid_external_record_count,
+        "1c_missing_static_baselines": ", ".join(str(item) for item in missing_strategy_ids),
         "2_static_baseline_aligned": final_status
         in {
             "STATIC_BASELINE_MANUAL_RECONCILED",

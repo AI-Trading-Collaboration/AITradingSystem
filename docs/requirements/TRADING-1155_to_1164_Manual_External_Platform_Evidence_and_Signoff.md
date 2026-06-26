@@ -68,3 +68,21 @@ convention status, and the safety boundary.
   external validation and equal-risk growth tilt, task/register/report/docs contract
   pytest, and `git diff --check`. Actual external platform evidence remains blocked
   until the project owner supplies real exports/screenshots and manual convention signoff.
+- 2026-06-27: Owner supplied `G:\Download\Portfolio_20260626180410.xlsx`, a real
+  Portfolio Visualizer export for `100_qqq` covering 2022-12-01 to 2026-06-25. The
+  workbook is valid evidence for the single-asset QQQ static baseline, but it does not
+  cover `qqq_50_sgov_50`, `qqq_60_sgov_40`, metric convention signoff, or SGOV convention
+  signoff. The ingestion layer must preserve the platform's `No rebalancing` text for
+  this single-asset case and treat it only as an audited single-asset equivalence, not as
+  a general replacement for monthly rebalance validation.
+- 2026-06-27: The supplied workbook was retained under
+  `inputs/external_validation/manual_external_records/evidence/` and summarized in
+  `static_baseline_external_records.yaml` with provider, URL, parameters, timestamp,
+  non-empty row count, and SHA256. Real ingestion returns `MANUAL_EXTERNAL_INPUT_PARTIAL`
+  with one valid `100_qqq` record and missing `qqq_50_sgov_50` / `qqq_60_sgov_40`.
+  Final reconciliation returns `STATIC_BASELINE_MANUAL_MISMATCH`: annual return is close,
+  but Portfolio Visualizer reports monthly-return max drawdown while internal static
+  validation uses daily equity-path drawdown. Metric convention signoff remains
+  `METRIC_CONVENTIONS_STILL_UNKNOWN`, SGOV signoff remains `SGOV_CONVENTION_STILL_UNKNOWN`,
+  owner recommendation is `NEED_MORE_MANUAL_EVIDENCE`, and master status is
+  `EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT`.

@@ -402,6 +402,94 @@ def test_manual_external_evidence_signoff_builders_and_cli(tmp_path: Path) -> No
     assert (output_root / "static_baseline_external_manual_input_ingestion.json").exists()
 
 
+def test_single_asset_manual_external_record_accepts_no_rebalancing(
+    tmp_path: Path,
+) -> None:
+    records_path = tmp_path / "static_baseline_external_records.yaml"
+    records_path.write_text(
+        yaml.safe_dump(
+            {
+                "records": [
+                    {
+                        "external_tool": "Portfolio Visualizer",
+                        "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
+                        "strategy_id": "100_qqq",
+                        "date_range_start": "2022-12-01",
+                        "date_range_end": "2026-06-25",
+                        "asset_weights": {"QQQ": 1.0},
+                        "rebalance_frequency": "No rebalancing",
+                        "dividend_reinvestment": "reinvested",
+                        "price_or_total_return_policy": "total_return",
+                        "annual_return": 0.2910428246168404,
+                        "max_drawdown": -0.10087499557814356,
+                        "sharpe": 1.2432326708294785,
+                        "calmar": 2.519927897552753,
+                        "turnover": "metric_unavailable_on_platform",
+                        "monthly_returns_available": True,
+                        "export_file_path": "fixture://portfolio_visualizer_100_qqq.xlsx",
+                        "screenshot_reference": "",
+                        "manual_notes": (
+                            "Portfolio Visualizer exports No rebalancing for a 100% "
+                            "single-asset baseline; this is not used for multi-asset "
+                            "static baselines."
+                        ),
+                        "owner": "test_owner",
+                        "recorded_at": "2026-06-27T03:04:13+09:00",
+                    },
+                    {
+                        "external_tool": "Portfolio Visualizer",
+                        "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
+                        "strategy_id": "qqq_50_sgov_50",
+                        "date_range_start": "2022-12-01",
+                        "date_range_end": "2026-06-25",
+                        "asset_weights": {"QQQ": 0.5, "SGOV": 0.5},
+                        "rebalance_frequency": "No rebalancing",
+                        "dividend_reinvestment": "reinvested",
+                        "price_or_total_return_policy": "total_return",
+                        "annual_return": 0.12,
+                        "max_drawdown": -0.05,
+                        "sharpe": 1.0,
+                        "calmar": 2.0,
+                        "turnover": "metric_unavailable_on_platform",
+                        "monthly_returns_available": True,
+                        "export_file_path": "fixture://portfolio_visualizer_50_50.xlsx",
+                        "screenshot_reference": "",
+                        "manual_notes": "multi-asset baselines must use monthly rebalance",
+                        "owner": "test_owner",
+                        "recorded_at": "2026-06-27T03:04:13+09:00",
+                    }
+                ]
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    payload = run_static_baseline_external_manual_input_ingestion(
+        output_root=tmp_path / "outputs",
+        input_yaml_path=records_path,
+        input_csv_path=tmp_path / "missing_manual_records.csv",
+        end_date=date(2026, 6, 25),
+    )
+
+    assert payload["status"] == "MANUAL_EXTERNAL_INPUT_PARTIAL"
+    assert payload["missing_strategy_ids"] == ["qqq_60_sgov_40"]
+    assert len(payload["valid_records"]) == 1
+    valid_record = payload["valid_records"][0]
+    assert valid_record["strategy_id"] == "100_qqq"
+    assert valid_record["rebalance_frequency"] == "No rebalancing"
+    assert valid_record["validation_errors"] == []
+    assert valid_record["validation_warnings"] == [
+        "rebalance_frequency_no_rebalancing_equivalent_for_single_asset"
+    ]
+    assert len(payload["invalid_records"]) == 1
+    invalid_record = payload["invalid_records"][0]
+    assert invalid_record["strategy_id"] == "qqq_50_sgov_50"
+    assert invalid_record["validation_errors"] == [
+        "rebalance_frequency_must_be_monthly_for_static_baseline"
+    ]
+
+
 def test_external_validation_report_registry_contracts() -> None:
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     entries = {item["report_id"]: item for item in registry["reports"]}
