@@ -17410,3 +17410,232 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: external_validation_scope_contract
+    title: External Validation Scope Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-scope-contract
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_scope_contract.json
+      - outputs/research_strategies/external_validation/external_validation_scope_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1129 defines the research-only external validation scope, strategy set, tolerances, and no-production boundary.
+    owner_action: review_external_validation_scope_contract
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_baseline_external_reconciliation
+    title: Static Baseline External Reconciliation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies static-baseline-external-reconciliation
+    artifact_globs:
+      - outputs/research_strategies/external_validation/static_baseline_external_reconciliation.json
+      - outputs/research_strategies/external_validation/static_baseline_external_reconciliation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1130 reconciles P0 static baselines against explicit manually supplied external records.
+    owner_action: supply_or_review_static_baseline_external_records
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: strategy_weight_path_export
+    title: Strategy Weight Path Export
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies strategy-weight-path-export
+    artifact_globs:
+      - outputs/research_strategies/external_validation/strategy_weight_path_export.json
+      - outputs/research_strategies/external_validation/strategy_weight_path_export.md
+      - outputs/research_strategies/external_validation/weight_paths/*_weight_path.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1131 exports auditable dynamic strategy weight paths for independent replay.
+    owner_action: review_weight_path_export_before_external_replay
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_independent_return_replay
+    title: External Independent Return Replay
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-independent-return-replay
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_independent_return_replay.json
+      - outputs/research_strategies/external_validation/external_independent_return_replay.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1132 independently replays dynamic returns from exported weight paths and validated prices.
+    owner_action: review_independent_replay_metric_tolerance
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: metric_definition_reconciliation
+    title: Metric Definition Reconciliation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies metric-definition-reconciliation
+    artifact_globs:
+      - outputs/research_strategies/external_validation/metric_definition_reconciliation.json
+      - outputs/research_strategies/external_validation/metric_definition_reconciliation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1133 records metric formula alignment requirements before comparing internal and external backtests.
+    owner_action: review_metric_definition_mapping
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: sgov_total_return_external_check
+    title: SGOV Total Return External Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies sgov-total-return-external-check
+    artifact_globs:
+      - outputs/research_strategies/external_validation/sgov_total_return_external_check.json
+      - outputs/research_strategies/external_validation/sgov_total_return_external_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1134 isolates SGOV close-versus-adjusted-close effects for external platform reconciliation.
+    owner_action: review_sgov_total_return_handling
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_platform_feasibility_review
+    title: External Platform Feasibility Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-platform-feasibility-review
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_platform_feasibility_review.json
+      - outputs/research_strategies/external_validation/external_platform_feasibility_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1135 records which external platforms can feasibly replicate static and dynamic research-only backtests.
+    owner_action: review_external_platform_feasibility_before_replication
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: quantconnect_replication_dry_run_plan
+    title: QuantConnect Replication Dry-Run Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies quantconnect-replication-dry-run-plan
+    artifact_globs:
+      - outputs/research_strategies/external_validation/quantconnect_replication_dry_run_plan.json
+      - outputs/research_strategies/external_validation/quantconnect_replication_dry_run_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1136 defines a dry-run-only QuantConnect replication checklist without broker or production effects.
+    owner_action: review_quantconnect_replication_dry_run_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_difference_attribution
+    title: External Validation Difference Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-difference-attribution
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_difference_attribution.json
+      - outputs/research_strategies/external_validation/external_validation_difference_attribution.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1137 attributes differences to data source, SGOV handling, metric definitions, rebalancing, and missing external records.
+    owner_action: review_external_validation_difference_attribution
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_owner_report
+    title: External Validation Owner Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-owner-report
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_owner_report.json
+      - docs/research/external_validation_owner_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1138 summarizes external validation readiness for project-owner manual review.
+    owner_action: review_external_validation_owner_report
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_master_review
+    title: External Validation Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-master-review
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_master_review.json
+      - docs/research/external_validation_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1139 records the final research-only external validation status and remaining blockers.
+    owner_action: review_external_validation_master_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_reader_brief_safe_preview
+    title: External Validation Reader Brief Safe Preview
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-reader-brief-safe-preview
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_reader_brief_safe_preview.json
+      - outputs/research_strategies/external_validation/external_validation_reader_brief_safe_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1140 previews Reader-Brief-safe text without integrating it into the formal daily brief.
+    owner_action: review_external_validation_reader_brief_preview_safety
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

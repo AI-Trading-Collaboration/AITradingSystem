@@ -8,6 +8,9 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.cli_commands.research_external_validation import (
+    register_external_validation_strategy_commands,
+)
 from ai_trading_system.cli_commands.research_growth_tilt import (
     register_growth_tilt_strategy_commands,
 )
@@ -246,6 +249,7 @@ def register_simple_baseline_strategy_commands(strategies_app: typer.Typer) -> N
     for command_name, command in _SIMPLE_BASELINE_STRATEGY_COMMANDS:
         strategies_app.command(command_name)(command)
     register_growth_tilt_strategy_commands(strategies_app)
+    register_external_validation_strategy_commands(strategies_app)
 
 
 def strategies_simple_baseline_registry_review_command(
