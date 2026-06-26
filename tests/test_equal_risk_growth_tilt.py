@@ -11,8 +11,18 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    run_balanced_core_definition_lock,
+    run_balanced_core_first_observation_write,
+    run_balanced_core_forward_aging_dry_run,
+    run_balanced_core_idempotency_duplicate_guard,
+    run_balanced_core_maturity_scoreboard_safety_gate,
+    run_balanced_core_owner_launch_pack,
+    run_balanced_core_watchlist_activation_contract,
     run_best_growth_tilt_candidate_deep_dive,
     run_beta_adjusted_edge_methodology_audit,
+    run_dual_forward_aging_comparator_panel,
+    run_dual_forward_aging_master_review,
+    run_dual_forward_aging_reader_brief_safe_preview,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -96,6 +106,16 @@ GROWTH_TILT_REPORT_IDS = {
     "growth_tilt_watchlist_reconsideration_gate",
     "growth_tilt_owner_diagnosis_pack",
     "growth_tilt_focused_diagnosis_master_review",
+    "balanced_core_watchlist_activation_contract",
+    "balanced_core_definition_lock",
+    "balanced_core_forward_aging_dry_run",
+    "balanced_core_first_observation_write",
+    "balanced_core_idempotency_duplicate_guard",
+    "balanced_core_maturity_scoreboard_safety_gate",
+    "dual_forward_aging_comparator_panel",
+    "dual_forward_aging_reader_brief_safe_preview",
+    "balanced_core_owner_launch_pack",
+    "dual_forward_aging_master_review",
 }
 
 
@@ -580,9 +600,180 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
     assert (growth_root / "growth_tilt_focused_diagnosis_master_review.json").exists()
 
 
+def test_balanced_core_forward_aging_launch_builders_and_cli(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_growth_caches(tmp_path)
+    config_path = _write_small_growth_config(tmp_path)
+    growth_root = tmp_path / "outputs" / "research_strategies" / "growth_components"
+    roadmap_root = tmp_path / "outputs" / "research_strategies" / "roadmap"
+    docs_root = tmp_path / "docs" / "research"
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "config_path": config_path,
+        "output_root": growth_root,
+        "as_of_date": as_of,
+    }
+    activation_sources = _balanced_core_ready_activation_sources()
+
+    activation = run_balanced_core_watchlist_activation_contract(
+        **common,
+        _master_payload=activation_sources["master"],
+        _owner_payload=activation_sources["owner"],
+        _watchlist_payload=activation_sources["watchlist"],
+        _role_payload=activation_sources["role"],
+        _finalist_payload=activation_sources["finalist"],
+    )
+    candidate_summary = run_growth_tilt_candidate_result_summary(**common)
+    definition_lock = run_balanced_core_definition_lock(
+        **common,
+        _candidate_summary_payload=candidate_summary,
+    )
+    dry_run = run_balanced_core_forward_aging_dry_run(
+        **common,
+        _activation_payload=activation,
+        _definition_lock_payload=definition_lock,
+    )
+    observation = run_balanced_core_first_observation_write(
+        **common,
+        _activation_payload=activation,
+        _definition_lock_payload=definition_lock,
+        _dry_run_payload=dry_run,
+    )
+    duplicate = run_balanced_core_first_observation_write(
+        **common,
+        decision_date=as_of,
+        _dry_run_payload=dry_run,
+    )
+    idempotency = run_balanced_core_idempotency_duplicate_guard(
+        **common,
+        decision_date=as_of,
+    )
+    maturity = run_balanced_core_maturity_scoreboard_safety_gate(**common)
+    panel = run_dual_forward_aging_comparator_panel(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        as_of_date=as_of,
+    )
+    reader_preview = run_dual_forward_aging_reader_brief_safe_preview(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        as_of_date=as_of,
+        _maturity_payload=maturity,
+        _panel_payload=panel,
+    )
+    owner = run_balanced_core_owner_launch_pack(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        docs_path=docs_root / "balanced_core_owner_launch_pack.md",
+        as_of_date=as_of,
+        _activation_payload=activation,
+        _definition_lock_payload=definition_lock,
+        _observation_payload=observation,
+        _idempotency_payload=idempotency,
+        _maturity_payload=maturity,
+        _panel_payload=panel,
+        _reader_preview_payload=reader_preview,
+    )
+    master = run_dual_forward_aging_master_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        growth_output_root=growth_root,
+        output_root=roadmap_root,
+        docs_path=docs_root / "dual_forward_aging_master_review.md",
+        owner_docs_path=docs_root / "balanced_core_owner_launch_pack.md",
+        as_of_date=as_of,
+        _owner_launch_payload=owner,
+    )
+
+    assert activation["status"] == "BALANCED_CORE_WATCHLIST_CONTRACT_READY"
+    assert definition_lock["status"] == "BALANCED_CORE_DEFINITION_LOCKED"
+    assert definition_lock["strategy_id"] == "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
+    assert dry_run["status"] == "BALANCED_CORE_FORWARD_DRY_RUN_PASS"
+    assert dry_run["observation_written"] is False
+    assert dry_run["target_weight_qqq"] > 0.0
+    assert dry_run["comparator_equal_risk_weights"]["QQQ"] > 0.0
+    assert dry_run["comparator_100_qqq_weights"]["QQQ"] == 1.0
+    assert observation["status"] == "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN"
+    assert observation["observation_written"] is True
+    assert duplicate["status"] == "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS"
+    assert idempotency["status"] == "BALANCED_CORE_IDEMPOTENCY_PASS"
+    assert maturity["status"] == "BALANCED_CORE_SCOREBOARD_INSUFFICIENT"
+    assert maturity["scoreboard_status"] == "INSUFFICIENT"
+    assert maturity["matured_20d_count"] == 0
+    assert panel["status"] == "DUAL_FORWARD_PANEL_PENDING"
+    assert len(panel["panel_rows"]) == 5
+    assert reader_preview["status"] == "DUAL_READER_BRIEF_SAFE"
+    assert reader_preview["prohibited_phrase_hits"] == []
+    assert owner["owner_recommendation"] == "BALANCED_CORE_FORWARD_AGING_LAUNCHED"
+    assert master["status"] == "DUAL_FORWARD_AGING_ACTIVE_RESEARCH_ONLY"
+    assert (docs_root / "balanced_core_owner_launch_pack.md").exists()
+    assert (docs_root / "dual_forward_aging_master_review.md").exists()
+    assert (
+        growth_root
+        / "forward_aging_observations"
+        / f"balanced_core_forward_aging_observation_{as_of.isoformat()}.json"
+    ).exists()
+
+    for payload in (
+        activation,
+        definition_lock,
+        dry_run,
+        observation,
+        idempotency,
+        maturity,
+        panel,
+        reader_preview,
+        owner,
+        master,
+    ):
+        _assert_research_only_payload(payload)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "balanced-core-maturity-scoreboard-safety-gate",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (growth_root / "balanced_core_maturity_scoreboard_safety_gate.json").exists()
+
+
 def test_equal_risk_growth_tilt_reports_and_registry_contracts() -> None:
     config = yaml.safe_load(DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH.read_text())
     safety = config["safety_boundary"]
+    balanced_core_policy = config["research_policy"]["balanced_core_forward_aging"]
     excluded_paths = set(config["excluded_paths"])
     families = config["candidate_families"]
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
@@ -595,6 +786,11 @@ def test_equal_risk_growth_tilt_reports_and_registry_contracts() -> None:
     assert safety["manual_review_required"] is True
     assert config["market_regime"]["regime_id"] == "ai_after_chatgpt"
     assert str(config["market_regime"]["default_backtest_start"]) == "2022-12-01"
+    assert balanced_core_policy["policy_id"] == "balanced_core_forward_aging_safety_v1"
+    assert balanced_core_policy["observation_windows"] == [5, 10, 20, 60, 120]
+    assert balanced_core_policy["minimum_required_20d"] == 20
+    assert balanced_core_policy["minimum_required_60d"] == 20
+    assert balanced_core_policy["minimum_required_120d"] == 20
     assert "modify_original_equal_risk_qqq_sgov" in excluded_paths
     assert "tail_risk_fallback" in excluded_paths
     assert "LEAPS" in excluded_paths
@@ -671,6 +867,46 @@ def _write_small_growth_config(tmp_path: Path) -> Path:
     config_path = tmp_path / "equal_risk_growth_tilt_candidate_registry.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     return config_path
+
+
+def _balanced_core_ready_activation_sources() -> dict[str, dict[str, object]]:
+    safety = {
+        "production_effect": "none",
+        "broker_action": "none",
+        "promotion_allowed": False,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "manual_review_required": True,
+        "market_regime": "ai_after_chatgpt",
+        "artifact_paths": {"json_path": "fixture.json", "markdown_path": "fixture.md"},
+    }
+    candidate_id = "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
+    return {
+        "master": {
+            **safety,
+            "status": "BALANCED_CORE_FORWARD_AGING_REVIEWABLE",
+            "summary": {"candidate_strategy_id": candidate_id},
+        },
+        "owner": {
+            **safety,
+            "status": "GROWTH_TILT_OWNER_DIAGNOSIS_PACK_READY",
+            "owner_recommendation": "ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE",
+        },
+        "watchlist": {
+            **safety,
+            "status": "BALANCED_CORE_WATCHLIST_REVIEWABLE",
+            "candidate_strategy_id": candidate_id,
+            "warning_reasons": [],
+        },
+        "role": {
+            **safety,
+            "status": "BALANCED_CORE_REVIEWABLE",
+        },
+        "finalist": {
+            **safety,
+            "status": "BASE_CANDIDATE_REMAINS_BEST",
+        },
+    }
 
 
 def _write_growth_caches(tmp_path: Path) -> tuple[Path, Path, Path, date]:

@@ -54,6 +54,12 @@ DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH = (
 DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "growth_tilt_focused_diagnosis_master_review.md"
 )
+DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "balanced_core_owner_launch_pack.md"
+)
+DEFAULT_DUAL_FORWARD_AGING_MASTER_REVIEW_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "dual_forward_aging_master_review.md"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -4268,6 +4274,1138 @@ def run_growth_tilt_focused_diagnosis_master_review(
     return payload
 
 
+def run_balanced_core_watchlist_activation_contract(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _master_payload: Mapping[str, Any] | None = None,
+    _owner_payload: Mapping[str, Any] | None = None,
+    _watchlist_payload: Mapping[str, Any] | None = None,
+    _role_payload: Mapping[str, Any] | None = None,
+    _finalist_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    master = dict(
+        _master_payload
+        or run_growth_tilt_focused_diagnosis_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    owner = dict(
+        _owner_payload
+        or _read_json_or_empty(output_root / "growth_tilt_owner_diagnosis_pack.json")
+    )
+    watchlist = dict(
+        _watchlist_payload
+        or _read_json_or_empty(output_root / "growth_tilt_watchlist_reconsideration_gate.json")
+    )
+    role = dict(
+        _role_payload
+        or _read_json_or_empty(output_root / "growth_tilt_balanced_core_role_review.json")
+    )
+    finalist = dict(
+        _finalist_payload
+        or _read_json_or_empty(output_root / "growth_tilt_parameter_neighbor_finalist_review.json")
+    )
+    source_payloads = {
+        "growth_tilt_focused_diagnosis_master_review": master,
+        "growth_tilt_owner_diagnosis_pack": owner,
+        "growth_tilt_watchlist_reconsideration_gate": watchlist,
+        "growth_tilt_balanced_core_role_review": role,
+        "growth_tilt_parameter_neighbor_finalist_review": finalist,
+    }
+    blocking_reasons = _focused_source_blockers(source_payloads)
+    warning_reasons: list[str] = []
+    candidate_id = str(
+        _mapping(master.get("summary")).get("candidate_strategy_id")
+        or watchlist.get("candidate_strategy_id")
+        or FOCUSED_GROWTH_TILT_CANDIDATE_ID
+    )
+    if candidate_id != FOCUSED_GROWTH_TILT_CANDIDATE_ID:
+        blocking_reasons.append("candidate_strategy_id_changed")
+    if master.get("status") != "BALANCED_CORE_FORWARD_AGING_REVIEWABLE":
+        blocking_reasons.append("focused_master_not_balanced_core_reviewable")
+    if owner.get("owner_recommendation") != "ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE":
+        blocking_reasons.append("owner_recommendation_not_balanced_core_forward_aging")
+    if watchlist.get("status") != "BALANCED_CORE_WATCHLIST_REVIEWABLE":
+        blocking_reasons.append("watchlist_gate_not_balanced_core_reviewable")
+    if role.get("status") != "BALANCED_CORE_REVIEWABLE":
+        warning_reasons.append(f"role_status:{role.get('status')}")
+    if finalist.get("status") == "NO_STABLE_FINALIST":
+        blocking_reasons.append("no_stable_finalist")
+    safety_violations = _safety_violations(source_payloads.values())
+    blocking_reasons.extend(safety_violations)
+
+    blocking_reasons = _dedupe_text(blocking_reasons)
+    warning_reasons = _dedupe_text(
+        [*warning_reasons, *_records_to_text(watchlist.get("warning_reasons"))]
+    )
+    watchlist_activation_allowed = not blocking_reasons
+    if watchlist_activation_allowed:
+        status = "BALANCED_CORE_WATCHLIST_CONTRACT_READY"
+    elif safety_violations or _focused_source_blockers(source_payloads):
+        status = "BALANCED_CORE_WATCHLIST_BLOCKED"
+    else:
+        status = "BALANCED_CORE_WATCHLIST_NEEDS_OWNER_REVIEW"
+    payload = _payload(
+        report_type="balanced_core_watchlist_activation_contract",
+        title="Balanced Core Watchlist Activation Contract",
+        status=status,
+        summary={
+            "candidate_strategy_id": candidate_id,
+            "candidate_role": "balanced_core_candidate",
+            "watchlist_activation_allowed": watchlist_activation_allowed,
+            "watchlist_scope": "research_only_forward_aging",
+            "blocking_reason_count": len(blocking_reasons),
+            **_safety_summary(),
+        },
+        candidate_strategy_id=candidate_id,
+        candidate_role="balanced_core_candidate",
+        watchlist_activation_allowed=watchlist_activation_allowed,
+        watchlist_scope="research_only_forward_aging",
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        blocking_reasons=blocking_reasons,
+        warning_reasons=warning_reasons,
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_watchlist_activation_contract",
+            "Balanced Core Watchlist Activation Contract",
+            "aits research strategies balanced-core-watchlist-activation-contract",
+            "balanced_core_watchlist_activation_contract",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_balanced_core_definition_lock(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _candidate_summary_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    summary = dict(
+        _candidate_summary_payload
+        or run_growth_tilt_candidate_result_summary(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    candidate = _focused_growth_tilt_candidate(summary)
+    blocking_reasons: list[str] = []
+    if not candidate:
+        blocking_reasons.append("focused_candidate_missing")
+    if candidate.get("strategy_id") != FOCUSED_GROWTH_TILT_CANDIDATE_ID:
+        blocking_reasons.append("candidate_strategy_id_changed")
+    source_blockers = _focused_source_blockers(
+        {"growth_tilt_candidate_result_summary": summary}
+    )
+    blocking_reasons.extend(source_blockers)
+    definition = (
+        _balanced_core_definition(
+            candidate,
+            config=config,
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        )
+        if candidate
+        else {}
+    )
+    definition_hash = _stable_hash(definition) if definition else ""
+    existing = _read_json_or_empty(output_root / "balanced_core_definition_lock.json")
+    existing_hash = str(existing.get("definition_hash") or "")
+    existing_strategy_id = str(existing.get("strategy_id") or "")
+    if existing_hash and existing_hash != definition_hash:
+        if existing_strategy_id == FOCUSED_GROWTH_TILT_CANDIDATE_ID:
+            blocking_reasons.append("definition_hash_changed_for_same_strategy_id")
+            status = "BALANCED_CORE_DEFINITION_CHANGED"
+        else:
+            blocking_reasons.append("definition_hash_conflicted_with_existing_lock")
+            status = "BALANCED_CORE_DEFINITION_CONFLICTED"
+    elif blocking_reasons:
+        status = "BALANCED_CORE_DEFINITION_BLOCKED"
+    else:
+        status = "BALANCED_CORE_DEFINITION_LOCKED"
+    blocking_reasons = _dedupe_text(blocking_reasons)
+    payload = _payload(
+        report_type="balanced_core_definition_lock",
+        title="Balanced Core Definition Lock",
+        status=status,
+        summary={
+            "strategy_id": candidate.get("strategy_id"),
+            "definition_hash": definition_hash,
+            "definition_locked": status == "BALANCED_CORE_DEFINITION_LOCKED",
+            "blocking_reason_count": len(blocking_reasons),
+            **_safety_summary(),
+        },
+        strategy_id=candidate.get("strategy_id"),
+        base_strategy_id=candidate.get("base_strategy_id") or DEFENSIVE_PRIMARY_ID,
+        candidate_family=candidate.get("candidate_family"),
+        policy_definition=definition.get("policy_definition", {}),
+        target_vol_config=definition.get("target_vol_config", {}),
+        vol_lookback_window=definition.get("vol_lookback_window"),
+        qqq_weight_bounds=definition.get("qqq_weight_bounds", {}),
+        sgov_weight_bounds=definition.get("sgov_weight_bounds", {}),
+        tqqq_weight_bounds=definition.get("tqqq_weight_bounds", {}),
+        rebalance_rule=definition.get("rebalance_rule"),
+        data_inputs=definition.get("data_inputs", {}),
+        data_source_contract=definition.get("data_source_contract", {}),
+        definition_hash=definition_hash,
+        historical_observation_rewrite_allowed=False,
+        definition_change_requires_new_strategy_id=True,
+        blocking_reasons=blocking_reasons,
+        source_statuses={"growth_tilt_candidate_result_summary": summary.get("status")},
+        source_artifacts=_artifact_paths_by_report(
+            {"growth_tilt_candidate_result_summary": summary}
+        ),
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_definition_lock",
+            "Balanced Core Definition Lock",
+            "aits research strategies balanced-core-definition-lock",
+            "balanced_core_definition_lock",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_balanced_core_forward_aging_dry_run(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    decision_date: date | None = None,
+    _activation_payload: Mapping[str, Any] | None = None,
+    _definition_lock_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    activation = dict(
+        _activation_payload
+        or run_balanced_core_watchlist_activation_contract(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    definition_lock = dict(
+        _definition_lock_payload
+        or run_balanced_core_definition_lock(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    data_gate = _data_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    blockers: list[str] = []
+    if activation.get("status") != "BALANCED_CORE_WATCHLIST_CONTRACT_READY":
+        blockers.append("activation_contract_not_ready")
+    if definition_lock.get("status") != "BALANCED_CORE_DEFINITION_LOCKED":
+        blockers.append("definition_lock_not_locked")
+    if not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+    prices = pd.DataFrame()
+    resolved_date = decision_date
+    candidate_weights: dict[str, float] = {}
+    equal_risk_weights: dict[str, float] = {}
+    qqq_weights: dict[str, float] = {"QQQ": 1.0, "TQQQ": 0.0, "SGOV": 0.0}
+    signal_inputs: dict[str, Any] = {}
+    if not blockers:
+        prices = _price_matrix(
+            prices_path,
+            config,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        resolved_date = _resolve_balanced_core_decision_date(
+            prices,
+            decision_date or _safe_date(data_gate.get("as_of")) or as_of_date,
+        )
+        candidate = _candidate_from_definition_lock(definition_lock)
+        candidate_weights = _target_weights_at(candidate, prices, config, resolved_date)
+        equal_risk_weights = _target_weights_at(
+            {"strategy_id": DEFENSIVE_PRIMARY_ID, "special_policy": "equal_risk"},
+            prices,
+            config,
+            resolved_date,
+        )
+        signal_inputs = _balanced_core_signal_inputs(
+            candidate,
+            prices,
+            config,
+            resolved_date,
+        )
+    blockers = _dedupe_text(blockers)
+    warning_count = _int(data_gate.get("warning_count"))
+    if blockers:
+        status = "BALANCED_CORE_FORWARD_DRY_RUN_BLOCKED"
+    elif warning_count > 0 or "WARNING" in str(data_gate.get("status", "")).upper():
+        status = "BALANCED_CORE_FORWARD_DRY_RUN_WARN"
+    else:
+        status = "BALANCED_CORE_FORWARD_DRY_RUN_PASS"
+    payload = _payload(
+        report_type="balanced_core_forward_aging_dry_run",
+        title="Balanced Core Forward-Aging Dry Run",
+        status=status,
+        summary={
+            "decision_date": resolved_date.isoformat() if resolved_date else None,
+            "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "candidate_definition_hash": definition_lock.get("definition_hash"),
+            "data_quality_status": data_gate.get("status"),
+            "observation_written": False,
+            "blocking_reason_count": len(blockers),
+            **_safety_summary(),
+        },
+        decision_date=resolved_date.isoformat() if resolved_date else None,
+        candidate_strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        candidate_definition_hash=definition_lock.get("definition_hash"),
+        target_weight_qqq=candidate_weights.get("QQQ", 0.0),
+        target_weight_tqqq=candidate_weights.get("TQQQ", 0.0),
+        target_weight_sgov=candidate_weights.get("SGOV", 0.0),
+        target_weights=candidate_weights,
+        comparator_equal_risk_weights=equal_risk_weights,
+        comparator_100_qqq_weights=qqq_weights,
+        signal_inputs_used=signal_inputs,
+        data_quality_status=data_gate.get("status"),
+        data_quality=data_gate,
+        observation_written=False,
+        blocking_reasons=blockers,
+        source_statuses={
+            "balanced_core_watchlist_activation_contract": activation.get("status"),
+            "balanced_core_definition_lock": definition_lock.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "balanced_core_watchlist_activation_contract": activation,
+                "balanced_core_definition_lock": definition_lock,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_forward_aging_dry_run",
+            "Balanced Core Forward-Aging Dry Run",
+            "aits research strategies balanced-core-forward-aging-dry-run",
+            "balanced_core_forward_aging_dry_run",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_balanced_core_first_observation_write(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    decision_date: date | None = None,
+    _activation_payload: Mapping[str, Any] | None = None,
+    _definition_lock_payload: Mapping[str, Any] | None = None,
+    _dry_run_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if decision_date is not None:
+        existing_path = _balanced_core_observation_path(output_root, decision_date)
+        existing = _read_json_or_empty(existing_path)
+        if _is_balanced_core_written_observation(existing):
+            existing["status"] = "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS"
+            existing["observation_written"] = False
+            existing["idempotency_status"] = "already_exists_no_rewrite"
+            return existing
+    dry_run = dict(
+        _dry_run_payload
+        or run_balanced_core_forward_aging_dry_run(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            decision_date=decision_date,
+            _activation_payload=_activation_payload,
+            _definition_lock_payload=_definition_lock_payload,
+        )
+    )
+    resolved_date = _safe_date(dry_run.get("decision_date")) or decision_date
+    if resolved_date is None:
+        resolved_date = as_of_date or DEFAULT_AI_REGIME_BACKTEST_START
+    observation_root = output_root / "forward_aging_observations"
+    artifact_id = f"balanced_core_forward_aging_observation_{resolved_date.isoformat()}"
+    json_path = observation_root / f"{artifact_id}.json"
+    if json_path.exists():
+        existing = _read_json_or_empty(json_path)
+        if _is_balanced_core_written_observation(existing):
+            existing["status"] = "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS"
+            existing["observation_written"] = False
+            existing["idempotency_status"] = "already_exists_no_rewrite"
+            return existing
+    blockers = list(_records_to_text(dry_run.get("blocking_reasons")))
+    data_quality_status = str(dry_run.get("data_quality_status") or "")
+    if dry_run.get("status") not in {
+        "BALANCED_CORE_FORWARD_DRY_RUN_PASS",
+        "BALANCED_CORE_FORWARD_DRY_RUN_WARN",
+    }:
+        blockers.append("dry_run_not_passed")
+    if data_quality_status.upper().endswith("BLOCKED"):
+        blockers.append("data_quality_blocked")
+    blockers = _dedupe_text(blockers)
+    observation_written = not blockers
+    status = (
+        "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN"
+        if observation_written
+        else "BALANCED_CORE_FIRST_OBSERVATION_BLOCKED"
+    )
+    observation = _balanced_core_observation_row(dry_run, observation_written)
+    payload = _payload(
+        report_type="balanced_core_first_observation_write",
+        title="Balanced Core Forward-Aging Observation",
+        status=status,
+        summary={
+            "decision_date": resolved_date.isoformat(),
+            "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "observation_written": observation_written,
+            "data_quality_status": data_quality_status,
+            "blocking_reason_count": len(blockers),
+            **_safety_summary(),
+        },
+        decision_date=resolved_date.isoformat(),
+        candidate_strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        candidate_definition_hash=dry_run.get("candidate_definition_hash"),
+        observation_written=observation_written,
+        data_quality_status=data_quality_status,
+        data_quality=dry_run.get("data_quality", {}),
+        observations=[observation] if observation_written else [],
+        blocked_observation=observation if not observation_written else {},
+        blocking_reasons=blockers,
+        source_statuses={"balanced_core_forward_aging_dry_run": dry_run.get("status")},
+        source_artifacts=_artifact_paths_by_report(
+            {"balanced_core_forward_aging_dry_run": dry_run}
+        ),
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_first_observation_write",
+            "Balanced Core First Observation Write",
+            "aits research strategies balanced-core-first-observation-write",
+            "forward_aging_observations/balanced_core_forward_aging_observation_*",
+        ),
+    )
+    _write_pair(payload, observation_root, artifact_id)
+    return payload
+
+
+def run_balanced_core_idempotency_duplicate_guard(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    decision_date: date | None = None,
+) -> dict[str, Any]:
+    resolved_date = decision_date or _latest_balanced_core_observation_date(output_root)
+    if resolved_date is None:
+        payload = _payload(
+            report_type="balanced_core_idempotency_duplicate_guard",
+            title="Balanced Core Idempotency Duplicate Guard",
+            status="BALANCED_CORE_IDEMPOTENCY_BLOCKED",
+            summary={
+                "decision_date": None,
+                "strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+                "duplicate_detected": False,
+                "idempotency_status": "missing_first_observation",
+                **_safety_summary(),
+            },
+            decision_date=None,
+            strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            first_observation_exists=False,
+            second_run_status=None,
+            duplicate_detected=False,
+            original_fields_preserved=False,
+            definition_hash_preserved=False,
+            idempotency_status="missing_first_observation",
+            blocking_reasons=["first_observation_missing"],
+            report_registry_entry=_report_registry_entry(
+                "balanced_core_idempotency_duplicate_guard",
+                "Balanced Core Idempotency Duplicate Guard",
+                "aits research strategies balanced-core-idempotency-duplicate-guard",
+                "balanced_core_idempotency_duplicate_guard",
+            ),
+        )
+        _write_pair(payload, output_root, payload["report_type"])
+        return payload
+    observation_path = _balanced_core_observation_path(output_root, resolved_date)
+    before_payload = _read_json_or_empty(observation_path)
+    first_exists = _is_balanced_core_written_observation(before_payload)
+    before_hash = _stable_hash(before_payload)
+    before_core = _balanced_core_observation_core(before_payload)
+    second = run_balanced_core_first_observation_write(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        decision_date=resolved_date,
+    )
+    after_payload = _read_json_or_empty(observation_path)
+    after_hash = _stable_hash(after_payload)
+    after_core = _balanced_core_observation_core(after_payload)
+    duplicate_detected = second.get("status") == "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS"
+    original_fields_preserved = before_hash == after_hash and before_core == after_core
+    definition_hash_preserved = before_core.get("definition_hash") == after_core.get(
+        "definition_hash"
+    )
+    blockers = []
+    if not first_exists:
+        blockers.append("first_observation_missing_or_invalid")
+    if not duplicate_detected:
+        blockers.append("second_run_did_not_return_already_exists")
+    if not original_fields_preserved:
+        blockers.append("original_fields_changed")
+    if not definition_hash_preserved:
+        blockers.append("definition_hash_changed")
+    if blockers:
+        status = "BALANCED_CORE_IDEMPOTENCY_BLOCKED"
+        idempotency_status = "duplicate_guard_failed"
+    else:
+        status = "BALANCED_CORE_IDEMPOTENCY_PASS"
+        idempotency_status = "duplicate_guard_passed"
+    payload = _payload(
+        report_type="balanced_core_idempotency_duplicate_guard",
+        title="Balanced Core Idempotency Duplicate Guard",
+        status=status,
+        summary={
+            "decision_date": resolved_date.isoformat(),
+            "strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "duplicate_detected": duplicate_detected,
+            "original_fields_preserved": original_fields_preserved,
+            "definition_hash_preserved": definition_hash_preserved,
+            **_safety_summary(),
+        },
+        decision_date=resolved_date.isoformat(),
+        strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        first_observation_exists=first_exists,
+        second_run_status=second.get("status"),
+        duplicate_detected=duplicate_detected,
+        original_fields_preserved=original_fields_preserved,
+        definition_hash_preserved=definition_hash_preserved,
+        idempotency_status=idempotency_status,
+        before_core_hashes=before_core,
+        after_core_hashes=after_core,
+        blocking_reasons=blockers,
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_idempotency_duplicate_guard",
+            "Balanced Core Idempotency Duplicate Guard",
+            "aits research strategies balanced-core-idempotency-duplicate-guard",
+            "balanced_core_idempotency_duplicate_guard",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_balanced_core_maturity_scoreboard_safety_gate(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    policy = _balanced_core_forward_policy(config)
+    windows = _balanced_core_windows(config)
+    data_gate = _data_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    observations = _balanced_core_written_observations(output_root)
+    matured_counts = {window: 0 for window in windows}
+    blockers: list[str] = []
+    if not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+    else:
+        prices = _price_matrix(
+            prices_path,
+            config,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        for observation in observations:
+            decision = _safe_date(observation.get("decision_date"))
+            if decision is None:
+                continue
+            for window in windows:
+                if _window_is_matured(prices, decision, window):
+                    matured_counts[window] += 1
+    min_20 = _int(policy.get("minimum_required_20d"))
+    min_60 = _int(policy.get("minimum_required_60d"))
+    min_120 = _int(policy.get("minimum_required_120d"))
+    blocked_conclusions = _balanced_core_blocked_conclusions(
+        matured_counts,
+        minimum_required_20d=min_20,
+        minimum_required_60d=min_60,
+        minimum_required_120d=min_120,
+    )
+    if blockers:
+        status = "BALANCED_CORE_SCOREBOARD_BLOCKED"
+        scoreboard_status = "BLOCKED"
+    elif blocked_conclusions:
+        status = "BALANCED_CORE_SCOREBOARD_INSUFFICIENT"
+        scoreboard_status = "INSUFFICIENT"
+    else:
+        status = "BALANCED_CORE_SCOREBOARD_SAFETY_PASS"
+        scoreboard_status = "PENDING"
+    payload = _payload(
+        report_type="balanced_core_maturity_scoreboard_safety_gate",
+        title="Balanced Core Maturity Scoreboard Safety Gate",
+        status=status,
+        summary={
+            "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "observation_count": len(observations),
+            "scoreboard_status": scoreboard_status,
+            "blocked_conclusion_count": len(blocked_conclusions),
+            **_safety_summary(),
+        },
+        candidate_strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        matured_5d_count=matured_counts.get(5, 0),
+        matured_10d_count=matured_counts.get(10, 0),
+        matured_20d_count=matured_counts.get(20, 0),
+        matured_60d_count=matured_counts.get(60, 0),
+        matured_120d_count=matured_counts.get(120, 0),
+        minimum_required_20d=min_20,
+        minimum_required_60d=min_60,
+        minimum_required_120d=min_120,
+        scoreboard_status=scoreboard_status,
+        blocked_conclusions=blocked_conclusions,
+        data_quality_status=data_gate.get("status"),
+        data_quality=data_gate,
+        observation_files=[str(item.get("_path")) for item in observations],
+        blocking_reasons=blockers,
+        report_registry_entry=_report_registry_entry(
+            "balanced_core_maturity_scoreboard_safety_gate",
+            "Balanced Core Maturity Scoreboard Safety Gate",
+            "aits research strategies balanced-core-maturity-scoreboard-safety-gate",
+            "balanced_core_maturity_scoreboard_safety_gate",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_dual_forward_aging_comparator_panel(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    windows = _balanced_core_windows(config)
+    data_gate = _data_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    observations = _balanced_core_written_observations(growth_output_root)
+    rows: list[dict[str, Any]] = []
+    blockers: list[str] = []
+    if not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+    elif observations:
+        prices = _price_matrix(
+            prices_path,
+            config,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        definition_lock = _read_json_or_empty(
+            growth_output_root / "balanced_core_definition_lock.json"
+        )
+        candidate_map = _dual_panel_strategy_maps(definition_lock, config)
+        for observation in observations:
+            decision = _safe_date(observation.get("decision_date"))
+            if decision is None:
+                continue
+            decision_rows = [
+                _dual_panel_row(
+                    strategy_id=strategy_id,
+                    strategy_role=role,
+                    candidate=candidate,
+                    prices=prices,
+                    config=config,
+                    decision_date=decision,
+                    windows=windows,
+                    data_quality_status=str(data_gate.get("status")),
+                    observation=observation,
+                )
+                for strategy_id, role, candidate in candidate_map
+            ]
+            _attach_relative_fields(decision_rows, windows)
+            rows.extend(decision_rows)
+    any_matured = any(
+        row.get(f"matured_{window}d_return") is not None
+        for row in rows
+        for window in windows
+    )
+    if blockers:
+        status = "DUAL_FORWARD_PANEL_BLOCKED"
+    elif not observations:
+        status = "DUAL_FORWARD_PANEL_INSUFFICIENT"
+    elif any_matured:
+        status = "DUAL_FORWARD_PANEL_READY"
+    else:
+        status = "DUAL_FORWARD_PANEL_PENDING"
+    payload = _payload(
+        report_type="dual_forward_aging_comparator_panel",
+        title="Dual Forward-Aging Comparator Panel",
+        status=status,
+        summary={
+            "observation_count": len(observations),
+            "panel_row_count": len(rows),
+            "data_quality_status": data_gate.get("status"),
+            **_safety_summary(),
+        },
+        panel_rows=rows,
+        data_quality_status=data_gate.get("status"),
+        data_quality=data_gate,
+        observation_files=[str(item.get("_path")) for item in observations],
+        blocking_reasons=blockers,
+        report_registry_entry=_report_registry_entry(
+            "dual_forward_aging_comparator_panel",
+            "Dual Forward-Aging Comparator Panel",
+            "aits research strategies dual-forward-aging-comparator-panel",
+            "dual_forward_aging_comparator_panel",
+            output_subdir="roadmap",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_dual_forward_aging_reader_brief_safe_preview(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _maturity_payload: Mapping[str, Any] | None = None,
+    _panel_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    maturity = dict(
+        _maturity_payload
+        or run_balanced_core_maturity_scoreboard_safety_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    panel = dict(
+        _panel_payload
+        or run_dual_forward_aging_comparator_panel(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    latest_observation_date = _latest_balanced_core_observation_date(growth_output_root)
+    preview = {
+        "display_scope": "forward-aging research-only",
+        "defensive_primary": DEFENSIVE_PRIMARY_ID,
+        "balanced_core_candidate": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        "latest_observation_date": latest_observation_date.isoformat()
+        if latest_observation_date
+        else None,
+        "matured_5d_count": maturity.get("matured_5d_count", 0),
+        "matured_20d_count": maturity.get("matured_20d_count", 0),
+        "scoreboard_status": maturity.get("scoreboard_status"),
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+    }
+    prohibited_hits = _prohibited_reader_brief_hits(preview)
+    blockers = []
+    if panel.get("status") == "DUAL_FORWARD_PANEL_BLOCKED":
+        blockers.append("dual_forward_panel_blocked")
+    if maturity.get("status") == "BALANCED_CORE_SCOREBOARD_BLOCKED":
+        blockers.append("scoreboard_safety_gate_blocked")
+    if prohibited_hits:
+        blockers.append("reader_brief_prohibited_phrase_hit")
+    if blockers:
+        status = "DUAL_READER_BRIEF_BLOCKED"
+    elif prohibited_hits:
+        status = "DUAL_READER_BRIEF_AMBIGUOUS"
+    else:
+        status = "DUAL_READER_BRIEF_SAFE"
+    payload = _payload(
+        report_type="dual_forward_aging_reader_brief_safe_preview",
+        title="Dual Forward-Aging Reader Brief Safe Preview",
+        status=status,
+        summary={
+            "latest_observation_date": preview["latest_observation_date"],
+            "scoreboard_status": preview["scoreboard_status"],
+            "prohibited_phrase_hit_count": len(prohibited_hits),
+            **_safety_summary(),
+        },
+        reader_brief_preview=preview,
+        prohibited_phrase_hits=prohibited_hits,
+        blocking_reasons=blockers,
+        source_statuses={
+            "balanced_core_maturity_scoreboard_safety_gate": maturity.get("status"),
+            "dual_forward_aging_comparator_panel": panel.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "balanced_core_maturity_scoreboard_safety_gate": maturity,
+                "dual_forward_aging_comparator_panel": panel,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "dual_forward_aging_reader_brief_safe_preview",
+            "Dual Forward-Aging Reader Brief Safe Preview",
+            "aits research strategies dual-forward-aging-reader-brief-safe-preview",
+            "dual_forward_aging_reader_brief_safe_preview",
+            output_subdir="roadmap",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_balanced_core_owner_launch_pack(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _activation_payload: Mapping[str, Any] | None = None,
+    _definition_lock_payload: Mapping[str, Any] | None = None,
+    _observation_payload: Mapping[str, Any] | None = None,
+    _idempotency_payload: Mapping[str, Any] | None = None,
+    _maturity_payload: Mapping[str, Any] | None = None,
+    _panel_payload: Mapping[str, Any] | None = None,
+    _reader_preview_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    activation = dict(
+        _activation_payload
+        or run_balanced_core_watchlist_activation_contract(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    definition_lock = dict(
+        _definition_lock_payload
+        or run_balanced_core_definition_lock(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    observation = dict(
+        _observation_payload
+        or run_balanced_core_first_observation_write(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _activation_payload=activation,
+            _definition_lock_payload=definition_lock,
+        )
+    )
+    idempotency = dict(
+        _idempotency_payload
+        or run_balanced_core_idempotency_duplicate_guard(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    maturity = dict(
+        _maturity_payload
+        or run_balanced_core_maturity_scoreboard_safety_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=growth_output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    panel = dict(
+        _panel_payload
+        or run_dual_forward_aging_comparator_panel(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    reader_preview = dict(
+        _reader_preview_payload
+        or run_dual_forward_aging_reader_brief_safe_preview(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _maturity_payload=maturity,
+            _panel_payload=panel,
+        )
+    )
+    source_payloads = {
+        "balanced_core_watchlist_activation_contract": activation,
+        "balanced_core_definition_lock": definition_lock,
+        "balanced_core_first_observation_write": observation,
+        "balanced_core_idempotency_duplicate_guard": idempotency,
+        "balanced_core_maturity_scoreboard_safety_gate": maturity,
+        "dual_forward_aging_comparator_panel": panel,
+        "dual_forward_aging_reader_brief_safe_preview": reader_preview,
+    }
+    answers = _balanced_core_owner_launch_answers(source_payloads)
+    blockers = _balanced_core_launch_blockers(source_payloads)
+    if blockers:
+        recommendation = (
+            "BALANCED_CORE_LAUNCH_BLOCKED"
+            if any("blocked" in item for item in blockers)
+            else "BALANCED_CORE_LAUNCH_NEEDS_REVIEW"
+        )
+    else:
+        recommendation = "BALANCED_CORE_FORWARD_AGING_LAUNCHED"
+    payload = _payload(
+        report_type="balanced_core_owner_launch_pack",
+        title="Balanced Core Owner Launch Pack",
+        status="BALANCED_CORE_OWNER_LAUNCH_PACK_READY"
+        if recommendation == "BALANCED_CORE_FORWARD_AGING_LAUNCHED"
+        else "BALANCED_CORE_OWNER_LAUNCH_PACK_NEEDS_REVIEW",
+        summary={
+            "owner_recommendation": recommendation,
+            "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "latest_observation_date": _summary_value(observation, "decision_date"),
+            "scoreboard_status": maturity.get("scoreboard_status"),
+            **_safety_summary(),
+        },
+        owner_recommendation=recommendation,
+        required_answers=answers,
+        blocking_reasons=blockers,
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        report_registry_entry=_roadmap_doc_report_registry_entry(
+            "balanced_core_owner_launch_pack",
+            "Balanced Core Owner Launch Pack",
+            "aits research strategies balanced-core-owner-launch-pack",
+            "balanced_core_owner_launch_pack",
+            "docs/research/balanced_core_owner_launch_pack.md",
+        ),
+    )
+    _write_json_and_owner_doc(
+        payload,
+        output_root / "balanced_core_owner_launch_pack.json",
+        docs_path,
+        "Balanced Core Owner Launch Pack",
+    )
+    return payload
+
+
+def run_dual_forward_aging_master_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_DUAL_FORWARD_AGING_MASTER_REVIEW_DOC_PATH,
+    owner_docs_path: Path = DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _owner_launch_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    owner_launch = dict(
+        _owner_launch_payload
+        or run_balanced_core_owner_launch_pack(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=owner_docs_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    answers = _dual_forward_master_answers(owner_launch)
+    recommendation = owner_launch.get("owner_recommendation")
+    if recommendation == "BALANCED_CORE_FORWARD_AGING_LAUNCHED":
+        final_status = "DUAL_FORWARD_AGING_ACTIVE_RESEARCH_ONLY"
+    elif recommendation == "BALANCED_CORE_LAUNCH_BLOCKED":
+        final_status = "DUAL_FORWARD_AGING_BLOCKED"
+    elif _summary_value(owner_launch, "latest_observation_date"):
+        final_status = "DUAL_FORWARD_AGING_NEEDS_OWNER_REVIEW"
+    else:
+        final_status = "BALANCED_CORE_DRY_RUN_ONLY"
+    payload = _payload(
+        report_type="dual_forward_aging_master_review",
+        title="Dual Forward-Aging Master Review",
+        status=final_status,
+        summary={
+            "final_status": final_status,
+            "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+            "owner_recommendation": recommendation,
+            **_safety_summary(),
+        },
+        final_status=final_status,
+        required_answers=answers,
+        next_minimum_task="wait_for_forward_aging_maturity_then_update_scoreboard",
+        final_conclusions=[
+            final_status,
+            "KEEP_EQUAL_RISK_DEFENSIVE_PRIMARY",
+            "KEEP_100_QQQ_HARD_BENCHMARK",
+            "NO_PAPER_SHADOW_NO_PRODUCTION_NO_BROKER",
+        ],
+        source_statuses={"balanced_core_owner_launch_pack": owner_launch.get("status")},
+        source_artifacts=_artifact_paths_by_report(
+            {"balanced_core_owner_launch_pack": owner_launch}
+        ),
+        report_registry_entry=_roadmap_doc_report_registry_entry(
+            "dual_forward_aging_master_review",
+            "Dual Forward-Aging Master Review",
+            "aits research strategies dual-forward-aging-master-review",
+            "dual_forward_aging_master_review",
+            "docs/research/dual_forward_aging_master_review.md",
+        ),
+    )
+    _write_json_and_owner_doc(
+        payload,
+        output_root / "dual_forward_aging_master_review.json",
+        docs_path,
+        "Dual Forward-Aging Master Review",
+    )
+    return payload
+
+
 def _run_search(
     *,
     report_type: str,
@@ -6918,6 +8056,531 @@ def _search_grid(config: Mapping[str, Any], key: str) -> dict[str, Any]:
 
 def _candidate_limit(config: Mapping[str, Any], key: str) -> float:
     return _float(_research_mapping(config, "candidate_limits").get(key))
+
+
+def _balanced_core_forward_policy(config: Mapping[str, Any]) -> dict[str, Any]:
+    return _mapping(_research_policy(config).get("balanced_core_forward_aging"))
+
+
+def _balanced_core_windows(config: Mapping[str, Any]) -> list[int]:
+    windows = [
+        _int(item)
+        for item in _list(_balanced_core_forward_policy(config).get("observation_windows"))
+    ]
+    return [window for window in windows if window > 0]
+
+
+def _balanced_core_definition(
+    candidate: Mapping[str, Any],
+    *,
+    config: Mapping[str, Any],
+    prices_path: Path,
+    marketstack_prices_path: Path,
+    rates_path: Path,
+) -> dict[str, Any]:
+    policy_definition = _mapping(candidate.get("policy_definition"))
+    weight_bounds = _mapping(policy_definition.get("weight_bounds")) or _mapping(
+        candidate.get("weight_bounds")
+    )
+    data_inputs = {
+        "required_price_tickers": _required_tickers(config),
+        "required_rate_series": list(_research_policy(config).get("required_rate_series", [])),
+        "market_regime": "ai_after_chatgpt",
+        "default_backtest_start": DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
+    }
+    return {
+        "strategy_id": candidate.get("strategy_id"),
+        "base_strategy_id": candidate.get("base_strategy_id") or DEFENSIVE_PRIMARY_ID,
+        "candidate_family": candidate.get("candidate_family"),
+        "policy_definition": policy_definition,
+        "target_vol_config": _target_vol_config(candidate),
+        "vol_lookback_window": policy_definition.get("vol_lookback"),
+        "qqq_weight_bounds": _mapping(weight_bounds.get("QQQ")),
+        "sgov_weight_bounds": _mapping(weight_bounds.get("SGOV")),
+        "tqqq_weight_bounds": _mapping(weight_bounds.get("TQQQ")),
+        "rebalance_rule": policy_definition.get("rebalance_rule"),
+        "data_inputs": data_inputs,
+        "data_source_contract": {
+            "primary_price_cache": str(prices_path),
+            "secondary_price_cache": str(marketstack_prices_path),
+            "rates_cache": str(rates_path),
+            "validation_gate": "aits validate-data / validate_data_cache",
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+    }
+
+
+def _candidate_from_definition_lock(definition_lock: Mapping[str, Any]) -> dict[str, Any]:
+    candidate = _mapping(definition_lock.get("policy_definition"))
+    if not candidate:
+        candidate = {}
+    candidate.setdefault("strategy_id", definition_lock.get("strategy_id"))
+    candidate.setdefault("base_strategy_id", definition_lock.get("base_strategy_id"))
+    candidate.setdefault("candidate_family", definition_lock.get("candidate_family"))
+    candidate.setdefault("rebalance_rule", definition_lock.get("rebalance_rule"))
+    return candidate
+
+
+def _resolve_balanced_core_decision_date(
+    prices: pd.DataFrame,
+    requested_date: date | None,
+) -> date:
+    if prices.empty:
+        return requested_date or DEFAULT_AI_REGIME_BACKTEST_START
+    index = pd.to_datetime(prices.index)
+    if requested_date is not None:
+        eligible = index[index <= pd.Timestamp(requested_date)]
+        if len(eligible) > 0:
+            return eligible[-1].date()
+    return index[-1].date()
+
+
+def _target_weights_at(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+    decision_date: date,
+) -> dict[str, float]:
+    weights = _weight_frame(dict(candidate), prices, config)
+    if weights.empty:
+        return {"QQQ": 0.0, "TQQQ": 0.0, "SGOV": 0.0}
+    eligible = weights.loc[pd.to_datetime(weights.index) <= pd.Timestamp(decision_date)]
+    row = eligible.iloc[-1] if not eligible.empty else weights.iloc[-1]
+    result = {
+        ticker: _round(row.get(ticker, 0.0))
+        for ticker in ("QQQ", "TQQQ", "SGOV")
+    }
+    total = sum(result.values())
+    if total > 0:
+        result = {key: _round(value / total) for key, value in result.items()}
+    return result
+
+
+def _balanced_core_signal_inputs(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+    decision_date: date,
+) -> dict[str, Any]:
+    eligible = prices.loc[pd.to_datetime(prices.index) <= pd.Timestamp(decision_date)]
+    if eligible.empty:
+        return {"decision_date": decision_date.isoformat()}
+    latest = eligible.iloc[-1]
+    window = _int(candidate.get("vol_lookback"), 120)
+    qqq_returns = eligible["QQQ"].pct_change().fillna(0.0)
+    qqq_vol = qqq_returns.tail(window).std(ddof=0) * math.sqrt(_annualization(config))
+    return {
+        "decision_date": decision_date.isoformat(),
+        "vol_lookback_window": window,
+        "qqq_close": _round(latest.get("QQQ")),
+        "sgov_close": _round(latest.get("SGOV")),
+        "tqqq_close": _round(latest.get("TQQQ")) if "TQQQ" in eligible else 0.0,
+        "qqq_realized_vol": _round(qqq_vol),
+        "target_vol_config": {
+            "target_vol_mode": candidate.get("target_vol_mode"),
+            "target_vol": candidate.get("target_vol"),
+            "target_vol_additive": candidate.get("target_vol_additive"),
+        },
+    }
+
+
+def _balanced_core_observation_row(
+    dry_run: Mapping[str, Any],
+    observation_written: bool,
+) -> dict[str, Any]:
+    target_weights = _mapping(dry_run.get("target_weights"))
+    return {
+        "decision_date": dry_run.get("decision_date"),
+        "strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        "strategy_role": "balanced_core_candidate",
+        "definition_hash": dry_run.get("candidate_definition_hash"),
+        "target_weights": target_weights,
+        "target_weight_qqq": target_weights.get("QQQ", 0.0),
+        "target_weight_tqqq": target_weights.get("TQQQ", 0.0),
+        "target_weight_sgov": target_weights.get("SGOV", 0.0),
+        "signal_inputs_used": dry_run.get("signal_inputs_used", {}),
+        "comparator_equal_risk_weights": dry_run.get("comparator_equal_risk_weights", {}),
+        "comparator_100_qqq_weights": dry_run.get("comparator_100_qqq_weights", {}),
+        "data_quality_status": dry_run.get("data_quality_status"),
+        "observation_written": observation_written,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _balanced_core_observation_path(output_root: Path, decision_date: date) -> Path:
+    artifact_id = f"balanced_core_forward_aging_observation_{decision_date.isoformat()}"
+    return output_root / "forward_aging_observations" / f"{artifact_id}.json"
+
+
+def _is_balanced_core_written_observation(payload: Mapping[str, Any]) -> bool:
+    return (
+        payload.get("report_type") == "balanced_core_first_observation_write"
+        and payload.get("status") == "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN"
+        and bool(_records(payload.get("observations")))
+    )
+
+
+def _balanced_core_observation_core(payload: Mapping[str, Any]) -> dict[str, str]:
+    observation = next(iter(_records(payload.get("observations"))), {})
+    return {
+        "target_weights_hash": _stable_hash(observation.get("target_weights")),
+        "signal_inputs_hash": _stable_hash(observation.get("signal_inputs_used")),
+        "definition_hash": str(observation.get("definition_hash") or ""),
+    }
+
+
+def _latest_balanced_core_observation_date(output_root: Path) -> date | None:
+    observations = _balanced_core_written_observations(output_root)
+    dates = [
+        parsed
+        for parsed in (_safe_date(observation.get("decision_date")) for observation in observations)
+        if parsed is not None
+    ]
+    return max(dates) if dates else None
+
+
+def _balanced_core_written_observations(output_root: Path) -> list[dict[str, Any]]:
+    observation_root = output_root / "forward_aging_observations"
+    observations: list[dict[str, Any]] = []
+    for path in sorted(observation_root.glob("balanced_core_forward_aging_observation_*.json")):
+        payload = _read_json_or_empty(path)
+        if not _is_balanced_core_written_observation(payload):
+            continue
+        for row in _records(payload.get("observations")):
+            row["_path"] = str(path)
+            observations.append(row)
+    return observations
+
+
+def _window_is_matured(prices: pd.DataFrame, decision_date: date, window: int) -> bool:
+    future = prices.loc[pd.to_datetime(prices.index) > pd.Timestamp(decision_date)]
+    return len(future.index) >= window
+
+
+def _balanced_core_blocked_conclusions(
+    matured_counts: Mapping[int, int],
+    *,
+    minimum_required_20d: int,
+    minimum_required_60d: int,
+    minimum_required_120d: int,
+) -> list[str]:
+    blocked = []
+    if _int(matured_counts.get(20)) < minimum_required_20d:
+        blocked.append("no_20d_conclusion_until_minimum_matured_samples")
+    if _int(matured_counts.get(60)) < minimum_required_60d:
+        blocked.append("no_medium_horizon_readiness_until_60d_floor")
+    if _int(matured_counts.get(120)) < minimum_required_120d:
+        blocked.append("paper_shadow_allowed_must_remain_false_until_120d_floor")
+    return blocked
+
+
+def _dual_panel_strategy_maps(
+    definition_lock: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[tuple[str, str, dict[str, Any]]]:
+    benchmarks = {item["strategy_id"]: item for item in _benchmark_candidates(config)}
+    balanced = _candidate_from_definition_lock(definition_lock)
+    return [
+        (
+            DEFENSIVE_PRIMARY_ID,
+            "defensive_primary",
+            {"strategy_id": DEFENSIVE_PRIMARY_ID, "special_policy": "equal_risk"},
+        ),
+        (FOCUSED_GROWTH_TILT_CANDIDATE_ID, "balanced_core_candidate", balanced),
+        (PRIMARY_QQQ_BENCHMARK_ID, "hard_benchmark", benchmarks[PRIMARY_QQQ_BENCHMARK_ID]),
+        ("qqq_50_sgov_50", "static_reference", benchmarks["qqq_50_sgov_50"]),
+        ("qqq_60_sgov_40", "static_reference", benchmarks["qqq_60_sgov_40"]),
+    ]
+
+
+def _dual_panel_row(
+    *,
+    strategy_id: str,
+    strategy_role: str,
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+    decision_date: date,
+    windows: list[int],
+    data_quality_status: str,
+    observation: Mapping[str, Any],
+) -> dict[str, Any]:
+    target_weights = (
+        _mapping(observation.get("target_weights"))
+        if strategy_id == FOCUSED_GROWTH_TILT_CANDIDATE_ID
+        else _target_weights_at(candidate, prices, config, decision_date)
+    )
+    window_stats = _forward_window_stats(candidate, prices, config, decision_date, windows)
+    definition_hash = (
+        observation.get("definition_hash")
+        if strategy_id == FOCUSED_GROWTH_TILT_CANDIDATE_ID
+        else _stable_hash(_policy_definition(candidate))
+    )
+    row: dict[str, Any] = {
+        "decision_date": decision_date.isoformat(),
+        "strategy_id": strategy_id,
+        "strategy_role": strategy_role,
+        "definition_hash": definition_hash,
+        "target_weight_qqq": target_weights.get("QQQ", 0.0),
+        "target_weight_tqqq": target_weights.get("TQQQ", 0.0),
+        "target_weight_sgov": target_weights.get("SGOV", 0.0),
+        "forward_max_drawdown_by_window": {
+            f"{window}d": window_stats[window]["max_drawdown"] for window in windows
+        },
+        "relative_vs_equal_risk": {},
+        "relative_vs_balanced_core": {},
+        "relative_vs_100_qqq": {},
+        "data_quality_status": data_quality_status,
+    }
+    for window in windows:
+        row[f"matured_{window}d_return"] = window_stats[window]["return"]
+    return row
+
+
+def _forward_window_stats(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+    decision_date: date,
+    windows: list[int],
+) -> dict[int, dict[str, float | None]]:
+    returns, _weights = _returns_and_weights(dict(candidate), prices, config)
+    future = returns.loc[pd.to_datetime(returns.index) > pd.Timestamp(decision_date)]
+    stats: dict[int, dict[str, float | None]] = {}
+    for window in windows:
+        if len(future.index) < window:
+            stats[window] = {"return": None, "max_drawdown": None}
+            continue
+        segment = future.iloc[:window]
+        forward_return = (1.0 + segment).prod() - 1.0
+        stats[window] = {
+            "return": _round(forward_return),
+            "max_drawdown": _round(_forward_max_drawdown(segment)),
+        }
+    return stats
+
+
+def _forward_max_drawdown(returns: pd.Series) -> float:
+    if returns.empty:
+        return 0.0
+    cumulative = (1.0 + returns).cumprod()
+    running_max = cumulative.cummax()
+    drawdown = cumulative / running_max.replace(0.0, math.nan) - 1.0
+    return _float(drawdown.min())
+
+
+def _attach_relative_fields(rows: list[dict[str, Any]], windows: list[int]) -> None:
+    by_strategy = {str(row.get("strategy_id")): row for row in rows}
+    equal = by_strategy.get(DEFENSIVE_PRIMARY_ID, {})
+    balanced = by_strategy.get(FOCUSED_GROWTH_TILT_CANDIDATE_ID, {})
+    qqq = by_strategy.get(PRIMARY_QQQ_BENCHMARK_ID, {})
+    for row in rows:
+        row["relative_vs_equal_risk"] = _relative_window_returns(row, equal, windows)
+        row["relative_vs_balanced_core"] = _relative_window_returns(row, balanced, windows)
+        row["relative_vs_100_qqq"] = _relative_window_returns(row, qqq, windows)
+
+
+def _relative_window_returns(
+    row: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    windows: list[int],
+) -> dict[str, float | None]:
+    result: dict[str, float | None] = {}
+    for window in windows:
+        key = f"matured_{window}d_return"
+        value = row.get(key)
+        base = baseline.get(key)
+        result[f"{window}d"] = (
+            _round(_float(value) - _float(base))
+            if value is not None and base is not None
+            else None
+        )
+    return result
+
+
+def _summary_value(payload: Mapping[str, Any], key: str) -> Any:
+    summary = _mapping(payload.get("summary"))
+    return summary.get(key) or payload.get(key)
+
+
+def _balanced_core_owner_launch_answers(
+    source_payloads: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    definition_lock = source_payloads["balanced_core_definition_lock"]
+    observation = source_payloads["balanced_core_first_observation_write"]
+    idempotency = source_payloads["balanced_core_idempotency_duplicate_guard"]
+    maturity = source_payloads["balanced_core_maturity_scoreboard_safety_gate"]
+    panel = source_payloads["dual_forward_aging_comparator_panel"]
+    reader_preview = source_payloads["dual_forward_aging_reader_brief_safe_preview"]
+    return {
+        "1_balanced_core_candidate": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        "2_definition_hash_locked": definition_lock.get("status")
+        == "BALANCED_CORE_DEFINITION_LOCKED",
+        "3_first_observation_written": observation.get("status")
+        in {
+            "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN",
+            "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS",
+        },
+        "4_duplicate_guard_passed": idempotency.get("status")
+        == "BALANCED_CORE_IDEMPOTENCY_PASS",
+        "5_scoreboard_still_insufficient_or_pending": maturity.get("scoreboard_status")
+        in {"INSUFFICIENT", "PENDING"},
+        "6_dual_comparator_panel_generated": panel.get("status")
+        in {
+            "DUAL_FORWARD_PANEL_READY",
+            "DUAL_FORWARD_PANEL_PENDING",
+            "DUAL_FORWARD_PANEL_INSUFFICIENT",
+        },
+        "7_reader_brief_preview_safe": reader_preview.get("status")
+        == "DUAL_READER_BRIEF_SAFE",
+        "8_paper_shadow_allowed_false": True,
+        "9_production_allowed_false": True,
+        "10_broker_action_none": True,
+        "11_equal_risk_remains_defensive_primary": True,
+    }
+
+
+def _balanced_core_launch_blockers(
+    source_payloads: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    blockers = []
+    expected = {
+        "balanced_core_watchlist_activation_contract": {
+            "BALANCED_CORE_WATCHLIST_CONTRACT_READY"
+        },
+        "balanced_core_definition_lock": {"BALANCED_CORE_DEFINITION_LOCKED"},
+        "balanced_core_first_observation_write": {
+            "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN",
+            "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS",
+        },
+        "balanced_core_idempotency_duplicate_guard": {"BALANCED_CORE_IDEMPOTENCY_PASS"},
+        "balanced_core_maturity_scoreboard_safety_gate": {
+            "BALANCED_CORE_SCOREBOARD_SAFETY_PASS",
+            "BALANCED_CORE_SCOREBOARD_INSUFFICIENT",
+        },
+        "dual_forward_aging_comparator_panel": {
+            "DUAL_FORWARD_PANEL_READY",
+            "DUAL_FORWARD_PANEL_PENDING",
+            "DUAL_FORWARD_PANEL_INSUFFICIENT",
+        },
+        "dual_forward_aging_reader_brief_safe_preview": {"DUAL_READER_BRIEF_SAFE"},
+    }
+    for key, allowed_statuses in expected.items():
+        status = str(source_payloads[key].get("status"))
+        if status not in allowed_statuses:
+            blockers.append(f"{key}_status_not_ready:{status}")
+    blockers.extend(_safety_violations(source_payloads.values()))
+    return _dedupe_text(blockers)
+
+
+def _dual_forward_master_answers(owner_launch: Mapping[str, Any]) -> dict[str, Any]:
+    owner_answers = _mapping(owner_launch.get("required_answers"))
+    return {
+        "1_balanced_core_safely_added_to_research_only_forward_aging": owner_launch.get(
+            "owner_recommendation"
+        )
+        == "BALANCED_CORE_FORWARD_AGING_LAUNCHED",
+        "2_equal_risk_remains_defensive_primary": owner_answers.get(
+            "11_equal_risk_remains_defensive_primary"
+        )
+        is True,
+        "3_100_qqq_is_hard_benchmark": True,
+        "4_dual_comparator_panel_available": owner_answers.get(
+            "6_dual_comparator_panel_generated"
+        )
+        is True,
+        "5_scoreboard_restrained_when_samples_insufficient": owner_answers.get(
+            "5_scoreboard_still_insufficient_or_pending"
+        )
+        is True,
+        "6_reader_brief_safe": owner_answers.get("7_reader_brief_preview_safe") is True,
+        "7_no_paper_shadow_production_broker": True,
+        "8_next_minimum_task": "wait_for_maturity_and_update_dual_scoreboard",
+    }
+
+
+def _records_to_text(value: object) -> list[str]:
+    if isinstance(value, list):
+        result = []
+        for item in value:
+            if isinstance(item, Mapping):
+                result.append(str(item.get("reason") or item.get("message") or item))
+            else:
+                result.append(str(item))
+        return result
+    return []
+
+
+def _safety_violations(payloads: Any) -> list[str]:
+    violations = []
+    for index, payload in enumerate(payloads):
+        mapping = _mapping(payload)
+        if mapping.get("paper_shadow_allowed", False) is not False:
+            violations.append(f"source_{index}_paper_shadow_allowed_not_false")
+        if mapping.get("production_allowed", False) is not False:
+            violations.append(f"source_{index}_production_allowed_not_false")
+        if mapping.get("broker_action", "none") != "none":
+            violations.append(f"source_{index}_broker_action_not_none")
+        if mapping.get("manual_review_required", True) is not True:
+            violations.append(f"source_{index}_manual_review_required_not_true")
+    return violations
+
+
+def _write_json_and_owner_doc(
+    payload: dict[str, Any],
+    json_path: Path,
+    docs_path: Path,
+    title: str,
+) -> None:
+    payload["artifact_paths"] = {
+        "json_path": str(json_path),
+        "markdown_path": str(docs_path),
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str)
+        + "\n",
+        encoding="utf-8",
+    )
+    _write_owner_doc(payload, docs_path, title)
+
+
+def _roadmap_doc_report_registry_entry(
+    report_id: str,
+    title: str,
+    command: str,
+    artifact_slug: str,
+    docs_glob: str,
+) -> dict[str, Any]:
+    return {
+        "report_id": report_id,
+        "title": title,
+        "group": "research",
+        "cadence": "ad_hoc",
+        "audience": "project_owner",
+        "owner": "research_governance",
+        "command": command,
+        "artifact_globs": [
+            f"outputs/research_strategies/roadmap/{artifact_slug}.json",
+            docs_glob,
+        ],
+        "artifact_selection_policy": "latest_available",
+        "freshness_sla_days": 30,
+        "freshness_rationale": (
+            "Balanced-core forward-aging launch artifacts are regenerated after "
+            "observation, maturity, comparator panel, owner review or safety state changes."
+        ),
+        "owner_action": "review_balanced_core_forward_aging_research_only_launch",
+        "include_in_reader_brief": False,
+        "include_in_daily_task_dashboard": False,
+        "required_for_daily_reading": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def _annualization(config: Mapping[str, Any]) -> int:

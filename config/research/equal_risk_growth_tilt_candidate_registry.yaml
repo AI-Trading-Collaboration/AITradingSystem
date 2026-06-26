@@ -105,6 +105,30 @@ research_policy:
       Pilot research-only thresholds for tiering and review sequencing. They
       are deliberately conservative guardrails, not calibrated production or
       promotion thresholds.
+  balanced_core_forward_aging:
+    policy_id: balanced_core_forward_aging_safety_v1
+    owner: research_governance
+    status: pilot_baseline
+    observation_windows: [5, 10, 20, 60, 120]
+    minimum_required_20d: 20
+    minimum_required_60d: 20
+    minimum_required_120d: 20
+    scoreboard_status_when_below_floor: INSUFFICIENT
+    rationale: >
+      Forward-aging conclusions for the balanced core candidate must wait for
+      enough matured observations. The initial floors are pilot sample
+      discipline thresholds for research-only scoreboard restraint, not
+      paper-shadow or production promotion thresholds.
+    intended_effect: >
+      Keep 20d, medium-horizon and 120d/paper-shadow interpretations blocked
+      while the balanced core observation sample is still immature.
+    validation_evidence: >
+      TRADING-1119 to 1128 focused tests validate append-only observation
+      writing, duplicate guard behavior, maturity counts, scoreboard
+      insufficient status, dual comparator panel and Reader Brief safe preview.
+    review_condition: >
+      Review before changing any maturity floor, using the scoreboard as a
+      promotion gate, or wiring balanced core status into formal Reader Brief.
   beta_attribution_policy:
     max_beta_explained_edge_share: 0.70
     risk_budget_edge_minimum: 0.0025

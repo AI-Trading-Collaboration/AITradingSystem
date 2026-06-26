@@ -17220,3 +17220,193 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: balanced_core_watchlist_activation_contract
+    title: Balanced Core Watchlist Activation Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-watchlist-activation-contract
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_watchlist_activation_contract.json
+      - outputs/research_strategies/growth_components/balanced_core_watchlist_activation_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1119 defines research-only balanced-core watchlist activation.
+    owner_action: review_balanced_core_watchlist_activation_contract
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_definition_lock
+    title: Balanced Core Definition Lock
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-definition-lock
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_definition_lock.json
+      - outputs/research_strategies/growth_components/balanced_core_definition_lock.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1120 locks balanced-core strategy definition and hash.
+    owner_action: review_definition_hash_before_forward_aging_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_forward_aging_dry_run
+    title: Balanced Core Forward-Aging Dry Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-forward-aging-dry-run
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_forward_aging_dry_run.json
+      - outputs/research_strategies/growth_components/balanced_core_forward_aging_dry_run.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1121 validates balanced-core observation shape without writing it.
+    owner_action: review_dry_run_before_first_observation_write
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_first_observation_write
+    title: Balanced Core First Observation Write
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-first-observation-write
+    artifact_globs:
+      - outputs/research_strategies/growth_components/forward_aging_observations/balanced_core_forward_aging_observation_*.json
+      - outputs/research_strategies/growth_components/forward_aging_observations/balanced_core_forward_aging_observation_*.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1122 writes the first append-only research-only observation.
+    owner_action: review_balanced_core_first_research_only_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_idempotency_duplicate_guard
+    title: Balanced Core Idempotency Duplicate Guard
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-idempotency-duplicate-guard
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_idempotency_duplicate_guard.json
+      - outputs/research_strategies/growth_components/balanced_core_idempotency_duplicate_guard.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1123 verifies duplicate observation writes do not overwrite originals.
+    owner_action: review_duplicate_guard_before_interpreting_forward_aging
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_maturity_scoreboard_safety_gate
+    title: Balanced Core Maturity Scoreboard Safety Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-maturity-scoreboard-safety-gate
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_maturity_scoreboard_safety_gate.json
+      - outputs/research_strategies/growth_components/balanced_core_maturity_scoreboard_safety_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1124 keeps scoreboard conclusions pending while samples are immature.
+    owner_action: review_scoreboard_safety_before_any_readiness_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_comparator_panel
+    title: Dual Forward-Aging Comparator Panel
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-comparator-panel
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_comparator_panel.json
+      - outputs/research_strategies/roadmap/dual_forward_aging_comparator_panel.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1125 compares defensive primary, balanced core and hard benchmark.
+    owner_action: review_dual_forward_aging_panel_as_research_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_reader_brief_safe_preview
+    title: Dual Forward-Aging Reader Brief Safe Preview
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-reader-brief-safe-preview
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_reader_brief_safe_preview.json
+      - outputs/research_strategies/roadmap/dual_forward_aging_reader_brief_safe_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1126 previews safe display text without formal Reader Brief integration.
+    owner_action: review_reader_brief_preview_safety_before_any_display_integration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_owner_launch_pack
+    title: Balanced Core Owner Launch Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-owner-launch-pack
+    artifact_globs:
+      - outputs/research_strategies/roadmap/balanced_core_owner_launch_pack.json
+      - docs/research/balanced_core_owner_launch_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1127 summarizes launch state for project-owner review.
+    owner_action: review_balanced_core_research_only_launch_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_master_review
+    title: Dual Forward-Aging Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-master-review
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_master_review.json
+      - docs/research/dual_forward_aging_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1128 summarizes dual forward-aging launch with safety boundaries.
+    owner_action: review_dual_forward_aging_research_only_master_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

@@ -9,6 +9,8 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.equal_risk_growth_tilt import (
+    DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
+    DEFAULT_DUAL_FORWARD_AGING_MASTER_REVIEW_DOC_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
@@ -18,8 +20,18 @@ from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH,
     DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH,
     DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
+    run_balanced_core_definition_lock,
+    run_balanced_core_first_observation_write,
+    run_balanced_core_forward_aging_dry_run,
+    run_balanced_core_idempotency_duplicate_guard,
+    run_balanced_core_maturity_scoreboard_safety_gate,
+    run_balanced_core_owner_launch_pack,
+    run_balanced_core_watchlist_activation_contract,
     run_best_growth_tilt_candidate_deep_dive,
     run_beta_adjusted_edge_methodology_audit,
+    run_dual_forward_aging_comparator_panel,
+    run_dual_forward_aging_master_review,
+    run_dual_forward_aging_reader_brief_safe_preview,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -156,6 +168,55 @@ def _make_growth_tilt_data_command(
                 as_of_date=_parse_optional_date(as_of),
                 start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
                 end_date=_parse_optional_date(end_date),
+            )
+        )
+        _print_growth_tilt_payload(label, payload)
+
+    command.__name__ = f"strategies_{label.lower().replace(' ', '_')}_command"
+    return command
+
+
+def _make_growth_tilt_forward_data_command(
+    builder: Callable[..., dict[str, object]],
+    label: str,
+) -> Callable[..., None]:
+    def command(
+        prices_path: Annotated[
+            Path,
+            typer.Option("--prices-path"),
+        ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+        marketstack_prices_path: Annotated[
+            Path,
+            typer.Option("--marketstack-prices-path"),
+        ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+        rates_path: Annotated[
+            Path,
+            typer.Option("--rates-path"),
+        ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+        as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+        start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+        end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+        decision_date: Annotated[str | None, typer.Option("--decision-date")] = None,
+        config_path: Annotated[
+            Path,
+            typer.Option("--config"),
+        ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+        output_root: Annotated[
+            Path,
+            typer.Option("--output-root"),
+        ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    ) -> None:
+        payload = _build_growth_tilt_payload(
+            lambda: builder(
+                prices_path=prices_path,
+                marketstack_prices_path=marketstack_prices_path,
+                rates_path=rates_path,
+                config_path=config_path,
+                output_root=output_root,
+                as_of_date=_parse_optional_date(as_of),
+                start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+                end_date=_parse_optional_date(end_date),
+                decision_date=_parse_optional_date(decision_date),
             )
         )
         _print_growth_tilt_payload(label, payload)
@@ -390,6 +451,201 @@ def strategies_growth_tilt_real_result_master_review_command(
         )
     )
     _print_growth_tilt_payload("Growth tilt real result master review", payload)
+
+
+def strategies_dual_forward_aging_comparator_panel_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_comparator_panel(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging comparator panel", payload)
+
+
+def strategies_dual_forward_aging_reader_brief_safe_preview_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_reader_brief_safe_preview(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging Reader Brief safe preview", payload)
+
+
+def strategies_balanced_core_owner_launch_pack_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path"),
+    ] = DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_balanced_core_owner_launch_pack(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Balanced core owner launch pack", payload)
+
+
+def strategies_dual_forward_aging_master_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path,
+        typer.Option("--growth-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path"),
+    ] = DEFAULT_DUAL_FORWARD_AGING_MASTER_REVIEW_DOC_PATH,
+    owner_docs_path: Annotated[
+        Path,
+        typer.Option("--owner-docs-path"),
+    ] = DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            owner_docs_path=owner_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging master review", payload)
 
 
 _GROWTH_TILT_STRATEGY_COMMANDS = (
@@ -661,6 +917,64 @@ _GROWTH_TILT_STRATEGY_COMMANDS = (
             "Growth tilt focused diagnosis master review",
             DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH,
         ),
+    ),
+    (
+        "balanced-core-watchlist-activation-contract",
+        _make_growth_tilt_data_command(
+            run_balanced_core_watchlist_activation_contract,
+            "Balanced core watchlist activation contract",
+        ),
+    ),
+    (
+        "balanced-core-definition-lock",
+        _make_growth_tilt_data_command(
+            run_balanced_core_definition_lock,
+            "Balanced core definition lock",
+        ),
+    ),
+    (
+        "balanced-core-forward-aging-dry-run",
+        _make_growth_tilt_forward_data_command(
+            run_balanced_core_forward_aging_dry_run,
+            "Balanced core forward-aging dry run",
+        ),
+    ),
+    (
+        "balanced-core-first-observation-write",
+        _make_growth_tilt_forward_data_command(
+            run_balanced_core_first_observation_write,
+            "Balanced core first observation write",
+        ),
+    ),
+    (
+        "balanced-core-idempotency-duplicate-guard",
+        _make_growth_tilt_forward_data_command(
+            run_balanced_core_idempotency_duplicate_guard,
+            "Balanced core idempotency duplicate guard",
+        ),
+    ),
+    (
+        "balanced-core-maturity-scoreboard-safety-gate",
+        _make_growth_tilt_data_command(
+            run_balanced_core_maturity_scoreboard_safety_gate,
+            "Balanced core maturity scoreboard safety gate",
+        ),
+    ),
+    (
+        "dual-forward-aging-comparator-panel",
+        strategies_dual_forward_aging_comparator_panel_command,
+    ),
+    (
+        "dual-forward-aging-reader-brief-safe-preview",
+        strategies_dual_forward_aging_reader_brief_safe_preview_command,
+    ),
+    (
+        "balanced-core-owner-launch-pack",
+        strategies_balanced_core_owner_launch_pack_command,
+    ),
+    (
+        "dual-forward-aging-master-review",
+        strategies_dual_forward_aging_master_review_command,
     ),
 )
 
