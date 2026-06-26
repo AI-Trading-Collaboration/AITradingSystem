@@ -9,11 +9,14 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.equal_risk_growth_tilt import (
+    DEFAULT_BALANCED_CORE_LAUNCH_OWNER_REPORT_DOC_PATH,
     DEFAULT_BALANCED_CORE_OWNER_LAUNCH_PACK_DOC_PATH,
     DEFAULT_DUAL_FORWARD_AGING_MASTER_REVIEW_DOC_PATH,
+    DEFAULT_DUAL_FORWARD_AGING_MONTHLY_MONITOR_CONTRACT_DOC_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    DEFAULT_EXTERNAL_VALIDATION_BALANCED_CORE_LAUNCH_MASTER_REVIEW_DOC_PATH,
     DEFAULT_GROWTH_EXPLORATION_MASTER_REVIEW_DOC_PATH,
     DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH,
     DEFAULT_GROWTH_TILT_OWNER_DECISION_DOC_PATH,
@@ -22,16 +25,24 @@ from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
     run_balanced_core_definition_lock,
     run_balanced_core_first_observation_write,
+    run_balanced_core_first_observation_write_after_validation,
     run_balanced_core_forward_aging_dry_run,
     run_balanced_core_idempotency_duplicate_guard,
+    run_balanced_core_launch_owner_report,
+    run_balanced_core_launch_preflight,
     run_balanced_core_maturity_scoreboard_safety_gate,
+    run_balanced_core_observation_idempotency_proof,
     run_balanced_core_owner_launch_pack,
     run_balanced_core_watchlist_activation_contract,
     run_best_growth_tilt_candidate_deep_dive,
     run_beta_adjusted_edge_methodology_audit,
     run_dual_forward_aging_comparator_panel,
+    run_dual_forward_aging_comparator_panel_after_launch,
     run_dual_forward_aging_master_review,
+    run_dual_forward_aging_monthly_monitor_contract,
     run_dual_forward_aging_reader_brief_safe_preview,
+    run_dual_forward_aging_reader_brief_safe_preview_after_launch,
+    run_dual_forward_aging_scoreboard_safety_review,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -42,6 +53,7 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_equal_risk_small_tqqq_overlay_search,
     run_equal_risk_trend_on_qqq_boost_search,
     run_equal_risk_vol_target_growth_tilt_search,
+    run_external_validation_balanced_core_launch_master_review,
     run_growth_exploration_master_review,
     run_growth_research_framing_correction,
     run_growth_tilt_balanced_core_role_review,
@@ -80,8 +92,14 @@ from ai_trading_system.simple_baseline_portfolio_control import (
 from ai_trading_system.simple_baseline_portfolio_control import (
     DEFAULT_RATES_PATH as DEFAULT_SIMPLE_BASELINE_RATES_PATH,
 )
+from ai_trading_system.simple_baseline_portfolio_control import (
+    DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+)
 
 console = Console()
+DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH = (
+    DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT.parent / "external_validation"
+)
 
 
 def register_growth_tilt_strategy_commands(strategies_app: typer.Typer) -> None:
@@ -648,6 +666,350 @@ def strategies_dual_forward_aging_master_review_command(
     _print_growth_tilt_payload("Dual forward-aging master review", payload)
 
 
+def strategies_balanced_core_launch_preflight_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    external_validation_output_root: Annotated[
+        Path, typer.Option("--external-validation-output-root")
+    ] = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH,
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    decision_date: Annotated[str | None, typer.Option("--decision-date")] = None,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_balanced_core_launch_preflight(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            config_path=config_path,
+            external_validation_output_root=external_validation_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+            decision_date=_parse_optional_date(decision_date),
+        )
+    )
+    _print_growth_tilt_payload("Balanced core launch preflight", payload)
+
+
+def strategies_balanced_core_first_observation_write_after_validation_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    external_validation_output_root: Annotated[
+        Path, typer.Option("--external-validation-output-root")
+    ] = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH,
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    decision_date: Annotated[str | None, typer.Option("--decision-date")] = None,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_balanced_core_first_observation_write_after_validation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            config_path=config_path,
+            external_validation_output_root=external_validation_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+            decision_date=_parse_optional_date(decision_date),
+        )
+    )
+    _print_growth_tilt_payload(
+        "Balanced core first observation write after validation", payload
+    )
+
+
+def strategies_dual_forward_aging_comparator_panel_after_launch_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    growth_output_root: Annotated[Path, typer.Option("--growth-output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_comparator_panel_after_launch(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging comparator panel after launch", payload)
+
+
+def strategies_dual_forward_aging_scoreboard_safety_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    growth_output_root: Annotated[Path, typer.Option("--growth-output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_scoreboard_safety_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging scoreboard safety review", payload)
+
+
+def strategies_dual_forward_aging_reader_brief_safe_preview_after_launch_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    external_validation_output_root: Annotated[
+        Path, typer.Option("--external-validation-output-root")
+    ] = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH,
+    growth_output_root: Annotated[Path, typer.Option("--growth-output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_reader_brief_safe_preview_after_launch(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            config_path=config_path,
+            external_validation_output_root=external_validation_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload(
+        "Dual forward-aging Reader Brief safe preview after launch", payload
+    )
+
+
+def strategies_balanced_core_launch_owner_report_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    external_validation_output_root: Annotated[
+        Path, typer.Option("--external-validation-output-root")
+    ] = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH,
+    growth_output_root: Annotated[Path, typer.Option("--growth-output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+    docs_path: Annotated[Path, typer.Option("--docs-path")] = (
+        DEFAULT_BALANCED_CORE_LAUNCH_OWNER_REPORT_DOC_PATH
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_balanced_core_launch_owner_report(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            config_path=config_path,
+            external_validation_output_root=external_validation_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Balanced core launch owner report", payload)
+
+
+def strategies_external_validation_balanced_core_launch_master_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = (
+        DEFAULT_SIMPLE_BASELINE_PRICES_PATH
+    ),
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = (
+        DEFAULT_SIMPLE_BASELINE_RATES_PATH
+    ),
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH
+    ),
+    external_validation_output_root: Annotated[
+        Path, typer.Option("--external-validation-output-root")
+    ] = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT_FOR_GROWTH,
+    growth_output_root: Annotated[Path, typer.Option("--growth-output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT
+    ),
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+    docs_path: Annotated[Path, typer.Option("--docs-path")] = (
+        DEFAULT_EXTERNAL_VALIDATION_BALANCED_CORE_LAUNCH_MASTER_REVIEW_DOC_PATH
+    ),
+    owner_docs_path: Annotated[Path, typer.Option("--owner-docs-path")] = (
+        DEFAULT_BALANCED_CORE_LAUNCH_OWNER_REPORT_DOC_PATH
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_external_validation_balanced_core_launch_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            config_path=config_path,
+            external_validation_output_root=external_validation_output_root,
+            growth_output_root=growth_output_root,
+            output_root=output_root,
+            docs_path=docs_path,
+            owner_docs_path=owner_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload(
+        "External validation balanced core launch master review", payload
+    )
+
+
+def strategies_dual_forward_aging_monthly_monitor_contract_command(
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT
+    ),
+    docs_path: Annotated[Path, typer.Option("--docs-path")] = (
+        DEFAULT_DUAL_FORWARD_AGING_MONTHLY_MONITOR_CONTRACT_DOC_PATH
+    ),
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_dual_forward_aging_monthly_monitor_contract(
+            output_root=output_root,
+            docs_path=docs_path,
+        )
+    )
+    _print_growth_tilt_payload("Dual forward-aging monthly monitor contract", payload)
+
+
 _GROWTH_TILT_STRATEGY_COMMANDS = (
     (
         "growth-research-framing-correction",
@@ -975,6 +1337,45 @@ _GROWTH_TILT_STRATEGY_COMMANDS = (
     (
         "dual-forward-aging-master-review",
         strategies_dual_forward_aging_master_review_command,
+    ),
+    (
+        "balanced-core-launch-preflight",
+        strategies_balanced_core_launch_preflight_command,
+    ),
+    (
+        "balanced-core-first-observation-write-after-validation",
+        strategies_balanced_core_first_observation_write_after_validation_command,
+    ),
+    (
+        "balanced-core-observation-idempotency-proof",
+        _make_growth_tilt_forward_data_command(
+            run_balanced_core_observation_idempotency_proof,
+            "Balanced core observation idempotency proof",
+        ),
+    ),
+    (
+        "dual-forward-aging-comparator-panel-after-launch",
+        strategies_dual_forward_aging_comparator_panel_after_launch_command,
+    ),
+    (
+        "dual-forward-aging-scoreboard-safety-review",
+        strategies_dual_forward_aging_scoreboard_safety_review_command,
+    ),
+    (
+        "dual-forward-aging-reader-brief-safe-preview-after-launch",
+        strategies_dual_forward_aging_reader_brief_safe_preview_after_launch_command,
+    ),
+    (
+        "balanced-core-launch-owner-report",
+        strategies_balanced_core_launch_owner_report_command,
+    ),
+    (
+        "external-validation-balanced-core-launch-master-review",
+        strategies_external_validation_balanced_core_launch_master_review_command,
+    ),
+    (
+        "dual-forward-aging-monthly-monitor-contract",
+        strategies_dual_forward_aging_monthly_monitor_contract_command,
     ),
 )
 

@@ -48,6 +48,11 @@ EXTERNAL_VALIDATION_REPORT_IDS = {
     "external_validation_owner_report",
     "external_validation_master_review",
     "external_validation_reader_brief_safe_preview",
+    "external_validation_real_result_status_reader",
+    "static_baseline_reconciliation_final_check",
+    "dynamic_weight_path_replay_final_check",
+    "metric_and_sgov_reconciliation_signoff",
+    "external_validation_to_launch_gate",
 }
 
 WEIGHT_PATH_COLUMNS = {

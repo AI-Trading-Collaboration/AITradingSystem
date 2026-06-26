@@ -17639,3 +17639,271 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: external_validation_real_result_status_reader
+    title: External Validation Real Result Status Reader
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-real-result-status-reader
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_real_result_status_reader.json
+      - outputs/research_strategies/external_validation/external_validation_real_result_status_reader.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1141 reads the real external validation result chain before launch gating.
+    owner_action: review_external_validation_real_result_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_baseline_reconciliation_final_check
+    title: Static Baseline Reconciliation Final Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies static-baseline-reconciliation-final-check
+    artifact_globs:
+      - outputs/research_strategies/external_validation/static_baseline_reconciliation_final_check.json
+      - outputs/research_strategies/external_validation/static_baseline_reconciliation_final_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1142 performs the final static baseline external reconciliation check.
+    owner_action: review_static_baseline_final_reconciliation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_weight_path_replay_final_check
+    title: Dynamic Weight Path Replay Final Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-weight-path-replay-final-check
+    artifact_globs:
+      - outputs/research_strategies/external_validation/dynamic_weight_path_replay_final_check.json
+      - outputs/research_strategies/external_validation/dynamic_weight_path_replay_final_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1143 verifies exported dynamic weight paths and independent replay final status.
+    owner_action: review_dynamic_weight_path_replay_final_check
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: metric_and_sgov_reconciliation_signoff
+    title: Metric And SGOV Reconciliation Signoff
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies metric-and-sgov-reconciliation-signoff
+    artifact_globs:
+      - outputs/research_strategies/external_validation/metric_sgov_reconciliation_signoff.json
+      - outputs/research_strategies/external_validation/metric_sgov_reconciliation_signoff.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1144 signs off metric definitions and SGOV total-return handling.
+    owner_action: review_metric_sgov_reconciliation_signoff
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_to_launch_gate
+    title: External Validation To Launch Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-to-launch-gate
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_to_launch_gate.json
+      - outputs/research_strategies/external_validation/external_validation_to_launch_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1145 gates balanced-core launch after external validation final checks.
+    owner_action: review_external_validation_launch_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_launch_preflight
+    title: Balanced Core Launch Preflight
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-launch-preflight
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_launch_preflight.json
+      - outputs/research_strategies/growth_components/balanced_core_launch_preflight.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1146 checks balanced-core definition, launch gate, data quality and duplicate state before observation write.
+    owner_action: review_balanced_core_launch_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_first_observation_write_after_validation
+    title: Balanced Core First Observation Write After Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-first-observation-write-after-validation
+    artifact_globs:
+      - outputs/research_strategies/growth_components/forward_aging_observations/balanced_core_forward_aging_observation_*.json
+      - outputs/research_strategies/growth_components/forward_aging_observations/balanced_core_forward_aging_observation_*.md
+      - outputs/research_strategies/growth_components/balanced_core_first_observation_write_after_validation.json
+      - outputs/research_strategies/growth_components/balanced_core_first_observation_write_after_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1147 writes the first balanced-core observation only after external validation passes or warns.
+    owner_action: review_balanced_core_first_observation_after_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_observation_idempotency_proof
+    title: Balanced Core Observation Idempotency Proof
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-observation-idempotency-proof
+    artifact_globs:
+      - outputs/research_strategies/growth_components/balanced_core_observation_idempotency_proof.json
+      - outputs/research_strategies/growth_components/balanced_core_observation_idempotency_proof.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1148 proves repeated balanced-core observation writes preserve the original record.
+    owner_action: review_balanced_core_observation_idempotency_proof
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_comparator_panel_after_launch
+    title: Dual Forward-Aging Comparator Panel After Launch
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-comparator-panel-after-launch
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_panel_after_launch.json
+      - outputs/research_strategies/roadmap/dual_forward_panel_after_launch.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1149 generates the after-launch dual forward-aging comparator panel.
+    owner_action: review_dual_forward_panel_after_launch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_scoreboard_safety_review
+    title: Dual Forward-Aging Scoreboard Safety Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-scoreboard-safety-review
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_scoreboard_safety_review.json
+      - outputs/research_strategies/roadmap/dual_forward_aging_scoreboard_safety_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1150 verifies the dual scoreboard does not overstate immature samples.
+    owner_action: review_dual_forward_scoreboard_safety
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_reader_brief_safe_preview_after_launch
+    title: Dual Forward-Aging Reader Brief Safe Preview After Launch
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-reader-brief-safe-preview-after-launch
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_reader_brief_after_launch_safe_preview.json
+      - outputs/research_strategies/roadmap/dual_forward_aging_reader_brief_after_launch_safe_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1151 previews Reader-Brief-safe dual forward-aging status after launch.
+    owner_action: review_dual_forward_reader_brief_after_launch_preview
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: balanced_core_launch_owner_report
+    title: Balanced Core Launch Owner Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies balanced-core-launch-owner-report
+    artifact_globs:
+      - outputs/research_strategies/roadmap/balanced_core_launch_owner_report.json
+      - docs/research/balanced_core_launch_owner_report.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1152 summarizes balanced-core launch after external validation.
+    owner_action: review_balanced_core_launch_owner_report
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_balanced_core_launch_master_review
+    title: External Validation Balanced Core Launch Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-balanced-core-launch-master-review
+    artifact_globs:
+      - outputs/research_strategies/roadmap/external_validation_balanced_core_launch_master_review.json
+      - docs/research/external_validation_balanced_core_launch_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1153 records the final external-validation-to-balanced-core-launch master status.
+    owner_action: review_external_validation_balanced_core_launch_master_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dual_forward_aging_monthly_monitor_contract
+    title: Dual Forward-Aging Monthly Monitor Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dual-forward-aging-monthly-monitor-contract
+    artifact_globs:
+      - outputs/research_strategies/roadmap/dual_forward_aging_monthly_monitor_contract.json
+      - docs/research/dual_forward_aging_monthly_monitor_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1154 defines the monthly dual forward-aging research-only monitor contract.
+    owner_action: review_dual_forward_monthly_monitor_contract
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

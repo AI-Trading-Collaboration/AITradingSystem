@@ -1071,6 +1071,890 @@ def run_external_validation_reader_brief_safe_preview(
     return payload
 
 
+def run_external_validation_real_result_status_reader(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _scope_payload: Mapping[str, Any] | None = None,
+    _static_payload: Mapping[str, Any] | None = None,
+    _weight_export_payload: Mapping[str, Any] | None = None,
+    _replay_payload: Mapping[str, Any] | None = None,
+    _metric_payload: Mapping[str, Any] | None = None,
+    _sgov_payload: Mapping[str, Any] | None = None,
+    _difference_payload: Mapping[str, Any] | None = None,
+    _owner_payload: Mapping[str, Any] | None = None,
+    _master_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    sources = _real_result_sources(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        growth_config_path=growth_config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+        scope_payload=_scope_payload,
+        static_payload=_static_payload,
+        weight_export_payload=_weight_export_payload,
+        replay_payload=_replay_payload,
+        metric_payload=_metric_payload,
+        sgov_payload=_sgov_payload,
+        difference_payload=_difference_payload,
+        owner_payload=_owner_payload,
+        master_payload=_master_payload,
+    )
+    blocking_reasons = _external_status_blockers(sources)
+    warning_reasons = _external_status_warnings(sources)
+    master_status = str(sources["master"].get("status") or "")
+    if _missing_sources(sources):
+        status = "EXTERNAL_VALIDATION_RESULT_MISSING"
+    elif blocking_reasons:
+        status = "EXTERNAL_VALIDATION_RESULT_BLOCKED"
+    elif master_status == "EXTERNAL_VALIDATION_PASS" and not warning_reasons:
+        status = "EXTERNAL_VALIDATION_RESULT_READY"
+    else:
+        status = "EXTERNAL_VALIDATION_RESULT_WARN"
+    payload = _payload(
+        report_type="external_validation_real_result_status_reader",
+        title="External Validation Real Result Status Reader",
+        status=status,
+        summary={
+            "external_validation_master_status": sources["master"].get("status"),
+            "static_baseline_status": sources["static"].get("status"),
+            "dynamic_replay_status": sources["replay"].get("status"),
+            "owner_recommendation": sources["owner"].get("owner_recommendation"),
+            "blocking_reason_count": len(blocking_reasons),
+            "warning_reason_count": len(warning_reasons),
+            **_safety_summary(),
+        },
+        external_validation_master_status=sources["master"].get("status"),
+        static_baseline_status=sources["static"].get("status"),
+        dynamic_replay_status=sources["replay"].get("status"),
+        metric_reconciliation_status=sources["metric"].get("status"),
+        sgov_reconciliation_status=sources["sgov"].get("status"),
+        difference_attribution_status=sources["difference"].get("status"),
+        owner_recommendation=sources["owner"].get("owner_recommendation"),
+        blocking_reasons=blocking_reasons,
+        warning_reasons=warning_reasons,
+        source_statuses={key: value.get("status") for key, value in sources.items()},
+        source_artifacts=_artifact_paths_by_report(sources),
+        report_registry_entry=_report_registry_entry(
+            "external_validation_real_result_status_reader",
+            "External Validation Real Result Status Reader",
+            "aits research strategies external-validation-real-result-status-reader",
+            "external_validation_real_result_status_reader",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_static_baseline_reconciliation_final_check(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    external_records_path: Path | None = None,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _static_payload: Mapping[str, Any] | None = None,
+    _sgov_payload: Mapping[str, Any] | None = None,
+    _metric_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    static = dict(
+        _static_payload
+        or run_static_baseline_external_reconciliation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            output_root=output_root,
+            external_records_path=external_records_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    sgov = dict(
+        _sgov_payload
+        or run_sgov_total_return_external_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    metric = dict(_metric_payload or run_metric_definition_reconciliation(output_root=output_root))
+    rows = _records(static.get("reconciliation_rows"))
+    blockers = list(_records_to_text(static.get("blocking_reasons")))
+    missing_external = [
+        row["strategy_id"] for row in rows if not row.get("external_record_present")
+    ]
+    mismatches = [row for row in rows if row.get("within_tolerance") is False]
+    warnings = []
+    if missing_external:
+        warnings.append("manual_external_records_missing")
+    if str(sgov.get("status")) == "SGOV_PRICE_ONLY_DIFFERENCE_WARN":
+        warnings.append("SGOV_adjusted_close_vs_price_only_difference_disclosed")
+    if "WARNING" in str(metric.get("status")).upper():
+        warnings.append("metric_definition_requires_manual_external_tool_confirmation")
+    if "BLOCKED" in str(static.get("status")).upper() or blockers:
+        status = "STATIC_BASELINE_FINAL_BLOCKED"
+    elif mismatches:
+        status = "STATIC_BASELINE_FINAL_MISMATCH"
+    elif warnings or "WARNING" in str(static.get("status")).upper():
+        status = "STATIC_BASELINE_FINAL_WARN"
+    else:
+        status = "STATIC_BASELINE_FINAL_RECONCILED"
+    payload = _payload(
+        report_type="static_baseline_reconciliation_final_check",
+        title="Static Baseline Reconciliation Final Check",
+        status=status,
+        summary={
+            "strategy_count": len(rows),
+            "missing_external_record_count": len(missing_external),
+            "mismatch_count": len(mismatches),
+            "SGOV_status": sgov.get("status"),
+            **_safety_summary(),
+        },
+        checked_strategy_ids=list(STATIC_BASELINE_IDS),
+        final_check_rows=rows,
+        required_checks={
+            "external_or_manual_record_present": not missing_external,
+            "annual_return_within_tolerance": _all_metric_within_static(rows, "annual_return"),
+            "max_drawdown_within_tolerance": _all_metric_within_static(rows, "max_drawdown"),
+            "sharpe_within_tolerance": _all_metric_within_static(rows, "sharpe"),
+            "calmar_within_tolerance": _all_metric_within_static(rows, "calmar"),
+            "SGOV_dividend_adjusted_close_effect_disclosed": sgov.get("status")
+            in {"SGOV_TOTAL_RETURN_RECONCILED", "SGOV_PRICE_ONLY_DIFFERENCE_WARN"},
+            "internal_metric_fix_required": status == "STATIC_BASELINE_FINAL_MISMATCH",
+        },
+        source_statuses={
+            "static_baseline_external_reconciliation": static.get("status"),
+            "metric_definition_reconciliation": metric.get("status"),
+            "sgov_total_return_external_check": sgov.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "static_baseline_external_reconciliation": static,
+                "metric_definition_reconciliation": metric,
+                "sgov_total_return_external_check": sgov,
+            }
+        ),
+        blocking_reasons=blockers,
+        warning_reasons=_dedupe_text(warnings),
+        report_registry_entry=_report_registry_entry(
+            "static_baseline_reconciliation_final_check",
+            "Static Baseline Reconciliation Final Check",
+            "aits research strategies static-baseline-reconciliation-final-check",
+            "static_baseline_reconciliation_final_check",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_dynamic_weight_path_replay_final_check(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _weight_export_payload: Mapping[str, Any] | None = None,
+    _replay_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    weight_export = dict(
+        _weight_export_payload
+        or run_strategy_weight_path_export(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    replay = dict(
+        _replay_payload
+        or run_external_independent_return_replay(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _weight_export_payload=weight_export,
+        )
+    )
+    weight_health = {
+        strategy_id: _weight_path_health(Path(str(path_text)))
+        for strategy_id, path_text in _mapping(weight_export.get("exported_weight_paths")).items()
+    }
+    definition_hashes = _mapping(weight_export.get("definition_hashes"))
+    rows = [
+        _dynamic_final_check_row(
+            row,
+            weight_health=weight_health.get(str(row.get("strategy_id")), {}),
+            definition_hash=str(definition_hashes.get(str(row.get("strategy_id"))) or ""),
+        )
+        for row in _records(replay.get("replay_rows"))
+    ]
+    blockers = list(_records_to_text(weight_export.get("blocking_reasons")))
+    blockers.extend(_records_to_text(replay.get("blocking_reasons")))
+    if str(weight_export.get("status")) == "WEIGHT_PATH_EXPORT_BLOCKED":
+        blockers.append("weight_path_export_blocked")
+    if str(replay.get("status")) == "INDEPENDENT_REPLAY_BLOCKED":
+        blockers.append("independent_replay_blocked")
+    mismatches = [row for row in rows if row.get("within_tolerance") is False]
+    warnings = []
+    if str(weight_export.get("status")) == "WEIGHT_PATH_EXPORT_WARN":
+        warnings.append("weight_path_export_passed_with_data_quality_warnings")
+    if str(replay.get("status")) == "INDEPENDENT_REPLAY_MATCHED_WITH_WARNINGS":
+        warnings.append("independent_replay_matched_with_data_quality_warnings")
+    if blockers:
+        status = "DYNAMIC_REPLAY_FINAL_BLOCKED"
+    elif mismatches:
+        status = "DYNAMIC_REPLAY_FINAL_MISMATCH"
+    elif warnings:
+        status = "DYNAMIC_REPLAY_FINAL_WARN"
+    else:
+        status = "DYNAMIC_REPLAY_FINAL_MATCHED"
+    payload = _payload(
+        report_type="dynamic_weight_path_replay_final_check",
+        title="Dynamic Weight Path Replay Final Check",
+        status=status,
+        summary={
+            "strategy_count": len(rows),
+            "mismatch_count": len(mismatches),
+            "warning_count": len(warnings),
+            **_safety_summary(),
+        },
+        checked_strategy_ids=list(DYNAMIC_REPLAY_IDS),
+        replay_final_rows=rows,
+        weight_path_health=weight_health,
+        pandas_index_alignment_risk="mitigated_by_explicit_date_index_and_numpy_weight_columns",
+        signal_execution_alignment="signal_close_weights_apply_to_next_daily_return",
+        source_statuses={
+            "strategy_weight_path_export": weight_export.get("status"),
+            "external_independent_return_replay": replay.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "strategy_weight_path_export": weight_export,
+                "external_independent_return_replay": replay,
+            }
+        ),
+        blocking_reasons=_dedupe_text(blockers),
+        warning_reasons=_dedupe_text(warnings),
+        report_registry_entry=_report_registry_entry(
+            "dynamic_weight_path_replay_final_check",
+            "Dynamic Weight Path Replay Final Check",
+            "aits research strategies dynamic-weight-path-replay-final-check",
+            "dynamic_weight_path_replay_final_check",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_metric_and_sgov_reconciliation_signoff(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _metric_payload: Mapping[str, Any] | None = None,
+    _sgov_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    metric = dict(_metric_payload or run_metric_definition_reconciliation(output_root=output_root))
+    sgov = dict(
+        _sgov_payload
+        or run_sgov_total_return_external_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    blockers = []
+    if "BLOCKED" in str(metric.get("status")).upper():
+        blockers.append("metric_definition_reconciliation_blocked")
+    if "BLOCKED" in str(sgov.get("status")).upper():
+        blockers.append("sgov_total_return_check_blocked")
+    warnings = []
+    if "WARNING" in str(metric.get("status")).upper():
+        warnings.append("external_metric_definitions_require_manual_tool_confirmation")
+    if str(sgov.get("status")) == "SGOV_PRICE_ONLY_DIFFERENCE_WARN":
+        warnings.append("SGOV_adjusted_close_total_return_proxy_differs_from_price_only")
+    if blockers:
+        status = "METRIC_SGOV_SIGNOFF_BLOCKED"
+    elif warnings:
+        status = "METRIC_SGOV_SIGNOFF_WARN"
+    else:
+        status = "METRIC_SGOV_SIGNOFF_READY"
+    payload = _payload(
+        report_type="metric_sgov_reconciliation_signoff",
+        title="Metric And SGOV Reconciliation Signoff",
+        status=status,
+        summary={
+            "metric_status": metric.get("status"),
+            "SGOV_status": sgov.get("status"),
+            "warning_count": len(warnings),
+            **_safety_summary(),
+        },
+        signoff_checks={
+            "CAGR_vs_arithmetic_annualized_return_explicit": True,
+            "max_drawdown_definition_explicit": True,
+            "sharpe_risk_free_rate_recorded": True,
+            "calmar_definition_explicit": True,
+            "SGOV_adjusted_close_used_as_total_return_proxy": True,
+            "price_only_vs_adjusted_close_difference_disclosed": bool(
+                _mapping(sgov.get("sgov_total_return_summary"))
+            ),
+            "SGOV_impact_explained_for_static_and_dynamic_strategies": bool(
+                _records(sgov.get("impact_rows"))
+            ),
+        },
+        source_statuses={
+            "metric_definition_reconciliation": metric.get("status"),
+            "sgov_total_return_external_check": sgov.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "metric_definition_reconciliation": metric,
+                "sgov_total_return_external_check": sgov,
+            }
+        ),
+        blocking_reasons=blockers,
+        warning_reasons=_dedupe_text(warnings),
+        report_registry_entry=_report_registry_entry(
+            "metric_and_sgov_reconciliation_signoff",
+            "Metric And SGOV Reconciliation Signoff",
+            "aits research strategies metric-and-sgov-reconciliation-signoff",
+            "metric_sgov_reconciliation_signoff",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_external_validation_to_launch_gate(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _status_reader_payload: Mapping[str, Any] | None = None,
+    _static_final_payload: Mapping[str, Any] | None = None,
+    _dynamic_final_payload: Mapping[str, Any] | None = None,
+    _metric_sgov_payload: Mapping[str, Any] | None = None,
+    _definition_lock_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    status_reader = dict(
+        _status_reader_payload
+        or run_external_validation_real_result_status_reader(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    static_final = dict(
+        _static_final_payload
+        or run_static_baseline_reconciliation_final_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    dynamic_final = dict(
+        _dynamic_final_payload
+        or run_dynamic_weight_path_replay_final_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    metric_sgov = dict(
+        _metric_sgov_payload
+        or run_metric_and_sgov_reconciliation_signoff(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    definition_lock = dict(
+        _definition_lock_payload
+        or run_balanced_core_definition_lock(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=growth_config_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    blocking_reasons = []
+    warning_reasons = []
+    master_status = str(status_reader.get("external_validation_master_status") or "")
+    if master_status not in {"EXTERNAL_VALIDATION_PASS", "EXTERNAL_VALIDATION_PASS_WITH_WARNINGS"}:
+        blocking_reasons.append("external_validation_master_not_passed")
+    if static_final.get("status") == "STATIC_BASELINE_FINAL_BLOCKED":
+        blocking_reasons.append("static_baseline_final_check_blocked")
+    if dynamic_final.get("status") in {
+        "DYNAMIC_REPLAY_FINAL_BLOCKED",
+        "DYNAMIC_REPLAY_FINAL_MISMATCH",
+    }:
+        blocking_reasons.append("dynamic_replay_final_check_blocked_or_mismatched")
+    if metric_sgov.get("status") == "METRIC_SGOV_SIGNOFF_BLOCKED":
+        blocking_reasons.append("metric_sgov_signoff_blocked")
+    if status_reader.get("owner_recommendation") == "INTERNAL_BACKTEST_FIX_REQUIRED":
+        blocking_reasons.append("difference_attribution_internal_backtest_fix_required")
+    if not str(definition_lock.get("definition_hash") or ""):
+        blocking_reasons.append("balanced_core_definition_hash_missing")
+    if definition_lock.get("status") != "BALANCED_CORE_DEFINITION_LOCKED":
+        blocking_reasons.append("balanced_core_definition_not_locked")
+    safety_sources = [status_reader, static_final, dynamic_final, metric_sgov, definition_lock]
+    safety_violations = _external_safety_violations(safety_sources)
+    blocking_reasons.extend(safety_violations)
+    for source in (status_reader, static_final, dynamic_final, metric_sgov):
+        warning_reasons.extend(_records_to_text(source.get("warning_reasons")))
+        if str(source.get("status")).endswith("_WARN") or "WARNING" in str(source.get("status")):
+            warning_reasons.append(f"{source.get('report_type')}_warning")
+    launch_allowed = not blocking_reasons
+    if not launch_allowed:
+        status = "EXTERNAL_VALIDATION_LAUNCH_GATE_BLOCKED"
+    elif _dedupe_text(warning_reasons) or master_status == "EXTERNAL_VALIDATION_PASS_WITH_WARNINGS":
+        status = "EXTERNAL_VALIDATION_LAUNCH_GATE_WARN"
+    else:
+        status = "EXTERNAL_VALIDATION_LAUNCH_GATE_PASS"
+    payload = _payload(
+        report_type="external_validation_to_launch_gate",
+        title="External Validation To Launch Gate",
+        status=status,
+        summary={
+            "launch_allowed": launch_allowed,
+            "launch_scope": "balanced_core_research_only_forward_aging",
+            "external_validation_master_status": master_status,
+            "candidate_definition_hash": definition_lock.get("definition_hash"),
+            "blocking_reason_count": len(_dedupe_text(blocking_reasons)),
+            **_safety_summary(),
+        },
+        launch_allowed=launch_allowed,
+        launch_scope="balanced_core_research_only_forward_aging",
+        required_owner_review=True,
+        candidate_strategy_id=FOCUSED_GROWTH_TILT_CANDIDATE_ID,
+        candidate_definition_hash=definition_lock.get("definition_hash"),
+        source_statuses={
+            "external_validation_real_result_status_reader": status_reader.get("status"),
+            "static_baseline_reconciliation_final_check": static_final.get("status"),
+            "dynamic_weight_path_replay_final_check": dynamic_final.get("status"),
+            "metric_sgov_reconciliation_signoff": metric_sgov.get("status"),
+            "balanced_core_definition_lock": definition_lock.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "external_validation_real_result_status_reader": status_reader,
+                "static_baseline_reconciliation_final_check": static_final,
+                "dynamic_weight_path_replay_final_check": dynamic_final,
+                "metric_sgov_reconciliation_signoff": metric_sgov,
+                "balanced_core_definition_lock": definition_lock,
+            }
+        ),
+        blocking_reasons=_dedupe_text(blocking_reasons),
+        warning_reasons=_dedupe_text(warning_reasons),
+        report_registry_entry=_report_registry_entry(
+            "external_validation_to_launch_gate",
+            "External Validation To Launch Gate",
+            "aits research strategies external-validation-to-launch-gate",
+            "external_validation_to_launch_gate",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def _real_result_sources(
+    *,
+    prices_path: Path,
+    marketstack_prices_path: Path,
+    rates_path: Path,
+    simple_config_path: Path,
+    growth_config_path: Path,
+    output_root: Path,
+    as_of_date: date | None,
+    start_date: date,
+    end_date: date | None,
+    scope_payload: Mapping[str, Any] | None,
+    static_payload: Mapping[str, Any] | None,
+    weight_export_payload: Mapping[str, Any] | None,
+    replay_payload: Mapping[str, Any] | None,
+    metric_payload: Mapping[str, Any] | None,
+    sgov_payload: Mapping[str, Any] | None,
+    difference_payload: Mapping[str, Any] | None,
+    owner_payload: Mapping[str, Any] | None,
+    master_payload: Mapping[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
+    scope = dict(
+        scope_payload
+        or _read_json_or_empty(output_root / "external_validation_scope_contract.json")
+        or run_external_validation_scope_contract(
+            output_root=output_root,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    static = dict(
+        static_payload
+        or _read_json_or_empty(output_root / "static_baseline_external_reconciliation.json")
+        or run_static_baseline_external_reconciliation(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    weight_export = dict(
+        weight_export_payload
+        or _read_json_or_empty(output_root / "strategy_weight_path_export.json")
+        or run_strategy_weight_path_export(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    replay = dict(
+        replay_payload
+        or _read_json_or_empty(output_root / "external_independent_return_replay.json")
+        or run_external_independent_return_replay(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _weight_export_payload=weight_export,
+        )
+    )
+    metric = dict(
+        metric_payload
+        or _read_json_or_empty(output_root / "metric_definition_reconciliation.json")
+        or run_metric_definition_reconciliation(output_root=output_root)
+    )
+    sgov = dict(
+        sgov_payload
+        or _read_json_or_empty(output_root / "sgov_total_return_external_check.json")
+        or run_sgov_total_return_external_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    difference = dict(
+        difference_payload
+        or _read_json_or_empty(output_root / "external_validation_difference_attribution.json")
+        or run_external_validation_difference_attribution(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _static_reconciliation_payload=static,
+            _replay_payload=replay,
+            _metric_payload=metric,
+            _sgov_payload=sgov,
+        )
+    )
+    owner = dict(
+        owner_payload
+        or _read_json_or_empty(output_root / "external_validation_owner_report.json")
+        or run_external_validation_owner_report(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _scope_payload=scope,
+            _static_payload=static,
+            _replay_payload=replay,
+            _metric_payload=metric,
+            _sgov_payload=sgov,
+            _difference_payload=difference,
+        )
+    )
+    master = dict(
+        master_payload
+        or _read_json_or_empty(output_root / "external_validation_master_review.json")
+        or run_external_validation_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _owner_payload=owner,
+        )
+    )
+    return {
+        "scope": scope,
+        "static": static,
+        "weight_export": weight_export,
+        "replay": replay,
+        "metric": metric,
+        "sgov": sgov,
+        "difference": difference,
+        "owner": owner,
+        "master": master,
+    }
+
+
+def _missing_sources(sources: Mapping[str, Mapping[str, Any]]) -> list[str]:
+    return [key for key, value in sources.items() if not value.get("status")]
+
+
+def _external_status_blockers(sources: Mapping[str, Mapping[str, Any]]) -> list[str]:
+    blockers = []
+    for key, source in sources.items():
+        status = str(source.get("status") or "")
+        if "BLOCKED" in status or "MISMATCH" in status or "FIX_REQUIRED" in status:
+            blockers.append(f"{key}:{status}")
+    if sources["owner"].get("owner_recommendation") == "INTERNAL_BACKTEST_FIX_REQUIRED":
+        blockers.append("owner_recommendation_internal_backtest_fix_required")
+    blockers.extend(_external_safety_violations(sources.values()))
+    return _dedupe_text(blockers)
+
+
+def _external_status_warnings(sources: Mapping[str, Mapping[str, Any]]) -> list[str]:
+    warnings = []
+    for key, source in sources.items():
+        status = str(source.get("status") or "")
+        if "WARN" in status or "WARNING" in status or "PENDING" in status:
+            warnings.append(f"{key}:{status}")
+        warnings.extend(_records_to_text(source.get("warning_reasons")))
+    return _dedupe_text(warnings)
+
+
+def _all_metric_within_static(rows: list[dict[str, Any]], metric: str) -> bool:
+    for row in rows:
+        if row.get("within_tolerance") is None:
+            return False
+        deltas = _mapping(row.get("metric_delta"))
+        if metric not in deltas:
+            return False
+        if row.get("within_tolerance") is not True:
+            return False
+    return bool(rows)
+
+
+def _weight_path_health(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "exists": False,
+            "row_count": 0,
+            "first_date": None,
+            "last_date": None,
+            "nonzero_weight_rows": 0,
+            "weight_sum_min": None,
+            "weight_sum_max": None,
+            "reasonable_weight_sum": False,
+        }
+    frame = pd.read_csv(path)
+    weight_cols = ["target_weight_qqq", "target_weight_tqqq", "target_weight_sgov"]
+    weights = frame.reindex(columns=weight_cols, fill_value=0.0)
+    weight_sum = weights.sum(axis=1)
+    nonzero = weight_sum.abs() > 1e-9
+    return {
+        "path": str(path),
+        "exists": True,
+        "row_count": len(frame.index),
+        "first_date": str(frame["date"].iloc[0]) if "date" in frame and not frame.empty else None,
+        "last_date": str(frame["date"].iloc[-1]) if "date" in frame and not frame.empty else None,
+        "nonzero_weight_rows": int(nonzero.sum()),
+        "weight_sum_min": _round(weight_sum.min()) if len(weight_sum.index) else None,
+        "weight_sum_max": _round(weight_sum.max()) if len(weight_sum.index) else None,
+        "reasonable_weight_sum": bool(
+            len(weight_sum.index) and weight_sum.between(0.99, 1.01).all()
+        ),
+    }
+
+
+def _dynamic_final_check_row(
+    row: Mapping[str, Any],
+    *,
+    weight_health: Mapping[str, Any],
+    definition_hash: str,
+) -> dict[str, Any]:
+    annual = _metric_reconciliation(row, "annual_return")
+    drawdown = _metric_reconciliation(row, "max_drawdown")
+    sharpe = _metric_reconciliation(row, "sharpe")
+    calmar = _metric_reconciliation(row, "calmar")
+    metric_rows = _records(row.get("metric_reconciliation"))
+    metrics_within = bool(row.get("all_metrics_within_tolerance"))
+    weight_ok = (
+        bool(weight_health.get("exists"))
+        and _int(weight_health.get("row_count")) > 0
+        and _int(weight_health.get("nonzero_weight_rows")) > 0
+        and bool(weight_health.get("reasonable_weight_sum"))
+    )
+    within_tolerance = metrics_within and weight_ok and bool(definition_hash)
+    difference_reason = "within_tolerance"
+    if not definition_hash:
+        difference_reason = "definition_hash_missing"
+    elif not weight_ok:
+        difference_reason = "weight_path_missing_zero_or_unreasonable_sum"
+    else:
+        for metric in metric_rows:
+            if metric.get("within_tolerance") is not True:
+                difference_reason = str(metric.get("difference_reason") or "metric_mismatch")
+                break
+    return {
+        "strategy_id": row.get("strategy_id"),
+        "weight_path_rows": weight_health.get("row_count", 0),
+        "first_date": weight_health.get("first_date"),
+        "last_date": weight_health.get("last_date"),
+        "definition_hash": definition_hash,
+        "internal_annual_return": annual.get("internal_metric"),
+        "replay_annual_return": annual.get("replay_metric"),
+        "annual_return_delta": annual.get("metric_delta"),
+        "internal_max_drawdown": drawdown.get("internal_metric"),
+        "replay_max_drawdown": drawdown.get("replay_metric"),
+        "max_drawdown_delta": drawdown.get("metric_delta"),
+        "internal_sharpe": sharpe.get("internal_metric"),
+        "replay_sharpe": sharpe.get("replay_metric"),
+        "sharpe_delta": sharpe.get("metric_delta"),
+        "internal_calmar": calmar.get("internal_metric"),
+        "replay_calmar": calmar.get("replay_metric"),
+        "calmar_delta": calmar.get("metric_delta"),
+        "within_tolerance": within_tolerance,
+        "difference_reason": difference_reason,
+    }
+
+
+def _metric_reconciliation(row: Mapping[str, Any], metric_name: str) -> dict[str, Any]:
+    for metric in _records(row.get("metric_reconciliation")):
+        if metric.get("metric") == metric_name:
+            return metric
+    return {}
+
+
+def _external_safety_violations(payloads: Any) -> list[str]:
+    violations = []
+    for index, payload in enumerate(payloads):
+        if not isinstance(payload, Mapping):
+            continue
+        label = str(payload.get("report_type") or index)
+        if payload.get("paper_shadow_allowed") is not False:
+            violations.append(f"{label}:paper_shadow_allowed_not_false")
+        if payload.get("production_allowed") is not False:
+            violations.append(f"{label}:production_allowed_not_false")
+        if payload.get("broker_action") != "none":
+            violations.append(f"{label}:broker_action_not_none")
+        if payload.get("manual_review_required") is not True:
+            violations.append(f"{label}:manual_review_required_not_true")
+        if payload.get("production_effect") != "none":
+            violations.append(f"{label}:production_effect_not_none")
+    return _dedupe_text(violations)
+
+
 def _internal_static_metric_rows(
     config: Mapping[str, Any],
     prices: pd.DataFrame,
@@ -1820,6 +2704,16 @@ def _artifact_paths_by_report(sources: Mapping[str, Mapping[str, Any]]) -> dict[
     return {name: source.get("artifact_paths", {}) for name, source in sources.items()}
 
 
+def _read_json_or_empty(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return dict(raw) if isinstance(raw, Mapping) else {}
+
+
 def _prohibited_reader_brief_hits(payload: Mapping[str, Any]) -> list[str]:
     prohibited = (
         "买入",
@@ -1860,6 +2754,25 @@ def _records(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _records_to_text(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item)]
+    if value is None:
+        return []
+    return [str(value)]
+
+
+def _dedupe_text(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
 
 
 def _float(value: object, default: float = 0.0) -> float:

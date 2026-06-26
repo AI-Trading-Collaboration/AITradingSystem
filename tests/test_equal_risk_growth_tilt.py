@@ -116,6 +116,15 @@ GROWTH_TILT_REPORT_IDS = {
     "dual_forward_aging_reader_brief_safe_preview",
     "balanced_core_owner_launch_pack",
     "dual_forward_aging_master_review",
+    "balanced_core_launch_preflight",
+    "balanced_core_first_observation_write_after_validation",
+    "balanced_core_observation_idempotency_proof",
+    "dual_forward_aging_comparator_panel_after_launch",
+    "dual_forward_aging_scoreboard_safety_review",
+    "dual_forward_aging_reader_brief_safe_preview_after_launch",
+    "balanced_core_launch_owner_report",
+    "external_validation_balanced_core_launch_master_review",
+    "dual_forward_aging_monthly_monitor_contract",
 }
 
 

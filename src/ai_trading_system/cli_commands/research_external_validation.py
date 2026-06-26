@@ -15,17 +15,22 @@ from ai_trading_system.external_validation import (
     DEFAULT_EXTERNAL_VALIDATION_MASTER_REVIEW_DOC_PATH,
     DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
     DEFAULT_EXTERNAL_VALIDATION_OWNER_REPORT_DOC_PATH,
+    run_dynamic_weight_path_replay_final_check,
     run_external_independent_return_replay,
     run_external_platform_feasibility_review,
     run_external_validation_difference_attribution,
     run_external_validation_master_review,
     run_external_validation_owner_report,
     run_external_validation_reader_brief_safe_preview,
+    run_external_validation_real_result_status_reader,
     run_external_validation_scope_contract,
+    run_external_validation_to_launch_gate,
+    run_metric_and_sgov_reconciliation_signoff,
     run_metric_definition_reconciliation,
     run_quantconnect_replication_dry_run_plan,
     run_sgov_total_return_external_check,
     run_static_baseline_external_reconciliation,
+    run_static_baseline_reconciliation_final_check,
     run_strategy_weight_path_export,
 )
 from ai_trading_system.research_governance import ResearchGovernanceError
@@ -156,6 +161,45 @@ def strategies_static_baseline_external_reconciliation_command(
         )
     )
     _print_payload("Static baseline external reconciliation", payload)
+
+
+def strategies_static_baseline_reconciliation_final_check_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Annotated[
+        Path, typer.Option("--growth-config")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Annotated[Path, typer.Option("--output-root")] = (
+        DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
+    ),
+    external_records_path: Annotated[
+        Path | None, typer.Option("--external-records-path")
+    ] = None,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = _build_payload(
+        lambda: run_static_baseline_reconciliation_final_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            external_records_path=external_records_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_payload("Static baseline reconciliation final check", payload)
 
 
 def strategies_external_validation_owner_report_command(
@@ -311,6 +355,38 @@ _EXTERNAL_VALIDATION_COMMANDS = (
         _make_data_command(
             run_external_validation_reader_brief_safe_preview,
             "External validation Reader Brief safe preview",
+        ),
+    ),
+    (
+        "external-validation-real-result-status-reader",
+        _make_data_command(
+            run_external_validation_real_result_status_reader,
+            "External validation real result status reader",
+        ),
+    ),
+    (
+        "static-baseline-reconciliation-final-check",
+        strategies_static_baseline_reconciliation_final_check_command,
+    ),
+    (
+        "dynamic-weight-path-replay-final-check",
+        _make_data_command(
+            run_dynamic_weight_path_replay_final_check,
+            "Dynamic weight path replay final check",
+        ),
+    ),
+    (
+        "metric-and-sgov-reconciliation-signoff",
+        _make_data_command(
+            run_metric_and_sgov_reconciliation_signoff,
+            "Metric and SGOV reconciliation signoff",
+        ),
+    ),
+    (
+        "external-validation-to-launch-gate",
+        _make_data_command(
+            run_external_validation_to_launch_gate,
+            "External validation to launch gate",
         ),
     ),
 )
