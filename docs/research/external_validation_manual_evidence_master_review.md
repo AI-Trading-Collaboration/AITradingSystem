@@ -12,9 +12,9 @@
 |Question|Answer|
 |---|---|
 |`1_external_record_status_recorded`|`True`|
-|`2_metric_conventions_confirmed`|`False`|
+|`2_metric_conventions_confirmed`|`True`|
 |`3_sgov_convention_confirmed_or_limitation_accepted`|`False`|
-|`4_static_baseline_final_reconciled`|`False`|
+|`4_static_baseline_final_reconciled`|`True`|
 |`5_dynamic_weight_path_external_support_status`|`DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE`|
 |`6_quantconnect_weight_path_replay_needed`|`True`|
 |`7_dual_forward_aging_can_continue`|`False`|

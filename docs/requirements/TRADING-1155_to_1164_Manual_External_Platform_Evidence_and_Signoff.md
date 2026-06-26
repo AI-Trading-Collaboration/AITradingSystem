@@ -105,3 +105,22 @@ convention status, and the safety boundary.
   `SGOV_CONVENTION_STILL_UNKNOWN`, owner recommendation remains
   `NEED_MORE_MANUAL_EVIDENCE`, and master status remains
   `EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT`.
+- 2026-06-27: Owner accepted the analysis that the over-tolerance external/internal
+  differences are caused by statistical metric convention differences rather than a true
+  backtest replication error. Added `external_platform_metric_convention_signoff.yaml`:
+  annual return, monthly rebalance, and dividend reinvestment are confirmed as matching;
+  max drawdown, Sharpe, and Calmar are confirmed with limitations because Portfolio
+  Visualizer uses monthly-return risk metrics while internal validation uses daily
+  equity-path metrics; turnover is confirmed as unavailable on the retained workbook.
+  This signoff explains static metric differences only and does not sign off SGOV-specific
+  convention handling, dynamic weight-path replay, paper-shadow, production, or broker
+  action.
+- 2026-06-27: After metric convention signoff, real artifacts changed to
+  `METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS` and
+  `STATIC_BASELINE_MANUAL_RECONCILED_WITH_WARNINGS`. All three static rows now carry
+  `explained_by_metric_convention_limitation`; hard mismatch count is zero and owner
+  answers mark static baseline aligned, metric convention confirmed, and unexplained
+  difference remaining false. Overall owner recommendation remains
+  `NEED_MORE_MANUAL_EVIDENCE` and master remains `EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT`
+  because SGOV convention signoff is still unknown and dynamic path replay still requires
+  a custom engine / QuantConnect-style implementation.

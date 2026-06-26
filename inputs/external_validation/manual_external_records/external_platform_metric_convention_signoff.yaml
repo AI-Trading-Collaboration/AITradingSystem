@@ -1,0 +1,93 @@
+schema_version: 1
+owner_signoff:
+  owner: project_owner
+  recorded_at: "2026-06-27T00:00:00+09:00"
+  source_statement: >
+    Owner accepted that the observed external/internal metric differences are
+    caused by statistical convention differences rather than a true backtest
+    replication error, and requested that this point be recorded.
+  scope:
+    external_tool: Portfolio Visualizer
+    evidence_workbook: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_static_baselines_2022-12-01_to_2026-06-25_20260626180942.xlsx
+    strategies:
+      - 100_qqq
+      - qqq_50_sgov_50
+      - qqq_60_sgov_40
+  interpretation_boundary: >
+    This signoff explains metric convention differences for static baseline
+    reconciliation only. It does not sign off SGOV-specific convention handling,
+    dynamic weight-path replay, paper-shadow, production, or broker action.
+records:
+  - external_tool: Portfolio Visualizer
+    metric_name: annual_return
+    platform_definition: >
+      Portfolio Visualizer CAGR / geometric annualized return over the selected
+      2022-12-01 to 2026-06-25 window.
+    definition_match_status: match
+    manual_confirmation_status: confirmed
+    difference_expected: false
+    owner_notes: >
+      Annual-return deltas versus internal daily-path CAGR are small and inside
+      configured tolerance for all three static baselines.
+  - external_tool: Portfolio Visualizer
+    metric_name: max_drawdown
+    platform_definition: >
+      Portfolio Visualizer drawdown is based on monthly returns in the exported
+      report notes. Internal validation uses daily equity-path peak-to-trough
+      drawdown, which captures intra-month troughs and is expected to be deeper.
+    definition_match_status: different
+    manual_confirmation_status: confirmed
+    difference_expected: true
+    owner_notes: >
+      This explains the large max-drawdown deltas and is not treated as evidence
+      of a true backtest replication error.
+  - external_tool: Portfolio Visualizer
+    metric_name: sharpe
+    platform_definition: >
+      Portfolio Visualizer Sharpe is calculated from monthly excess returns with
+      risk-free returns based on U.S. 3-Month Treasury Bill Rate. Internal static
+      validation uses daily excess return Sharpe with zero risk-free baseline.
+    definition_match_status: different
+    manual_confirmation_status: confirmed
+    difference_expected: true
+    owner_notes: >
+      Sharpe deltas are expected from frequency and risk-free-rate convention
+      differences rather than from strategy weight or return-path mismatch.
+  - external_tool: Portfolio Visualizer
+    metric_name: calmar
+    platform_definition: >
+      Portfolio Visualizer Calmar uses annualized return divided by monthly
+      return based maximum drawdown over the applicable window. Internal Calmar
+      uses daily equity-path max drawdown.
+    definition_match_status: different
+    manual_confirmation_status: confirmed
+    difference_expected: true
+    owner_notes: >
+      Calmar deltas follow from the max-drawdown convention difference.
+  - external_tool: Portfolio Visualizer
+    metric_name: turnover
+    platform_definition: metric_unavailable_on_platform
+    definition_match_status: limitation
+    manual_confirmation_status: confirmed
+    difference_expected: true
+    owner_notes: >
+      Portfolio Visualizer export does not provide strategy turnover in the
+      retained workbook; manual records use metric_unavailable_on_platform.
+  - external_tool: Portfolio Visualizer
+    metric_name: rebalance
+    platform_definition: >
+      Retained workbook reports Rebalance monthly for Portfolio 1, Portfolio 2,
+      and Portfolio 3.
+    definition_match_status: match
+    manual_confirmation_status: confirmed
+    difference_expected: false
+    owner_notes: Monthly rebalance matches the static baseline requirement.
+  - external_tool: Portfolio Visualizer
+    metric_name: dividend
+    platform_definition: >
+      Retained workbook reports Reinvest Dividends=Yes and notes that results
+      are based on total return with dividends and distributions reinvested.
+    definition_match_status: match
+    manual_confirmation_status: confirmed
+    difference_expected: false
+    owner_notes: Dividend reinvestment is consistent with total-return evidence.
