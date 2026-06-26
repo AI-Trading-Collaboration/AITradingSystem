@@ -18100,3 +18100,421 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_execution_semantics_contract
+    title: Dynamic Strategy Execution Semantics Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-execution-semantics-contract
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_execution_semantics_contract.json
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_execution_semantics_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: implicit_monthly_rebalance_assumption_audit
+    title: Implicit Monthly Rebalance Assumption Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies implicit-monthly-rebalance-assumption-audit
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/implicit_monthly_rebalance_assumption_audit.json
+      - outputs/research_strategies/execution_semantics/implicit_monthly_rebalance_assumption_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: strategy_execution_policy_registry_review
+    title: Strategy Execution Policy Registry Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies strategy-execution-policy-registry-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/strategy_execution_policy_registry_review.json
+      - outputs/research_strategies/execution_semantics/strategy_execution_policy_registry_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_validity_period_audit
+    title: Dynamic Strategy Validity Period Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-validity-period-audit
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_validity_period_audit.json
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_validity_period_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: target_vs_actual_position_path_builder
+    title: Target vs Actual Position Path Builder
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies target-vs-actual-position-path-builder
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/target_vs_actual_position_path_builder.json
+      - outputs/research_strategies/execution_semantics/target_vs_actual_position_path_builder.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: rebalance_frequency_sensitivity_suite
+    title: Rebalance Frequency Sensitivity Suite
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies rebalance-frequency-sensitivity-suite
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/rebalance_frequency_sensitivity_suite.json
+      - outputs/research_strategies/execution_semantics/rebalance_frequency_sensitivity_suite.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: threshold_hybrid_rebalance_review
+    title: Threshold Hybrid Rebalance Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies threshold-hybrid-rebalance-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/threshold_hybrid_rebalance_review.json
+      - outputs/research_strategies/execution_semantics/threshold_hybrid_rebalance_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: signal_staleness_cost_review
+    title: Signal Staleness Cost Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies signal-staleness-cost-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/signal_staleness_cost_review.json
+      - outputs/research_strategies/execution_semantics/signal_staleness_cost_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_latency_execution_lag_review
+    title: Dynamic Strategy Latency Execution Lag Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-latency-execution-lag-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_latency_execution_lag_review.json
+      - outputs/research_strategies/execution_semantics/dynamic_strategy_latency_execution_lag_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_policy_impact_on_prior_conclusions
+    title: Execution Policy Impact On Prior Conclusions
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-policy-impact-on-prior-conclusions
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_policy_impact_on_prior_conclusions.json
+      - outputs/research_strategies/execution_semantics/execution_policy_impact_on_prior_conclusions.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: rebalance_sensitive_candidate_recovery_review
+    title: Rebalance Sensitive Candidate Recovery Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies rebalance-sensitive-candidate-recovery-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/rebalance_sensitive_candidate_recovery_review.json
+      - outputs/research_strategies/execution_semantics/rebalance_sensitive_candidate_recovery_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_semantics_data_lineage_audit
+    title: Execution Semantics Data Lineage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-data-lineage-audit
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_data_lineage_audit.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_data_lineage_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_policy_cost_turnover_normalization
+    title: Execution Policy Cost Turnover Normalization
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-policy-cost-turnover-normalization
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_policy_cost_turnover_normalization.json
+      - outputs/research_strategies/execution_semantics/execution_policy_cost_turnover_normalization.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_semantics_external_validation_update
+    title: Execution Semantics External Validation Update
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-external-validation-update
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_external_validation_update.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_external_validation_update.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_aware_forward_aging_observation_contract
+    title: Execution Aware Forward Aging Observation Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-aware-forward-aging-observation-contract
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_aware_forward_aging_observation_contract.json
+      - outputs/research_strategies/execution_semantics/execution_aware_forward_aging_observation_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: equal_risk_balanced_core_execution_policy_selection
+    title: Equal Risk Balanced Core Execution Policy Selection
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies equal-risk-balanced-core-execution-policy-selection
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/equal_risk_balanced_core_execution_policy_selection.json
+      - outputs/research_strategies/execution_semantics/equal_risk_balanced_core_execution_policy_selection.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_backtest_engine_contract_update
+    title: Dynamic Backtest Engine Contract Update
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-backtest-engine-contract-update
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/dynamic_backtest_engine_contract_update.json
+      - outputs/research_strategies/execution_semantics/dynamic_backtest_engine_contract_update.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_semantics_reporting_update
+    title: Execution Semantics Reporting Update
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-reporting-update
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_reporting_update.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_reporting_update.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: rebalance_assumption_owner_review_pack
+    title: Rebalance Assumption Owner Review Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies rebalance-assumption-owner-review-pack
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/rebalance_assumption_owner_review_pack.json
+      - outputs/research_strategies/execution_semantics/rebalance_assumption_owner_review_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_semantics_master_review
+    title: Execution Semantics Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-master-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_master_review.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: roadmap_update_after_execution_semantics_review
+    title: Roadmap Update After Execution Semantics Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies roadmap-update-after-execution-semantics-review
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/roadmap_update_after_execution_semantics_review.json
+      - outputs/research_strategies/execution_semantics/roadmap_update_after_execution_semantics_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: reader_brief_execution_semantics_safe_preview
+    title: Reader Brief Execution Semantics Safe Preview
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies reader-brief-execution-semantics-safe-preview
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/reader_brief_execution_semantics_safe_preview.json
+      - outputs/research_strategies/execution_semantics/reader_brief_execution_semantics_safe_preview.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1165 to 1186 execution semantics artifacts are regenerated after strategy, policy, backtest, reporting, external validation or owner-review changes.
+    owner_action: review_execution_semantics_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

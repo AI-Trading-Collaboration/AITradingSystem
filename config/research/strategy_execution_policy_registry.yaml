@@ -1,0 +1,343 @@
+schema_version: 1
+policy_id: strategy_execution_policy_registry_v1
+policy_metadata:
+  owner: research_governance
+  status: research_only_baseline
+  rationale: >
+    Dynamic strategy backtests must distinguish signal cadence, target weight
+    cadence, recommendation validity, execution permission and actual position
+    path. The registry prevents unreviewed monthly execution defaults from
+    being silently applied to dynamic signals.
+  intended_effect: >
+    Make execution assumptions reviewable for research-only backtests,
+    external replay, forward-aging observations and owner reports.
+  validation_evidence: >
+    TRADING-1165 to 1186 focused tests validate required policy fields, CLI
+    artifacts, target-vs-actual path construction and report registry coverage.
+  review_condition: >
+    Review before using any policy outside research-only artifacts, changing a
+    drift/validity/holding threshold, changing cost assumptions, or attaching a
+    policy to paper-shadow, production or broker execution.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+defaults:
+  cost_model:
+    model_id: research_execution_cost_model_v1
+    explicit_cost_bps: 1.0
+    slippage_bps: 0.0
+    rationale: >
+      Pilot research-only comparison cost. It is intentionally visible so that
+      high-frequency policies do not receive free turnover in sensitivity
+      reports. It is not a production trading cost model.
+  max_turnover_per_period: 1.0
+  signal_to_execution_lag: 1
+  review_owner: research_governance
+policy_groups:
+  monthly:
+    description: Explicit monthly execution baselines.
+  weekly_daily:
+    description: Higher-cadence execution sensitivity policies.
+  threshold:
+    description: Drift-triggered policies.
+  hybrid:
+    description: Monthly execution plus threshold or risk-shock override.
+  validity_holding_hysteresis:
+    description: Recommendation expiry, holding-period and hysteresis policies.
+policies:
+  - execution_policy_id: monthly_eom_v1
+    execution_frequency: monthly
+    rebalance_calendar: us_equity_month_end
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 31
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: pilot_baseline
+      rationale: Explicitly preserves the historical monthly-end execution assumption.
+      intended_effect: Baseline comparator for identifying monthly execution drag.
+      validation_evidence: Covered by TRADING-1167 policy registry review.
+      review_condition: Review before treating monthly execution as default for a dynamic signal.
+  - execution_policy_id: monthly_bom_v1
+    execution_frequency: monthly
+    rebalance_calendar: us_equity_month_begin
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 31
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Tests whether month-start execution changes monthly baseline conclusions.
+      intended_effect: Calendar timing sensitivity.
+      validation_evidence: Covered by TRADING-1170 sensitivity suite.
+      review_condition: Review before selecting month-start execution for any strategy.
+  - execution_policy_id: weekly_friday_v1
+    execution_frequency: weekly
+    rebalance_calendar: us_equity_friday_or_last_session
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 7
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Measures whether weekly execution reduces signal staleness without daily turnover.
+      intended_effect: Cadence sensitivity for dynamic strategies.
+      validation_evidence: Covered by TRADING-1170 and TRADING-1173 artifacts.
+      review_condition: Review turnover and operational feasibility before owner selection.
+  - execution_policy_id: daily_close_next_day_v1
+    execution_frequency: daily
+    rebalance_calendar: us_equity_daily_close_next_day
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 1
+    max_turnover_per_period: 0.50
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Captures theoretical next-day execution without same-close lookahead.
+      intended_effect: Upper-bound response sensitivity with visible turnover cost.
+      validation_evidence: Covered by latency and cost-turnover artifacts.
+      review_condition: Must not be promoted without feasibility, cost and owner review.
+  - execution_policy_id: threshold_drift_5pct_v1
+    execution_frequency: threshold
+    rebalance_calendar: us_equity_daily_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: 0.05
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 10
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: pilot_baseline
+      rationale: Five percentage-point drift is a pilot threshold for material weight divergence.
+      intended_effect: Rebalance only when target and actual positions materially diverge.
+      validation_evidence: Sensitivity only; not calibrated as an investment boundary.
+      review_condition: Calibrate before any production-facing interpretation.
+  - execution_policy_id: threshold_drift_10pct_v1
+    execution_frequency: threshold
+    rebalance_calendar: us_equity_daily_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: 0.10
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 20
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: pilot_baseline
+      rationale: Ten percentage-point drift is the coarse-threshold comparator to 5% drift.
+      intended_effect: Test whether lower turnover offsets slower response.
+      validation_evidence: Sensitivity only; not calibrated as an investment boundary.
+      review_condition: Calibrate before any production-facing interpretation.
+  - execution_policy_id: monthly_plus_threshold_5pct_v1
+    execution_frequency: monthly_plus_threshold
+    rebalance_calendar: us_equity_month_end_plus_daily_drift_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: 0.05
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 20
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: owner_review_candidate
+      rationale: Hybrid baseline for preserving monthly cadence while reducing material drift.
+      intended_effect: Candidate default for research-only dynamic strategies pending owner review.
+      validation_evidence: TRADING-1171 and TRADING-1180 review artifacts.
+      review_condition: Owner must approve before it becomes a default policy.
+  - execution_policy_id: monthly_plus_threshold_10pct_v1
+    execution_frequency: monthly_plus_threshold
+    rebalance_calendar: us_equity_month_end_plus_daily_drift_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: 0.10
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 20
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Coarser hybrid comparator to the 5% drift hybrid.
+      intended_effect: Isolate turnover and staleness tradeoff.
+      validation_evidence: TRADING-1170 and TRADING-1171 sensitivity artifacts.
+      review_condition: Owner review required before selection.
+  - execution_policy_id: monthly_plus_vol_shock_v1
+    execution_frequency: monthly_plus_override
+    rebalance_calendar: us_equity_month_end_plus_daily_shock_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: qqq_realized_vol_20d_above_80th_percentile
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 10
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Tests whether volatility shock override reduces late risk-off cost.
+      intended_effect: Risk-shock sensitivity without approving trading automation.
+      validation_evidence: TRADING-1171 and TRADING-1172 artifacts.
+      review_condition: Requires external validation and owner review before selection.
+  - execution_policy_id: monthly_plus_drawdown_shock_v1
+    execution_frequency: monthly_plus_override
+    rebalance_calendar: us_equity_month_end_plus_daily_shock_check
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: qqq_drawdown_from_252d_high_below_minus_8pct
+    trend_override_trigger: none
+    validity_period_days: 10
+    max_turnover_per_period: 1.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Tests whether drawdown shock override reduces delayed de-risking.
+      intended_effect: Risk-off override sensitivity.
+      validation_evidence: TRADING-1171 and TRADING-1172 artifacts.
+      review_condition: Requires lineage and cost review before selection.
+  - execution_policy_id: validity_5d_v1
+    execution_frequency: validity_period
+    rebalance_calendar: us_equity_daily_until_recommendation_expiry
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 5
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: contract_only
+      rationale: Short recommendation validity sensitivity for fast-moving signals.
+      intended_effect: Expose stale recommendation risk.
+      validation_evidence: TRADING-1168 and TRADING-1172 artifacts.
+      review_condition: Must be tied to explicit signal frequency before use.
+  - execution_policy_id: validity_10d_v1
+    execution_frequency: validity_period
+    rebalance_calendar: us_equity_daily_until_recommendation_expiry
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 10
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: contract_only
+      rationale: Medium recommendation validity sensitivity.
+      intended_effect: Compare staleness against 5d and 20d validity.
+      validation_evidence: TRADING-1168 and TRADING-1172 artifacts.
+      review_condition: Must be tied to explicit signal frequency before use.
+  - execution_policy_id: validity_20d_v1
+    execution_frequency: validity_period
+    rebalance_calendar: us_equity_daily_until_recommendation_expiry
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 20
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: contract_only
+      rationale: Monthly-adjacent recommendation validity comparator.
+      intended_effect: Separate recommendation expiry from monthly execution.
+      validation_evidence: TRADING-1168 and TRADING-1172 artifacts.
+      review_condition: Must be tied to explicit signal frequency before use.
+  - execution_policy_id: min_holding_20d_v1
+    execution_frequency: threshold_with_min_holding
+    rebalance_calendar: us_equity_daily_check_after_min_holding
+    signal_to_execution_lag: 1
+    minimum_holding_period: 20
+    drift_threshold: 0.05
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 20
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Tests whether a 20-trading-day minimum holding period controls churn.
+      intended_effect: Turnover control sensitivity.
+      validation_evidence: TRADING-1171 and TRADING-1177 artifacts.
+      review_condition: Calibrate before use as an investment-facing holding rule.
+  - execution_policy_id: hysteresis_band_v1
+    execution_frequency: hysteresis_threshold
+    rebalance_calendar: us_equity_daily_check_with_entry_exit_band
+    signal_to_execution_lag: 1
+    minimum_holding_period: 0
+    drift_threshold: 0.05
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: qqq_trend_state_change_confirmed
+    validity_period_days: 20
+    max_turnover_per_period: 0.75
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 1.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: sensitivity_only
+      rationale: Tests whether hysteresis reduces churn near trend or allocation boundaries.
+      intended_effect: Churn and late-response sensitivity.
+      validation_evidence: TRADING-1171 and TRADING-1177 artifacts.
+      review_condition: Requires calibration and owner review before selection.
