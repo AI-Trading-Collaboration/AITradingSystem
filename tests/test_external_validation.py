@@ -490,6 +490,40 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
     ]
 
 
+def test_owner_recommendation_waits_for_metric_and_sgov_signoff_before_fix(
+    tmp_path: Path,
+) -> None:
+    owner = run_external_validation_manual_evidence_owner_signoff(
+        output_root=tmp_path / "outputs",
+        docs_path=tmp_path / "owner.md",
+        _manual_input_payload={
+            "status": "MANUAL_EXTERNAL_INPUT_RECORDED",
+            "valid_records": [
+                {"strategy_id": "100_qqq"},
+                {"strategy_id": "qqq_50_sgov_50"},
+                {"strategy_id": "qqq_60_sgov_40"},
+            ],
+            "invalid_records": [],
+            "missing_strategy_ids": [],
+        },
+        _metric_signoff_payload={"status": "METRIC_CONVENTIONS_STILL_UNKNOWN"},
+        _sgov_signoff_payload={"status": "SGOV_CONVENTION_STILL_UNKNOWN"},
+        _final_reconciliation_payload={"status": "STATIC_BASELINE_MANUAL_MISMATCH"},
+        _dynamic_support_payload={
+            "status": "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
+        },
+        _qc_preflight_payload={
+            "status": "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION"
+        },
+    )
+
+    assert owner["owner_recommendation"] == "NEED_MORE_MANUAL_EVIDENCE"
+    assert owner["required_answers"]["1_real_external_platform_records_provided"] is True
+    assert owner["required_answers"]["1a_valid_external_record_count"] == 3
+    assert owner["required_answers"]["4_metric_convention_confirmed"] is False
+    assert owner["required_answers"]["5_unexplained_difference_remaining"] is True
+
+
 def test_external_validation_report_registry_contracts() -> None:
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     entries = {item["report_id"]: item for item in registry["reports"]}

@@ -3,38 +3,51 @@ evidence_manifest:
   - provider_name: Portfolio Visualizer
     source_kind: public_convenience_external_backtest_platform
     endpoint: https://www.portfoliovisualizer.com/backtest-portfolio
-    source_url: https://www.portfoliovisualizer.com/backtest-portfolio?s=y&sl=2JwtlNLoMr4nMpAlQM4zYu
+    source_url: not_provided_by_owner
     request_parameters:
       start_date: "2022-12-01"
       end_date: "2026-06-25"
       initial_balance: 10000
-      holdings:
-        QQQ: 1.0
-      rebalancing: No rebalancing
+      portfolios:
+        Portfolio 1:
+          QQQ: 1.0
+        Portfolio 2:
+          QQQ: 0.5
+          SGOV: 0.5
+        Portfolio 3:
+          QQQ: 0.6
+          SGOV: 0.4
+      rebalancing: Rebalance monthly
       reinvest_dividends: "Yes"
-    download_timestamp: "2026-06-27T03:04:13+09:00"
-    original_file_path: G:\Download\Portfolio_20260626180410.xlsx
-    retained_export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_100_qqq_2022-12-01_to_2026-06-25_20260626180410.xlsx
-    workbook_sha256: 007AB4F3F4EC6ED4230AA464C1934CE4170F959556620C50560BF541687883A7
+    download_timestamp: "2026-06-27T03:09:44+09:00"
+    original_file_path: G:\Download\Portfolio_20260626180942.xlsx
+    retained_export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_static_baselines_2022-12-01_to_2026-06-25_20260626180942.xlsx
+    workbook_sha256: FADFEB31CC7142092BABE97EE5CF73D0148C164F28EA767A4DFA8A511CF67165
     workbook_sheet_count: 1
     workbook_sheets:
       - Portfolio Report
-    workbook_non_empty_row_count: 205
+    workbook_row_count: 409
+    workbook_column_count: 11
+    workbook_non_empty_row_count: 348
+    monthly_return_row_count: 43
+    monthly_return_window: 2022-12..2026-06
     owner_supplied: true
+    supersedes:
+      - inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_100_qqq_2022-12-01_to_2026-06-25_20260626180410.xlsx
     notes: >
-      Portfolio Visualizer export for the 100% QQQ static baseline. The platform
-      reports No rebalancing for this single-asset portfolio; ingestion preserves
-      that text and records a single-asset equivalence warning rather than
-      generalizing it to multi-asset static baselines.
+      Replacement Portfolio Visualizer export containing all three static
+      baselines. Portfolio 1 maps to `100_qqq`, Portfolio 2 maps to
+      `qqq_50_sgov_50`, and Portfolio 3 maps to `qqq_60_sgov_40`.
+      The platform workbook reports Rebalance monthly and Reinvest Dividends=Yes.
 records:
   - external_tool: Portfolio Visualizer
-    external_tool_url_or_name: https://www.portfoliovisualizer.com/backtest-portfolio?s=y&sl=2JwtlNLoMr4nMpAlQM4zYu
+    external_tool_url_or_name: Portfolio Visualizer workbook export Portfolio_20260626180942.xlsx / Portfolio 1
     strategy_id: 100_qqq
     date_range_start: "2022-12-01"
     date_range_end: "2026-06-25"
     asset_weights:
       QQQ: 1.0
-    rebalance_frequency: No rebalancing
+    rebalance_frequency: monthly
     dividend_reinvestment: reinvested
     price_or_total_return_policy: total_return
     annual_return: 0.2910428246168404
@@ -43,14 +56,63 @@ records:
     calmar: 2.519927897552753
     turnover: metric_unavailable_on_platform
     monthly_returns_available: true
-    export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_100_qqq_2022-12-01_to_2026-06-25_20260626180410.xlsx
+    export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_static_baselines_2022-12-01_to_2026-06-25_20260626180942.xlsx
     screenshot_reference: ""
     manual_notes: >
-      Owner supplied Portfolio Visualizer XLSX export. Workbook rows show Start
-      Date=2022-12-01, End Date=2026-06-25, Initial Balance=10000, QQQ allocation
-      100%, Rebalancing=No rebalancing, Reinvest Dividends=Yes, and notes state
-      results are based on total return with dividends/distributions reinvested.
-      No rebalancing is accepted only as a single-asset 100% QQQ equivalence
-      warning; it is not accepted for QQQ/SGOV multi-asset baselines.
+      Owner supplied replacement Portfolio Visualizer XLSX export. Workbook rows
+      show Start Date=2022-12-01, End Date=2026-06-25, Initial Balance=10000,
+      Rebalancing=Rebalance monthly, Reinvest Dividends=Yes, Portfolio 1 QQQ
+      allocation 100%, and Portfolio Visualizer notes state results are based on
+      total return with dividends/distributions reinvested.
     owner: project_owner
-    recorded_at: "2026-06-27T03:04:13+09:00"
+    recorded_at: "2026-06-27T03:09:44+09:00"
+  - external_tool: Portfolio Visualizer
+    external_tool_url_or_name: Portfolio Visualizer workbook export Portfolio_20260626180942.xlsx / Portfolio 2
+    strategy_id: qqq_50_sgov_50
+    date_range_start: "2022-12-01"
+    date_range_end: "2026-06-25"
+    asset_weights:
+      QQQ: 0.5
+      SGOV: 0.5
+    rebalance_frequency: monthly
+    dividend_reinvestment: reinvested
+    price_or_total_return_policy: total_return
+    annual_return: 0.1676072233004131
+    max_drawdown: -0.04771135292492459
+    sharpe: 1.2435585500960844
+    calmar: 3.1444071001186145
+    turnover: metric_unavailable_on_platform
+    monthly_returns_available: true
+    export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_static_baselines_2022-12-01_to_2026-06-25_20260626180942.xlsx
+    screenshot_reference: ""
+    manual_notes: >
+      Owner supplied replacement Portfolio Visualizer XLSX export. Workbook rows
+      show Portfolio 2 allocations QQQ=50% and SGOV=50%, global monthly rebalance,
+      dividend reinvestment, and total-return notes.
+    owner: project_owner
+    recorded_at: "2026-06-27T03:09:44+09:00"
+  - external_tool: Portfolio Visualizer
+    external_tool_url_or_name: Portfolio Visualizer workbook export Portfolio_20260626180942.xlsx / Portfolio 3
+    strategy_id: qqq_60_sgov_40
+    date_range_start: "2022-12-01"
+    date_range_end: "2026-06-25"
+    asset_weights:
+      QQQ: 0.6
+      SGOV: 0.4
+    rebalance_frequency: monthly
+    dividend_reinvestment: reinvested
+    price_or_total_return_policy: total_return
+    annual_return: 0.1921300939603705
+    max_drawdown: -0.058440269355815276
+    sharpe: 1.2434527755687304
+    calmar: 2.9231887232954756
+    turnover: metric_unavailable_on_platform
+    monthly_returns_available: true
+    export_file_path: inputs/external_validation/manual_external_records/evidence/portfolio_visualizer_static_baselines_2022-12-01_to_2026-06-25_20260626180942.xlsx
+    screenshot_reference: ""
+    manual_notes: >
+      Owner supplied replacement Portfolio Visualizer XLSX export. Workbook rows
+      show Portfolio 3 allocations QQQ=60% and SGOV=40%, global monthly rebalance,
+      dividend reinvestment, and total-return notes.
+    owner: project_owner
+    recorded_at: "2026-06-27T03:09:44+09:00"

@@ -11,7 +11,7 @@
 
 |Question|Answer|
 |---|---|
-|`1_external_record_status_recorded`|`False`|
+|`1_external_record_status_recorded`|`True`|
 |`2_metric_conventions_confirmed`|`False`|
 |`3_sgov_convention_confirmed_or_limitation_accepted`|`False`|
 |`4_static_baseline_final_reconciled`|`False`|

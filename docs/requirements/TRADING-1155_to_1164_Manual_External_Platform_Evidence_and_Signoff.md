@@ -86,3 +86,22 @@ convention status, and the safety boundary.
   `METRIC_CONVENTIONS_STILL_UNKNOWN`, SGOV signoff remains `SGOV_CONVENTION_STILL_UNKNOWN`,
   owner recommendation is `NEED_MORE_MANUAL_EVIDENCE`, and master status is
   `EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT`.
+- 2026-06-27: Owner supplied replacement workbook `G:\Download\Portfolio_20260626180942.xlsx`
+  and stated that it contains all three static baseline strategies. This replacement is
+  under review and may supersede the previous single-strategy `100_qqq` evidence only
+  after workbook parsing, strategy-to-baseline mapping, checksum capture, and real
+  ingestion/reconciliation validation complete.
+- 2026-06-27: Replacement workbook accepted as the current retained external evidence
+  source after parsing Portfolio 1/2/3 as `100_qqq`, `qqq_50_sgov_50`, and
+  `qqq_60_sgov_40`. The previous single-strategy retained workbook was removed. The new
+  manifest records SHA256 `FADFEB31CC7142092BABE97EE5CF73D0148C164F28EA767A4DFA8A511CF67165`,
+  409 workbook rows, 348 non-empty rows, 43 monthly-return rows, monthly rebalance, and
+  dividend reinvestment. Real ingestion now returns `MANUAL_EXTERNAL_INPUT_RECORDED` with
+  three valid records and no missing static baselines. Final reconciliation still returns
+  `STATIC_BASELINE_MANUAL_MISMATCH` for all three rows because annual-return deltas are
+  small but Portfolio Visualizer's monthly-risk metrics differ materially from internal
+  daily equity-path max drawdown / Sharpe / Calmar. Metric convention signoff remains
+  `METRIC_CONVENTIONS_STILL_UNKNOWN`, SGOV signoff remains
+  `SGOV_CONVENTION_STILL_UNKNOWN`, owner recommendation remains
+  `NEED_MORE_MANUAL_EVIDENCE`, and master status remains
+  `EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT`.

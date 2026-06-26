@@ -3571,14 +3571,14 @@ def _manual_owner_recommendation(
     final_status = str(final_reconciliation.get("status"))
     if str(manual_input.get("status")) != "MANUAL_EXTERNAL_INPUT_RECORDED":
         return "NEED_MORE_MANUAL_EVIDENCE"
-    if final_status == "STATIC_BASELINE_MANUAL_MISMATCH":
-        return "INTERNAL_FIX_REQUIRED"
-    if final_status == "STATIC_BASELINE_MANUAL_BLOCKED":
-        return "BLOCKED"
     if str(metric_signoff.get("status")) == "METRIC_CONVENTIONS_STILL_UNKNOWN" or str(
         sgov_signoff.get("status")
     ) == "SGOV_CONVENTION_STILL_UNKNOWN":
         return "NEED_MORE_MANUAL_EVIDENCE"
+    if final_status == "STATIC_BASELINE_MANUAL_MISMATCH":
+        return "INTERNAL_FIX_REQUIRED"
+    if final_status == "STATIC_BASELINE_MANUAL_BLOCKED":
+        return "BLOCKED"
     if str(dynamic_support.get("status")) == "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE":
         return "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS"
     if final_status == "STATIC_BASELINE_MANUAL_RECONCILED":

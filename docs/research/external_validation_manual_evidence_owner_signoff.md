@@ -11,10 +11,10 @@
 
 |Question|Answer|
 |---|---|
-|`1_real_external_platform_records_provided`|`False`|
-|`1a_valid_external_record_count`|`1`|
+|`1_real_external_platform_records_provided`|`True`|
+|`1a_valid_external_record_count`|`3`|
 |`1b_invalid_external_record_count`|`0`|
-|`1c_missing_static_baselines`|`qqq_50_sgov_50, qqq_60_sgov_40`|
+|`1c_missing_static_baselines`|``|
 |`2_static_baseline_aligned`|`False`|
 |`3_sgov_difference_explained`|`False`|
 |`4_metric_convention_confirmed`|`False`|
