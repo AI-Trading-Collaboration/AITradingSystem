@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
@@ -55,6 +56,39 @@ DEFAULT_EXTERNAL_VALIDATION_OWNER_REPORT_DOC_PATH = (
 DEFAULT_EXTERNAL_VALIDATION_MASTER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "external_validation_master_review.md"
 )
+DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR = (
+    PROJECT_ROOT / "inputs" / "external_validation" / "manual_external_records"
+)
+DEFAULT_MANUAL_EXTERNAL_RECORDS_TEMPLATE_YAML_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "static_baseline_external_records.template.yaml"
+)
+DEFAULT_MANUAL_EXTERNAL_RECORDS_TEMPLATE_CSV_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "static_baseline_external_records.template.csv"
+)
+DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "static_baseline_external_records.yaml"
+)
+DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "static_baseline_external_records.csv"
+)
+DEFAULT_MANUAL_EXTERNAL_RECORD_INPUT_GUIDE_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "manual_external_record_input_guide.md"
+)
+DEFAULT_STATIC_BASELINE_EXTERNAL_MANUAL_RUNBOOK_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "static_baseline_external_manual_runbook.md"
+)
+DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "external_platform_metric_convention_signoff.yaml"
+)
+DEFAULT_SGOV_CONVENTION_SIGNOFF_INPUT_PATH = (
+    DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR / "sgov_external_convention_signoff.yaml"
+)
+DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_OWNER_SIGNOFF_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "external_validation_manual_evidence_owner_signoff.md"
+)
+DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_MASTER_REVIEW_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "external_validation_manual_evidence_master_review.md"
+)
 
 EXTERNAL_VALIDATION_STRATEGY_IDS = (
     "100_qqq",
@@ -65,6 +99,51 @@ EXTERNAL_VALIDATION_STRATEGY_IDS = (
 )
 STATIC_BASELINE_IDS = ("100_qqq", "qqq_50_sgov_50", "qqq_60_sgov_40")
 DYNAMIC_REPLAY_IDS = ("equal_risk_qqq_sgov", FOCUSED_GROWTH_TILT_CANDIDATE_ID)
+STATIC_BASELINE_INTERNAL_IDS = {
+    "100_qqq": "qqq_100_static",
+    "qqq_50_sgov_50": "qqq_50_sgov_50",
+    "qqq_60_sgov_40": "qqq_60_sgov_40",
+}
+STATIC_BASELINE_EXPECTED_WEIGHTS: dict[str, dict[str, float]] = {
+    "100_qqq": {"QQQ": 1.0},
+    "qqq_50_sgov_50": {"QQQ": 0.5, "SGOV": 0.5},
+    "qqq_60_sgov_40": {"QQQ": 0.6, "SGOV": 0.4},
+}
+MANUAL_EXTERNAL_RECORD_FIELDS = (
+    "external_tool",
+    "external_tool_url_or_name",
+    "strategy_id",
+    "date_range_start",
+    "date_range_end",
+    "asset_weights",
+    "rebalance_frequency",
+    "dividend_reinvestment",
+    "price_or_total_return_policy",
+    "annual_return",
+    "max_drawdown",
+    "sharpe",
+    "calmar",
+    "turnover",
+    "monthly_returns_available",
+    "export_file_path",
+    "screenshot_reference",
+    "manual_notes",
+    "owner",
+    "recorded_at",
+)
+MANUAL_METRIC_FIELDS = ("annual_return", "max_drawdown", "sharpe", "calmar", "turnover")
+RECONCILIATION_METRIC_FIELDS = ("annual_return", "max_drawdown", "sharpe", "calmar")
+METRIC_UNAVAILABLE_MARKER = "metric_unavailable_on_platform"
+SGOV_CONVENTIONS = {"unknown", "price_only", "adjusted", "total_return", "platform_default"}
+METRIC_INTERNAL_DEFINITIONS = {
+    "annual_return": "CAGR from cumulative daily equity path",
+    "max_drawdown": "daily equity path drawdown from cumulative peak",
+    "sharpe": "daily excess return Sharpe with zero risk-free baseline",
+    "calmar": "CAGR divided by absolute max drawdown",
+    "turnover": "sum of absolute target-weight changes after rebalance",
+    "rebalance": "monthly static baseline rebalance unless explicitly stated",
+    "dividend": "adjusted close / total-return proxy when available",
+}
 
 SAFETY_BOUNDARY: dict[str, Any] = {
     "production_effect": "none",
@@ -1642,6 +1721,904 @@ def run_external_validation_to_launch_gate(
     return payload
 
 
+def run_manual_external_record_template(
+    *,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    template_dir: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_DIR,
+    guide_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORD_INPUT_GUIDE_DOC_PATH,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    yaml_path = template_dir / DEFAULT_MANUAL_EXTERNAL_RECORDS_TEMPLATE_YAML_PATH.name
+    csv_path = template_dir / DEFAULT_MANUAL_EXTERNAL_RECORDS_TEMPLATE_CSV_PATH.name
+    template_records = _manual_template_records(start_date=start_date, end_date=end_date)
+    _write_manual_external_template_files(template_records, yaml_path, csv_path)
+    _write_manual_external_record_input_guide(
+        guide_path,
+        yaml_path=yaml_path,
+        csv_path=csv_path,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    written_paths = [yaml_path, csv_path, guide_path]
+    status = (
+        "MANUAL_EXTERNAL_TEMPLATE_READY"
+        if all(path.exists() for path in written_paths)
+        else "MANUAL_EXTERNAL_TEMPLATE_PARTIAL"
+    )
+    payload = _payload(
+        report_type="manual_external_record_template",
+        title="Manual External Record Template",
+        status=status,
+        summary={
+            "template_field_count": len(MANUAL_EXTERNAL_RECORD_FIELDS),
+            "baseline_count": len(STATIC_BASELINE_IDS),
+            "date_range": _date_range_label(start_date, end_date),
+            **_safety_summary(),
+        },
+        template_fields=list(MANUAL_EXTERNAL_RECORD_FIELDS),
+        baseline_templates=template_records,
+        template_paths={
+            "yaml": str(yaml_path),
+            "csv": str(csv_path),
+            "guide": str(guide_path),
+        },
+        required_statuses=[
+            "MANUAL_EXTERNAL_TEMPLATE_READY",
+            "MANUAL_EXTERNAL_TEMPLATE_PARTIAL",
+            "MANUAL_EXTERNAL_TEMPLATE_BLOCKED",
+        ],
+        report_registry_entry=_report_registry_entry(
+            "manual_external_record_template",
+            "Manual External Record Template",
+            "aits research strategies manual-external-record-template",
+            "manual_external_record_template",
+            extra_artifact_globs=[
+                "inputs/external_validation/manual_external_records/"
+                "static_baseline_external_records.template.yaml",
+                "inputs/external_validation/manual_external_records/"
+                "static_baseline_external_records.template.csv",
+                "docs/research/manual_external_record_input_guide.md",
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_static_baseline_external_manual_runbook(
+    *,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_STATIC_BASELINE_EXTERNAL_MANUAL_RUNBOOK_DOC_PATH,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    baseline_rows = _manual_baseline_rows(config)
+    payload = _payload(
+        report_type="static_baseline_external_manual_runbook",
+        title="Static Baseline External Manual Runbook",
+        status="MANUAL_RUNBOOK_READY",
+        summary={
+            "baseline_count": len(baseline_rows),
+            "date_range": _date_range_label(start_date, end_date),
+            "required_metric_count": len(MANUAL_METRIC_FIELDS),
+            **_safety_summary(),
+        },
+        baseline_rows=baseline_rows,
+        date_range={
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat() if end_date else "latest_available_internal_as_of",
+        },
+        required_metrics=list(MANUAL_METRIC_FIELDS),
+        screenshot_and_export_policy={
+            "minimum_evidence": "screenshot_reference_or_export_file_path_required",
+            "forbidden": [
+                "broker_account_information",
+                "personal_account_screenshots",
+                "internal_metrics_copied_as_external_results",
+            ],
+        },
+        manual_records_target_paths={
+            "yaml": str(DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH),
+            "csv": str(DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH),
+        },
+        report_registry_entry=_doc_report_registry_entry(
+            "static_baseline_external_manual_runbook",
+            "Static Baseline External Manual Runbook",
+            "aits research strategies static-baseline-external-manual-runbook",
+            "static_baseline_external_manual_runbook",
+            "docs/research/static_baseline_external_manual_runbook.md",
+        ),
+    )
+    _write_runbook_artifact(
+        payload,
+        output_root / "static_baseline_external_manual_runbook.json",
+        docs_path,
+    )
+    return payload
+
+
+def run_static_baseline_external_manual_input_ingestion(
+    *,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    input_yaml_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH,
+    input_csv_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    loaded = _load_manual_external_records(input_yaml_path, input_csv_path)
+    normalized_records = [
+        _normalize_manual_external_record(
+            row,
+            source=source,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        for source, row in loaded["records"]
+    ]
+    expected = set(STATIC_BASELINE_IDS)
+    present = {str(row.get("strategy_id")) for row in normalized_records}
+    missing_strategy_ids = sorted(expected - present)
+    invalid_records = [
+        row for row in normalized_records if _records_to_text(row.get("validation_errors"))
+    ]
+    valid_records = [
+        row for row in normalized_records if not _records_to_text(row.get("validation_errors"))
+    ]
+    for row in valid_records:
+        row["baseline_definition"] = _manual_baseline_definition(
+            config,
+            str(row.get("strategy_id")),
+        )
+    if loaded["parse_errors"]:
+        status = "MANUAL_EXTERNAL_INPUT_BLOCKED"
+    elif not loaded["source_paths"]:
+        status = "MANUAL_EXTERNAL_INPUT_MISSING"
+    elif invalid_records or missing_strategy_ids:
+        status = "MANUAL_EXTERNAL_INPUT_PARTIAL"
+    else:
+        status = "MANUAL_EXTERNAL_INPUT_RECORDED"
+    payload = _payload(
+        report_type="static_baseline_external_manual_input_ingestion",
+        title="Static Baseline External Manual Input Ingestion",
+        status=status,
+        summary={
+            "source_file_count": len(loaded["source_paths"]),
+            "record_count": len(normalized_records),
+            "valid_record_count": len(valid_records),
+            "invalid_record_count": len(invalid_records),
+            "missing_strategy_count": len(missing_strategy_ids),
+            **_safety_summary(),
+        },
+        input_paths=loaded["source_paths"],
+        parsed_record_count=len(normalized_records),
+        records=normalized_records,
+        valid_records=valid_records,
+        invalid_records=invalid_records,
+        missing_strategy_ids=missing_strategy_ids,
+        parse_errors=loaded["parse_errors"],
+        allowed_strategy_ids=list(STATIC_BASELINE_IDS),
+        required_sgov_conventions=sorted(SGOV_CONVENTIONS),
+        report_registry_entry=_report_registry_entry(
+            "static_baseline_external_manual_input_ingestion",
+            "Static Baseline External Manual Input Ingestion",
+            "aits research strategies static-baseline-external-manual-input-ingestion",
+            "static_baseline_external_manual_input_ingestion",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_external_platform_metric_convention_signoff(
+    *,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+    input_yaml_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH,
+    input_csv_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH,
+    _manual_input_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    manual_input = dict(
+        _manual_input_payload
+        or run_static_baseline_external_manual_input_ingestion(
+            output_root=output_root,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+        )
+    )
+    signoff_rows, parse_errors = _load_metric_convention_signoff_rows(signoff_path)
+    external_tools = _manual_external_tools(manual_input)
+    rows = _metric_convention_rows(signoff_rows, external_tools)
+    unknown_rows = [
+        row for row in rows if str(row["manual_confirmation_status"]).lower() == "unknown"
+    ]
+    limitation_rows = [
+        row
+        for row in rows
+        if str(row["definition_match_status"]).lower()
+        in {"platform_default", "partial", "limitation", "different"}
+        or _bool(row.get("difference_expected"))
+    ]
+    if parse_errors:
+        status = "METRIC_CONVENTIONS_BLOCKED"
+    elif unknown_rows:
+        status = "METRIC_CONVENTIONS_STILL_UNKNOWN"
+    elif limitation_rows:
+        status = "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS"
+    else:
+        status = "METRIC_CONVENTIONS_CONFIRMED"
+    payload = _payload(
+        report_type="external_platform_metric_convention_signoff",
+        title="External Platform Metric Convention Signoff",
+        status=status,
+        summary={
+            "metric_row_count": len(rows),
+            "unknown_row_count": len(unknown_rows),
+            "limitation_row_count": len(limitation_rows),
+            **_safety_summary(),
+        },
+        signoff_input_path=str(signoff_path),
+        metric_rows=rows,
+        parse_errors=parse_errors,
+        source_statuses={
+            "static_baseline_external_manual_input_ingestion": manual_input.get("status")
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {"static_baseline_external_manual_input_ingestion": manual_input}
+        ),
+        report_registry_entry=_report_registry_entry(
+            "external_platform_metric_convention_signoff",
+            "External Platform Metric Convention Signoff",
+            "aits research strategies external-platform-metric-convention-signoff",
+            "external_platform_metric_convention_signoff",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_sgov_external_convention_signoff(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    signoff_path: Path = DEFAULT_SGOV_CONVENTION_SIGNOFF_INPUT_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _sgov_check_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    sgov_check = dict(
+        _sgov_check_payload
+        or run_sgov_total_return_external_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    rows, parse_errors = _load_sgov_convention_signoff_rows(signoff_path, sgov_check)
+    accepted_rows = [row for row in rows if _bool(row.get("convention_accepted"))]
+    unknown_rows = [
+        row
+        for row in rows
+        if str(row.get("sgov_convention", "unknown")).lower() == "unknown"
+        or not _bool(row.get("convention_accepted"))
+    ]
+    limitation_rows = [
+        row
+        for row in accepted_rows
+        if str(row.get("sgov_convention", "")).lower() in {"price_only", "platform_default"}
+    ]
+    if parse_errors:
+        status = "SGOV_CONVENTION_BLOCKED"
+    elif unknown_rows:
+        status = "SGOV_CONVENTION_STILL_UNKNOWN"
+    elif limitation_rows:
+        status = "SGOV_CONVENTION_LIMITATION_ACCEPTED"
+    else:
+        status = "SGOV_CONVENTION_CONFIRMED"
+    payload = _payload(
+        report_type="sgov_external_convention_signoff",
+        title="SGOV External Convention Signoff",
+        status=status,
+        summary={
+            "sgov_row_count": len(rows),
+            "accepted_row_count": len(accepted_rows),
+            "unknown_row_count": len(unknown_rows),
+            **_safety_summary(),
+        },
+        signoff_input_path=str(signoff_path),
+        sgov_rows=rows,
+        parse_errors=parse_errors,
+        source_statuses={"sgov_total_return_external_check": sgov_check.get("status")},
+        source_artifacts=_artifact_paths_by_report(
+            {"sgov_total_return_external_check": sgov_check}
+        ),
+        report_registry_entry=_report_registry_entry(
+            "sgov_external_convention_signoff",
+            "SGOV External Convention Signoff",
+            "aits research strategies sgov-external-convention-signoff",
+            "sgov_external_convention_signoff",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_static_baseline_final_reconciliation_after_manual_input(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    input_yaml_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH,
+    input_csv_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH,
+    metric_signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+    sgov_signoff_path: Path = DEFAULT_SGOV_CONVENTION_SIGNOFF_INPUT_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _manual_input_payload: Mapping[str, Any] | None = None,
+    _metric_signoff_payload: Mapping[str, Any] | None = None,
+    _sgov_signoff_payload: Mapping[str, Any] | None = None,
+    _static_final_check_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    manual_input = dict(
+        _manual_input_payload
+        or run_static_baseline_external_manual_input_ingestion(
+            simple_config_path=simple_config_path,
+            output_root=output_root,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    metric_signoff = dict(
+        _metric_signoff_payload
+        or run_external_platform_metric_convention_signoff(
+            output_root=output_root,
+            signoff_path=metric_signoff_path,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            _manual_input_payload=manual_input,
+        )
+    )
+    sgov_signoff = dict(
+        _sgov_signoff_payload
+        or run_sgov_external_convention_signoff(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            signoff_path=sgov_signoff_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    static_final_check = dict(
+        _static_final_check_payload
+        or run_static_baseline_reconciliation_final_check(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    blockers = []
+    if not bool(data_gate.get("passed")):
+        blockers.append("validate_data_cache_failed")
+    if str(manual_input.get("status")) in {
+        "MANUAL_EXTERNAL_INPUT_MISSING",
+        "MANUAL_EXTERNAL_INPUT_BLOCKED",
+    }:
+        blockers.append("manual_external_input_missing_or_blocked")
+    prices = _price_matrix(prices_path, config, start_date=start_date, end_date=end_date)
+    internal_rows = {
+        str(row.get("strategy_id")): row for row in _internal_static_metric_rows(config, prices)
+    }
+    manual_records = {
+        str(row.get("strategy_id")): row for row in _records(manual_input.get("valid_records"))
+    }
+    reconciliation_rows = [
+        _manual_final_reconciliation_row(
+            strategy_id,
+            internal_rows.get(strategy_id, {}),
+            manual_records.get(strategy_id),
+            metric_signoff=metric_signoff,
+            sgov_signoff=sgov_signoff,
+        )
+        for strategy_id in STATIC_BASELINE_IDS
+    ]
+    hard_mismatches = [
+        row
+        for row in reconciliation_rows
+        if row.get("difference_reason") == "metric_delta_exceeds_tolerance"
+    ]
+    warning_rows = [
+        row
+        for row in reconciliation_rows
+        if row.get("difference_reason") not in {"within_tolerance", "manual_external_input_missing"}
+    ]
+    if blockers:
+        status = "STATIC_BASELINE_MANUAL_BLOCKED"
+    elif hard_mismatches:
+        status = "STATIC_BASELINE_MANUAL_MISMATCH"
+    elif warning_rows:
+        status = "STATIC_BASELINE_MANUAL_RECONCILED_WITH_WARNINGS"
+    else:
+        status = "STATIC_BASELINE_MANUAL_RECONCILED"
+    payload = _payload(
+        report_type="static_baseline_final_reconciliation_after_manual_input",
+        title="Static Baseline Final Reconciliation After Manual Input",
+        status=status,
+        summary={
+            "row_count": len(reconciliation_rows),
+            "hard_mismatch_count": len(hard_mismatches),
+            "warning_row_count": len(warning_rows),
+            "data_quality_status": data_gate.get("status"),
+            **_safety_summary(),
+        },
+        reconciliation_rows=reconciliation_rows,
+        data_quality=data_gate,
+        blocking_reasons=blockers,
+        warning_reasons=_dedupe_text(
+            [str(row.get("difference_reason")) for row in warning_rows]
+        ),
+        source_statuses={
+            "static_baseline_external_manual_input_ingestion": manual_input.get("status"),
+            "external_platform_metric_convention_signoff": metric_signoff.get("status"),
+            "sgov_external_convention_signoff": sgov_signoff.get("status"),
+            "static_baseline_reconciliation_final_check": static_final_check.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "static_baseline_external_manual_input_ingestion": manual_input,
+                "external_platform_metric_convention_signoff": metric_signoff,
+                "sgov_external_convention_signoff": sgov_signoff,
+                "static_baseline_reconciliation_final_check": static_final_check,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "static_baseline_final_reconciliation_after_manual_input",
+            "Static Baseline Final Reconciliation After Manual Input",
+            "aits research strategies static-baseline-final-reconciliation-after-manual-input",
+            "static_baseline_final_reconciliation_after_manual_input",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_dynamic_weight_path_external_support_check(
+    *,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    rows = [
+        {
+            "platform": "Portfolio Visualizer",
+            "supports_dynamic_weight_path_import": False,
+            "supports_custom_rebalance_dates": "limited",
+            "supports_custom_weights_by_date": False,
+            "supports_cash_or_sgov_handling": "static_only_manual_confirmation_required",
+            "supports_exported_weight_path_replay": False,
+            "supports_custom_strategy_code": False,
+            "manual_work_required": "use only for static baseline checks",
+            "recommended_role": "STATIC_BASELINE_ONLY",
+        },
+        {
+            "platform": "testfol.io",
+            "supports_dynamic_weight_path_import": False,
+            "supports_custom_rebalance_dates": "limited",
+            "supports_custom_weights_by_date": False,
+            "supports_cash_or_sgov_handling": "static_only_manual_confirmation_required",
+            "supports_exported_weight_path_replay": False,
+            "supports_custom_strategy_code": False,
+            "manual_work_required": "use only for static baseline cross-checks",
+            "recommended_role": "STATIC_BASELINE_ONLY",
+        },
+        {
+            "platform": "QuantConnect",
+            "supports_dynamic_weight_path_import": True,
+            "supports_custom_rebalance_dates": True,
+            "supports_custom_weights_by_date": True,
+            "supports_cash_or_sgov_handling": True,
+            "supports_exported_weight_path_replay": True,
+            "supports_custom_strategy_code": True,
+            "manual_work_required": "implement custom data import and research-only backtest",
+            "recommended_role": "FULL_STRATEGY_REPLICATION_POSSIBLE",
+        },
+        {
+            "platform": "TradingView",
+            "supports_dynamic_weight_path_import": "manual_or_script_limited",
+            "supports_custom_rebalance_dates": True,
+            "supports_custom_weights_by_date": "limited",
+            "supports_cash_or_sgov_handling": "symbol_and_script_dependent",
+            "supports_exported_weight_path_replay": "limited",
+            "supports_custom_strategy_code": True,
+            "manual_work_required": "script recreation; not authoritative for reconciliation",
+            "recommended_role": "WEIGHT_PATH_REPLAY_POSSIBLE",
+        },
+        {
+            "platform": "local independent notebook",
+            "supports_dynamic_weight_path_import": True,
+            "supports_custom_rebalance_dates": True,
+            "supports_custom_weights_by_date": True,
+            "supports_cash_or_sgov_handling": True,
+            "supports_exported_weight_path_replay": True,
+            "supports_custom_strategy_code": True,
+            "manual_work_required": "maintain independent replay notebook or script audit trail",
+            "recommended_role": "WEIGHT_PATH_REPLAY_POSSIBLE",
+        },
+    ]
+    status = "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
+    payload = _payload(
+        report_type="dynamic_weight_path_external_support_check",
+        title="Dynamic Weight Path External Support Check",
+        status=status,
+        summary={
+            "platform_count": len(rows),
+            "custom_engine_required": True,
+            "recommended_dynamic_platform": "QuantConnect or local independent notebook",
+            **_safety_summary(),
+        },
+        platform_rows=rows,
+        allowed_recommended_roles=[
+            "STATIC_BASELINE_ONLY",
+            "WEIGHT_PATH_REPLAY_POSSIBLE",
+            "FULL_STRATEGY_REPLICATION_POSSIBLE",
+            "NOT_RECOMMENDED",
+        ],
+        report_registry_entry=_report_registry_entry(
+            "dynamic_weight_path_external_support_check",
+            "Dynamic Weight Path External Support Check",
+            "aits research strategies dynamic-weight-path-external-support-check",
+            "dynamic_weight_path_external_support_check",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_quantconnect_weight_path_replay_preflight(
+    *,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    payload = _payload(
+        report_type="quantconnect_weight_path_replay_preflight",
+        title="QuantConnect Weight Path Replay Preflight",
+        status="QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION",
+        summary={
+            "schema_field_count": 10,
+            "manual_step_count": 7,
+            "blocker_count": 3,
+            **_safety_summary(),
+        },
+        weight_path_csv_schema=[
+            "date",
+            "strategy_id",
+            "definition_hash",
+            "target_weight_qqq",
+            "target_weight_tqqq",
+            "target_weight_sgov",
+            "rebalance_flag",
+            "signal_time",
+            "execution_assumption",
+            "data_quality_status",
+        ],
+        custom_data_import_schema={
+            "date": "QC Time field / trading date",
+            "weights": "decimal target weights by ticker",
+            "definition_hash": "string audit key, not trading signal",
+        },
+        symbol_mapping={"QQQ": "QQQ", "SGOV": "SGOV", "TQQQ": "TQQQ"},
+        rebalance_date_handling="rebalance only on rows where rebalance_flag is true",
+        execution_timing="apply imported target weights after signal close / next bar execution",
+        cash_or_sgov_handling="SGOV treated as defensive ETF; cash remains residual only",
+        transaction_cost_model="0 bps reconciliation baseline, then explicit sensitivity",
+        expected_output_metrics=[
+            "annual_return",
+            "max_drawdown",
+            "sharpe",
+            "calmar",
+            "turnover",
+            "monthly_returns",
+        ],
+        manual_implementation_steps=[
+            "create research-only QuantConnect project",
+            "confirm ETF adjusted data and dividend reinvestment behavior",
+            "import exported weight path CSV as custom data",
+            "map symbols and dates to QC Securities",
+            "apply target weights with no broker account credentials",
+            "export equity curve and monthly returns",
+            "attach exports/screenshots to manual evidence records",
+        ],
+        current_blockers=[
+            "manual QuantConnect implementation not yet created",
+            "SGOV adjusted/total-return behavior still needs owner confirmation",
+            "external platform metric definitions still need owner confirmation",
+        ],
+        report_registry_entry=_report_registry_entry(
+            "quantconnect_weight_path_replay_preflight",
+            "QuantConnect Weight Path Replay Preflight",
+            "aits research strategies quantconnect-weight-path-replay-preflight",
+            "quantconnect_weight_path_replay_preflight",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_external_validation_manual_evidence_owner_signoff(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_OWNER_SIGNOFF_DOC_PATH,
+    input_yaml_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH,
+    input_csv_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH,
+    metric_signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+    sgov_signoff_path: Path = DEFAULT_SGOV_CONVENTION_SIGNOFF_INPUT_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _manual_input_payload: Mapping[str, Any] | None = None,
+    _metric_signoff_payload: Mapping[str, Any] | None = None,
+    _sgov_signoff_payload: Mapping[str, Any] | None = None,
+    _final_reconciliation_payload: Mapping[str, Any] | None = None,
+    _dynamic_support_payload: Mapping[str, Any] | None = None,
+    _qc_preflight_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    manual_input = dict(
+        _manual_input_payload
+        or run_static_baseline_external_manual_input_ingestion(
+            simple_config_path=simple_config_path,
+            output_root=output_root,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    metric_signoff = dict(
+        _metric_signoff_payload
+        or run_external_platform_metric_convention_signoff(
+            output_root=output_root,
+            signoff_path=metric_signoff_path,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            _manual_input_payload=manual_input,
+        )
+    )
+    sgov_signoff = dict(
+        _sgov_signoff_payload
+        or run_sgov_external_convention_signoff(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            signoff_path=sgov_signoff_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    final_reconciliation = dict(
+        _final_reconciliation_payload
+        or run_static_baseline_final_reconciliation_after_manual_input(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            metric_signoff_path=metric_signoff_path,
+            sgov_signoff_path=sgov_signoff_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _manual_input_payload=manual_input,
+            _metric_signoff_payload=metric_signoff,
+            _sgov_signoff_payload=sgov_signoff,
+        )
+    )
+    dynamic_support = dict(
+        _dynamic_support_payload
+        or run_dynamic_weight_path_external_support_check(output_root=output_root)
+    )
+    qc_preflight = dict(
+        _qc_preflight_payload
+        or run_quantconnect_weight_path_replay_preflight(output_root=output_root)
+    )
+    answers = _manual_owner_required_answers(
+        manual_input,
+        metric_signoff,
+        sgov_signoff,
+        final_reconciliation,
+        dynamic_support,
+        qc_preflight,
+    )
+    recommendation = _manual_owner_recommendation(
+        manual_input,
+        metric_signoff,
+        sgov_signoff,
+        final_reconciliation,
+        dynamic_support,
+    )
+    payload = _payload(
+        report_type="external_validation_manual_evidence_owner_signoff",
+        title="External Validation Manual Evidence Owner Signoff",
+        status="EXTERNAL_VALIDATION_MANUAL_EVIDENCE_OWNER_SIGNOFF_READY",
+        summary={
+            "owner_recommendation": recommendation,
+            "manual_input_status": manual_input.get("status"),
+            "final_reconciliation_status": final_reconciliation.get("status"),
+            **_safety_summary(),
+        },
+        owner_recommendation=recommendation,
+        required_answers=answers,
+        source_statuses={
+            "static_baseline_external_manual_input_ingestion": manual_input.get("status"),
+            "external_platform_metric_convention_signoff": metric_signoff.get("status"),
+            "sgov_external_convention_signoff": sgov_signoff.get("status"),
+            "static_baseline_final_reconciliation_after_manual_input": final_reconciliation.get(
+                "status"
+            ),
+            "dynamic_weight_path_external_support_check": dynamic_support.get("status"),
+            "quantconnect_weight_path_replay_preflight": qc_preflight.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "static_baseline_external_manual_input_ingestion": manual_input,
+                "external_platform_metric_convention_signoff": metric_signoff,
+                "sgov_external_convention_signoff": sgov_signoff,
+                "static_baseline_final_reconciliation_after_manual_input": final_reconciliation,
+                "dynamic_weight_path_external_support_check": dynamic_support,
+                "quantconnect_weight_path_replay_preflight": qc_preflight,
+            }
+        ),
+        report_registry_entry=_doc_report_registry_entry(
+            "external_validation_manual_evidence_owner_signoff",
+            "External Validation Manual Evidence Owner Signoff",
+            "aits research strategies external-validation-manual-evidence-owner-signoff",
+            "external_validation_manual_evidence_owner_signoff",
+            "docs/research/external_validation_manual_evidence_owner_signoff.md",
+        ),
+    )
+    _write_json_and_doc(
+        payload,
+        output_root / "external_validation_manual_evidence_owner_signoff.json",
+        docs_path,
+        "External Validation Manual Evidence Owner Signoff",
+    )
+    return payload
+
+
+def run_external_validation_manual_evidence_master_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    growth_config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_MASTER_REVIEW_DOC_PATH,
+    owner_docs_path: Path = DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_OWNER_SIGNOFF_DOC_PATH,
+    input_yaml_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_YAML_PATH,
+    input_csv_path: Path = DEFAULT_MANUAL_EXTERNAL_RECORDS_CSV_PATH,
+    metric_signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+    sgov_signoff_path: Path = DEFAULT_SGOV_CONVENTION_SIGNOFF_INPUT_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _owner_signoff_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    owner = dict(
+        _owner_signoff_payload
+        or run_external_validation_manual_evidence_owner_signoff(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            growth_config_path=growth_config_path,
+            output_root=output_root,
+            docs_path=owner_docs_path,
+            input_yaml_path=input_yaml_path,
+            input_csv_path=input_csv_path,
+            metric_signoff_path=metric_signoff_path,
+            sgov_signoff_path=sgov_signoff_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    recommendation = str(owner.get("owner_recommendation"))
+    if recommendation == "ACCEPT_EXTERNAL_VALIDATION":
+        status = "EXTERNAL_MANUAL_EVIDENCE_ACCEPTED"
+    elif recommendation == "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS":
+        status = "EXTERNAL_MANUAL_EVIDENCE_ACCEPTED_WITH_WARNINGS"
+    elif recommendation in {"NEED_MORE_MANUAL_EVIDENCE", "NEED_DYNAMIC_PLATFORM_REPLAY"}:
+        status = "EXTERNAL_MANUAL_EVIDENCE_NEEDS_MORE_INPUT"
+    else:
+        status = "EXTERNAL_MANUAL_EVIDENCE_BLOCKED"
+    answers = _manual_master_required_answers(owner)
+    payload = _payload(
+        report_type="external_validation_manual_evidence_master_review",
+        title="External Validation Manual Evidence Master Review",
+        status=status,
+        summary={
+            "final_status": status,
+            "owner_recommendation": recommendation,
+            **_safety_summary(),
+        },
+        final_status=status,
+        required_answers=answers,
+        final_conclusions=[
+            status,
+            "KEEP_EXTERNAL_VALIDATION_RESEARCH_ONLY",
+            "NO_PAPER_SHADOW_NO_PRODUCTION_NO_BROKER",
+        ],
+        source_statuses={
+            "external_validation_manual_evidence_owner_signoff": owner.get("status")
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {"external_validation_manual_evidence_owner_signoff": owner}
+        ),
+        report_registry_entry=_doc_report_registry_entry(
+            "external_validation_manual_evidence_master_review",
+            "External Validation Manual Evidence Master Review",
+            "aits research strategies external-validation-manual-evidence-master-review",
+            "external_validation_manual_evidence_master_review",
+            "docs/research/external_validation_manual_evidence_master_review.md",
+        ),
+    )
+    _write_json_and_doc(
+        payload,
+        output_root / "external_validation_manual_evidence_master_review.json",
+        docs_path,
+        "External Validation Manual Evidence Master Review",
+    )
+    return payload
+
+
 def _real_result_sources(
     *,
     prices_path: Path,
@@ -1955,6 +2932,656 @@ def _external_safety_violations(payloads: Any) -> list[str]:
     return _dedupe_text(violations)
 
 
+def _manual_template_records(
+    *,
+    start_date: date,
+    end_date: date | None,
+) -> list[dict[str, Any]]:
+    end = end_date.isoformat() if end_date else "latest_available_internal_as_of"
+    records = []
+    for strategy_id in STATIC_BASELINE_IDS:
+        records.append(
+            {
+                "external_tool": "TODO_Portfolio_Visualizer_or_testfol",
+                "external_tool_url_or_name": "",
+                "strategy_id": strategy_id,
+                "date_range_start": start_date.isoformat(),
+                "date_range_end": end,
+                "asset_weights": STATIC_BASELINE_EXPECTED_WEIGHTS[strategy_id],
+                "rebalance_frequency": "monthly",
+                "dividend_reinvestment": "unknown",
+                "price_or_total_return_policy": "unknown",
+                "annual_return": "TODO_OR_metric_unavailable_on_platform",
+                "max_drawdown": "TODO_OR_metric_unavailable_on_platform",
+                "sharpe": "TODO_OR_metric_unavailable_on_platform",
+                "calmar": "TODO_OR_metric_unavailable_on_platform",
+                "turnover": "TODO_OR_metric_unavailable_on_platform",
+                "monthly_returns_available": "unknown",
+                "export_file_path": "",
+                "screenshot_reference": "",
+                "manual_notes": (
+                    "Do not copy internal metrics into external fields. Record platform "
+                    "limitations and date-range differences here."
+                ),
+                "owner": "",
+                "recorded_at": "",
+            }
+        )
+    return records
+
+
+def _write_manual_external_template_files(
+    records: list[dict[str, Any]],
+    yaml_path: Path,
+    csv_path: Path,
+) -> None:
+    import yaml
+
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_payload = {
+        "schema_version": 1,
+        "instructions": [
+            "Fill these records only with real external platform results.",
+            "Use metric_unavailable_on_platform when a platform does not provide a metric.",
+            "Do not paste internal system metrics as external platform evidence.",
+        ],
+        "records": records,
+    }
+    yaml_path.write_text(
+        yaml.safe_dump(yaml_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(MANUAL_EXTERNAL_RECORD_FIELDS))
+        writer.writeheader()
+        for row in records:
+            writer.writerow(
+                {
+                    field: (
+                        json.dumps(row[field], ensure_ascii=False, sort_keys=True)
+                        if field == "asset_weights"
+                        else row[field]
+                    )
+                    for field in MANUAL_EXTERNAL_RECORD_FIELDS
+                }
+            )
+
+
+def _write_manual_external_record_input_guide(
+    path: Path,
+    *,
+    yaml_path: Path,
+    csv_path: Path,
+    start_date: date,
+    end_date: date | None,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    end = end_date.isoformat() if end_date else "latest available internal date"
+    lines = [
+        "# Manual External Record Input Guide",
+        "",
+        "本指南用于记录 Portfolio Visualizer、testfol.io 或其他外部组合回测平台的"
+        "静态 baseline 结果。只填写真实外部平台导出、截图或手工记录，不得把内部系统"
+        "结果复制为外部证据。",
+        "",
+        f"- YAML template: `{yaml_path}`",
+        f"- CSV template: `{csv_path}`",
+        f"- Required date range: `{start_date.isoformat()}` to `{end}`",
+        "- Required baselines: `100_qqq`, `qqq_50_sgov_50`, `qqq_60_sgov_40`",
+        "- Required evidence: `screenshot_reference` or `export_file_path` must be filled.",
+        "- SGOV convention must be one of `unknown`, `price_only`, `adjusted`, "
+        "`total_return`, `platform_default`.",
+        "",
+        "## Metric Fields",
+        "",
+        "For `annual_return`, `max_drawdown`, `sharpe`, `calmar`, and `turnover`, enter"
+        " the platform value when available. If the platform does not provide that metric,"
+        f" enter `{METRIC_UNAVAILABLE_MARKER}` exactly.",
+        "",
+        "## Safety Boundary",
+        "",
+        "- `paper_shadow_allowed=false`",
+        "- `production_allowed=false`",
+        "- `broker_action=none`",
+        "- `manual_review_required=true`",
+        "",
+        "Do not upload broker account information or personal account screenshots.",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _manual_baseline_rows(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return [_manual_baseline_definition(config, strategy_id) for strategy_id in STATIC_BASELINE_IDS]
+
+
+def _manual_baseline_definition(config: Mapping[str, Any], strategy_id: str) -> dict[str, Any]:
+    internal_id = STATIC_BASELINE_INTERNAL_IDS.get(strategy_id, strategy_id)
+    strategy = _strategy_by_id(config, internal_id)
+    weights = STATIC_BASELINE_EXPECTED_WEIGHTS.get(strategy_id, {})
+    return {
+        "strategy_id": strategy_id,
+        "internal_strategy_id": internal_id,
+        "display_name": strategy.get("display_name", strategy_id),
+        "asset_weights": weights,
+        "rebalance_frequency": strategy.get("rebalance_frequency", "monthly"),
+        "dividend_reinvestment": "external_platform_must_confirm",
+        "price_or_total_return_policy": "external_platform_must_confirm",
+    }
+
+
+def _write_runbook_artifact(payload: dict[str, Any], json_path: Path, docs_path: Path) -> None:
+    payload["artifact_paths"] = {
+        "json_path": str(json_path),
+        "markdown_path": str(docs_path),
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# Static Baseline External Manual Runbook",
+        "",
+        f"- 状态：`{payload.get('status')}`",
+        "- paper_shadow_allowed：`false`",
+        "- production_allowed：`false`",
+        "- broker_action：`none`",
+        "- manual_review_required：`true`",
+        "",
+        "## Baselines",
+        "",
+        "|strategy_id|asset_weights|rebalance_frequency|",
+        "|---|---|---|",
+    ]
+    for row in _records(payload.get("baseline_rows")):
+        lines.append(
+            f"|`{row.get('strategy_id')}`|`{json.dumps(row.get('asset_weights'), sort_keys=True)}`|"
+            f"`{row.get('rebalance_frequency')}`|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required External Platform Steps",
+            "",
+            "1. Run each baseline on Portfolio Visualizer, testfol.io, or another platform "
+            "that supports ETF portfolio backtests.",
+            "2. Match the requested date range, monthly rebalance, and dividend "
+            "reinvestment setting where the platform allows it.",
+            "3. Record annual return, max drawdown, Sharpe, Calmar, turnover, and monthly "
+            f"returns availability. Use `{METRIC_UNAVAILABLE_MARKER}` when unavailable.",
+            "4. Record SGOV handling as unknown, price_only, adjusted, total_return, or "
+            "platform_default.",
+            "5. Save a screenshot or export CSV and fill the manual records YAML/CSV.",
+            "",
+            "Do not include broker account data, personal account screenshots, real trading "
+            "instructions, or production readiness claims.",
+        ]
+    )
+    docs_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _load_manual_external_records(yaml_path: Path, csv_path: Path) -> dict[str, Any]:
+    records: list[tuple[str, dict[str, Any]]] = []
+    source_paths: list[str] = []
+    parse_errors: list[str] = []
+    if yaml_path.exists():
+        source_paths.append(str(yaml_path))
+        try:
+            records.extend((str(yaml_path), row) for row in _read_yaml_record_list(yaml_path))
+        except (OSError, ValueError) as exc:
+            parse_errors.append(f"{yaml_path}:{exc}")
+    if csv_path.exists():
+        source_paths.append(str(csv_path))
+        try:
+            records.extend((str(csv_path), row) for row in _read_csv_record_list(csv_path))
+        except (OSError, ValueError) as exc:
+            parse_errors.append(f"{csv_path}:{exc}")
+    return {"records": records, "source_paths": source_paths, "parse_errors": parse_errors}
+
+
+def _read_yaml_record_list(path: Path) -> list[dict[str, Any]]:
+    import yaml
+
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if raw is None:
+        return []
+    records = raw.get("records", raw) if isinstance(raw, Mapping) else raw
+    if not isinstance(records, list):
+        raise ValueError("manual external records YAML must contain a records list")
+    return [dict(row) for row in records if isinstance(row, Mapping)]
+
+
+def _read_csv_record_list(path: Path) -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
+
+
+def _normalize_manual_external_record(
+    row: Mapping[str, Any],
+    *,
+    source: str,
+    start_date: date,
+    end_date: date | None,
+) -> dict[str, Any]:
+    normalized: dict[str, Any] = {field: row.get(field) for field in MANUAL_EXTERNAL_RECORD_FIELDS}
+    normalized["source_path"] = source
+    normalized["strategy_id"] = str(normalized.get("strategy_id") or "").strip()
+    normalized["asset_weights"] = _parse_asset_weights(normalized.get("asset_weights"))
+    normalized["unavailable_metrics"] = [
+        metric for metric in MANUAL_METRIC_FIELDS if _metric_is_unavailable(normalized.get(metric))
+    ]
+    for metric in MANUAL_METRIC_FIELDS:
+        normalized[f"external_{metric}"] = _manual_metric_value(normalized.get(metric))
+    normalized["evidence_reference_present"] = bool(
+        str(normalized.get("export_file_path") or "").strip()
+        or str(normalized.get("screenshot_reference") or "").strip()
+    )
+    normalized["sgov_convention"] = str(
+        normalized.get("price_or_total_return_policy") or "unknown"
+    ).strip().lower()
+    errors, warnings = _manual_record_validation_errors(
+        normalized,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    normalized["validation_errors"] = errors
+    normalized["validation_warnings"] = warnings
+    normalized["weight_match"] = not any(error.startswith("asset_weights") for error in errors)
+    normalized["date_range_match"] = not any(error.startswith("date_range") for error in errors)
+    normalized["metrics_complete_or_marked_unavailable"] = not any(
+        error.startswith("metric") for error in errors
+    )
+    return normalized
+
+
+def _manual_record_validation_errors(
+    row: Mapping[str, Any],
+    *,
+    start_date: date,
+    end_date: date | None,
+) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    strategy_id = str(row.get("strategy_id") or "")
+    if strategy_id not in STATIC_BASELINE_IDS:
+        errors.append("strategy_id_not_allowed")
+    expected_weights = STATIC_BASELINE_EXPECTED_WEIGHTS.get(strategy_id, {})
+    if expected_weights and not _asset_weights_match(
+        _mapping(row.get("asset_weights")),
+        expected_weights,
+    ):
+        errors.append("asset_weights_do_not_match_baseline_definition")
+    if str(row.get("rebalance_frequency") or "").strip().lower() != "monthly":
+        errors.append("rebalance_frequency_must_be_monthly_for_static_baseline")
+    expected_start = start_date.isoformat()
+    expected_end = end_date.isoformat() if end_date else None
+    actual_start = str(row.get("date_range_start") or "").strip()
+    actual_end = str(row.get("date_range_end") or "").strip()
+    notes = str(row.get("manual_notes") or "").lower()
+    date_diff_documented = "date_range_difference" in notes or "date range difference" in notes
+    if actual_start != expected_start:
+        if date_diff_documented:
+            warnings.append("date_range_start_diff_documented")
+        else:
+            errors.append("date_range_start_mismatch_without_manual_note")
+    if expected_end and actual_end != expected_end:
+        if date_diff_documented:
+            warnings.append("date_range_end_diff_documented")
+        else:
+            errors.append("date_range_end_mismatch_without_manual_note")
+    if not row.get("evidence_reference_present"):
+        errors.append("screenshot_reference_or_export_file_path_required")
+    if str(row.get("sgov_convention") or "unknown") not in SGOV_CONVENTIONS:
+        errors.append("price_or_total_return_policy_invalid")
+    for metric in MANUAL_METRIC_FIELDS:
+        value = row.get(metric)
+        if _metric_is_unavailable(value):
+            continue
+        if value is None or str(value).strip() == "":
+            errors.append(f"metric_{metric}_blank_without_unavailable_marker")
+        elif _manual_metric_value(value) is None:
+            errors.append(f"metric_{metric}_not_numeric_or_unavailable_marker")
+    return errors, warnings
+
+
+def _parse_asset_weights(value: object) -> dict[str, float]:
+    if isinstance(value, Mapping):
+        return {str(key).upper(): _float(raw) for key, raw in value.items()}
+    raw = str(value or "").strip()
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        parsed = None
+    if isinstance(parsed, Mapping):
+        return {str(key).upper(): _float(raw_value) for key, raw_value in parsed.items()}
+    weights: dict[str, float] = {}
+    for chunk in raw.replace(",", ";").split(";"):
+        if not chunk.strip() or ":" not in chunk:
+            continue
+        ticker, raw_weight = chunk.split(":", 1)
+        weights[ticker.strip().upper()] = _float(raw_weight.strip())
+    return weights
+
+
+def _asset_weights_match(actual: Mapping[str, Any], expected: Mapping[str, float]) -> bool:
+    tickers = set(actual) | set(expected)
+    return all(
+        abs(_float(actual.get(ticker)) - _float(expected.get(ticker))) <= 0.0001
+        for ticker in tickers
+    )
+
+
+def _metric_is_unavailable(value: object) -> bool:
+    return str(value or "").strip().lower() == METRIC_UNAVAILABLE_MARKER
+
+
+def _manual_metric_value(value: object) -> float | None:
+    if _metric_is_unavailable(value):
+        return None
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    if raw.endswith("%"):
+        return _float(raw[:-1]) / 100.0
+    parsed = _float(raw, default=math.nan)
+    return None if math.isnan(parsed) else parsed
+
+
+def _load_metric_convention_signoff_rows(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    if not path.exists():
+        return [], []
+    try:
+        records = _read_yaml_record_list(path)
+    except (OSError, ValueError) as exc:
+        return [], [f"{path}:{exc}"]
+    return records, []
+
+
+def _manual_external_tools(manual_input: Mapping[str, Any]) -> list[str]:
+    tools = sorted(
+        {
+            str(row.get("external_tool") or row.get("external_tool_url_or_name") or "").strip()
+            for row in _records(manual_input.get("valid_records"))
+            if str(row.get("external_tool") or row.get("external_tool_url_or_name") or "").strip()
+        }
+    )
+    return tools or ["unknown_external_tool_pending"]
+
+
+def _metric_convention_rows(
+    signoff_rows: list[dict[str, Any]],
+    external_tools: list[str],
+) -> list[dict[str, Any]]:
+    keyed = {
+        (str(row.get("external_tool") or ""), str(row.get("metric_name") or "")): row
+        for row in signoff_rows
+    }
+    rows = []
+    for tool in external_tools:
+        for metric_name in METRIC_INTERNAL_DEFINITIONS:
+            raw = keyed.get((tool, metric_name), {})
+            rows.append(
+                {
+                    "external_tool": tool,
+                    "metric_name": metric_name,
+                    "platform_definition": raw.get("platform_definition", "unknown"),
+                    "internal_definition": METRIC_INTERNAL_DEFINITIONS[metric_name],
+                    "definition_match_status": raw.get("definition_match_status", "unknown"),
+                    "manual_confirmation_status": raw.get(
+                        "manual_confirmation_status", "unknown"
+                    ),
+                    "difference_expected": _bool(raw.get("difference_expected", False)),
+                    "owner_notes": raw.get("owner_notes", ""),
+                }
+            )
+    return rows
+
+
+def _load_sgov_convention_signoff_rows(
+    path: Path,
+    sgov_check: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    if path.exists():
+        try:
+            records = _read_yaml_record_list(path)
+        except (OSError, ValueError) as exc:
+            return [], [f"{path}:{exc}"]
+        return [_normalize_sgov_signoff_row(row, sgov_check) for row in records], []
+    summary = _mapping(sgov_check.get("sgov_total_return_summary"))
+    return [
+        {
+            "external_tool": "unknown_external_tool_pending",
+            "sgov_convention": "unknown",
+            "internal_sgov_convention": summary.get(
+                "internal_SGOV_total_return_proxy",
+                "adj_close",
+            ),
+            "sgov_annual_return_external": None,
+            "sgov_annual_return_internal": summary.get("SGOV_adjusted_close_return"),
+            "annual_return_delta": None,
+            "impact_on_static_baselines": "unknown_until_owner_signoff",
+            "impact_on_dynamic_strategies": "unknown_until_owner_signoff",
+            "convention_accepted": False,
+            "owner_notes": "manual SGOV external convention signoff not supplied",
+        }
+    ], []
+
+
+def _normalize_sgov_signoff_row(
+    row: Mapping[str, Any],
+    sgov_check: Mapping[str, Any],
+) -> dict[str, Any]:
+    summary = _mapping(sgov_check.get("sgov_total_return_summary"))
+    external = _manual_metric_value(row.get("sgov_annual_return_external"))
+    internal = _manual_metric_value(row.get("sgov_annual_return_internal"))
+    if internal is None:
+        internal = _float(summary.get("SGOV_adjusted_close_return"))
+    delta = _manual_metric_value(row.get("annual_return_delta"))
+    if delta is None and external is not None and internal is not None:
+        delta = external - internal
+    return {
+        "external_tool": row.get("external_tool", "unknown_external_tool"),
+        "sgov_convention": str(row.get("sgov_convention", "unknown")).lower(),
+        "internal_sgov_convention": row.get(
+            "internal_sgov_convention",
+            summary.get("internal_SGOV_total_return_proxy", "adj_close"),
+        ),
+        "sgov_annual_return_external": external,
+        "sgov_annual_return_internal": internal,
+        "annual_return_delta": _round(delta),
+        "impact_on_static_baselines": row.get("impact_on_static_baselines", "owner_noted"),
+        "impact_on_dynamic_strategies": row.get("impact_on_dynamic_strategies", "owner_noted"),
+        "convention_accepted": _bool(row.get("convention_accepted")),
+        "owner_notes": row.get("owner_notes", ""),
+    }
+
+
+def _manual_final_reconciliation_row(
+    strategy_id: str,
+    internal: Mapping[str, Any],
+    external: Mapping[str, Any] | None,
+    *,
+    metric_signoff: Mapping[str, Any],
+    sgov_signoff: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not external:
+        return {
+            "strategy_id": strategy_id,
+            "internal_annual_return": internal.get("annual_return"),
+            "external_annual_return": None,
+            "annual_return_delta": None,
+            "internal_max_drawdown": internal.get("max_drawdown"),
+            "external_max_drawdown": None,
+            "max_drawdown_delta": None,
+            "internal_sharpe": internal.get("sharpe"),
+            "external_sharpe": None,
+            "sharpe_delta": None,
+            "internal_calmar": internal.get("calmar"),
+            "external_calmar": None,
+            "calmar_delta": None,
+            "within_tolerance": None,
+            "difference_reason": "manual_external_input_missing",
+        }
+    deltas = {
+        metric: (
+            None
+            if external.get(f"external_{metric}") is None
+            else _round(_float(internal.get(metric)) - _float(external.get(f"external_{metric}")))
+        )
+        for metric in RECONCILIATION_METRIC_FIELDS
+    }
+    missing_metrics = [
+        metric for metric in RECONCILIATION_METRIC_FIELDS if deltas.get(metric) is None
+    ]
+    within = (
+        not missing_metrics
+        and abs(_float(deltas["annual_return"])) <= METRIC_TOLERANCE["annual_return"]
+        and abs(_float(deltas["max_drawdown"])) <= METRIC_TOLERANCE["max_drawdown"]
+        and abs(_float(deltas["sharpe"])) <= METRIC_TOLERANCE["sharpe"]
+        and abs(_float(deltas["calmar"])) <= METRIC_TOLERANCE["calmar"]
+    )
+    if within:
+        reason = "within_tolerance"
+    elif missing_metrics and str(metric_signoff.get("status")) in {
+        "METRIC_CONVENTIONS_CONFIRMED",
+        "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS",
+    }:
+        reason = "metric_unavailable_on_platform"
+    elif str(sgov_signoff.get("status")) in {
+        "SGOV_CONVENTION_CONFIRMED",
+        "SGOV_CONVENTION_LIMITATION_ACCEPTED",
+    } and "SGOV" in STATIC_BASELINE_EXPECTED_WEIGHTS.get(strategy_id, {}):
+        reason = "explained_by_sgov_or_total_return_convention"
+    elif str(metric_signoff.get("status")) == "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS":
+        reason = "explained_by_metric_convention_limitation"
+    else:
+        reason = "metric_delta_exceeds_tolerance"
+    return {
+        "strategy_id": strategy_id,
+        "internal_annual_return": internal.get("annual_return"),
+        "external_annual_return": external.get("external_annual_return"),
+        "annual_return_delta": deltas["annual_return"],
+        "internal_max_drawdown": internal.get("max_drawdown"),
+        "external_max_drawdown": external.get("external_max_drawdown"),
+        "max_drawdown_delta": deltas["max_drawdown"],
+        "internal_sharpe": internal.get("sharpe"),
+        "external_sharpe": external.get("external_sharpe"),
+        "sharpe_delta": deltas["sharpe"],
+        "internal_calmar": internal.get("calmar"),
+        "external_calmar": external.get("external_calmar"),
+        "calmar_delta": deltas["calmar"],
+        "within_tolerance": within,
+        "difference_reason": reason,
+    }
+
+
+def _manual_owner_required_answers(
+    manual_input: Mapping[str, Any],
+    metric_signoff: Mapping[str, Any],
+    sgov_signoff: Mapping[str, Any],
+    final_reconciliation: Mapping[str, Any],
+    dynamic_support: Mapping[str, Any],
+    qc_preflight: Mapping[str, Any],
+) -> dict[str, Any]:
+    final_status = str(final_reconciliation.get("status"))
+    metric_status = str(metric_signoff.get("status"))
+    sgov_status = str(sgov_signoff.get("status"))
+    return {
+        "1_real_external_platform_records_provided": manual_input.get("status")
+        == "MANUAL_EXTERNAL_INPUT_RECORDED",
+        "2_static_baseline_aligned": final_status
+        in {
+            "STATIC_BASELINE_MANUAL_RECONCILED",
+            "STATIC_BASELINE_MANUAL_RECONCILED_WITH_WARNINGS",
+        },
+        "3_sgov_difference_explained": sgov_status
+        in {"SGOV_CONVENTION_CONFIRMED", "SGOV_CONVENTION_LIMITATION_ACCEPTED"},
+        "4_metric_convention_confirmed": metric_status
+        in {
+            "METRIC_CONVENTIONS_CONFIRMED",
+            "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS",
+        },
+        "5_unexplained_difference_remaining": final_status
+        == "STATIC_BASELINE_MANUAL_MISMATCH",
+        "6_still_need_quantconnect_or_tradingview_replay": dynamic_support.get("status")
+        == "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
+        and qc_preflight.get("status") == "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION",
+        "7_external_validation_can_be_pass_or_pass_with_warnings": final_status
+        in {
+            "STATIC_BASELINE_MANUAL_RECONCILED",
+            "STATIC_BASELINE_MANUAL_RECONCILED_WITH_WARNINGS",
+        }
+        and metric_status
+        in {
+            "METRIC_CONVENTIONS_CONFIRMED",
+            "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS",
+        }
+        and sgov_status
+        in {"SGOV_CONVENTION_CONFIRMED", "SGOV_CONVENTION_LIMITATION_ACCEPTED"},
+        "8_continue_no_paper_shadow_no_production_no_broker": True,
+    }
+
+
+def _manual_owner_recommendation(
+    manual_input: Mapping[str, Any],
+    metric_signoff: Mapping[str, Any],
+    sgov_signoff: Mapping[str, Any],
+    final_reconciliation: Mapping[str, Any],
+    dynamic_support: Mapping[str, Any],
+) -> str:
+    final_status = str(final_reconciliation.get("status"))
+    if str(manual_input.get("status")) != "MANUAL_EXTERNAL_INPUT_RECORDED":
+        return "NEED_MORE_MANUAL_EVIDENCE"
+    if final_status == "STATIC_BASELINE_MANUAL_MISMATCH":
+        return "INTERNAL_FIX_REQUIRED"
+    if final_status == "STATIC_BASELINE_MANUAL_BLOCKED":
+        return "BLOCKED"
+    if str(metric_signoff.get("status")) == "METRIC_CONVENTIONS_STILL_UNKNOWN" or str(
+        sgov_signoff.get("status")
+    ) == "SGOV_CONVENTION_STILL_UNKNOWN":
+        return "NEED_MORE_MANUAL_EVIDENCE"
+    if str(dynamic_support.get("status")) == "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE":
+        return "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS"
+    if final_status == "STATIC_BASELINE_MANUAL_RECONCILED":
+        return "ACCEPT_EXTERNAL_VALIDATION"
+    return "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS"
+
+
+def _manual_master_required_answers(owner: Mapping[str, Any]) -> dict[str, Any]:
+    answers = _mapping(owner.get("required_answers"))
+    recommendation = str(owner.get("owner_recommendation"))
+    return {
+        "1_external_record_status_recorded": answers.get(
+            "1_real_external_platform_records_provided"
+        )
+        is True,
+        "2_metric_conventions_confirmed": answers.get("4_metric_convention_confirmed") is True,
+        "3_sgov_convention_confirmed_or_limitation_accepted": answers.get(
+            "3_sgov_difference_explained"
+        )
+        is True,
+        "4_static_baseline_final_reconciled": answers.get("2_static_baseline_aligned") is True,
+        "5_dynamic_weight_path_external_support_status": owner.get("source_statuses", {}).get(
+            "dynamic_weight_path_external_support_check"
+        )
+        if isinstance(owner.get("source_statuses"), Mapping)
+        else None,
+        "6_quantconnect_weight_path_replay_needed": answers.get(
+            "6_still_need_quantconnect_or_tradingview_replay"
+        )
+        is True,
+        "7_dual_forward_aging_can_continue": recommendation
+        in {"ACCEPT_EXTERNAL_VALIDATION", "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS"},
+        "8_external_validation_warn_can_be_accepted_with_warnings": recommendation
+        == "ACCEPT_EXTERNAL_VALIDATION_WITH_WARNINGS",
+        "9_continue_no_paper_shadow_no_production_no_broker": True,
+    }
+
+
 def _internal_static_metric_rows(
     config: Mapping[str, Any],
     prices: pd.DataFrame,
@@ -1963,19 +3590,21 @@ def _internal_static_metric_rows(
     qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
     annualization = _research_policy_int(config, "annualization_trading_days")
     for strategy_id in STATIC_BASELINE_IDS:
-        strategy = _strategy_by_id(config, strategy_id)
+        internal_strategy_id = STATIC_BASELINE_INTERNAL_IDS.get(strategy_id, strategy_id)
+        strategy = _strategy_by_id(config, internal_strategy_id)
         returns = _strategy_return_series(strategy, prices, config, cost_bps=0.0)
         weights = _target_weight_frame(strategy, prices, config).reindex(returns.index).ffill()
-        rows.append(
-            _metrics_for_strategy(
-                strategy,
-                returns,
-                weights,
-                qqq_returns,
-                annualization=annualization,
-                cost_bps=0.0,
-            )
+        metrics = _metrics_for_strategy(
+            strategy,
+            returns,
+            weights,
+            qqq_returns,
+            annualization=annualization,
+            cost_bps=0.0,
         )
+        metrics["strategy_id"] = strategy_id
+        metrics["internal_strategy_id"] = internal_strategy_id
+        rows.append(metrics)
     return rows
 
 
@@ -2762,6 +4391,14 @@ def _records_to_text(value: object) -> list[str]:
     if value is None:
         return []
     return [str(value)]
+
+
+def _bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    return str(value or "").strip().lower() in {"true", "yes", "y", "1", "accepted"}
 
 
 def _dedupe_text(items: list[str]) -> list[str]:

@@ -17907,3 +17907,196 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: manual_external_record_template
+    title: Manual External Record Template
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies manual-external-record-template
+    artifact_globs:
+      - outputs/research_strategies/external_validation/manual_external_record_template.json
+      - outputs/research_strategies/external_validation/manual_external_record_template.md
+      - inputs/external_validation/manual_external_records/static_baseline_external_records.template.yaml
+      - inputs/external_validation/manual_external_records/static_baseline_external_records.template.csv
+      - docs/research/manual_external_record_input_guide.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1155 creates owner-fillable external platform evidence templates and input guidance.
+    owner_action: fill_or_review_manual_external_record_template
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_baseline_external_manual_runbook
+    title: Static Baseline External Manual Runbook
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies static-baseline-external-manual-runbook
+    artifact_globs:
+      - outputs/research_strategies/external_validation/static_baseline_external_manual_runbook.json
+      - docs/research/static_baseline_external_manual_runbook.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1156 explains how to run static baselines on external platforms and record evidence.
+    owner_action: follow_static_baseline_external_manual_runbook
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_baseline_external_manual_input_ingestion
+    title: Static Baseline External Manual Input Ingestion
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies static-baseline-external-manual-input-ingestion
+    artifact_globs:
+      - outputs/research_strategies/external_validation/static_baseline_external_manual_input_ingestion.json
+      - outputs/research_strategies/external_validation/static_baseline_external_manual_input_ingestion.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1157 ingests owner-supplied external platform records and validates required evidence fields.
+    owner_action: review_manual_external_input_ingestion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_platform_metric_convention_signoff
+    title: External Platform Metric Convention Signoff
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-platform-metric-convention-signoff
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_platform_metric_convention_signoff.json
+      - outputs/research_strategies/external_validation/external_platform_metric_convention_signoff.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1158 records owner-confirmed annual return, drawdown, Sharpe, Calmar, turnover, rebalance, and dividend conventions.
+    owner_action: review_external_platform_metric_convention_signoff
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: sgov_external_convention_signoff
+    title: SGOV External Convention Signoff
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies sgov-external-convention-signoff
+    artifact_globs:
+      - outputs/research_strategies/external_validation/sgov_external_convention_signoff.json
+      - outputs/research_strategies/external_validation/sgov_external_convention_signoff.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1159 records owner-confirmed SGOV price-only, adjusted, total-return, or platform-default handling.
+    owner_action: review_sgov_external_convention_signoff
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_baseline_final_reconciliation_after_manual_input
+    title: Static Baseline Final Reconciliation After Manual Input
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies static-baseline-final-reconciliation-after-manual-input
+    artifact_globs:
+      - outputs/research_strategies/external_validation/static_baseline_final_reconciliation_after_manual_input.json
+      - outputs/research_strategies/external_validation/static_baseline_final_reconciliation_after_manual_input.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1160 compares ingested external static baseline evidence with internal metrics after manual signoff.
+    owner_action: review_static_baseline_manual_final_reconciliation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_weight_path_external_support_check
+    title: Dynamic Weight Path External Support Check
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-weight-path-external-support-check
+    artifact_globs:
+      - outputs/research_strategies/external_validation/dynamic_weight_path_external_support_check.json
+      - outputs/research_strategies/external_validation/dynamic_weight_path_external_support_check.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1161 classifies external platform support for dynamic weight-path import and replay.
+    owner_action: review_dynamic_weight_path_external_support
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: quantconnect_weight_path_replay_preflight
+    title: QuantConnect Weight Path Replay Preflight
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies quantconnect-weight-path-replay-preflight
+    artifact_globs:
+      - outputs/research_strategies/external_validation/quantconnect_weight_path_replay_preflight.json
+      - outputs/research_strategies/external_validation/quantconnect_weight_path_replay_preflight.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1162 defines research-only QuantConnect weight-path replay schema, steps, and blockers.
+    owner_action: review_quantconnect_weight_path_replay_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_manual_evidence_owner_signoff
+    title: External Validation Manual Evidence Owner Signoff
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-manual-evidence-owner-signoff
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_manual_evidence_owner_signoff.json
+      - docs/research/external_validation_manual_evidence_owner_signoff.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1163 summarizes manual evidence, metric, SGOV, and final reconciliation owner signoff.
+    owner_action: review_external_validation_manual_evidence_owner_signoff
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: external_validation_manual_evidence_master_review
+    title: External Validation Manual Evidence Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies external-validation-manual-evidence-master-review
+    artifact_globs:
+      - outputs/research_strategies/external_validation/external_validation_manual_evidence_master_review.json
+      - docs/research/external_validation_manual_evidence_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1164 records the final manual external evidence master status and accepted-with-warnings decision boundary.
+    owner_action: review_external_validation_manual_evidence_master_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

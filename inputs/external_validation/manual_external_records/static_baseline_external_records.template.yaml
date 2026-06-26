@@ -1,0 +1,66 @@
+schema_version: 1
+instructions:
+  - Fill these records only with real external platform results.
+  - Use metric_unavailable_on_platform when a platform does not provide a metric.
+  - Do not paste internal system metrics as external platform evidence.
+records:
+  - external_tool: TODO_Portfolio_Visualizer_or_testfol
+    external_tool_url_or_name: ""
+    strategy_id: 100_qqq
+    date_range_start: "2022-12-01"
+    date_range_end: latest_available_internal_as_of
+    asset_weights: {QQQ: 1.0}
+    rebalance_frequency: monthly
+    dividend_reinvestment: unknown
+    price_or_total_return_policy: unknown
+    annual_return: TODO_OR_metric_unavailable_on_platform
+    max_drawdown: TODO_OR_metric_unavailable_on_platform
+    sharpe: TODO_OR_metric_unavailable_on_platform
+    calmar: TODO_OR_metric_unavailable_on_platform
+    turnover: TODO_OR_metric_unavailable_on_platform
+    monthly_returns_available: unknown
+    export_file_path: ""
+    screenshot_reference: ""
+    manual_notes: Do not copy internal metrics into external fields.
+    owner: ""
+    recorded_at: ""
+  - external_tool: TODO_Portfolio_Visualizer_or_testfol
+    external_tool_url_or_name: ""
+    strategy_id: qqq_50_sgov_50
+    date_range_start: "2022-12-01"
+    date_range_end: latest_available_internal_as_of
+    asset_weights: {QQQ: 0.5, SGOV: 0.5}
+    rebalance_frequency: monthly
+    dividend_reinvestment: unknown
+    price_or_total_return_policy: unknown
+    annual_return: TODO_OR_metric_unavailable_on_platform
+    max_drawdown: TODO_OR_metric_unavailable_on_platform
+    sharpe: TODO_OR_metric_unavailable_on_platform
+    calmar: TODO_OR_metric_unavailable_on_platform
+    turnover: TODO_OR_metric_unavailable_on_platform
+    monthly_returns_available: unknown
+    export_file_path: ""
+    screenshot_reference: ""
+    manual_notes: Do not copy internal metrics into external fields.
+    owner: ""
+    recorded_at: ""
+  - external_tool: TODO_Portfolio_Visualizer_or_testfol
+    external_tool_url_or_name: ""
+    strategy_id: qqq_60_sgov_40
+    date_range_start: "2022-12-01"
+    date_range_end: latest_available_internal_as_of
+    asset_weights: {QQQ: 0.6, SGOV: 0.4}
+    rebalance_frequency: monthly
+    dividend_reinvestment: unknown
+    price_or_total_return_policy: unknown
+    annual_return: TODO_OR_metric_unavailable_on_platform
+    max_drawdown: TODO_OR_metric_unavailable_on_platform
+    sharpe: TODO_OR_metric_unavailable_on_platform
+    calmar: TODO_OR_metric_unavailable_on_platform
+    turnover: TODO_OR_metric_unavailable_on_platform
+    monthly_returns_available: unknown
+    export_file_path: ""
+    screenshot_reference: ""
+    manual_notes: Do not copy internal metrics into external fields.
+    owner: ""
+    recorded_at: ""
