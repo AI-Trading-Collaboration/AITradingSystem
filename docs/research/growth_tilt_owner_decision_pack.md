@@ -12,7 +12,7 @@
 |Question|Answer|
 |---|---|
 |`1_most_valuable_growth_tilt_candidate`|`equal_risk_growth_tilt_trend_boost_v1_boost5_monthly`|
-|`2_return_improvement_vs_equal_risk`|`0.003738`|
+|`2_return_improvement_vs_equal_risk`|`0.003855`|
 |`3_return_gap_vs_100_qqq_narrowed`|`True`|
 |`4_is_only_higher_beta`|`False`|
 |`5_drawdown_acceptable`|`True`|

@@ -14,6 +14,8 @@ from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
     DEFAULT_GROWTH_EXPLORATION_MASTER_REVIEW_DOC_PATH,
     DEFAULT_GROWTH_TILT_OWNER_DECISION_DOC_PATH,
+    DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH,
+    DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -26,13 +28,23 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_equal_risk_vol_target_growth_tilt_search,
     run_growth_exploration_master_review,
     run_growth_research_framing_correction,
+    run_growth_tilt_beta_adjusted_edge_review,
     run_growth_tilt_beta_risk_budget_attribution,
+    run_growth_tilt_candidate_result_summary,
     run_growth_tilt_cost_turnover_sensitivity,
     run_growth_tilt_definition_lock_versioning,
     run_growth_tilt_forward_aging_readiness_gate,
+    run_growth_tilt_forward_aging_watchlist_review,
     run_growth_tilt_owner_decision_pack,
+    run_growth_tilt_owner_decision_pack_real_run,
+    run_growth_tilt_period_drawdown_cost_triage,
     run_growth_tilt_period_drawdown_replay,
     run_growth_tilt_reader_brief_safety_preview,
+    run_growth_tilt_real_cli_suite,
+    run_growth_tilt_real_result_master_review,
+    run_growth_tilt_risk_return_frontier_review,
+    run_growth_tilt_tier_validation,
+    run_growth_tilt_vs_equal_risk_and_qqq_final_gate,
     run_roadmap_update_after_growth_tilt_review,
 )
 from ai_trading_system.research_governance import ResearchGovernanceError
@@ -249,6 +261,126 @@ def strategies_roadmap_update_after_growth_tilt_review_command(
     _print_growth_tilt_payload("Roadmap update after growth tilt review", payload)
 
 
+def strategies_growth_tilt_real_cli_suite_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    roadmap_output_root: Annotated[
+        Path,
+        typer.Option("--roadmap-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    owner_docs_path: Annotated[
+        Path,
+        typer.Option("--owner-docs-path"),
+    ] = DEFAULT_GROWTH_TILT_OWNER_DECISION_DOC_PATH,
+    master_docs_path: Annotated[
+        Path,
+        typer.Option("--master-docs-path"),
+    ] = DEFAULT_GROWTH_EXPLORATION_MASTER_REVIEW_DOC_PATH,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_growth_tilt_real_cli_suite(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            roadmap_output_root=roadmap_output_root,
+            owner_docs_path=owner_docs_path,
+            master_docs_path=master_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Growth tilt real CLI suite", payload)
+
+
+def strategies_growth_tilt_real_result_master_review_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path"),
+    ] = DEFAULT_SIMPLE_BASELINE_RATES_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    roadmap_output_root: Annotated[
+        Path,
+        typer.Option("--roadmap-output-root"),
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path,
+        typer.Option("--docs-path"),
+    ] = DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
+    owner_docs_path: Annotated[
+        Path,
+        typer.Option("--owner-docs-path"),
+    ] = DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH,
+    source_owner_docs_path: Annotated[
+        Path,
+        typer.Option("--source-owner-docs-path"),
+    ] = DEFAULT_GROWTH_TILT_OWNER_DECISION_DOC_PATH,
+    source_master_docs_path: Annotated[
+        Path,
+        typer.Option("--source-master-docs-path"),
+    ] = DEFAULT_GROWTH_EXPLORATION_MASTER_REVIEW_DOC_PATH,
+) -> None:
+    payload = _build_growth_tilt_payload(
+        lambda: run_growth_tilt_real_result_master_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            roadmap_output_root=roadmap_output_root,
+            docs_path=docs_path,
+            owner_docs_path=owner_docs_path,
+            source_owner_docs_path=source_owner_docs_path,
+            source_master_docs_path=source_master_docs_path,
+            as_of_date=_parse_optional_date(as_of),
+            start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+            end_date=_parse_optional_date(end_date),
+        )
+    )
+    _print_growth_tilt_payload("Growth tilt real result master review", payload)
+
+
 _GROWTH_TILT_STRATEGY_COMMANDS = (
     (
         "growth-research-framing-correction",
@@ -388,6 +520,71 @@ _GROWTH_TILT_STRATEGY_COMMANDS = (
             run_growth_tilt_reader_brief_safety_preview,
             "Growth tilt Reader Brief safety preview",
         ),
+    ),
+    (
+        "growth-tilt-real-cli-suite",
+        strategies_growth_tilt_real_cli_suite_command,
+    ),
+    (
+        "growth-tilt-candidate-result-summary",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_candidate_result_summary,
+            "Growth tilt candidate result summary",
+        ),
+    ),
+    (
+        "growth-tilt-tier-validation",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_tier_validation,
+            "Growth tilt tier validation",
+        ),
+    ),
+    (
+        "growth-tilt-beta-adjusted-edge-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_beta_adjusted_edge_review,
+            "Growth tilt beta-adjusted edge review",
+        ),
+    ),
+    (
+        "growth-tilt-risk-return-frontier-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_risk_return_frontier_review,
+            "Growth tilt risk-return frontier review",
+        ),
+    ),
+    (
+        "growth-tilt-period-drawdown-cost-triage",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_period_drawdown_cost_triage,
+            "Growth tilt period drawdown cost triage",
+        ),
+    ),
+    (
+        "growth-tilt-vs-equal-risk-and-qqq-final-gate",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_vs_equal_risk_and_qqq_final_gate,
+            "Growth tilt final gate",
+        ),
+    ),
+    (
+        "growth-tilt-forward-aging-watchlist-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_forward_aging_watchlist_review,
+            "Growth tilt forward-aging watchlist review",
+        ),
+    ),
+    (
+        "growth-tilt-owner-decision-pack-real-run",
+        _make_growth_tilt_doc_command(
+            run_growth_tilt_owner_decision_pack_real_run,
+            "Growth tilt owner decision pack real run",
+            DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH,
+        ),
+    ),
+    (
+        "growth-tilt-real-result-master-review",
+        strategies_growth_tilt_real_result_master_review_command,
     ),
 )
 

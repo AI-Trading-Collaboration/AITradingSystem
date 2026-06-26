@@ -16855,3 +16855,195 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_real_cli_suite_summary
+    title: Growth Tilt Real CLI Suite Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-real-cli-suite
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_real_cli_suite_summary.json
+      - outputs/research_strategies/growth_components/growth_tilt_real_cli_suite_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1100 runs all TRADING-1065 to 1084 Equal-Risk Growth Tilt CLIs and summarizes real statuses.
+    owner_action: review_growth_tilt_real_cli_suite_before_result_convergence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_candidate_result_summary
+    title: Growth Tilt Candidate Result Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-candidate-result-summary
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_candidate_result_summary.json
+      - outputs/research_strategies/growth_components/growth_tilt_candidate_result_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1101 summarizes existing Equal-Risk Growth Tilt search results and family-level candidates.
+    owner_action: review_growth_tilt_candidate_summary_before_tier_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_tier_validation
+    title: Growth Tilt Tier Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-tier-validation
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_tier_validation.json
+      - outputs/research_strategies/growth_components/growth_tilt_tier_validation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1102 validates Tier 1, Tier 2 and Tier 3 growth tilt candidate classifications.
+    owner_action: review_growth_tilt_tier_validation_before_beta_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_beta_adjusted_edge_review
+    title: Growth Tilt Beta-Adjusted Edge Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-beta-adjusted-edge-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_beta_adjusted_edge_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_beta_adjusted_edge_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1103 checks whether growth tilt return improvement survives beta, cost, drawdown and path-dependency review.
+    owner_action: review_beta_adjusted_edge_before_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_risk_return_frontier_review
+    title: Growth Tilt Risk-Return Frontier Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-risk-return-frontier-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_risk_return_frontier_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_risk_return_frontier_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1104 compares growth tilt candidates with equal-risk, QQQ and static QQQ/SGOV benchmarks.
+    owner_action: review_growth_tilt_frontier_before_triage_and_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_period_drawdown_cost_triage
+    title: Growth Tilt Period Drawdown Cost Triage
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-period-drawdown-cost-triage
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_period_drawdown_cost_triage.json
+      - outputs/research_strategies/growth_components/growth_tilt_period_drawdown_cost_triage.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1105 checks period split, drawdown episode and cost sensitivity for growth tilt candidates.
+    owner_action: review_period_drawdown_cost_triage_before_final_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_final_gate
+    title: Growth Tilt Final Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-vs-equal-risk-and-qqq-final-gate
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_final_gate.json
+      - outputs/research_strategies/growth_components/growth_tilt_final_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1106 determines whether a growth tilt candidate passes Tier 1, Tier 2 or Tier 3 research-only review gates.
+    owner_action: review_growth_tilt_final_gate_before_watchlist_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_forward_aging_watchlist_review
+    title: Growth Tilt Forward-Aging Watchlist Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-forward-aging-watchlist-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_forward_aging_watchlist_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_forward_aging_watchlist_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1107 reviews whether at most one growth tilt candidate is research-only forward-aging watchlist reviewable.
+    owner_action: owner_manual_review_required_before_any_growth_tilt_watchlist_observation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_owner_decision_pack_real_run
+    title: Growth Tilt Owner Decision Pack Real Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-owner-decision-pack-real-run
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_owner_decision_pack_real_run.json
+      - outputs/research_strategies/growth_components/growth_tilt_owner_decision_pack_real_run.md
+      - docs/research/growth_tilt_owner_decision_pack_real_run.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1108 packages real-run growth tilt candidate, beta, triage, gate and watchlist findings for owner review.
+    owner_action: decide_keep_research_only_add_forward_aging_watchlist_or_pause_growth_tilt
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_real_result_master_review
+    title: Growth Tilt Real Result Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-real-result-master-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_real_result_master_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_real_result_master_review.md
+      - docs/research/growth_tilt_real_result_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1109 summarizes real-run growth tilt findings and next minimum research-only task.
+    owner_action: review_growth_tilt_real_result_master_before_any_next_stage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
