@@ -17047,3 +17047,176 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: best_growth_tilt_candidate_deep_dive
+    title: Best Growth Tilt Candidate Deep Dive
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies best-growth-tilt-candidate-deep-dive
+    artifact_globs:
+      - outputs/research_strategies/growth_components/best_growth_tilt_candidate_deep_dive.json
+      - outputs/research_strategies/growth_components/best_growth_tilt_candidate_deep_dive.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1110 diagnoses the focused vol-target Growth Tilt candidate.
+    owner_action: review_best_growth_tilt_candidate_before_local_sensitivity
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: vol_target_growth_tilt_local_sensitivity
+    title: Vol-Target Growth Tilt Local Sensitivity
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies vol-target-growth-tilt-local-sensitivity
+    artifact_globs:
+      - outputs/research_strategies/growth_components/vol_target_growth_tilt_local_sensitivity.json
+      - outputs/research_strategies/growth_components/vol_target_growth_tilt_local_sensitivity.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1111 checks local parameter robustness around the focused candidate.
+    owner_action: review_local_sensitivity_before_finalist_selection
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: beta_adjusted_edge_methodology_audit
+    title: Beta-Adjusted Edge Methodology Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies beta-adjusted-edge-methodology-audit
+    artifact_globs:
+      - outputs/research_strategies/growth_components/beta_adjusted_edge_methodology_audit.json
+      - outputs/research_strategies/growth_components/beta_adjusted_edge_methodology_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1112 audits whether beta-adjusted edge treatment is robust.
+    owner_action: review_beta_methodology_before_role_and_watchlist_reconsideration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_balanced_core_role_review
+    title: Growth Tilt Balanced Core Role Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-balanced-core-role-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_balanced_core_role_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_balanced_core_role_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1113 reviews whether the focused candidate is a balanced-core candidate.
+    owner_action: review_balanced_core_role_before_watchlist_reconsideration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_vs_equal_risk_missed_upside_review
+    title: Growth Tilt Vs Equal-Risk Missed Upside Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-vs-equal-risk-missed-upside-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_vs_equal_risk_missed_upside_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_vs_equal_risk_missed_upside_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1114 checks whether the candidate reduces equal-risk missed upside.
+    owner_action: review_missed_upside_tradeoff_before_watchlist_reconsideration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_parameter_neighbor_finalist_review
+    title: Growth Tilt Parameter Neighbor Finalist Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-parameter-neighbor-finalist-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_parameter_neighbor_finalist_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_parameter_neighbor_finalist_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1115 chooses whether the base candidate or a neighbor remains the finalist.
+    owner_action: review_finalist_before_watchlist_reconsideration_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_watchlist_reconsideration_gate
+    title: Growth Tilt Watchlist Reconsideration Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-watchlist-reconsideration-gate
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_watchlist_reconsideration_gate.json
+      - outputs/research_strategies/growth_components/growth_tilt_watchlist_reconsideration_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1116 reconsiders research-only watchlist eligibility.
+    owner_action: owner_manual_review_required_before_any_watchlist_entry
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_owner_diagnosis_pack
+    title: Growth Tilt Owner Diagnosis Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-owner-diagnosis-pack
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_owner_diagnosis_pack.json
+      - outputs/research_strategies/growth_components/growth_tilt_owner_diagnosis_pack.md
+      - docs/research/growth_tilt_owner_diagnosis_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1117 packages focused diagnosis findings for owner review.
+    owner_action: decide_growth_tilt_keep_research_only_or_watchlist_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_focused_diagnosis_master_review
+    title: Growth Tilt Focused Diagnosis Master Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-focused-diagnosis-master-review
+    artifact_globs:
+      - outputs/research_strategies/growth_components/growth_tilt_focused_diagnosis_master_review.json
+      - outputs/research_strategies/growth_components/growth_tilt_focused_diagnosis_master_review.md
+      - docs/research/growth_tilt_focused_diagnosis_master_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1118 summarizes focused diagnosis and the final research-only conclusion.
+    owner_action: review_focused_diagnosis_master_before_any_next_stage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

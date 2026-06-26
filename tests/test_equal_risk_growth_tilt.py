@@ -11,6 +11,8 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    run_best_growth_tilt_candidate_deep_dive,
+    run_beta_adjusted_edge_methodology_audit,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -23,15 +25,19 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_equal_risk_vol_target_growth_tilt_search,
     run_growth_exploration_master_review,
     run_growth_research_framing_correction,
+    run_growth_tilt_balanced_core_role_review,
     run_growth_tilt_beta_adjusted_edge_review,
     run_growth_tilt_beta_risk_budget_attribution,
     run_growth_tilt_candidate_result_summary,
     run_growth_tilt_cost_turnover_sensitivity,
     run_growth_tilt_definition_lock_versioning,
+    run_growth_tilt_focused_diagnosis_master_review,
     run_growth_tilt_forward_aging_readiness_gate,
     run_growth_tilt_forward_aging_watchlist_review,
     run_growth_tilt_owner_decision_pack,
     run_growth_tilt_owner_decision_pack_real_run,
+    run_growth_tilt_owner_diagnosis_pack,
+    run_growth_tilt_parameter_neighbor_finalist_review,
     run_growth_tilt_period_drawdown_cost_triage,
     run_growth_tilt_period_drawdown_replay,
     run_growth_tilt_reader_brief_safety_preview,
@@ -40,7 +46,10 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_growth_tilt_risk_return_frontier_review,
     run_growth_tilt_tier_validation,
     run_growth_tilt_vs_equal_risk_and_qqq_final_gate,
+    run_growth_tilt_vs_equal_risk_missed_upside_review,
+    run_growth_tilt_watchlist_reconsideration_gate,
     run_roadmap_update_after_growth_tilt_review,
+    run_vol_target_growth_tilt_local_sensitivity,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -78,6 +87,15 @@ GROWTH_TILT_REPORT_IDS = {
     "growth_tilt_forward_aging_watchlist_review",
     "growth_tilt_owner_decision_pack_real_run",
     "growth_tilt_real_result_master_review",
+    "best_growth_tilt_candidate_deep_dive",
+    "vol_target_growth_tilt_local_sensitivity",
+    "beta_adjusted_edge_methodology_audit",
+    "growth_tilt_balanced_core_role_review",
+    "growth_tilt_vs_equal_risk_missed_upside_review",
+    "growth_tilt_parameter_neighbor_finalist_review",
+    "growth_tilt_watchlist_reconsideration_gate",
+    "growth_tilt_owner_diagnosis_pack",
+    "growth_tilt_focused_diagnosis_master_review",
 }
 
 
@@ -389,6 +407,179 @@ def test_growth_tilt_real_result_convergence_builders_and_cli(
     assert (growth_root / "growth_tilt_candidate_result_summary.json").exists()
 
 
+def test_growth_tilt_focused_diagnosis_builders_and_cli(
+    tmp_path: Path,
+) -> None:
+    prices_path, marketstack_path, rates_path, as_of = _write_growth_caches(tmp_path)
+    config_path = _write_small_growth_config(tmp_path)
+    growth_root = tmp_path / "outputs" / "research_strategies" / "growth_components"
+    docs_root = tmp_path / "docs" / "research"
+    owner_docs_path = docs_root / "growth_tilt_owner_diagnosis_pack.md"
+    master_docs_path = docs_root / "growth_tilt_focused_diagnosis_master_review.md"
+    common = {
+        "prices_path": prices_path,
+        "marketstack_prices_path": marketstack_path,
+        "rates_path": rates_path,
+        "config_path": config_path,
+        "output_root": growth_root,
+        "as_of_date": as_of,
+    }
+
+    deep = run_best_growth_tilt_candidate_deep_dive(**common)
+    sensitivity = run_vol_target_growth_tilt_local_sensitivity(**common)
+    beta_method = run_beta_adjusted_edge_methodology_audit(
+        **common,
+        _deep_dive_payload=deep,
+    )
+    role = run_growth_tilt_balanced_core_role_review(
+        **common,
+        _deep_dive_payload=deep,
+        _beta_method_payload=beta_method,
+    )
+    missed = run_growth_tilt_vs_equal_risk_missed_upside_review(
+        **common,
+        _deep_dive_payload=deep,
+    )
+    finalist = run_growth_tilt_parameter_neighbor_finalist_review(
+        **common,
+        _sensitivity_payload=sensitivity,
+        _deep_dive_payload=deep,
+        _beta_method_payload=beta_method,
+        _role_payload=role,
+    )
+    watchlist = run_growth_tilt_watchlist_reconsideration_gate(
+        **common,
+        _deep_dive_payload=deep,
+        _sensitivity_payload=sensitivity,
+        _beta_method_payload=beta_method,
+        _role_payload=role,
+        _missed_payload=missed,
+        _finalist_payload=finalist,
+    )
+    owner = run_growth_tilt_owner_diagnosis_pack(
+        **common,
+        docs_path=owner_docs_path,
+        _deep_dive_payload=deep,
+        _sensitivity_payload=sensitivity,
+        _beta_method_payload=beta_method,
+        _role_payload=role,
+        _missed_payload=missed,
+        _finalist_payload=finalist,
+        _watchlist_payload=watchlist,
+    )
+    master = run_growth_tilt_focused_diagnosis_master_review(
+        **common,
+        docs_path=master_docs_path,
+        owner_docs_path=owner_docs_path,
+        _deep_dive_payload=deep,
+        _sensitivity_payload=sensitivity,
+        _beta_method_payload=beta_method,
+        _role_payload=role,
+        _missed_payload=missed,
+        _finalist_payload=finalist,
+        _watchlist_payload=watchlist,
+        _owner_payload=owner,
+    )
+
+    assert deep["status"] in {
+        "BEST_GROWTH_TILT_DEEP_DIVE_READY",
+        "BEST_GROWTH_TILT_DEEP_DIVE_WARN",
+        "BEST_GROWTH_TILT_DEEP_DIVE_BLOCKED",
+    }
+    assert deep["candidate_strategy_id"]
+    assert deep["qqq_weight_path_summary"]["max_weight"] >= 0.0
+    assert sensitivity["status"] in {
+        "LOCAL_SENSITIVITY_STABLE",
+        "LOCAL_VARIANT_IMPROVES_EDGE",
+        "LOCAL_SENSITIVITY_FRAGILE",
+        "LOCAL_SENSITIVITY_BLOCKED",
+    }
+    assert sensitivity["sensitivity_rows"]
+    assert {
+        "variant_strategy_id",
+        "parameter_delta",
+        "local_robustness_score",
+    } <= set(sensitivity["sensitivity_rows"][0])
+    assert beta_method["status"] in {
+        "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "BETA_METHOD_SHOWS_TIMING_EDGE",
+        "BETA_METHOD_INCONCLUSIVE",
+        "BETA_METHOD_BLOCKED",
+    }
+    assert len(beta_method["method_rows"]) >= 6
+    assert role["status"] in {
+        "BALANCED_CORE_REVIEWABLE",
+        "GROWTH_COMPONENT_NOT_SUPPORTED",
+        "DEFENSIVE_ONLY_BETTER",
+        "ROLE_INCONCLUSIVE",
+        "ROLE_REVIEW_BLOCKED",
+    }
+    assert missed["period_rows"]
+    assert finalist["status"] in {
+        "BASE_CANDIDATE_REMAINS_BEST",
+        "NEIGHBOR_CANDIDATE_BETTER",
+        "NO_STABLE_FINALIST",
+        "FINALIST_REVIEW_BLOCKED",
+    }
+    assert watchlist["broker_action"] == "none"
+    assert owner["owner_recommendation"] in {
+        "ADD_AS_GROWTH_TILT_FORWARD_AGING_CANDIDATE",
+        "ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE",
+        "KEEP_GROWTH_TILT_RESEARCH_ONLY",
+        "NO_STABLE_GROWTH_TILT_CANDIDATE",
+        "NEED_MORE_HISTORY",
+        "BLOCKED",
+    }
+    assert master["status"] in {
+        "GROWTH_TILT_FORWARD_AGING_REVIEWABLE",
+        "BALANCED_CORE_FORWARD_AGING_REVIEWABLE",
+        "KEEP_GROWTH_TILT_RESEARCH_ONLY",
+        "NO_STABLE_GROWTH_TILT_CANDIDATE",
+        "GROWTH_TILT_DIAGNOSIS_BLOCKED",
+    }
+    assert owner_docs_path.exists()
+    assert master_docs_path.exists()
+
+    for payload in (
+        deep,
+        sensitivity,
+        beta_method,
+        role,
+        missed,
+        finalist,
+        watchlist,
+        owner,
+        master,
+    ):
+        _assert_research_only_payload(payload)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "research",
+            "strategies",
+            "growth-tilt-focused-diagnosis-master-review",
+            "--prices-path",
+            str(prices_path),
+            "--marketstack-prices-path",
+            str(marketstack_path),
+            "--rates-path",
+            str(rates_path),
+            "--config",
+            str(config_path),
+            "--as-of",
+            as_of.isoformat(),
+            "--output-root",
+            str(growth_root),
+            "--docs-path",
+            str(master_docs_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (growth_root / "growth_tilt_focused_diagnosis_master_review.json").exists()
+
+
 def test_equal_risk_growth_tilt_reports_and_registry_contracts() -> None:
     config = yaml.safe_load(DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH.read_text())
     safety = config["safety_boundary"]
@@ -472,10 +663,10 @@ def _write_small_growth_config(tmp_path: Path) -> Path:
     }
     grids["vol_target_growth_tilt"] = {
         "target_vol_absolute": [0.15],
-        "target_vol_additive_pp": [0.02],
-        "vol_lookback": [60],
-        "qqq_max_weight": [0.80],
-        "sgov_min_weight": [0.20],
+        "target_vol_additive_pp": [0.04],
+        "vol_lookback": [120],
+        "qqq_max_weight": [0.70],
+        "sgov_min_weight": [0.10],
     }
     config_path = tmp_path / "equal_risk_growth_tilt_candidate_registry.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")

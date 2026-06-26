@@ -48,6 +48,12 @@ DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH = (
 DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "growth_tilt_real_result_master_review.md"
 )
+DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "growth_tilt_owner_diagnosis_pack.md"
+)
+DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "growth_tilt_focused_diagnosis_master_review.md"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -57,6 +63,9 @@ DEFAULT_AI_REGIME_BACKTEST_START = (
 DEFENSIVE_PRIMARY_ID = "equal_risk_qqq_sgov"
 PRIMARY_QQQ_BENCHMARK_ID = "100_qqq"
 TQQQ_DAILY_LEVERAGE_MULTIPLIER = 3.0
+FOCUSED_GROWTH_TILT_CANDIDATE_ID = (
+    "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
+)
 
 SAFETY_BOUNDARY: dict[str, Any] = {
     "production_effect": "none",
@@ -2833,6 +2842,1432 @@ def run_growth_tilt_real_result_master_review(
     return payload
 
 
+def run_best_growth_tilt_candidate_deep_dive(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _candidate_summary_payload: Mapping[str, Any] | None = None,
+    _beta_payload: Mapping[str, Any] | None = None,
+    _frontier_payload: Mapping[str, Any] | None = None,
+    _triage_payload: Mapping[str, Any] | None = None,
+    _final_gate_payload: Mapping[str, Any] | None = None,
+    _master_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    summary = dict(
+        _candidate_summary_payload
+        or run_growth_tilt_candidate_result_summary(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta = dict(
+        _beta_payload
+        or run_growth_tilt_beta_adjusted_edge_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _candidate_summary_payload=summary,
+        )
+    )
+    frontier = dict(
+        _frontier_payload
+        or run_growth_tilt_risk_return_frontier_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _candidate_summary_payload=summary,
+        )
+    )
+    triage = dict(
+        _triage_payload
+        or run_growth_tilt_period_drawdown_cost_triage(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _candidate_summary_payload=summary,
+        )
+    )
+    final_gate = dict(
+        _final_gate_payload
+        or run_growth_tilt_vs_equal_risk_and_qqq_final_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _candidate_summary_payload=summary,
+            _beta_payload=beta,
+            _triage_payload=triage,
+        )
+    )
+    master = dict(
+        _master_payload
+        or _read_json_or_empty(output_root / "growth_tilt_real_result_master_review.json")
+    )
+    candidate = _focused_growth_tilt_candidate(summary)
+    blockers = _focused_source_blockers(
+        {
+            "growth_tilt_candidate_result_summary": summary,
+            "growth_tilt_beta_adjusted_edge_review": beta,
+            "growth_tilt_risk_return_frontier_review": frontier,
+            "growth_tilt_period_drawdown_cost_triage": triage,
+            "growth_tilt_final_gate": final_gate,
+        }
+    )
+    config = _load_config(config_path)
+    if not candidate:
+        blockers.append("focused_candidate_not_found")
+    prices = _price_matrix(prices_path, config, start_date=start_date, end_date=end_date)
+    candidate_policy = _candidate_from_row(candidate) if candidate else {}
+    returns, weights = (
+        _returns_and_weights(candidate_policy, prices, config)
+        if candidate_policy
+        else (pd.Series(dtype=float), pd.DataFrame())
+    )
+    benchmarks = _benchmark_metric_rows(prices, config)
+    equal = benchmarks.get(DEFENSIVE_PRIMARY_ID, {})
+    qqq = benchmarks.get(PRIMARY_QQQ_BENCHMARK_ID, {})
+    drawdown_delta_equal = _round(
+        abs(_float(candidate.get("max_drawdown"))) - abs(_float(equal.get("max_drawdown")))
+    )
+    drawdown_delta_qqq = _round(
+        abs(_float(candidate.get("max_drawdown"))) - abs(_float(qqq.get("max_drawdown")))
+    )
+    answers = {
+        "1_return_lift_vs_equal_risk": candidate.get("annual_return_edge_vs_equal_risk"),
+        "2_gap_reduction_vs_100_qqq": candidate.get("return_gap_reduction_vs_100_qqq"),
+        "3_drawdown_worse_vs_equal_risk": drawdown_delta_equal,
+        "4_drawdown_vs_100_qqq_acceptable": drawdown_delta_qqq
+        <= _candidate_limit(config, "max_drawdown_increase_vs_equal_risk"),
+        "5_weight_path_stable": _weight_path_is_stable(weights),
+        "6_return_mostly_higher_qqq_exposure": beta.get("status")
+        in {"BETA_EXPLAINS_EDGE", "BETA_ADJUSTED_EDGE_PRESENT"},
+        "7_continue_growth_tilt_review": final_gate.get("status")
+        in {"GROWTH_TILT_RESEARCH_ONLY", "GROWTH_TILT_TIER2_REVIEWABLE"},
+    }
+    status = (
+        "BEST_GROWTH_TILT_DEEP_DIVE_BLOCKED"
+        if blockers
+        else (
+            "BEST_GROWTH_TILT_DEEP_DIVE_WARN"
+            if beta.get("status") != "BETA_ADJUSTED_EDGE_MATERIAL"
+            else "BEST_GROWTH_TILT_DEEP_DIVE_READY"
+        )
+    )
+    source_payloads = {
+        "growth_tilt_candidate_result_summary": summary,
+        "growth_tilt_beta_adjusted_edge_review": beta,
+        "growth_tilt_risk_return_frontier_review": frontier,
+        "growth_tilt_period_drawdown_cost_triage": triage,
+        "growth_tilt_final_gate": final_gate,
+        "growth_tilt_real_result_master_review": master,
+    }
+    payload = _payload(
+        report_type="best_growth_tilt_candidate_deep_dive",
+        title="Best Growth Tilt Candidate Deep Dive",
+        status=status,
+        summary={
+            "candidate_strategy_id": candidate.get("strategy_id"),
+            "candidate_family": candidate.get("candidate_family"),
+            "beta_status": beta.get("status"),
+            "final_gate_status": final_gate.get("status"),
+            "data_quality_status": _payload_data_quality_status(summary),
+            **_safety_summary(),
+        },
+        candidate_strategy_id=candidate.get("strategy_id"),
+        candidate_family=candidate.get("candidate_family"),
+        policy_definition_hash=candidate.get("definition_hash"),
+        target_vol_config=_target_vol_config(candidate),
+        vol_lookback_window=_mapping(candidate.get("policy_definition")).get("vol_lookback"),
+        qqq_weight_path_summary=_weight_path_summary(weights, "QQQ"),
+        sgov_weight_path_summary=_weight_path_summary(weights, "SGOV"),
+        tqqq_weight_path_summary=_weight_path_summary(weights, "TQQQ"),
+        annual_return=candidate.get("annual_return"),
+        annual_return_edge_vs_equal_risk=candidate.get("annual_return_edge_vs_equal_risk"),
+        annual_return_gap_vs_100_qqq=candidate.get("annual_return_gap_vs_100_qqq"),
+        max_drawdown=candidate.get("max_drawdown"),
+        drawdown_delta_vs_equal_risk=drawdown_delta_equal,
+        drawdown_delta_vs_100_qqq=drawdown_delta_qqq,
+        sharpe=candidate.get("sharpe"),
+        calmar=candidate.get("calmar"),
+        turnover=candidate.get("turnover"),
+        switch_count=candidate.get("switch_count"),
+        realized_candidate_vol=_round(returns.std(ddof=0) * math.sqrt(_annualization(config))),
+        data_quality_status=_payload_data_quality_status(summary),
+        required_answers=answers,
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        blockers=_dedupe_text(blockers),
+        report_registry_entry=_report_registry_entry(
+            "best_growth_tilt_candidate_deep_dive",
+            "Best Growth Tilt Candidate Deep Dive",
+            "aits research strategies best-growth-tilt-candidate-deep-dive",
+            "best_growth_tilt_candidate_deep_dive",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_vol_target_growth_tilt_local_sensitivity(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _candidate_summary_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    data_gate = _data_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    if not data_gate["passed"]:
+        payload = _blocked_payload(
+            report_type="vol_target_growth_tilt_local_sensitivity",
+            title="Vol-Target Growth Tilt Local Sensitivity",
+            status="LOCAL_SENSITIVITY_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_pair(payload, output_root, payload["report_type"])
+        return payload
+    summary = dict(
+        _candidate_summary_payload
+        or run_growth_tilt_candidate_result_summary(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    base_row = _focused_growth_tilt_candidate(summary)
+    base_candidate = (
+        _candidate_from_row(base_row)
+        if base_row
+        else _default_focused_vol_target_candidate(config)
+    )
+    variants = _local_vol_target_variants(base_candidate, config)
+    rows = _metric_rows(
+        variants,
+        prices_path=prices_path,
+        config=config,
+        start_date=start_date,
+        end_date=end_date,
+        data_quality_status=str(data_gate["status"]),
+    )
+    rows = [
+        _local_sensitivity_row(row, base_candidate, config, rank=index + 1)
+        for index, row in enumerate(rows)
+        if _float(row.get("effective_qqq_beta"))
+        <= _candidate_limit(config, "max_effective_qqq_beta")
+    ]
+    base_result = _local_base_result(rows, base_candidate)
+    top = rows[0] if rows else {}
+    material = _candidate_limit(config, "beta_adjusted_edge_minimum")
+    stable_neighbors = [
+        row
+        for row in rows
+        if row.get("variant_strategy_id") != base_candidate.get("strategy_id")
+        and abs(
+            _float(row.get("annual_return"))
+            - _float(base_result.get("annual_return"))
+        )
+        <= material
+    ]
+    if not rows:
+        status = "LOCAL_SENSITIVITY_BLOCKED"
+    elif _float(top.get("beta_adjusted_edge")) > _float(
+        base_result.get("beta_adjusted_edge")
+    ) + material:
+        status = "LOCAL_VARIANT_IMPROVES_EDGE"
+    elif stable_neighbors:
+        status = "LOCAL_SENSITIVITY_STABLE"
+    else:
+        status = "LOCAL_SENSITIVITY_FRAGILE"
+    payload = _payload(
+        report_type="vol_target_growth_tilt_local_sensitivity",
+        title="Vol-Target Growth Tilt Local Sensitivity",
+        status=status,
+        summary={
+            "base_candidate": base_candidate.get("strategy_id"),
+            "variant_count": len(rows),
+            "stable_neighbor_count": len(stable_neighbors),
+            "top_variant": top.get("variant_strategy_id"),
+            "data_quality_status": data_gate["status"],
+            **_safety_summary(),
+        },
+        base_candidate=base_candidate.get("strategy_id"),
+        sensitivity_rows=rows,
+        stable_neighbor_rows=stable_neighbors[:10],
+        best_variant=top,
+        search_constraints=[
+            "local_vol_target_perturbation_only",
+            "no_new_growth_tilt_family",
+            "no_tqqq_heavy",
+            "no_options",
+            "max_effective_qqq_beta_not_exceeded",
+            "beta_adjusted_edge_standard_not_relaxed",
+        ],
+        data_quality=data_gate,
+        source_statuses={"growth_tilt_candidate_result_summary": summary.get("status")},
+        source_artifacts={
+            "growth_tilt_candidate_result_summary": summary.get("artifact_paths", {})
+        },
+        report_registry_entry=_report_registry_entry(
+            "vol_target_growth_tilt_local_sensitivity",
+            "Vol-Target Growth Tilt Local Sensitivity",
+            "aits research strategies vol-target-growth-tilt-local-sensitivity",
+            "vol_target_growth_tilt_local_sensitivity",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_beta_adjusted_edge_methodology_audit(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    data_gate = _data_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+    )
+    if not data_gate["passed"]:
+        payload = _blocked_payload(
+            report_type="beta_adjusted_edge_methodology_audit",
+            title="Beta-Adjusted Edge Methodology Audit",
+            status="BETA_METHOD_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_pair(payload, output_root, payload["report_type"])
+        return payload
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    summary = run_growth_tilt_candidate_result_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    candidate_row = _focused_growth_tilt_candidate(summary)
+    prices = _price_matrix(prices_path, config, start_date=start_date, end_date=end_date)
+    method_rows = _beta_methodology_rows(candidate_row, prices, config)
+    material = _candidate_limit(config, "beta_adjusted_edge_minimum")
+    best_adjusted = max(
+        (_float(row.get("beta_adjusted_edge")) for row in method_rows),
+        default=0.0,
+    )
+    if not candidate_row:
+        status = "BETA_METHOD_BLOCKED"
+    elif best_adjusted > material:
+        status = "BETA_METHOD_SHOWS_TIMING_EDGE"
+    elif method_rows:
+        status = "BETA_METHOD_CONFIRMS_WEAK_EDGE"
+    else:
+        status = "BETA_METHOD_INCONCLUSIVE"
+    answers = {
+        "1_current_non_material_edge_robust": status
+        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "2_alternative_reasonable_method_shows_stronger_edge": status
+        == "BETA_METHOD_SHOWS_TIMING_EDGE",
+        "3_attribution_mouth_too_strict_possible": status
+        == "BETA_METHOD_INCONCLUSIVE",
+        "4_candidate_return_mostly_beta": status
+        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "5_independent_timing_or_risk_budget_contribution": any(
+            _float(row.get("timing_edge")) > material
+            or _float(row.get("vol_targeting_contribution")) > material
+            for row in method_rows
+        ),
+    }
+    payload = _payload(
+        report_type="beta_adjusted_edge_methodology_audit",
+        title="Beta-Adjusted Edge Methodology Audit",
+        status=status,
+        summary={
+            "candidate_strategy_id": candidate_row.get("strategy_id"),
+            "method_count": len(method_rows),
+            "best_beta_adjusted_edge": _round(best_adjusted),
+            "data_quality_status": data_gate["status"],
+            **_safety_summary(),
+        },
+        candidate_strategy_id=candidate_row.get("strategy_id"),
+        methodology_checks=[
+            "effective_qqq_beta",
+            "benchmark_beta_window",
+            "rolling_beta",
+            "full_period_beta",
+            "sgov_carry",
+            "rebalance_contribution",
+            "vol_targeting_timing_contribution",
+            "beta_over_attribution_guard",
+        ],
+        method_rows=method_rows,
+        required_answers=answers,
+        data_quality=data_gate,
+        source_statuses={
+            "best_growth_tilt_candidate_deep_dive": deep.get("status"),
+            "growth_tilt_candidate_result_summary": summary.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "best_growth_tilt_candidate_deep_dive": deep,
+                "growth_tilt_candidate_result_summary": summary,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "beta_adjusted_edge_methodology_audit",
+            "Beta-Adjusted Edge Methodology Audit",
+            "aits research strategies beta-adjusted-edge-methodology-audit",
+            "beta_adjusted_edge_methodology_audit",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_balanced_core_role_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+    _beta_method_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta_method = dict(
+        _beta_method_payload
+        or run_beta_adjusted_edge_methodology_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    config = _load_config(config_path)
+    prices = _price_matrix(prices_path, config, start_date=start_date, end_date=end_date)
+    summary = run_growth_tilt_candidate_result_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    candidate = _focused_growth_tilt_candidate(summary)
+    role_rows = _balanced_core_role_rows(candidate, prices, config)
+    rows_by_id = {str(row.get("strategy_id")): row for row in role_rows}
+    candidate_row = rows_by_id.get(str(candidate.get("strategy_id")), {})
+    qqq60 = rows_by_id.get("qqq_60_sgov_40", {})
+    if _focused_source_blockers(
+        {
+            "best_growth_tilt_candidate_deep_dive": deep,
+            "beta_adjusted_edge_methodology_audit": beta_method,
+        }
+    ):
+        status = "ROLE_REVIEW_BLOCKED"
+    elif not candidate_row:
+        status = "ROLE_INCONCLUSIVE"
+    elif _float(candidate_row.get("annual_return")) <= _float(
+        rows_by_id.get(DEFENSIVE_PRIMARY_ID, {}).get("annual_return")
+    ):
+        status = "DEFENSIVE_ONLY_BETTER"
+    elif beta_method.get("status") == "BETA_METHOD_CONFIRMS_WEAK_EDGE":
+        status = "BALANCED_CORE_REVIEWABLE"
+    elif _float(candidate_row.get("risk_adjusted_role_score")) > _float(
+        qqq60.get("risk_adjusted_role_score")
+    ):
+        status = "BALANCED_CORE_REVIEWABLE"
+    else:
+        status = "GROWTH_COMPONENT_NOT_SUPPORTED"
+    answers = {
+        "1_candidate_better_balanced_core_than_equal_risk": _float(
+            candidate_row.get("annual_return")
+        )
+        > _float(rows_by_id.get(DEFENSIVE_PRIMARY_ID, {}).get("annual_return")),
+        "2_candidate_better_than_qqq_60_sgov_40": _float(
+            candidate_row.get("risk_adjusted_role_score")
+        )
+        > _float(qqq60.get("risk_adjusted_role_score")),
+        "3_not_growth_component_but_balanced_core": status
+        == "BALANCED_CORE_REVIEWABLE",
+        "4_need_independent_balanced_core_standard": True,
+    }
+    payload = _payload(
+        report_type="growth_tilt_balanced_core_role_review",
+        title="Growth Tilt Balanced Core Role Review",
+        status=status,
+        summary={
+            "candidate_strategy_id": candidate.get("strategy_id"),
+            "candidate_role_status": status,
+            "row_count": len(role_rows),
+            "data_quality_status": deep.get("data_quality_status"),
+            **_safety_summary(),
+        },
+        role_rows=role_rows,
+        required_answers=answers,
+        source_statuses={
+            "best_growth_tilt_candidate_deep_dive": deep.get("status"),
+            "beta_adjusted_edge_methodology_audit": beta_method.get("status"),
+            "growth_tilt_candidate_result_summary": summary.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "best_growth_tilt_candidate_deep_dive": deep,
+                "beta_adjusted_edge_methodology_audit": beta_method,
+                "growth_tilt_candidate_result_summary": summary,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_balanced_core_role_review",
+            "Growth Tilt Balanced Core Role Review",
+            "aits research strategies growth-tilt-balanced-core-role-review",
+            "growth_tilt_balanced_core_role_review",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_vs_equal_risk_missed_upside_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    config = _load_config(config_path)
+    prices = _price_matrix(prices_path, config, start_date=start_date, end_date=end_date)
+    summary = run_growth_tilt_candidate_result_summary(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+        output_root=output_root,
+        as_of_date=as_of_date,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    candidate = _focused_growth_tilt_candidate(summary)
+    rows = _missed_upside_rows(candidate, prices, config)
+    avg_improvement = (
+        sum(_float(row.get("net_missed_upside_improvement")) for row in rows) / len(rows)
+        if rows
+        else 0.0
+    )
+    max_penalty = max((_float(row.get("drawdown_penalty")) for row in rows), default=0.0)
+    if not candidate or _focused_source_blockers({"best_growth_tilt_candidate_deep_dive": deep}):
+        status = "MISSED_UPSIDE_REVIEW_BLOCKED"
+    elif avg_improvement > _candidate_limit(config, "beta_adjusted_edge_minimum"):
+        status = "MISSED_UPSIDE_REDUCTION_MATERIAL"
+    elif avg_improvement > 0.0 and max_penalty <= _candidate_limit(
+        config, "max_drawdown_increase_vs_equal_risk"
+    ):
+        status = "MISSED_UPSIDE_REDUCTION_MODEST"
+    else:
+        status = "MISSED_UPSIDE_REDUCTION_NOT_WORTH_RISK"
+    answers = {
+        "1_missed_upside_significantly_reduced": status
+        == "MISSED_UPSIDE_REDUCTION_MATERIAL",
+        "2_candidate_keeps_up_in_strong_trend": any(
+            row.get("period") == "strong_trend_periods"
+            and _float(row.get("missed_upside_vs_100_qqq_candidate"))
+            < _float(row.get("missed_upside_vs_100_qqq_equal_risk"))
+            for row in rows
+        ),
+        "3_candidate_loses_equal_risk_protection": max_penalty
+        > _candidate_limit(config, "max_drawdown_increase_vs_equal_risk"),
+        "4_improvement_worth_extra_drawdown": status
+        in {"MISSED_UPSIDE_REDUCTION_MATERIAL", "MISSED_UPSIDE_REDUCTION_MODEST"},
+    }
+    payload = _payload(
+        report_type="growth_tilt_vs_equal_risk_missed_upside_review",
+        title="Growth Tilt Vs Equal-Risk Missed Upside Review",
+        status=status,
+        summary={
+            "candidate_strategy_id": candidate.get("strategy_id"),
+            "period_count": len(rows),
+            "avg_net_missed_upside_improvement": _round(avg_improvement),
+            "max_drawdown_penalty": _round(max_penalty),
+            **_safety_summary(),
+        },
+        period_rows=rows,
+        required_answers=answers,
+        source_statuses={
+            "best_growth_tilt_candidate_deep_dive": deep.get("status"),
+            "growth_tilt_candidate_result_summary": summary.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "best_growth_tilt_candidate_deep_dive": deep,
+                "growth_tilt_candidate_result_summary": summary,
+            }
+        ),
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_vs_equal_risk_missed_upside_review",
+            "Growth Tilt Vs Equal-Risk Missed Upside Review",
+            "aits research strategies growth-tilt-vs-equal-risk-missed-upside-review",
+            "growth_tilt_vs_equal_risk_missed_upside_review",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_parameter_neighbor_finalist_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _sensitivity_payload: Mapping[str, Any] | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+    _beta_method_payload: Mapping[str, Any] | None = None,
+    _role_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    sensitivity = dict(
+        _sensitivity_payload
+        or run_vol_target_growth_tilt_local_sensitivity(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta_method = dict(
+        _beta_method_payload
+        or run_beta_adjusted_edge_methodology_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    role = dict(
+        _role_payload
+        or run_growth_tilt_balanced_core_role_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+        )
+    )
+    rows = _records(sensitivity.get("sensitivity_rows"))
+    base_id = str(sensitivity.get("base_candidate") or FOCUSED_GROWTH_TILT_CANDIDATE_ID)
+    base = next((row for row in rows if row.get("variant_strategy_id") == base_id), {})
+    neighbor = next(
+        (row for row in rows if row.get("variant_strategy_id") != base_id),
+        {},
+    )
+    blockers = _focused_source_blockers(
+        {
+            "vol_target_growth_tilt_local_sensitivity": sensitivity,
+            "best_growth_tilt_candidate_deep_dive": deep,
+            "beta_adjusted_edge_methodology_audit": beta_method,
+            "growth_tilt_balanced_core_role_review": role,
+        }
+    )
+    if blockers:
+        status = "FINALIST_REVIEW_BLOCKED"
+    elif sensitivity.get("status") == "LOCAL_SENSITIVITY_FRAGILE":
+        status = "NO_STABLE_FINALIST"
+    elif sensitivity.get("status") == "LOCAL_VARIANT_IMPROVES_EDGE" and neighbor:
+        status = "NEIGHBOR_CANDIDATE_BETTER"
+    else:
+        status = "BASE_CANDIDATE_REMAINS_BEST"
+    recommended = neighbor if status == "NEIGHBOR_CANDIDATE_BETTER" else base
+    row = {
+        "base_candidate": base_id,
+        "neighbor_candidate": neighbor.get("variant_strategy_id"),
+        "parameter_difference": neighbor.get("parameter_delta"),
+        "annual_return": recommended.get("annual_return"),
+        "max_drawdown": recommended.get("max_drawdown"),
+        "sharpe": recommended.get("sharpe"),
+        "calmar": recommended.get("calmar"),
+        "turnover": recommended.get("turnover"),
+        "effective_qqq_beta": recommended.get("effective_qqq_beta"),
+        "beta_adjusted_edge": recommended.get("beta_adjusted_edge"),
+        "local_robustness_score": recommended.get("local_robustness_score"),
+        "recommended_finalist": recommended.get("variant_strategy_id") or base_id,
+    }
+    payload = _payload(
+        report_type="growth_tilt_parameter_neighbor_finalist_review",
+        title="Growth Tilt Parameter Neighbor Finalist Review",
+        status=status,
+        summary={
+            "base_candidate": base_id,
+            "recommended_finalist": row["recommended_finalist"],
+            "sensitivity_status": sensitivity.get("status"),
+            **_safety_summary(),
+        },
+        finalist_row=row,
+        source_statuses={
+            "vol_target_growth_tilt_local_sensitivity": sensitivity.get("status"),
+            "best_growth_tilt_candidate_deep_dive": deep.get("status"),
+            "beta_adjusted_edge_methodology_audit": beta_method.get("status"),
+            "growth_tilt_balanced_core_role_review": role.get("status"),
+        },
+        source_artifacts=_artifact_paths_by_report(
+            {
+                "vol_target_growth_tilt_local_sensitivity": sensitivity,
+                "best_growth_tilt_candidate_deep_dive": deep,
+                "beta_adjusted_edge_methodology_audit": beta_method,
+                "growth_tilt_balanced_core_role_review": role,
+            }
+        ),
+        blockers=blockers,
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_parameter_neighbor_finalist_review",
+            "Growth Tilt Parameter Neighbor Finalist Review",
+            "aits research strategies growth-tilt-parameter-neighbor-finalist-review",
+            "growth_tilt_parameter_neighbor_finalist_review",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_watchlist_reconsideration_gate(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+    _sensitivity_payload: Mapping[str, Any] | None = None,
+    _beta_method_payload: Mapping[str, Any] | None = None,
+    _role_payload: Mapping[str, Any] | None = None,
+    _missed_payload: Mapping[str, Any] | None = None,
+    _finalist_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    sensitivity = dict(
+        _sensitivity_payload
+        or run_vol_target_growth_tilt_local_sensitivity(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta_method = dict(
+        _beta_method_payload
+        or run_beta_adjusted_edge_methodology_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    role = dict(
+        _role_payload
+        or run_growth_tilt_balanced_core_role_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+        )
+    )
+    missed = dict(
+        _missed_payload
+        or run_growth_tilt_vs_equal_risk_missed_upside_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    finalist = dict(
+        _finalist_payload
+        or run_growth_tilt_parameter_neighbor_finalist_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _sensitivity_payload=sensitivity,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+        )
+    )
+    config = _load_config(config_path)
+    source_payloads = {
+        "best_growth_tilt_candidate_deep_dive": deep,
+        "vol_target_growth_tilt_local_sensitivity": sensitivity,
+        "beta_adjusted_edge_methodology_audit": beta_method,
+        "growth_tilt_balanced_core_role_review": role,
+        "growth_tilt_vs_equal_risk_missed_upside_review": missed,
+        "growth_tilt_parameter_neighbor_finalist_review": finalist,
+    }
+    blockers = _focused_source_blockers(source_payloads)
+    warning_reasons: list[str] = []
+    if beta_method.get("status") == "BETA_METHOD_CONFIRMS_WEAK_EDGE":
+        warning_reasons.append("beta_adjusted_edge_still_weak")
+    if sensitivity.get("status") == "LOCAL_SENSITIVITY_FRAGILE":
+        blockers.append("local_sensitivity_fragile")
+    if role.get("status") in {"ROLE_INCONCLUSIVE", "DEFENSIVE_ONLY_BETTER"}:
+        warning_reasons.append(f"role_status:{role.get('status')}")
+    growth_watchlist = (
+        missed.get("status") == "MISSED_UPSIDE_REDUCTION_MATERIAL"
+        and sensitivity.get("status")
+        in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
+        and beta_method.get("status") == "BETA_METHOD_SHOWS_TIMING_EDGE"
+        and not blockers
+    )
+    balanced_watchlist = (
+        role.get("status") == "BALANCED_CORE_REVIEWABLE"
+        and sensitivity.get("status")
+        in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
+        and not blockers
+    )
+    if blockers:
+        status = (
+            "NO_STABLE_FINALIST"
+            if "local_sensitivity_fragile" in blockers
+            else "WATCHLIST_RECONSIDERATION_BLOCKED"
+        )
+    elif growth_watchlist:
+        status = "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY"
+    elif balanced_watchlist:
+        status = "BALANCED_CORE_WATCHLIST_REVIEWABLE"
+    else:
+        status = "KEEP_GROWTH_TILT_RESEARCH_ONLY"
+    watchlist_allowed = status in {
+        "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY",
+        "BALANCED_CORE_WATCHLIST_REVIEWABLE",
+    }
+    recommended_role = (
+        "GROWTH_TILT"
+        if status == "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY"
+        else (
+            "BALANCED_CORE"
+            if status == "BALANCED_CORE_WATCHLIST_REVIEWABLE"
+            else "RESEARCH_ONLY"
+        )
+    )
+    payload = _payload(
+        report_type="growth_tilt_watchlist_reconsideration_gate",
+        title="Growth Tilt Watchlist Reconsideration Gate",
+        status=status,
+        summary={
+            "candidate_strategy_id": deep.get("candidate_strategy_id"),
+            "recommended_role": recommended_role,
+            "watchlist_allowed": watchlist_allowed,
+            "watchlist_type": recommended_role.lower(),
+            **_safety_summary(),
+        },
+        candidate_strategy_id=deep.get("candidate_strategy_id"),
+        recommended_role=recommended_role,
+        watchlist_allowed=watchlist_allowed,
+        watchlist_type=recommended_role.lower(),
+        blocking_reasons=_dedupe_text(blockers),
+        warning_reasons=_dedupe_text(warning_reasons),
+        required_forward_days=_candidate_limit(config, "required_forward_days"),
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_watchlist_reconsideration_gate",
+            "Growth Tilt Watchlist Reconsideration Gate",
+            "aits research strategies growth-tilt-watchlist-reconsideration-gate",
+            "growth_tilt_watchlist_reconsideration_gate",
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_owner_diagnosis_pack(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+    _sensitivity_payload: Mapping[str, Any] | None = None,
+    _beta_method_payload: Mapping[str, Any] | None = None,
+    _role_payload: Mapping[str, Any] | None = None,
+    _missed_payload: Mapping[str, Any] | None = None,
+    _finalist_payload: Mapping[str, Any] | None = None,
+    _watchlist_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    sensitivity = dict(
+        _sensitivity_payload
+        or run_vol_target_growth_tilt_local_sensitivity(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta_method = dict(
+        _beta_method_payload
+        or run_beta_adjusted_edge_methodology_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    role = dict(
+        _role_payload
+        or run_growth_tilt_balanced_core_role_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+        )
+    )
+    missed = dict(
+        _missed_payload
+        or run_growth_tilt_vs_equal_risk_missed_upside_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    finalist = dict(
+        _finalist_payload
+        or run_growth_tilt_parameter_neighbor_finalist_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _sensitivity_payload=sensitivity,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+        )
+    )
+    watchlist = dict(
+        _watchlist_payload
+        or run_growth_tilt_watchlist_reconsideration_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _sensitivity_payload=sensitivity,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+            _missed_payload=missed,
+            _finalist_payload=finalist,
+        )
+    )
+    source_payloads = {
+        "best_growth_tilt_candidate_deep_dive": deep,
+        "vol_target_growth_tilt_local_sensitivity": sensitivity,
+        "beta_adjusted_edge_methodology_audit": beta_method,
+        "growth_tilt_balanced_core_role_review": role,
+        "growth_tilt_vs_equal_risk_missed_upside_review": missed,
+        "growth_tilt_parameter_neighbor_finalist_review": finalist,
+        "growth_tilt_watchlist_reconsideration_gate": watchlist,
+    }
+    blockers = _focused_source_blockers(source_payloads)
+    if blockers:
+        recommendation = "BLOCKED"
+    elif watchlist.get("status") == "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY":
+        recommendation = "ADD_AS_GROWTH_TILT_FORWARD_AGING_CANDIDATE"
+    elif watchlist.get("status") == "BALANCED_CORE_WATCHLIST_REVIEWABLE":
+        recommendation = "ADD_AS_BALANCED_CORE_FORWARD_AGING_CANDIDATE"
+    elif finalist.get("status") == "NO_STABLE_FINALIST":
+        recommendation = "NO_STABLE_GROWTH_TILT_CANDIDATE"
+    elif beta_method.get("status") == "BETA_METHOD_INCONCLUSIVE":
+        recommendation = "NEED_MORE_HISTORY"
+    else:
+        recommendation = "KEEP_GROWTH_TILT_RESEARCH_ONLY"
+    answers = {
+        "1_why_candidate_was_found": "vol_target_growth_tilt improved equal-risk upside",
+        "2_why_not_watchlist_before": "beta_adjusted_edge_not_material",
+        "3_beta_adjusted_edge_really_insufficient": beta_method.get("status")
+        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "4_possible_balanced_core": role.get("status") == "BALANCED_CORE_REVIEWABLE",
+        "5_better_neighbor_exists": finalist.get("status") == "NEIGHBOR_CANDIDATE_BETTER",
+        "6_missed_upside_improvement_worth_it": missed.get("status")
+        in {"MISSED_UPSIDE_REDUCTION_MATERIAL", "MISSED_UPSIDE_REDUCTION_MODEST"},
+        "7_forward_aging_watchlist_allowed": watchlist.get("watchlist_allowed") is True,
+        "8_equal_risk_remains_defensive_primary": True,
+        "9_continue_no_paper_shadow_production_broker": True,
+    }
+    payload = _payload(
+        report_type="growth_tilt_owner_diagnosis_pack",
+        title="Growth Tilt Owner Diagnosis Pack",
+        status="GROWTH_TILT_OWNER_DIAGNOSIS_PACK_READY"
+        if recommendation != "BLOCKED"
+        else "BLOCKED",
+        summary={
+            "owner_recommendation": recommendation,
+            "candidate_strategy_id": deep.get("candidate_strategy_id"),
+            "watchlist_status": watchlist.get("status"),
+            **_safety_summary(),
+        },
+        owner_recommendation=recommendation,
+        required_answers=answers,
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_owner_diagnosis_pack",
+            "Growth Tilt Owner Diagnosis Pack",
+            "aits research strategies growth-tilt-owner-diagnosis-pack",
+            "growth_tilt_owner_diagnosis_pack",
+            extra_artifact_globs=["docs/research/growth_tilt_owner_diagnosis_pack.md"],
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    _write_owner_doc(payload, docs_path, "Growth Tilt Owner Diagnosis Pack")
+    payload["owner_doc_path"] = str(docs_path)
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_growth_tilt_focused_diagnosis_master_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    config_path: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    output_root: Path = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH,
+    owner_docs_path: Path = DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+    _deep_dive_payload: Mapping[str, Any] | None = None,
+    _sensitivity_payload: Mapping[str, Any] | None = None,
+    _beta_method_payload: Mapping[str, Any] | None = None,
+    _role_payload: Mapping[str, Any] | None = None,
+    _missed_payload: Mapping[str, Any] | None = None,
+    _finalist_payload: Mapping[str, Any] | None = None,
+    _watchlist_payload: Mapping[str, Any] | None = None,
+    _owner_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    deep = dict(
+        _deep_dive_payload
+        or run_best_growth_tilt_candidate_deep_dive(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    sensitivity = dict(
+        _sensitivity_payload
+        or run_vol_target_growth_tilt_local_sensitivity(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    beta_method = dict(
+        _beta_method_payload
+        or run_beta_adjusted_edge_methodology_audit(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    role = dict(
+        _role_payload
+        or run_growth_tilt_balanced_core_role_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+        )
+    )
+    missed = dict(
+        _missed_payload
+        or run_growth_tilt_vs_equal_risk_missed_upside_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+        )
+    )
+    finalist = dict(
+        _finalist_payload
+        or run_growth_tilt_parameter_neighbor_finalist_review(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _sensitivity_payload=sensitivity,
+            _deep_dive_payload=deep,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+        )
+    )
+    watchlist = dict(
+        _watchlist_payload
+        or run_growth_tilt_watchlist_reconsideration_gate(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _sensitivity_payload=sensitivity,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+            _missed_payload=missed,
+            _finalist_payload=finalist,
+        )
+    )
+    owner = dict(
+        _owner_payload
+        or run_growth_tilt_owner_diagnosis_pack(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            config_path=config_path,
+            output_root=output_root,
+            docs_path=owner_docs_path,
+            as_of_date=as_of_date,
+            start_date=start_date,
+            end_date=end_date,
+            _deep_dive_payload=deep,
+            _sensitivity_payload=sensitivity,
+            _beta_method_payload=beta_method,
+            _role_payload=role,
+            _missed_payload=missed,
+            _finalist_payload=finalist,
+            _watchlist_payload=watchlist,
+        )
+    )
+    source_payloads = {
+        "best_growth_tilt_candidate_deep_dive": deep,
+        "vol_target_growth_tilt_local_sensitivity": sensitivity,
+        "beta_adjusted_edge_methodology_audit": beta_method,
+        "growth_tilt_balanced_core_role_review": role,
+        "growth_tilt_vs_equal_risk_missed_upside_review": missed,
+        "growth_tilt_parameter_neighbor_finalist_review": finalist,
+        "growth_tilt_watchlist_reconsideration_gate": watchlist,
+        "growth_tilt_owner_diagnosis_pack": owner,
+    }
+    blockers = _focused_source_blockers(source_payloads)
+    if blockers:
+        status = "GROWTH_TILT_DIAGNOSIS_BLOCKED"
+    elif watchlist.get("status") == "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY":
+        status = "GROWTH_TILT_FORWARD_AGING_REVIEWABLE"
+    elif watchlist.get("status") == "BALANCED_CORE_WATCHLIST_REVIEWABLE":
+        status = "BALANCED_CORE_FORWARD_AGING_REVIEWABLE"
+    elif finalist.get("status") == "NO_STABLE_FINALIST":
+        status = "NO_STABLE_GROWTH_TILT_CANDIDATE"
+    else:
+        status = "KEEP_GROWTH_TILT_RESEARCH_ONLY"
+    answers = {
+        "1_candidate_stable": sensitivity.get("status")
+        in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"},
+        "2_better_neighbor_exists": finalist.get("status") == "NEIGHBOR_CANDIDATE_BETTER",
+        "3_beta_adjusted_edge_not_material_holds": beta_method.get("status")
+        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "4_timing_or_risk_budget_contribution_exists": beta_method.get("status")
+        == "BETA_METHOD_SHOWS_TIMING_EDGE",
+        "5_more_suitable_as_balanced_core": role.get("status")
+        == "BALANCED_CORE_REVIEWABLE",
+        "6_watchlist_allowed": watchlist.get("watchlist_allowed") is True,
+        "7_next_step_if_not_allowed": _focused_master_next_step(status),
+        "8_equal_risk_remains_defensive_primary": True,
+    }
+    payload = _payload(
+        report_type="growth_tilt_focused_diagnosis_master_review",
+        title="Growth Tilt Focused Diagnosis Master Review",
+        status=status,
+        summary={
+            "final_status": status,
+            "candidate_strategy_id": deep.get("candidate_strategy_id"),
+            "owner_recommendation": owner.get("owner_recommendation"),
+            "watchlist_status": watchlist.get("status"),
+            **_safety_summary(),
+        },
+        owner_recommendation=owner.get("owner_recommendation"),
+        required_answers=answers,
+        final_conclusions=[
+            status,
+            "KEEP_EQUAL_RISK_DEFENSIVE_PRIMARY",
+            "NO_PAPER_SHADOW_NO_PRODUCTION_NO_BROKER",
+        ],
+        owner_next_action=_focused_master_next_step(status),
+        source_statuses={key: value.get("status") for key, value in source_payloads.items()},
+        source_artifacts=_artifact_paths_by_report(source_payloads),
+        report_registry_entry=_report_registry_entry(
+            "growth_tilt_focused_diagnosis_master_review",
+            "Growth Tilt Focused Diagnosis Master Review",
+            "aits research strategies growth-tilt-focused-diagnosis-master-review",
+            "growth_tilt_focused_diagnosis_master_review",
+            extra_artifact_globs=[
+                "docs/research/growth_tilt_focused_diagnosis_master_review.md"
+            ],
+        ),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    _write_owner_doc(payload, docs_path, "Growth Tilt Focused Diagnosis Master Review")
+    payload["master_doc_path"] = str(docs_path)
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
 def _run_search(
     *,
     report_type: str,
@@ -4067,6 +5502,524 @@ def _growth_tilt_source_artifact_blocked_status(status: str) -> bool:
         "GROWTH_TILT_WATCHLIST_BLOCKED",
         "BLOCKED",
     }
+
+
+def _focused_source_blockers(sources: Mapping[str, Mapping[str, Any]]) -> list[str]:
+    return [
+        name
+        for name, source in sources.items()
+        if _growth_tilt_source_artifact_blocked_status(str(source.get("status")))
+        or str(source.get("status", "")).endswith("_BLOCKED")
+    ]
+
+
+def _focused_growth_tilt_candidate(summary: Mapping[str, Any]) -> dict[str, Any]:
+    rows = _records(summary.get("candidate_results"))
+    for row in rows:
+        if row.get("strategy_id") == FOCUSED_GROWTH_TILT_CANDIDATE_ID:
+            return row
+    return _best_summary_candidate(summary)
+
+
+def _target_vol_config(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    policy = _mapping(candidate.get("policy_definition"))
+    return {
+        "target_vol_mode": policy.get("target_vol_mode"),
+        "target_vol": policy.get("target_vol"),
+        "target_vol_additive": policy.get("target_vol_additive"),
+        "qqq_max_weight": policy.get("qqq_max_weight"),
+        "sgov_min_weight": policy.get("sgov_min_weight"),
+        "rebalance_rule": policy.get("rebalance_rule"),
+    }
+
+
+def _weight_path_summary(weights: pd.DataFrame, ticker: str) -> dict[str, Any]:
+    if weights.empty or ticker not in weights:
+        return {
+            "ticker": ticker,
+            "average_weight": 0.0,
+            "min_weight": 0.0,
+            "max_weight": 0.0,
+            "final_weight": 0.0,
+            "weight_change_count": 0,
+        }
+    series = weights[ticker].fillna(0.0)
+    return {
+        "ticker": ticker,
+        "average_weight": _round(series.mean()),
+        "min_weight": _round(series.min()),
+        "max_weight": _round(series.max()),
+        "final_weight": _round(series.iloc[-1]),
+        "weight_change_count": int((series.diff().abs().fillna(0.0) > 1e-9).sum()),
+    }
+
+
+def _weight_path_is_stable(weights: pd.DataFrame) -> bool:
+    if weights.empty:
+        return False
+    totals = weights.fillna(0.0).sum(axis=1)
+    return bool((totals <= 1.000001).all() and (weights.fillna(0.0) >= -1e-9).all().all())
+
+
+def _default_focused_vol_target_candidate(config: Mapping[str, Any]) -> dict[str, Any]:
+    return _candidate(
+        config,
+        "vol_target_growth_tilt",
+        strategy_suffix="tv4_w120_q7_s1",
+        target_vol_mode="equal_risk_plus",
+        target_vol=None,
+        target_vol_additive=0.04,
+        vol_lookback=120,
+        qqq_max_weight=0.70,
+        sgov_min_weight=0.10,
+        rebalance_rule="monthly",
+    )
+
+
+def _local_vol_target_variants(
+    base_candidate: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    mode = str(base_candidate.get("target_vol_mode") or "equal_risk_plus")
+    base_target = _float(
+        base_candidate.get("target_vol")
+        if mode == "absolute"
+        else base_candidate.get("target_vol_additive"),
+        0.04,
+    )
+    base_qqq_cap = _float(base_candidate.get("qqq_max_weight"), 0.70)
+    base_sgov_floor = _float(base_candidate.get("sgov_min_weight"), 0.10)
+    variants: list[dict[str, Any]] = []
+    target_values = [
+        max(base_target + delta, 0.0)
+        for delta in (-0.02, -0.01, 0.0, 0.01, 0.02)
+    ]
+    for target_value in target_values:
+        for window in (60, 90, 120, 180):
+            for qqq_cap in _dedupe_float_values(
+                [base_qqq_cap - 0.10, base_qqq_cap, base_qqq_cap + 0.10]
+            ):
+                for sgov_floor in _dedupe_float_values(
+                    [max(base_sgov_floor - 0.10, 0.0), base_sgov_floor, base_sgov_floor + 0.10]
+                ):
+                    for rebalance in ("monthly", "threshold"):
+                        suffix = (
+                            f"tv{_pct_token(target_value)}_w{window}_"
+                            f"q{_pct_token(qqq_cap)}_s{_pct_token(sgov_floor)}"
+                        )
+                        if rebalance != "monthly":
+                            suffix = f"{suffix}_{rebalance}"
+                        variants.append(
+                            _candidate(
+                                config,
+                                "vol_target_growth_tilt",
+                                strategy_suffix=suffix,
+                                target_vol_mode=mode,
+                                target_vol=target_value if mode == "absolute" else None,
+                                target_vol_additive=(
+                                    target_value if mode != "absolute" else None
+                                ),
+                                vol_lookback=window,
+                                qqq_max_weight=qqq_cap,
+                                sgov_min_weight=sgov_floor,
+                                rebalance_rule=rebalance,
+                            )
+                        )
+    return _dedupe_candidates(variants)
+
+
+def _dedupe_float_values(values: list[float]) -> list[float]:
+    result: list[float] = []
+    seen: set[float] = set()
+    for value in values:
+        rounded = round(value, 6)
+        if rounded not in seen:
+            result.append(rounded)
+            seen.add(rounded)
+    return result
+
+
+def _local_sensitivity_row(
+    row: Mapping[str, Any],
+    base_candidate: Mapping[str, Any],
+    config: Mapping[str, Any],
+    *,
+    rank: int,
+) -> dict[str, Any]:
+    policy = _mapping(row.get("policy_definition"))
+    target_key = (
+        "target_vol"
+        if policy.get("target_vol_mode") == "absolute"
+        else "target_vol_additive"
+    )
+    parameter_delta = {
+        target_key: _round(
+            _float(policy.get(target_key)) - _float(base_candidate.get(target_key))
+        ),
+        "vol_lookback": _int(policy.get("vol_lookback"))
+        - _int(base_candidate.get("vol_lookback")),
+        "qqq_cap": _round(
+            _float(policy.get("qqq_max_weight"))
+            - _float(base_candidate.get("qqq_max_weight"))
+        ),
+        "sgov_floor": _round(
+            _float(policy.get("sgov_min_weight"))
+            - _float(base_candidate.get("sgov_min_weight"))
+        ),
+        "rebalance": policy.get("rebalance_rule"),
+    }
+    robustness_score = _float(row.get("beta_adjusted_edge")) - max(
+        _float(row.get("drawdown_increase_vs_equal_risk")),
+        0.0,
+    )
+    return {
+        "variant_strategy_id": row.get("strategy_id"),
+        "parameter_delta": parameter_delta,
+        "annual_return": row.get("annual_return"),
+        "return_edge_vs_equal_risk": row.get("annual_return_edge_vs_equal_risk"),
+        "return_gap_vs_100_qqq": row.get("annual_return_gap_vs_100_qqq"),
+        "max_drawdown": row.get("max_drawdown"),
+        "sharpe": row.get("sharpe"),
+        "calmar": row.get("calmar"),
+        "turnover": row.get("turnover"),
+        "effective_qqq_beta": row.get("effective_qqq_beta"),
+        "beta_adjusted_edge": row.get("beta_adjusted_edge"),
+        "rank_stability": (
+            "base_candidate"
+            if row.get("strategy_id") == base_candidate.get("strategy_id")
+            else ("top_10_local_variant" if rank <= 10 else "lower_ranked_local_variant")
+        ),
+        "local_robustness_score": _round(robustness_score),
+        "max_effective_qqq_beta_limit": _candidate_limit(
+            config, "max_effective_qqq_beta"
+        ),
+        **_safety_summary(),
+    }
+
+
+def _local_base_result(
+    rows: list[Mapping[str, Any]],
+    base_candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    base_id = str(base_candidate.get("strategy_id") or "")
+    for row in rows:
+        if row.get("variant_strategy_id") == base_id:
+            return dict(row)
+    return dict(rows[0]) if rows else {}
+
+
+def _beta_methodology_rows(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    if not candidate:
+        return []
+    policy = _candidate_from_row(candidate)
+    returns, weights = _returns_and_weights(policy, prices, config)
+    equal_returns, _equal_weights = _returns_and_weights(
+        {"strategy_id": DEFENSIVE_PRIMARY_ID, "special_policy": "equal_risk"},
+        prices,
+        config,
+    )
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    annualization = _annualization(config)
+    strategy_metrics = _series_metrics(returns, annualization)
+    equal_metrics = _series_metrics(equal_returns, annualization)
+    qqq_metrics = _series_metrics(qqq_returns, annualization)
+    raw_edge = _float(strategy_metrics.get("annual_return")) - _float(
+        equal_metrics.get("annual_return")
+    )
+    equal_beta = _beta(equal_returns, qqq_returns)
+    qqq_return = _float(qqq_metrics.get("annual_return"))
+    avg_weights = weights.mean().to_dict() if not weights.empty else {}
+    qqq_equiv = _float(avg_weights.get("QQQ")) + _float(
+        avg_weights.get("TQQQ")
+    ) * TQQQ_DAILY_LEVERAGE_MULTIPLIER
+    beta_estimates = {
+        "static_beta_adjustment": _beta(returns, qqq_returns),
+        "rolling_60d_beta_adjustment": _rolling_beta_mean(returns, qqq_returns, 60),
+        "rolling_120d_beta_adjustment": _rolling_beta_mean(returns, qqq_returns, 120),
+        "regime_conditional_beta_adjustment": _regime_conditional_beta(
+            returns, qqq_returns, prices, config
+        ),
+        "qqq_equivalent_exposure_adjustment": qqq_equiv,
+        "risk_budget_attribution_adjustment": _float(
+            candidate.get("effective_qqq_beta")
+        ),
+    }
+    sgov_carry = _asset_contribution(
+        weights,
+        prices["SGOV"].pct_change().fillna(0.0),
+        "SGOV",
+        config,
+    )
+    rebalance_edge = _rebalance_contribution(returns, weights, prices, config)
+    rows = []
+    for method_id, estimate in beta_estimates.items():
+        beta_adjusted = raw_edge - max(estimate - equal_beta, 0.0) * qqq_return
+        timing_edge = beta_adjusted - sgov_carry - rebalance_edge
+        vol_targeting = (
+            timing_edge
+            if candidate.get("candidate_family") == "vol_target_growth_tilt"
+            else 0.0
+        )
+        rows.append(
+            {
+                "method_id": method_id,
+                "beta_estimate": _round(estimate),
+                "raw_edge": _round(raw_edge),
+                "beta_adjusted_edge": _round(beta_adjusted),
+                "timing_edge": _round(timing_edge),
+                "rebalance_edge": _round(rebalance_edge),
+                "sgov_carry_contribution": _round(sgov_carry),
+                "vol_targeting_contribution": _round(vol_targeting),
+                "method_commentary": _beta_method_commentary(method_id, beta_adjusted),
+            }
+        )
+    return rows
+
+
+def _rolling_beta_mean(returns: pd.Series, benchmark: pd.Series, window: int) -> float:
+    aligned = pd.concat([returns, benchmark], axis=1).dropna()
+    if aligned.empty:
+        return 0.0
+    aligned.columns = ["strategy", "benchmark"]
+    cov = aligned["strategy"].rolling(window, min_periods=max(10, window // 3)).cov(
+        aligned["benchmark"]
+    )
+    var = aligned["benchmark"].rolling(window, min_periods=max(10, window // 3)).var()
+    beta = (cov / var.replace(0.0, math.nan)).dropna()
+    return float(beta.mean()) if not beta.empty else 0.0
+
+
+def _regime_conditional_beta(
+    returns: pd.Series,
+    benchmark: pd.Series,
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+) -> float:
+    mask = _risk_on_mask(prices, config).reindex(returns.index).fillna(False)
+    risk_on_beta = _beta(returns[mask], benchmark[mask])
+    risk_off_beta = _beta(returns[~mask], benchmark[~mask])
+    risk_on_share = float(mask.mean()) if len(mask) else 0.0
+    return risk_on_beta * risk_on_share + risk_off_beta * (1.0 - risk_on_share)
+
+
+def _rebalance_contribution(
+    returns: pd.Series,
+    weights: pd.DataFrame,
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+) -> float:
+    if weights.empty:
+        return 0.0
+    average_weights = weights.mean().to_dict()
+    asset_returns = prices.pct_change().fillna(0.0)
+    static_returns = pd.Series(0.0, index=asset_returns.index)
+    for ticker, weight in average_weights.items():
+        if ticker in asset_returns:
+            static_returns += _float(weight) * asset_returns[ticker]
+    actual = _float(_series_metrics(returns, _annualization(config)).get("annual_return"))
+    static = _float(
+        _series_metrics(static_returns, _annualization(config)).get("annual_return")
+    )
+    return actual - static
+
+
+def _beta_method_commentary(method_id: str, beta_adjusted_edge: float) -> str:
+    if beta_adjusted_edge > 0.0:
+        return f"{method_id}_shows_positive_non_beta_edge"
+    return f"{method_id}_does_not_show_positive_non_beta_edge"
+
+
+def _balanced_core_role_rows(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    benchmarks = _benchmark_metric_rows(prices, config)
+    equal = benchmarks.get(DEFENSIVE_PRIMARY_ID, {})
+    qqq = benchmarks.get(PRIMARY_QQQ_BENCHMARK_ID, {})
+    rows = []
+    for strategy_id in (
+        DEFENSIVE_PRIMARY_ID,
+        str(candidate.get("strategy_id") or ""),
+        PRIMARY_QQQ_BENCHMARK_ID,
+        "qqq_50_sgov_50",
+        "qqq_60_sgov_40",
+    ):
+        if not strategy_id:
+            continue
+        if strategy_id == candidate.get("strategy_id"):
+            metrics = candidate
+            role = "BALANCED_CORE"
+        else:
+            metrics = benchmarks.get(strategy_id, {})
+            role = (
+                "DEFENSIVE_CORE"
+                if strategy_id == DEFENSIVE_PRIMARY_ID
+                else (
+                    "HARD_BENCHMARK"
+                    if strategy_id == PRIMARY_QQQ_BENCHMARK_ID
+                    else "STATIC_REFERENCE"
+                )
+            )
+        drawdown_gap = _round(
+            abs(_float(metrics.get("max_drawdown")))
+            - abs(_float(equal.get("max_drawdown")))
+        )
+        return_gap = _round(
+            _float(qqq.get("annual_return")) - _float(metrics.get("annual_return"))
+        )
+        role_score = (
+            _float(metrics.get("calmar"))
+            + _float(metrics.get("sharpe"))
+            - max(drawdown_gap, 0.0)
+        )
+        rows.append(
+            {
+                "strategy_id": strategy_id,
+                "role_candidate": role,
+                "annual_return": metrics.get("annual_return"),
+                "max_drawdown": metrics.get("max_drawdown"),
+                "sharpe": metrics.get("sharpe"),
+                "calmar": metrics.get("calmar"),
+                "return_gap_vs_100_qqq": return_gap,
+                "drawdown_gap_vs_equal_risk": drawdown_gap,
+                "risk_adjusted_role_score": _round(role_score),
+                "role_commentary": _role_commentary(role, role_score),
+            }
+        )
+    return rows
+
+
+def _role_commentary(role: str, role_score: float) -> str:
+    if role == "BALANCED_CORE" and role_score > 0.0:
+        return "candidate_has_positive_balanced_core_role_score"
+    if role == "BALANCED_CORE":
+        return "candidate_balanced_core_role_score_needs_owner_review"
+    return f"{role.lower()}_comparison_row"
+
+
+def _missed_upside_rows(
+    candidate: Mapping[str, Any],
+    prices: pd.DataFrame,
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    if not candidate:
+        return []
+    candidate_returns, _weights = _returns_and_weights(
+        _candidate_from_row(candidate),
+        prices,
+        config,
+    )
+    equal_returns, equal_weights = _returns_and_weights(
+        {"strategy_id": DEFENSIVE_PRIMARY_ID, "special_policy": "equal_risk"},
+        prices,
+        config,
+    )
+    qqq_returns, _qqq_weights = _returns_and_weights(
+        {"strategy_id": PRIMARY_QQQ_BENCHMARK_ID, "target_weights": {"QQQ": 1.0}},
+        prices,
+        config,
+    )
+    period_specs = _focused_missed_upside_periods(config, prices)
+    benchmark_rows = _benchmark_metric_rows(prices, config)
+    equal_turnover = _float(benchmark_rows.get(DEFENSIVE_PRIMARY_ID, {}).get("turnover"))
+    medium_cost_bps = _float(
+        _mapping(_research_mapping(config, "cost_turnover_sensitivity").get("cost_bps")).get(
+            "medium_cost"
+        )
+    )
+    turnover_penalty = max(_float(candidate.get("turnover")) - equal_turnover, 0.0) * (
+        medium_cost_bps / 10000.0
+    )
+    rows = []
+    for period in period_specs:
+        candidate_metrics = _series_metrics(
+            _period_slice(candidate_returns, period), _annualization(config)
+        )
+        equal_metrics = _series_metrics(
+            _period_slice(equal_returns, period), _annualization(config)
+        )
+        qqq_metrics = _series_metrics(
+            _period_slice(qqq_returns, period), _annualization(config)
+        )
+        equal_missed = max(
+            _float(qqq_metrics.get("annual_return"))
+            - _float(equal_metrics.get("annual_return")),
+            0.0,
+        )
+        candidate_missed = max(
+            _float(qqq_metrics.get("annual_return"))
+            - _float(candidate_metrics.get("annual_return")),
+            0.0,
+        )
+        reduction = equal_missed - candidate_missed
+        drawdown_penalty = max(
+            abs(_float(candidate_metrics.get("max_drawdown")))
+            - abs(_float(equal_metrics.get("max_drawdown"))),
+            0.0,
+        )
+        rows.append(
+            {
+                "period": period.get("period_id"),
+                "equal_risk_return": equal_metrics.get("annual_return"),
+                "candidate_return": candidate_metrics.get("annual_return"),
+                "100_qqq_return": qqq_metrics.get("annual_return"),
+                "missed_upside_vs_100_qqq_equal_risk": _round(equal_missed),
+                "missed_upside_vs_100_qqq_candidate": _round(candidate_missed),
+                "missed_upside_reduction": _round(reduction),
+                "drawdown_penalty": _round(drawdown_penalty),
+                "turnover_penalty": _round(turnover_penalty),
+                "net_missed_upside_improvement": _round(
+                    reduction - drawdown_penalty - turnover_penalty
+                ),
+                "equal_risk_average_weights": {
+                    key: _round(value) for key, value in equal_weights.mean().to_dict().items()
+                },
+            }
+        )
+    return rows
+
+
+def _focused_missed_upside_periods(
+    config: Mapping[str, Any],
+    prices: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    periods = [
+        dict(row)
+        for row in _records(_research_policy(config).get("periods"))
+        if row.get("period_id")
+        in {
+            "2023_recovery",
+            "2024_ai_rally",
+            "2025_to_latest",
+            "high_rate_sgov_carry_period",
+        }
+    ]
+    latest = prices.index.max().date().isoformat() if not prices.empty else "latest"
+    periods.extend(
+        [
+            {"period_id": "strong_trend_periods", "start": "2023-01-01", "end": latest},
+            {"period_id": "low_vol_trend_periods", "start": "2024-01-01", "end": latest},
+        ]
+    )
+    return periods
+
+
+def _focused_master_next_step(status: str) -> str:
+    if status in {
+        "GROWTH_TILT_FORWARD_AGING_REVIEWABLE",
+        "BALANCED_CORE_FORWARD_AGING_REVIEWABLE",
+    }:
+        return "owner_manual_review_before_any_research_only_watchlist_entry"
+    if status == "NO_STABLE_GROWTH_TILT_CANDIDATE":
+        return "pause_growth_tilt_until_new_evidence_or_owner_request"
+    if status == "GROWTH_TILT_DIAGNOSIS_BLOCKED":
+        return "resolve_blocked_focused_diagnosis_source"
+    return "continue_research_only_local_growth_tilt_diagnosis_or_pause"
 
 
 def _warning_status(status: str) -> bool:

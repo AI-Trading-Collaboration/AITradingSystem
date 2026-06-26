@@ -13,9 +13,13 @@ from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_ROADMAP_OUTPUT_ROOT,
     DEFAULT_GROWTH_EXPLORATION_MASTER_REVIEW_DOC_PATH,
+    DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH,
     DEFAULT_GROWTH_TILT_OWNER_DECISION_DOC_PATH,
     DEFAULT_GROWTH_TILT_OWNER_DECISION_REAL_RUN_DOC_PATH,
+    DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH,
     DEFAULT_GROWTH_TILT_REAL_RESULT_MASTER_REVIEW_DOC_PATH,
+    run_best_growth_tilt_candidate_deep_dive,
+    run_beta_adjusted_edge_methodology_audit,
     run_equal_risk_cap_floor_tilt_search,
     run_equal_risk_growth_tilt_objective_contract,
     run_equal_risk_growth_tilt_ranking_tiering,
@@ -28,15 +32,19 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_equal_risk_vol_target_growth_tilt_search,
     run_growth_exploration_master_review,
     run_growth_research_framing_correction,
+    run_growth_tilt_balanced_core_role_review,
     run_growth_tilt_beta_adjusted_edge_review,
     run_growth_tilt_beta_risk_budget_attribution,
     run_growth_tilt_candidate_result_summary,
     run_growth_tilt_cost_turnover_sensitivity,
     run_growth_tilt_definition_lock_versioning,
+    run_growth_tilt_focused_diagnosis_master_review,
     run_growth_tilt_forward_aging_readiness_gate,
     run_growth_tilt_forward_aging_watchlist_review,
     run_growth_tilt_owner_decision_pack,
     run_growth_tilt_owner_decision_pack_real_run,
+    run_growth_tilt_owner_diagnosis_pack,
+    run_growth_tilt_parameter_neighbor_finalist_review,
     run_growth_tilt_period_drawdown_cost_triage,
     run_growth_tilt_period_drawdown_replay,
     run_growth_tilt_reader_brief_safety_preview,
@@ -45,7 +53,10 @@ from ai_trading_system.equal_risk_growth_tilt import (
     run_growth_tilt_risk_return_frontier_review,
     run_growth_tilt_tier_validation,
     run_growth_tilt_vs_equal_risk_and_qqq_final_gate,
+    run_growth_tilt_vs_equal_risk_missed_upside_review,
+    run_growth_tilt_watchlist_reconsideration_gate,
     run_roadmap_update_after_growth_tilt_review,
+    run_vol_target_growth_tilt_local_sensitivity,
 )
 from ai_trading_system.research_governance import ResearchGovernanceError
 from ai_trading_system.simple_baseline_portfolio_control import (
@@ -585,6 +596,71 @@ _GROWTH_TILT_STRATEGY_COMMANDS = (
     (
         "growth-tilt-real-result-master-review",
         strategies_growth_tilt_real_result_master_review_command,
+    ),
+    (
+        "best-growth-tilt-candidate-deep-dive",
+        _make_growth_tilt_data_command(
+            run_best_growth_tilt_candidate_deep_dive,
+            "Best growth tilt candidate deep dive",
+        ),
+    ),
+    (
+        "vol-target-growth-tilt-local-sensitivity",
+        _make_growth_tilt_data_command(
+            run_vol_target_growth_tilt_local_sensitivity,
+            "Vol target growth tilt local sensitivity",
+        ),
+    ),
+    (
+        "beta-adjusted-edge-methodology-audit",
+        _make_growth_tilt_data_command(
+            run_beta_adjusted_edge_methodology_audit,
+            "Beta adjusted edge methodology audit",
+        ),
+    ),
+    (
+        "growth-tilt-balanced-core-role-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_balanced_core_role_review,
+            "Growth tilt balanced core role review",
+        ),
+    ),
+    (
+        "growth-tilt-vs-equal-risk-missed-upside-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_vs_equal_risk_missed_upside_review,
+            "Growth tilt vs equal risk missed upside review",
+        ),
+    ),
+    (
+        "growth-tilt-parameter-neighbor-finalist-review",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_parameter_neighbor_finalist_review,
+            "Growth tilt parameter neighbor finalist review",
+        ),
+    ),
+    (
+        "growth-tilt-watchlist-reconsideration-gate",
+        _make_growth_tilt_data_command(
+            run_growth_tilt_watchlist_reconsideration_gate,
+            "Growth tilt watchlist reconsideration gate",
+        ),
+    ),
+    (
+        "growth-tilt-owner-diagnosis-pack",
+        _make_growth_tilt_doc_command(
+            run_growth_tilt_owner_diagnosis_pack,
+            "Growth tilt owner diagnosis pack",
+            DEFAULT_GROWTH_TILT_OWNER_DIAGNOSIS_PACK_DOC_PATH,
+        ),
+    ),
+    (
+        "growth-tilt-focused-diagnosis-master-review",
+        _make_growth_tilt_doc_command(
+            run_growth_tilt_focused_diagnosis_master_review,
+            "Growth tilt focused diagnosis master review",
+            DEFAULT_GROWTH_TILT_FOCUSED_DIAGNOSIS_MASTER_REVIEW_DOC_PATH,
+        ),
     ),
 )
 
