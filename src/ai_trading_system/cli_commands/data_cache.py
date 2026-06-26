@@ -156,6 +156,23 @@ def download_data(
     console.print(f"下载审计清单：{summary.manifest_path}")
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
     console.print(f"FRED 宏观序列：{', '.join(summary.rate_series)}")
+    for budget in summary.request_budget_statuses:
+        console.print(
+            "请求预算："
+            f"{budget.get('provider')} / {budget.get('api_family')} "
+            f"status={budget.get('status')} "
+            f"estimated_increment_usage={budget.get('estimated_increment_usage')} "
+            f"quota_remaining={budget.get('quota_remaining')}"
+        )
+    for cache_summary in summary.request_cache_summaries:
+        console.print(
+            "请求缓存："
+            f"{cache_summary.get('provider')} / {cache_summary.get('api_family')} "
+            f"hits={cache_summary.get('cache_hits')} "
+            f"misses={cache_summary.get('cache_misses')} "
+            f"live={cache_summary.get('live_request_count')} "
+            f"quota_remaining={cache_summary.get('quota_remaining')}"
+        )
 
 
 def validate_data(

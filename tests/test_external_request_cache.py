@@ -9,6 +9,7 @@ import pandas as pd
 
 import ai_trading_system.data.market_data as market_data_module
 from ai_trading_system.data.market_data import (
+    CboeVixPriceProvider,
     FmpPriceProvider,
     FredRateProvider,
     MarketstackPriceProvider,
@@ -19,6 +20,7 @@ from ai_trading_system.data.market_data import (
 )
 from ai_trading_system.external_request_cache import (
     cached_requests_get,
+    external_request_cache_trace,
     safe_response_headers,
     write_external_request_cache_response,
 )
@@ -33,28 +35,30 @@ def test_cached_requests_get_reuses_identical_request_and_redacts_secret(
 ) -> None:
     fake_requests = _FakeRequests(payload={"ok": True})
 
-    first = cached_requests_get(
-        provider="Example Vendor",
-        api_family="example",
-        url="https://vendor.example.test/data",
-        params={"symbol": "NVDA", "apikey": "secret-key"},
-        requests_module=fake_requests,
-        cache_dir=tmp_path,
-    )
-    second = cached_requests_get(
-        provider="Example Vendor",
-        api_family="example",
-        url="https://vendor.example.test/data",
-        params={"symbol": "NVDA", "apikey": "another-secret-key"},
-        requests_module=fake_requests,
-        cache_dir=tmp_path,
-    )
+    with external_request_cache_trace() as events:
+        first = cached_requests_get(
+            provider="Example Vendor",
+            api_family="example",
+            url="https://vendor.example.test/data",
+            params={"symbol": "NVDA", "apikey": "secret-key"},
+            requests_module=fake_requests,
+            cache_dir=tmp_path,
+        )
+        second = cached_requests_get(
+            provider="Example Vendor",
+            api_family="example",
+            url="https://vendor.example.test/data",
+            params={"symbol": "NVDA", "apikey": "another-secret-key"},
+            requests_module=fake_requests,
+            cache_dir=tmp_path,
+        )
 
     assert first.from_cache is False
     assert second.from_cache is True
     assert first.json() == {"ok": True}
     assert second.json() == {"ok": True}
     assert len(fake_requests.calls) == 1
+    assert [event.from_cache for event in events] == [False, True]
 
     metadata_text = next(tmp_path.rglob("metadata.json")).read_text(encoding="utf-8")
     metadata = json.loads(metadata_text)
@@ -151,6 +155,35 @@ def test_yfinance_provider_uses_dataframe_cache(
 
     assert first.equals(second)
     assert fake_yfinance.call_count == 1
+
+
+def test_cboe_vix_provider_reuses_stable_full_history_cache_for_new_window(
+    tmp_path: Path,
+) -> None:
+    fake_requests = _FakeCboeRequests()
+    provider = CboeVixPriceProvider(
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+    )
+
+    first = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 1))
+    )
+    second = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 2))
+    )
+
+    assert first["date"].tolist() == ["2026-05-01"]
+    assert second["date"].tolist() == ["2026-05-01", "2026-05-02"]
+    assert len(fake_requests.calls) == 1
+
+    metadata = json.loads(next(tmp_path.rglob("metadata.json")).read_text(encoding="utf-8"))
+    params = metadata["request_identity"]["params"]
+    assert params == {
+        "content": "full_history_csv",
+        "interval": "1d",
+        "ticker": "^VIX",
+    }
 
 
 def test_marketstack_provider_reports_sanitized_pre_response_failure(tmp_path: Path) -> None:
@@ -325,3 +358,24 @@ class _FakeYFinance:
     def download(self, **_kwargs: Any) -> pd.DataFrame:
         self.call_count += 1
         return self.raw
+
+
+class _FakeCboeResponse:
+    text = (
+        "DATE,OPEN,HIGH,LOW,CLOSE\n"
+        "05/01/2026,16.5,17.2,15.9,16.8\n"
+        "05/02/2026,18.0,19.0,17.5,18.2\n"
+    )
+    content = text.encode("utf-8")
+    headers = {"content-type": "text/csv"}
+    ok = True
+    status_code = 200
+
+
+class _FakeCboeRequests:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def get(self, url: str, **kwargs: Any) -> _FakeCboeResponse:
+        self.calls.append({"url": url, **kwargs})
+        return _FakeCboeResponse()

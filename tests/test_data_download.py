@@ -6,19 +6,26 @@ from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe
-from ai_trading_system.data.download import download_daily_data, write_download_failure_report
+from ai_trading_system.data.download import (
+    ProviderQuotaBudgetError,
+    download_daily_data,
+    write_download_failure_report,
+)
 from ai_trading_system.data.market_data import (
     CboeVixPriceProvider,
     FmpPriceProvider,
+    MarketstackPriceProvider,
     PriceRequest,
     ProviderDownloadError,
     ProviderRequestDiagnostic,
     RateRequest,
 )
+from ai_trading_system.external_request_cache import write_external_request_cache_response
 
 
 @dataclass(frozen=True)
@@ -67,6 +74,30 @@ class FakeRateProvider:
             {"date": request.end.isoformat(), "series": series, "value": 4.5}
             for series in request.series_ids
         ]
+        return pd.DataFrame(rows)
+
+
+class RecordingRangePriceProvider:
+    def __init__(self) -> None:
+        self.calls: list[PriceRequest] = []
+
+    def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        self.calls.append(request)
+        rows: list[dict[str, object]] = []
+        for current in pd.date_range(request.start, request.end, freq="D"):
+            for ticker in request.tickers:
+                rows.append(
+                    {
+                        "date": current.strftime("%Y-%m-%d"),
+                        "ticker": ticker,
+                        "open": 1.0,
+                        "high": 1.0,
+                        "low": 1.0,
+                        "close": 1.0,
+                        "adj_close": 1.0,
+                        "volume": 1,
+                    }
+                )
         return pd.DataFrame(rows)
 
 
@@ -119,6 +150,94 @@ def test_download_daily_data_writes_secondary_price_cache(tmp_path: Path) -> Non
         "fake_price_provider",
     ]
     assert str(summary.secondary_prices_path) in set(manifest["output_path"].astype(str))
+
+
+def test_download_daily_data_incrementally_requests_only_missing_tail(
+    tmp_path: Path,
+) -> None:
+    primary_provider = RecordingRangePriceProvider()
+    secondary_provider = RecordingRangePriceProvider()
+    universe = load_universe()
+
+    first = download_daily_data(
+        universe,
+        start=date(2026, 4, 29),
+        end=date(2026, 4, 30),
+        output_dir=tmp_path,
+        price_provider=primary_provider,
+        secondary_price_provider=secondary_provider,
+        rate_provider=FakeRateProvider(),
+    )
+    second = download_daily_data(
+        universe,
+        start=date(2026, 4, 29),
+        end=date(2026, 5, 1),
+        output_dir=tmp_path,
+        price_provider=primary_provider,
+        secondary_price_provider=secondary_provider,
+        rate_provider=FakeRateProvider(),
+    )
+
+    assert primary_provider.calls[0].start == date(2026, 4, 29)
+    assert primary_provider.calls[0].end == date(2026, 4, 30)
+    assert primary_provider.calls[1].start == date(2026, 5, 1)
+    assert primary_provider.calls[1].end == date(2026, 5, 1)
+    assert secondary_provider.calls[1].start == date(2026, 5, 1)
+    assert secondary_provider.calls[1].end == date(2026, 5, 1)
+
+    assert second.price_rows == first.price_rows + len(second.price_tickers)
+    assert second.secondary_price_rows == first.secondary_price_rows + len(second.price_tickers)
+
+    manifest = pd.read_csv(second.manifest_path)
+    latest_primary = manifest.loc[
+        manifest["output_path"].astype(str) == str(second.prices_path)
+    ].iloc[-1]
+    request_parameters = json.loads(str(latest_primary["request_parameters"]))
+    incremental = request_parameters["incremental_refresh"]
+
+    assert incremental["reused_row_count"] == first.price_rows
+    assert incremental["fetched_row_count"] == len(second.price_tickers)
+    assert incremental["fetch_window_count"] == 1
+    assert incremental["fetch_windows"][0]["start"] == "2026-05-01"
+
+
+def test_download_daily_data_blocks_marketstack_when_quota_preflight_fails(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "0",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    fake_marketstack_requests = _NeverRequests()
+
+    with pytest.raises(ProviderQuotaBudgetError, match="Marketstack quota preflight blocked"):
+        download_daily_data(
+            load_universe(),
+            start=date(2026, 4, 29),
+            end=date(2026, 5, 1),
+            output_dir=tmp_path,
+            price_provider=FakePriceProvider(),
+            secondary_price_provider=MarketstackPriceProvider(
+                api_key="test-key",
+                requests_module=fake_marketstack_requests,
+                request_cache_dir=request_cache_dir,
+            ),
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert fake_marketstack_requests.calls == []
 
 
 def test_download_daily_data_adds_cboe_vix_when_primary_skips_it(tmp_path: Path) -> None:
@@ -288,3 +407,12 @@ class _FakeCboeRequests:
     ) -> _FakeCboeResponse:
         assert timeout == 30
         return _FakeCboeResponse()
+
+
+class _NeverRequests:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def get(self, url: str, **kwargs: object) -> _FakeResponse:
+        self.calls.append({"url": url, **kwargs})
+        raise AssertionError("Marketstack should not be called after quota preflight failure")

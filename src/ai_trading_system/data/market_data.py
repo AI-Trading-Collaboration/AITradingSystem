@@ -17,6 +17,7 @@ from ai_trading_system.external_request_cache import (
     cached_requests_get,
     default_external_request_cache_dir,
     lookup_external_request_cache,
+    record_external_request_cache_event,
     sanitize_diagnostic_text,
     write_external_request_cache_response,
 )
@@ -484,9 +485,8 @@ class CboeVixPriceProvider:
         )
         cache_identity_params = {
             "ticker": self.ticker,
-            "start": request.start.isoformat(),
-            "end": request.end.isoformat(),
             "interval": request.interval,
+            "content": "full_history_csv",
         }
         cache_lookup = lookup_external_request_cache(
             provider="Cboe Global Markets",
@@ -497,8 +497,19 @@ class CboeVixPriceProvider:
             cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
         )
         response = cache_lookup.response
-        if response is not None and not _cboe_vix_response_covers_end(response, request.end):
-            response = None
+        if response is not None:
+            if _cboe_vix_response_covers_end(response, request.end):
+                record_external_request_cache_event(
+                    provider="Cboe Global Markets",
+                    api_family="vix_daily_prices",
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    from_cache=True,
+                    status_code=response.status_code,
+                    response_headers=response.headers,
+                )
+            else:
+                response = None
         if response is None:
             raw_response = requests.get(self.base_url, timeout=30)
             content = _http_response_content(raw_response)
@@ -526,6 +537,15 @@ class CboeVixPriceProvider:
                     content=content,
                     cache_dir=Path(request_cache_dir),
                 )
+            record_external_request_cache_event(
+                provider="Cboe Global Markets",
+                api_family="vix_daily_prices",
+                cache_key=response.cache_key,
+                cache_metadata_path=response.cache_metadata_path,
+                from_cache=False,
+                status_code=response.status_code,
+                response_headers=response.headers,
+            )
         if not response.ok:
             raise ValueError("Cboe VIX request failed: " f"http_status={response.status_code}")
 

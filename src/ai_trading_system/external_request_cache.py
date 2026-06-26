@@ -6,7 +6,9 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -88,6 +90,64 @@ class ExternalRequestCacheLookup:
     response: CachedHttpResponse | None
 
 
+@dataclass(frozen=True)
+class ExternalRequestCacheEvent:
+    provider: str
+    api_family: str
+    cache_key: str
+    cache_metadata_path: Path
+    from_cache: bool
+    status_code: int | None
+    quota_limit: int | None = None
+    quota_remaining: int | None = None
+    increment_usage: int | None = None
+
+
+_CACHE_TRACE_EVENTS: ContextVar[list[ExternalRequestCacheEvent] | None] = ContextVar(
+    "external_request_cache_trace_events",
+    default=None,
+)
+
+
+@contextmanager
+def external_request_cache_trace() -> Iterator[list[ExternalRequestCacheEvent]]:
+    events: list[ExternalRequestCacheEvent] = []
+    token = _CACHE_TRACE_EVENTS.set(events)
+    try:
+        yield events
+    finally:
+        _CACHE_TRACE_EVENTS.reset(token)
+
+
+def record_external_request_cache_event(
+    *,
+    provider: str,
+    api_family: str,
+    cache_key: str,
+    cache_metadata_path: Path,
+    from_cache: bool,
+    status_code: int | None,
+    response_headers: Mapping[str, str] | None = None,
+) -> None:
+    events = _CACHE_TRACE_EVENTS.get()
+    if events is None:
+        return
+    headers = response_headers or {}
+    events.append(
+        ExternalRequestCacheEvent(
+            provider=provider,
+            api_family=api_family,
+            cache_key=cache_key,
+            cache_metadata_path=cache_metadata_path,
+            from_cache=from_cache,
+            status_code=status_code,
+            quota_limit=_header_int(headers, "x-quota-limit"),
+            quota_remaining=_header_int(headers, "x-quota-remaining"),
+            increment_usage=_header_int(headers, "x-increment-usage"),
+        )
+    )
+
+
 def cached_requests_get(
     *,
     provider: str,
@@ -110,6 +170,15 @@ def cached_requests_get(
         cache_dir=None if cache_dir is None else Path(cache_dir),
     )
     if lookup.response is not None:
+        record_external_request_cache_event(
+            provider=provider,
+            api_family=api_family,
+            cache_key=lookup.response.cache_key,
+            cache_metadata_path=lookup.response.cache_metadata_path,
+            from_cache=True,
+            status_code=lookup.response.status_code,
+            response_headers=lookup.response.headers,
+        )
         return lookup.response
 
     kwargs: dict[str, Any] = {"timeout": timeout}
@@ -122,7 +191,7 @@ def cached_requests_get(
     response_headers = _mapping_from_headers(getattr(response, "headers", {}) or {})
     content = _response_content(response)
     if cache_dir is None:
-        return CachedHttpResponse(
+        cached_response = CachedHttpResponse(
             status_code=status_code,
             headers=response_headers,
             content=content,
@@ -131,7 +200,17 @@ def cached_requests_get(
             cache_metadata_path=lookup.metadata_path,
             from_cache=False,
         )
-    return write_external_request_cache_response(
+        record_external_request_cache_event(
+            provider=provider,
+            api_family=api_family,
+            cache_key=cached_response.cache_key,
+            cache_metadata_path=cached_response.cache_metadata_path,
+            from_cache=False,
+            status_code=cached_response.status_code,
+            response_headers=cached_response.headers,
+        )
+        return cached_response
+    cached_response = write_external_request_cache_response(
         provider=provider,
         api_family=api_family,
         method="GET",
@@ -144,6 +223,16 @@ def cached_requests_get(
         cache_dir=Path(cache_dir),
         requested_at=datetime.now(tz=UTC),
     )
+    record_external_request_cache_event(
+        provider=provider,
+        api_family=api_family,
+        cache_key=cached_response.cache_key,
+        cache_metadata_path=cached_response.cache_metadata_path,
+        from_cache=False,
+        status_code=cached_response.status_code,
+        response_headers=cached_response.headers,
+    )
+    return cached_response
 
 
 def cached_urllib_get(
@@ -165,6 +254,15 @@ def cached_urllib_get(
         cache_dir=None if cache_dir is None else Path(cache_dir),
     )
     if lookup.response is not None:
+        record_external_request_cache_event(
+            provider=provider,
+            api_family=api_family,
+            cache_key=lookup.response.cache_key,
+            cache_metadata_path=lookup.response.cache_metadata_path,
+            from_cache=True,
+            status_code=lookup.response.status_code,
+            response_headers=lookup.response.headers,
+        )
         return lookup.response
 
     request = urllib.request.Request(
@@ -183,7 +281,7 @@ def cached_urllib_get(
         content = exc.read()
 
     if cache_dir is None:
-        return CachedHttpResponse(
+        cached_response = CachedHttpResponse(
             status_code=status_code,
             headers=response_headers,
             content=content,
@@ -192,7 +290,17 @@ def cached_urllib_get(
             cache_metadata_path=lookup.metadata_path,
             from_cache=False,
         )
-    return write_external_request_cache_response(
+        record_external_request_cache_event(
+            provider=provider,
+            api_family=api_family,
+            cache_key=cached_response.cache_key,
+            cache_metadata_path=cached_response.cache_metadata_path,
+            from_cache=False,
+            status_code=cached_response.status_code,
+            response_headers=cached_response.headers,
+        )
+        return cached_response
+    cached_response = write_external_request_cache_response(
         provider=provider,
         api_family=api_family,
         method="GET",
@@ -204,6 +312,16 @@ def cached_urllib_get(
         cache_dir=Path(cache_dir),
         requested_at=datetime.now(tz=UTC),
     )
+    record_external_request_cache_event(
+        provider=provider,
+        api_family=api_family,
+        cache_key=cached_response.cache_key,
+        cache_metadata_path=cached_response.cache_metadata_path,
+        from_cache=False,
+        status_code=cached_response.status_code,
+        response_headers=cached_response.headers,
+    )
+    return cached_response
 
 
 def lookup_external_request_cache(
@@ -537,6 +655,21 @@ def _mapping_from_headers(headers: Any) -> dict[str, str]:
     if hasattr(headers, "items"):
         return {str(key): str(value) for key, value in _stable_mapping_items(headers)}
     return {}
+
+
+def _header_int(headers: Mapping[str, str], name: str) -> int | None:
+    value: str | None = None
+    wanted = name.lower()
+    for key, header_value in _stable_mapping_items(headers):
+        if str(key).lower() == wanted:
+            value = str(header_value)
+            break
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
 def _valid_metadata(metadata: Any, cache_key: str, content: bytes) -> bool:

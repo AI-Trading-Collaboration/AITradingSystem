@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -29,7 +32,14 @@ from ai_trading_system.data.market_data import (
     RateRequest,
     YFinancePriceProvider,
 )
-from ai_trading_system.external_request_cache import sanitize_diagnostic_text
+from ai_trading_system.external_request_cache import (
+    ExternalRequestCacheEvent,
+    default_external_request_cache_dir,
+    external_request_cache_trace,
+    sanitize_diagnostic_text,
+)
+
+_PRICE_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 
 
 @dataclass(frozen=True)
@@ -43,6 +53,38 @@ class DataDownloadSummary:
     rate_series: tuple[str, ...]
     secondary_prices_path: Path | None = None
     secondary_price_rows: int = 0
+    request_cache_summaries: tuple[dict[str, object], ...] = ()
+    request_budget_statuses: tuple[dict[str, object], ...] = ()
+
+
+@dataclass(frozen=True)
+class IncrementalPriceWindow:
+    tickers: tuple[str, ...]
+    start: date
+    end: date
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "tickers": list(self.tickers),
+            "start": self.start.isoformat(),
+            "end": self.end.isoformat(),
+        }
+
+
+@dataclass(frozen=True)
+class IncrementalPriceDownload:
+    prices: pd.DataFrame
+    supported_tickers: tuple[str, ...]
+    skipped_tickers: tuple[str, ...]
+    fetch_windows: tuple[IncrementalPriceWindow, ...]
+    reused_row_count: int
+    fetched_row_count: int
+    output_row_count: int
+    request_budget_status: dict[str, object] | None = None
+
+
+class ProviderQuotaBudgetError(RuntimeError):
+    """Raised before live provider calls when cached quota metadata says they cannot finish."""
 
 
 def default_download_failure_report_path(reports_dir: Path, as_of: date) -> Path:
@@ -133,63 +175,122 @@ def download_daily_data(
     price_provider = price_provider or YFinancePriceProvider()
     rate_provider = rate_provider or FredRateProvider()
     cache = CsvDataCache(output_dir)
+    prices_path_target = output_dir / "prices_daily.csv"
+    secondary_prices_path_target = output_dir / "prices_marketstack_daily.csv"
 
     price_request = PriceRequest(tickers=price_tickers, start=start, end=end, interval="1d")
     rate_request = RateRequest(series_ids=rate_series, start=start, end=end)
 
-    primary_prices = price_provider.download_prices(price_request)
-    prices = primary_prices
-    vix_prices: pd.DataFrame | None = None
-    vix_request: PriceRequest | None = None
-    if CBOE_VIX_TICKER in price_tickers and CBOE_VIX_TICKER not in set(prices["ticker"]):
-        vix_price_provider = vix_price_provider or CboeVixPriceProvider()
-        vix_request = PriceRequest(
-            tickers=[CBOE_VIX_TICKER],
+    with external_request_cache_trace() as request_cache_events:
+        primary_tickers = _supported_price_tickers(price_provider, price_tickers)
+        primary_download = _download_incremental_prices(
+            provider=price_provider,
+            request=PriceRequest(
+                tickers=list(primary_tickers),
+                start=start,
+                end=end,
+                interval="1d",
+            ),
+            existing_path=prices_path_target,
+        )
+        price_frames = [primary_download.prices]
+        vix_download: IncrementalPriceDownload | None = None
+        vix_request: PriceRequest | None = None
+        if CBOE_VIX_TICKER in price_tickers and CBOE_VIX_TICKER not in set(
+            primary_download.prices["ticker"].astype(str)
+        ):
+            vix_price_provider = vix_price_provider or CboeVixPriceProvider()
+            vix_request = PriceRequest(
+                tickers=[CBOE_VIX_TICKER],
+                start=start,
+                end=end,
+                interval="1d",
+            )
+            vix_download = _download_incremental_prices(
+                provider=vix_price_provider,
+                request=vix_request,
+                existing_path=prices_path_target,
+            )
+            price_frames.append(vix_download.prices)
+        prices = _merge_price_frames(
+            price_frames,
+            tickers=price_tickers,
             start=start,
             end=end,
-            interval="1d",
         )
-        vix_prices = vix_price_provider.download_prices(vix_request)
-        prices = pd.concat([prices, vix_prices], ignore_index=True)
-        prices = prices.sort_values(["ticker", "date"]).reset_index(drop=True)
-    rates = rate_provider.download_rates(rate_request)
+        rates = rate_provider.download_rates(rate_request)
+
+        secondary_download: IncrementalPriceDownload | None = None
+        if secondary_price_provider is not None:
+            secondary_tickers = _supported_price_tickers(secondary_price_provider, price_tickers)
+            secondary_download = _download_incremental_prices(
+                provider=secondary_price_provider,
+                request=PriceRequest(
+                    tickers=list(secondary_tickers),
+                    start=start,
+                    end=end,
+                    interval="1d",
+                ),
+                existing_path=secondary_prices_path_target,
+            )
 
     prices_path = cache.write_prices(prices)
     rates_path = cache.write_rates(rates)
     secondary_prices_path: Path | None = None
     secondary_price_rows = 0
+    request_cache_summaries = tuple(_request_cache_summary_records(request_cache_events))
+    request_budget_statuses = tuple(
+        status
+        for status in (
+            primary_download.request_budget_status,
+            None if vix_download is None else vix_download.request_budget_status,
+            None if secondary_download is None else secondary_download.request_budget_status,
+        )
+        if status is not None
+    )
     manifest_records = [
         _manifest_record_for_prices(
             price_provider,
             price_request,
             prices_path,
-            len(primary_prices),
+            len(primary_download.prices),
+            incremental_download=primary_download,
+            request_cache_summaries=request_cache_summaries,
         ),
-        _manifest_record_for_rates(rate_provider, rate_request, rates_path, len(rates)),
+        _manifest_record_for_rates(
+            rate_provider,
+            rate_request,
+            rates_path,
+            len(rates),
+            request_cache_summaries=request_cache_summaries,
+        ),
     ]
-    if vix_price_provider is not None and vix_request is not None and vix_prices is not None:
+    if vix_price_provider is not None and vix_request is not None and vix_download is not None:
         manifest_records.append(
             _manifest_record_for_prices(
                 vix_price_provider,
                 vix_request,
                 prices_path,
-                len(vix_prices),
+                len(vix_download.prices),
+                incremental_download=vix_download,
+                request_cache_summaries=request_cache_summaries,
             )
         )
 
-    if secondary_price_provider is not None:
-        secondary_prices = secondary_price_provider.download_prices(price_request)
+    if secondary_price_provider is not None and secondary_download is not None:
         secondary_prices_path = cache.write_prices(
-            secondary_prices,
+            secondary_download.prices,
             filename="prices_marketstack_daily.csv",
         )
-        secondary_price_rows = len(secondary_prices)
+        secondary_price_rows = len(secondary_download.prices)
         manifest_records.append(
             _manifest_record_for_prices(
                 secondary_price_provider,
                 price_request,
                 secondary_prices_path,
                 secondary_price_rows,
+                incremental_download=secondary_download,
+                request_cache_summaries=request_cache_summaries,
             )
         )
 
@@ -208,7 +309,370 @@ def download_daily_data(
         rate_series=tuple(rate_series),
         secondary_prices_path=secondary_prices_path,
         secondary_price_rows=secondary_price_rows,
+        request_cache_summaries=request_cache_summaries,
+        request_budget_statuses=request_budget_statuses,
     )
+
+
+def _download_incremental_prices(
+    *,
+    provider: PriceDataProvider,
+    request: PriceRequest,
+    existing_path: Path,
+) -> IncrementalPriceDownload:
+    supported_tickers = _supported_price_tickers(provider, request.tickers)
+    skipped_tickers = tuple(ticker for ticker in request.tickers if ticker not in supported_tickers)
+    existing = _read_existing_price_cache(
+        existing_path,
+        tickers=supported_tickers,
+        start=request.start,
+        end=request.end,
+    )
+    fetch_windows = _price_fetch_windows(
+        existing,
+        tickers=supported_tickers,
+        start=request.start,
+        end=request.end,
+    )
+    request_budget_status = _provider_request_budget_status(provider, fetch_windows)
+
+    fetched_frames: list[pd.DataFrame] = []
+    for window in fetch_windows:
+        fetched = provider.download_prices(
+            PriceRequest(
+                tickers=list(window.tickers),
+                start=window.start,
+                end=window.end,
+                interval=request.interval,
+            )
+        )
+        fetched_frames.append(fetched)
+
+    prices = _merge_price_frames(
+        [existing, *fetched_frames],
+        tickers=supported_tickers,
+        start=request.start,
+        end=request.end,
+    )
+    return IncrementalPriceDownload(
+        prices=prices,
+        supported_tickers=supported_tickers,
+        skipped_tickers=skipped_tickers,
+        fetch_windows=fetch_windows,
+        reused_row_count=len(existing),
+        fetched_row_count=sum(len(frame) for frame in fetched_frames),
+        output_row_count=len(prices),
+        request_budget_status=request_budget_status,
+    )
+
+
+def _supported_price_tickers(
+    provider: PriceDataProvider,
+    tickers: list[str] | tuple[str, ...],
+) -> tuple[str, ...]:
+    if isinstance(provider, FmpPriceProvider):
+        return tuple(
+            ticker for ticker in tickers if provider.provider_symbol_for(ticker) is not None
+        )
+    if isinstance(provider, MarketstackPriceProvider):
+        return tuple(
+            ticker
+            for ticker in tickers
+            if provider.symbol_aliases.get(ticker, ticker) is not None
+        )
+    if isinstance(provider, CboeVixPriceProvider):
+        return tuple(ticker for ticker in tickers if ticker == provider.ticker)
+    return tuple(tickers)
+
+
+def _read_existing_price_cache(
+    path: Path,
+    *,
+    tickers: tuple[str, ...],
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    if not tickers:
+        return _empty_price_frame()
+    if not path.exists():
+        return _empty_price_frame()
+    try:
+        frame = pd.read_csv(path)
+    except Exception as exc:
+        raise ValueError(f"Existing price cache is unreadable: {path}") from exc
+    missing = {"date", "ticker"} - set(frame.columns)
+    if missing:
+        raise ValueError(
+            "Existing price cache missing required columns: " + ", ".join(sorted(missing))
+        )
+    filtered = frame.loc[frame["ticker"].astype(str).isin(tickers)].copy()
+    if filtered.empty:
+        return _empty_price_frame()
+    parsed_dates = pd.to_datetime(filtered["date"], errors="coerce")
+    invalid_count = int(parsed_dates.isna().sum())
+    if invalid_count:
+        raise ValueError(
+            f"Existing price cache has {invalid_count} invalid date values for requested tickers"
+        )
+    filtered["date"] = parsed_dates.dt.strftime("%Y-%m-%d")
+    filtered = filtered.loc[
+        (parsed_dates.dt.date >= start) & (parsed_dates.dt.date <= end)
+    ].copy()
+    return _normalize_price_frame_columns(filtered)
+
+
+def _price_fetch_windows(
+    existing: pd.DataFrame,
+    *,
+    tickers: tuple[str, ...],
+    start: date,
+    end: date,
+) -> tuple[IncrementalPriceWindow, ...]:
+    if not tickers:
+        return ()
+    date_ranges_by_ticker = _price_date_ranges(existing)
+    grouped: dict[date, list[str]] = {}
+    for ticker in tickers:
+        date_range = date_ranges_by_ticker.get(ticker)
+        if date_range is None:
+            fetch_start = start
+        else:
+            earliest, latest = date_range
+            if earliest > start:
+                fetch_start = start
+            elif latest >= end:
+                continue
+            else:
+                fetch_start = latest + timedelta(days=1)
+        if fetch_start <= end:
+            grouped.setdefault(fetch_start, []).append(ticker)
+    return tuple(
+        IncrementalPriceWindow(
+            tickers=tuple(sorted(grouped[fetch_start])),
+            start=fetch_start,
+            end=end,
+        )
+        for fetch_start in sorted(grouped)
+    )
+
+
+def _price_date_ranges(frame: pd.DataFrame) -> dict[str, tuple[date, date]]:
+    if frame.empty:
+        return {}
+    parsed_dates = pd.to_datetime(frame["date"], errors="coerce")
+    dates = parsed_dates.dt.date
+    ranges: dict[str, tuple[date, date]] = {}
+    for ticker, ticker_dates in dates.groupby(frame["ticker"].astype(str)):
+        min_date = ticker_dates.min()
+        max_date = ticker_dates.max()
+        if pd.notna(min_date) and pd.notna(max_date):
+            ranges[str(ticker)] = (min_date, max_date)
+    return ranges
+
+
+def _merge_price_frames(
+    frames: list[pd.DataFrame],
+    *,
+    tickers: list[str] | tuple[str, ...],
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    non_empty = [frame for frame in frames if frame is not None and not frame.empty]
+    if not non_empty:
+        return _empty_price_frame()
+    merged = pd.concat(non_empty, ignore_index=True)
+    merged = _normalize_price_frame_columns(merged)
+    parsed_dates = pd.to_datetime(merged["date"], errors="coerce")
+    merged = merged.loc[parsed_dates.notna()].copy()
+    parsed_dates = pd.to_datetime(merged["date"], errors="coerce")
+    ticker_set = set(tickers)
+    merged = merged.loc[
+        merged["ticker"].astype(str).isin(ticker_set)
+        & (parsed_dates.dt.date >= start)
+        & (parsed_dates.dt.date <= end)
+    ].copy()
+    if merged.empty:
+        return _empty_price_frame()
+    merged["date"] = pd.to_datetime(merged["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    merged["ticker"] = merged["ticker"].astype(str)
+    merged = merged.drop_duplicates(subset=["ticker", "date"], keep="last")
+    ordered_columns = list(_PRICE_COLUMNS) + [
+        column for column in merged.columns if column not in _PRICE_COLUMNS
+    ]
+    return merged[ordered_columns].sort_values(["ticker", "date"]).reset_index(drop=True)
+
+
+def _normalize_price_frame_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    normalized = frame.copy()
+    for column in _PRICE_COLUMNS:
+        if column not in normalized.columns:
+            normalized[column] = pd.NA
+    return normalized
+
+
+def _empty_price_frame() -> pd.DataFrame:
+    return pd.DataFrame(columns=list(_PRICE_COLUMNS))
+
+
+def _provider_request_budget_status(
+    provider: PriceDataProvider,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+) -> dict[str, object] | None:
+    if not isinstance(provider, MarketstackPriceProvider):
+        return None
+    estimated_units = _estimate_marketstack_increment_usage(provider, fetch_windows)
+    cache_dir = default_external_request_cache_dir(
+        requests_module=provider.requests_module,
+        explicit_cache_dir=provider.request_cache_dir,
+    )
+    latest_metadata = _latest_external_request_metadata(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        cache_dir=None if cache_dir is None else Path(cache_dir),
+    )
+    quota_limit = _metadata_header_int(latest_metadata, "x-quota-limit")
+    quota_remaining = _metadata_header_int(latest_metadata, "x-quota-remaining")
+    latest_observed_at = (
+        str(latest_metadata.get("created_at"))
+        if isinstance(latest_metadata, Mapping) and latest_metadata.get("created_at")
+        else None
+    )
+    status = "NO_LIVE_REQUEST_NEEDED" if estimated_units == 0 else "PASS"
+    if quota_remaining is not None and quota_remaining < estimated_units:
+        status = "BLOCKED_QUOTA_INSUFFICIENT"
+    payload: dict[str, object] = {
+        "provider": "Marketstack",
+        "api_family": "eod_daily_prices",
+        "status": status,
+        "estimated_increment_usage": estimated_units,
+        "quota_limit": quota_limit,
+        "quota_remaining": quota_remaining,
+        "latest_quota_observed_at": latest_observed_at,
+        "fetch_window_count": len(fetch_windows),
+    }
+    if status == "BLOCKED_QUOTA_INSUFFICIENT":
+        raise ProviderQuotaBudgetError(
+            "Marketstack quota preflight blocked download: "
+            f"estimated_increment_usage={estimated_units}, "
+            f"quota_remaining={quota_remaining}, quota_limit={quota_limit}"
+        )
+    return payload
+
+
+def _estimate_marketstack_increment_usage(
+    provider: MarketstackPriceProvider,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+) -> int:
+    total = 0
+    for window in fetch_windows:
+        provider_symbols, _provider_to_ticker = provider._provider_symbols(list(window.tickers))
+        if not provider_symbols:
+            continue
+        calendar_days = max(1, (window.end - window.start).days + 1)
+        estimated_records = max(1, calendar_days * len(provider_symbols))
+        estimated_pages = max(1, math.ceil(estimated_records / provider.page_limit))
+        total += len(provider_symbols) * estimated_pages
+    return total
+
+
+def _latest_external_request_metadata(
+    *,
+    provider: str,
+    api_family: str,
+    cache_dir: Path | None,
+) -> Mapping[str, Any] | None:
+    if cache_dir is None:
+        return None
+    root = cache_dir / _safe_cache_path_token(provider) / _safe_cache_path_token(api_family)
+    if not root.exists():
+        return None
+    latest: tuple[datetime, Mapping[str, Any]] | None = None
+    for path in root.rglob("metadata.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, Mapping):
+            continue
+        if payload.get("provider") != provider or payload.get("api_family") != api_family:
+            continue
+        created_at_raw = payload.get("created_at")
+        if not isinstance(created_at_raw, str):
+            continue
+        try:
+            created_at = datetime.fromisoformat(created_at_raw)
+        except ValueError:
+            continue
+        if latest is None or created_at > latest[0]:
+            latest = (created_at, payload)
+    return None if latest is None else latest[1]
+
+
+def _metadata_header_int(metadata: Mapping[str, Any] | None, header_name: str) -> int | None:
+    if not isinstance(metadata, Mapping):
+        return None
+    headers = metadata.get("response_headers")
+    if not isinstance(headers, Mapping):
+        return None
+    wanted = header_name.lower()
+    for key, value in headers.items():
+        if str(key).lower() == wanted:
+            try:
+                return int(str(value))
+            except ValueError:
+                return None
+    return None
+
+
+def _safe_cache_path_token(value: str) -> str:
+    token = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value)
+    return token[:80] or "unknown"
+
+
+def _request_cache_summary_records(
+    events: list[ExternalRequestCacheEvent],
+) -> list[dict[str, object]]:
+    grouped: dict[tuple[str, str], list[ExternalRequestCacheEvent]] = {}
+    for event in events:
+        grouped.setdefault((event.provider, event.api_family), []).append(event)
+    records: list[dict[str, object]] = []
+    for (provider, api_family), group in sorted(grouped.items()):
+        latest_quota_event = next(
+            (
+                event
+                for event in reversed(group)
+                if event.quota_limit is not None or event.quota_remaining is not None
+            ),
+            None,
+        )
+        records.append(
+            {
+                "provider": provider,
+                "api_family": api_family,
+                "cache_hits": sum(1 for event in group if event.from_cache),
+                "cache_misses": sum(1 for event in group if not event.from_cache),
+                "live_request_count": sum(1 for event in group if not event.from_cache),
+                "increment_usage_sum": sum(event.increment_usage or 0 for event in group),
+                "quota_limit": (
+                    None if latest_quota_event is None else latest_quota_event.quota_limit
+                ),
+                "quota_remaining": (
+                    None if latest_quota_event is None else latest_quota_event.quota_remaining
+                ),
+            }
+        )
+    return records
+
+
+def _cache_summaries_for_provider(
+    request_cache_summaries: tuple[dict[str, object], ...],
+    provider_name: str,
+) -> list[dict[str, object]]:
+    return [
+        dict(summary)
+        for summary in request_cache_summaries
+        if summary.get("provider") == provider_name
+    ]
 
 
 def _provider_diagnostic_from_error(error: BaseException) -> ProviderRequestDiagnostic | None:
@@ -322,6 +786,9 @@ def _manifest_record_for_prices(
     request: PriceRequest,
     output_path: Path,
     row_count: int,
+    *,
+    incremental_download: IncrementalPriceDownload | None = None,
+    request_cache_summaries: tuple[dict[str, object], ...] = (),
 ) -> dict[str, object]:
     source_id, provider_name, endpoint = _price_provider_metadata(provider)
     request_parameters: dict[str, object] = {
@@ -333,6 +800,23 @@ def _manifest_record_for_prices(
     provider_symbol_aliases = _price_provider_symbol_aliases(provider, request.tickers)
     if provider_symbol_aliases:
         request_parameters["provider_symbol_aliases"] = provider_symbol_aliases
+    if incremental_download is not None:
+        request_parameters["incremental_refresh"] = {
+            "mode": "coverage_gap",
+            "supported_tickers": list(incremental_download.supported_tickers),
+            "skipped_tickers": list(incremental_download.skipped_tickers),
+            "fetch_windows": [
+                window.to_payload() for window in incremental_download.fetch_windows
+            ],
+            "fetch_window_count": len(incremental_download.fetch_windows),
+            "reused_row_count": incremental_download.reused_row_count,
+            "fetched_row_count": incremental_download.fetched_row_count,
+            "output_row_count": incremental_download.output_row_count,
+            "request_budget_status": incremental_download.request_budget_status,
+        }
+    cache_summaries = _cache_summaries_for_provider(request_cache_summaries, provider_name)
+    if cache_summaries:
+        request_parameters["external_request_cache_summary"] = cache_summaries
     return _manifest_record(
         source_id=source_id,
         provider=provider_name,
@@ -348,17 +832,23 @@ def _manifest_record_for_rates(
     request: RateRequest,
     output_path: Path,
     row_count: int,
+    *,
+    request_cache_summaries: tuple[dict[str, object], ...] = (),
 ) -> dict[str, object]:
     source_id, provider_name, endpoint = _rate_provider_metadata(provider)
+    request_parameters: dict[str, object] = {
+        "series_ids": request.series_ids,
+        "start": request.start.isoformat(),
+        "end": request.end.isoformat(),
+    }
+    cache_summaries = _cache_summaries_for_provider(request_cache_summaries, provider_name)
+    if cache_summaries:
+        request_parameters["external_request_cache_summary"] = cache_summaries
     return _manifest_record(
         source_id=source_id,
         provider=provider_name,
         endpoint=endpoint,
-        request_parameters={
-            "series_ids": request.series_ids,
-            "start": request.start.isoformat(),
-            "end": request.end.isoformat(),
-        },
+        request_parameters=request_parameters,
         output_path=output_path,
         row_count=row_count,
     )
