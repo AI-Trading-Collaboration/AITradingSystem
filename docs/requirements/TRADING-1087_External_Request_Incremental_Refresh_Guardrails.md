@@ -57,6 +57,13 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   `increment_usage` 和估算剩余额度。
 - 若预计额度不足以完成当前 data-quality-required workflow，命令必须停止并
   说明 blocker；不得生成看似新鲜但缺第二来源或缺主源的下游结果。
+- 2026-06-27 owner 接受“单日几十级别请求量”后，允许在
+  `config/data_source_request_budget_policy.yaml` 中登记的临时 owner-approved
+  overage 继续执行：仅限 Marketstack `eod_daily_prices` 单窗口、单日、
+  `estimated_increment_usage <= 50` 的 tail refresh。该状态必须输出为
+  `OWNER_APPROVED_SMALL_DAILY_OVERAGE` 并记录 policy version、reason、
+  behavioral impact、risk、validation coverage 和 exit condition；任何多日、
+  multi-window、全历史或超上限请求仍 fail closed。
 
 ### C. 可观测性
 
@@ -131,3 +138,19 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   Ruff、compileall 和 `git diff --check`。剩余阻塞是 Marketstack 最近 quota
   header 仍为 `quota_remaining=-688`；真实 daily-run 必须继续 fail closed，
   待 quota 恢复或 owner 批准可审计供应商/额度处理方案后再端到端复验。
+- 2026-06-27: owner 确认单日在几十的请求量可以接受，要求继续跑。本轮新增
+  `config/data_source_request_budget_policy.yaml`，把该判断登记为
+  `active_owner_approved_temporary_override`。原因：head-gap bug 修复后实际每日
+  tail refresh 估算为 25 units，不再是全历史 1950 units。行为影响：当最新
+  Marketstack quota header 仍为负值时，单日 tail refresh 可继续进入 live
+  request。风险：供应商仍可能拒绝或计费 overage。验证覆盖：focused tests
+  覆盖小额 overage 放行与大窗口 fail-closed。退出条件：Marketstack quota 恢复、
+  套餐/供应商政策变更，或单日估算超出该上限时移除/收紧该临时批准。
+- 2026-06-27: 真实复验通过。`aits ops daily-run --as-of 2026-06-26` 运行
+  `daily_ops_run:2026-06-26:20260627T013833Z`，36/36 steps PASS，`download_data`
+  PASS，`validate_data` PASS。`download_manifest.csv` 中 Marketstack 行记录
+  `fetch_window_count=1`、窗口 `2026-06-26` 至 `2026-06-26`、25 tickers、
+  `estimated_increment_usage=25`、`status=OWNER_APPROVED_SMALL_DAILY_OVERAGE`、
+  `live_request_count=1`、`increment_usage_sum=25`；data quality 为
+  `PASS_WITH_WARNINGS` / 0 errors / 1 warning。任务转入 `VALIDATING`，后续关注
+  quota 恢复后移除或收紧临时 owner-approved overage。

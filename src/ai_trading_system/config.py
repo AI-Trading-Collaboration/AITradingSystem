@@ -30,6 +30,9 @@ DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"
 DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_metrics.yaml"
 DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_features.yaml"
+DEFAULT_DATA_SOURCE_REQUEST_BUDGET_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "data_source_request_budget_policy.yaml"
+)
 
 
 class MarketUniverse(BaseModel):
@@ -237,6 +240,62 @@ class DataSourceConfig(BaseModel):
 
 class DataSourcesConfig(BaseModel):
     sources: list[DataSourceConfig] = Field(min_length=1)
+
+
+class DataSourceRequestBudgetPolicyMetadataConfig(BaseModel):
+    owner: str = Field(min_length=1)
+    status: str = Field(min_length=1)
+    rationale: str = Field(default="", min_length=1)
+    intended_effect: str = Field(default="", min_length=1)
+    validation_evidence: str = Field(default="", min_length=1)
+    review_condition: str = Field(default="", min_length=1)
+
+
+class OwnerApprovedProviderOverageConfig(BaseModel):
+    enabled: bool = False
+    max_estimated_increment_usage: int = Field(default=0, ge=0)
+    max_fetch_window_count: int = Field(default=0, ge=0)
+    max_calendar_days_per_window: int = Field(default=0, ge=0)
+    allowed_status: str = Field(
+        default="OWNER_APPROVED_SMALL_DAILY_OVERAGE",
+        min_length=1,
+    )
+    reason: str = Field(default="", min_length=1)
+    behavioral_impact: str = Field(default="", min_length=1)
+    risk: str = Field(default="", min_length=1)
+    validation_coverage: str = Field(default="", min_length=1)
+    exit_condition: str = Field(default="", min_length=1)
+
+    @model_validator(mode="after")
+    def validate_enabled_limits(self) -> Self:
+        if self.enabled and (
+            self.max_estimated_increment_usage <= 0
+            or self.max_fetch_window_count <= 0
+            or self.max_calendar_days_per_window <= 0
+        ):
+            raise ValueError("enabled owner-approved overage must define positive limits")
+        return self
+
+
+class MarketstackEodDailyPricesBudgetPolicyConfig(BaseModel):
+    owner_approved_overage: OwnerApprovedProviderOverageConfig = Field(
+        default_factory=OwnerApprovedProviderOverageConfig
+    )
+
+
+class MarketstackRequestBudgetPolicyConfig(BaseModel):
+    eod_daily_prices: MarketstackEodDailyPricesBudgetPolicyConfig = Field(
+        default_factory=MarketstackEodDailyPricesBudgetPolicyConfig
+    )
+
+
+class DataSourceRequestBudgetPolicyConfig(BaseModel):
+    schema_version: int = Field(ge=1)
+    policy_version: str = Field(min_length=1)
+    policy_metadata: DataSourceRequestBudgetPolicyMetadataConfig
+    marketstack: MarketstackRequestBudgetPolicyConfig = Field(
+        default_factory=MarketstackRequestBudgetPolicyConfig
+    )
 
 
 def _default_sec_metric_periods() -> list[Literal["annual", "quarterly"]]:
@@ -1154,6 +1213,14 @@ def load_data_sources(
     config_path = Path(path)
     raw: dict[str, Any] = _load_yaml_config(config_path)
     return DataSourcesConfig.model_validate(raw)
+
+
+def load_data_source_request_budget_policy(
+    path: Path | str = DEFAULT_DATA_SOURCE_REQUEST_BUDGET_POLICY_CONFIG_PATH,
+) -> DataSourceRequestBudgetPolicyConfig:
+    config_path = Path(path)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
+    return DataSourceRequestBudgetPolicyConfig.model_validate(raw)
 
 
 def load_sec_companies(

@@ -12,9 +12,11 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.config import configured_price_tickers, load_universe
 from ai_trading_system.data.download import (
+    IncrementalPriceWindow,
     ProviderQuotaBudgetError,
     _estimate_marketstack_increment_usage,
     _price_fetch_windows,
+    _provider_request_budget_status,
     download_daily_data,
     write_download_failure_report,
 )
@@ -264,11 +266,63 @@ def test_download_daily_data_blocks_marketstack_when_quota_preflight_fails(
                 api_key="test-key",
                 requests_module=fake_marketstack_requests,
                 request_cache_dir=request_cache_dir,
+                page_limit=1,
             ),
             rate_provider=FakeRateProvider(),
         )
 
     assert fake_marketstack_requests.calls == []
+
+
+def test_marketstack_owner_approved_small_daily_overage_allows_tail_preflight(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-688",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+
+    status = _provider_request_budget_status(
+        provider,
+        (
+            IncrementalPriceWindow(
+                tickers=supported_tickers,
+                start=date(2026, 6, 26),
+                end=date(2026, 6, 26),
+            ),
+        ),
+    )
+
+    assert status is not None
+    assert status["status"] == "OWNER_APPROVED_SMALL_DAILY_OVERAGE"
+    assert status["estimated_increment_usage"] == len(supported_tickers)
+    owner_approved_overage = status["owner_approved_overage"]
+    assert isinstance(owner_approved_overage, dict)
+    assert owner_approved_overage["approved"] is True
+    assert owner_approved_overage["policy_version"] == "data_source_request_budget_policy_v1"
+    assert owner_approved_overage["max_estimated_increment_usage"] == 50
+    assert owner_approved_overage["window_calendar_days"] == [1]
 
 
 def test_download_daily_data_adds_cboe_vix_when_primary_skips_it(tmp_path: Path) -> None:

@@ -16,6 +16,7 @@ from ai_trading_system.config import (
     UniverseConfig,
     configured_price_tickers,
     configured_rate_series,
+    load_data_source_request_budget_policy,
 )
 from ai_trading_system.data.market_data import (
     CBOE_VIX_TICKER,
@@ -538,8 +539,17 @@ def _provider_request_budget_status(
         else None
     )
     status = "NO_LIVE_REQUEST_NEEDED" if estimated_units == 0 else "PASS"
+    owner_approved_overage: dict[str, object] | None = None
     if quota_remaining is not None and quota_remaining < estimated_units:
-        status = "BLOCKED_QUOTA_INSUFFICIENT"
+        owner_approved_overage = _marketstack_owner_approved_overage_status(
+            estimated_units=estimated_units,
+            fetch_windows=fetch_windows,
+            quota_remaining=quota_remaining,
+        )
+        if owner_approved_overage["approved"]:
+            status = str(owner_approved_overage["allowed_status"])
+        else:
+            status = "BLOCKED_QUOTA_INSUFFICIENT"
     payload: dict[str, object] = {
         "provider": "Marketstack",
         "api_family": "eod_daily_prices",
@@ -550,6 +560,8 @@ def _provider_request_budget_status(
         "latest_quota_observed_at": latest_observed_at,
         "fetch_window_count": len(fetch_windows),
     }
+    if owner_approved_overage is not None:
+        payload["owner_approved_overage"] = owner_approved_overage
     if status == "BLOCKED_QUOTA_INSUFFICIENT":
         raise ProviderQuotaBudgetError(
             "Marketstack quota preflight blocked download: "
@@ -557,6 +569,48 @@ def _provider_request_budget_status(
             f"quota_remaining={quota_remaining}, quota_limit={quota_limit}"
         )
     return payload
+
+
+def _marketstack_owner_approved_overage_status(
+    *,
+    estimated_units: int,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+    quota_remaining: int,
+) -> dict[str, object]:
+    policy = load_data_source_request_budget_policy()
+    approval = policy.marketstack.eod_daily_prices.owner_approved_overage
+    window_calendar_days = tuple(
+        max(1, (window.end - window.start).days + 1) for window in fetch_windows
+    )
+    violation_reasons: list[str] = []
+    if not approval.enabled:
+        violation_reasons.append("owner_approved_overage_disabled")
+    if estimated_units <= 0:
+        violation_reasons.append("no_live_request_needed")
+    if estimated_units > approval.max_estimated_increment_usage:
+        violation_reasons.append("estimated_usage_exceeds_owner_approved_limit")
+    if len(fetch_windows) > approval.max_fetch_window_count:
+        violation_reasons.append("fetch_window_count_exceeds_owner_approved_limit")
+    if any(days > approval.max_calendar_days_per_window for days in window_calendar_days):
+        violation_reasons.append("calendar_window_exceeds_owner_approved_limit")
+
+    return {
+        "approved": not violation_reasons,
+        "policy_version": policy.policy_version,
+        "policy_status": policy.policy_metadata.status,
+        "allowed_status": approval.allowed_status,
+        "quota_shortfall": max(0, estimated_units - quota_remaining),
+        "max_estimated_increment_usage": approval.max_estimated_increment_usage,
+        "max_fetch_window_count": approval.max_fetch_window_count,
+        "max_calendar_days_per_window": approval.max_calendar_days_per_window,
+        "window_calendar_days": list(window_calendar_days),
+        "violation_reasons": violation_reasons,
+        "reason": approval.reason,
+        "behavioral_impact": approval.behavioral_impact,
+        "risk": approval.risk,
+        "validation_coverage": approval.validation_coverage,
+        "exit_condition": approval.exit_condition,
+    }
 
 
 def _estimate_marketstack_increment_usage(

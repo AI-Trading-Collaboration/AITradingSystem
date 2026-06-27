@@ -1,0 +1,45 @@
+schema_version: 1
+policy_version: data_source_request_budget_policy_v1
+policy_metadata:
+  owner: project_owner
+  status: active_owner_approved_temporary_override
+  rationale: >
+    After TRADING-1087 reduced the Marketstack daily tail refresh estimate from
+    full-history usage to tens of units, the project owner approved continuing
+    the daily run when the only blocker is a small single-day Marketstack quota
+    overage.
+  intended_effect: >
+    Keep the audited daily data-quality workflow moving while preserving
+    fail-closed behavior for full-history refreshes, multi-day repairs, and
+    large quota shortfalls.
+  validation_evidence: >
+    tests/test_data_download.py covers owner-approved small daily overage and
+    confirms large Marketstack quota shortfalls still block before live calls.
+  review_condition: >
+    Remove or tighten after the Marketstack monthly quota resets, the vendor
+    plan changes, or daily estimated usage exceeds this approved small-tail
+    boundary.
+marketstack:
+  eod_daily_prices:
+    owner_approved_overage:
+      enabled: true
+      max_estimated_increment_usage: 50
+      max_fetch_window_count: 1
+      max_calendar_days_per_window: 1
+      allowed_status: OWNER_APPROVED_SMALL_DAILY_OVERAGE
+      reason: >
+        Owner accepted single-day Marketstack request volume in the tens on
+        2026-06-27 after the head-gap incremental-refresh bug was fixed.
+      behavioral_impact: >
+        Allows a single-day Marketstack tail refresh to proceed even when the
+        latest cached quota header reports negative remaining quota.
+      risk: >
+        Marketstack may reject the live request, bill overage usage, or continue
+        reporting negative quota until the plan/monthly allowance resets.
+      validation_coverage: >
+        Focused unit tests validate both the allowed small daily tail case and
+        the blocked large-refresh case; daily-run diagnostics expose the status.
+      exit_condition: >
+        Replace with the normal quota preflight once Marketstack quota recovers
+        or a reviewed paid/vendor quota policy supersedes this temporary
+        approval.
