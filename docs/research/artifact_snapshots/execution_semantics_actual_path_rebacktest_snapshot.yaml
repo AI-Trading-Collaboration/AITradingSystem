@@ -1,0 +1,204 @@
+schema_version: 1
+snapshot_id: execution_semantics_actual_path_rebacktest_snapshot_v1
+review_task_id: TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
+review_report_path: docs/research/execution_semantics_actual_path_rebacktest_review.md
+source_runtime_root: outputs/research_strategies/execution_semantics
+source_generated_at:
+  gate: "2026-06-27T02:51:04Z"
+  rebacktest: "2026-06-27T02:51:15Z"
+commands:
+  gate: aits research strategies execution-semantics-rebacktest-gate
+  rebacktest: >-
+    aits research strategies execution-semantics-rebacktest --policy-registry
+    config/research/strategy_execution_policy_registry.yaml --output
+    outputs/research_strategies/execution_semantics
+policy_registry:
+  path: config/research/strategy_execution_policy_registry.yaml
+  sha256: 5c1b64260ffa4e9154dc27c9596b7cf2111fb07d03121b3ad5610f3f23922df0
+market_regime:
+  regime_id: ai_after_chatgpt
+  date_range_start: "2022-12-01"
+  date_range_end: "2026-06-26"
+data_quality:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  error_count: 0
+  warning_count: 1
+  warning_diagnosis_status: NON_BLOCKING_WARNING
+  ranking_impact: not_evidenced
+  required_action: keep_warning_visible_and_recheck_if_validation_escalates
+  warning_details:
+    - severity: WARNING
+      source: 价格主源
+      code: prices_adjustment_ratio_jump
+      rows: 1
+      sample: "TQQQ 2025-11-20 adjustment ratio jump from data_quality_2026-06-26.md"
+gate:
+  artifact_relative_path: outputs/research_strategies/execution_semantics/execution_semantics_rebacktest_gate.json
+  sha256: d267aeb076414d2a214344434747b862d2f1e4a01f89818acb2e4436dd4bd4a4
+  status: EXECUTION_SEMANTICS_REBACKTEST_REQUIRED
+  promotion_eligible: false
+  rebacktest_required: true
+  blocked_reasons:
+    - PRE_EXECUTION_SEMANTICS
+    - TARGET_PATH_NOT_PROMOTION_ELIGIBLE
+    - EXECUTION_SEMANTICS_REBACKTEST_REQUIRED
+aggregate_rebacktest:
+  artifact_relative_path: outputs/research_strategies/execution_semantics/execution_semantics_rebacktest.json
+  sha256: eecff8df87539c2da769c4563b939ee7fbc29eb95c95eb58b510698e5dbb6590
+  status: EXECUTION_SEMANTICS_AWARE_REBACKTEST_COMPLETE
+  completed_count: 5
+  blocked_count: 0
+  dynamic_promotion_blocked: true
+final_status:
+  warning_diagnosis: NON_BLOCKING_WARNING
+  dynamic_promotion: BLOCKED
+  reason: >-
+    Data quality validation passed with one non-blocking warning and zero errors.
+    Dynamic promotion remains blocked by execution-semantics readiness and owner-review
+    requirements, not by re-enabling any target-path result.
+strategies:
+  - strategy_id: defensive_limited_adjustment
+    strategy_type: dynamic
+    data_quality_status: PASS_WITH_WARNINGS
+    execution_policy_id: monthly_plus_drawdown_shock_v1
+    metrics_actual_path: present
+    metrics_target_path: present
+    promotion_readiness_status: NOT_PROMOTION_ELIGIBLE
+    promotion_eligible: false
+    blocked_reasons:
+      - SIGNAL_STALENESS_COST_MATERIAL
+      - OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION
+    artifact_complete: true
+    artifacts:
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/summary.json
+        sha256: a57f5da0c3c43c75ec0dd63778379ffe6a906b666ffa358bfe3c181a1c9a1d78
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/metrics_actual_path.json
+        sha256: afb5f6b7f372651817bf7a5f39a2fdb8d569aad40db59cd6cad7fcd55009bcb2
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/metrics_target_path.json
+        sha256: f23ff325dab6b59ba34d48587003b6c5a82bc83b76c6d82be58d02d27768eb04
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/target_vs_actual_position_path.csv
+        sha256: 57635481c0857b4e7f1700cf4e01b7d88271224bd7e19b475130e7e008f64022
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/lag_cost_report.md
+        sha256: cf2e1fbd4406fbc04b1b4785da72a1d8ca1874bc2eaec01e716dee876b341253
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/signal_staleness_report.md
+        sha256: a2e395ae3da72569fb58e1b6ef05d6fbb7f851bc6c5880bbf324c040c3255c0e
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/execution_policy_snapshot.yaml
+        sha256: 0f942ca468ff951951d991385d8a1f462caeab60b2395904db66f7f5a724b1e6
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/defensive_limited_adjustment/promotion_readiness.json
+        sha256: 4b3561f1eb492a94f270e2d56d936f1975e0502c2f654e2d4d3ee6fde2e62625
+  - strategy_id: limited_adjustment
+    strategy_type: dynamic
+    data_quality_status: PASS_WITH_WARNINGS
+    execution_policy_id: monthly_plus_threshold_5pct_v1
+    metrics_actual_path: present
+    metrics_target_path: present
+    promotion_readiness_status: NOT_PROMOTION_ELIGIBLE
+    promotion_eligible: false
+    blocked_reasons:
+      - SIGNAL_STALENESS_COST_MATERIAL
+      - OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION
+    artifact_complete: true
+    artifacts:
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/summary.json
+        sha256: ea2a42c044e8fc69bea0356f2c00a37d62641ec30b70228cf5218cfde52f48af
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/metrics_actual_path.json
+        sha256: 158f5aec7c8757998392099544b24df90b42cd37135d7a564e15cec6fb641ca7
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/metrics_target_path.json
+        sha256: f707fa25f70ec443429980b45f610577f8c4d9f949a9cde917f2e3a7c78a17b8
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/target_vs_actual_position_path.csv
+        sha256: 2281c4460851ef5cbed889b415f28572f515146934a71ee1b960f999a5b5f0b5
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/lag_cost_report.md
+        sha256: fcd5e6544c673edd34cf9eba4e93d479fd5ee2ed62a4b815feeb3ccef35e598e
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/signal_staleness_report.md
+        sha256: e6b89c4cb115d8cf50c1ddd80d5867c62b4348df17a0a5359952bfda78894a1b
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/execution_policy_snapshot.yaml
+        sha256: fc7c3569162499c8061871705e58d7c34a1c249634d8e84e596a5522c60dfbe5
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/limited_adjustment/promotion_readiness.json
+        sha256: 1092a5c3201ff948e72d4fe508f2474336ae8341cd17f0b8462e95e4bc991640
+  - strategy_id: no_trade
+    strategy_type: static
+    data_quality_status: PASS_WITH_WARNINGS
+    execution_policy_id: no_rebalance
+    metrics_actual_path: present
+    metrics_target_path: present
+    promotion_readiness_status: PROMOTION_REVIEWABLE
+    promotion_eligible: true
+    blocked_reasons: []
+    artifact_complete: true
+    artifacts:
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/summary.json
+        sha256: 4f8c29fb28a80bbbc4b0ad613c2327bdbd119de1bd4ae991b5e27a4b53a1d6b1
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/metrics_actual_path.json
+        sha256: 6e4d651a43f820c1f48a39923efe1921ff1113805d0cfa30e2b9782f4bb37a3e
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/metrics_target_path.json
+        sha256: 56061ad67f72d3cb10560cae6cf5e78fad405725f3ef0045fd9fa703f2613028
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/target_vs_actual_position_path.csv
+        sha256: 6378b2c0e413b098672b4ce88158a2e9dbeb50d37464e68083d8f0fa814ca727
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/lag_cost_report.md
+        sha256: 27e696adde5f74aa7dc37aeb993e7ec900352e521465a3695aa97f4b06705ca9
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/signal_staleness_report.md
+        sha256: c8482e7fb22757dc28e0ae1a2a04e341a6d3499175ee490c527f44c830add1a9
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/execution_policy_snapshot.yaml
+        sha256: 88902711b8d37d19dae6c1e34bbca5cbbfbe8c72932166e05f1f9b9485bf6851
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/no_trade/promotion_readiness.json
+        sha256: f7d165561f60d0c39ec5fc610254db02670233f7605d0740095bff44a84d1c0e
+  - strategy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    strategy_type: dynamic
+    data_quality_status: PASS_WITH_WARNINGS
+    execution_policy_id: min_holding_20d_v1
+    metrics_actual_path: present
+    metrics_target_path: present
+    promotion_readiness_status: NOT_PROMOTION_ELIGIBLE
+    promotion_eligible: false
+    blocked_reasons:
+      - EXECUTION_LAG_COST_MATERIAL
+      - SIGNAL_STALENESS_COST_MATERIAL
+      - OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION
+    artifact_complete: true
+    artifacts:
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/summary.json
+        sha256: 583f2ac8ef11c869e62c85cca67c954114b31000021ea947350d439cfcd39170
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/metrics_actual_path.json
+        sha256: a038d09360f4658595c4159ebeb7b29440864254a35b4e8d7421ee9f3d00c10c
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/metrics_target_path.json
+        sha256: 11a8ad61e2bb436a1573d8d4c841c75f2f8ca485c2629f44e500862f85bf024c
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/target_vs_actual_position_path.csv
+        sha256: 017628d3ebb254f22af75601afc6b236be305f7e61464d97fe64ad560f67f95a
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/lag_cost_report.md
+        sha256: e99ff6c5d1623c86a7116714c40d716d53706c7b193d72fd6f4adc16d38fbb30
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/signal_staleness_report.md
+        sha256: e4f82bb8fb1361d9b9ac8dcd0ce44e0a1a9f810ed364c1e8c4dca1f55b566de0
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/execution_policy_snapshot.yaml
+        sha256: cd22382c26dbdad622801a245806e12a5fd833848fc5830b2ea18efc60f00e5c
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_regime_overlay_v0_4_lower_turnover/promotion_readiness.json
+        sha256: eef97bd188c1b623f9a59b7d48a98b11f47fc45b93f7edd61364b2d4af61c291
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+    strategy_type: dynamic
+    data_quality_status: PASS_WITH_WARNINGS
+    execution_policy_id: hysteresis_band_v1
+    metrics_actual_path: present
+    metrics_target_path: present
+    promotion_readiness_status: NOT_PROMOTION_ELIGIBLE
+    promotion_eligible: false
+    blocked_reasons:
+      - SIGNAL_STALENESS_COST_MATERIAL
+      - OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION
+    artifact_complete: true
+    artifacts:
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/summary.json
+        sha256: cc29abef7833771319b61d1576cbc2a894d9ea968f9a50dac9a1d0ae2fbe02db
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/metrics_actual_path.json
+        sha256: 00e48aa00fb5b5b344fe9c5cfce986becbfa11159797ff09f3938264b106b74f
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/metrics_target_path.json
+        sha256: 85ffa9555c2cde4008256a299050686f682880bd22db3a5b88bb12b73e9143bc
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/target_vs_actual_position_path.csv
+        sha256: a93b9710c0f3f3f4741d3ef15d869bc016c1a6922632fde4dee8d3d070ab9cf3
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/lag_cost_report.md
+        sha256: 57db18cb38f0caa392ec5b94183675c780b3e0ef340b553dc0c6093e6d885599
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/signal_staleness_report.md
+        sha256: a2eaefedb2df7cdad0c5631ca668133cfabcca02637e8792ab2f166618289f14
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/execution_policy_snapshot.yaml
+        sha256: cc621f1caa2ad294482ede3989715442435cc2336af77ccc60b35097ab048cee
+      - artifact_relative_path: outputs/research_strategies/execution_semantics/dynamic_v0_5_ai_trend_confirmed_only/promotion_readiness.json
+        sha256: dee9c2ce0fcd2202f2f375e0e1163beaca59b38c1525b2b52dd4e3189ffa3bf1
