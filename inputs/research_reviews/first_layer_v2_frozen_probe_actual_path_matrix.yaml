@@ -2,10 +2,18 @@ schema_version: first_layer_v2_frozen_probe_actual_path_matrix.v1
 report_type: first_layer_v2_frozen_probe_actual_path_matrix
 title: First-Layer V2 Frozen-Probe Actual-Path Matrix
 status: FIRST_LAYER_V2_FROZEN_PROBE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
-generated_at: '2026-06-27T15:19:17Z'
+generated_at: '2026-06-27T16:52:07Z'
 market_regime: ai_after_chatgpt
 anchor_event: ChatGPT public launch
 anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
 summary:
   research_window_id: exact_three_asset_validated
   requested_start: '2021-02-22'
@@ -15,8 +23,8 @@ summary:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  probe_count: 4
-  improved_vs_flat_reference_count: 4
+  probe_count: 8
+  improved_vs_flat_reference_count: 8
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false
 research_only: true
@@ -29,6 +37,18 @@ broker_action: none
 production_effect: none
 manual_review_required: true
 dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_composer_v2
+  threshold_policy: first_layer_threshold_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 8
+  pre_registered_selection_rule: true
 probe_rows:
 - research_window_id: exact_three_asset_validated
   requested_start: '2021-02-22'
@@ -40,18 +60,20 @@ probe_rows:
   exact_or_proxy: exact
   probe_id: defensive_overlay_probe
   model_id: first_layer_composer_v2
-  v2_annual_return: 0.141507
-  v2_max_drawdown: -0.075779
-  v2_sharpe: 1.675215
-  v2_calmar: 1.867376
-  v2_turnover: 42.475942
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.137002
+  v2_max_drawdown: -0.075336
+  v2_sharpe: 1.642834
+  v2_calmar: 1.818531
+  v2_turnover: 44.242455
   flat_annual_return_reference: 0.097325
   hierarchical_annual_return_reference: 0.077251
   flat_calmar_reference: 0.95561
   hierarchical_calmar_reference: 0.621718
-  v2_vs_flat_return_delta_reference: 0.044182
-  v2_vs_hierarchical_return_delta_reference: 0.064256
-  v2_vs_flat_calmar_delta_reference: 0.911766
+  v2_vs_flat_return_delta_reference: 0.039677
+  v2_vs_hierarchical_return_delta_reference: 0.059751
+  v2_vs_flat_calmar_delta_reference: 0.862921
   actual_path_improved_vs_flat_reference: true
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false
@@ -75,18 +97,20 @@ probe_rows:
   exact_or_proxy: exact
   probe_id: balanced_dynamic_probe
   model_id: first_layer_composer_v2
-  v2_annual_return: 0.156015
-  v2_max_drawdown: -0.082585
-  v2_sharpe: 1.538574
-  v2_calmar: 1.889144
-  v2_turnover: 63.377405
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.153773
+  v2_max_drawdown: -0.083738
+  v2_sharpe: 1.495338
+  v2_calmar: 1.836365
+  v2_turnover: 67.796474
   flat_annual_return_reference: 0.098138
   hierarchical_annual_return_reference: 0.085037
   flat_calmar_reference: 0.974622
   hierarchical_calmar_reference: 0.577605
-  v2_vs_flat_return_delta_reference: 0.057877
-  v2_vs_hierarchical_return_delta_reference: 0.070978
-  v2_vs_flat_calmar_delta_reference: 0.914522
+  v2_vs_flat_return_delta_reference: 0.055635
+  v2_vs_hierarchical_return_delta_reference: 0.068736
+  v2_vs_flat_calmar_delta_reference: 0.861743
   actual_path_improved_vs_flat_reference: true
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false
@@ -110,18 +134,20 @@ probe_rows:
   exact_or_proxy: exact
   probe_id: drawdown_control_probe
   model_id: first_layer_composer_v2
-  v2_annual_return: 0.149733
-  v2_max_drawdown: -0.105862
-  v2_sharpe: 1.293105
-  v2_calmar: 1.414416
-  v2_turnover: 121.263419
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.144494
+  v2_max_drawdown: -0.10949
+  v2_sharpe: 1.2139
+  v2_calmar: 1.319691
+  v2_turnover: 128.185237
   flat_annual_return_reference: 0.10189
   hierarchical_annual_return_reference: 0.065686
   flat_calmar_reference: 1.204107
   hierarchical_calmar_reference: 0.37436
-  v2_vs_flat_return_delta_reference: 0.047843
-  v2_vs_hierarchical_return_delta_reference: 0.084047
-  v2_vs_flat_calmar_delta_reference: 0.210309
+  v2_vs_flat_return_delta_reference: 0.042604
+  v2_vs_hierarchical_return_delta_reference: 0.078808
+  v2_vs_flat_calmar_delta_reference: 0.115584
   actual_path_improved_vs_flat_reference: true
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false
@@ -143,20 +169,170 @@ probe_rows:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  probe_id: risk_on_diagnostic_probe
+  probe_id: no_tqqq_return_seeking_probe
   model_id: first_layer_composer_v2
-  v2_annual_return: 0.169136
-  v2_max_drawdown: -0.091056
-  v2_sharpe: 1.483156
-  v2_calmar: 1.857487
-  v2_turnover: 58.656358
-  flat_annual_return_reference: 0.097325
-  hierarchical_annual_return_reference: 0.092932
-  flat_calmar_reference: 0.95561
-  hierarchical_calmar_reference: 0.582879
-  v2_vs_flat_return_delta_reference: 0.071811
-  v2_vs_hierarchical_return_delta_reference: 0.076204
-  v2_vs_flat_calmar_delta_reference: 0.901877
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.154
+  v2_max_drawdown: -0.080725
+  v2_sharpe: 1.52909
+  v2_calmar: 1.907714
+  v2_turnover: 73.861878
+  flat_annual_return_reference: null
+  hierarchical_annual_return_reference: null
+  flat_calmar_reference: null
+  hierarchical_calmar_reference: null
+  v2_vs_flat_return_delta_reference: 0.154
+  v2_vs_hierarchical_return_delta_reference: 0.154
+  v2_vs_flat_calmar_delta_reference: 1.907714
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: low_tqqq_balanced_growth_probe
+  model_id: first_layer_composer_v2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.166618
+  v2_max_drawdown: -0.092836
+  v2_sharpe: 1.456135
+  v2_calmar: 1.794759
+  v2_turnover: 74.098539
+  flat_annual_return_reference: null
+  hierarchical_annual_return_reference: null
+  flat_calmar_reference: null
+  hierarchical_calmar_reference: null
+  v2_vs_flat_return_delta_reference: 0.166618
+  v2_vs_hierarchical_return_delta_reference: 0.166618
+  v2_vs_flat_calmar_delta_reference: 1.794759
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: qqq_heavy_growth_probe
+  model_id: first_layer_composer_v2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.171066
+  v2_max_drawdown: -0.104732
+  v2_sharpe: 1.477983
+  v2_calmar: 1.633361
+  v2_turnover: 67.955435
+  flat_annual_return_reference: null
+  hierarchical_annual_return_reference: null
+  flat_calmar_reference: null
+  hierarchical_calmar_reference: null
+  v2_vs_flat_return_delta_reference: 0.171066
+  v2_vs_hierarchical_return_delta_reference: 0.171066
+  v2_vs_flat_calmar_delta_reference: 1.633361
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: capped_risk_on_diagnostic_probe
+  model_id: first_layer_composer_v2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.179055
+  v2_max_drawdown: -0.105888
+  v2_sharpe: 1.390431
+  v2_calmar: 1.690978
+  v2_turnover: 74.460194
+  flat_annual_return_reference: null
+  hierarchical_annual_return_reference: null
+  flat_calmar_reference: null
+  hierarchical_calmar_reference: null
+  v2_vs_flat_return_delta_reference: 0.179055
+  v2_vs_hierarchical_return_delta_reference: 0.179055
+  v2_vs_flat_calmar_delta_reference: 1.690978
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  model_id: first_layer_composer_v2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  v2_annual_return: 0.166618
+  v2_max_drawdown: -0.092836
+  v2_sharpe: 1.456135
+  v2_calmar: 1.794759
+  v2_turnover: 74.098539
+  flat_annual_return_reference: null
+  hierarchical_annual_return_reference: null
+  flat_calmar_reference: null
+  hierarchical_calmar_reference: null
+  v2_vs_flat_return_delta_reference: 0.166618
+  v2_vs_hierarchical_return_delta_reference: 0.166618
+  v2_vs_flat_calmar_delta_reference: 1.794759
   actual_path_improved_vs_flat_reference: true
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false

@@ -1,0 +1,100 @@
+schema_version: first_layer_v2_frozen_probe_contract.v1
+report_type: first_layer_v2_frozen_probe_contract
+title: First-Layer V2 Frozen Probe Contract
+status: FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T16:51:15Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  modified_layer: first_layer
+  frozen_second_layer: dynamic_second_layer_probe_registry_v2
+  probe_registry_path: D:\Work\AITradingSystem\config\research\dynamic_second_layer_probe_registry_v2.yaml
+  probe_count: 8
+  allowed_probe_count: 8
+  registry_frozen: true
+  second_layer_weight_changes_allowed: false
+  blocked_weight_changes: true
+  primary_window: '2021-02-22'
+  legacy_window_role: comparison_only
+  sensitivity_window_role: caveated_sensitivity
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_composer_v2
+  threshold_policy: first_layer_threshold_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 8
+  pre_registered_selection_rule: true
+probe_ids:
+- defensive_overlay_probe
+- balanced_dynamic_probe
+- drawdown_control_probe
+- no_tqqq_return_seeking_probe
+- low_tqqq_balanced_growth_probe
+- qqq_heavy_growth_probe
+- capped_risk_on_diagnostic_probe
+- asymmetric_risk_on_slow_confirm_probe
+window_rows:
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+- research_window_id: exact_three_asset_primary_only_extension
+  requested_start: '2020-05-28'
+  actual_start: '2020-05-28'
+  actual_portfolio_start: '2020-05-28'
+  end: latest
+  window_role: sensitivity
+  data_quality_contract: primary_only_for_sgov_before_2021_02_22
+  exact_or_proxy: exact
+- research_window_id: legacy_research_window_2022_12
+  requested_start: '2022-12-01'
+  actual_start: '2022-12-01'
+  actual_portfolio_start: '2022-12-01'
+  end: latest
+  window_role: legacy_comparison
+  data_quality_contract: legacy_ai_after_chatgpt_window
+  exact_or_proxy: exact
+forbidden_changes:
+- second_layer_probe_weight_change
+- new_second_layer_probe
+- dynamic_promotion
+- paper_shadow
+- production
+- broker_action

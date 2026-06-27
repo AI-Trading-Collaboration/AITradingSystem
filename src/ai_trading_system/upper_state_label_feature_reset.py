@@ -102,6 +102,9 @@ DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH = (
 DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH = (
     PROJECT_ROOT / "config" / "research" / "first_layer_composer_v2.yaml"
 )
+DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "dynamic_second_layer_probe_registry_v2.yaml"
+)
 
 DEFAULT_UP_STATE_REPAIR_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "up_state_repair_result_review.md"
@@ -139,6 +142,9 @@ DEFAULT_FEATURE_INVENTORY_YAML_PATH = (
 )
 DEFAULT_FEATURE_INVENTORY_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "up_state_feature_inventory_review.md"
+)
+DEFAULT_FEATURE_INVENTORY_DOC_V3_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "up_state_feature_inventory_review_v3.md"
 )
 DEFAULT_PIT_FEATURE_V3_CSV_PATH = (
     DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "pit_feature_matrix" / "pit_feature_matrix_v3.csv"
@@ -214,6 +220,33 @@ DEFAULT_FINAL_MATRIX_YAML_PATH = (
     / "inputs"
     / "research_reviews"
     / "upper_state_label_feature_reset_final_matrix.yaml"
+)
+DEFAULT_FIRST_LAYER_V2_SCOPE_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "first_layer_v2_frozen_probe_scope.md"
+)
+DEFAULT_FIRST_LAYER_V2_CONTRACT_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "first_layer_v2_frozen_probe_contract.yaml"
+)
+DEFAULT_FIRST_LAYER_V2_COVERAGE_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "first_layer_v2_effective_coverage_audit.md"
+)
+DEFAULT_FIRST_LAYER_V2_COVERAGE_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "first_layer_v2_effective_coverage_audit.yaml"
+)
+DEFAULT_FIRST_LAYER_V2_OWNER_REVIEW_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "first_layer_v2_owner_review_pack.md"
+)
+DEFAULT_FIRST_LAYER_V2_CLOSEOUT_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "first_layer_v2_label_feature_model_closeout.md"
+)
+DEFAULT_FIRST_LAYER_V2_FINAL_MATRIX_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "first_layer_v2_label_feature_model_final_matrix.yaml"
 )
 DEFAULT_PRIOR_UP_STATE_FINAL_PATH = (
     PROJECT_ROOT / "inputs" / "research_reviews" / "first_layer_up_state_learning_final_matrix.yaml"
@@ -296,6 +329,7 @@ def run_upper_state_label_feature_reset_pack(
     marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
     rates_path: Path = DEFAULT_RATES_PATH,
     output_root: Path = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT,
+    first_layer_v2_closeout: bool = False,
 ) -> dict[str, Any]:
     registry = load_research_window_registry(registry_path)
     protocol = _load_yaml_mapping(alternating_protocol_path)
@@ -329,6 +363,16 @@ def run_upper_state_label_feature_reset_pack(
     primary_prices = slice_window_prices(prices, primary_window)
     primary_rates = rates.loc[rates.index >= primary_prices.index.min()].copy()
 
+    frozen_probe_contract = (
+        build_first_layer_v2_frozen_probe_contract(
+            primary_window=primary_window,
+            windows=windows,
+            probe_registry=probe_registry,
+            probe_registry_path=probe_registry_path,
+        )
+        if first_layer_v2_closeout
+        else None
+    )
     repair_review = build_up_state_repair_result_review(
         prior_final_path=DEFAULT_PRIOR_UP_STATE_FINAL_PATH,
         primary_window=primary_window,
@@ -387,6 +431,17 @@ def run_upper_state_label_feature_reset_pack(
         primary_window=primary_window,
         prior_actual_path_path=DEFAULT_PRIOR_ACTUAL_PATH_PATH,
     )
+    effective_coverage = (
+        build_first_layer_v2_effective_coverage_audit(
+            primary_window=primary_window,
+            labels=labels_v2,
+            feature_matrix=feature_matrix,
+            composer_predictions=composer_predictions,
+            actual_path=actual_path,
+        )
+        if first_layer_v2_closeout
+        else None
+    )
     walk_forward = build_first_layer_walk_forward_review_v3(
         model_results=model_results,
         composer_predictions=composer_predictions,
@@ -400,6 +455,7 @@ def run_upper_state_label_feature_reset_pack(
         model_results=model_results,
         actual_path=actual_path,
         primary_window=primary_window,
+        effective_coverage=effective_coverage,
     )
     threshold_review = build_threshold_review(threshold_policy, model_results, primary_window)
     owner_pack = build_owner_review_pack(
@@ -420,8 +476,39 @@ def run_upper_state_label_feature_reset_pack(
         failure=failure,
         primary_window=primary_window,
     )
+    first_layer_v2_owner_pack = (
+        build_first_layer_v2_owner_review_pack(
+            frozen_probe_contract=_mapping(frozen_probe_contract),
+            effective_coverage=_mapping(effective_coverage),
+            label_summary=label_summary,
+            feature_audit=feature_audit,
+            walk_forward=walk_forward,
+            actual_path=actual_path,
+            failure=failure,
+            primary_window=primary_window,
+        )
+        if first_layer_v2_closeout
+        else None
+    )
+    first_layer_v2_final_matrix = (
+        build_first_layer_v2_label_feature_model_final_matrix(
+            frozen_probe_contract=_mapping(frozen_probe_contract),
+            effective_coverage=_mapping(effective_coverage),
+            label_summary=label_summary,
+            feature_audit=feature_audit,
+            walk_forward=walk_forward,
+            actual_path=actual_path,
+            failure=failure,
+            owner_pack=_mapping(first_layer_v2_owner_pack),
+            primary_window=primary_window,
+        )
+        if first_layer_v2_closeout
+        else None
+    )
     write_upper_state_reset_outputs(
         output_root=output_root,
+        frozen_probe_contract=frozen_probe_contract,
+        effective_coverage=effective_coverage,
         repair_review=repair_review,
         protocol_review=protocol_review,
         taxonomy_review=taxonomy_review,
@@ -442,8 +529,42 @@ def run_upper_state_label_feature_reset_pack(
         failure=failure,
         owner_pack=owner_pack,
         final_matrix=final_matrix,
+        first_layer_v2_owner_pack=first_layer_v2_owner_pack,
+        first_layer_v2_final_matrix=first_layer_v2_final_matrix,
     )
-    return owner_pack
+    return _mapping(first_layer_v2_final_matrix) if first_layer_v2_closeout else owner_pack
+
+
+def run_first_layer_v2_label_feature_model_reset_pack(
+    *,
+    registry_path: Path = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    alternating_protocol_path: Path = DEFAULT_ALTERNATING_PROTOCOL_PATH,
+    upper_state_taxonomy_path: Path = DEFAULT_UPPER_STATE_TAXONOMY_V2_PATH,
+    action_value_policy_path: Path = DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
+    threshold_policy_path: Path = DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH,
+    composer_config_path: Path = DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH,
+    probe_registry_path: Path = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    expanded_config_path: Path = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    output_root: Path = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    return run_upper_state_label_feature_reset_pack(
+        registry_path=registry_path,
+        alternating_protocol_path=alternating_protocol_path,
+        upper_state_taxonomy_path=upper_state_taxonomy_path,
+        action_value_policy_path=action_value_policy_path,
+        threshold_policy_path=threshold_policy_path,
+        composer_config_path=composer_config_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        first_layer_v2_closeout=True,
+    )
 
 
 def validate_alternating_two_layer_protocol(protocol: Mapping[str, Any]) -> dict[str, Any]:
@@ -533,6 +654,133 @@ def upper_state_label_rows_have_window_metadata(labels: pd.DataFrame) -> bool:
 def first_layer_predictions_contain_weights(predictions: pd.DataFrame) -> bool:
     forbidden_tokens = {"QQQ", "SGOV", "TQQQ", "weight", "target_weight", "actual_weight"}
     return any(any(token in str(column) for token in forbidden_tokens) for column in predictions)
+
+
+def build_first_layer_v2_frozen_probe_contract(
+    *,
+    primary_window: Mapping[str, Any],
+    windows: Sequence[Mapping[str, Any]],
+    probe_registry: Mapping[str, Any],
+    probe_registry_path: Path,
+) -> dict[str, Any]:
+    probes = _records(probe_registry.get("probes"))
+    probe_ids = [str(probe.get("probe_id")) for probe in probes]
+    policy_id = str(probe_registry.get("policy_id"))
+    registry_frozen = policy_id == "dynamic_second_layer_probe_registry_v2"
+    blocked_weight_changes = all(
+        "first_layer_action_value_approval" not in _string_list(probe.get("blocked_usage"))
+        or str(probe.get("probe_id")) == "capped_risk_on_diagnostic_probe"
+        for probe in probes
+    )
+    return _payload(
+        report_type="first_layer_v2_frozen_probe_contract",
+        title="First-Layer V2 Frozen Probe Contract",
+        status="FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_READY_PROMOTION_BLOCKED"
+        if registry_frozen
+        else "FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_INVALID",
+        summary={
+            **window_metadata(primary_window),
+            "modified_layer": "first_layer",
+            "frozen_second_layer": policy_id,
+            "probe_registry_path": str(probe_registry_path),
+            "probe_count": len(probes),
+            "allowed_probe_count": len(probe_ids),
+            "registry_frozen": registry_frozen,
+            "second_layer_weight_changes_allowed": False,
+            "blocked_weight_changes": blocked_weight_changes,
+            "primary_window": "2021-02-22",
+            "legacy_window_role": "comparison_only",
+            "sensitivity_window_role": "caveated_sensitivity",
+            "target_path_metrics_used_for_pass": False,
+        },
+        probe_ids=probe_ids,
+        window_rows=[window_metadata(window) for window in windows],
+        forbidden_changes=[
+            "second_layer_probe_weight_change",
+            "new_second_layer_probe",
+            "dynamic_promotion",
+            "paper_shadow",
+            "production",
+            "broker_action",
+        ],
+    )
+
+
+def build_first_layer_v2_effective_coverage_audit(
+    *,
+    primary_window: Mapping[str, Any],
+    labels: pd.DataFrame,
+    feature_matrix: pd.DataFrame,
+    composer_predictions: pd.DataFrame,
+    actual_path: Mapping[str, Any],
+) -> dict[str, Any]:
+    requested_start = str(window_metadata(primary_window).get("requested_start"))
+    label_start = _min_iso_date(
+        labels.loc[labels["research_window_id"] == PRIMARY_WINDOW_ID]
+        if "research_window_id" in labels
+        else labels
+    )
+    feature_start = _min_iso_date(feature_matrix)
+    prediction_start = _min_iso_date(composer_predictions)
+    actual_rows = _records(actual_path.get("probe_rows"))
+    portfolio_start = min(
+        [str(row.get("date_start")) for row in actual_rows if row.get("date_start")],
+        default=prediction_start,
+    )
+    prediction_cutoff = "2022-01-01"
+    prediction_late = bool(prediction_start and prediction_start > prediction_cutoff)
+    status = (
+        "PRIMARY_WINDOW_COVERAGE_INCOMPLETE"
+        if prediction_late
+        else "FIRST_LAYER_V2_EFFECTIVE_COVERAGE_READY_PROMOTION_BLOCKED"
+    )
+    coverage_rows = [
+        {
+            "coverage_item": "label",
+            "actual_start": label_start,
+            "covers_2021": _covers_year(label_start, labels, 2021),
+            "covers_2022": _covers_year(label_start, labels, 2022),
+        },
+        {
+            "coverage_item": "feature",
+            "actual_start": feature_start,
+            "covers_2021": _covers_year(feature_start, feature_matrix, 2021),
+            "covers_2022": _covers_year(feature_start, feature_matrix, 2022),
+        },
+        {
+            "coverage_item": "prediction",
+            "actual_start": prediction_start,
+            "covers_2021": _covers_year(prediction_start, composer_predictions, 2021),
+            "covers_2022": _covers_year(prediction_start, composer_predictions, 2022),
+        },
+        {
+            "coverage_item": "portfolio",
+            "actual_start": portfolio_start,
+            "covers_2021": bool(portfolio_start and portfolio_start <= "2021-12-31"),
+            "covers_2022": bool(portfolio_start and portfolio_start <= "2022-12-31"),
+        },
+    ]
+    return _payload(
+        report_type="first_layer_v2_effective_coverage_audit",
+        title="First-Layer V2 Effective Coverage Audit",
+        status=status,
+        summary={
+            **window_metadata(primary_window),
+            "requested_research_window_start": requested_start,
+            "actual_label_start": label_start,
+            "actual_feature_start": feature_start,
+            "actual_prediction_start": prediction_start,
+            "actual_portfolio_start_effective": portfolio_start,
+            "prediction_late_cutoff": prediction_cutoff,
+            "primary_window_coverage_incomplete": prediction_late,
+            "covers_2021_predictions": _covers_year(prediction_start, composer_predictions, 2021),
+            "covers_2022_predictions": _covers_year(prediction_start, composer_predictions, 2022),
+            "late_prediction_reason": "walk_forward_train_window_and_label_horizon_delay"
+            if prediction_late
+            else "prediction_coverage_reaches_required_cutoff",
+        },
+        coverage_rows=coverage_rows,
+    )
 
 
 def build_up_state_repair_result_review(
@@ -819,6 +1067,7 @@ def build_action_value_summary(
         title="Action-Value Summary V2",
         status="ACTION_VALUE_MATRIX_V2_READY_PROMOTION_BLOCKED",
         summary={
+            **(window_metadata(windows[0]) if windows else {}),
             "data_quality_status": data_gate.get("status"),
             "action_value_row_count": len(action_value),
             "label_row_count": len(labels),
@@ -1153,6 +1402,8 @@ def build_first_layer_v2_frozen_probe_actual_path_matrix(
                 **window_metadata(primary_window),
                 "probe_id": str(probe.get("probe_id")),
                 "model_id": "first_layer_composer_v2",
+                "date_start": raw["date_start"],
+                "date_end": raw["date_end"],
                 "v2_annual_return": raw["actual_path_annual_return"],
                 "v2_max_drawdown": raw["max_drawdown_daily_equity"],
                 "v2_sharpe": raw["sharpe_daily_zero_rf"],
@@ -1275,6 +1526,7 @@ def build_first_layer_v2_failure_attribution(
     model_results: Mapping[str, Mapping[str, Any]],
     actual_path: Mapping[str, Any],
     primary_window: Mapping[str, Any],
+    effective_coverage: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     label_rows = _records(label_summary.get("label_rows"))
     risk_on = next(
@@ -1284,7 +1536,14 @@ def build_first_layer_v2_failure_attribution(
     model_metrics = [_mapping(result.get("metrics")) for result in model_results.values()]
     weak_precision_count = sum(_float(row.get("precision")) < 0.35 for row in model_metrics)
     improved = _int(_mapping(actual_path.get("summary")).get("improved_vs_flat_reference_count"))
+    coverage_incomplete = bool(
+        _mapping(_mapping(effective_coverage).get("summary")).get(
+            "primary_window_coverage_incomplete"
+        )
+    )
     reasons = []
+    if coverage_incomplete:
+        reasons.append("WINDOW_COVERAGE_INCOMPLETE")
     if risk_on.get("sample_status") == "SAMPLE_INSUFFICIENT":
         reasons.append("RISK_ON_SAMPLE_INSUFFICIENT")
     if weak_precision_count:
@@ -1303,14 +1562,16 @@ def build_first_layer_v2_failure_attribution(
             "failure_reason_count": len(reasons),
             "primary_failure_reason": reasons[0],
             "actual_path_improved_vs_flat_reference_count": improved,
-            "next_action": "KEEP_RISK_OFF_ONLY_FORWARD_WATCH"
-            if improved <= 0
-            else "OWNER_REVIEW_FIRST_LAYER_V2_FORWARD_WATCH",
+            "next_action": _failure_next_action(
+                coverage_incomplete=coverage_incomplete,
+                improved_count=improved,
+            ),
         },
         failure_reasons=reasons,
         model_metric_rows=model_metrics,
         label_quality_summary=_mapping(label_summary.get("summary")),
         actual_path_summary=_mapping(actual_path.get("summary")),
+        effective_coverage_summary=_mapping(_mapping(effective_coverage).get("summary")),
     )
 
 
@@ -1407,9 +1668,137 @@ def build_final_matrix(
     )
 
 
+def build_first_layer_v2_owner_review_pack(
+    *,
+    frozen_probe_contract: Mapping[str, Any],
+    effective_coverage: Mapping[str, Any],
+    label_summary: Mapping[str, Any],
+    feature_audit: Mapping[str, Any],
+    walk_forward: Mapping[str, Any],
+    actual_path: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    primary_window: Mapping[str, Any],
+) -> dict[str, Any]:
+    failure_summary = _mapping(failure.get("summary"))
+    coverage_summary = _mapping(effective_coverage.get("summary"))
+    actual_summary = _mapping(actual_path.get("summary"))
+    improved = _int(actual_summary.get("improved_vs_flat_reference_count"))
+    recommendation = (
+        "REVIEW_FIRST_LAYER_V2_FORWARD_WATCH"
+        if improved > 0 and not coverage_summary.get("primary_window_coverage_incomplete")
+        else "KEEP_FIRST_LAYER_V2_RESEARCH_ONLY_PENDING_COVERAGE"
+    )
+    return _payload(
+        report_type="first_layer_v2_owner_review_pack",
+        title="First-Layer V2 Owner Review Pack",
+        status="FIRST_LAYER_V2_OWNER_REVIEW_READY_PROMOTION_BLOCKED",
+        summary={
+            **window_metadata(primary_window),
+            "frozen_probe_contract_status": frozen_probe_contract.get("status"),
+            "effective_coverage_status": effective_coverage.get("status"),
+            "label_status": label_summary.get("status"),
+            "feature_audit_status": feature_audit.get("status"),
+            "walk_forward_status": walk_forward.get("status"),
+            "actual_path_status": actual_path.get("status"),
+            "failure_primary_reason": failure_summary.get("primary_failure_reason"),
+            "owner_recommendation": recommendation,
+        },
+        owner_answers={
+            "second_layer_is_frozen": _mapping(frozen_probe_contract.get("summary")).get(
+                "registry_frozen"
+            ),
+            "first_layer_v2_research_window": PRIMARY_WINDOW_ID,
+            "label_taxonomy_v2_more_stable": label_summary.get("status")
+            in {
+                "UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED",
+                "UPPER_STATE_LABELS_V2_READY_RISK_ON_SAMPLE_INSUFFICIENT_PROMOTION_BLOCKED",
+            },
+            "learnable_labels": _learnable_label_summary(walk_forward),
+            "actual_path_improves": improved > 0,
+            "failure_reason": failure_summary.get("primary_failure_reason"),
+            "dynamic_promotion_remains_blocked": True,
+        },
+        artifact_paths=_artifact_paths() | _first_layer_v2_artifact_paths(),
+    )
+
+
+def build_first_layer_v2_label_feature_model_final_matrix(
+    *,
+    frozen_probe_contract: Mapping[str, Any],
+    effective_coverage: Mapping[str, Any],
+    label_summary: Mapping[str, Any],
+    feature_audit: Mapping[str, Any],
+    walk_forward: Mapping[str, Any],
+    actual_path: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    owner_pack: Mapping[str, Any],
+    primary_window: Mapping[str, Any],
+) -> dict[str, Any]:
+    coverage_summary = _mapping(effective_coverage.get("summary"))
+    actual_summary = _mapping(actual_path.get("summary"))
+    label_rows = _records(label_summary.get("label_rows"))
+    improved = _int(actual_summary.get("improved_vs_flat_reference_count"))
+    risk_on = next(
+        (row for row in label_rows if row.get("label_id") == "high_confidence_risk_on"),
+        {},
+    )
+    if coverage_summary.get("primary_window_coverage_incomplete"):
+        final_status = "WINDOW_COVERAGE_INCOMPLETE"
+    elif improved > 0:
+        final_status = "FIRST_LAYER_V2_ACTION_VALUE_IMPROVES"
+    elif risk_on.get("sample_status") == "SAMPLE_INSUFFICIENT":
+        final_status = "RISK_ON_DIAGNOSTIC_ONLY"
+    else:
+        final_status = "FIRST_LAYER_V2_NO_MATERIAL_IMPROVEMENT"
+    return _payload(
+        report_type="first_layer_v2_label_feature_model_final_matrix",
+        title="First-Layer V2 Label Feature Model Final Matrix",
+        status=final_status,
+        summary={
+            **window_metadata(primary_window),
+            "final_status": final_status,
+            "frozen_probe_contract_status": frozen_probe_contract.get("status"),
+            "effective_coverage_status": effective_coverage.get("status"),
+            "actual_prediction_start": coverage_summary.get("actual_prediction_start"),
+            "actual_portfolio_start_effective": coverage_summary.get(
+                "actual_portfolio_start_effective"
+            ),
+            "label_status": label_summary.get("status"),
+            "feature_audit_status": feature_audit.get("status"),
+            "walk_forward_status": walk_forward.get("status"),
+            "actual_path_status": actual_path.get("status"),
+            "probe_count": actual_summary.get("probe_count"),
+            "label_row_count": _mapping(label_summary.get("summary")).get("label_row_count"),
+            "composer_prediction_count": _mapping(walk_forward.get("summary")).get(
+                "composer_prediction_count"
+            ),
+            "actual_path_improved_vs_flat_reference_count": improved,
+            "failure_status": failure.get("status"),
+            "primary_failure_reason": _mapping(failure.get("summary")).get(
+                "primary_failure_reason"
+            ),
+            "owner_pack_status": owner_pack.get("status"),
+            "dynamic_promotion_status": "BLOCKED",
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+        },
+        final_decision={
+            "frozen_second_layer_registry": "dynamic_second_layer_probe_registry_v2",
+            "first_layer_v2": "research_only",
+            "high_confidence_risk_on": "diagnostic_only",
+            "dynamic_promotion": "blocked",
+            "next_action": _mapping(failure.get("summary")).get("next_action"),
+            "target_path_metrics_can_pass": False,
+        },
+    )
+
+
 def write_upper_state_reset_outputs(
     *,
     output_root: Path,
+    frozen_probe_contract: Mapping[str, Any] | None = None,
+    effective_coverage: Mapping[str, Any] | None = None,
     repair_review: Mapping[str, Any],
     protocol_review: Mapping[str, Any],
     taxonomy_review: Mapping[str, Any],
@@ -1430,7 +1819,21 @@ def write_upper_state_reset_outputs(
     failure: Mapping[str, Any],
     owner_pack: Mapping[str, Any],
     final_matrix: Mapping[str, Any],
+    first_layer_v2_owner_pack: Mapping[str, Any] | None = None,
+    first_layer_v2_final_matrix: Mapping[str, Any] | None = None,
 ) -> None:
+    if frozen_probe_contract is not None:
+        _write_yaml(DEFAULT_FIRST_LAYER_V2_CONTRACT_YAML_PATH, frozen_probe_contract)
+        _write_markdown(
+            DEFAULT_FIRST_LAYER_V2_SCOPE_DOC_PATH,
+            _render_payload_doc(frozen_probe_contract),
+        )
+    if effective_coverage is not None:
+        _write_yaml(DEFAULT_FIRST_LAYER_V2_COVERAGE_YAML_PATH, effective_coverage)
+        _write_markdown(
+            DEFAULT_FIRST_LAYER_V2_COVERAGE_DOC_PATH,
+            _render_payload_doc(effective_coverage),
+        )
     _write_yaml(DEFAULT_UP_STATE_REPAIR_REVIEW_YAML_PATH, repair_review)
     _write_markdown(DEFAULT_UP_STATE_REPAIR_REVIEW_DOC_PATH, _render_payload_doc(repair_review))
     _write_markdown(DEFAULT_ALTERNATING_PROTOCOL_DOC_PATH, _render_payload_doc(protocol_review))
@@ -1443,6 +1846,7 @@ def write_upper_state_reset_outputs(
     _write_markdown(DEFAULT_LABEL_QUALITY_DOC_PATH, _render_payload_doc(label_summary))
     _write_yaml(DEFAULT_FEATURE_INVENTORY_YAML_PATH, feature_inventory)
     _write_markdown(DEFAULT_FEATURE_INVENTORY_DOC_PATH, _render_payload_doc(feature_inventory))
+    _write_markdown(DEFAULT_FEATURE_INVENTORY_DOC_V3_PATH, _render_payload_doc(feature_inventory))
     _write_csv(DEFAULT_PIT_FEATURE_V3_CSV_PATH, feature_matrix)
     _write_json(DEFAULT_PIT_FEATURE_V3_REPORT_PATH, feature_report)
     _write_yaml(DEFAULT_FEATURE_PIT_AUDIT_YAML_PATH, feature_audit)
@@ -1465,14 +1869,26 @@ def write_upper_state_reset_outputs(
     _write_yaml(DEFAULT_FAILURE_ATTRIBUTION_YAML_PATH, failure)
     _write_markdown(DEFAULT_FAILURE_ATTRIBUTION_DOC_PATH, _render_payload_doc(failure))
     _write_markdown(DEFAULT_OWNER_REVIEW_DOC_PATH, _render_owner_doc(owner_pack))
+    if first_layer_v2_owner_pack is not None:
+        _write_markdown(
+            DEFAULT_FIRST_LAYER_V2_OWNER_REVIEW_DOC_PATH,
+            _render_owner_doc(first_layer_v2_owner_pack),
+        )
     forward_path = (
         DEFAULT_FIRST_LAYER_V2_FORWARD_WATCH_DOC_PATH
         if _int(_mapping(actual_path.get("summary")).get("improved_vs_flat_reference_count")) > 0
         else DEFAULT_RISK_OFF_ONLY_FORWARD_WATCH_DOC_PATH
     )
-    _write_markdown(forward_path, _render_forward_watch_doc(final_matrix))
+    forward_payload = first_layer_v2_final_matrix or final_matrix
+    _write_markdown(forward_path, _render_forward_watch_doc(forward_payload))
     _write_yaml(DEFAULT_FINAL_MATRIX_YAML_PATH, final_matrix)
     _write_markdown(DEFAULT_CLOSEOUT_DOC_PATH, _render_payload_doc(final_matrix))
+    if first_layer_v2_final_matrix is not None:
+        _write_yaml(DEFAULT_FIRST_LAYER_V2_FINAL_MATRIX_YAML_PATH, first_layer_v2_final_matrix)
+        _write_markdown(
+            DEFAULT_FIRST_LAYER_V2_CLOSEOUT_DOC_PATH,
+            _render_payload_doc(first_layer_v2_final_matrix),
+        )
 
 
 def _action_scores_from_state_rows(
@@ -2016,6 +2432,52 @@ def _artifact_paths() -> dict[str, str]:
     return {key: str(value) for key, value in paths.items()}
 
 
+def _first_layer_v2_artifact_paths() -> dict[str, str]:
+    return {
+        "frozen_probe_scope": str(DEFAULT_FIRST_LAYER_V2_SCOPE_DOC_PATH),
+        "frozen_probe_contract": str(DEFAULT_FIRST_LAYER_V2_CONTRACT_YAML_PATH),
+        "effective_coverage_audit": str(DEFAULT_FIRST_LAYER_V2_COVERAGE_YAML_PATH),
+        "first_layer_v2_owner_pack": str(DEFAULT_FIRST_LAYER_V2_OWNER_REVIEW_DOC_PATH),
+        "first_layer_v2_final_matrix": str(DEFAULT_FIRST_LAYER_V2_FINAL_MATRIX_YAML_PATH),
+        "first_layer_v2_closeout": str(DEFAULT_FIRST_LAYER_V2_CLOSEOUT_DOC_PATH),
+    }
+
+
+def _learnable_label_summary(walk_forward: Mapping[str, Any]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for row in _records(walk_forward.get("model_rows")):
+        model_id = str(row.get("model_id"))
+        label_id = model_id.removesuffix("_model_v1")
+        status = str(row.get("status"))
+        result[label_id] = "learnable_diagnostic" if status == "MODEL_DIAGNOSTIC_READY" else status
+    return result
+
+
+def _failure_next_action(*, coverage_incomplete: bool, improved_count: int) -> str:
+    if coverage_incomplete:
+        return "REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION"
+    if improved_count <= 0:
+        return "KEEP_RISK_OFF_ONLY_FORWARD_WATCH"
+    return "OWNER_REVIEW_FIRST_LAYER_V2_FORWARD_WATCH"
+
+
+def _first_layer_candidate_count(summary: Mapping[str, Any], extra: Mapping[str, Any]) -> int:
+    for key in (
+        "probe_count",
+        "submodel_count",
+        "approved_feature_count",
+        "label_row_count",
+        "row_count",
+        "action_value_row_count",
+    ):
+        if key in summary:
+            return max(0, _int(summary.get(key)))
+    for key in ("probe_rows", "model_rows", "label_rows", "features"):
+        if key in extra:
+            return len(_records(extra.get(key)))
+    return 0
+
+
 def _payload(
     *,
     report_type: str,
@@ -2024,6 +2486,40 @@ def _payload(
     summary: Mapping[str, Any],
     **extra: Any,
 ) -> dict[str, Any]:
+    summary_dict = dict(summary)
+    window_fields = {
+        key: summary_dict[key]
+        for key in (
+            "research_window_id",
+            "research_window_alias",
+            "requested_start",
+            "actual_start",
+            "actual_portfolio_start",
+            "end",
+            "window_role",
+            "data_quality_contract",
+            "exact_or_proxy",
+        )
+        if key in summary_dict
+    }
+    candidate_count = _first_layer_candidate_count(summary_dict, extra)
+    audit_metadata = (
+        {
+            "modified_layer": "first_layer",
+            "frozen_first_layer_version": "frozen_or_not_applicable",
+            "frozen_second_layer_version": "dynamic_second_layer_probe_registry_v2",
+            "research_window_id": window_fields["research_window_id"],
+            "label_version": "upper_state_label_taxonomy_v2",
+            "feature_set_version": "pit_feature_matrix_v3",
+            "model_version": "first_layer_composer_v2",
+            "threshold_policy": "first_layer_threshold_policy_v2",
+            "probe_registry_version": "dynamic_second_layer_probe_registry_v2",
+            "candidate_count": candidate_count,
+            "pre_registered_selection_rule": True,
+        }
+        if "research_window_id" in window_fields
+        else None
+    )
     return {
         "schema_version": f"{report_type}.v1",
         "report_type": report_type,
@@ -2033,8 +2529,10 @@ def _payload(
         "market_regime": "ai_after_chatgpt",
         "anchor_event": "ChatGPT public launch",
         "anchor_date": "2022-11-30",
-        "summary": dict(summary),
+        **window_fields,
+        "summary": summary_dict,
         **SAFETY_BOUNDARY,
+        **({"research_audit_metadata": audit_metadata} if audit_metadata else {}),
         **extra,
     }
 
@@ -2222,6 +2720,24 @@ def _label_sum(frame: pd.DataFrame, column: str) -> int:
 
 def _state_counts(series: pd.Series) -> dict[str, int]:
     return {str(key): int(value) for key, value in series.astype(str).value_counts().items()}
+
+
+def _min_iso_date(frame: pd.DataFrame) -> str:
+    if frame.empty or "date" not in frame.columns:
+        return ""
+    values = pd.to_datetime(frame["date"], errors="coerce").dropna()
+    if values.empty:
+        return ""
+    return values.min().date().isoformat()
+
+
+def _covers_year(start: str, frame: pd.DataFrame, year: int) -> bool:
+    if not start or frame.empty or "date" not in frame.columns:
+        return False
+    dates = pd.to_datetime(frame["date"], errors="coerce").dropna()
+    if dates.empty:
+        return False
+    return bool((dates.dt.year == year).any())
 
 
 def _row_hash(row: Mapping[str, Any], columns: Sequence[str]) -> str:

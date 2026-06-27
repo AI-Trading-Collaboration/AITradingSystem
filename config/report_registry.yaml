@@ -20160,6 +20160,201 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_v2_frozen_probe_contract
+    title: First-Layer V2 Frozen Probe Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_v2_frozen_probe_scope.md
+      - inputs/research_reviews/first_layer_v2_frozen_probe_contract.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Contract changes after frozen probe registry, primary research window, or alternating-layer research policy changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_effective_coverage_audit
+    title: First-Layer V2 Effective Coverage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_v2_effective_coverage_audit.md
+      - inputs/research_reviews/first_layer_v2_effective_coverage_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage audit changes after label, feature, prediction, walk-forward split, or primary research window coverage changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: action_value_matrix_v2
+    title: First-Layer V2 Action-Value Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - outputs/research_trends/action_value_matrix_v2/action_value_matrix_v2.csv
+      - outputs/research_trends/action_value_matrix_v2/action_value_summary_v2.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Action-value matrix changes after frozen probe registry v2, score policy, price cache, or research window changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: upper_state_label_quality_review_v2
+    title: Upper-State Label Quality Review V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - outputs/research_trends/trend_labels/upper_state_labels_v2.csv
+      - inputs/research_reviews/upper_state_label_v2_summary.yaml
+      - docs/research/upper_state_label_quality_review_v2.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Label quality changes after action-value matrix, taxonomy, thresholds, or frozen probe registry v2 changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: pit_feature_matrix_v3
+    title: First-Layer PIT Feature Matrix V3
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix_v3.csv
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix_v3_report.json
+      - docs/research/up_state_feature_inventory_review_v3.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT features change after validated price/rate cache, feature inventory, or PIT usage policy changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_feature_pit_audit_v3
+    title: First-Layer Feature PIT Audit V3
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - inputs/research_reviews/first_layer_feature_pit_audit_v3.yaml
+      - docs/research/first_layer_feature_pit_audit_v3.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Feature PIT audit changes after feature matrix, inventory, or point-in-time availability policy changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_walk_forward_review_v3
+    title: First-Layer Walk-Forward Review V3
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_walk_forward_review_v3.md
+      - inputs/research_reviews/first_layer_walk_forward_matrix_v3.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Walk-forward evidence changes after labels, features, thresholds, or model composition changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_frozen_probe_actual_path_review
+    title: First-Layer V2 Frozen-Probe Actual-Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_v2_frozen_probe_actual_path_review.md
+      - inputs/research_reviews/first_layer_v2_frozen_probe_actual_path_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Actual-path review changes after composer predictions, frozen probe registry v2, price cache, or prior baseline comparison changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_failure_attribution
+    title: First-Layer V2 Failure Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_v2_failure_attribution.md
+      - inputs/research_reviews/first_layer_v2_failure_attribution.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Failure attribution changes after coverage, label quality, model diagnostics, or actual-path review changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_label_feature_model_closeout
+    title: First-Layer V2 Label Feature Model Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-v2-reset
+    artifact_globs:
+      - docs/research/first_layer_v2_owner_review_pack.md
+      - docs/research/first_layer_v2_label_feature_model_closeout.md
+      - inputs/research_reviews/first_layer_v2_label_feature_model_final_matrix.yaml
+      - docs/research/first_layer_v2_forward_watch_plan.md
+      - docs/research/risk_off_only_forward_watch_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout changes after any first-layer v2 label, feature, model, walk-forward, coverage, actual-path, or failure-attribution evidence changes.
+    owner_action: review_first_layer_v2_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

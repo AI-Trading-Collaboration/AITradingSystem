@@ -1,7 +1,7 @@
-schema_version: upper_state_label_feature_reset_final_matrix.v1
-report_type: upper_state_label_feature_reset_final_matrix
-title: Upper-State Label Feature Reset Final Matrix
-status: UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH
+schema_version: first_layer_v2_label_feature_model_final_matrix.v1
+report_type: first_layer_v2_label_feature_model_final_matrix
+title: First-Layer V2 Label Feature Model Final Matrix
+status: WINDOW_COVERAGE_INCOMPLETE
 generated_at: '2026-06-27T16:52:07Z'
 market_regime: ai_after_chatgpt
 anchor_event: ChatGPT public launch
@@ -23,11 +23,22 @@ summary:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  owner_pack_status: UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED
+  final_status: WINDOW_COVERAGE_INCOMPLETE
+  frozen_probe_contract_status: FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_READY_PROMOTION_BLOCKED
+  effective_coverage_status: PRIMARY_WINDOW_COVERAGE_INCOMPLETE
+  actual_prediction_start: '2023-02-22'
+  actual_portfolio_start_effective: '2023-02-22'
   label_status: UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED
+  feature_audit_status: FIRST_LAYER_FEATURE_PIT_AUDIT_V3_PASS_PROMOTION_BLOCKED
+  walk_forward_status: FIRST_LAYER_WALK_FORWARD_V3_READY_PROMOTION_BLOCKED
   actual_path_status: FIRST_LAYER_V2_FROZEN_PROBE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+  probe_count: 8
+  label_row_count: 1282
+  composer_prediction_count: 2205
+  actual_path_improved_vs_flat_reference_count: 8
   failure_status: FIRST_LAYER_V2_FAILURE_ATTRIBUTION_READY_PROMOTION_BLOCKED
-  final_status: UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH
+  primary_failure_reason: WINDOW_COVERAGE_INCOMPLETE
+  owner_pack_status: FIRST_LAYER_V2_OWNER_REVIEW_READY_PROMOTION_BLOCKED
   dynamic_promotion_status: BLOCKED
   paper_shadow_allowed: false
   production_allowed: false
@@ -52,11 +63,12 @@ research_audit_metadata:
   model_version: first_layer_composer_v2
   threshold_policy: first_layer_threshold_policy_v2
   probe_registry_version: dynamic_second_layer_probe_registry_v2
-  candidate_count: 0
+  candidate_count: 8
   pre_registered_selection_rule: true
 final_decision:
-  upper_state_detector_v1: paused
+  frozen_second_layer_registry: dynamic_second_layer_probe_registry_v2
   first_layer_v2: research_only
   high_confidence_risk_on: diagnostic_only
   dynamic_promotion: blocked
   next_action: REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION
+  target_path_metrics_can_pass: false

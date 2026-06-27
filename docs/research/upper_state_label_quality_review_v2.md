@@ -18,7 +18,7 @@
 - exact_or_proxy: `exact`
 - data_quality_status: `PASS_WITH_WARNINGS`
 - label_row_count: `1282`
-- high_confidence_label_share: `0.186427`
-- average_disagreement: `0.06406`
+- high_confidence_label_share: `0.24727`
+- average_disagreement: `0.107254`
 - risk_on_sample_status: `PASS`
 - target_path_metrics_used_for_pass: `False`

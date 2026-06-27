@@ -46,7 +46,9 @@ from ai_trading_system.upper_state_label_feature_reset import (
     DEFAULT_ALTERNATING_PROTOCOL_PATH,
     DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH,
     DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH,
+    DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
     DEFAULT_UPPER_STATE_TAXONOMY_V2_PATH,
+    run_first_layer_v2_label_feature_model_reset_pack,
     run_upper_state_label_feature_reset_pack,
 )
 
@@ -273,6 +275,58 @@ def upper_state_label_feature_reset_command(
         output_root=output_root,
     )
     _print_payload("Upper-state label feature reset", payload)
+
+
+@trends_app.command("first-layer-v2-reset")
+def first_layer_v2_label_feature_model_reset_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    alternating_protocol_path: Annotated[
+        Path, typer.Option("--alternating-protocol")
+    ] = DEFAULT_ALTERNATING_PROTOCOL_PATH,
+    upper_state_taxonomy_path: Annotated[
+        Path, typer.Option("--upper-state-taxonomy")
+    ] = DEFAULT_UPPER_STATE_TAXONOMY_V2_PATH,
+    action_value_policy_path: Annotated[
+        Path, typer.Option("--action-value-policy")
+    ] = DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
+    threshold_policy_path: Annotated[
+        Path, typer.Option("--threshold-policy")
+    ] = DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH,
+    composer_config_path: Annotated[
+        Path, typer.Option("--composer-config")
+    ] = DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_v2_label_feature_model_reset_pack(
+        registry_path=registry_path,
+        alternating_protocol_path=alternating_protocol_path,
+        upper_state_taxonomy_path=upper_state_taxonomy_path,
+        action_value_policy_path=action_value_policy_path,
+        threshold_policy_path=threshold_policy_path,
+        composer_config_path=composer_config_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer v2 label feature model reset", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

@@ -1,6 +1,6 @@
-# First-Layer V2 Failure Attribution
+# Up-State Feature Inventory V2
 
-- 状态：`FIRST_LAYER_V2_FAILURE_ATTRIBUTION_READY_PROMOTION_BLOCKED`
+- 状态：`UP_STATE_FEATURE_INVENTORY_V2_READY_PROMOTION_BLOCKED`
 - 市场周期：`ai_after_chatgpt`
 - promotion_allowed：`False`
 - paper_shadow_allowed：`False`
@@ -16,7 +16,6 @@
 - window_role: `primary_validated`
 - data_quality_contract: `secondary_cross_checked`
 - exact_or_proxy: `exact`
-- failure_reason_count: `2`
-- primary_failure_reason: `WINDOW_COVERAGE_INCOMPLETE`
-- actual_path_improved_vs_flat_reference_count: `8`
-- next_action: `REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION`
+- data_quality_status: `PASS_WITH_WARNINGS`
+- approved_feature_count: `26`
+- blocked_feature_count: `3`

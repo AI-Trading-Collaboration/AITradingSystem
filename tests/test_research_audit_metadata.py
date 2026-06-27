@@ -121,6 +121,45 @@ def test_second_layer_probe_freeze_final_matrix_counts() -> None:
     assert artifact["summary"]["tqqq_stress_blocked_count"] == 0
 
 
+def test_first_layer_v2_reset_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/first_layer_v2_frozen_probe_contract.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_effective_coverage_audit.yaml"),
+        Path("inputs/research_reviews/upper_state_label_v2_summary.yaml"),
+        Path("inputs/research_reviews/first_layer_feature_pit_audit_v3.yaml"),
+        Path("inputs/research_reviews/first_layer_walk_forward_matrix_v3.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_frozen_probe_actual_path_matrix.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_failure_attribution.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_label_feature_model_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "first_layer"
+        assert metadata["frozen_second_layer_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert metadata["probe_registry_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+
+
+def test_first_layer_v2_final_matrix_records_coverage_blocker() -> None:
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/first_layer_v2_label_feature_model_final_matrix.yaml")
+    )
+
+    assert artifact["status"] == "WINDOW_COVERAGE_INCOMPLETE"
+    assert artifact["summary"]["actual_prediction_start"] == "2023-02-22"
+    assert artifact["summary"]["primary_failure_reason"] == "WINDOW_COVERAGE_INCOMPLETE"
+    assert (
+        artifact["final_decision"]["next_action"]
+        == "REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION"
+    )
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

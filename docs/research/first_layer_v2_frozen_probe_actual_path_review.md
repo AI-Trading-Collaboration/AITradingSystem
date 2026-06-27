@@ -16,7 +16,7 @@
 - window_role: `primary_validated`
 - data_quality_contract: `secondary_cross_checked`
 - exact_or_proxy: `exact`
-- probe_count: `4`
-- improved_vs_flat_reference_count: `4`
+- probe_count: `8`
+- improved_vs_flat_reference_count: `8`
 - comparison_window_compatibility: `PRIOR_ROWS_LEGACY_REFERENCE_ONLY`
 - target_path_metrics_used_for_pass: `False`

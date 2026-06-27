@@ -19,7 +19,7 @@
 - data_quality_status: `PASS_WITH_WARNINGS`
 - submodel_count: `4`
 - composer_prediction_count: `2205`
-- composer_distribution: `{'risk_off': 1054, 'constructive': 562, 'risk_on': 338, 'neutral': 143, 'defensive': 108}`
+- composer_distribution: `{'risk_off': 1103, 'risk_on': 551, 'constructive': 322, 'neutral': 139, 'defensive': 90}`
 - primary_label_rows: `1282`
-- actual_path_improved_vs_flat_reference_count: `4`
+- actual_path_improved_vs_flat_reference_count: `8`
 - target_path_metrics_used_for_pass: `False`

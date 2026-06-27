@@ -1,8 +1,8 @@
-schema_version: upper_state_label_v2_summary.v1
-report_type: upper_state_label_v2_summary
-title: Upper-State Label V2 Summary
-status: UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED
-generated_at: '2026-06-27T16:52:04Z'
+schema_version: first_layer_v2_effective_coverage_audit.v1
+report_type: first_layer_v2_effective_coverage_audit
+title: First-Layer V2 Effective Coverage Audit
+status: PRIMARY_WINDOW_COVERAGE_INCOMPLETE
+generated_at: '2026-06-27T16:52:07Z'
 market_regime: ai_after_chatgpt
 anchor_event: ChatGPT public launch
 anchor_date: '2022-11-30'
@@ -23,12 +23,16 @@ summary:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  data_quality_status: PASS_WITH_WARNINGS
-  label_row_count: 1282
-  high_confidence_label_share: 0.24727
-  average_disagreement: 0.107254
-  risk_on_sample_status: PASS
-  target_path_metrics_used_for_pass: false
+  requested_research_window_start: '2021-02-22'
+  actual_label_start: '2021-02-22'
+  actual_feature_start: '2021-02-22'
+  actual_prediction_start: '2023-02-22'
+  actual_portfolio_start_effective: '2023-02-22'
+  prediction_late_cutoff: '2022-01-01'
+  primary_window_coverage_incomplete: true
+  covers_2021_predictions: false
+  covers_2022_predictions: false
+  late_prediction_reason: walk_forward_train_window_and_label_horizon_delay
 research_only: true
 actual_path_required: true
 target_path_metrics_role: diagnostic_only
@@ -49,34 +53,22 @@ research_audit_metadata:
   model_version: first_layer_composer_v2
   threshold_policy: first_layer_threshold_policy_v2
   probe_registry_version: dynamic_second_layer_probe_registry_v2
-  candidate_count: 1282
+  candidate_count: 0
   pre_registered_selection_rule: true
-label_rows:
-- label_id: do_not_de_risk
-  positive_count: 307
-  positive_share: 0.23947
-  minimum_positive_samples: 60
-  sample_status: PASS
-  average_confidence: 0.253609
-  research_only: true
-- label_id: stay_constructive
-  positive_count: 407
-  positive_share: 0.317473
-  minimum_positive_samples: 60
-  sample_status: PASS
-  average_confidence: 0.380863
-  research_only: true
-- label_id: add_risk
-  positive_count: 88
-  positive_share: 0.068643
-  minimum_positive_samples: 40
-  sample_status: PASS
-  average_confidence: 0.111774
-  research_only: true
-- label_id: high_confidence_risk_on
-  positive_count: 138
-  positive_share: 0.107644
-  minimum_positive_samples: 60
-  sample_status: PASS
-  average_confidence: 0.211964
-  research_only: true
+coverage_rows:
+- coverage_item: label
+  actual_start: '2021-02-22'
+  covers_2021: true
+  covers_2022: true
+- coverage_item: feature
+  actual_start: '2021-02-22'
+  covers_2021: true
+  covers_2022: true
+- coverage_item: prediction
+  actual_start: '2023-02-22'
+  covers_2021: false
+  covers_2022: false
+- coverage_item: portfolio
+  actual_start: '2023-02-22'
+  covers_2021: false
+  covers_2022: false

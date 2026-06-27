@@ -20,11 +20,11 @@
 - prediction_count: `2205`
 - split_count: `35`
 - positive_sample_floor: `40`
-- positive_count: `120`
-- predicted_positive_count: `609`
-- precision: `0.083744`
-- recall: `0.425`
-- accuracy: `0.715646`
+- positive_count: `117`
+- predicted_positive_count: `666`
+- precision: `0.082583`
+- recall: `0.470085`
+- accuracy: `0.694785`
 - target_path_metrics_used_for_pass: `False`
 - research_only: `True`
 - actual_path_required: `True`

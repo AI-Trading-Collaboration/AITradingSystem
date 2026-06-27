@@ -2,10 +2,18 @@ schema_version: first_layer_v2_failure_attribution.v1
 report_type: first_layer_v2_failure_attribution
 title: First-Layer V2 Failure Attribution
 status: FIRST_LAYER_V2_FAILURE_ATTRIBUTION_READY_PROMOTION_BLOCKED
-generated_at: '2026-06-27T15:19:17Z'
+generated_at: '2026-06-27T16:52:07Z'
 market_regime: ai_after_chatgpt
 anchor_event: ChatGPT public launch
 anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
 summary:
   research_window_id: exact_three_asset_validated
   requested_start: '2021-02-22'
@@ -15,10 +23,10 @@ summary:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  failure_reason_count: 1
-  primary_failure_reason: SUBMODEL_PRECISION_WEAK
-  actual_path_improved_vs_flat_reference_count: 4
-  next_action: OWNER_REVIEW_FIRST_LAYER_V2_FORWARD_WATCH
+  failure_reason_count: 2
+  primary_failure_reason: WINDOW_COVERAGE_INCOMPLETE
+  actual_path_improved_vs_flat_reference_count: 8
+  next_action: REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION
 research_only: true
 actual_path_required: true
 target_path_metrics_role: diagnostic_only
@@ -29,7 +37,20 @@ broker_action: none
 production_effect: none
 manual_review_required: true
 dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_composer_v2
+  threshold_policy: first_layer_threshold_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
 failure_reasons:
+- WINDOW_COVERAGE_INCOMPLETE
 - SUBMODEL_PRECISION_WEAK
 model_metric_rows:
 - research_window_id: exact_three_asset_validated
@@ -44,11 +65,11 @@ model_metric_rows:
   prediction_count: 2205
   split_count: 35
   positive_sample_floor: 60
-  positive_count: 563
-  predicted_positive_count: 1043
-  precision: 0.282838
-  recall: 0.523979
-  accuracy: 0.539229
+  positive_count: 547
+  predicted_positive_count: 1012
+  precision: 0.284585
+  recall: 0.526508
+  accuracy: 0.554195
   target_path_metrics_used_for_pass: false
   research_only: true
   actual_path_required: true
@@ -73,11 +94,11 @@ model_metric_rows:
   prediction_count: 2205
   split_count: 35
   positive_sample_floor: 60
-  positive_count: 678
-  predicted_positive_count: 1388
-  precision: 0.229827
-  recall: 0.470501
-  accuracy: 0.352381
+  positive_count: 712
+  predicted_positive_count: 1335
+  precision: 0.229213
+  recall: 0.429775
+  accuracy: 0.349206
   target_path_metrics_used_for_pass: false
   research_only: true
   actual_path_required: true
@@ -102,11 +123,11 @@ model_metric_rows:
   prediction_count: 2205
   split_count: 35
   positive_sample_floor: 40
-  positive_count: 120
-  predicted_positive_count: 609
-  precision: 0.083744
-  recall: 0.425
-  accuracy: 0.715646
+  positive_count: 117
+  predicted_positive_count: 666
+  precision: 0.082583
+  recall: 0.470085
+  accuracy: 0.694785
   target_path_metrics_used_for_pass: false
   research_only: true
   actual_path_required: true
@@ -131,11 +152,11 @@ model_metric_rows:
   prediction_count: 2205
   split_count: 35
   positive_sample_floor: 60
-  positive_count: 169
-  predicted_positive_count: 651
-  precision: 0.016897
-  recall: 0.065089
-  accuracy: 0.638095
+  positive_count: 191
+  predicted_positive_count: 959
+  precision: 0.079249
+  recall: 0.397906
+  accuracy: 0.547392
   target_path_metrics_used_for_pass: false
   research_only: true
   actual_path_required: true
@@ -159,8 +180,8 @@ label_quality_summary:
   exact_or_proxy: exact
   data_quality_status: PASS_WITH_WARNINGS
   label_row_count: 1282
-  high_confidence_label_share: 0.186427
-  average_disagreement: 0.06406
+  high_confidence_label_share: 0.24727
+  average_disagreement: 0.107254
   risk_on_sample_status: PASS
   target_path_metrics_used_for_pass: false
 actual_path_summary:
@@ -172,7 +193,26 @@ actual_path_summary:
   window_role: primary_validated
   data_quality_contract: secondary_cross_checked
   exact_or_proxy: exact
-  probe_count: 4
-  improved_vs_flat_reference_count: 4
+  probe_count: 8
+  improved_vs_flat_reference_count: 8
   comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
   target_path_metrics_used_for_pass: false
+effective_coverage_summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  requested_research_window_start: '2021-02-22'
+  actual_label_start: '2021-02-22'
+  actual_feature_start: '2021-02-22'
+  actual_prediction_start: '2023-02-22'
+  actual_portfolio_start_effective: '2023-02-22'
+  prediction_late_cutoff: '2022-01-01'
+  primary_window_coverage_incomplete: true
+  covers_2021_predictions: false
+  covers_2022_predictions: false
+  late_prediction_reason: walk_forward_train_window_and_label_horizon_delay
