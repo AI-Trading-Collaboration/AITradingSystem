@@ -19944,3 +19944,100 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: upper_state_label_feature_reset_protocol
+    title: Upper-State Label Feature Reset Protocol
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends upper-state-reset
+    artifact_globs:
+      - docs/research/up_state_repair_result_review.md
+      - docs/research/alternating_two_layer_research_protocol.md
+      - docs/research/upper_state_label_taxonomy_reset.md
+      - docs/research/window_aware_upper_state_label_regeneration_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Protocol and taxonomy reset are regenerated after first-layer label taxonomy, alternating-layer discipline, or research window contract changes.
+    owner_action: review_upper_state_reset_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: upper_state_action_value_and_labels_v2
+    title: Upper-State Action-Value and Labels V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends upper-state-reset
+    artifact_globs:
+      - outputs/research_trends/action_value_matrix_v2/action_value_matrix_v2.csv
+      - outputs/research_trends/action_value_matrix_v2/action_value_summary_v2.json
+      - outputs/research_trends/trend_labels/upper_state_labels_v2.csv
+      - inputs/research_reviews/upper_state_label_v2_summary.yaml
+      - docs/research/upper_state_label_quality_review_v2.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Action-value labels are regenerated after frozen probe registry, score policy, taxonomy, price cache, or research window changes.
+    owner_action: review_upper_state_reset_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: upper_state_pit_features_and_models_v2
+    title: Upper-State PIT Features and First-Layer Models V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends upper-state-reset
+    artifact_globs:
+      - inputs/research_reviews/up_state_feature_inventory_v2.yaml
+      - docs/research/up_state_feature_inventory_review.md
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix_v3.csv
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix_v3_report.json
+      - inputs/research_reviews/first_layer_feature_pit_audit_v3.yaml
+      - docs/research/first_layer_feature_pit_audit_v3.md
+      - outputs/research_trends/models/*_model_v1/metrics.json
+      - outputs/research_trends/models/first_layer_composer_v2_predictions.csv
+      - docs/research/first_layer_threshold_calibration_review_v2.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT features and first-layer model diagnostics are regenerated after feature inventory, threshold policy, composer policy, labels, or price/rate cache changes.
+    owner_action: review_upper_state_reset_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: upper_state_label_feature_reset_owner_pack
+    title: Upper-State Label Feature Reset Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends upper-state-reset
+    artifact_globs:
+      - inputs/research_reviews/first_layer_walk_forward_matrix_v3.yaml
+      - docs/research/first_layer_walk_forward_review_v3.md
+      - inputs/research_reviews/first_layer_v2_frozen_probe_actual_path_matrix.yaml
+      - docs/research/first_layer_v2_frozen_probe_actual_path_review.md
+      - inputs/research_reviews/first_layer_v2_failure_attribution.yaml
+      - docs/research/first_layer_v2_failure_attribution.md
+      - docs/research/upper_state_label_feature_reset_owner_review_pack.md
+      - docs/research/first_layer_v2_forward_watch_plan.md
+      - docs/research/risk_off_only_forward_watch_plan.md
+      - inputs/research_reviews/upper_state_label_feature_reset_final_matrix.yaml
+      - docs/research/upper_state_label_feature_reset_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner pack and closeout are regenerated after label quality, feature audit, model diagnostics, frozen-probe actual-path, or failure attribution changes.
+    owner_action: review_upper_state_reset_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

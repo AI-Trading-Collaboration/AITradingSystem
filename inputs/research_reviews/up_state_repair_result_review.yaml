@@ -1,0 +1,85 @@
+schema_version: up_state_repair_result_review.v1
+report_type: up_state_repair_result_review
+title: Up-State Repair Result Review
+status: UP_STATE_REPAIR_FAILURE_REVIEW_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T15:18:48Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  prior_status: UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED
+  prior_predicted_upper_state_count: 185
+  prior_upper_state_precision: 0.064865
+  prior_upper_state_recall: 0.105263
+  prior_improved_vs_flat_probe_count: 0
+  decision: PAUSE_UPPER_STATE_DETECTOR_V1_AND_RESET_LABEL_FEATURE_PROBLEM
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+prior_walk_forward_metrics:
+  accuracy: 0.493284
+  balanced_accuracy: 0.180128
+  three_zone_accuracy: 0.509158
+  risk_off_precision: 0.744076
+  risk_off_recall: 0.824869
+  false_risk_off_rate: 0.197802
+  late_risk_off_rate: 0.1221
+  upper_state_precision: 0.064865
+  upper_state_recall: 0.105263
+  false_risk_on_rate: 0.211233
+  missed_upside: 0.894737
+  captured_upside: 0.105263
+  predicted_upper_state_count: 185
+  true_upper_state_count: 114
+  predicted_constructive_count: 159
+  predicted_risk_on_count: 26
+  true_constructive_count: 96
+  true_risk_on_count: 18
+  upper_state_collapse_flag: true
+  risk_on_severity_status: RISK_ON_SEVERITY_SCALER_READY
+  risk_off_action_value_delta_proxy: 0.627066
+  upper_state_action_value_delta_proxy: -0.10597
+  prediction_distribution:
+    risk_off: 508
+    constructive: 159
+    neutral: 106
+    risk_on: 26
+    defensive: 20
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+prior_actual_path_summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  probe_count: 4
+  improved_vs_flat_probe_count: 0
+  comparison_scope:
+  - old_scorecard_first_layer_v1
+  - flat_calibrated_first_layer_v1
+  - hierarchical_first_layer_v1
+  - prior_static_baselines_referenced_from_expanded_universe_artifacts
+  - limited_adjustment_referenced_from_expanded_universe_artifacts
+  flat_probe_metric_source_rows: 8

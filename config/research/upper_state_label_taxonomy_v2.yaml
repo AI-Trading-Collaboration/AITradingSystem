@@ -1,0 +1,70 @@
+schema_version: upper_state_label_taxonomy_v2.v1
+policy_id: upper_state_label_taxonomy_v2
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Constructive and risk_on as plain five-class labels did not create stable
+    action value. V2 splits upper-state learning into action questions that can
+    be validated against frozen second-layer probes.
+  intended_effect: >
+    Separate defensive de-risk avoidance from constructive exposure maintenance,
+    incremental add-risk decisions and high-confidence risk-on diagnostics.
+  validation_evidence: >
+    TRADING-1666 to 1705 tests verify do_not_de_risk generation, add_risk versus
+    stay_constructive separation and research-only risk-on diagnostics.
+  review_condition: >
+    Review before changing score cutoffs, positive sample floors or allowing
+    high_confidence_risk_on outside diagnostic research usage.
+label_definitions:
+  do_not_de_risk:
+    label_role: first_layer_action_value
+    description: Avoid moving from neutral or constructive exposure into a defensive posture when forward drawdown protection has low action value.
+    positive_condition:
+      min_score: 0.0005
+      max_drawdown_gap_vs_defensive: 0.015
+    model_usage: trainable
+  stay_constructive:
+    label_role: first_layer_action_value
+    description: Maintain constructive exposure when return-seeking states beat neutral without relying on high TQQQ beta.
+    positive_condition:
+      min_score: 0.0010
+      min_return_delta_vs_neutral: 0.0005
+      max_tqqq_weight: 0.10
+    model_usage: trainable
+  add_risk:
+    label_role: first_layer_action_value
+    description: Increment exposure above neutral only when return-seeking states show incremental net value after drawdown, stress and TQQQ penalties.
+    positive_condition:
+      min_score: 0.0020
+      min_incremental_score_vs_stay_constructive: 0.0010
+      max_stress_penalty: 0.055
+    model_usage: trainable
+  high_confidence_risk_on:
+    label_role: research_only_diagnostic
+    description: Diagnostic label for rare high-conviction risk-on periods; never promotion evidence in this batch.
+    positive_condition:
+      min_score: 0.0040
+      min_probe_vote_share: 0.60
+      min_primary_window_positive_samples: 60
+      max_tqqq_weight: 0.15
+    model_usage: diagnostic_only
+label_quality:
+  high_confidence_floor: 0.55
+  max_disagreement_score: 0.50
+  minimum_train_samples: 300
+  minimum_positive_samples:
+    do_not_de_risk: 60
+    stay_constructive: 60
+    add_risk: 40
+    high_confidence_risk_on: 60
+target_path_metrics_can_pass_gate: false
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,62 @@
+schema_version: upper_state_label_v2_summary.v1
+report_type: upper_state_label_v2_summary
+title: Upper-State Label V2 Summary
+status: UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T15:19:16Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  label_row_count: 1282
+  high_confidence_label_share: 0.186427
+  average_disagreement: 0.06406
+  risk_on_sample_status: PASS
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+label_rows:
+- label_id: do_not_de_risk
+  positive_count: 320
+  positive_share: 0.24961
+  minimum_positive_samples: 60
+  sample_status: PASS
+  average_confidence: 0.254707
+  research_only: true
+- label_id: stay_constructive
+  positive_count: 392
+  positive_share: 0.305772
+  minimum_positive_samples: 60
+  sample_status: PASS
+  average_confidence: 0.372864
+  research_only: true
+- label_id: add_risk
+  positive_count: 86
+  positive_share: 0.067083
+  minimum_positive_samples: 40
+  sample_status: PASS
+  average_confidence: 0.096429
+  research_only: true
+- label_id: high_confidence_risk_on
+  positive_count: 120
+  positive_share: 0.093604
+  minimum_positive_samples: 60
+  sample_status: PASS
+  average_confidence: 0.10765
+  research_only: true

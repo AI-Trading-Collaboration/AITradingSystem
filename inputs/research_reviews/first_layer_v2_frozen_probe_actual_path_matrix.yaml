@@ -1,0 +1,172 @@
+schema_version: first_layer_v2_frozen_probe_actual_path_matrix.v1
+report_type: first_layer_v2_frozen_probe_actual_path_matrix
+title: First-Layer V2 Frozen-Probe Actual-Path Matrix
+status: FIRST_LAYER_V2_FROZEN_PROBE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T15:19:17Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_count: 4
+  improved_vs_flat_reference_count: 4
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+probe_rows:
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: defensive_overlay_probe
+  model_id: first_layer_composer_v2
+  v2_annual_return: 0.141507
+  v2_max_drawdown: -0.075779
+  v2_sharpe: 1.675215
+  v2_calmar: 1.867376
+  v2_turnover: 42.475942
+  flat_annual_return_reference: 0.097325
+  hierarchical_annual_return_reference: 0.077251
+  flat_calmar_reference: 0.95561
+  hierarchical_calmar_reference: 0.621718
+  v2_vs_flat_return_delta_reference: 0.044182
+  v2_vs_hierarchical_return_delta_reference: 0.064256
+  v2_vs_flat_calmar_delta_reference: 0.911766
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: balanced_dynamic_probe
+  model_id: first_layer_composer_v2
+  v2_annual_return: 0.156015
+  v2_max_drawdown: -0.082585
+  v2_sharpe: 1.538574
+  v2_calmar: 1.889144
+  v2_turnover: 63.377405
+  flat_annual_return_reference: 0.098138
+  hierarchical_annual_return_reference: 0.085037
+  flat_calmar_reference: 0.974622
+  hierarchical_calmar_reference: 0.577605
+  v2_vs_flat_return_delta_reference: 0.057877
+  v2_vs_hierarchical_return_delta_reference: 0.070978
+  v2_vs_flat_calmar_delta_reference: 0.914522
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: drawdown_control_probe
+  model_id: first_layer_composer_v2
+  v2_annual_return: 0.149733
+  v2_max_drawdown: -0.105862
+  v2_sharpe: 1.293105
+  v2_calmar: 1.414416
+  v2_turnover: 121.263419
+  flat_annual_return_reference: 0.10189
+  hierarchical_annual_return_reference: 0.065686
+  flat_calmar_reference: 1.204107
+  hierarchical_calmar_reference: 0.37436
+  v2_vs_flat_return_delta_reference: 0.047843
+  v2_vs_hierarchical_return_delta_reference: 0.084047
+  v2_vs_flat_calmar_delta_reference: 0.210309
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: risk_on_diagnostic_probe
+  model_id: first_layer_composer_v2
+  v2_annual_return: 0.169136
+  v2_max_drawdown: -0.091056
+  v2_sharpe: 1.483156
+  v2_calmar: 1.857487
+  v2_turnover: 58.656358
+  flat_annual_return_reference: 0.097325
+  hierarchical_annual_return_reference: 0.092932
+  flat_calmar_reference: 0.95561
+  hierarchical_calmar_reference: 0.582879
+  v2_vs_flat_return_delta_reference: 0.071811
+  v2_vs_hierarchical_return_delta_reference: 0.076204
+  v2_vs_flat_calmar_delta_reference: 0.901877
+  actual_path_improved_vs_flat_reference: true
+  comparison_window_compatibility: PRIOR_ROWS_LEGACY_REFERENCE_ONLY
+  target_path_metrics_used_for_pass: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED

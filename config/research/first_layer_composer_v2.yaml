@@ -1,0 +1,76 @@
+schema_version: first_layer_composer_v2.v1
+policy_id: first_layer_composer_v2
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    V2 submodel outputs need a deterministic first-layer state composer that
+    never emits portfolio weights.
+  intended_effect: >
+    Translate do-not-de-risk, stay-constructive, add-risk and risk-on diagnostic
+    scores into trend_state / confidence / validity / decay metadata for frozen
+    probe actual-path validation.
+  validation_evidence: >
+    TRADING-1666 to 1705 tests check no weight columns and target-path metrics
+    cannot pass the first-layer gate.
+  review_condition: >
+    Review before changing state precedence or using composer output in
+    paper-shadow, production or broker paths.
+state_precedence:
+  - risk_off
+  - defensive
+  - neutral
+  - constructive
+  - risk_on
+rules:
+  risk_off:
+    condition: do_not_de_risk_pred_false
+    validity_days: 5
+    decay_profile: fast
+  defensive:
+    condition: do_not_de_risk_low_confidence
+    validity_days: 7
+    decay_profile: fast
+  neutral:
+    condition: no_constructive_signal
+    validity_days: 10
+    decay_profile: medium
+  constructive:
+    condition: stay_constructive_or_add_risk_pred_true
+    validity_days: 15
+    decay_profile: medium
+  risk_on:
+    condition: high_confidence_risk_on_pred_true_and_add_risk_true
+    validity_days: 10
+    decay_profile: fast
+output_contract:
+  allowed_columns:
+    - date
+    - model_id
+    - trend_state
+    - confidence
+    - expected_horizon_days
+    - validity_days
+    - decay_profile
+    - feature_snapshot_hash
+    - model_version
+    - known_at
+    - available_at
+    - decision_at
+  forbidden_columns:
+    - QQQ
+    - SGOV
+    - TQQQ
+    - weight
+    - target_weight
+    - actual_weight
+target_path_metrics_can_pass_gate: false
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

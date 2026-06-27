@@ -1,0 +1,47 @@
+schema_version: first_layer_threshold_policy_v2.v1
+policy_id: first_layer_threshold_policy_v2
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    V2 first-layer submodels use train-window quantiles and explicit sample
+    floors instead of post-hoc threshold tweaks on validation failures.
+  intended_effect: >
+    Keep low-complexity models auditable while preventing rare risk-on labels
+    from being over-promoted.
+  validation_evidence: >
+    TRADING-1666 to 1705 tests verify first-layer outputs contain no weights and
+    high-confidence risk-on remains diagnostic-only when sample support is weak.
+  review_condition: >
+    Review before changing quantiles, positive sample floors or validation
+    window lengths.
+walk_forward:
+  train_window_days: 504
+  validation_window_days: 63
+  step_days: 21
+  min_train_samples: 300
+  label_horizon_days: 20
+threshold_selection:
+  positive_score_quantile: 0.65
+  negative_score_quantile: 0.85
+  min_predicted_share: 0.02
+  max_predicted_share: 0.50
+positive_sample_floor:
+  do_not_de_risk_model_v1: 60
+  stay_constructive_model_v1: 60
+  add_risk_model_v1: 40
+  high_confidence_risk_on_model_v1: 60
+model_complexity:
+  allowed_model_family: train_window_quantile_scorecard
+  max_feature_count_per_model: 8
+  direct_weight_output_allowed: false
+target_path_metrics_can_pass_gate: false
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

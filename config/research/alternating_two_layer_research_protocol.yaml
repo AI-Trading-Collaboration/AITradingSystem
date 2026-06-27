@@ -1,0 +1,82 @@
+schema_version: alternating_two_layer_research_protocol.v1
+policy_id: alternating_two_layer_research_protocol_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    First-layer trend models and second-layer state-to-portfolio mappings cannot
+    be tuned at the same time without losing attribution. This protocol forces
+    one layer to remain frozen in each research round.
+  intended_effect: >
+    Preserve auditability when labels, features, probes and actual-path results
+    are compared across research windows.
+  validation_evidence: >
+    TRADING-1666 to 1705 tests validate one-layer-only mutation rules and block
+    target-path metrics from passing first-layer gates.
+  review_condition: >
+    Review before allowing a round type to change both first-layer and
+    second-layer artifacts, or before using validation holdout failures for
+    immediate tuning.
+round_types:
+  first_layer_calibration:
+    modified_layer: first_layer
+    frozen_layer: second_layer
+    allowed_changes:
+      - action_value_label_regeneration
+      - first_layer_feature_set_review
+      - first_layer_model_training
+      - first_layer_threshold_calibration
+      - first_layer_composer
+    forbidden_changes:
+      - second_layer_probe_weight_change
+      - state_to_portfolio_weight_optimization
+      - production_or_paper_shadow_enablement
+    required_validation:
+      - frozen_probe_actual_path
+      - window_metadata
+      - data_quality_gate
+  second_layer_mapping:
+    modified_layer: second_layer
+    frozen_layer: first_layer
+    allowed_changes:
+      - trend_state_to_portfolio_mapping
+      - same_risk_frontier_comparison
+      - net_of_cost_stress_review
+    forbidden_changes:
+      - first_layer_label_change
+      - first_layer_feature_change
+      - first_layer_model_change
+    required_validation:
+      - frozen_first_layer_prediction_input
+      - same_risk_frontier
+      - actual_path_backtest
+  validation:
+    modified_layer: none
+    frozen_layer: both
+    allowed_changes:
+      - holdout_validation
+      - forward_watch_review
+      - owner_review_pack
+    forbidden_changes:
+      - first_layer_tuning_on_holdout
+      - second_layer_tuning_on_holdout
+      - mixed_window_leaderboard
+    required_validation:
+      - holdout_disjointness
+      - window_metadata
+      - data_quality_gate
+promotion_rules:
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_can_pass_first_layer_gate: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

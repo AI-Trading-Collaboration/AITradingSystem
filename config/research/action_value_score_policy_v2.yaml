@@ -1,0 +1,59 @@
+schema_version: action_value_score_policy_v2.v1
+policy_id: action_value_score_policy_v2
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Upper-state labels need action-value decomposition rather than a single
+    five-class full-allocation score.
+  intended_effect: >
+    Score do-not-de-risk, stay-constructive, add-risk and risk-on diagnostic
+    labels from frozen second-layer probes without changing probe weights.
+  validation_evidence: >
+    TRADING-1666 to 1705 tests and generated label-quality reports disclose
+    positive sample counts, disagreement and research-only risk-on status.
+  review_condition: >
+    Review before changing penalties, horizons, score floors or using target
+    path metrics as a pass basis.
+horizons:
+  - 5
+  - 10
+  - 20
+  - 60
+neutral_state: neutral
+defensive_states:
+  - risk_off
+  - defensive
+constructive_states:
+  - constructive
+risk_on_states:
+  - risk_on
+score_weights:
+  return_delta: 1.00
+  drawdown_delta: 0.70
+  stress_penalty: 0.45
+  tqqq_penalty: 0.35
+  missed_upside_penalty: 0.60
+  net_of_cost_penalty: 1.00
+thresholds:
+  do_not_de_risk_score: 0.0005
+  stay_constructive_score: 0.0010
+  add_risk_score: 0.0020
+  risk_on_diagnostic_score: 0.0040
+stress:
+  max_acceptable_worst_5d_loss: -0.055
+  max_acceptable_worst_20d_loss: -0.110
+tqqq:
+  max_constructive_weight: 0.10
+  max_risk_on_diagnostic_weight: 0.15
+  penalty_per_weight: 0.20
+target_path_metrics_can_pass_gate: false
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,42 @@
+schema_version: upper_state_label_feature_reset_final_matrix.v1
+report_type: upper_state_label_feature_reset_final_matrix
+title: Upper-State Label Feature Reset Final Matrix
+status: UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH
+generated_at: '2026-06-27T15:19:17Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  owner_pack_status: UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED
+  label_status: UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED
+  actual_path_status: FIRST_LAYER_V2_FROZEN_PROBE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+  failure_status: FIRST_LAYER_V2_FAILURE_ATTRIBUTION_READY_PROMOTION_BLOCKED
+  final_status: UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH
+  dynamic_promotion_status: BLOCKED
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+final_decision:
+  upper_state_detector_v1: paused
+  first_layer_v2: research_only
+  high_confidence_risk_on: diagnostic_only
+  dynamic_promotion: blocked
+  next_action: OWNER_REVIEW_FIRST_LAYER_V2_FORWARD_WATCH
