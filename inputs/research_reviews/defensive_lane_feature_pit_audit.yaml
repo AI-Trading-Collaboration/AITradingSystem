@@ -1,0 +1,133 @@
+schema_version: defensive_lane_feature_pit_audit.v1
+report_type: defensive_lane_feature_pit_audit
+title: Defensive Lane Feature PIT Audit
+status: DEFENSIVE_LANE_FEATURE_PIT_AUDIT_READY_WITH_LIMITATIONS
+generated_at: '2026-06-27T18:42:57Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  feature_row_count: 1343
+  approved_feature_count: 14
+  blocked_feature_count: 5
+  feature_cutoff_passed: true
+  tqqq_feature_count: 0
+  add_risk_feature_count: 0
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: defensive_lane_label_taxonomy_v1
+  feature_set_version: defensive_lane_feature_matrix_v1
+  model_version: defensive_preservation_lane_v1
+  threshold_policy: defensive_lane_action_value_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 1343
+  pre_registered_selection_rule: true
+feature_matrix_columns:
+- research_window_id
+- requested_start
+- actual_start
+- actual_portfolio_start
+- end
+- window_role
+- data_quality_contract
+- exact_or_proxy
+- date
+- known_at
+- available_at
+- decision_at
+- data_quality_status
+- feature_cutoff_passed
+- pit_status
+- qqq_return_5d
+- qqq_return_20d
+- qqq_return_60d
+- realized_vol_20d
+- realized_vol_60d
+- downside_vol_20d
+- drawdown_depth_126d
+- drawdown_speed_20d
+- trend_break_20_60
+- volatility_regime_score
+- rate_shock_20d
+- liquidity_stress_proxy
+- recovery_from_60d_low
+- distance_from_60d_high
+feature_rows:
+- feature_id: qqq_return_5d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: qqq_return_20d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: qqq_return_60d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: realized_vol_20d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: realized_vol_60d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: downside_vol_20d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: drawdown_depth_126d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: drawdown_speed_20d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: trend_break_20_60
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: volatility_regime_score
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: rate_shock_20d
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: liquidity_stress_proxy
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: recovery_from_60d_low
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+- feature_id: distance_from_60d_high
+  pit_status: PIT_APPROVED
+  feature_role: defensive_risk_control
+blocked_features:
+- VIX unavailable in current tracked cache
+- event risk score unavailable in current tracked cache
+- liquidity stress direct market-depth source unavailable
+- TQQQ-related signal intentionally blocked for defensive lane
+- add-risk and high-confidence risk-on features intentionally blocked

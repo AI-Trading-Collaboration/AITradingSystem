@@ -20829,6 +20829,125 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: defensive_preservation_lane_policy_contract
+    title: Defensive Preservation Lane Policy Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - config/research/defensive_preservation_lane_policy.yaml
+      - config/research/defensive_lane_label_taxonomy.yaml
+      - config/research/defensive_lane_action_value_policy.yaml
+      - docs/research/defensive_preservation_lane_scope.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive lane policy artifacts change after scope, label taxonomy, action-value thresholds, or safety boundaries change.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_lane_feature_pit_audit
+    title: Defensive Lane Feature PIT Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - docs/research/defensive_lane_feature_pit_audit.md
+      - inputs/research_reviews/defensive_lane_feature_pit_audit.yaml
+      - outputs/research_trends/defensive_lane_feature_matrix.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive lane feature PIT audit changes after defensive feature construction, source availability, or PIT boundary rules change.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_lane_model_review
+    title: Defensive Lane Model Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - docs/research/defensive_lane_model_review.md
+      - inputs/research_reviews/defensive_lane_model_matrix.yaml
+      - outputs/research_trends/defensive_lane_labels.csv
+      - outputs/research_trends/models/defensive_lane_predictions.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive lane model review changes after label taxonomy, model thresholds, generated predictions, or blocked-output rules change.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_lane_actual_path_review
+    title: Defensive Lane Actual-Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - docs/research/defensive_lane_actual_path_review.md
+      - inputs/research_reviews/defensive_lane_actual_path_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive lane actual-path review changes after defensive probe predictions, probe registry, or same-window neutral reference logic changes.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_lane_2022_slice_review
+    title: Defensive Lane 2022 Slice Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - docs/research/defensive_lane_2022_slice_review.md
+      - inputs/research_reviews/defensive_lane_2022_slice_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive lane 2022 slice review changes after slice definitions, labels, predictions, or 2022 stress/recovery interpretation changes.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_preservation_lane_closeout
+    title: Defensive Preservation Lane Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends defensive-lane
+    artifact_globs:
+      - docs/research/defensive_preservation_lane_closeout.md
+      - inputs/research_reviews/defensive_preservation_lane_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive preservation lane closeout changes after policy, PIT audit, model review, actual-path, or 2022 slice evidence changes.
+    owner_action: review_defensive_preservation_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

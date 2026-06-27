@@ -1,0 +1,66 @@
+schema_version: defensive_preservation_lane_policy.v1
+policy_id: defensive_preservation_lane_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-1786 to 1805 showed that false add-risk breaks defensive probes.
+    This policy limits Phase 2 to defensive preservation signals and blocks all
+    add-risk, high-confidence risk-on and TQQQ-related model outputs.
+  intended_effect: >
+    Test whether a defensive-only first layer can preserve or improve defensive
+    probes without contaminating them with return-seeking signals.
+  validation_evidence: >
+    Guardrail tests verify that the generated labels, model predictions and
+    actual-path rows contain no add-risk/risk-on/TQQQ signal and keep promotion,
+    paper-shadow, production and broker paths disabled.
+  review_condition: >
+    Review before changing any model threshold, allowing constructive/risk-on
+    states, adding TQQQ features, or using the lane outside defensive research.
+modified_layer: first_layer
+frozen_second_layer: dynamic_second_layer_probe_registry_v2
+frozen_second_layer_probes:
+  - defensive_overlay_probe
+  - drawdown_control_probe
+  - limited_adjustment_reference
+allowed_outputs:
+  - risk_off
+  - defensive
+  - do_not_de_risk
+  - re_risk_allowed_but_not_add_risk
+disallowed_outputs:
+  - stay_constructive
+  - add_risk
+  - high_confidence_risk_on
+  - risk_on_diagnostic
+blocked_features:
+  - tqqq_related_signal
+  - add_risk_signal
+  - high_confidence_risk_on_signal
+  - future_outcome_feature
+model_thresholds:
+  risk_off_drawdown_depth: -0.14
+  risk_off_drawdown_speed: -0.06
+  risk_off_realized_vol_20d: 0.32
+  risk_off_trend_break_20_60: -0.05
+  risk_off_score_cutoff: 2.0
+  defensive_drawdown_depth: -0.08
+  defensive_realized_vol_20d: 0.24
+  defensive_trend_break_20_60: -0.025
+  defensive_volatility_regime_score: 0.35
+  defensive_score_cutoff: 2.0
+  re_risk_recovery_from_60d_low: 0.08
+  re_risk_drawdown_speed_floor: 0.025
+  re_risk_realized_vol_ceiling: 0.28
+  re_risk_allowed_score_cutoff: 2.0
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED

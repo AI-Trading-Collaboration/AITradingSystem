@@ -1,0 +1,192 @@
+schema_version: defensive_lane_actual_path_matrix.v1
+report_type: defensive_lane_actual_path_matrix
+title: Defensive Lane Actual-Path Matrix
+status: DEFENSIVE_LANE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T18:42:59Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  model_id: defensive_preservation_lane_v1
+  probe_count: 3
+  modeled_defensive_probe_count: 2
+  defensive_probe_no_regression: true
+  drawdown_not_worse: true
+  add_risk_used: false
+  risk_on_used: false
+  tqqq_signal_used: false
+  limited_adjustment_reference_included: true
+  promotion_status: blocked
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: defensive_lane_label_taxonomy_v1
+  feature_set_version: defensive_lane_feature_matrix_v1
+  model_version: defensive_preservation_lane_v1
+  threshold_policy: defensive_lane_action_value_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 3
+  pre_registered_selection_rule: true
+probe_rows:
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: defensive_overlay_probe
+  role: defensive_overlay
+  lane_role: defensive_preservation
+  date_start: '2021-02-22'
+  date_end: '2026-06-26'
+  model_id: defensive_preservation_lane_v1
+  annual_return: 0.118029
+  max_drawdown_daily_equity: -0.177727
+  sharpe: 1.07106
+  calmar: 0.664106
+  turnover: 26.662314
+  tqqq_max_weight: 0.0
+  neutral_annual_return: 0.117718
+  neutral_max_drawdown_daily_equity: -0.217934
+  annual_return_delta_vs_neutral: 0.000311
+  drawdown_delta_vs_neutral: 0.040207
+  drawdown_not_worse: true
+  defensive_probe_no_regression: true
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: drawdown_control_probe
+  role: drawdown_control
+  lane_role: defensive_preservation
+  date_start: '2021-02-22'
+  date_end: '2026-06-26'
+  model_id: defensive_preservation_lane_v1
+  annual_return: 0.129728
+  max_drawdown_daily_equity: -0.17948
+  sharpe: 1.12403
+  calmar: 0.722798
+  turnover: 52.003172
+  tqqq_max_weight: 0.0
+  neutral_annual_return: 0.130372
+  neutral_max_drawdown_daily_equity: -0.252502
+  annual_return_delta_vs_neutral: -0.000644
+  drawdown_delta_vs_neutral: 0.073022
+  drawdown_not_worse: true
+  defensive_probe_no_regression: true
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_id: limited_adjustment_reference
+  role: limited_adjustment_reference
+  lane_role: prior_dynamic_reference_only
+  date_start: '2022-12-01'
+  date_end: '2026-06-26'
+  model_id: limited_adjustment_reference
+  annual_return: 0.192658
+  max_drawdown_daily_equity: -0.116204
+  sharpe: 1.609148
+  calmar: 1.65793
+  turnover: 2.4
+  tqqq_max_weight: null
+  neutral_annual_return: null
+  neutral_max_drawdown_daily_equity: null
+  annual_return_delta_vs_neutral: null
+  drawdown_delta_vs_neutral: null
+  drawdown_not_worse: null
+  defensive_probe_no_regression: null
+  reference_source: inputs\research_reviews\dynamic_actual_path_owner_review_decision.yaml
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+model_summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  model_count: 3
+  prediction_count: 1343
+  label_count: 1323
+  predicted_state_distribution:
+    neutral: 998
+    risk_off: 174
+    defensive: 171
+  label_state_distribution:
+    neutral: 771
+    risk_off: 522
+    defensive: 30
+  add_risk_prediction_count: 0
+  high_confidence_risk_on_prediction_count: 0
+  tqqq_signal_allowed: false
+  promotion_status: blocked

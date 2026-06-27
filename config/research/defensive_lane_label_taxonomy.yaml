@@ -1,0 +1,47 @@
+schema_version: defensive_lane_label_taxonomy.v1
+policy_id: defensive_lane_label_taxonomy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Defensive preservation needs labels that answer defensive action questions
+    only. Add-risk rewards are explicitly excluded.
+  intended_effect: >
+    Separate risk-off, defensive hold, do-not-de-risk and cautious re-risk
+    labels from return-seeking first-layer v2 labels.
+  validation_evidence: >
+    Tests assert that generated labels include no add-risk or high-confidence
+    risk-on label and that actual-path predictions map only to risk_off,
+    defensive or neutral states.
+  review_condition: >
+    Review before changing label priority, adding an add-risk reward, or using
+    labels for promotion or allocation.
+label_definitions:
+  risk_off_needed:
+    output_state: risk_off
+    purpose: avoid_future_drawdown
+  defensive_hold_needed:
+    output_state: defensive
+    purpose: preserve_defensive_overlay
+  do_not_de_risk:
+    output_state: neutral
+    purpose: avoid_false_risk_off
+  re_risk_allowed_but_not_add_risk:
+    output_state: neutral
+    purpose: allow_neutralization_without_growth_overlay
+blocked_labels:
+  - add_risk
+  - high_confidence_risk_on
+  - risk_on_diagnostic
+priority_order:
+  - risk_off_needed
+  - defensive_hold_needed
+  - do_not_de_risk
+  - re_risk_allowed_but_not_add_risk
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none

@@ -1,0 +1,89 @@
+schema_version: defensive_preservation_lane_final_matrix.v1
+report_type: defensive_preservation_lane_final_matrix
+title: Defensive Preservation Lane Final Matrix
+status: DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+generated_at: '2026-06-27T18:42:59Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  final_status: DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+  defensive_probe_no_regression: true
+  drawdown_not_worse: true
+  false_risk_off_cost_declined: false
+  interpretation: NO_MATERIAL_IMPROVEMENT_WITH_NO_DEFENSIVE_REGRESSION
+  model_count: 3
+  feature_status: DEFENSIVE_LANE_FEATURE_PIT_AUDIT_READY_WITH_LIMITATIONS
+  actual_path_status: DEFENSIVE_LANE_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+  2022_slice_status: DEFENSIVE_LANE_2022_SLICE_READY_PROMOTION_BLOCKED
+  add_risk_disabled: true
+  high_confidence_risk_on_disabled: true
+  tqqq_signal_disabled: true
+  gated_integration_allowed: false
+  owner_review_allowed: false
+  promotion_status: blocked
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: defensive_lane_label_taxonomy_v1
+  feature_set_version: defensive_lane_feature_matrix_v1
+  model_version: defensive_preservation_lane_v1
+  threshold_policy: defensive_lane_action_value_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 3
+  pre_registered_selection_rule: true
+phase_decision:
+  next_action: RUN_RETURN_SEEKING_DIAGNOSTIC_LANE_OR_REVIEW_DEFENSIVE_FEATURE_LIMITATIONS
+  gated_integration_allowed_now: false
+  reason: Phase 3 evidence is still missing; Phase 2 did not establish a promoted
+    defensive lane.
+artifact_paths:
+  lane_policy: config\research\defensive_preservation_lane_policy.yaml
+  label_taxonomy: config\research\defensive_lane_label_taxonomy.yaml
+  action_value_policy: config\research\defensive_lane_action_value_policy.yaml
+  scope_doc: docs\research\defensive_preservation_lane_scope.md
+  labels_csv: outputs\research_trends\defensive_lane_labels.csv
+  feature_matrix_csv: outputs\research_trends\defensive_lane_feature_matrix.csv
+  feature_pit_audit_doc: docs\research\defensive_lane_feature_pit_audit.md
+  feature_pit_audit_yaml: inputs\research_reviews\defensive_lane_feature_pit_audit.yaml
+  model_review_doc: docs\research\defensive_lane_model_review.md
+  model_matrix_yaml: inputs\research_reviews\defensive_lane_model_matrix.yaml
+  predictions_csv: outputs\research_trends\models\defensive_lane_predictions.csv
+  actual_path_doc: docs\research\defensive_lane_actual_path_review.md
+  actual_path_yaml: inputs\research_reviews\defensive_lane_actual_path_matrix.yaml
+  slice_2022_doc: docs\research\defensive_lane_2022_slice_review.md
+  slice_2022_yaml: inputs\research_reviews\defensive_lane_2022_slice_matrix.yaml
+  closeout_doc: docs\research\defensive_preservation_lane_closeout.md
+  final_matrix_yaml: inputs\research_reviews\defensive_preservation_lane_final_matrix.yaml

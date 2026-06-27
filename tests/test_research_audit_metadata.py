@@ -199,6 +199,47 @@ def test_first_layer_coverage_rebuild_final_matrix_records_blocker() -> None:
     )
 
 
+def test_defensive_preservation_lane_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/defensive_lane_feature_pit_audit.yaml"),
+        Path("inputs/research_reviews/defensive_lane_model_matrix.yaml"),
+        Path("inputs/research_reviews/defensive_lane_actual_path_matrix.yaml"),
+        Path("inputs/research_reviews/defensive_lane_2022_slice_matrix.yaml"),
+        Path("inputs/research_reviews/defensive_preservation_lane_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "first_layer"
+        assert metadata["frozen_second_layer_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert metadata["label_version"] == "defensive_lane_label_taxonomy_v1"
+        assert metadata["feature_set_version"] == "defensive_lane_feature_matrix_v1"
+        assert metadata["model_version"] == "defensive_preservation_lane_v1"
+        assert metadata["threshold_policy"] == "defensive_lane_action_value_policy_v1"
+        assert metadata["probe_registry_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+        assert artifact["paper_shadow_allowed"] is False
+        assert artifact["production_allowed"] is False
+        assert artifact["broker_action"] == "none"
+
+
+def test_defensive_preservation_lane_final_matrix_records_no_material_improvement() -> None:
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/defensive_preservation_lane_final_matrix.yaml")
+    )
+
+    assert artifact["status"] == "DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT"
+    assert artifact["summary"]["defensive_probe_no_regression"] is True
+    assert artifact["summary"]["false_risk_off_cost_declined"] is False
+    assert artifact["summary"]["gated_integration_allowed"] is False
+    assert artifact["phase_decision"]["gated_integration_allowed_now"] is False
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

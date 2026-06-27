@@ -1,0 +1,192 @@
+schema_version: defensive_lane_model_matrix.v1
+report_type: defensive_lane_model_matrix
+title: Defensive Lane Model Review
+status: DEFENSIVE_LANE_MODEL_REVIEW_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T18:42:57Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  model_count: 3
+  prediction_count: 1343
+  label_count: 1323
+  predicted_state_distribution:
+    neutral: 998
+    risk_off: 174
+    defensive: 171
+  label_state_distribution:
+    neutral: 771
+    risk_off: 522
+    defensive: 30
+  add_risk_prediction_count: 0
+  high_confidence_risk_on_prediction_count: 0
+  tqqq_signal_allowed: false
+  promotion_status: blocked
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: defensive_lane_label_taxonomy_v1
+  feature_set_version: defensive_lane_feature_matrix_v1
+  model_version: defensive_preservation_lane_v1
+  threshold_policy: defensive_lane_action_value_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 1343
+  pre_registered_selection_rule: true
+label_columns:
+- research_window_id
+- requested_start
+- actual_start
+- actual_portfolio_start
+- end
+- window_role
+- data_quality_contract
+- exact_or_proxy
+- date
+- horizon_days
+- future_return
+- future_max_drawdown
+- worst_5d_return
+- risk_off_needed
+- defensive_hold_needed
+- do_not_de_risk
+- re_risk_allowed_but_not_add_risk
+- defensive_label_state
+- label_uses_future_outcome
+- add_risk_label_allowed
+- high_confidence_risk_on_label_allowed
+- research_only
+- actual_path_required
+- target_path_metrics_role
+- promotion_allowed
+- paper_shadow_allowed
+- production_allowed
+- broker_action
+- production_effect
+- manual_review_required
+- dynamic_promotion_status
+prediction_columns:
+- research_window_id
+- requested_start
+- actual_start
+- actual_portfolio_start
+- end
+- window_role
+- data_quality_contract
+- exact_or_proxy
+- date
+- model_id
+- output_signal
+- trend_state
+- confidence
+- risk_off_probability
+- defensive_probability
+- do_not_de_risk_probability
+- re_risk_allowed_probability
+- add_risk_probability
+- high_confidence_risk_on_probability
+- tqqq_signal_allowed
+- research_only
+- actual_path_required
+- target_path_metrics_role
+- promotion_allowed
+- paper_shadow_allowed
+- production_allowed
+- broker_action
+- production_effect
+- manual_review_required
+- dynamic_promotion_status
+label_contract:
+  required_label_columns:
+  - risk_off_needed
+  - defensive_hold_needed
+  - do_not_de_risk
+  - re_risk_allowed_but_not_add_risk
+  add_risk_label_allowed_any: false
+  high_confidence_risk_on_label_allowed_any: false
+prediction_contract:
+  allowed_trend_states:
+  - risk_off
+  - defensive
+  - neutral
+  observed_trend_states:
+  - defensive
+  - neutral
+  - risk_off
+  add_risk_probability_max: 0.0
+  high_confidence_risk_on_probability_max: 0.0
+  tqqq_signal_allowed_any: false
+model_rows:
+- model_id: risk_off_detector_v4
+  predicted_positive_count: 174
+  actual_positive_count: 522
+  true_positive_count: 137
+  false_positive_count: 37
+  false_negative_count: 385
+  precision: 0.787356
+  recall: 0.262452
+  model_status: LOW_COMPLEXITY_DIAGNOSTIC_ONLY
+  promotion_allowed: false
+- model_id: do_not_de_risk_detector_defensive_v1
+  predicted_positive_count: 280
+  actual_positive_count: 496
+  true_positive_count: 102
+  false_positive_count: 178
+  false_negative_count: 394
+  precision: 0.364286
+  recall: 0.205645
+  model_status: LOW_COMPLEXITY_DIAGNOSTIC_ONLY
+  promotion_allowed: false
+- model_id: re_risk_allowed_detector_v1
+  predicted_positive_count: 709
+  actual_positive_count: 566
+  true_positive_count: 495
+  false_positive_count: 214
+  false_negative_count: 71
+  precision: 0.698166
+  recall: 0.874558
+  model_status: LOW_COMPLEXITY_DIAGNOSTIC_ONLY
+  promotion_allowed: false
+policy_thresholds:
+  risk_off_drawdown_depth: -0.14
+  risk_off_drawdown_speed: -0.06
+  risk_off_realized_vol_20d: 0.32
+  risk_off_trend_break_20_60: -0.05
+  risk_off_score_cutoff: 2.0
+  defensive_drawdown_depth: -0.08
+  defensive_realized_vol_20d: 0.24
+  defensive_trend_break_20_60: -0.025
+  defensive_volatility_regime_score: 0.35
+  defensive_score_cutoff: 2.0
+  re_risk_recovery_from_60d_low: 0.08
+  re_risk_drawdown_speed_floor: 0.025
+  re_risk_realized_vol_ceiling: 0.28
+  re_risk_allowed_score_cutoff: 2.0

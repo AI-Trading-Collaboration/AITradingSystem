@@ -7,6 +7,13 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.defensive_preservation_lane import (
+    DEFAULT_DEFENSIVE_ACTION_VALUE_POLICY_PATH,
+    DEFAULT_DEFENSIVE_LABEL_TAXONOMY_PATH,
+    DEFAULT_DEFENSIVE_LANE_POLICY_PATH,
+    DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
+    run_defensive_preservation_lane_pack,
+)
 from ai_trading_system.first_layer_defensive_regression_diagnosis import (
     run_first_layer_defensive_regression_diagnosis_pack,
 )
@@ -455,6 +462,54 @@ def first_layer_defensive_regression_diagnosis_command(
         coverage_model_root=coverage_model_root,
     )
     _print_payload("First-layer defensive regression diagnosis", payload)
+
+
+@trends_app.command("defensive-lane")
+def defensive_preservation_lane_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    lane_policy_path: Annotated[
+        Path, typer.Option("--lane-policy")
+    ] = DEFAULT_DEFENSIVE_LANE_POLICY_PATH,
+    label_taxonomy_path: Annotated[
+        Path, typer.Option("--label-taxonomy")
+    ] = DEFAULT_DEFENSIVE_LABEL_TAXONOMY_PATH,
+    action_value_policy_path: Annotated[
+        Path, typer.Option("--action-value-policy")
+    ] = DEFAULT_DEFENSIVE_ACTION_VALUE_POLICY_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT,
+    limited_adjustment_reference_path: Annotated[
+        Path, typer.Option("--limited-adjustment-reference")
+    ] = DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
+) -> None:
+    payload = run_defensive_preservation_lane_pack(
+        registry_path=registry_path,
+        lane_policy_path=lane_policy_path,
+        label_taxonomy_path=label_taxonomy_path,
+        action_value_policy_path=action_value_policy_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        limited_adjustment_reference_path=limited_adjustment_reference_path,
+    )
+    _print_payload("Defensive preservation lane", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

@@ -1,0 +1,92 @@
+schema_version: defensive_lane_2022_slice_matrix.v1
+report_type: defensive_lane_2022_slice_matrix
+title: Defensive Lane 2022 Slice Review
+status: DEFENSIVE_LANE_2022_SLICE_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T18:42:59Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  slice_count: 3
+  defensive_probe_no_regression: true
+  add_risk_used: false
+  risk_on_used: false
+  promotion_status: blocked
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: defensive_lane_label_taxonomy_v1
+  feature_set_version: defensive_lane_feature_matrix_v1
+  model_version: defensive_preservation_lane_v1
+  threshold_policy: defensive_lane_action_value_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 3
+  pre_registered_selection_rule: true
+slice_rows:
+- slice_id: 2022_drawdown_slice
+  start: '2022-02-18'
+  end: '2022-06-30'
+  prediction_count: 91
+  label_count: 91
+  risk_off_prediction_count: 71
+  defensive_prediction_count: 20
+  neutral_prediction_count: 0
+  risk_off_label_count: 84
+  avg_drawdown_depth: -0.203325
+  avg_realized_vol_20d: 0.348272
+  add_risk_used: false
+  risk_on_used: false
+- slice_id: 2022_recovery_slice
+  start: '2022-07-01'
+  end: '2022-10-31'
+  prediction_count: 85
+  label_count: 85
+  risk_off_prediction_count: 46
+  defensive_prediction_count: 37
+  neutral_prediction_count: 2
+  risk_off_label_count: 71
+  avg_drawdown_depth: -0.193453
+  avg_realized_vol_20d: 0.283911
+  add_risk_used: false
+  risk_on_used: false
+- slice_id: post_chatgpt_transition_slice
+  start: '2022-11-01'
+  end: '2023-02-21'
+  prediction_count: 76
+  label_count: 76
+  risk_off_prediction_count: 23
+  defensive_prediction_count: 27
+  neutral_prediction_count: 26
+  risk_off_label_count: 45
+  avg_drawdown_depth: -0.145224
+  avg_realized_vol_20d: 0.281223
+  add_risk_used: false
+  risk_on_used: false

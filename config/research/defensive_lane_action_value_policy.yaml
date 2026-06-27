@@ -1,0 +1,46 @@
+schema_version: defensive_lane_action_value_policy.v1
+policy_id: defensive_lane_action_value_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Defensive lane scoring should reward avoided drawdown and penalize false
+    risk-off / delayed re-risk costs, without rewarding add-risk.
+  intended_effect: >
+    Keep model-policy interpretation aligned with defensive preservation rather
+    than return-seeking allocation.
+  validation_evidence: >
+    Generated labels expose future drawdown, worst 5d loss, missed upside proxy
+    and label state while blocking add-risk labels.
+  review_condition: >
+    Review before changing thresholds or using any score as an investment
+    promotion gate.
+horizon_days: 20
+thresholds:
+  risk_off_future_max_drawdown: -0.08
+  risk_off_worst_5d_return: -0.04
+  defensive_current_drawdown: -0.06
+  defensive_volatility_regime_score: 0.30
+  defensive_future_return_ceiling: 0.04
+  do_not_de_risk_future_return: 0.025
+  do_not_de_risk_max_drawdown_floor: -0.045
+  re_risk_recovery_from_60d_low: 0.06
+  re_risk_worst_5d_floor: -0.035
+score_components:
+  - avoided_drawdown
+  - worst_5d_loss_reduction
+  - missed_upside
+  - false_risk_off_cost
+  - re_risk_delay_cost
+excluded_components:
+  - add_risk_reward
+  - high_confidence_risk_on_reward
+  - tqqq_beta_reward
+safety_boundary:
+  research_only: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
