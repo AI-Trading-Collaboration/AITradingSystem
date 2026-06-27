@@ -1,0 +1,45 @@
+# Hierarchical First-Layer Walk-Forward Matrix
+
+- Status: `HIERARCHICAL_FIRST_LAYER_WALK_FORWARD_READY_PROMOTION_BLOCKED`
+- Market regime: `ai_after_chatgpt`
+- market_regime: `ai_after_chatgpt`
+- default_backtest_start: `2022-12-01`
+- accuracy: `0.493284`
+- balanced_accuracy: `0.180128`
+- three_zone_accuracy: `0.509158`
+- risk_off_precision: `0.744076`
+- risk_off_recall: `0.824869`
+- false_risk_off_rate: `0.197802`
+- late_risk_off_rate: `0.1221`
+- upper_state_precision: `0.064865`
+- upper_state_recall: `0.105263`
+- false_risk_on_rate: `0.211233`
+- missed_upside: `0.894737`
+- captured_upside: `0.105263`
+- predicted_upper_state_count: `185`
+- true_upper_state_count: `114`
+- predicted_constructive_count: `159`
+- predicted_risk_on_count: `26`
+- true_constructive_count: `96`
+- true_risk_on_count: `18`
+- upper_state_collapse_flag: `True`
+- risk_on_severity_status: `RISK_ON_SEVERITY_SCALER_READY`
+- risk_off_action_value_delta_proxy: `0.627066`
+- upper_state_action_value_delta_proxy: `-0.10597`
+- prediction_distribution: `{'risk_off': 508, 'constructive': 159, 'neutral': 106, 'risk_on': 26, 'defensive': 20}`
+- research_only: `True`
+- actual_path_required: `True`
+- target_path_metrics_role: `diagnostic_only`
+- promotion_allowed: `False`
+- paper_shadow_allowed: `False`
+- production_allowed: `False`
+- broker_action: `none`
+- production_effect: `none`
+- manual_review_required: `True`
+- dynamic_promotion_status: `BLOCKED`
+
+Safety boundary:
+- promotion_allowed: `False`
+- paper_shadow_allowed: `False`
+- production_allowed: `False`
+- broker_action: `none`

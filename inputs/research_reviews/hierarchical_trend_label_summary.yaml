@@ -1,0 +1,37 @@
+schema_version: hierarchical_trend_label_summary.v1
+report_type: hierarchical_trend_label_summary
+title: Hierarchical Trend Label Summary
+status: HIERARCHICAL_TREND_LABELS_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:42:27Z'
+source_commit: 3ce41373
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 3332
+  risk_off_positive_count: 2035
+  upper_state_positive_count: 519
+  upper_state_share: 0.155762
+  constructive_count: 338
+  risk_on_count: 181
+  zone_counts:
+    downside_zone: 2067
+    middle_zone: 746
+    upside_zone: 519
+  severity_counts:
+    '0': 2813
+    '1': 338
+    '2': 181
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

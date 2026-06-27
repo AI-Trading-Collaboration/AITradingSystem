@@ -1,0 +1,93 @@
+schema_version: hierarchical_first_layer_actual_path_matrix.v1
+report_type: hierarchical_first_layer_actual_path_matrix
+title: Hierarchical First-Layer Actual-Path Matrix
+status: HIERARCHICAL_FIRST_LAYER_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:42:30Z'
+source_commit: 3ce41373
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  probe_count: 4
+  improved_vs_flat_probe_count: 0
+  comparison_scope:
+  - old_scorecard_first_layer_v1
+  - flat_calibrated_first_layer_v1
+  - hierarchical_first_layer_v1
+  - prior_static_baselines_referenced_from_expanded_universe_artifacts
+  - limited_adjustment_referenced_from_expanded_universe_artifacts
+  flat_probe_metric_source_rows: 8
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+probe_rows:
+- probe_id: balanced_dynamic_probe
+  old_annual_return: 0.187235
+  flat_annual_return: 0.098138
+  hierarchical_annual_return: 0.085037
+  old_calmar: 1.526717
+  flat_calmar: 0.974622
+  hierarchical_calmar: 0.577605
+  old_sharpe: 1.544321
+  flat_sharpe: 1.040879
+  hierarchical_sharpe: 0.545944
+  hierarchical_vs_flat_return_delta: -0.013101
+  hierarchical_vs_flat_calmar_delta: -0.397017
+  hierarchical_vs_old_return_delta: -0.102198
+  hierarchical_vs_old_calmar_delta: -0.949112
+  actual_path_improved_vs_flat: false
+- probe_id: defensive_overlay_probe
+  old_annual_return: 0.181997
+  flat_annual_return: 0.097325
+  hierarchical_annual_return: 0.077251
+  old_calmar: 1.588989
+  flat_calmar: 0.95561
+  hierarchical_calmar: 0.621718
+  old_sharpe: 1.649424
+  flat_sharpe: 1.014871
+  hierarchical_sharpe: 0.649102
+  hierarchical_vs_flat_return_delta: -0.020074
+  hierarchical_vs_flat_calmar_delta: -0.333892
+  hierarchical_vs_old_return_delta: -0.104746
+  hierarchical_vs_old_calmar_delta: -0.967271
+  actual_path_improved_vs_flat: false
+- probe_id: drawdown_control_probe
+  old_annual_return: 0.202317
+  flat_annual_return: 0.10189
+  hierarchical_annual_return: 0.065686
+  old_calmar: 1.386393
+  flat_calmar: 1.204107
+  hierarchical_calmar: 0.37436
+  old_sharpe: 1.46828
+  flat_sharpe: 1.228653
+  hierarchical_sharpe: 0.342828
+  hierarchical_vs_flat_return_delta: -0.036204
+  hierarchical_vs_flat_calmar_delta: -0.829747
+  hierarchical_vs_old_return_delta: -0.136631
+  hierarchical_vs_old_calmar_delta: -1.012033
+  actual_path_improved_vs_flat: false
+- probe_id: risk_on_diagnostic_probe
+  old_annual_return: 0.190786
+  flat_annual_return: 0.097325
+  hierarchical_annual_return: 0.092932
+  old_calmar: 1.488309
+  flat_calmar: 0.95561
+  hierarchical_calmar: 0.582879
+  old_sharpe: 1.472667
+  flat_sharpe: 1.014871
+  hierarchical_sharpe: 0.541932
+  hierarchical_vs_flat_return_delta: -0.004393
+  hierarchical_vs_flat_calmar_delta: -0.372731
+  hierarchical_vs_old_return_delta: -0.097854
+  hierarchical_vs_old_calmar_delta: -0.90543
+  actual_path_improved_vs_flat: false

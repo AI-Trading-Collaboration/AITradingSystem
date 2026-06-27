@@ -1,0 +1,265 @@
+schema_version: first_layer_up_state_failure_diagnosis.v1
+report_type: first_layer_up_state_failure_diagnosis
+title: First-Layer Up-State Failure Diagnosis
+status: FIRST_LAYER_UP_STATE_FAILURE_DIAGNOSIS_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:42:27Z'
+source_commit: 3ce41373
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  return_seeking_probe_count: 3
+  label_count: 3332
+  upper_state_label_count: 519
+  flat_predicted_constructive_count: 0
+  flat_predicted_risk_on_count: 0
+  flat_true_upper_state_count: 114
+  hierarchical_predicted_upper_state_count: 185
+  actual_path_deteriorated_probe_count: 4
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+probe_role_rows:
+- probe_id: defensive_overlay_probe
+  role: defensive_overlay
+  role_tags:
+  - defensive_overlay
+  return_seeking: false
+  research_only: true
+  promotion_enabled: false
+  broker_enabled: false
+- probe_id: balanced_dynamic_probe
+  role: balanced_dynamic
+  role_tags:
+  - balanced_dynamic
+  - return_seeking
+  return_seeking: true
+  research_only: true
+  promotion_enabled: false
+  broker_enabled: false
+- probe_id: drawdown_control_probe
+  role: drawdown_control
+  role_tags:
+  - drawdown_control
+  - return_seeking
+  return_seeking: true
+  research_only: true
+  promotion_enabled: false
+  broker_enabled: false
+- probe_id: risk_on_diagnostic_probe
+  role: risk_on_diagnostic
+  role_tags:
+  - risk_on_diagnostic
+  - return_seeking
+  return_seeking: true
+  research_only: true
+  promotion_enabled: false
+  broker_enabled: false
+qqq_equivalent_exposure_by_state:
+- probe_id: defensive_overlay_probe
+  state: risk_off
+  qqq_weight: 0.3
+  sgov_weight: 0.7
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.3
+  risk_asset_weight: 0.3
+- probe_id: defensive_overlay_probe
+  state: defensive
+  qqq_weight: 0.45
+  sgov_weight: 0.55
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.45
+  risk_asset_weight: 0.45
+- probe_id: defensive_overlay_probe
+  state: neutral
+  qqq_weight: 0.6
+  sgov_weight: 0.4
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.6
+  risk_asset_weight: 0.6
+- probe_id: defensive_overlay_probe
+  state: constructive
+  qqq_weight: 0.65
+  sgov_weight: 0.35
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.65
+  risk_asset_weight: 0.65
+- probe_id: defensive_overlay_probe
+  state: risk_on
+  qqq_weight: 0.65
+  sgov_weight: 0.35
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.65
+  risk_asset_weight: 0.65
+- probe_id: balanced_dynamic_probe
+  state: risk_off
+  qqq_weight: 0.25
+  sgov_weight: 0.75
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.25
+  risk_asset_weight: 0.25
+- probe_id: balanced_dynamic_probe
+  state: defensive
+  qqq_weight: 0.45
+  sgov_weight: 0.55
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.45
+  risk_asset_weight: 0.45
+- probe_id: balanced_dynamic_probe
+  state: neutral
+  qqq_weight: 0.6
+  sgov_weight: 0.4
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.6
+  risk_asset_weight: 0.6
+- probe_id: balanced_dynamic_probe
+  state: constructive
+  qqq_weight: 0.68
+  sgov_weight: 0.27
+  tqqq_weight: 0.05
+  qqq_equivalent_exposure: 0.83
+  risk_asset_weight: 0.73
+- probe_id: balanced_dynamic_probe
+  state: risk_on
+  qqq_weight: 0.7
+  sgov_weight: 0.2
+  tqqq_weight: 0.1
+  qqq_equivalent_exposure: 1.0
+  risk_asset_weight: 0.8
+- probe_id: drawdown_control_probe
+  state: risk_off
+  qqq_weight: 0.0
+  sgov_weight: 1.0
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.0
+  risk_asset_weight: 0.0
+- probe_id: drawdown_control_probe
+  state: defensive
+  qqq_weight: 0.4
+  sgov_weight: 0.6
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.4
+  risk_asset_weight: 0.4
+- probe_id: drawdown_control_probe
+  state: neutral
+  qqq_weight: 0.7
+  sgov_weight: 0.3
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.7
+  risk_asset_weight: 0.7
+- probe_id: drawdown_control_probe
+  state: constructive
+  qqq_weight: 1.0
+  sgov_weight: 0.0
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 1.0
+  risk_asset_weight: 1.0
+- probe_id: drawdown_control_probe
+  state: risk_on
+  qqq_weight: 0.85
+  sgov_weight: 0.0
+  tqqq_weight: 0.15
+  qqq_equivalent_exposure: 1.3
+  risk_asset_weight: 1.0
+- probe_id: risk_on_diagnostic_probe
+  state: risk_off
+  qqq_weight: 0.3
+  sgov_weight: 0.7
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.3
+  risk_asset_weight: 0.3
+- probe_id: risk_on_diagnostic_probe
+  state: defensive
+  qqq_weight: 0.45
+  sgov_weight: 0.55
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.45
+  risk_asset_weight: 0.45
+- probe_id: risk_on_diagnostic_probe
+  state: neutral
+  qqq_weight: 0.6
+  sgov_weight: 0.4
+  tqqq_weight: 0.0
+  qqq_equivalent_exposure: 0.6
+  risk_asset_weight: 0.6
+- probe_id: risk_on_diagnostic_probe
+  state: constructive
+  qqq_weight: 0.65
+  sgov_weight: 0.25
+  tqqq_weight: 0.1
+  qqq_equivalent_exposure: 0.95
+  risk_asset_weight: 0.75
+- probe_id: risk_on_diagnostic_probe
+  state: risk_on
+  qqq_weight: 0.65
+  sgov_weight: 0.2
+  tqqq_weight: 0.15
+  qqq_equivalent_exposure: 1.1
+  risk_asset_weight: 0.8
+label_distribution:
+  risk_off: 2032
+  neutral: 746
+  constructive: 338
+  risk_on: 181
+  defensive: 35
+high_confidence_by_state:
+  constructive: 0.378698
+  defensive: 0.085714
+  neutral: 0.83378
+  risk_off: 1.0
+  risk_on: 1.0
+disagreement_by_state:
+  constructive: 0.633876
+  defensive: 0.685714
+  neutral: 0.497989
+  risk_off: 0.00406
+  risk_on: 0.055249
+flat_prediction_distribution:
+  risk_off: 433
+  defensive: 344
+  neutral: 42
+flat_true_label_distribution:
+  risk_off: 568
+  neutral: 128
+  constructive: 96
+  risk_on: 18
+  defensive: 9
+hierarchical_prediction_distribution:
+  risk_off: 508
+  constructive: 159
+  neutral: 106
+  risk_on: 26
+  defensive: 20
+actual_path_deterioration:
+  deteriorated_probe_count: 4
+  rows:
+  - probe_id: balanced_dynamic_probe
+    annual_return_delta: -0.089097
+    sharpe_delta: -0.503442
+    calmar_delta: -0.552095
+    deteriorated: true
+  - probe_id: defensive_overlay_probe
+    annual_return_delta: -0.084672
+    sharpe_delta: -0.634553
+    calmar_delta: -0.633379
+    deteriorated: true
+  - probe_id: drawdown_control_probe
+    annual_return_delta: -0.100427
+    sharpe_delta: -0.239627
+    calmar_delta: -0.182286
+    deteriorated: true
+  - probe_id: risk_on_diagnostic_probe
+    annual_return_delta: -0.093461
+    sharpe_delta: -0.457796
+    calmar_delta: -0.532699
+    deteriorated: true

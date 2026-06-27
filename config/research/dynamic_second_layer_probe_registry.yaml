@@ -25,6 +25,9 @@ trend_states:
 probes:
   - probe_id: defensive_overlay_probe
     role: defensive_overlay
+    role_tags:
+      - defensive_overlay
+    return_seeking: false
     trend_sensitive: true
     frozen: true
     tqqq_usage: none
@@ -42,6 +45,10 @@ probes:
       risk_on: {QQQ: 0.65, SGOV: 0.35, TQQQ: 0.00}
   - probe_id: balanced_dynamic_probe
     role: balanced_dynamic
+    role_tags:
+      - balanced_dynamic
+      - return_seeking
+    return_seeking: true
     trend_sensitive: true
     frozen: true
     tqqq_usage: small_constructive_and_risk_on
@@ -59,6 +66,10 @@ probes:
       risk_on: {QQQ: 0.70, SGOV: 0.20, TQQQ: 0.10}
   - probe_id: drawdown_control_probe
     role: drawdown_control
+    role_tags:
+      - drawdown_control
+      - return_seeking
+    return_seeking: true
     trend_sensitive: true
     frozen: true
     tqqq_usage: capped_research_diagnostic
@@ -76,6 +87,10 @@ probes:
       risk_on: {QQQ: 0.85, SGOV: 0.00, TQQQ: 0.15}
   - probe_id: risk_on_diagnostic_probe
     role: risk_on_diagnostic
+    role_tags:
+      - risk_on_diagnostic
+      - return_seeking
+    return_seeking: true
     trend_sensitive: true
     frozen: true
     tqqq_usage: risk_on_research_only

@@ -1,0 +1,66 @@
+schema_version: hierarchical_first_layer.v1
+policy_id: hierarchical_first_layer_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    First-layer trend learning needs a lower-complexity hierarchy because the
+    first flat model learned mostly risk-off behavior and predicted zero
+    constructive/risk_on states in walk-forward validation.
+  intended_effect: >
+    Compose independent risk-off and upper-state detectors into a trend_state,
+    confidence, validity_days and decay_profile output without generating
+    portfolio weights.
+  validation_evidence: >
+    TRADING-1616 to 1645 up-state guardrail tests and real repair-pack outputs
+    validate nonzero upper-state predictions, split diagnostics and blocked
+    promotion safety fields.
+  review_condition: >
+    Review before allowing observe-only forward watch, changing frozen second
+    layer probes, or adding production-facing consumption of these predictions.
+state_composition:
+  downside_states:
+    - risk_off
+    - defensive
+  middle_state: neutral
+  upper_states:
+    - constructive
+    - risk_on
+output_fields:
+  - date
+  - risk_off_probability
+  - upper_state_probability
+  - risk_on_severity_score
+  - trend_state
+  - confidence
+  - validity_days
+  - decay_profile
+allowed_first_layer_outputs:
+  direct_weight_output_allowed: false
+  trend_state_allowed: true
+  confidence_allowed: true
+  validity_allowed: true
+  decay_profile_allowed: true
+validity_days_by_state:
+  risk_off: 5
+  defensive: 5
+  neutral: 10
+  constructive: 10
+  risk_on: 5
+decay_profile_by_state:
+  risk_off: fast
+  defensive: medium
+  neutral: medium
+  constructive: medium
+  risk_on: fast
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  manual_review_required: true

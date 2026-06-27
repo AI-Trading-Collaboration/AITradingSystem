@@ -1,0 +1,205 @@
+schema_version: hierarchical_first_layer_walk_forward_matrix.v1
+report_type: hierarchical_first_layer_walk_forward_matrix
+title: Hierarchical First-Layer Walk-Forward Matrix
+status: HIERARCHICAL_FIRST_LAYER_WALK_FORWARD_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:42:30Z'
+source_commit: 3ce41373
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  accuracy: 0.493284
+  balanced_accuracy: 0.180128
+  three_zone_accuracy: 0.509158
+  risk_off_precision: 0.744076
+  risk_off_recall: 0.824869
+  false_risk_off_rate: 0.197802
+  late_risk_off_rate: 0.1221
+  upper_state_precision: 0.064865
+  upper_state_recall: 0.105263
+  false_risk_on_rate: 0.211233
+  missed_upside: 0.894737
+  captured_upside: 0.105263
+  predicted_upper_state_count: 185
+  true_upper_state_count: 114
+  predicted_constructive_count: 159
+  predicted_risk_on_count: 26
+  true_constructive_count: 96
+  true_risk_on_count: 18
+  upper_state_collapse_flag: true
+  risk_on_severity_status: RISK_ON_SEVERITY_SCALER_READY
+  risk_off_action_value_delta_proxy: 0.627066
+  upper_state_action_value_delta_proxy: -0.10597
+  prediction_distribution:
+    risk_off: 508
+    constructive: 159
+    neutral: 106
+    risk_on: 26
+    defensive: 20
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+split_rows:
+- split_id: 0
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 95
+  validation_upper_state_count: 0
+  predicted_upper_state_count: 7
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.55
+  risk_on_severity_threshold: 0.628219
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 1
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 89
+  validation_upper_state_count: 2
+  predicted_upper_state_count: 26
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.45
+  risk_on_severity_threshold: 0.64174
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 2
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 78
+  validation_upper_state_count: 21
+  predicted_upper_state_count: 20
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.65
+  risk_on_severity_threshold: 0.680359
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 3
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 78
+  validation_upper_state_count: 26
+  predicted_upper_state_count: 15
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.6
+  risk_on_severity_threshold: 0.680359
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 4
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 74
+  validation_upper_state_count: 29
+  predicted_upper_state_count: 1
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.45
+  upper_state_threshold: 0.6
+  risk_on_severity_threshold: 0.673068
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 5
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 83
+  validation_upper_state_count: 10
+  predicted_upper_state_count: 10
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.35
+  upper_state_threshold: 0.65
+  risk_on_severity_threshold: 0.706844
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 6
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 73
+  validation_upper_state_count: 11
+  predicted_upper_state_count: 0
+  upper_state_collapse_flag: true
+  risk_off_threshold: 0.35
+  upper_state_threshold: 0.5
+  risk_on_severity_threshold: 0.41479
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 7
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 78
+  validation_upper_state_count: 7
+  predicted_upper_state_count: 0
+  upper_state_collapse_flag: true
+  risk_off_threshold: 0.35
+  upper_state_threshold: 0.35
+  risk_on_severity_threshold: 0.467756
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 8
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 78
+  validation_upper_state_count: 7
+  predicted_upper_state_count: 0
+  upper_state_collapse_flag: true
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.4
+  risk_on_severity_threshold: 0.467756
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 9
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 84
+  validation_upper_state_count: 1
+  predicted_upper_state_count: 10
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.25
+  risk_on_severity_threshold: 0.413605
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 10
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 85
+  validation_upper_state_count: 0
+  predicted_upper_state_count: 21
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.25
+  risk_on_severity_threshold: 0.390538
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 11
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 76
+  validation_upper_state_count: 0
+  predicted_upper_state_count: 34
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.35
+  upper_state_threshold: 0.3
+  risk_on_severity_threshold: 0.157678
+  severity_status: RISK_ON_SEVERITY_SCALER_READY
+- split_id: 12
+  train_sample_count: 504
+  validation_sample_count: 63
+  train_upper_state_count: 68
+  validation_upper_state_count: 0
+  predicted_upper_state_count: 41
+  upper_state_collapse_flag: false
+  risk_off_threshold: 0.3
+  upper_state_threshold: 0.35
+  risk_on_severity_threshold: 0.141171
+  severity_status: RISK_ON_SEVERITY_SCALER_READY

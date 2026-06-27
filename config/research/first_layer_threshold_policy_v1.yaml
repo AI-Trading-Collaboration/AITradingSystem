@@ -1,0 +1,60 @@
+schema_version: first_layer_threshold_policy.v1
+policy_id: first_layer_threshold_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    The flat five-class first-layer model collapsed away from constructive and
+    risk_on predictions. Thresholds must therefore be calibrated separately for
+    risk-off and upper-state detectors instead of using an implicit 0.5 cutoff.
+  intended_effect: >
+    Select walk-forward thresholds inside each train window while constraining
+    false risk-off and false risk-on behavior, and make collapse diagnostics
+    visible to owner review.
+  validation_evidence: >
+    TRADING-1616 to 1645 tests cover hierarchical labels, nonzero upper-state
+    predictions when validation contains upper-state labels, return-seeking
+    probe metadata and blocked promotion safety fields.
+  review_condition: >
+    Review before changing objective weights, adding higher-complexity models,
+    or using hierarchical first-layer predictions outside research diagnostics.
+risk_off_detector:
+  enabled: true
+  class_weighting: balanced
+  threshold_grid:
+    start: 0.30
+    stop: 0.70
+    step: 0.05
+  objective:
+    precision_weight: 0.45
+    recall_weight: 0.45
+    false_risk_off_penalty: 0.10
+upper_state_detector:
+  enabled: true
+  class_weighting: balanced
+  threshold_grid:
+    start: 0.25
+    stop: 0.65
+    step: 0.05
+  objective:
+    precision_weight: 0.35
+    recall_weight: 0.50
+    false_risk_on_penalty: 0.15
+risk_on_severity:
+  enabled: true
+  min_upper_state_samples: 60
+  risk_on_quantile: 0.75
+collapse_guardrail:
+  upper_state_validation_positive_min: 1
+  predicted_upper_state_min_when_validation_positive: 1
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  manual_review_required: true

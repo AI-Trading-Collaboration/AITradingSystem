@@ -1,0 +1,188 @@
+schema_version: first_layer_feature_pit_audit_v2.v1
+report_type: first_layer_feature_pit_audit_v2
+title: First-Layer Feature PIT Audit v2
+status: FIRST_LAYER_FEATURE_PIT_AUDIT_V2_READY
+generated_at: '2026-06-27T13:42:27Z'
+source_commit: 3ce41373
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 894
+  approved_feature_count: 17
+  blocked_feature_count: 0
+  feature_cutoff_passed: true
+  walk_forward_split_count: 13
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+features:
+- feature_name: qqq_momentum_20d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_momentum_60d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_ma_slope_20_60
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_drawdown_126d
+  family: post_drawdown_recovery
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: realized_vol_20d
+  family: volatility_compression
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: yield_curve_10y2y
+  family: macro_rates
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_momentum_120d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_ma_slope_60_120
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_above_ma60_duration_60d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_drawdown_recovery_20d
+  family: post_drawdown_recovery
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_higher_high_proxy_20d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_higher_low_proxy_20d
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: qqq_distance_from_60d_high
+  family: price_trend_persistence
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: realized_vol_decline_20d
+  family: volatility_compression
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: downside_vol_20d
+  family: volatility_compression
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: days_since_60d_low
+  family: post_drawdown_recovery
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+- feature_name: recovery_from_60d_low
+  family: post_drawdown_recovery
+  known_at: same_day_close_or_rate_cache_at_or_before_decision
+  available_at: same_as_known_at_for_cached_daily_research
+  PIT_status: PIT_APPROVED
+  missing_rate: 0.0
+  split_coverage: 1.0
+  training_allowed: true
+  allowed_for_model: true
+excluded_non_pit_or_unavailable_features:
+- SMH/QQQ relative strength unavailable in required validated cache
+- SOXX/QQQ ratio trend unavailable in required validated cache
+- AI basket relative strength unavailable in required validated cache
+- VIX falling regime unavailable in required validated cache
+- market breadth proxy unavailable in required validated cache

@@ -19650,3 +19650,153 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_up_state_failure_diagnosis
+    title: First-Layer Up-State Failure Diagnosis
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - docs/research/first_layer_up_state_failure_diagnosis.md
+      - inputs/research_reviews/first_layer_up_state_failure_diagnosis.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1616 to 1645 failure diagnosis is regenerated after flat first-layer predictions, consensus labels, probe metadata, or actual-path diagnostics change.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: upper_state_label_audit
+    title: Upper-State Label Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - outputs/research_trends/trend_labels/hierarchical_trend_labels.csv
+      - inputs/research_reviews/hierarchical_trend_label_summary.yaml
+      - docs/research/upper_state_label_audit.md
+      - inputs/research_reviews/upper_state_label_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Upper-state labels and split audit are regenerated after consensus labels, label taxonomy, confidence policy, or walk-forward split policy changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_up_state_feature_audit_v2
+    title: First-Layer Up-State Feature Audit v2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix_v2.csv
+      - docs/research/up_state_feature_expansion_review.md
+      - docs/research/first_layer_feature_pit_audit_v2.md
+      - inputs/research_reviews/first_layer_feature_pit_audit_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT feature audit v2 is regenerated after feature expansion, data-quality, price/rates cache, or split coverage changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_hierarchical_detectors
+    title: First-Layer Hierarchical Detectors
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - outputs/research_trends/models/risk_off_detector_v2/*
+      - outputs/research_trends/models/upper_state_detector_v1/*
+      - outputs/research_trends/models/risk_on_severity_scaler_v1/*
+      - docs/research/risk_off_detector_v2_review.md
+      - docs/research/upper_state_detector_v1_review.md
+      - docs/research/risk_on_severity_scaler_review.md
+      - docs/research/first_layer_threshold_calibration_review.md
+      - config/research/first_layer_threshold_policy_v1.yaml
+      - config/research/hierarchical_first_layer_v1.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Hierarchical detector artifacts are regenerated after labels, feature matrix v2, threshold policy, model config, or split policy changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: hierarchical_first_layer_walk_forward_review
+    title: Hierarchical First-Layer Walk-Forward Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - outputs/research_trends/models/hierarchical_first_layer_v1_predictions.csv
+      - docs/research/hierarchical_first_layer_walk_forward_review.md
+      - inputs/research_reviews/hierarchical_first_layer_walk_forward_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Hierarchical first-layer walk-forward review is regenerated after detector, threshold, feature, label, or split changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: hierarchical_first_layer_actual_path_review
+    title: Hierarchical First-Layer Actual Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - outputs/research_trends/hierarchical_first_layer_probe_backtest/old_flat_hierarchical_probe_metrics.csv
+      - docs/research/hierarchical_first_layer_actual_path_review.md
+      - inputs/research_reviews/hierarchical_first_layer_actual_path_matrix.yaml
+      - docs/research/return_seeking_probe_compatibility_with_up_state_model.md
+      - docs/research/first_layer_class_imbalance_split_diagnostics.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Hierarchical actual-path review is regenerated after predictions, frozen probes, price cache, return-seeking metadata, or comparison policy changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_up_state_learning_owner_pack
+    title: First-Layer Up-State Learning Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends up-state-repair
+    artifact_globs:
+      - docs/research/first_layer_up_state_learning_owner_review_pack.md
+      - docs/research/hierarchical_first_layer_forward_watch_plan.md
+      - inputs/research_reviews/first_layer_up_state_learning_final_matrix.yaml
+      - docs/research/first_layer_up_state_learning_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner pack and closeout are regenerated after failure diagnosis, label audit, feature audit, hierarchical walk-forward, actual-path review, or owner-review changes.
+    owner_action: review_first_layer_up_state_learning_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
