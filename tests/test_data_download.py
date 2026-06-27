@@ -10,9 +10,11 @@ import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
-from ai_trading_system.config import load_universe
+from ai_trading_system.config import configured_price_tickers, load_universe
 from ai_trading_system.data.download import (
     ProviderQuotaBudgetError,
+    _estimate_marketstack_increment_usage,
+    _price_fetch_windows,
     download_daily_data,
     write_download_failure_report,
 )
@@ -199,6 +201,35 @@ def test_download_daily_data_incrementally_requests_only_missing_tail(
     assert incremental["fetched_row_count"] == len(second.price_tickers)
     assert incremental["fetch_window_count"] == 1
     assert incremental["fetch_windows"][0]["start"] == "2026-05-01"
+
+
+def test_marketstack_incremental_windows_ignore_head_gap_for_existing_cache() -> None:
+    provider = MarketstackPriceProvider(api_key="test-key")
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+    rows = []
+    for ticker in supported_tickers:
+        first_date = "2021-02-22" if ticker in {"PLTR", "SGOV"} else "2018-01-02"
+        rows.append({"date": first_date, "ticker": ticker})
+        rows.append({"date": "2026-06-25", "ticker": ticker})
+    existing = pd.DataFrame(rows)
+
+    windows = _price_fetch_windows(
+        existing,
+        tickers=supported_tickers,
+        start=date(2018, 1, 1),
+        end=date(2026, 6, 26),
+    )
+
+    assert [(window.start, window.end, window.tickers) for window in windows] == [
+        (date(2026, 6, 26), date(2026, 6, 26), tuple(sorted(supported_tickers)))
+    ]
+    assert _estimate_marketstack_increment_usage(provider, windows) == len(
+        supported_tickers
+    )
 
 
 def test_download_daily_data_blocks_marketstack_when_quota_preflight_fails(

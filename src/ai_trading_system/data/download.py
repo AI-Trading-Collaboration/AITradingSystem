@@ -437,10 +437,10 @@ def _price_fetch_windows(
         if date_range is None:
             fetch_start = start
         else:
-            earliest, latest = date_range
-            if earliest > start:
-                fetch_start = start
-            elif latest >= end:
+            _earliest, latest = date_range
+            # Daily refresh only fills tail gaps; head gaps are often holidays or pre-listing
+            # periods and require an explicit repair/backfill workflow.
+            if latest >= end:
                 continue
             else:
                 fetch_start = latest + timedelta(days=1)

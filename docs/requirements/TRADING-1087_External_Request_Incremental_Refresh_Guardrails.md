@@ -42,6 +42,9 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   计算每个 ticker 的缺口，只请求缺口区间或带审计说明的受控 overlap。
 - `Marketstack` 第二行情源必须基于已有 `prices_marketstack_daily.csv`
   覆盖计算缺口，分页请求应随缺口窗口缩小，不再每天扫描 2018 起全历史页。
+- Daily incremental refresh 只自动补已有 cache ticker 的尾部缺口；请求起点落在
+  休市日、节假日或 ticker 上市前造成的 head gap 不得在 daily-run 中自动回补，
+  需要历史修复时必须走显式 repair/backfill 路径并单独审计。
 - `Cboe VIX` 应使用稳定 URL/content identity、conditional GET 或明确的
   coverage-aware 缓存策略，避免仅因 `end` 变化写入新 full CSV cache key。
 - 新旧数据合并必须去重并保留 provider、endpoint、request params、row count、
@@ -111,3 +114,20 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   status。验证通过 Ruff、py_compile、focused parallel pytest；额外
   `tests/test_ops_daily.py tests/test_scheduled_tasks.py` 暴露 2 个与本任务无关的既有
   forward-evidence 调度期望失败，本批未修改调度顺序测试。
+- 2026-06-27: 真实 `aits ops daily-run --as-of 2026-06-26` 仍在 `download_data`
+  fail closed，诊断为 `ProviderQuotaBudgetError`：
+  `estimated_increment_usage=1950`、`quota_remaining=-688`。复现确认
+  `_price_fetch_windows` 把 `start=2018-01-01` 休市日到首条行情 `2018-01-02`
+  的自然 head gap，以及 PLTR/SGOV 等上市前自然缺口，误判为全 universe
+  历史缺口。任务重新进入 `IN_PROGRESS`；本轮修复 daily incremental
+  tail-only 语义，head gap 回补必须走显式 repair/backfill，不在 daily scheduler
+  中自动消耗 Marketstack 配额。
+- 2026-06-27: 修复完成。`_price_fetch_windows` 对已有 cache ticker 只生成
+  `latest + 1` 到 `end` 的尾部窗口；无任何既有行的新增 ticker 仍从请求 start
+  开始抓取。新增回归测试覆盖 `2018-01-01` 非交易日起点、PLTR/SGOV 自然
+  head gap 和 Marketstack usage 估算；真实本地 cache 复算 2026-06-26 窗口为
+  `2026-06-26` 单日 25 tickers，estimated usage 从 1950 降到 25。验证通过
+  focused parallel pytest、task/docs focused pytest、contract-validation tier、
+  Ruff、compileall 和 `git diff --check`。剩余阻塞是 Marketstack 最近 quota
+  header 仍为 `quota_remaining=-688`；真实 daily-run 必须继续 fail closed，
+  待 quota 恢复或 owner 批准可审计供应商/额度处理方案后再端到端复验。
