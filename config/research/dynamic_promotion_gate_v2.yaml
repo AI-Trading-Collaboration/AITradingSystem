@@ -1,0 +1,85 @@
+schema_version: 1
+policy_id: dynamic_promotion_gate_v2
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic promotion must fail closed until actual-path edge, objective role,
+    PIT safety, walk-forward robustness, cost/cash-yield impact, stress risk,
+    regime robustness, and owner review are all explicit.
+  intended_effect: >
+    Separate full allocation strategy, defensive overlay, and advisory
+    diagnostic paths while banning target-path metrics from promotion evidence.
+  validation_evidence: >
+    TRADING-1326 to 1360 objective gate tests validate blocked promotion,
+    actual-path-only inputs, target-path exclusion, and owner-review requirement.
+  review_condition: >
+    Review before any candidate enters paper-shadow preflight, before relaxing a
+    hard blocker, or before adding quantitative acceptance thresholds.
+role_paths:
+  full_allocation_strategy:
+    recommended_role: FULL_ALLOCATION_RESEARCH_CANDIDATE
+    required_edge_verdicts:
+      - EDGE_SURVIVES_ACTUAL_PATH
+    max_next_stage: PAPER_SHADOW_PREFLIGHT_CANDIDATE_AFTER_OWNER_REVIEW
+  defensive_overlay:
+    recommended_role: DEFENSIVE_OVERLAY_ONLY
+    required_edge_verdicts:
+      - DEFENSIVE_OVERLAY_ONLY
+      - EDGE_EXISTS_ONLY_IN_BEAR_REGIME
+    max_next_stage: WATCH_ONLY_DEFENSIVE_OVERLAY_REVIEW
+  advisory_diagnostic:
+    recommended_role: ADVISORY_DIAGNOSTIC
+    required_edge_verdicts:
+      - UNDERPERFORMS_DUE_TO_QQQ_EXPOSURE_DRAG
+      - FALSE_RISK_OFF_DOMINATES
+      - RISK_ON_RECOVERY_TOO_SLOW
+      - NO_STABLE_EDGE
+      - INSUFFICIENT_EVIDENCE
+    max_next_stage: ADVISORY_DIAGNOSTIC_ONLY
+default_recommended_role: ADVISORY_DIAGNOSTIC
+hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+conditional_blockers:
+  full_allocation_edge_missing: ACTUAL_PATH_EDGE_NOT_ESTABLISHED_FOR_FULL_ALLOCATION
+  target_path_role_not_diagnostic: TARGET_PATH_METRICS_ROLE_NOT_DIAGNOSTIC_ONLY
+role_gate_policy:
+  full_allocation_strategy:
+    next_status: DYNAMIC_PROMOTION_BLOCKED_OWNER_REVIEW_REQUIRED
+    max_candidate_status: PAPER_SHADOW_PREFLIGHT_CANDIDATE
+  defensive_overlay:
+    next_status: DEFENSIVE_OVERLAY_WATCH_ONLY
+    max_candidate_status: WATCH_ONLY_DEFENSIVE_OVERLAY_REVIEW
+  advisory_diagnostic:
+    next_status: WATCH_ONLY_DIAGNOSTIC
+    max_candidate_status: WATCH_ONLY
+promotion_inputs:
+  allowed_metric_namespace: actual_path
+  forbidden_metric_namespace: target_path
+  target_path_role: diagnostic_only
+  legacy_dynamic_result_role: PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE
+allowed_owner_decisions:
+  - WATCH_ONLY
+  - DEFENSIVE_OVERLAY_WATCH
+  - PAPER_SHADOW_PREFLIGHT_CANDIDATE
+  - REJECT
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

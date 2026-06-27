@@ -10,11 +10,18 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.execution_semantics import (
+    DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
     DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
     DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH,
     DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH,
     DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
     DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH,
+    DEFAULT_DYNAMIC_PROMOTION_GATE_V2_PATH,
+    DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH,
+    DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_REVIEW_PATH,
+    DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH,
     DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
@@ -34,11 +41,13 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
     EVENT_OVERRIDE_MODE_T_PLUS_1,
+    run_actual_path_edge_attribution_review,
     run_dynamic_actual_path_owner_review_decision,
     run_dynamic_actual_path_policy_sensitivity_review,
     run_dynamic_backtest_engine_contract_update,
     run_dynamic_strategy_execution_semantics_contract,
     run_dynamic_strategy_latency_execution_lag_review,
+    run_dynamic_strategy_objective_gate_review,
     run_dynamic_strategy_validity_period_audit,
     run_equal_risk_balanced_core_execution_policy_selection,
     run_execution_aware_forward_aging_observation_contract,
@@ -74,6 +83,12 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-actual-path-policy-sensitivity-review")(
         _dynamic_actual_path_policy_sensitivity_review_command
+    )
+    strategies_app.command("actual-path-edge-attribution")(
+        _actual_path_edge_attribution_command
+    )
+    strategies_app.command("dynamic-strategy-objective-gate-review")(
+        _dynamic_strategy_objective_gate_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -335,6 +350,86 @@ def _dynamic_actual_path_policy_sensitivity_review_command(
         end_date=_parse_optional_date(end_date),
     )
     _print_execution_semantics_payload("Dynamic actual-path policy sensitivity", payload)
+
+
+def _actual_path_edge_attribution_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    objective_config_path: Annotated[
+        Path, typer.Option("--objective-config", "--objectives-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT,
+    run_id: Annotated[
+        str | None, typer.Option("--run-id")
+    ] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_actual_path_edge_attribution_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        output_root=output_root,
+        run_id=run_id,
+        source_root=source_root,
+        objective_config_path=objective_config_path,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Actual-path edge attribution", payload)
+
+
+def _dynamic_strategy_objective_gate_review_command(
+    edge_matrix_path: Annotated[
+        Path, typer.Option("--edge-matrix", "--edge-matrix-path")
+    ] = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    objectives_path: Annotated[
+        Path, typer.Option("--objective-config", "--objectives-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    promotion_gate_path: Annotated[
+        Path, typer.Option("--gate-config", "--promotion-gate-path")
+    ] = DEFAULT_DYNAMIC_PROMOTION_GATE_V2_PATH,
+    docs_path: Annotated[
+        Path, typer.Option("--review-path", "--docs-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--matrix-path", "--yaml-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH,
+) -> None:
+    payload = run_dynamic_strategy_objective_gate_review(
+        edge_matrix_path=edge_matrix_path,
+        objectives_path=objectives_path,
+        promotion_gate_path=promotion_gate_path,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+    )
+    _print_execution_semantics_payload("Dynamic strategy objective gate review", payload)
 
 
 def _call_builder(

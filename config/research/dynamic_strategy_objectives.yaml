@@ -1,0 +1,118 @@
+schema_version: 1
+policy_id: dynamic_strategy_objectives_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic strategy review must distinguish return-seeking allocation,
+    risk-adjusted allocation, defensive overlay, and advisory diagnostic roles
+    before any owner-controlled paper-shadow preflight discussion.
+  intended_effect: >
+    Prevent annual-return-only ranking from promoting a dynamic strategy whose
+    value is only drawdown control or diagnostic information.
+  validation_evidence: >
+    TRADING-1326 to 1360 focused tests cover actual-path-only attribution,
+    objective role classification, target-path exclusion, and blocked promotion
+    status.
+  review_condition: >
+    Review before changing candidate role definitions, adding promotion metrics,
+    or using this policy outside research-only actual-path review.
+strategy_scope:
+  candidates:
+    - limited_adjustment
+    - dynamic_v0_5_ai_trend_confirmed_only
+    - limited_adjustment_event_override_v1
+    - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  static_baselines:
+    - no_trade
+    - 100_qqq
+    - qqq_60_sgov_40
+    - qqq_50_sgov_50
+dynamic_strategy_objectives:
+  return_objective:
+    role: full_allocation_strategy
+    metrics:
+      - annual_return_actual_path
+      - terminal_value_actual_path
+      - excess_return_vs_static_baseline
+  risk_objective:
+    role: risk_adjusted_allocation_strategy
+    metrics:
+      - max_drawdown_daily_equity
+      - volatility_daily
+      - downside_deviation
+      - calmar_daily_equity_dd
+      - worst_5d_loss
+  control_objective:
+    role: defensive_overlay_or_advisory_diagnostic
+    metrics:
+      - turnover
+      - false_risk_off_cost
+      - risk_on_recovery_delay_cost
+      - qqq_exposure_drag
+      - owner_intervention_count
+objective_roles:
+  full_allocation_strategy:
+    required_edge_verdicts:
+      - EDGE_SURVIVES_ACTUAL_PATH
+  defensive_overlay:
+    required_edge_verdicts:
+      - DEFENSIVE_OVERLAY_ONLY
+      - EDGE_EXISTS_ONLY_IN_BEAR_REGIME
+  advisory_diagnostic:
+    required_edge_verdicts:
+      - UNDERPERFORMS_DUE_TO_QQQ_EXPOSURE_DRAG
+      - FALSE_RISK_OFF_DOMINATES
+      - RISK_ON_RECOVERY_TOO_SLOW
+      - NO_STABLE_EDGE
+      - INSUFFICIENT_EVIDENCE
+attribution_policy:
+  policy_id: actual_path_edge_attribution_policy_v1
+  risk_off_event_definition: >
+    A risk-off event is an executed actual-path reduction in QQQ plus TQQQ
+    exposure, or a row with event_override_executed=true. Attribution starts on
+    the next trading row because same-row returns use prior close weights.
+  counterfactual_definition: >
+    The event counterfactual holds the previous actual QQQ/TQQQ/SGOV weights
+    until the actual-path risk exposure recovers to the pre-event exposure or
+    the runtime path ends.
+  false_risk_off_definition: >
+    A risk-off event is false when the actual-path segment return is below the
+    previous-position counterfactual segment return.
+  numeric_tolerances:
+    weight_change_epsilon:
+      value: 0.000000001
+      rationale: Floating point tolerance only; it is not an investment cutoff.
+  materiality:
+    min_risk_off_events: 0
+    min_actual_vs_static_return_edge: 0.0
+    min_drawdown_improvement: 0.0
+    min_sharpe_edge: 0.0
+    false_risk_off_cost_materiality: 0.0
+    recovery_delay_cost_materiality: 0.0
+    qqq_exposure_drag_materiality: 0.0
+  threshold_rationale:
+    min_risk_off_events: >
+      Pilot baseline treats the actual-path event log as reviewable evidence even
+      when a candidate has no executed risk-off event; owner review remains
+      mandatory before any promotion path.
+    sign_based_edges: >
+      Zero materiality values intentionally preserve a sign-based research
+      baseline for TRADING-1326 to 1360. This is not a production acceptance
+      threshold and must be recalibrated before promotion.
+    review_condition: >
+      Replace sign-based materiality with calibrated thresholds before any
+      paper-shadow preflight candidate can be approved.
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

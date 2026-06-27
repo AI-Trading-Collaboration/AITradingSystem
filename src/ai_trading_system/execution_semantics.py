@@ -95,6 +95,30 @@ DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH = (
 DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH = (
     PROJECT_ROOT / "docs" / "research" / "event_override_execution_semantics_review.md"
 )
+DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "edge_attribution"
+)
+DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "actual_path_edge_attribution_review.md"
+)
+DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "actual_path_edge_attribution_matrix.yaml"
+)
+DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH = (
+    PROJECT_ROOT / "config" / "research" / "dynamic_strategy_objectives.yaml"
+)
+DEFAULT_DYNAMIC_PROMOTION_GATE_V2_PATH = (
+    PROJECT_ROOT / "config" / "research" / "dynamic_promotion_gate_v2.yaml"
+)
+DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "dynamic_strategy_objective_gate_review.md"
+)
+DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "dynamic_strategy_objective_gate_matrix.yaml"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -220,6 +244,20 @@ EVENT_OVERRIDE_WATCH_ONLY_VARIANTS: dict[str, str] = {
         "dynamic_v0_5_ai_trend_confirmed_only"
     ),
 }
+
+ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES: tuple[str, ...] = (
+    "limited_adjustment",
+    "dynamic_v0_5_ai_trend_confirmed_only",
+    "limited_adjustment_event_override_v1",
+    "dynamic_v0_5_ai_trend_confirmed_event_override_v1",
+)
+
+ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES: tuple[str, ...] = (
+    "no_trade",
+    "100_qqq",
+    "qqq_60_sgov_40",
+    "qqq_50_sgov_50",
+)
 
 EVENT_OVERRIDE_VARIANT_PAIRS: dict[str, str] = {
     "limited_adjustment": "limited_adjustment_event_override_v1",
@@ -467,6 +505,16 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
             "aits research strategies execution-semantics-rebacktest "
             "--enable-event-override"
         ),
+    },
+    {
+        "report_id": "actual_path_edge_attribution_review",
+        "title": "Actual Path Edge Attribution Review",
+        "command": "aits research strategies actual-path-edge-attribution",
+    },
+    {
+        "report_id": "dynamic_strategy_objective_gate_review",
+        "title": "Dynamic Strategy Objective Gate Review",
+        "command": "aits research strategies dynamic-strategy-objective-gate-review",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -1697,6 +1745,322 @@ def run_dynamic_actual_path_policy_sensitivity_review(
     )
     _write_json(output_root / "policy_sensitivity_summary.json", summary_payload)
     _write_policy_sensitivity_review_docs(payload, docs_path, yaml_path, scenario_rows)
+    return payload
+
+
+def run_actual_path_edge_attribution_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    objective_config_path: Path = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("edge_attr"))
+    objective_config = _load_yaml_mapping(objective_config_path)
+    attribution_policy, policy_issues = _edge_attribution_policy_from_config(
+        objective_config
+    )
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="actual_path_edge_attribution_review",
+            title=REPORT_SPEC_BY_ID["actual_path_edge_attribution_review"]["title"],
+            status="EDGE_ATTRIBUTION_BLOCKED",
+            data_gate=data_gate,
+        )
+        payload["attribution_policy"] = attribution_policy
+        payload["objective_policy_hash"] = _file_sha256(objective_config_path)
+        _write_edge_attribution_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            strategy_rows=[],
+            risk_off_rows=[],
+            recovery_rows=[],
+            qqq_drag_rows=[],
+            sgov_rows=[],
+        )
+        return payload
+
+    if policy_issues:
+        payload = _payload(
+            report_type="actual_path_edge_attribution_review",
+            title=REPORT_SPEC_BY_ID["actual_path_edge_attribution_review"]["title"],
+            status="EDGE_ATTRIBUTION_BLOCKED",
+            summary={
+                "policy_issue_count": len(policy_issues),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "promotion_decision_source": "actual_path_only",
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=policy_issues,
+            source_runtime_root=str(source_root),
+            attribution_policy=attribution_policy,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry(
+                "actual_path_edge_attribution_review"
+            ),
+        )
+        _write_edge_attribution_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            strategy_rows=[],
+            risk_off_rows=[],
+            recovery_rows=[],
+            qqq_drag_rows=[],
+            sgov_rows=[],
+        )
+        return payload
+
+    required_strategy_ids = [
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES,
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    ]
+    missing = _missing_runtime_strategy_artifacts(source_root, required_strategy_ids)
+    if missing:
+        payload = _payload(
+            report_type="actual_path_edge_attribution_review",
+            title=REPORT_SPEC_BY_ID["actual_path_edge_attribution_review"]["title"],
+            status="EDGE_ATTRIBUTION_BLOCKED",
+            summary={
+                "missing_artifact_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "promotion_decision_source": "actual_path_only",
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            source_runtime_root=str(source_root),
+            attribution_policy=attribution_policy,
+            objective_policy_hash=_file_sha256(objective_config_path),
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry(
+                "actual_path_edge_attribution_review"
+            ),
+        )
+        _write_edge_attribution_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            strategy_rows=[],
+            risk_off_rows=[],
+            recovery_rows=[],
+            qqq_drag_rows=[],
+            sgov_rows=[],
+        )
+        return payload
+
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    index_payload = _read_json_mapping(source_root / "index.json")
+    runtime_date_range = _mapping(index_payload.get("date_range"))
+    date_range = {
+        "start": runtime_date_range.get("start")
+        or prices.index.min().date().isoformat(),
+        "end": runtime_date_range.get("end") or prices.index.max().date().isoformat(),
+        "market_regime": runtime_date_range.get("market_regime", "ai_after_chatgpt"),
+    }
+    evidence = {
+        strategy_id: _load_runtime_strategy_evidence(source_root, strategy_id)
+        for strategy_id in required_strategy_ids
+    }
+    baseline_metrics = {
+        strategy_id: _mapping(evidence[strategy_id].get("actual_path_metrics"))
+        for strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES
+    }
+    strategy_rows: list[dict[str, Any]] = []
+    risk_off_rows: list[dict[str, Any]] = []
+    recovery_rows: list[dict[str, Any]] = []
+    qqq_drag_rows: list[dict[str, Any]] = []
+    sgov_rows: list[dict[str, Any]] = []
+    for strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES:
+        attribution = _actual_path_edge_attribution_for_strategy(
+            strategy_id=strategy_id,
+            evidence=_mapping(evidence[strategy_id]),
+            baseline_metrics=baseline_metrics,
+            prices=prices,
+            attribution_policy=attribution_policy,
+        )
+        strategy_rows.append(attribution["strategy_row"])
+        risk_off_rows.extend(attribution["risk_off_rows"])
+        recovery_rows.extend(attribution["recovery_rows"])
+        qqq_drag_rows.append(attribution["qqq_drag_row"])
+        sgov_rows.append(attribution["sgov_allocation_row"])
+
+    payload = _payload(
+        report_type="actual_path_edge_attribution_review",
+        title=REPORT_SPEC_BY_ID["actual_path_edge_attribution_review"]["title"],
+        status="EDGE_ATTRIBUTION_REVIEW_READY",
+        summary={
+            "strategy_count": len(strategy_rows),
+            "risk_off_event_count": sum(
+                _int(row.get("risk_off_event_count")) for row in strategy_rows
+            ),
+            "dynamic_promotion_blocked": True,
+            "promotion_decision_source": "actual_path_only",
+            "target_path_metrics_role": "diagnostic_only",
+            "data_quality_status": data_gate.get("status"),
+            "source_runtime_root": str(source_root),
+            "runtime_artifact_root": str(runtime_root),
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        objective_policy_hash=_file_sha256(objective_config_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        attribution_policy=attribution_policy,
+        strategy_attributions=strategy_rows,
+        target_path_diagnostic_notice=(
+            "Target-path metrics are diagnostic only and are not used for edge "
+            "attribution verdicts, ranking, gate review or promotion decisions."
+        ),
+        report_registry_entry=_report_registry_entry(
+            "actual_path_edge_attribution_review"
+        ),
+    )
+    artifact_paths = _write_edge_attribution_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        strategy_rows=strategy_rows,
+        risk_off_rows=risk_off_rows,
+        recovery_rows=recovery_rows,
+        qqq_drag_rows=qqq_drag_rows,
+        sgov_rows=sgov_rows,
+    )
+    payload["artifact_paths"] = artifact_paths
+    return payload
+
+
+def run_dynamic_strategy_objective_gate_review(
+    *,
+    edge_matrix_path: Path = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    objectives_path: Path = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    promotion_gate_path: Path = DEFAULT_DYNAMIC_PROMOTION_GATE_V2_PATH,
+    docs_path: Path = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH,
+) -> dict[str, Any]:
+    edge_matrix = _load_yaml_mapping(edge_matrix_path)
+    objectives = _load_yaml_mapping(objectives_path)
+    gate_policy = _load_yaml_mapping(promotion_gate_path)
+    missing = [
+        str(path)
+        for path, payload in (
+            (edge_matrix_path, edge_matrix),
+            (objectives_path, objectives),
+            (promotion_gate_path, gate_policy),
+        )
+        if not payload
+    ]
+    if missing:
+        payload = _payload(
+            report_type="dynamic_strategy_objective_gate_review",
+            title=REPORT_SPEC_BY_ID["dynamic_strategy_objective_gate_review"]["title"],
+            status="OBJECTIVE_GATE_REVIEW_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "dynamic_promotion_blocked": True,
+                "promotion_decision_source": "actual_path_only",
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=[f"missing_or_empty_input:{path}" for path in missing],
+            report_registry_entry=_report_registry_entry(
+                "dynamic_strategy_objective_gate_review"
+            ),
+        )
+        _write_objective_gate_artifacts(payload, docs_path=docs_path, yaml_path=yaml_path)
+        return payload
+
+    strategy_rows = [
+        _objective_gate_row_for_strategy(row, gate_policy=gate_policy)
+        for row in _records(edge_matrix.get("strategy_attributions"))
+    ]
+    summary = {
+        "strategy_count": len(strategy_rows),
+        "full_allocation_candidate_count": sum(
+            1
+            for row in strategy_rows
+            if row.get("recommended_role") == "FULL_ALLOCATION_RESEARCH_CANDIDATE"
+        ),
+        "defensive_overlay_count": sum(
+            1 for row in strategy_rows if row.get("recommended_role") == "DEFENSIVE_OVERLAY_ONLY"
+        ),
+        "advisory_diagnostic_count": sum(
+            1 for row in strategy_rows if row.get("recommended_role") == "ADVISORY_DIAGNOSTIC"
+        ),
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "dynamic_promotion_blocked": True,
+        "owner_manual_review_required": True,
+        **_safety_summary(),
+    }
+    payload = _payload(
+        report_type="dynamic_strategy_objective_gate_review",
+        title=REPORT_SPEC_BY_ID["dynamic_strategy_objective_gate_review"]["title"],
+        status="OBJECTIVE_GATE_REVIEW_READY",
+        summary=summary,
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(objectives_path),
+        policy_hash=_file_sha256(promotion_gate_path),
+        edge_matrix_hash=_file_sha256(edge_matrix_path),
+        data_snapshot_hash=edge_matrix.get("data_snapshot_hash"),
+        date_range=_mapping(edge_matrix.get("date_range")),
+        objective_policy={
+            "pathways": list(_mapping(objectives.get("dynamic_strategy_objectives")).keys()),
+            "policy_id": objectives.get("policy_id"),
+            "status": objectives.get("status"),
+        },
+        gate_policy={
+            "policy_id": gate_policy.get("policy_id"),
+            "status": gate_policy.get("status"),
+            "hard_blockers": gate_policy.get("hard_blockers"),
+        },
+        strategy_gate_rows=strategy_rows,
+        blocked_actions=["dynamic_promotion", "paper_shadow", "production", "broker"],
+        allowed_next_action="OWNER_REVIEW_AND_NEXT_BATCH_AUDITS",
+        target_path_diagnostic_notice=(
+            "Target-path metrics are excluded from objective gate v2 promotion inputs."
+        ),
+        report_registry_entry=_report_registry_entry(
+            "dynamic_strategy_objective_gate_review"
+        ),
+    )
+    _write_objective_gate_artifacts(payload, docs_path=docs_path, yaml_path=yaml_path)
     return payload
 
 
@@ -6317,6 +6681,818 @@ def _read_json_mapping(path: Path) -> dict[str, Any]:
     except json.JSONDecodeError:
         return {}
     return dict(raw) if isinstance(raw, Mapping) else {}
+
+
+def _run_id(prefix: str) -> str:
+    timestamp = (
+        utc_now_iso()
+        .replace("-", "")
+        .replace(":", "")
+        .replace("+00:00", "Z")
+        .replace(".", "")
+    )
+    return f"{prefix}_{timestamp}"
+
+
+def _data_snapshot_hash(
+    *,
+    prices_path: Path,
+    marketstack_prices_path: Path,
+    rates_path: Path,
+) -> str:
+    return _stable_hash(
+        {
+            "prices_daily": _file_sha256(prices_path),
+            "prices_marketstack_daily": _file_sha256(marketstack_prices_path),
+            "rates_daily": _file_sha256(rates_path),
+        }
+    )
+
+
+def _edge_attribution_policy_from_config(
+    config: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    issues: list[str] = []
+    root = _mapping(config)
+    attribution_policy = _mapping(root.get("attribution_policy"))
+    numeric = _mapping(attribution_policy.get("numeric_tolerances"))
+    materiality = _mapping(attribution_policy.get("materiality"))
+    if not root:
+        issues.append("missing_policy_config:dynamic_strategy_objectives")
+    if not attribution_policy:
+        issues.append("missing_policy_section:attribution_policy")
+
+    thresholds: dict[str, float] = {}
+    required_values = {
+        "numeric_tolerances": (
+            numeric,
+            ("weight_change_epsilon",),
+        ),
+        "materiality": (
+            materiality,
+            (
+                "min_risk_off_events",
+                "min_actual_vs_static_return_edge",
+                "min_drawdown_improvement",
+                "min_sharpe_edge",
+                "false_risk_off_cost_materiality",
+                "recovery_delay_cost_materiality",
+                "qqq_exposure_drag_materiality",
+            ),
+        ),
+    }
+    for section_name, (section, keys) in required_values.items():
+        for key in keys:
+            found, value = _policy_numeric_value(section, key)
+            if not found:
+                issues.append(f"missing_policy_value:{section_name}.{key}")
+                continue
+            thresholds[key] = value
+    policy_summary = {
+        "policy_id": attribution_policy.get(
+            "policy_id",
+            "actual_path_edge_attribution_policy_v1",
+        ),
+        "source_policy_id": root.get("policy_id"),
+        "status": root.get("status"),
+        "thresholds": thresholds,
+    }
+    return policy_summary, issues
+
+
+def _policy_numeric_value(source: Mapping[str, Any], key: str) -> tuple[bool, float]:
+    if key not in source:
+        return False, 0.0
+    raw = source.get(key)
+    if isinstance(raw, Mapping):
+        raw = raw.get("value")
+    if raw is None:
+        return False, 0.0
+    return True, _float(raw)
+
+
+def _edge_policy_threshold(policy: Mapping[str, Any], key: str) -> float:
+    return _float(_mapping(policy.get("thresholds")).get(key))
+
+
+def _missing_runtime_strategy_artifacts(
+    source_root: Path,
+    strategy_ids: list[str],
+) -> list[str]:
+    required_files = (
+        "metrics_actual_path.json",
+        "summary.json",
+        "target_vs_actual_position_path.csv",
+        "promotion_readiness.json",
+    )
+    missing: list[str] = []
+    for strategy_id in strategy_ids:
+        strategy_root = source_root / strategy_id
+        for filename in required_files:
+            path = strategy_root / filename
+            if not path.exists():
+                missing.append(f"missing_runtime_artifact:{strategy_id}:{filename}")
+    if not (source_root / "index.json").exists():
+        missing.append("missing_runtime_artifact:index.json")
+    return missing
+
+
+def _load_runtime_strategy_evidence(
+    source_root: Path,
+    strategy_id: str,
+) -> dict[str, Any]:
+    evidence = _load_actual_path_strategy_evidence(source_root, strategy_id)
+    metrics_payload = _read_json_mapping(source_root / strategy_id / "metrics_actual_path.json")
+    path = source_root / strategy_id / "target_vs_actual_position_path.csv"
+    frame = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    return {
+        **evidence,
+        "legacy_metric_fields": _mapping(
+            _mapping(metrics_payload.get("legacy_metrics_deprecated")).get("fields")
+        ),
+        "path_frame": frame,
+    }
+
+
+def _actual_path_edge_attribution_for_strategy(
+    *,
+    strategy_id: str,
+    evidence: Mapping[str, Any],
+    baseline_metrics: Mapping[str, Mapping[str, Any]],
+    prices: pd.DataFrame,
+    attribution_policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    path = _normalised_path_frame(evidence.get("path_frame"))
+    actual_metrics = _mapping(evidence.get("actual_path_metrics"))
+    legacy_metrics = _mapping(evidence.get("legacy_metric_fields"))
+    primary_static_id = "qqq_60_sgov_40"
+    primary_static = _mapping(baseline_metrics.get(primary_static_id))
+    qqq_metrics = _mapping(baseline_metrics.get("100_qqq"))
+    risk_rows, recovery_rows = _risk_off_recovery_rows(
+        strategy_id=strategy_id,
+        path=path,
+        prices=prices,
+        attribution_policy=attribution_policy,
+    )
+    net_contribution = round(sum(_float(row.get("net_contribution")) for row in risk_rows), 6)
+    missed_upside = round(sum(_float(row.get("missed_upside")) for row in risk_rows), 6)
+    avoided_drawdown = round(
+        sum(_float(row.get("avoided_drawdown")) for row in risk_rows),
+        6,
+    )
+    delay_cost = round(
+        sum(_float(row.get("risk_on_recovery_delay_cost")) for row in recovery_rows),
+        6,
+    )
+    delay_days = [float(row.get("risk_on_recovery_delay_days") or 0.0) for row in recovery_rows]
+    qqq_drag = round(
+        _float(qqq_metrics.get("actual_path_annual_return"))
+        - _float(actual_metrics.get("actual_path_annual_return")),
+        6,
+    )
+    sgov_benefit = _sgov_allocation_benefit(path=path, prices=prices)
+    actual_vs_static_return_gap = _metric_delta_by_key(
+        actual_metrics,
+        primary_static,
+        "actual_path_annual_return",
+    )
+    actual_vs_static_risk_gap = round(
+        abs(_float(actual_metrics.get("actual_path_max_drawdown_daily_equity")))
+        - abs(_float(primary_static.get("actual_path_max_drawdown_daily_equity"))),
+        6,
+    )
+    strategy_row = {
+        "strategy_id": strategy_id,
+        "strategy_status": "WATCH_ONLY",
+        "risk_off_event_count": len(risk_rows),
+        "risk_off_net_contribution": net_contribution,
+        "risk_off_avoided_drawdown": avoided_drawdown,
+        "risk_off_missed_upside": missed_upside,
+        "false_risk_off_count": sum(1 for row in risk_rows if row.get("false_risk_off") is True),
+        "false_risk_off_cost": round(
+            sum(_float(row.get("false_risk_off_cost")) for row in risk_rows),
+            6,
+        ),
+        "risk_on_recovery_delay_days": round(_mean(delay_days), 3),
+        "risk_on_recovery_delay_cost": delay_cost,
+        "post_risk_off_missed_upside": missed_upside,
+        "qqq_exposure_drag": qqq_drag,
+        "sgov_allocation_benefit": sgov_benefit,
+        "turnover_drag": _float(legacy_metrics.get("cost_drag")),
+        "actual_vs_static_return_gap": actual_vs_static_return_gap,
+        "actual_vs_static_risk_gap": actual_vs_static_risk_gap,
+        "static_comparator_id": primary_static_id,
+        "actual_path_annual_return": actual_metrics.get("actual_path_annual_return"),
+        "actual_path_max_drawdown_daily_equity": actual_metrics.get(
+            "actual_path_max_drawdown_daily_equity"
+        ),
+        "actual_path_sharpe_daily_zero_rf": actual_metrics.get(
+            "actual_path_sharpe_daily_zero_rf"
+        ),
+        "actual_path_calmar_daily_equity_dd": actual_metrics.get(
+            "actual_path_calmar_daily_equity_dd"
+        ),
+        "actual_path_turnover": actual_metrics.get("actual_path_turnover"),
+        "promotion_final_status": _mapping(evidence.get("promotion_readiness")).get(
+            "final_status",
+            "blocked",
+        ),
+        "verdict": _edge_attribution_verdict(
+            actual_metrics=actual_metrics,
+            static_metrics=primary_static,
+            risk_off_net_contribution=net_contribution,
+            risk_off_avoided_drawdown=avoided_drawdown,
+            risk_off_missed_upside=missed_upside,
+            qqq_exposure_drag=qqq_drag,
+            actual_vs_static_return_gap=actual_vs_static_return_gap,
+            actual_vs_static_risk_gap=actual_vs_static_risk_gap,
+            attribution_policy=attribution_policy,
+        ),
+        "attribution_policy_id": attribution_policy.get("policy_id"),
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+    return {
+        "strategy_row": strategy_row,
+        "risk_off_rows": risk_rows,
+        "recovery_rows": recovery_rows,
+        "qqq_drag_row": {
+            "strategy_id": strategy_id,
+            "benchmark_strategy_id": "100_qqq",
+            "qqq_exposure_drag": qqq_drag,
+            "actual_path_annual_return": actual_metrics.get("actual_path_annual_return"),
+            "benchmark_actual_path_annual_return": qqq_metrics.get(
+                "actual_path_annual_return"
+            ),
+        },
+        "sgov_allocation_row": {
+            "strategy_id": strategy_id,
+            "sgov_allocation_benefit": sgov_benefit,
+            "average_actual_sgov_weight": _average_weight(path, "actual_weight_sgov"),
+        },
+    }
+
+
+def _normalised_path_frame(value: object) -> pd.DataFrame:
+    frame = value.copy() if isinstance(value, pd.DataFrame) else pd.DataFrame()
+    if frame.empty:
+        return frame
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame = frame.sort_values("date").reset_index(drop=True)
+    return frame
+
+
+def _risk_off_recovery_rows(
+    *,
+    strategy_id: str,
+    path: pd.DataFrame,
+    prices: pd.DataFrame,
+    attribution_policy: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if path.empty:
+        return [], []
+    epsilon = _edge_policy_threshold(attribution_policy, "weight_change_epsilon")
+    dates = pd.to_datetime(path["date"])
+    price_returns = prices.reindex(dates).pct_change().fillna(0.0)
+    exposures = (
+        path["actual_weight_qqq"].astype(float)
+        + path["actual_weight_tqqq"].astype(float)
+    )
+    prior_exposures = exposures.shift(1)
+    risk_off_mask = (
+        (exposures < prior_exposures - epsilon)
+        & (
+            _bool_series(path["rebalance_executed"])
+            | _bool_series(path["event_override_executed"])
+        )
+    )
+    risk_rows: list[dict[str, Any]] = []
+    recovery_rows: list[dict[str, Any]] = []
+    for index in [idx for idx, flag in enumerate(risk_off_mask) if bool(flag)]:
+        if index <= 0 or index + 1 >= len(path):
+            continue
+        previous_weights = _weights_from_path_row(path.iloc[index - 1], prefix="actual")
+        recovery_index = _risk_recovery_index(
+            exposures,
+            index,
+            _float(prior_exposures.iloc[index]),
+            epsilon=epsilon,
+        )
+        start = index + 1
+        end = max(start, recovery_index)
+        segment_returns = price_returns.iloc[start : end + 1]
+        actual_returns = path["portfolio_return_actual_path"].astype(float).iloc[
+            start : end + 1
+        ]
+        counterfactual_returns = (
+            segment_returns.reindex(columns=["QQQ", "TQQQ", "SGOV"]).fillna(0.0)
+            * pd.Series(previous_weights)
+        ).sum(axis=1)
+        actual_total = float(actual_returns.sum())
+        counterfactual_total = float(counterfactual_returns.sum())
+        net = round(actual_total - counterfactual_total, 6)
+        missed = round(max(0.0, counterfactual_total - actual_total), 6)
+        avoided = round(max(0.0, actual_total - counterfactual_total), 6)
+        false_risk_off = net < -epsilon
+        event = {
+            "strategy_id": strategy_id,
+            "event_date": path.iloc[index]["date"].date().isoformat(),
+            "analysis_start_date": path.iloc[start]["date"].date().isoformat(),
+            "analysis_end_date": path.iloc[end]["date"].date().isoformat(),
+            "risk_exposure_before": round(_float(prior_exposures.iloc[index]), 6),
+            "risk_exposure_after": round(_float(exposures.iloc[index]), 6),
+            "exposure_drop": round(
+                _float(prior_exposures.iloc[index]) - _float(exposures.iloc[index]),
+                6,
+            ),
+            "event_override_executed": _bool_value(
+                path.iloc[index].get("event_override_executed")
+            ),
+            "trigger_reason": path.iloc[index].get("trigger_reason"),
+            "net_contribution": net,
+            "avoided_drawdown": avoided,
+            "missed_upside": missed,
+            "false_risk_off": false_risk_off,
+            "false_risk_off_cost": missed if false_risk_off else 0.0,
+        }
+        risk_rows.append(event)
+        recovery_rows.append(
+            {
+                "strategy_id": strategy_id,
+                "risk_off_event_date": event["event_date"],
+                "recovery_date": path.iloc[recovery_index]["date"].date().isoformat(),
+                "risk_on_recovery_delay_days": int(recovery_index - index),
+                "risk_on_recovery_delay_cost": missed,
+                "post_risk_off_missed_upside": missed,
+                "risk_exposure_before": event["risk_exposure_before"],
+                "risk_exposure_after": event["risk_exposure_after"],
+            }
+        )
+    return risk_rows, recovery_rows
+
+
+def _weights_from_path_row(row: pd.Series, *, prefix: str) -> dict[str, float]:
+    return {
+        "QQQ": _float(row.get(f"{prefix}_weight_qqq")),
+        "TQQQ": _float(row.get(f"{prefix}_weight_tqqq")),
+        "SGOV": _float(row.get(f"{prefix}_weight_sgov")),
+    }
+
+
+def _risk_recovery_index(
+    exposures: pd.Series,
+    risk_off_index: int,
+    prior_exposure: float,
+    *,
+    epsilon: float,
+) -> int:
+    for index in range(risk_off_index + 1, len(exposures)):
+        if _float(exposures.iloc[index]) >= prior_exposure - epsilon:
+            return index
+    return len(exposures) - 1
+
+
+def _bool_series(series: pd.Series) -> pd.Series:
+    return series.fillna(False).map(_bool_value).astype(bool)
+
+
+def _bool_value(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"true", "1", "yes", "y"}
+
+
+def _sgov_allocation_benefit(*, path: pd.DataFrame, prices: pd.DataFrame) -> float:
+    if path.empty:
+        return 0.0
+    dates = pd.to_datetime(path["date"])
+    returns = prices.reindex(dates)["SGOV"].pct_change().fillna(0.0)
+    weights = path["actual_weight_sgov"].astype(float).shift(1).fillna(0.0)
+    return round(float((weights * returns.reset_index(drop=True)).sum()), 6)
+
+
+def _average_weight(path: pd.DataFrame, column: str) -> float:
+    if path.empty or column not in path:
+        return 0.0
+    return round(float(path[column].astype(float).mean()), 6)
+
+
+def _edge_attribution_verdict(
+    *,
+    actual_metrics: Mapping[str, Any],
+    static_metrics: Mapping[str, Any],
+    risk_off_net_contribution: float,
+    risk_off_avoided_drawdown: float,
+    risk_off_missed_upside: float,
+    qqq_exposure_drag: float,
+    actual_vs_static_return_gap: float | None,
+    actual_vs_static_risk_gap: float,
+    attribution_policy: Mapping[str, Any],
+) -> str:
+    if actual_vs_static_return_gap is None or not actual_metrics or not static_metrics:
+        return "INSUFFICIENT_EVIDENCE"
+    actual_sharpe = _float(actual_metrics.get("actual_path_sharpe_daily_zero_rf"))
+    static_sharpe = _float(static_metrics.get("actual_path_sharpe_daily_zero_rf"))
+    min_return_edge = _edge_policy_threshold(
+        attribution_policy,
+        "min_actual_vs_static_return_edge",
+    )
+    min_drawdown_improvement = _edge_policy_threshold(
+        attribution_policy,
+        "min_drawdown_improvement",
+    )
+    min_sharpe_edge = _edge_policy_threshold(attribution_policy, "min_sharpe_edge")
+    false_risk_off_materiality = _edge_policy_threshold(
+        attribution_policy,
+        "false_risk_off_cost_materiality",
+    )
+    recovery_delay_materiality = _edge_policy_threshold(
+        attribution_policy,
+        "recovery_delay_cost_materiality",
+    )
+    qqq_drag_materiality = _edge_policy_threshold(
+        attribution_policy,
+        "qqq_exposure_drag_materiality",
+    )
+    if (
+        actual_vs_static_return_gap >= min_return_edge
+        and actual_vs_static_risk_gap <= -min_drawdown_improvement
+        and actual_sharpe >= static_sharpe + min_sharpe_edge
+    ):
+        return "EDGE_SURVIVES_ACTUAL_PATH"
+    if (
+        risk_off_missed_upside
+        > risk_off_avoided_drawdown + false_risk_off_materiality
+        and risk_off_missed_upside > false_risk_off_materiality
+    ):
+        return "FALSE_RISK_OFF_DOMINATES"
+    if (
+        risk_off_net_contribution > recovery_delay_materiality
+        and qqq_exposure_drag > qqq_drag_materiality
+    ):
+        return "DEFENSIVE_OVERLAY_ONLY"
+    if (
+        qqq_exposure_drag > qqq_drag_materiality
+        and actual_vs_static_return_gap < -min_return_edge
+    ):
+        return "UNDERPERFORMS_DUE_TO_QQQ_EXPOSURE_DRAG"
+    if risk_off_missed_upside > recovery_delay_materiality:
+        return "RISK_ON_RECOVERY_TOO_SLOW"
+    return "NO_STABLE_EDGE"
+
+
+def _write_edge_attribution_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    strategy_rows: list[dict[str, Any]],
+    risk_off_rows: list[dict[str, Any]],
+    recovery_rows: list[dict[str, Any]],
+    qqq_drag_rows: list[dict[str, Any]],
+    sgov_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "edge_attribution_by_strategy": runtime_root / "edge_attribution_by_strategy.csv",
+        "risk_off_event_attribution": runtime_root / "risk_off_event_attribution.csv",
+        "risk_on_recovery_attribution": runtime_root / "risk_on_recovery_attribution.csv",
+        "qqq_exposure_drag": runtime_root / "qqq_exposure_drag.csv",
+        "sgov_allocation_benefit": runtime_root / "sgov_allocation_benefit.csv",
+        "edge_attribution_summary": runtime_root / "edge_attribution_summary.json",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(strategy_rows).to_csv(paths["edge_attribution_by_strategy"], index=False)
+    pd.DataFrame(risk_off_rows).to_csv(paths["risk_off_event_attribution"], index=False)
+    pd.DataFrame(recovery_rows).to_csv(paths["risk_on_recovery_attribution"], index=False)
+    pd.DataFrame(qqq_drag_rows).to_csv(paths["qqq_exposure_drag"], index=False)
+    pd.DataFrame(sgov_rows).to_csv(paths["sgov_allocation_benefit"], index=False)
+    artifact_hashes = {
+        key: _file_sha256(path)
+        for key, path in paths.items()
+        if key not in {"review_markdown", "review_yaml", "edge_attribution_summary"}
+    }
+    matrix_payload = _edge_attribution_matrix_payload(
+        payload=payload,
+        strategy_rows=strategy_rows,
+        runtime_root=runtime_root,
+        artifact_hashes=artifact_hashes,
+    )
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(matrix_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _edge_attribution_review_markdown(
+            payload=payload,
+            strategy_rows=strategy_rows,
+            matrix_payload=matrix_payload,
+        ),
+        encoding="utf-8",
+    )
+    artifact_paths = {key: str(path) for key, path in paths.items()}
+    summary_payload = dict(payload)
+    summary_payload["artifact_paths"] = artifact_paths
+    _write_json(paths["edge_attribution_summary"], summary_payload)
+    return artifact_paths
+
+
+def _edge_attribution_matrix_payload(
+    *,
+    payload: Mapping[str, Any],
+    strategy_rows: list[dict[str, Any]],
+    runtime_root: Path,
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "actual_path_edge_attribution_matrix.v1",
+        "report_type": "actual_path_edge_attribution_matrix",
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash": payload.get("policy_hash"),
+        "objective_policy_hash": payload.get("objective_policy_hash"),
+        "attribution_policy": _mapping(payload.get("attribution_policy")),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "data_quality_status": _mapping(payload.get("summary")).get("data_quality_status"),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        "strategy_attributions": strategy_rows,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _edge_attribution_review_markdown(
+    *,
+    payload: Mapping[str, Any],
+    strategy_rows: list[dict[str, Any]],
+    matrix_payload: Mapping[str, Any],
+) -> str:
+    date_range = _mapping(matrix_payload.get("date_range"))
+    lines = [
+        "# Actual Path Edge Attribution Review",
+        "",
+        f"- 状态：`{payload.get('status')}`",
+        f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+        f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+        f"- data_quality_status：`{matrix_payload.get('data_quality_status')}`",
+        "- promotion_decision_source：`actual_path_only`",
+        "- target_path_metrics_role：`diagnostic_only`",
+        "- dynamic_promotion：`BLOCKED`",
+        "- paper_shadow_allowed：`false`",
+        "- production_allowed：`false`",
+        "- broker_action：`none`",
+        "",
+        "## Attribution Summary",
+        "",
+        _markdown_table(
+            strategy_rows,
+            [
+                "strategy_id",
+                "risk_off_event_count",
+                "risk_off_net_contribution",
+                "risk_off_avoided_drawdown",
+                "risk_off_missed_upside",
+                "false_risk_off_count",
+                "risk_on_recovery_delay_days",
+                "qqq_exposure_drag",
+                "sgov_allocation_benefit",
+                "turnover_drag",
+                "actual_vs_static_return_gap",
+                "actual_vs_static_risk_gap",
+                "verdict",
+            ],
+        ),
+        "",
+        "## 结论",
+        "",
+    ]
+    for row in strategy_rows:
+        lines.append(
+            (
+                "- `{strategy_id}` verdict=`{verdict}`，"
+                "主要差距：QQQ exposure drag=`{drag}`，"
+                "false risk-off cost=`{false_cost}`，"
+                "risk-on recovery delay cost=`{delay_cost}`。"
+            ).format(
+                strategy_id=row.get("strategy_id"),
+                verdict=row.get("verdict"),
+                drag=row.get("qqq_exposure_drag"),
+                false_cost=row.get("false_risk_off_cost"),
+                delay_cost=row.get("risk_on_recovery_delay_cost"),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "本报告只使用 actual-path metrics 和 actual position path 做 ranking / attribution。"
+            "Target-path metrics 仅可用于 diagnostic，不得进入 promotion gate。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _objective_gate_row_for_strategy(
+    attribution_row: Mapping[str, Any],
+    *,
+    gate_policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    strategy_id = str(attribution_row.get("strategy_id"))
+    verdict = str(attribution_row.get("verdict") or "INSUFFICIENT_EVIDENCE")
+    recommended_role = _objective_gate_recommended_role(
+        verdict,
+        gate_policy=gate_policy,
+    )
+    hard_blockers = _objective_gate_hard_blockers(
+        attribution_row=attribution_row,
+        gate_policy=gate_policy,
+    )
+    return {
+        "strategy_id": strategy_id,
+        "edge_verdict": verdict,
+        "recommended_role": recommended_role,
+        "gate_v2_status": "BLOCKED",
+        "promotion_eligible": False,
+        "paper_shadow_preflight_candidate": False,
+        "paper_shadow_preflight_status": "BLOCKED_PENDING_OWNER_AND_REMAINING_AUDITS",
+        "hard_blockers": hard_blockers,
+        "actual_path_annual_return": attribution_row.get("actual_path_annual_return"),
+        "actual_path_max_drawdown_daily_equity": attribution_row.get(
+            "actual_path_max_drawdown_daily_equity"
+        ),
+        "actual_path_sharpe_daily_zero_rf": attribution_row.get(
+            "actual_path_sharpe_daily_zero_rf"
+        ),
+        "actual_vs_static_return_gap": attribution_row.get(
+            "actual_vs_static_return_gap"
+        ),
+        "actual_vs_static_risk_gap": attribution_row.get("actual_vs_static_risk_gap"),
+        "risk_off_net_contribution": attribution_row.get("risk_off_net_contribution"),
+        "false_risk_off_cost": attribution_row.get("false_risk_off_cost"),
+        "risk_on_recovery_delay_cost": attribution_row.get(
+            "risk_on_recovery_delay_cost"
+        ),
+        "qqq_exposure_drag": attribution_row.get("qqq_exposure_drag"),
+        "allowed_next_action": "OWNER_REVIEW_AND_NEXT_BATCH_AUDITS",
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+
+
+def _objective_gate_recommended_role(
+    verdict: str,
+    *,
+    gate_policy: Mapping[str, Any],
+) -> str:
+    default_role = str(
+        gate_policy.get("default_recommended_role") or "ADVISORY_DIAGNOSTIC"
+    )
+    for role_payload in _mapping(gate_policy.get("role_paths")).values():
+        role = _mapping(role_payload)
+        if verdict in {str(item) for item in role.get("required_edge_verdicts") or []}:
+            return str(role.get("recommended_role") or default_role)
+    return default_role
+
+
+def _objective_gate_hard_blockers(
+    *,
+    attribution_row: Mapping[str, Any],
+    gate_policy: Mapping[str, Any],
+) -> list[str]:
+    configured = [
+        str(item)
+        for item in gate_policy.get("hard_blockers") or []
+        if isinstance(item, str)
+    ]
+    conditional = _mapping(gate_policy.get("conditional_blockers"))
+    blockers = list(configured)
+    if attribution_row.get("verdict") != "EDGE_SURVIVES_ACTUAL_PATH":
+        blockers.append(
+            str(
+                conditional.get(
+                    "full_allocation_edge_missing",
+                    "ACTUAL_PATH_EDGE_NOT_ESTABLISHED_FOR_FULL_ALLOCATION",
+                )
+            )
+        )
+    if attribution_row.get("target_path_metrics_role") != "diagnostic_only":
+        blockers.append(
+            str(
+                conditional.get(
+                    "target_path_role_not_diagnostic",
+                    "TARGET_PATH_METRICS_ROLE_NOT_DIAGNOSTIC_ONLY",
+                )
+            )
+        )
+    return _dedupe_ordered(blockers)
+
+
+def _write_objective_gate_artifacts(
+    payload: dict[str, Any],
+    *,
+    docs_path: Path,
+    yaml_path: Path,
+) -> dict[str, str]:
+    yaml_payload = _objective_gate_matrix_payload(payload)
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(yaml_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _objective_gate_review_markdown(payload=payload, matrix_payload=yaml_payload),
+        encoding="utf-8",
+    )
+    paths = {"review_markdown": str(docs_path), "review_yaml": str(yaml_path)}
+    payload["artifact_paths"] = paths
+    return paths
+
+
+def _objective_gate_matrix_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": "dynamic_strategy_objective_gate_matrix.v1",
+        "report_type": "dynamic_strategy_objective_gate_matrix",
+        "status": payload.get("status"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash": payload.get("policy_hash"),
+        "edge_matrix_hash": payload.get("edge_matrix_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "objective_policy": _mapping(payload.get("objective_policy")),
+        "gate_policy": _mapping(payload.get("gate_policy")),
+        "strategy_gate_rows": _records(payload.get("strategy_gate_rows")),
+        "blocked_actions": list(payload.get("blocked_actions") or []),
+        "allowed_next_action": payload.get("allowed_next_action"),
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _objective_gate_review_markdown(
+    *,
+    payload: Mapping[str, Any],
+    matrix_payload: Mapping[str, Any],
+) -> str:
+    date_range = _mapping(matrix_payload.get("date_range"))
+    rows = _records(matrix_payload.get("strategy_gate_rows"))
+    lines = [
+        "# Dynamic Strategy Objective Gate Review",
+        "",
+        f"- 状态：`{payload.get('status')}`",
+        f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+        f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+        "- promotion_decision_source：`actual_path_only`",
+        "- target_path_metrics_role：`diagnostic_only`",
+        "- dynamic_promotion：`BLOCKED`",
+        "- owner_manual_review_required：`true`",
+        "- paper_shadow_allowed：`false`",
+        "- production_allowed：`false`",
+        "- broker_action：`none`",
+        "",
+        "## Gate V2 Classification",
+        "",
+        _markdown_table(
+            rows,
+            [
+                "strategy_id",
+                "edge_verdict",
+                "recommended_role",
+                "gate_v2_status",
+                "paper_shadow_preflight_status",
+                "actual_vs_static_return_gap",
+                "actual_vs_static_risk_gap",
+                "qqq_exposure_drag",
+            ],
+        ),
+        "",
+        "## Gate 结论",
+        "",
+        (
+            "Gate v2 已把 full allocation、defensive overlay 和 advisory diagnostic "
+            "分开，但当前所有候选仍为 `BLOCKED`。主要原因是 owner review、PIT audit、"
+            "walk-forward、cost/cash-yield、stress/regime 后续审计尚未完成。"
+        ),
+        "",
+        "Target-path metrics 被显式排除出 objective gate v2 的 promotion 输入。",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def _load_actual_path_strategy_evidence(

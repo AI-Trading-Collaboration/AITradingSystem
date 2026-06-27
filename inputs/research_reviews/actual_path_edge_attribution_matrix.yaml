@@ -1,0 +1,156 @@
+schema_version: actual_path_edge_attribution_matrix.v1
+report_type: actual_path_edge_attribution_matrix
+status: EDGE_ATTRIBUTION_REVIEW_READY
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\edge_attribution\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: 2a7c98654d9e28edea62dae3f0c5474ba6e0a791
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+objective_policy_hash: 6c4c4b110e0cfc07ac3056cf242bae6bfb5dc0b1b0ddd8c701aab22b1bb7f7dd
+attribution_policy:
+  policy_id: actual_path_edge_attribution_policy_v1
+  source_policy_id: dynamic_strategy_objectives_v1
+  status: pilot_baseline
+  thresholds:
+    weight_change_epsilon: 1.0e-09
+    min_risk_off_events: 0.0
+    min_actual_vs_static_return_edge: 0.0
+    min_drawdown_improvement: 0.0
+    min_sharpe_edge: 0.0
+    false_risk_off_cost_materiality: 0.0
+    recovery_delay_cost_materiality: 0.0
+    qqq_exposure_drag_materiality: 0.0
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+data_quality_status: PASS_WITH_WARNINGS
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  edge_attribution_by_strategy: a1fb0ac23b8b0748a43865d028976736541b20f1cabe56d1959f4c8e0d31d858
+  risk_off_event_attribution: 00e05b7875a2286a69c3c0303c38c866fe421ae859f6f8d4df867538150b6e5a
+  risk_on_recovery_attribution: 1080ea04014765b065204c9b40f80db8f2eefb0b56d065c3aaa10c385941a1bf
+  qqq_exposure_drag: 434a363bf4ebce3b243ed6aa3a26ceaf05d14ee825908d4010c3755466a5875a
+  sgov_allocation_benefit: da1da9291a0900451f9f4216aa97bd17f91078361f1b51f05104d16c2823e7e2
+strategy_attributions:
+- strategy_id: limited_adjustment
+  strategy_status: WATCH_ONLY
+  risk_off_event_count: 6
+  risk_off_net_contribution: -0.038911
+  risk_off_avoided_drawdown: 0.0
+  risk_off_missed_upside: 0.038911
+  false_risk_off_count: 6
+  false_risk_off_cost: 0.038911
+  risk_on_recovery_delay_days: 18.333
+  risk_on_recovery_delay_cost: 0.038911
+  post_risk_off_missed_upside: 0.038911
+  qqq_exposure_drag: 0.096255
+  sgov_allocation_benefit: 0.060909
+  turnover_drag: 0.00024
+  actual_vs_static_return_gap: 0.000671
+  actual_vs_static_risk_gap: -0.023864
+  static_comparator_id: qqq_60_sgov_40
+  actual_path_annual_return: 0.192658
+  actual_path_max_drawdown_daily_equity: -0.116204
+  actual_path_sharpe_daily_zero_rf: 1.609148
+  actual_path_calmar_daily_equity_dd: 1.65793
+  actual_path_turnover: 2.4
+  promotion_final_status: blocked
+  verdict: EDGE_SURVIVES_ACTUAL_PATH
+  attribution_policy_id: actual_path_edge_attribution_policy_v1
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  strategy_status: WATCH_ONLY
+  risk_off_event_count: 18
+  risk_off_net_contribution: -0.153163
+  risk_off_avoided_drawdown: 0.048438
+  risk_off_missed_upside: 0.201601
+  false_risk_off_count: 13
+  false_risk_off_cost: 0.201601
+  risk_on_recovery_delay_days: 16.778
+  risk_on_recovery_delay_cost: 0.201601
+  post_risk_off_missed_upside: 0.201601
+  qqq_exposure_drag: 0.106527
+  sgov_allocation_benefit: 0.065792
+  turnover_drag: 0.001575
+  actual_vs_static_return_gap: -0.009601
+  actual_vs_static_risk_gap: -0.04865
+  static_comparator_id: qqq_60_sgov_40
+  actual_path_annual_return: 0.182386
+  actual_path_max_drawdown_daily_equity: -0.091418
+  actual_path_sharpe_daily_zero_rf: 1.634858
+  actual_path_calmar_daily_equity_dd: 1.995078
+  actual_path_turnover: 15.75
+  promotion_final_status: blocked
+  verdict: FALSE_RISK_OFF_DOMINATES
+  attribution_policy_id: actual_path_edge_attribution_policy_v1
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  strategy_status: WATCH_ONLY
+  risk_off_event_count: 9
+  risk_off_net_contribution: -0.045268
+  risk_off_avoided_drawdown: 0.010158
+  risk_off_missed_upside: 0.055426
+  false_risk_off_count: 7
+  false_risk_off_cost: 0.055426
+  risk_on_recovery_delay_days: 12.333
+  risk_on_recovery_delay_cost: 0.055426
+  post_risk_off_missed_upside: 0.055426
+  qqq_exposure_drag: 0.098339
+  sgov_allocation_benefit: 0.061366
+  turnover_drag: 0.00068
+  actual_vs_static_return_gap: -0.001413
+  actual_vs_static_risk_gap: -0.024844
+  static_comparator_id: qqq_60_sgov_40
+  actual_path_annual_return: 0.190574
+  actual_path_max_drawdown_daily_equity: -0.115224
+  actual_path_sharpe_daily_zero_rf: 1.594445
+  actual_path_calmar_daily_equity_dd: 1.653946
+  actual_path_turnover: 6.8
+  promotion_final_status: blocked
+  verdict: FALSE_RISK_OFF_DOMINATES
+  attribution_policy_id: actual_path_edge_attribution_policy_v1
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  strategy_status: WATCH_ONLY
+  risk_off_event_count: 27
+  risk_off_net_contribution: -0.142427
+  risk_off_avoided_drawdown: 0.079971
+  risk_off_missed_upside: 0.222398
+  false_risk_off_count: 16
+  false_risk_off_cost: 0.222398
+  risk_on_recovery_delay_days: 11.519
+  risk_on_recovery_delay_cost: 0.222398
+  post_risk_off_missed_upside: 0.222398
+  qqq_exposure_drag: 0.104416
+  sgov_allocation_benefit: 0.067057
+  turnover_drag: 0.003105
+  actual_vs_static_return_gap: -0.00749
+  actual_vs_static_risk_gap: -0.048332
+  static_comparator_id: qqq_60_sgov_40
+  actual_path_annual_return: 0.184497
+  actual_path_max_drawdown_daily_equity: -0.091736
+  actual_path_sharpe_daily_zero_rf: 1.667961
+  actual_path_calmar_daily_equity_dd: 2.011166
+  actual_path_turnover: 31.05
+  promotion_final_status: blocked
+  verdict: FALSE_RISK_OFF_DOMINATES
+  attribution_policy_id: actual_path_edge_attribution_policy_v1
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

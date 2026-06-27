@@ -18484,6 +18484,52 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: actual_path_edge_attribution_review
+    title: Actual Path Edge Attribution Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies actual-path-edge-attribution
+    artifact_globs:
+      - outputs/research_strategies/edge_attribution/*/edge_attribution_by_strategy.csv
+      - outputs/research_strategies/edge_attribution/*/risk_off_event_attribution.csv
+      - outputs/research_strategies/edge_attribution/*/risk_on_recovery_attribution.csv
+      - outputs/research_strategies/edge_attribution/*/qqq_exposure_drag.csv
+      - outputs/research_strategies/edge_attribution/*/sgov_allocation_benefit.csv
+      - outputs/research_strategies/edge_attribution/*/edge_attribution_summary.json
+      - docs/research/actual_path_edge_attribution_review.md
+      - inputs/research_reviews/actual_path_edge_attribution_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1326 to 1345 actual-path edge attribution must be regenerated after execution semantics runtime artifacts, strategy variants, cached data, or attribution policy changes.
+    owner_action: review_actual_path_edge_attribution
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_objective_gate_review
+    title: Dynamic Strategy Objective Gate Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-objective-gate-review
+    artifact_globs:
+      - config/research/dynamic_strategy_objectives.yaml
+      - config/research/dynamic_promotion_gate_v2.yaml
+      - docs/research/dynamic_strategy_objective_gate_review.md
+      - inputs/research_reviews/dynamic_strategy_objective_gate_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1346 to 1360 objective gate review must be regenerated after edge attribution, objective policy, promotion gate policy, or owner-review rules change.
+    owner_action: review_dynamic_strategy_objective_gate_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

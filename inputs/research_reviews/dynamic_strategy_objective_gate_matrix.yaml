@@ -1,0 +1,165 @@
+schema_version: dynamic_strategy_objective_gate_matrix.v1
+report_type: dynamic_strategy_objective_gate_matrix
+status: OBJECTIVE_GATE_REVIEW_READY
+source_commit: 2a7c98654d9e28edea62dae3f0c5474ba6e0a791
+config_hash: 6c4c4b110e0cfc07ac3056cf242bae6bfb5dc0b1b0ddd8c701aab22b1bb7f7dd
+policy_hash: 6abad52cc1212b4761df360cec50eaaae9faeb8fad71511d938b7a9087521d92
+edge_matrix_hash: 9ddf4e68d3aac43fb0dfad558c681ed965cfb924b4288f56f69b7cca350619e4
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+objective_policy:
+  pathways:
+  - return_objective
+  - risk_objective
+  - control_objective
+  policy_id: dynamic_strategy_objectives_v1
+  status: pilot_baseline
+gate_policy:
+  policy_id: dynamic_promotion_gate_v2
+  status: pilot_baseline
+  hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+strategy_gate_rows:
+- strategy_id: limited_adjustment
+  edge_verdict: EDGE_SURVIVES_ACTUAL_PATH
+  recommended_role: FULL_ALLOCATION_RESEARCH_CANDIDATE
+  gate_v2_status: BLOCKED
+  promotion_eligible: false
+  paper_shadow_preflight_candidate: false
+  paper_shadow_preflight_status: BLOCKED_PENDING_OWNER_AND_REMAINING_AUDITS
+  hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+  actual_path_annual_return: 0.192658
+  actual_path_max_drawdown_daily_equity: -0.116204
+  actual_path_sharpe_daily_zero_rf: 1.609148
+  actual_vs_static_return_gap: 0.000671
+  actual_vs_static_risk_gap: -0.023864
+  risk_off_net_contribution: -0.038911
+  false_risk_off_cost: 0.038911
+  risk_on_recovery_delay_cost: 0.038911
+  qqq_exposure_drag: 0.096255
+  allowed_next_action: OWNER_REVIEW_AND_NEXT_BATCH_AUDITS
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  edge_verdict: FALSE_RISK_OFF_DOMINATES
+  recommended_role: ADVISORY_DIAGNOSTIC
+  gate_v2_status: BLOCKED
+  promotion_eligible: false
+  paper_shadow_preflight_candidate: false
+  paper_shadow_preflight_status: BLOCKED_PENDING_OWNER_AND_REMAINING_AUDITS
+  hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+  - ACTUAL_PATH_EDGE_NOT_ESTABLISHED_FOR_FULL_ALLOCATION
+  actual_path_annual_return: 0.182386
+  actual_path_max_drawdown_daily_equity: -0.091418
+  actual_path_sharpe_daily_zero_rf: 1.634858
+  actual_vs_static_return_gap: -0.009601
+  actual_vs_static_risk_gap: -0.04865
+  risk_off_net_contribution: -0.153163
+  false_risk_off_cost: 0.201601
+  risk_on_recovery_delay_cost: 0.201601
+  qqq_exposure_drag: 0.106527
+  allowed_next_action: OWNER_REVIEW_AND_NEXT_BATCH_AUDITS
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  edge_verdict: FALSE_RISK_OFF_DOMINATES
+  recommended_role: ADVISORY_DIAGNOSTIC
+  gate_v2_status: BLOCKED
+  promotion_eligible: false
+  paper_shadow_preflight_candidate: false
+  paper_shadow_preflight_status: BLOCKED_PENDING_OWNER_AND_REMAINING_AUDITS
+  hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+  - ACTUAL_PATH_EDGE_NOT_ESTABLISHED_FOR_FULL_ALLOCATION
+  actual_path_annual_return: 0.190574
+  actual_path_max_drawdown_daily_equity: -0.115224
+  actual_path_sharpe_daily_zero_rf: 1.594445
+  actual_vs_static_return_gap: -0.001413
+  actual_vs_static_risk_gap: -0.024844
+  risk_off_net_contribution: -0.045268
+  false_risk_off_cost: 0.055426
+  risk_on_recovery_delay_cost: 0.055426
+  qqq_exposure_drag: 0.098339
+  allowed_next_action: OWNER_REVIEW_AND_NEXT_BATCH_AUDITS
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  edge_verdict: FALSE_RISK_OFF_DOMINATES
+  recommended_role: ADVISORY_DIAGNOSTIC
+  gate_v2_status: BLOCKED
+  promotion_eligible: false
+  paper_shadow_preflight_candidate: false
+  paper_shadow_preflight_status: BLOCKED_PENDING_OWNER_AND_REMAINING_AUDITS
+  hard_blockers:
+  - TARGET_PATH_METRICS_FOR_PROMOTION_FORBIDDEN
+  - OWNER_MANUAL_REVIEW_REQUIRED
+  - PIT_AUDIT_REQUIRED
+  - WALK_FORWARD_VALIDATION_REQUIRED
+  - COST_CASH_YIELD_AUDIT_REQUIRED
+  - STRESS_RISK_REVIEW_REQUIRED
+  - REGIME_BASELINE_EXPANSION_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_APPROVED
+  - ACTUAL_PATH_EDGE_NOT_ESTABLISHED_FOR_FULL_ALLOCATION
+  actual_path_annual_return: 0.184497
+  actual_path_max_drawdown_daily_equity: -0.091736
+  actual_path_sharpe_daily_zero_rf: 1.667961
+  actual_vs_static_return_gap: -0.00749
+  actual_vs_static_risk_gap: -0.048332
+  risk_off_net_contribution: -0.142427
+  false_risk_off_cost: 0.222398
+  risk_on_recovery_delay_cost: 0.222398
+  qqq_exposure_drag: 0.104416
+  allowed_next_action: OWNER_REVIEW_AND_NEXT_BATCH_AUDITS
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+blocked_actions:
+- dynamic_promotion
+- paper_shadow
+- production
+- broker
+allowed_next_action: OWNER_REVIEW_AND_NEXT_BATCH_AUDITS
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true
