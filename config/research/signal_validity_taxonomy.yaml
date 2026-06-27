@@ -1,0 +1,133 @@
+schema_version: 1
+taxonomy_id: signal_validity_taxonomy_v1
+policy_metadata:
+  owner: research_governance
+  status: research_only_pilot_baseline
+  rationale: >
+    TRADING-1286 to 1305 isolates signal half-life, staleness cost and execution
+    lag for watch-only dynamic candidates after the ai_after_chatgpt regime
+    review. The bands below are initial research profiles, not calibrated
+    promotion thresholds.
+  intended_effect: >
+    Make signal validity assumptions explicit before staleness-aware actual-path
+    rebacktests and owner review.
+  validation_evidence: >
+    Covered by TRADING-1286 to 1305 focused no-future-leakage, stale action and
+    actual-path-only promotion tests.
+  review_condition: >
+    Review before adding new strategies, changing stale_after_days,
+    changing stale_action, or using any profile outside watch-only research.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true
+signal_validity_taxonomy:
+  fast_signal:
+    expected_half_life_days_min: 1
+    expected_half_life_days_max: 3
+    suitable_execution:
+      - next_trading_day
+      - daily_rebalance
+    unsuitable_execution:
+      - monthly_rebalance
+    promotion_note: requires low execution lag and separate owner review
+  medium_signal:
+    expected_half_life_days_min: 4
+    expected_half_life_days_max: 10
+    suitable_execution:
+      - next_trading_day
+      - weekly_rebalance
+    unsuitable_execution:
+      - monthly_rebalance_if_no_persistence_confirmed
+    promotion_note: suitable only when actual-path lag and stale cost are immaterial
+  slow_signal:
+    expected_half_life_days_min: 10
+    expected_half_life_days_max: 30
+    suitable_execution:
+      - weekly_rebalance
+      - monthly_rebalance_with_confirmation
+    unsuitable_execution:
+      - same_close_execution_without_no_lookahead_proof
+    promotion_note: more suitable for portfolio-level allocation research
+  persistent_regime_signal:
+    expected_half_life_days_min: 30
+    expected_half_life_days_max: null
+    suitable_execution:
+      - weekly_rebalance
+      - monthly_rebalance
+    unsuitable_execution:
+      - high_turnover_daily_rebalance_without_cost_review
+    promotion_note: best aligned with lower-turnover dynamic allocation research
+strategy_signal_validity_profiles:
+  limited_adjustment:
+    primary_signal_class: slow_signal
+    confirmation_required: true
+    min_validity_days_required_for_execution: 5
+    stale_after_days: 10
+    near_stale_within_days: 2
+    stale_action: hold_previous_position
+    actual_path_only: true
+    profile_status: watch_only_baseline
+    rationale: >
+      Policy sensitivity showed the candidate survives longer validity windows
+      but fails short-validity scenarios and still underperforms 100_qqq.
+      The initial stale_after_days therefore tests slow-signal persistence
+      without changing the underlying target-weight logic.
+    review_condition: Calibrate before paper-shadow preflight or production use.
+  dynamic_v0_5_ai_trend_confirmed_only:
+    primary_signal_class: medium_signal
+    confirmation_required: true
+    min_validity_days_required_for_execution: 3
+    stale_after_days: 5
+    near_stale_within_days: 1
+    stale_action: suppress_rebalance
+    actual_path_only: true
+    profile_status: watch_only_baseline
+    rationale: >
+      Policy sensitivity showed higher fragility under monthly and short
+      validity windows than limited_adjustment, so this profile starts with a
+      shorter medium-signal stale boundary.
+    review_condition: Calibrate before paper-shadow preflight or production use.
+  limited_adjustment_staleness_aware_v1:
+    inherits_strategy_id: limited_adjustment
+    primary_signal_class: slow_signal
+    confirmation_required: true
+    min_validity_days_required_for_execution: 5
+    stale_after_days: 10
+    near_stale_within_days: 2
+    stale_action: hold_previous_position
+    actual_path_only: true
+    repaired_candidate_status: WATCH_ONLY_REPAIRED_CANDIDATE
+    promotion_eligible: false
+    rationale: >
+      Watch-only repaired variant that keeps the limited_adjustment target path
+      and only adds staleness-aware execution suppression/holding semantics.
+  dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1:
+    inherits_strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+    primary_signal_class: medium_signal
+    confirmation_required: true
+    min_validity_days_required_for_execution: 3
+    stale_after_days: 5
+    near_stale_within_days: 1
+    stale_action: suppress_rebalance
+    actual_path_only: true
+    repaired_candidate_status: WATCH_ONLY_REPAIRED_CANDIDATE
+    promotion_eligible: false
+    rationale: >
+      Watch-only repaired variant that keeps the v0.5 AI trend target path and
+      only adds staleness-aware execution suppression semantics.
+allowed_stale_actions:
+  - suppress_rebalance
+  - hold_previous_position
+  - fallback_to_static_baseline
+  - no_trade

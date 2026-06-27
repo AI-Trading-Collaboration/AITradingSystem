@@ -25,7 +25,11 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_PRICES_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
     DEFAULT_RATES_PATH,
+    DEFAULT_SIGNAL_VALIDITY_STALENESS_INPUT_SUMMARY_PATH,
+    DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH,
+    DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
     run_dynamic_actual_path_owner_review_decision,
     run_dynamic_actual_path_policy_sensitivity_review,
     run_dynamic_backtest_engine_contract_update,
@@ -149,6 +153,9 @@ def _execution_semantics_rebacktest_command(
     policy_registry_path: Annotated[
         Path, typer.Option("--policy-registry")
     ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    signal_validity_taxonomy_path: Annotated[
+        Path, typer.Option("--signal-validity-taxonomy")
+    ] = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     output_root: Annotated[
         Path, typer.Option("--output", "--output-root")
     ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
@@ -160,6 +167,44 @@ def _execution_semantics_rebacktest_command(
         str | None,
         typer.Option("--execution-policy-id"),
     ] = None,
+    enable_staleness_filter: Annotated[
+        bool,
+        typer.Option("--enable-staleness-filter"),
+    ] = False,
+    stale_action: Annotated[
+        str | None,
+        typer.Option(
+            "--stale-action",
+            help=(
+                "Override stale action: suppress_rebalance, hold_previous_position, "
+                "fallback_to_static_baseline, or no_trade."
+            ),
+        ),
+    ] = None,
+    include_repaired_watch_only: Annotated[
+        bool,
+        typer.Option("--include-repaired-watch-only"),
+    ] = False,
+    emit_staleness_decomposition: Annotated[
+        bool,
+        typer.Option("--emit-staleness-decomposition"),
+    ] = False,
+    emit_lag_decomposition: Annotated[
+        bool,
+        typer.Option("--emit-lag-decomposition"),
+    ] = False,
+    staleness_input_summary_path: Annotated[
+        Path,
+        typer.Option("--staleness-input-summary-path"),
+    ] = DEFAULT_SIGNAL_VALIDITY_STALENESS_INPUT_SUMMARY_PATH,
+    staleness_repair_matrix_path: Annotated[
+        Path,
+        typer.Option("--staleness-repair-matrix-path"),
+    ] = DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
+    staleness_repair_review_path: Annotated[
+        Path,
+        typer.Option("--staleness-repair-review-path"),
+    ] = DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH,
     as_of: Annotated[str | None, typer.Option("--as-of")] = None,
     start_date: Annotated[str | None, typer.Option("--start-date")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date")] = None,
@@ -170,12 +215,21 @@ def _execution_semantics_rebacktest_command(
         rates_path=rates_path,
         simple_config_path=simple_config_path,
         policy_registry_path=policy_registry_path,
+        signal_validity_taxonomy_path=signal_validity_taxonomy_path,
         output_root=output_root,
         strategy_ids=strategy or list(DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS),
         execution_policy_id=execution_policy_id,
         as_of_date=_parse_optional_date(as_of),
         start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
         end_date=_parse_optional_date(end_date),
+        enable_staleness_filter=enable_staleness_filter,
+        stale_action=stale_action,
+        include_repaired_watch_only=include_repaired_watch_only,
+        emit_staleness_decomposition=emit_staleness_decomposition,
+        emit_lag_decomposition=emit_lag_decomposition,
+        staleness_input_summary_path=staleness_input_summary_path,
+        staleness_repair_matrix_path=staleness_repair_matrix_path,
+        staleness_repair_review_path=staleness_repair_review_path,
     )
     _print_execution_semantics_payload("Execution semantics rebacktest", payload)
 

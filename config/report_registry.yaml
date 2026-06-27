@@ -18230,12 +18230,18 @@ reports:
       - outputs/research_strategies/execution_semantics/*/target_vs_actual_position_path.csv
       - outputs/research_strategies/execution_semantics/*/lag_cost_report.md
       - outputs/research_strategies/execution_semantics/*/signal_staleness_report.md
+      - outputs/research_strategies/execution_semantics/*/signal_staleness_decomposition.json
+      - outputs/research_strategies/execution_semantics/*/signal_staleness_decomposition.md
+      - outputs/research_strategies/execution_semantics/*/execution_lag_decomposition.json
+      - outputs/research_strategies/execution_semantics/*/execution_lag_decomposition.md
       - outputs/research_strategies/execution_semantics/*/execution_policy_snapshot.yaml
       - outputs/research_strategies/execution_semantics/*/promotion_readiness.json
       - outputs/research_strategies/execution_semantics/index.json
       - outputs/research_strategies/execution_semantics/leaderboard_actual_path.csv
       - outputs/research_strategies/execution_semantics/target_vs_actual_gap_summary.csv
       - outputs/research_strategies/execution_semantics/promotion_readiness_summary.json
+      - outputs/research_strategies/execution_semantics/staleness_repair_summary.csv
+      - outputs/research_strategies/execution_semantics/lag_repair_summary.csv
       - outputs/research_strategies/execution_semantics/owner_review_pack.md
     artifact_selection_policy: latest_available
     freshness_sla_days: 30
@@ -18285,6 +18291,80 @@ reports:
     freshness_sla_days: 30
     freshness_rationale: Policy sensitivity evidence must be regenerated after execution policy, strategy target path, materiality policy or cached data changes.
     owner_action: review_dynamic_actual_path_policy_sensitivity
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: signal_validity_taxonomy
+    title: Signal Validity Taxonomy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --signal-validity-taxonomy config/research/signal_validity_taxonomy.yaml
+    artifact_globs:
+      - config/research/signal_validity_taxonomy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1286 to 1305 signal validity taxonomy must be reviewed after staleness profile, execution filter or watch-only repaired-candidate changes.
+    owner_action: review_signal_validity_taxonomy_before_repair_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: signal_validity_staleness_input_summary
+    title: Signal Validity Staleness Input Summary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --include-repaired-watch-only --enable-staleness-filter
+    artifact_globs:
+      - docs/research/signal_validity_staleness_input_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1286 input summary must be regenerated after owner review, policy sensitivity, actual-path rebacktest or signal validity profile changes.
+    owner_action: review_signal_validity_staleness_input_summary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: signal_validity_staleness_repair_review
+    title: Signal Validity Staleness Repair Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --include-repaired-watch-only --enable-staleness-filter
+    artifact_globs:
+      - docs/research/signal_validity_staleness_repair_review.md
+      - outputs/research_strategies/execution_semantics/staleness_repair_summary.csv
+      - outputs/research_strategies/execution_semantics/lag_repair_summary.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner-readable repair review must be regenerated after staleness filter, repaired variant, cached data or actual-path metric changes.
+    owner_action: review_signal_validity_staleness_repair_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: staleness_repair_matrix
+    title: Staleness Repair Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --include-repaired-watch-only --enable-staleness-filter
+    artifact_globs:
+      - inputs/research_reviews/staleness_repair_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Machine-readable staleness repair matrix must be regenerated after repaired-candidate actual-path metrics or repair verdict policy changes.
+    owner_action: review_staleness_repair_matrix
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

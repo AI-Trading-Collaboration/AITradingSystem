@@ -37,6 +37,9 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_EXECUTION_POLICY_REGISTRY_PATH = (
     PROJECT_ROOT / "config" / "research" / "strategy_execution_policy_registry.yaml"
 )
+DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "signal_validity_taxonomy.yaml"
+)
 DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "controlled_growth_component_candidate_registry_v2.yaml"
 )
@@ -72,6 +75,15 @@ DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH = (
     / "inputs"
     / "research_reviews"
     / "dynamic_actual_path_policy_sensitivity_matrix.yaml"
+)
+DEFAULT_SIGNAL_VALIDITY_STALENESS_INPUT_SUMMARY_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "signal_validity_staleness_input_summary.md"
+)
+DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "staleness_repair_matrix.yaml"
+)
+DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "signal_validity_staleness_repair_review.md"
 )
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
@@ -178,6 +190,33 @@ ACTUAL_PATH_OWNER_REVIEW_BASELINES: tuple[str, ...] = (
     "qqq_50_sgov_50",
 )
 
+REPAIRED_WATCH_ONLY_VARIANTS: dict[str, str] = {
+    "limited_adjustment_staleness_aware_v1": "limited_adjustment",
+    "dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1": (
+        "dynamic_v0_5_ai_trend_confirmed_only"
+    ),
+}
+
+STALENESS_REPAIR_VARIANT_PAIRS: dict[str, str] = {
+    "limited_adjustment": "limited_adjustment_staleness_aware_v1",
+    "dynamic_v0_5_ai_trend_confirmed_only": (
+        "dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1"
+    ),
+}
+
+DEFAULT_STALENESS_REPAIR_REBACKTEST_STRATEGY_IDS: tuple[str, ...] = (
+    *ACTUAL_PATH_OWNER_REVIEW_BASELINES,
+    *ACTUAL_PATH_OWNER_REVIEW_CANDIDATES,
+    *REPAIRED_WATCH_ONLY_VARIANTS.keys(),
+)
+
+ALLOWED_STALE_ACTIONS: tuple[str, ...] = (
+    "suppress_rebalance",
+    "hold_previous_position",
+    "fallback_to_static_baseline",
+    "no_trade",
+)
+
 POLICY_SENSITIVITY_EXECUTION_LAG_DAYS: tuple[int, ...] = (0, 1, 2)
 POLICY_SENSITIVITY_REBALANCE_FREQUENCIES: tuple[str, ...] = (
     "next_trading_day",
@@ -217,6 +256,10 @@ REBACKTEST_STRATEGY_ID_ALIASES: dict[str, str] = {
     "static_qqq_50_sgov_50": "qqq_50_sgov_50",
     "v0_4_lower_turnover": "dynamic_regime_overlay_v0_4_lower_turnover",
     "v0_5_ai_trend_confirmed_only": "dynamic_v0_5_ai_trend_confirmed_only",
+    "limited_adjustment_repaired": "limited_adjustment_staleness_aware_v1",
+    "dynamic_v0_5_ai_trend_confirmed_repaired": (
+        "dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1"
+    ),
 }
 
 # Fallback mirrors config/research/strategy_execution_policy_registry.yaml. The
@@ -275,6 +318,38 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "dynamic_actual_path_policy_sensitivity_review",
         "title": "Dynamic Actual-Path Policy Sensitivity Review",
         "command": "aits research strategies dynamic-actual-path-policy-sensitivity-review",
+    },
+    {
+        "report_id": "signal_validity_taxonomy",
+        "title": "Signal Validity Taxonomy",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--signal-validity-taxonomy config/research/signal_validity_taxonomy.yaml"
+        ),
+    },
+    {
+        "report_id": "signal_validity_staleness_input_summary",
+        "title": "Signal Validity Staleness Input Summary",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--include-repaired-watch-only --enable-staleness-filter"
+        ),
+    },
+    {
+        "report_id": "signal_validity_staleness_repair_review",
+        "title": "Signal Validity Staleness Repair Review",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--include-repaired-watch-only --enable-staleness-filter"
+        ),
+    },
+    {
+        "report_id": "staleness_repair_matrix",
+        "title": "Staleness Repair Matrix",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--include-repaired-watch-only --enable-staleness-filter"
+        ),
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -778,10 +853,19 @@ def run_execution_semantics_rebacktest(
     rates_path: Path = DEFAULT_RATES_PATH,
     simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    signal_validity_taxonomy_path: Path = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     output_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
     as_of_date: date | None = None,
     start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
     end_date: date | None = None,
+    enable_staleness_filter: bool = False,
+    stale_action: str | None = None,
+    include_repaired_watch_only: bool = False,
+    emit_staleness_decomposition: bool = False,
+    emit_lag_decomposition: bool = False,
+    staleness_input_summary_path: Path | None = None,
+    staleness_repair_matrix_path: Path | None = None,
+    staleness_repair_review_path: Path | None = None,
 ) -> dict[str, Any]:
     config = _load_registry(simple_config_path)
     data_gate = _data_quality_gate(
@@ -804,12 +888,23 @@ def run_execution_semantics_rebacktest(
 
     prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
     registry = _load_policy_registry(policy_registry_path)
+    taxonomy = _load_signal_validity_taxonomy(signal_validity_taxonomy_path)
     policies = _policies_by_id(registry)
     bindings = _strategy_execution_binding_by_id(registry)
     policy_ids = set(policies)
     materiality_thresholds = _execution_materiality_thresholds(registry)
     policy_registry_hash = _file_sha256(policy_registry_path)
+    taxonomy_hash = _file_sha256(signal_validity_taxonomy_path)
     selected_strategy_ids = _selected_rebacktest_strategy_ids(strategy_id, strategy_ids)
+    if include_repaired_watch_only:
+        selected_strategy_ids = _dedupe_ordered(
+            [*selected_strategy_ids, *REPAIRED_WATCH_ONLY_VARIANTS.keys()]
+        )
+    if stale_action is not None and stale_action not in ALLOWED_STALE_ACTIONS:
+        raise ValueError(
+            f"Unsupported stale_action={stale_action!r}; "
+            f"allowed={','.join(ALLOWED_STALE_ACTIONS)}"
+        )
     rows: list[dict[str, Any]] = []
     blocked_rows: list[dict[str, Any]] = []
 
@@ -854,12 +949,25 @@ def run_execution_semantics_rebacktest(
             rows.append(blocked)
             continue
 
+        signal_validity_profile = _signal_validity_profile_for_strategy(
+            strategy_id=current_strategy_id,
+            binding=binding,
+            taxonomy=taxonomy,
+            stale_action_override=stale_action,
+        )
+        staleness_filter_enabled = bool(
+            (enable_staleness_filter and not include_repaired_watch_only)
+            or current_strategy_id in REPAIRED_WATCH_ONLY_VARIANTS
+        )
         target_weights = _signal_target_weight_frame(current_strategy_id, prices)
         actual_weights, path_rows = _actual_position_path(
             strategy_id=current_strategy_id,
             execution_policy_id=policy_id,
             target_weights=target_weights,
             policy=policy,
+            signal_validity_profile=signal_validity_profile,
+            enable_staleness_filter=staleness_filter_enabled,
+            stale_action=stale_action,
         )
         _attach_path_return_columns(
             prices=prices,
@@ -883,6 +991,18 @@ def run_execution_semantics_rebacktest(
         staleness = _signal_staleness_summary(
             path_rows,
             thresholds=materiality_thresholds,
+        )
+        staleness_decomposition = _signal_staleness_decomposition(
+            strategy_id=current_strategy_id,
+            path_rows=path_rows,
+            staleness=staleness,
+            signal_validity_profile=signal_validity_profile,
+        )
+        lag_decomposition = _execution_lag_decomposition(
+            strategy_id=current_strategy_id,
+            path_rows=path_rows,
+            lag_cost=lag_cost,
+            policy=policy,
         )
         policy_hash = _policy_snapshot_hash(binding=binding, policy=policy)
         namespaced_actual = _namespace_path_metrics(metrics_actual, "actual_path")
@@ -916,6 +1036,16 @@ def run_execution_semantics_rebacktest(
             lag_cost=lag_cost,
             staleness=staleness,
             promotion_readiness=promotion_readiness,
+            signal_validity_profile=signal_validity_profile,
+            staleness_filter_enabled=staleness_filter_enabled,
+            taxonomy_path=signal_validity_taxonomy_path,
+            taxonomy_hash=taxonomy_hash,
+            staleness_decomposition=staleness_decomposition,
+            lag_decomposition=lag_decomposition,
+            emit_staleness_decomposition=(
+                emit_staleness_decomposition or staleness_filter_enabled
+            ),
+            emit_lag_decomposition=emit_lag_decomposition or staleness_filter_enabled,
             materiality_thresholds=materiality_thresholds,
             date_range_start=prices.index.min().date().isoformat(),
             date_range_end=prices.index.max().date().isoformat(),
@@ -927,6 +1057,15 @@ def run_execution_semantics_rebacktest(
                 "strategy_type": binding.get("strategy_type"),
                 "execution_policy_id": policy_id,
                 "policy_hash": policy_hash,
+                "parent_strategy_id": REPAIRED_WATCH_ONLY_VARIANTS.get(
+                    current_strategy_id
+                ),
+                "repaired_candidate_status": _mapping(binding).get(
+                    "repaired_candidate_status"
+                ),
+                "signal_validity_profile": signal_validity_profile,
+                "staleness_filter_enabled": staleness_filter_enabled,
+                "stale_action": signal_validity_profile.get("stale_action"),
                 "backtest_generation": "EXECUTION_SEMANTICS_AWARE",
                 "position_path_used_for_metrics": "ACTUAL",
                 "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
@@ -941,6 +1080,16 @@ def run_execution_semantics_rebacktest(
                 "annual_return_lag_cost": lag_cost["annual_return_lag_cost"],
                 "average_signal_age_bdays": staleness["average_signal_age_bdays"],
                 "stale_signal_day_pct": staleness["stale_signal_day_pct"],
+                "expired_signal_suppression_count": staleness_decomposition[
+                    "expired_signal_suppression_count"
+                ],
+                "near_stale_signal_count": staleness_decomposition[
+                    "near_stale_signal_count"
+                ],
+                "total_staleness_cost": staleness_decomposition[
+                    "total_staleness_cost"
+                ],
+                "total_lag_cost": lag_decomposition["total_lag_cost"],
                 "artifact_paths": artifact_paths,
             }
         )
@@ -960,6 +1109,13 @@ def run_execution_semantics_rebacktest(
         policy_registry_path=policy_registry_path,
         policy_registry_hash=policy_registry_hash,
         materiality_thresholds=materiality_thresholds,
+        taxonomy_path=signal_validity_taxonomy_path,
+        taxonomy_hash=taxonomy_hash,
+        include_repaired_watch_only=include_repaired_watch_only,
+        enable_staleness_filter=enable_staleness_filter,
+        staleness_input_summary_path=staleness_input_summary_path,
+        staleness_repair_matrix_path=staleness_repair_matrix_path,
+        staleness_repair_review_path=staleness_repair_review_path,
     )
     status = (
         "EXECUTION_SEMANTICS_REBACKTEST_COMPLETE_WITH_BLOCKED_ROWS"
@@ -984,6 +1140,8 @@ def run_execution_semantics_rebacktest(
             "promotion_decision_source": "actual_path_only",
             "target_path_metrics_role": "diagnostic_only",
             "dynamic_promotion_blocked": True,
+            "staleness_filter_enabled": enable_staleness_filter,
+            "include_repaired_watch_only": include_repaired_watch_only,
             "data_quality_status": data_gate.get("status"),
             **_safety_summary(),
         },
@@ -993,6 +1151,8 @@ def run_execution_semantics_rebacktest(
         date_range=date_range,
         policy_registry_path=str(policy_registry_path),
         policy_registry_hash=policy_registry_hash,
+        signal_validity_taxonomy_path=str(signal_validity_taxonomy_path),
+        signal_validity_taxonomy_hash=taxonomy_hash,
         selected_strategy_id_mapping={
             original: canonical
             for original, canonical in REBACKTEST_STRATEGY_ID_ALIASES.items()
@@ -2290,6 +2450,9 @@ def _actual_position_path(
     execution_policy_id: str,
     target_weights: pd.DataFrame,
     policy: Mapping[str, Any],
+    signal_validity_profile: Mapping[str, Any] | None = None,
+    enable_staleness_filter: bool = False,
+    stale_action: str | None = None,
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     target = _ensure_weight_columns(target_weights)
     if target.empty:
@@ -2300,20 +2463,30 @@ def _actual_position_path(
     current_values = target_values[0].copy()
     actual_rows: list[dict[str, float]] = []
     last_execution_index = 0
-    last_signal_index = 0
     rows: list[dict[str, Any]] = []
     max_turnover = _float(policy.get("max_turnover_per_period"), 1.0)
     cost_bps = _policy_cost_bps(policy)
     lag = max(0, _int(policy.get("signal_to_execution_lag"), 1))
     validity_days = max(1, _int(policy.get("validity_period_days"), 20))
+    profile = _mapping(signal_validity_profile)
+    stale_after_days = max(
+        1,
+        _int(profile.get("stale_after_days"), validity_days),
+    )
+    near_stale_within_days = max(0, _int(profile.get("near_stale_within_days"), 1))
+    effective_stale_action = str(
+        stale_action or profile.get("stale_action") or "hold_previous_position"
+    )
     frequency = str(policy.get("execution_frequency") or execution_policy_id)
     minimum_holding = max(0, _int(policy.get("minimum_holding_period"), 0))
     drift_threshold = _float(policy.get("drift_threshold"), 0.0)
     for index, current_date in enumerate(dates):
         signal_index = max(0, index - lag)
-        signal_date = dates[signal_index]
+        signal_generation_index = _last_signal_generation_index(target_values, signal_index)
+        signal_date = dates[signal_generation_index]
+        signal_observation_date = dates[signal_index]
         signal_target = target_values[signal_index].copy()
-        should_execute, trigger = _should_execute_fast(
+        policy_allows_execution, trigger = _should_execute_fast(
             execution_policy_id=execution_policy_id,
             frequency=frequency,
             dates=dates,
@@ -2325,9 +2498,31 @@ def _actual_position_path(
             drift_threshold=drift_threshold,
             validity_days=validity_days,
         )
+        should_execute = policy_allows_execution
         if index == 0:
             should_execute = True
             trigger = "initial_position"
+        signal_age_at_execution = index - signal_generation_index
+        is_signal_stale = signal_age_at_execution > stale_after_days
+        near_stale = (
+            not is_signal_stale
+            and signal_age_at_execution >= max(0, stale_after_days - near_stale_within_days)
+        )
+        staleness_filter_suppressed = False
+        stale_action_taken: str | None = None
+        if enable_staleness_filter and should_execute and is_signal_stale and index > 0:
+            stale_action_taken = effective_stale_action
+            if effective_stale_action in {"suppress_rebalance", "hold_previous_position"}:
+                should_execute = False
+                staleness_filter_suppressed = True
+                trigger = f"stale_signal_{effective_stale_action}"
+            elif effective_stale_action in {"fallback_to_static_baseline", "no_trade"}:
+                signal_target = _stale_action_target_values(effective_stale_action)
+                trigger = f"stale_signal_{effective_stale_action}"
+            else:
+                should_execute = False
+                staleness_filter_suppressed = True
+                trigger = "stale_signal_unrecognized_action_suppressed"
         if should_execute:
             raw_turnover = _array_turnover(current_values, signal_target)
             if raw_turnover > max_turnover > 0:
@@ -2338,7 +2533,6 @@ def _actual_position_path(
             turnover = _array_turnover(current_values, next_position)
             current_values = _normalise_weight_array(next_position)
             last_execution_index = index
-            last_signal_index = signal_index
         else:
             turnover = 0.0
         actual_rows.append(
@@ -2348,35 +2542,72 @@ def _actual_position_path(
                 "SGOV": float(current_values[2]),
             }
         )
-        signal_age = index - last_signal_index
         target_current = target_values[index]
+        first_executable_index = min(len(dates) - 1, signal_generation_index + lag)
+        actual_execution_date = current_date.date().isoformat() if should_execute else None
         rows.append(
             {
                 "date": current_date.date().isoformat(),
                 "strategy_id": strategy_id,
                 "execution_policy_id": execution_policy_id,
                 "signal_date": signal_date.date().isoformat(),
-                "signal_asof_date": signal_date.date().isoformat(),
+                "signal_asof_date": signal_observation_date.date().isoformat(),
+                "signal_generation_date": signal_date.date().isoformat(),
+                "signal_observation_date": signal_observation_date.date().isoformat(),
+                "advisory_generation_date": signal_observation_date.date().isoformat(),
+                "advisory_effective_date": dates[
+                    first_executable_index
+                ].date().isoformat(),
+                "first_executable_date": dates[
+                    first_executable_index
+                ].date().isoformat(),
+                "actual_execution_date": actual_execution_date,
+                "position_effective_date": actual_execution_date,
                 "target_weight_qqq": round(float(target_current[0]), 6),
                 "target_weight_tqqq": round(float(target_current[1]), 6),
                 "target_weight_sgov": round(float(target_current[2]), 6),
                 "actual_weight_qqq": round(float(current_values[0]), 6),
                 "actual_weight_tqqq": round(float(current_values[1]), 6),
                 "actual_weight_sgov": round(float(current_values[2]), 6),
-                "rebalance_allowed": should_execute,
+                "rebalance_allowed": policy_allows_execution,
                 "rebalance_executed": should_execute,
-                "execution_date": current_date.date().isoformat() if should_execute else None,
+                "execution_date": actual_execution_date,
                 "execution_lag_bdays": lag,
-                "signal_age_bdays": signal_age,
-                "is_signal_stale": signal_age > validity_days,
-                "trigger_reason": trigger if should_execute else "no_execution",
+                "signal_age_bdays": signal_age_at_execution,
+                "signal_age_at_execution_days": signal_age_at_execution,
+                "signal_stale_after_days": stale_after_days,
+                "is_signal_stale": is_signal_stale,
+                "near_stale_signal": near_stale,
+                "staleness_filter_enabled": enable_staleness_filter,
+                "staleness_filter_suppressed": staleness_filter_suppressed,
+                "stale_action": effective_stale_action,
+                "stale_action_taken": stale_action_taken,
+                "trigger_reason": trigger
+                if should_execute or staleness_filter_suppressed
+                else "no_execution",
                 "turnover": round(turnover, 6),
                 "cost": round(turnover * (cost_bps / 10000.0), 8),
-                "signal_staleness_days": signal_age,
+                "signal_staleness_days": signal_age_at_execution,
             }
         )
     actual = pd.DataFrame(actual_rows, index=target.index, columns=target.columns)
     return actual.astype(float), rows
+
+
+def _last_signal_generation_index(target_values: Any, signal_index: int) -> int:
+    for candidate_index in range(signal_index, 0, -1):
+        if _array_turnover(
+            target_values[candidate_index - 1],
+            target_values[candidate_index],
+        ) > 1e-9:
+            return candidate_index
+    return 0
+
+
+def _stale_action_target_values(stale_action: str) -> Any:
+    if stale_action == "no_trade":
+        return pd.Series({"QQQ": 0.0, "TQQQ": 0.0, "SGOV": 1.0}).to_numpy(dtype=float)
+    return pd.Series({"QQQ": 0.6, "TQQQ": 0.0, "SGOV": 0.4}).to_numpy(dtype=float)
 
 
 def _should_execute_fast(
@@ -2488,6 +2719,8 @@ def _should_execute(
 
 
 def _signal_target_weight_frame(strategy_id: str, prices: pd.DataFrame) -> pd.DataFrame:
+    if strategy_id in REPAIRED_WATCH_ONLY_VARIANTS:
+        return _signal_target_weight_frame(REPAIRED_WATCH_ONLY_VARIANTS[strategy_id], prices)
     if strategy_id in STATIC_TARGETS:
         return _constant_weight_frame(prices, STATIC_TARGETS[strategy_id])
     if strategy_id in {"no_trade", "no_trade_baseline"}:
@@ -3073,6 +3306,62 @@ def _execution_materiality_thresholds(registry: Mapping[str, Any]) -> dict[str, 
     return thresholds
 
 
+def _load_signal_validity_taxonomy(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return _load_yaml_mapping(path)
+
+
+def _signal_validity_profile_for_strategy(
+    *,
+    strategy_id: str,
+    binding: Mapping[str, Any],
+    taxonomy: Mapping[str, Any],
+    stale_action_override: str | None,
+) -> dict[str, Any]:
+    profiles = _mapping(taxonomy.get("strategy_signal_validity_profiles"))
+    parent_id = REPAIRED_WATCH_ONLY_VARIANTS.get(strategy_id)
+    profile = dict(_mapping(binding.get("signal_validity_profile")))
+    taxonomy_profile = _mapping(profiles.get(strategy_id))
+    if not taxonomy_profile and parent_id:
+        taxonomy_profile = _mapping(profiles.get(parent_id))
+    profile.update(taxonomy_profile)
+    if not profile:
+        signal_policy = _mapping(binding.get("signal_policy"))
+        profile = {
+            "primary_signal_class": "unclassified",
+            "confirmation_required": False,
+            "min_validity_days_required_for_execution": 1,
+            "stale_after_days": _int(
+                signal_policy.get("signal_validity_window_bdays"),
+                20,
+            ),
+            "near_stale_within_days": 1,
+            "stale_action": signal_policy.get(
+                "stale_signal_behavior",
+                "hold_previous_position",
+            ),
+            "actual_path_only": True,
+        }
+    if stale_action_override is not None:
+        profile["stale_action"] = stale_action_override
+    stale_action = str(profile.get("stale_action") or "hold_previous_position")
+    if stale_action == "hold_previous_actual_position":
+        stale_action = "hold_previous_position"
+    if stale_action == "not_applicable":
+        stale_action = "hold_previous_position"
+    if stale_action not in ALLOWED_STALE_ACTIONS:
+        stale_action = "hold_previous_position"
+    profile["stale_action"] = stale_action
+    profile["strategy_id"] = strategy_id
+    if parent_id:
+        profile["inherits_strategy_id"] = parent_id
+        profile["repaired_candidate_status"] = "WATCH_ONLY_REPAIRED_CANDIDATE"
+        profile["promotion_eligible"] = False
+    profile.setdefault("actual_path_only", True)
+    return profile
+
+
 def _file_sha256(path: Path) -> str:
     if not path.exists():
         return "missing"
@@ -3297,7 +3586,7 @@ def _signal_staleness_summary(
     *,
     thresholds: Mapping[str, float],
 ) -> dict[str, Any]:
-    ages = [_float(row.get("signal_age_bdays")) for row in path_rows]
+    ages = [_float(row.get("signal_age_at_execution_days")) for row in path_rows]
     stale_days = [row for row in path_rows if row.get("is_signal_stale") is True]
     material_rows = [
         row for row in stale_days if abs(_float(row.get("lag_cost_return_diff"))) > 0.00001
@@ -3317,6 +3606,12 @@ def _signal_staleness_summary(
         "stale_signal_day_pct": round(len(stale_days) / max(1, len(path_rows)), 6),
         "signal_staleness_event_count": len(stale_days),
         "signal_staleness_material_event_count": material_event_count,
+        "near_stale_signal_event_count": sum(
+            1 for row in path_rows if row.get("near_stale_signal") is True
+        ),
+        "staleness_filter_suppression_count": sum(
+            1 for row in path_rows if row.get("staleness_filter_suppressed") is True
+        ),
         "signal_staleness_return_cost_abs": round(return_cost_abs, 6),
         "signal_staleness_max_drawdown_cost": 0.0,
         "missed_signal_window_count": len(stale_days),
@@ -3325,6 +3620,120 @@ def _signal_staleness_summary(
         if review_status in {"warn", "fail"}
         else "SIGNAL_STALENESS_COST_READY",
     }
+
+
+def _signal_staleness_decomposition(
+    *,
+    strategy_id: str,
+    path_rows: list[dict[str, Any]],
+    staleness: Mapping[str, Any],
+    signal_validity_profile: Mapping[str, Any],
+) -> dict[str, Any]:
+    expired_rows = [row for row in path_rows if row.get("is_signal_stale") is True]
+    suppressed_rows = [
+        row for row in path_rows if row.get("staleness_filter_suppressed") is True
+    ]
+    near_rows = [row for row in path_rows if row.get("near_stale_signal") is True]
+    missed_valid_rows = [
+        row
+        for row in path_rows
+        if row.get("rebalance_allowed") is True
+        and row.get("rebalance_executed") is not True
+        and row.get("is_signal_stale") is not True
+        and _path_row_weight_drift(row) > 0.000001
+    ]
+    late_rows = [
+        row
+        for row in path_rows
+        if row.get("rebalance_executed") is True
+        and _float(row.get("execution_lag_bdays")) > 0
+    ]
+    return {
+        "schema_version": "signal_staleness_decomposition.v1",
+        "report_type": "signal_staleness_decomposition",
+        "strategy_id": strategy_id,
+        "status": "SIGNAL_STALENESS_DECOMPOSITION_READY",
+        "signal_validity_profile": dict(signal_validity_profile),
+        "total_staleness_cost": _positive_return_diff_sum(expired_rows),
+        "expired_signal_suppression_cost": _positive_return_diff_sum(suppressed_rows),
+        "near_stale_execution_cost": _positive_return_diff_sum(near_rows),
+        "missed_valid_signal_cost": _positive_return_diff_sum(missed_valid_rows),
+        "late_execution_cost": _positive_return_diff_sum(late_rows),
+        "stale_signal_avoided_loss": _negative_return_diff_benefit(suppressed_rows),
+        "stale_signal_avoided_gain": _positive_return_diff_sum(suppressed_rows),
+        "expired_signal_event_count": len(expired_rows),
+        "expired_signal_suppression_count": len(suppressed_rows),
+        "near_stale_signal_count": len(near_rows),
+        "missed_valid_signal_count": len(missed_valid_rows),
+        "source_staleness_summary": dict(staleness),
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _execution_lag_decomposition(
+    *,
+    strategy_id: str,
+    path_rows: list[dict[str, Any]],
+    lag_cost: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    executed_rows = [row for row in path_rows if row.get("rebalance_executed") is True]
+    not_executed_rows = [
+        row
+        for row in path_rows
+        if row.get("rebalance_allowed") is True and row.get("rebalance_executed") is not True
+    ]
+    next_day_rows = [
+        row for row in executed_rows if 0 < _float(row.get("execution_lag_bdays")) <= 1
+    ]
+    delayed_rows = [
+        row
+        for row in path_rows
+        if _float(row.get("execution_lag_bdays")) > 1
+        or row.get("rebalance_executed") is not True
+    ]
+    return {
+        "schema_version": "execution_lag_decomposition.v1",
+        "report_type": "execution_lag_decomposition",
+        "strategy_id": strategy_id,
+        "status": "EXECUTION_LAG_DECOMPOSITION_READY",
+        "execution_policy_id": policy.get("execution_policy_id"),
+        "total_lag_cost": _maybe_float(lag_cost.get("annual_return_lag_cost")),
+        "rebalance_window_lag_cost": _positive_return_diff_sum(delayed_rows),
+        "next_trading_day_lag_cost": _positive_return_diff_sum(next_day_rows),
+        "policy_enforced_lag_cost": _positive_return_diff_sum(delayed_rows),
+        "missed_rebalance_cost": _positive_return_diff_sum(not_executed_rows),
+        "avoided_bad_rebalance_benefit": _negative_return_diff_benefit(
+            not_executed_rows
+        ),
+        "rebalance_window_lag_event_count": len(delayed_rows),
+        "next_trading_day_lag_event_count": len(next_day_rows),
+        "missed_rebalance_count": len(not_executed_rows),
+        "source_lag_cost_summary": dict(lag_cost),
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _path_row_weight_drift(row: Mapping[str, Any]) -> float:
+    return (
+        abs(_float(row.get("target_weight_qqq")) - _float(row.get("actual_weight_qqq")))
+        + abs(_float(row.get("target_weight_tqqq")) - _float(row.get("actual_weight_tqqq")))
+        + abs(_float(row.get("target_weight_sgov")) - _float(row.get("actual_weight_sgov")))
+    ) / 2.0
+
+
+def _positive_return_diff_sum(rows: list[Mapping[str, Any]]) -> float:
+    return round(
+        sum(max(0.0, _float(row.get("lag_cost_return_diff"))) for row in rows),
+        6,
+    )
+
+
+def _negative_return_diff_benefit(rows: list[Mapping[str, Any]]) -> float:
+    return round(
+        sum(max(0.0, -_float(row.get("lag_cost_return_diff"))) for row in rows),
+        6,
+    )
 
 
 def _materiality_review_status(
@@ -3584,6 +3993,14 @@ def _write_strategy_rebacktest_artifacts(
     lag_cost: Mapping[str, Any],
     staleness: Mapping[str, Any],
     promotion_readiness: Mapping[str, Any],
+    signal_validity_profile: Mapping[str, Any],
+    staleness_filter_enabled: bool,
+    taxonomy_path: Path,
+    taxonomy_hash: str,
+    staleness_decomposition: Mapping[str, Any],
+    lag_decomposition: Mapping[str, Any],
+    emit_staleness_decomposition: bool,
+    emit_lag_decomposition: bool,
     materiality_thresholds: Mapping[str, float],
     date_range_start: str,
     date_range_end: str,
@@ -3610,6 +4027,10 @@ def _write_strategy_rebacktest_artifacts(
         "date_range": {"start": date_range_start, "end": date_range_end},
         "execution_policy_id": policy.get("execution_policy_id"),
         "policy_hash": policy_hash,
+        "signal_validity_profile": dict(signal_validity_profile),
+        "staleness_filter_enabled": staleness_filter_enabled,
+        "signal_validity_taxonomy_path": str(taxonomy_path),
+        "signal_validity_taxonomy_hash": taxonomy_hash,
         "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
         "promotion_decision_source": "actual_path_only",
         "target_path_diagnostic_notice": (
@@ -3618,6 +4039,8 @@ def _write_strategy_rebacktest_artifacts(
         ),
         "actual_path_metrics": namespaced_actual,
         "target_vs_actual_gap_metrics": gap_metrics,
+        "signal_staleness_decomposition": dict(staleness_decomposition),
+        "execution_lag_decomposition": dict(lag_decomposition),
         "promotion_eligible": promotion_readiness.get("promotion_eligible"),
         "rebacktest_required": promotion_readiness.get("rebacktest_required"),
         "promotion_final_status": promotion_readiness.get("final_status"),
@@ -3669,6 +4092,16 @@ def _write_strategy_rebacktest_artifacts(
         "target_vs_actual_position_path": output_root / "target_vs_actual_position_path.csv",
         "lag_cost_report": output_root / "lag_cost_report.md",
         "signal_staleness_report": output_root / "signal_staleness_report.md",
+        "signal_staleness_decomposition": (
+            output_root / "signal_staleness_decomposition.json"
+        ),
+        "signal_staleness_decomposition_markdown": (
+            output_root / "signal_staleness_decomposition.md"
+        ),
+        "execution_lag_decomposition": output_root / "execution_lag_decomposition.json",
+        "execution_lag_decomposition_markdown": (
+            output_root / "execution_lag_decomposition.md"
+        ),
         "execution_policy_snapshot": output_root / "execution_policy_snapshot.yaml",
         "promotion_readiness": output_root / "promotion_readiness.json",
     }
@@ -3681,11 +4114,33 @@ def _write_strategy_rebacktest_artifacts(
         _signal_staleness_markdown(strategy_id, staleness),
         encoding="utf-8",
     )
+    if emit_staleness_decomposition:
+        _write_json(paths["signal_staleness_decomposition"], staleness_decomposition)
+        paths["signal_staleness_decomposition_markdown"].write_text(
+            _signal_staleness_decomposition_markdown(staleness_decomposition),
+            encoding="utf-8",
+        )
+    else:
+        paths.pop("signal_staleness_decomposition")
+        paths.pop("signal_staleness_decomposition_markdown")
+    if emit_lag_decomposition:
+        _write_json(paths["execution_lag_decomposition"], lag_decomposition)
+        paths["execution_lag_decomposition_markdown"].write_text(
+            _execution_lag_decomposition_markdown(lag_decomposition),
+            encoding="utf-8",
+        )
+    else:
+        paths.pop("execution_lag_decomposition")
+        paths.pop("execution_lag_decomposition_markdown")
     paths["execution_policy_snapshot"].write_text(
         yaml.safe_dump(
             {
                 "policy_hash": policy_hash,
                 "materiality_thresholds": dict(materiality_thresholds),
+                "signal_validity_profile": dict(signal_validity_profile),
+                "staleness_filter_enabled": staleness_filter_enabled,
+                "signal_validity_taxonomy_path": str(taxonomy_path),
+                "signal_validity_taxonomy_hash": taxonomy_hash,
                 "normalized_execution_policy_contract": _normalized_policy_contract(
                     binding=binding,
                     policy=policy,
@@ -3744,6 +4199,13 @@ def _write_rebacktest_aggregate_artifacts(
     policy_registry_path: Path,
     policy_registry_hash: str,
     materiality_thresholds: Mapping[str, float],
+    taxonomy_path: Path,
+    taxonomy_hash: str,
+    include_repaired_watch_only: bool,
+    enable_staleness_filter: bool,
+    staleness_input_summary_path: Path | None,
+    staleness_repair_matrix_path: Path | None,
+    staleness_repair_review_path: Path | None,
 ) -> dict[str, str]:
     output_root.mkdir(parents=True, exist_ok=True)
     completed_rows = [
@@ -3753,6 +4215,8 @@ def _write_rebacktest_aggregate_artifacts(
     ]
     leaderboard_rows = _leaderboard_actual_path_rows(completed_rows)
     gap_rows = _target_vs_actual_gap_rows(completed_rows)
+    staleness_repair_rows = _staleness_repair_summary_rows(completed_rows)
+    lag_repair_rows = _lag_repair_summary_rows(completed_rows)
     readiness_summary = {
         "schema_version": "execution_semantics_promotion_readiness_summary.v1",
         "report_type": "execution_semantics_promotion_readiness_summary",
@@ -3786,9 +4250,13 @@ def _write_rebacktest_aggregate_artifacts(
         "data_quality_status": data_quality.get("status"),
         "policy_registry_path": str(policy_registry_path),
         "policy_registry_hash": policy_registry_hash,
+        "signal_validity_taxonomy_path": str(taxonomy_path),
+        "signal_validity_taxonomy_hash": taxonomy_hash,
         "materiality_thresholds": dict(materiality_thresholds),
         "promotion_decision_source": "actual_path_only",
         "target_path_metrics_role": "diagnostic_only",
+        "staleness_filter_enabled": enable_staleness_filter,
+        "include_repaired_watch_only": include_repaired_watch_only,
         "selected_strategy_ids": selected_strategy_ids,
         "strategy_rows": strategy_rows,
         "blocked_rows": blocked_rows,
@@ -3799,11 +4267,18 @@ def _write_rebacktest_aggregate_artifacts(
         "leaderboard_actual_path": output_root / "leaderboard_actual_path.csv",
         "target_vs_actual_gap_summary": output_root / "target_vs_actual_gap_summary.csv",
         "promotion_readiness_summary": output_root / "promotion_readiness_summary.json",
+        "staleness_repair_summary": output_root / "staleness_repair_summary.csv",
+        "lag_repair_summary": output_root / "lag_repair_summary.csv",
         "owner_review_pack": output_root / "owner_review_pack.md",
     }
     _write_json(paths["index"], index_payload)
     pd.DataFrame(leaderboard_rows).to_csv(paths["leaderboard_actual_path"], index=False)
     pd.DataFrame(gap_rows).to_csv(paths["target_vs_actual_gap_summary"], index=False)
+    pd.DataFrame(staleness_repair_rows).to_csv(
+        paths["staleness_repair_summary"],
+        index=False,
+    )
+    pd.DataFrame(lag_repair_rows).to_csv(paths["lag_repair_summary"], index=False)
     _write_json(paths["promotion_readiness_summary"], readiness_summary)
     paths["owner_review_pack"].write_text(
         _owner_review_pack_markdown(
@@ -3817,6 +4292,49 @@ def _write_rebacktest_aggregate_artifacts(
         ),
         encoding="utf-8",
     )
+    if include_repaired_watch_only or enable_staleness_filter:
+        input_summary_path = (
+            staleness_input_summary_path
+            or DEFAULT_SIGNAL_VALIDITY_STALENESS_INPUT_SUMMARY_PATH
+        )
+        matrix_path = (
+            staleness_repair_matrix_path or DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH
+        )
+        review_path = (
+            staleness_repair_review_path
+            or DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH
+        )
+        _write_signal_validity_input_summary(
+            path=input_summary_path,
+            strategy_rows=completed_rows,
+            date_range=date_range,
+            taxonomy_path=taxonomy_path,
+            taxonomy_hash=taxonomy_hash,
+        )
+        matrix_payload = _staleness_repair_matrix_payload(
+            strategy_rows=completed_rows,
+            date_range=date_range,
+            policy_registry_hash=policy_registry_hash,
+            taxonomy_hash=taxonomy_hash,
+        )
+        matrix_path.parent.mkdir(parents=True, exist_ok=True)
+        matrix_path.write_text(
+            yaml.safe_dump(matrix_payload, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        review_path.parent.mkdir(parents=True, exist_ok=True)
+        review_path.write_text(
+            _signal_validity_staleness_repair_review_markdown(
+                matrix_payload=matrix_payload,
+                strategy_rows=completed_rows,
+                staleness_repair_rows=staleness_repair_rows,
+                lag_repair_rows=lag_repair_rows,
+            ),
+            encoding="utf-8",
+        )
+        paths["signal_validity_staleness_input_summary"] = input_summary_path
+        paths["staleness_repair_matrix"] = matrix_path
+        paths["signal_validity_staleness_repair_review"] = review_path
     return {key: str(value) for key, value in paths.items()}
 
 
@@ -3879,6 +4397,444 @@ def _target_vs_actual_gap_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any
         }
         for row in rows
     ]
+
+
+def _staleness_repair_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    summary_rows: list[dict[str, Any]] = []
+    by_id = {str(row.get("strategy_id")): row for row in rows if row.get("strategy_id")}
+    for baseline_id, repaired_id in STALENESS_REPAIR_VARIANT_PAIRS.items():
+        baseline = by_id.get(baseline_id)
+        repaired = by_id.get(repaired_id)
+        if not baseline or not repaired:
+            continue
+        summary_rows.append(
+            {
+                "strategy_id": baseline_id,
+                "repaired_variant": repaired_id,
+                "baseline_total_staleness_cost": baseline.get("total_staleness_cost"),
+                "repaired_total_staleness_cost": repaired.get("total_staleness_cost"),
+                "staleness_cost_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "total_staleness_cost",
+                ),
+                "expired_signal_suppression_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "expired_signal_suppression_count",
+                ),
+                "near_stale_signal_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "near_stale_signal_count",
+                ),
+                "verdict": _repair_verdict(baseline, repaired),
+            }
+        )
+    return summary_rows
+
+
+def _lag_repair_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    summary_rows: list[dict[str, Any]] = []
+    by_id = {str(row.get("strategy_id")): row for row in rows if row.get("strategy_id")}
+    for baseline_id, repaired_id in STALENESS_REPAIR_VARIANT_PAIRS.items():
+        baseline = by_id.get(baseline_id)
+        repaired = by_id.get(repaired_id)
+        if not baseline or not repaired:
+            continue
+        summary_rows.append(
+            {
+                "strategy_id": baseline_id,
+                "repaired_variant": repaired_id,
+                "baseline_total_lag_cost": baseline.get("total_lag_cost"),
+                "repaired_total_lag_cost": repaired.get("total_lag_cost"),
+                "lag_cost_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "total_lag_cost",
+                ),
+                "annual_return_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_annual_return",
+                ),
+                "max_drawdown_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_max_drawdown_daily_equity",
+                ),
+                "turnover_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_turnover",
+                ),
+                "verdict": _repair_verdict(baseline, repaired),
+            }
+        )
+    return summary_rows
+
+
+def _staleness_repair_matrix_payload(
+    *,
+    strategy_rows: list[dict[str, Any]],
+    date_range: Mapping[str, Any],
+    policy_registry_hash: str,
+    taxonomy_hash: str,
+) -> dict[str, Any]:
+    by_id = {
+        str(row.get("strategy_id")): row
+        for row in strategy_rows
+        if row.get("strategy_id")
+    }
+    strategies: dict[str, Any] = {}
+    for baseline_id, repaired_id in STALENESS_REPAIR_VARIANT_PAIRS.items():
+        baseline = by_id.get(baseline_id, {})
+        repaired = by_id.get(repaired_id, {})
+        strategies[baseline_id] = {
+            "baseline_status": "WATCH_ONLY",
+            "repaired_variant": repaired_id,
+            "repaired_candidate_status": "WATCH_ONLY_REPAIRED_CANDIDATE",
+            "actual_path_improvement": {
+                "annual_return_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_annual_return",
+                ),
+                "max_drawdown_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_max_drawdown_daily_equity",
+                ),
+                "sharpe_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_sharpe_daily_zero_rf",
+                ),
+                "calmar_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_calmar_daily_equity_dd",
+                ),
+                "lag_cost_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "total_lag_cost",
+                ),
+                "staleness_cost_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "total_staleness_cost",
+                ),
+                "turnover_delta": _metric_delta_by_key(
+                    repaired,
+                    baseline,
+                    "actual_path_turnover",
+                ),
+            },
+            "verdict": _repair_verdict(baseline, repaired),
+            "dynamic_promotion_status": "BLOCKED",
+            "target_path_metrics_used_for_decision": False,
+            "owner_manual_review_required": True,
+        }
+    return {
+        "schema_version": "staleness_repair_matrix.v1",
+        "report_type": "staleness_repair_matrix",
+        "status": "STALENESS_REPAIR_MATRIX_READY",
+        "run_id": utc_now_iso(),
+        "source_commit": _source_commit_hash(),
+        "policy_registry_hash": policy_registry_hash,
+        "signal_validity_taxonomy_hash": taxonomy_hash,
+        "market_regime": "ai_after_chatgpt",
+        "date_range": dict(date_range),
+        "dynamic_promotion": {
+            "final_status": "BLOCKED",
+            "reason": [
+                "WATCH_ONLY_RESEARCH_STAGE",
+                "OWNER_REVIEW_REQUIRED",
+                "PAPER_SHADOW_PREFLIGHT_NOT_STARTED",
+            ],
+        },
+        "paper_shadow_preflight_candidate": _paper_shadow_preflight_candidate(
+            strategies
+        ),
+        "target_path_metrics_used_for_decision": False,
+        "strategies": strategies,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _paper_shadow_preflight_candidate(strategies: Mapping[str, Any]) -> dict[str, Any]:
+    candidates = [
+        (strategy_id, _mapping(strategy.get("actual_path_improvement")))
+        for strategy_id, strategy in strategies.items()
+        if strategy.get("verdict") == "REPAIR_IMPROVES_ACTUAL_PATH"
+    ]
+    if not candidates:
+        return {"status": "NOT_IDENTIFIED", "required_next_step": "OWNER_REVIEW"}
+    best_strategy_id, _best = max(
+        candidates,
+        key=lambda item: _float(item[1].get("annual_return_delta")),
+    )
+    return {
+        "status": "CANDIDATE_IDENTIFIED",
+        "strategy_id": STALENESS_REPAIR_VARIANT_PAIRS.get(best_strategy_id),
+        "required_next_step": "PAPER_SHADOW_PREFLIGHT",
+        "dynamic_promotion": "BLOCKED",
+    }
+
+
+def _repair_verdict(
+    baseline: Mapping[str, Any],
+    repaired: Mapping[str, Any],
+) -> str:
+    if not baseline or not repaired:
+        return "INSUFFICIENT_EVIDENCE"
+    annual_return_delta = _metric_delta_by_key(
+        repaired,
+        baseline,
+        "actual_path_annual_return",
+    )
+    staleness_delta = _metric_delta_by_key(repaired, baseline, "total_staleness_cost")
+    lag_delta = _metric_delta_by_key(repaired, baseline, "total_lag_cost")
+    drawdown_delta = _metric_delta_by_key(
+        repaired,
+        baseline,
+        "actual_path_max_drawdown_daily_equity",
+    )
+    if annual_return_delta is None or staleness_delta is None or lag_delta is None:
+        return "INSUFFICIENT_EVIDENCE"
+    staleness_reduced = staleness_delta < 0
+    lag_reduced = lag_delta < 0
+    return_improved = annual_return_delta > 0
+    risk_worse = drawdown_delta is not None and drawdown_delta < 0
+    if staleness_reduced and return_improved and not risk_worse:
+        return "REPAIR_IMPROVES_ACTUAL_PATH"
+    if staleness_reduced and not return_improved:
+        return "REPAIR_REDUCES_STALENESS_BUT_HURTS_RETURN"
+    if lag_reduced and risk_worse:
+        return "REPAIR_REDUCES_LAG_BUT_INCREASES_RISK"
+    if abs(annual_return_delta) < 0.001 and abs(staleness_delta) < 0.0005:
+        return "NO_MATERIAL_IMPROVEMENT"
+    return "REPAIR_TOO_FRAGILE"
+
+
+def _metric_delta_by_key(
+    candidate: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    key: str,
+) -> float | None:
+    candidate_value = _maybe_float(candidate.get(key))
+    baseline_value = _maybe_float(baseline.get(key))
+    if candidate_value is None or baseline_value is None:
+        return None
+    return round(candidate_value - baseline_value, 6)
+
+
+def _write_signal_validity_input_summary(
+    *,
+    path: Path,
+    strategy_rows: list[dict[str, Any]],
+    date_range: Mapping[str, Any],
+    taxonomy_path: Path,
+    taxonomy_hash: str,
+) -> None:
+    ranked = _leaderboard_actual_path_rows(strategy_rows)
+    rank_by_id = {
+        str(row.get("strategy_id")): index + 1 for index, row in enumerate(ranked)
+    }
+    by_id = {str(row.get("strategy_id")): row for row in strategy_rows}
+    rows = [
+        _input_summary_row(row, rank_by_id=rank_by_id, by_id=by_id)
+        for row in strategy_rows
+        if row.get("strategy_id") in ACTUAL_PATH_OWNER_REVIEW_CANDIDATES
+    ]
+    lines = [
+        "# Signal Validity Staleness Input Summary",
+        "",
+        "- status: `SIGNAL_VALIDITY_STALENESS_INPUT_READY`",
+        f"- market_regime: `{date_range.get('market_regime')}`",
+        f"- date_range: `{date_range.get('start')}` to `{date_range.get('end')}`",
+        f"- signal_validity_taxonomy_path: `{taxonomy_path}`",
+        f"- signal_validity_taxonomy_hash: `{taxonomy_hash}`",
+        "- dynamic_promotion: `BLOCKED`",
+        "- target_path_metrics_role: `diagnostic_only`",
+        "",
+        _markdown_table(
+            rows,
+            [
+                "strategy_id",
+                "owner_review_status",
+                "policy_sensitivity_status",
+                "actual_path_rank",
+                "relative_return_vs_no_trade",
+                "relative_return_vs_100_qqq",
+                "relative_return_vs_60_40",
+                "relative_max_drawdown_vs_static_baseline",
+                "target_vs_actual_gap",
+                "execution_lag_cost",
+                "signal_staleness_cost",
+                "turnover",
+                "blocked_reasons",
+                "current_decision",
+            ],
+        ),
+        "",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _input_summary_row(
+    row: Mapping[str, Any],
+    *,
+    rank_by_id: Mapping[str, int],
+    by_id: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    strategy_id = str(row.get("strategy_id"))
+    return {
+        "strategy_id": strategy_id,
+        "owner_review_status": "WATCH_ONLY",
+        "policy_sensitivity_status": "POLICY_SENSITIVE_BUT_WATCHABLE",
+        "actual_path_rank": rank_by_id.get(strategy_id),
+        "relative_return_vs_no_trade": _metric_delta_by_key(
+            row,
+            by_id.get("no_trade", {}),
+            "actual_path_annual_return",
+        ),
+        "relative_return_vs_100_qqq": _metric_delta_by_key(
+            row,
+            by_id.get("100_qqq", {}),
+            "actual_path_annual_return",
+        ),
+        "relative_return_vs_60_40": _metric_delta_by_key(
+            row,
+            by_id.get("qqq_60_sgov_40", {}),
+            "actual_path_annual_return",
+        ),
+        "relative_max_drawdown_vs_static_baseline": _metric_delta_by_key(
+            row,
+            by_id.get("qqq_60_sgov_40", {}),
+            "actual_path_max_drawdown_daily_equity",
+        ),
+        "target_vs_actual_gap": row.get("target_vs_actual_annual_return_gap"),
+        "execution_lag_cost": row.get("execution_lag_return_cost"),
+        "signal_staleness_cost": row.get("signal_staleness_return_cost"),
+        "turnover": row.get("actual_path_turnover"),
+        "blocked_reasons": ";".join(
+            str(item) for item in row.get("blocking_reasons", [])
+        ),
+        "current_decision": "WATCH_ONLY",
+    }
+
+
+def _signal_validity_staleness_repair_review_markdown(
+    *,
+    matrix_payload: Mapping[str, Any],
+    strategy_rows: list[dict[str, Any]],
+    staleness_repair_rows: list[dict[str, Any]],
+    lag_repair_rows: list[dict[str, Any]],
+) -> str:
+    strategy_table = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "actual_return": row.get("actual_path_annual_return"),
+            "max_drawdown": row.get("actual_path_max_drawdown_daily_equity"),
+            "sharpe": row.get("actual_path_sharpe_daily_zero_rf"),
+            "turnover": row.get("actual_path_turnover"),
+            "staleness_cost": row.get("total_staleness_cost"),
+            "lag_cost": row.get("total_lag_cost"),
+            "promotion": row.get("promotion_final_status"),
+        }
+        for row in strategy_rows
+        if row.get("strategy_id")
+        in {
+            *ACTUAL_PATH_OWNER_REVIEW_CANDIDATES,
+            *REPAIRED_WATCH_ONLY_VARIANTS.keys(),
+        }
+    ]
+    strategy_payload = _mapping(matrix_payload.get("strategies"))
+    verdict_rows = [
+        {
+            "strategy_id": strategy_id,
+            "repaired_variant": _mapping(item).get("repaired_variant"),
+            "verdict": _mapping(item).get("verdict"),
+            "annual_return_delta": _mapping(
+                _mapping(item).get("actual_path_improvement")
+            ).get("annual_return_delta"),
+            "staleness_cost_delta": _mapping(
+                _mapping(item).get("actual_path_improvement")
+            ).get("staleness_cost_delta"),
+            "lag_cost_delta": _mapping(
+                _mapping(item).get("actual_path_improvement")
+            ).get("lag_cost_delta"),
+        }
+        for strategy_id, item in strategy_payload.items()
+    ]
+    return "\n".join(
+        [
+            "# Signal Validity Staleness Repair Review",
+            "",
+            f"- status: `{matrix_payload.get('status')}`",
+            "- market_regime: `ai_after_chatgpt`",
+            "- dynamic_promotion: `BLOCKED`",
+            "- target_path_metrics_role: `diagnostic_only`",
+            "- paper_shadow_allowed: `false`",
+            "- production_allowed: `false`",
+            "- broker_action: `none`",
+            "",
+            "## 1. Actual-path repair comparison",
+            "",
+            _markdown_table(strategy_table, list(strategy_table[0]) if strategy_table else []),
+            "",
+            "## 2. Repair verdict matrix",
+            "",
+            _markdown_table(
+                verdict_rows,
+                [
+                    "strategy_id",
+                    "repaired_variant",
+                    "verdict",
+                    "annual_return_delta",
+                    "staleness_cost_delta",
+                    "lag_cost_delta",
+                ],
+            ),
+            "",
+            "## 3. Staleness repair summary",
+            "",
+            _markdown_table(
+                staleness_repair_rows,
+                list(staleness_repair_rows[0]) if staleness_repair_rows else [],
+            ),
+            "",
+            "## 4. Lag repair summary",
+            "",
+            _markdown_table(lag_repair_rows, list(lag_repair_rows[0]) if lag_repair_rows else []),
+            "",
+            "## 5. Owner questions",
+            "",
+            (
+                "1. 原始 surviving candidates 的主要实际执行损耗来自 "
+                "lag/staleness sensitivity 和 static baseline underperformance。"
+            ),
+            "2. staleness-aware variants 只用于 watch-only research evidence。",
+            "3. target-path metrics 没有参与 ranking、promotion 或 owner decision。",
+            "4. 没有候选可直接 promotion；dynamic promotion 继续 BLOCKED。",
+            (
+                "5. 若 matrix 标记 CANDIDATE_IDENTIFIED，下一步也只是 "
+                "PAPER_SHADOW_PREFLIGHT owner review。"
+            ),
+            "",
+        ]
+    )
+
+
+def _source_commit_hash() -> str:
+    try:
+        from ai_trading_system.shadow.lineage import git_commit_sha
+    except Exception:
+        return "unknown"
+    return git_commit_sha() or "unknown"
 
 
 def _owner_review_pack_markdown(
@@ -5018,6 +5974,66 @@ def _signal_staleness_markdown(strategy_id: str, staleness: Mapping[str, Any]) -
             "Target-path metrics are diagnostic only and are not eligible for promotion decisions.",
         ]
     ) + "\n"
+
+
+def _signal_staleness_decomposition_markdown(payload: Mapping[str, Any]) -> str:
+    rows = [
+        {"component": key, "value": payload.get(key)}
+        for key in (
+            "total_staleness_cost",
+            "expired_signal_suppression_cost",
+            "near_stale_execution_cost",
+            "missed_valid_signal_cost",
+            "late_execution_cost",
+            "stale_signal_avoided_loss",
+            "stale_signal_avoided_gain",
+            "expired_signal_event_count",
+            "expired_signal_suppression_count",
+            "near_stale_signal_count",
+            "missed_valid_signal_count",
+        )
+    ]
+    return "\n".join(
+        [
+            f"# Signal Staleness Decomposition: {payload.get('strategy_id')}",
+            "",
+            f"- status: `{payload.get('status')}`",
+            "- target_path_metrics_role: `diagnostic_only`",
+            "- dynamic_promotion: `BLOCKED`",
+            "",
+            _markdown_table(rows, ["component", "value"]),
+            "",
+        ]
+    )
+
+
+def _execution_lag_decomposition_markdown(payload: Mapping[str, Any]) -> str:
+    rows = [
+        {"component": key, "value": payload.get(key)}
+        for key in (
+            "total_lag_cost",
+            "rebalance_window_lag_cost",
+            "next_trading_day_lag_cost",
+            "policy_enforced_lag_cost",
+            "missed_rebalance_cost",
+            "avoided_bad_rebalance_benefit",
+            "rebalance_window_lag_event_count",
+            "next_trading_day_lag_event_count",
+            "missed_rebalance_count",
+        )
+    ]
+    return "\n".join(
+        [
+            f"# Execution Lag Decomposition: {payload.get('strategy_id')}",
+            "",
+            f"- status: `{payload.get('status')}`",
+            "- target_path_metrics_role: `diagnostic_only`",
+            "- dynamic_promotion: `BLOCKED`",
+            "",
+            _markdown_table(rows, ["component", "value"]),
+            "",
+        ]
+    )
 
 
 def _lag_cost_status(

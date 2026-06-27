@@ -1,0 +1,63 @@
+schema_version: staleness_repair_matrix.v1
+report_type: staleness_repair_matrix
+status: STALENESS_REPAIR_MATRIX_READY
+run_id: '2026-06-27T07:13:46Z'
+source_commit: 6e52eea9477d12c5d11c3bb7e5231320b91c78d7
+policy_registry_hash: 978c4ce58b521e7d5d0cc4f0ac280760ad9107dafa3b7f6ca12e723048a0ed62
+signal_validity_taxonomy_hash: bb81b9d74baf616e9f6f84f6dc026dd5bedbde36fb8516907d8f9c156c9481a7
+market_regime: ai_after_chatgpt
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+dynamic_promotion:
+  final_status: BLOCKED
+  reason:
+  - WATCH_ONLY_RESEARCH_STAGE
+  - OWNER_REVIEW_REQUIRED
+  - PAPER_SHADOW_PREFLIGHT_NOT_STARTED
+paper_shadow_preflight_candidate:
+  status: NOT_IDENTIFIED
+  required_next_step: OWNER_REVIEW
+target_path_metrics_used_for_decision: false
+strategies:
+  limited_adjustment:
+    baseline_status: WATCH_ONLY
+    repaired_variant: limited_adjustment_staleness_aware_v1
+    repaired_candidate_status: WATCH_ONLY_REPAIRED_CANDIDATE
+    actual_path_improvement:
+      annual_return_delta: 0.0
+      max_drawdown_delta: 0.0
+      sharpe_delta: 0.0
+      calmar_delta: 0.0
+      lag_cost_delta: 0.0
+      staleness_cost_delta: 0.0
+      turnover_delta: 0.0
+    verdict: NO_MATERIAL_IMPROVEMENT
+    dynamic_promotion_status: BLOCKED
+    target_path_metrics_used_for_decision: false
+    owner_manual_review_required: true
+  dynamic_v0_5_ai_trend_confirmed_only:
+    baseline_status: WATCH_ONLY
+    repaired_variant: dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1
+    repaired_candidate_status: WATCH_ONLY_REPAIRED_CANDIDATE
+    actual_path_improvement:
+      annual_return_delta: 0.0
+      max_drawdown_delta: 0.0
+      sharpe_delta: 0.0
+      calmar_delta: 0.0
+      lag_cost_delta: 0.0
+      staleness_cost_delta: 0.0
+      turnover_delta: 0.0
+    verdict: NO_MATERIAL_IMPROVEMENT
+    dynamic_promotion_status: BLOCKED
+    target_path_metrics_used_for_decision: false
+    owner_manual_review_required: true
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true
