@@ -54,6 +54,10 @@ from ai_trading_system.research_window_extension import (
     DEFAULT_WINDOWED_STATIC_FRONTIER_ROOT,
     run_research_window_extension_validation_pack,
 )
+from ai_trading_system.return_seeking_diagnostic_lane import (
+    DEFAULT_RETURN_SEEKING_POLICY_PATH,
+    run_return_seeking_diagnostic_lane_pack,
+)
 from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
 )
@@ -67,6 +71,7 @@ from ai_trading_system.second_layer_probe_library_freeze import (
 from ai_trading_system.upper_state_label_feature_reset import (
     DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
     DEFAULT_ALTERNATING_PROTOCOL_PATH,
+    DEFAULT_COMPOSER_PREDICTIONS_PATH,
     DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH,
     DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH,
     DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
@@ -510,6 +515,42 @@ def defensive_preservation_lane_command(
         limited_adjustment_reference_path=limited_adjustment_reference_path,
     )
     _print_payload("Defensive preservation lane", payload)
+
+
+@trends_app.command("return-seeking-diagnostic-lane")
+def return_seeking_diagnostic_lane_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    lane_policy_path: Annotated[
+        Path, typer.Option("--lane-policy")
+    ] = DEFAULT_RETURN_SEEKING_POLICY_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    composer_predictions_path: Annotated[
+        Path, typer.Option("--composer-predictions")
+    ] = DEFAULT_COMPOSER_PREDICTIONS_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+) -> None:
+    payload = run_return_seeking_diagnostic_lane_pack(
+        registry_path=registry_path,
+        lane_policy_path=lane_policy_path,
+        probe_registry_path=probe_registry_path,
+        composer_predictions_path=composer_predictions_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+    )
+    _print_payload("Return-seeking diagnostic lane", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

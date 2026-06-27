@@ -240,6 +240,48 @@ def test_defensive_preservation_lane_final_matrix_records_no_material_improvemen
     assert artifact["phase_decision"]["gated_integration_allowed_now"] is False
 
 
+def test_return_seeking_diagnostic_lane_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/return_seeking_signal_audit.yaml"),
+        Path("inputs/research_reviews/return_seeking_actual_path_matrix.yaml"),
+        Path("inputs/research_reviews/return_seeking_beta_tqqq_attribution.yaml"),
+        Path("inputs/research_reviews/return_seeking_2022_vs_2023_contrast.yaml"),
+        Path("inputs/research_reviews/return_seeking_diagnostic_lane_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "first_layer"
+        assert metadata["frozen_second_layer_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert metadata["model_version"] == "first_layer_composer_v2"
+        assert metadata["threshold_policy"] == "return_seeking_diagnostic_lane_policy_v1"
+        assert metadata["probe_registry_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+        assert artifact["paper_shadow_allowed"] is False
+        assert artifact["production_allowed"] is False
+        assert artifact["broker_action"] == "none"
+
+
+def test_return_seeking_final_matrix_records_dependent_upside_only() -> None:
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/return_seeking_diagnostic_lane_final_matrix.yaml")
+    )
+
+    assert artifact["status"] == (
+        "RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED"
+    )
+    assert artifact["summary"]["positive_return_delta_probe_count"] == 7
+    assert artifact["summary"]["drawdown_regression_probe_count"] == 7
+    assert artifact["summary"]["diagnostic_value_probe_count"] == 0
+    assert artifact["summary"]["gated_integration_allowed"] is False
+    assert artifact["phase_decision"]["gated_integration_allowed_now"] is False
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

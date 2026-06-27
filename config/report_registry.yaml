@@ -20948,6 +20948,120 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: return_seeking_diagnostic_lane_policy_contract
+    title: Return-Seeking Diagnostic Lane Policy Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - config/research/return_seeking_diagnostic_lane_policy.yaml
+      - docs/research/return_seeking_diagnostic_lane_scope.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Return-seeking diagnostic lane policy changes after allowed signals, blocked downstream usage, attribution thresholds, or safety boundary changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_signal_audit
+    title: Return-Seeking Signal Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - docs/research/return_seeking_signal_audit.md
+      - inputs/research_reviews/return_seeking_signal_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Signal audit changes after composer v2 predictions, allowed signal list, or blocked downstream usage changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_actual_path_review
+    title: Return-Seeking Actual-Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - docs/research/return_seeking_actual_path_review.md
+      - inputs/research_reviews/return_seeking_actual_path_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Return-seeking actual-path review changes after composer predictions, frozen return-seeking probes, or no-return-seeking reference logic changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_beta_tqqq_attribution
+    title: Return-Seeking Beta and TQQQ Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - docs/research/return_seeking_beta_tqqq_attribution.md
+      - inputs/research_reviews/return_seeking_beta_tqqq_attribution.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Beta/TQQQ attribution changes after probe weights, attribution thresholds, price cache, or composer prediction distribution changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_2022_vs_2023_contrast
+    title: Return-Seeking 2022 vs 2023+ Contrast
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - docs/research/return_seeking_2022_vs_2023_contrast.md
+      - inputs/research_reviews/return_seeking_2022_vs_2023_contrast.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: 2022 vs 2023+ contrast changes after slice definitions, composer predictions, frozen probes, or primary research window changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_diagnostic_lane_closeout
+    title: Return-Seeking Diagnostic Lane Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends return-seeking-diagnostic-lane
+    artifact_globs:
+      - docs/research/return_seeking_diagnostic_lane_closeout.md
+      - inputs/research_reviews/return_seeking_diagnostic_lane_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Return-seeking diagnostic lane closeout changes after signal audit, actual-path, beta/TQQQ attribution, contrast, or safety decision changes.
+    owner_action: review_return_seeking_diagnostic_lane_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

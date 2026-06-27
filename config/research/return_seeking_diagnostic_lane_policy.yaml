@@ -1,0 +1,67 @@
+schema_version: return_seeking_diagnostic_lane_policy.v1
+policy_id: return_seeking_diagnostic_lane_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-1806 to 1840 separates defensive preservation from return-seeking
+    diagnostics. This policy allows first-layer v2 upside signals to be audited
+    only against frozen return-seeking probes, while keeping all allocation,
+    defensive overlay, gated integration, promotion, paper-shadow, production
+    and broker paths disabled.
+  intended_effect: >
+    Determine whether stay_constructive, add_risk and high_confidence_risk_on
+    carry diagnostic value, and whether any value is mainly QQQ-equivalent beta,
+    TQQQ beta, or 2023+ AI/tech trend dependence.
+  validation_evidence: >
+    Guardrail tests verify the generated signal audit, actual-path review,
+    beta/TQQQ attribution, 2022 vs 2023+ contrast and final matrix remain
+    diagnostic-only and cannot enable defensive overlay or promotion.
+  review_condition: >
+    Review before changing attribution thresholds, allowing a diagnostic signal
+    to drive portfolio weights, or using this lane as a gated integration input.
+modified_layer: first_layer
+frozen_second_layer: dynamic_second_layer_probe_registry_v2
+allowed_signals:
+  - stay_constructive
+  - add_risk
+  - high_confidence_risk_on
+allowed_probe_roles:
+  - balanced_dynamic
+  - drawdown_control
+  - no_tqqq_return_seeking
+  - low_tqqq_balanced_growth
+  - qqq_heavy_growth
+  - capped_risk_on_diagnostic
+  - asymmetric_risk_on_slow_confirm
+blocked_downstream_usage:
+  - defensive_overlay
+  - full_allocation
+  - gated_integration
+  - promotion
+  - paper_shadow
+  - production
+  - broker_order
+diagnostic_thresholds:
+  min_actual_path_return_delta_vs_no_return_seeking: 0.0
+  max_drawdown_regression_allowed: 0.0
+  qqq_equivalent_exposure_delta_beta_dependency: 0.05
+  tqqq_beta_share_dependency: 0.15
+  min_2023_plus_positive_delta_share_for_dependency: 0.60
+reference_model:
+  reference_id: no_return_seeking_reference
+  rule: map_constructive_and_risk_on_to_neutral_preserve_risk_off_and_defensive
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  defensive_overlay_usage_allowed: false
+  full_allocation_usage_allowed: false
+  gated_integration_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
