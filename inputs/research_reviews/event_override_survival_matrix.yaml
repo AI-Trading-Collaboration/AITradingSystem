@@ -1,0 +1,64 @@
+schema_version: event_override_survival_matrix.v1
+report_type: event_override_survival_matrix
+status: EVENT_OVERRIDE_SURVIVAL_MATRIX_READY
+run_id: '2026-06-27T08:05:14Z'
+source_commit: 5dc82b02ca40ab41dd79efa97d037439ce277a44
+event_override_policy_hash: e58443b474605dbc183670739e823e21dc409b1875d521ea3ae7ba876631fa62
+market_regime: ai_after_chatgpt
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+dynamic_promotion:
+  final_status: BLOCKED
+paper_shadow_preflight_candidate:
+  status: NOT_IDENTIFIED
+  required_next_step: OWNER_REVIEW
+target_path_metrics_used_for_decision: false
+strategies:
+  limited_adjustment_event_override_v1:
+    base_strategy: limited_adjustment
+    status: WATCH_ONLY_EVENT_OVERRIDE_CANDIDATE
+    actual_path_improvement:
+      annual_return_delta_vs_base: -0.002084
+      max_drawdown_delta_vs_base: 0.00098
+      sharpe_delta_vs_base: -0.014703
+      calmar_delta_vs_base: -0.003984
+      turnover_delta_vs_base: 4.4
+      qqq_exposure_drag_delta: 0.002084
+      risk_off_event_net_contribution: -0.0020840000000000025
+    event_override_stats:
+      review_count: 9
+      trigger_count: 9
+      supersede_count: 9
+      blocked_count: 0
+      false_risk_off_count: 0
+      avoided_drawdown_count: 1
+    verdict: EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH
+  dynamic_v0_5_ai_trend_confirmed_event_override_v1:
+    base_strategy: dynamic_v0_5_ai_trend_confirmed_only
+    status: WATCH_ONLY_EVENT_OVERRIDE_CANDIDATE
+    actual_path_improvement:
+      annual_return_delta_vs_base: 0.002111
+      max_drawdown_delta_vs_base: -0.000318
+      sharpe_delta_vs_base: 0.033103
+      calmar_delta_vs_base: 0.016088
+      turnover_delta_vs_base: 15.3
+      qqq_exposure_drag_delta: -0.002111
+      risk_off_event_net_contribution: 0.0021110000000000018
+    event_override_stats:
+      review_count: 27
+      trigger_count: 27
+      supersede_count: 27
+      blocked_count: 0
+      false_risk_off_count: 0
+      avoided_drawdown_count: 0
+    verdict: EVENT_OVERRIDE_TOO_NOISY
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

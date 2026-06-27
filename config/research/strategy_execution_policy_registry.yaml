@@ -144,6 +144,24 @@ strategy_execution_policies:
     position_policy: {target_weight_rule: limited_adjustment_research_method, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
     cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
     validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required, promotion_allowed_for_repaired_candidate: false}
+  - strategy_id: limited_adjustment_event_override_v1
+    strategy_type: dynamic
+    policy_status: watch_only_event_override_candidate
+    execution_policy_id: monthly_plus_threshold_5pct_v1
+    parent_strategy_id: limited_adjustment
+    event_override_candidate_status: WATCH_ONLY_EVENT_OVERRIDE_CANDIDATE
+    signal_policy: {signal_source: close_based_dynamic_v3_target, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    signal_validity_profile:
+      primary_signal_class: slow_signal
+      confirmation_required: true
+      min_validity_days_required_for_execution: 5
+      stale_after_days: 10
+      stale_action: hold_previous_position
+      profile_source: config/research/signal_validity_taxonomy.yaml
+    rebalance_policy: {rebalance_frequency: monthly_plus_threshold, rebalance_anchor: month_end, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: limited_adjustment_research_method_with_event_override, actual_weight_fill_rule: event_override_t_plus_1_or_hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required, promotion_allowed_for_event_override_candidate: false}
   - strategy_id: defensive_limited_adjustment
     strategy_type: dynamic
     policy_status: active
@@ -196,6 +214,24 @@ strategy_execution_policies:
     position_policy: {target_weight_rule: ai_trend_confirmed_only, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
     cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
     validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required, promotion_allowed_for_repaired_candidate: false}
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    strategy_type: dynamic
+    policy_status: watch_only_event_override_candidate
+    execution_policy_id: hysteresis_band_v1
+    parent_strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+    event_override_candidate_status: WATCH_ONLY_EVENT_OVERRIDE_CANDIDATE
+    signal_policy: {signal_source: close_based_ai_trend_confirmation, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    signal_validity_profile:
+      primary_signal_class: medium_signal
+      confirmation_required: true
+      min_validity_days_required_for_execution: 3
+      stale_after_days: 5
+      stale_action: suppress_rebalance
+      profile_source: config/research/signal_validity_taxonomy.yaml
+    rebalance_policy: {rebalance_frequency: hysteresis_threshold, rebalance_anchor: policy_defined, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: ai_trend_confirmed_only_with_event_override, actual_weight_fill_rule: event_override_t_plus_1_or_hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required, promotion_allowed_for_event_override_candidate: false}
 defaults:
   cost_model:
     model_id: research_execution_cost_model_v1

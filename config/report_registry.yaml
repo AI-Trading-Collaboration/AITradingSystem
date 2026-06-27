@@ -18370,6 +18370,120 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: event_override_policy
+    title: Event Override Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override --event-override-policy config/research/event_override_policy.yaml
+    artifact_globs:
+      - config/research/event_override_policy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1306 event override policy must be reviewed after execution policy, risk-off threshold, no-lookahead or audit-output changes.
+    owner_action: review_event_override_policy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: pending_plan_ledger
+    title: Pending Plan Ledger
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override --emit-pending-plan-ledger
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/*/pending_plan_ledger.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Pending plan state ledger must be regenerated after event override semantics, target weights, cached data or execution policy changes.
+    owner_action: review_pending_plan_ledger
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: supersede_log
+    title: Pending Plan Supersede Log
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override --emit-supersede-log
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/*/supersede_log.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Supersede log must be reviewed whenever pending plan supersede policy, no-lookahead evidence or event override variants change.
+    owner_action: review_supersede_log
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: event_override_trace
+    title: Event Override Trace
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override --emit-event-override-trace
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/*/event_override_trace.json
+      - outputs/research_strategies/execution_semantics/*/event_override_summary.json
+      - outputs/research_strategies/execution_semantics/*/no_lookahead_evidence.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Event override trace and no-lookahead evidence must be regenerated after event policy, strategy variants or execution semantics changes.
+    owner_action: review_event_override_trace
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: event_override_survival_matrix
+    title: Event Override Survival Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override
+    artifact_globs:
+      - inputs/research_reviews/event_override_survival_matrix.yaml
+      - outputs/research_strategies/execution_semantics/event_override_leaderboard_actual_path.csv
+      - outputs/research_strategies/execution_semantics/event_override_vs_base_actual_path.csv
+      - outputs/research_strategies/execution_semantics/event_override_summary.json
+      - outputs/research_strategies/execution_semantics/event_override_gate.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Survival matrix must be regenerated after event override actual-path metrics, policy hash, cached data or verdict policy changes.
+    owner_action: review_event_override_survival_matrix
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: event_override_execution_semantics_review
+    title: Event Override Execution Semantics Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest --enable-event-override
+    artifact_globs:
+      - docs/research/event_override_execution_semantics_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner-readable event override review must be regenerated after survival matrix, policy or actual-path event override results change.
+    owner_action: review_event_override_execution_semantics_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

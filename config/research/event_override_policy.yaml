@@ -1,0 +1,73 @@
+schema_version: event_override_policy_v1
+event_override_policy:
+  version: 1
+  enabled: true
+  mode: research_only
+  policy_metadata:
+    owner: research_governance
+    status: pilot_baseline
+    rationale: >
+      Model no-lookahead pending plan supersede semantics for known risk events
+      without changing executed historical positions or production policy.
+    intended_effect: >
+      Allow T-day reviewed risk-off events to replace not-yet-executed pending
+      plans with T+1 risk-aware target weights in actual-path research only.
+    validation_evidence: >
+      TRADING-1306 to 1325 tests cover immutable executed positions, T+1
+      execution, risk-off-only direction gates, no-lookahead evidence and CLI
+      artifact emission.
+    review_condition: >
+      Review before using event override outside research-only actual-path
+      rebacktests, before enabling risk-on overrides, or before paper-shadow
+      preflight admission.
+
+  event_detection:
+    source: target_path_risk_reduction_signal
+    min_target_risk_reduction: 0.10
+    source_limitation: >
+      This pilot detector uses internal target-path risk-reduction signals as a
+      research proxy for event-response semantics; production use requires
+      reviewed external risk-event occurrence data.
+
+  no_lookahead:
+    require_event_known_before_review_cutoff: true
+    require_effective_date_after_decision_date: true
+    forbid_rewriting_executed_positions: true
+
+  pending_plan_supersede:
+    enabled: true
+    allow_supersede_advisory_generated: true
+    allow_supersede_pending_rebalance: true
+    allow_supersede_executed_position: false
+
+  risk_off_override:
+    enabled: true
+    min_event_risk_score: 80
+    allowed_directions:
+      - reduce_QQQ
+      - reduce_SMH
+      - reduce_SOXQ
+      - reduce_TQQQ
+      - increase_CASH
+      - increase_SGOV
+    max_single_override_weight_delta: 0.20
+    max_total_override_weight_delta: 0.35
+    allow_bypass_min_holding: true
+    allow_bypass_turnover_cap: true
+    require_owner_review_for_production: true
+
+  risk_on_override:
+    enabled: false
+    min_confirmation_days: 3
+    require_trend_confirmation: true
+    allow_bypass_min_holding: false
+    allow_bypass_turnover_cap: false
+
+  cooldown:
+    cooldown_days_after_override: 3
+    suppress_conflicting_risk_on_during_cooldown: true
+
+  audit:
+    emit_supersede_log: true
+    emit_event_override_trace: true
+    emit_no_lookahead_evidence: true

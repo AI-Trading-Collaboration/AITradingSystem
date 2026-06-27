@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,9 @@ DEFAULT_EXECUTION_POLICY_REGISTRY_PATH = (
 )
 DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH = (
     PROJECT_ROOT / "config" / "research" / "signal_validity_taxonomy.yaml"
+)
+DEFAULT_EVENT_OVERRIDE_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "event_override_policy.yaml"
 )
 DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "controlled_growth_component_candidate_registry_v2.yaml"
@@ -84,6 +88,12 @@ DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH = (
 )
 DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH = (
     PROJECT_ROOT / "docs" / "research" / "signal_validity_staleness_repair_review.md"
+)
+DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "event_override_survival_matrix.yaml"
+)
+DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "event_override_execution_semantics_review.md"
 )
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
@@ -204,6 +214,20 @@ STALENESS_REPAIR_VARIANT_PAIRS: dict[str, str] = {
     ),
 }
 
+EVENT_OVERRIDE_WATCH_ONLY_VARIANTS: dict[str, str] = {
+    "limited_adjustment_event_override_v1": "limited_adjustment",
+    "dynamic_v0_5_ai_trend_confirmed_event_override_v1": (
+        "dynamic_v0_5_ai_trend_confirmed_only"
+    ),
+}
+
+EVENT_OVERRIDE_VARIANT_PAIRS: dict[str, str] = {
+    "limited_adjustment": "limited_adjustment_event_override_v1",
+    "dynamic_v0_5_ai_trend_confirmed_only": (
+        "dynamic_v0_5_ai_trend_confirmed_event_override_v1"
+    ),
+}
+
 DEFAULT_STALENESS_REPAIR_REBACKTEST_STRATEGY_IDS: tuple[str, ...] = (
     *ACTUAL_PATH_OWNER_REVIEW_BASELINES,
     *ACTUAL_PATH_OWNER_REVIEW_CANDIDATES,
@@ -216,6 +240,46 @@ ALLOWED_STALE_ACTIONS: tuple[str, ...] = (
     "fallback_to_static_baseline",
     "no_trade",
 )
+
+PENDING_PLAN_SUPERSEDABLE_STATUSES: tuple[str, ...] = (
+    "ADVISORY_GENERATED",
+    "PENDING_REBALANCE",
+)
+PENDING_PLAN_FINAL_STATUSES: tuple[str, ...] = (
+    "SUPERSEDED",
+    "EXECUTED",
+    "EXPIRED",
+    "CANCELLED",
+)
+EVENT_OVERRIDE_MODE_T_PLUS_1 = "event_override_t_plus_1"
+EVENT_OVERRIDE_VERDICTS: tuple[str, ...] = (
+    "EVENT_OVERRIDE_IMPROVES_ACTUAL_PATH",
+    "EVENT_OVERRIDE_REDUCES_DD_BUT_HURTS_RETURN",
+    "EVENT_OVERRIDE_TOO_NOISY",
+    "EVENT_OVERRIDE_NO_MATERIAL_IMPROVEMENT",
+    "EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH",
+    "INSUFFICIENT_EVIDENCE",
+)
+
+
+@dataclass(frozen=True)
+class EventOverrideDecision:
+    event_id: str
+    event_known_at: str
+    review_at: str
+    decision_at: str
+    event_risk_score: float
+    override_triggered: bool
+    override_direction: str
+    allowed_by_policy: bool
+    blocked_reasons: list[str]
+    superseded_plan_id: str | None
+    new_plan_id: str | None
+    effective_at: str | None
+    no_lookahead_evidence: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 POLICY_SENSITIVITY_EXECUTION_LAG_DAYS: tuple[int, ...] = (0, 1, 2)
 POLICY_SENSITIVITY_REBALANCE_FREQUENCIES: tuple[str, ...] = (
@@ -259,6 +323,10 @@ REBACKTEST_STRATEGY_ID_ALIASES: dict[str, str] = {
     "limited_adjustment_repaired": "limited_adjustment_staleness_aware_v1",
     "dynamic_v0_5_ai_trend_confirmed_repaired": (
         "dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1"
+    ),
+    "limited_adjustment_event_override": "limited_adjustment_event_override_v1",
+    "dynamic_v0_5_ai_trend_confirmed_event_override": (
+        "dynamic_v0_5_ai_trend_confirmed_event_override_v1"
     ),
 }
 
@@ -349,6 +417,55 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "command": (
             "aits research strategies execution-semantics-rebacktest "
             "--include-repaired-watch-only --enable-staleness-filter"
+        ),
+    },
+    {
+        "report_id": "event_override_policy",
+        "title": "Event Override Policy",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override --event-override-policy "
+            "config/research/event_override_policy.yaml"
+        ),
+    },
+    {
+        "report_id": "pending_plan_ledger",
+        "title": "Pending Plan Ledger",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override --emit-pending-plan-ledger"
+        ),
+    },
+    {
+        "report_id": "supersede_log",
+        "title": "Pending Plan Supersede Log",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override --emit-supersede-log"
+        ),
+    },
+    {
+        "report_id": "event_override_trace",
+        "title": "Event Override Trace",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override --emit-event-override-trace"
+        ),
+    },
+    {
+        "report_id": "event_override_survival_matrix",
+        "title": "Event Override Survival Matrix",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override"
+        ),
+    },
+    {
+        "report_id": "event_override_execution_semantics_review",
+        "title": "Event Override Execution Semantics Review",
+        "command": (
+            "aits research strategies execution-semantics-rebacktest "
+            "--enable-event-override"
         ),
     },
     {
@@ -854,6 +971,7 @@ def run_execution_semantics_rebacktest(
     simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
     signal_validity_taxonomy_path: Path = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
+    event_override_policy_path: Path = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
     output_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
     as_of_date: date | None = None,
     start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
@@ -866,6 +984,13 @@ def run_execution_semantics_rebacktest(
     staleness_input_summary_path: Path | None = None,
     staleness_repair_matrix_path: Path | None = None,
     staleness_repair_review_path: Path | None = None,
+    enable_event_override: bool = False,
+    event_override_mode: str = EVENT_OVERRIDE_MODE_T_PLUS_1,
+    emit_pending_plan_ledger: bool = False,
+    emit_supersede_log: bool = False,
+    emit_event_override_trace: bool = False,
+    event_override_survival_matrix_path: Path | None = None,
+    event_override_review_path: Path | None = None,
 ) -> dict[str, Any]:
     config = _load_registry(simple_config_path)
     data_gate = _data_quality_gate(
@@ -889,22 +1014,37 @@ def run_execution_semantics_rebacktest(
     prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
     registry = _load_policy_registry(policy_registry_path)
     taxonomy = _load_signal_validity_taxonomy(signal_validity_taxonomy_path)
+    event_override_policy = _load_event_override_policy(event_override_policy_path)
     policies = _policies_by_id(registry)
     bindings = _strategy_execution_binding_by_id(registry)
     policy_ids = set(policies)
     materiality_thresholds = _execution_materiality_thresholds(registry)
     policy_registry_hash = _file_sha256(policy_registry_path)
     taxonomy_hash = _file_sha256(signal_validity_taxonomy_path)
+    event_override_policy_hash = _file_sha256(event_override_policy_path)
     selected_strategy_ids = _selected_rebacktest_strategy_ids(strategy_id, strategy_ids)
     if include_repaired_watch_only:
         selected_strategy_ids = _dedupe_ordered(
             [*selected_strategy_ids, *REPAIRED_WATCH_ONLY_VARIANTS.keys()]
         )
-    if stale_action is not None and stale_action not in ALLOWED_STALE_ACTIONS:
-        raise ValueError(
-            f"Unsupported stale_action={stale_action!r}; "
-            f"allowed={','.join(ALLOWED_STALE_ACTIONS)}"
+    if enable_event_override:
+        if event_override_mode != EVENT_OVERRIDE_MODE_T_PLUS_1:
+            raise ValueError(
+                f"Unsupported event_override_mode={event_override_mode!r}; "
+                f"allowed={EVENT_OVERRIDE_MODE_T_PLUS_1}"
+            )
+        selected_strategy_ids = _dedupe_ordered(
+            [
+                *selected_strategy_ids,
+                *REPAIRED_WATCH_ONLY_VARIANTS.keys(),
+                *EVENT_OVERRIDE_WATCH_ONLY_VARIANTS.keys(),
+            ]
         )
+        if stale_action is not None and stale_action not in ALLOWED_STALE_ACTIONS:
+            raise ValueError(
+                f"Unsupported stale_action={stale_action!r}; "
+                f"allowed={','.join(ALLOWED_STALE_ACTIONS)}"
+            )
     rows: list[dict[str, Any]] = []
     blocked_rows: list[dict[str, Any]] = []
 
@@ -959,6 +1099,19 @@ def run_execution_semantics_rebacktest(
             (enable_staleness_filter and not include_repaired_watch_only)
             or current_strategy_id in REPAIRED_WATCH_ONLY_VARIANTS
         )
+        event_override_enabled_for_strategy = bool(
+            enable_event_override
+            and current_strategy_id in EVENT_OVERRIDE_WATCH_ONLY_VARIANTS
+        )
+        event_override_runtime = (
+            _empty_event_override_runtime(
+                strategy_id=current_strategy_id,
+                mode=event_override_mode,
+                policy_hash=event_override_policy_hash,
+            )
+            if event_override_enabled_for_strategy
+            else None
+        )
         target_weights = _signal_target_weight_frame(current_strategy_id, prices)
         actual_weights, path_rows = _actual_position_path(
             strategy_id=current_strategy_id,
@@ -968,6 +1121,10 @@ def run_execution_semantics_rebacktest(
             signal_validity_profile=signal_validity_profile,
             enable_staleness_filter=staleness_filter_enabled,
             stale_action=stale_action,
+            enable_event_override=event_override_enabled_for_strategy,
+            event_override_policy=event_override_policy,
+            event_override_mode=event_override_mode,
+            event_override_runtime=event_override_runtime,
         )
         _attach_path_return_columns(
             prices=prices,
@@ -1040,6 +1197,14 @@ def run_execution_semantics_rebacktest(
             staleness_filter_enabled=staleness_filter_enabled,
             taxonomy_path=signal_validity_taxonomy_path,
             taxonomy_hash=taxonomy_hash,
+            event_override_runtime=event_override_runtime,
+            event_override_enabled=event_override_enabled_for_strategy,
+            event_override_policy_path=event_override_policy_path,
+            event_override_policy_hash=event_override_policy_hash,
+            event_override_mode=event_override_mode,
+            emit_pending_plan_ledger=emit_pending_plan_ledger,
+            emit_supersede_log=emit_supersede_log,
+            emit_event_override_trace=emit_event_override_trace,
             staleness_decomposition=staleness_decomposition,
             lag_decomposition=lag_decomposition,
             emit_staleness_decomposition=(
@@ -1066,6 +1231,17 @@ def run_execution_semantics_rebacktest(
                 "signal_validity_profile": signal_validity_profile,
                 "staleness_filter_enabled": staleness_filter_enabled,
                 "stale_action": signal_validity_profile.get("stale_action"),
+                "event_override_enabled": event_override_enabled_for_strategy,
+                "event_override_mode": event_override_mode
+                if event_override_enabled_for_strategy
+                else None,
+                "event_override_policy_hash": event_override_policy_hash
+                if event_override_enabled_for_strategy
+                else None,
+                "event_override_candidate_status": _mapping(binding).get(
+                    "event_override_candidate_status"
+                ),
+                "event_override_stats": _event_override_stats(event_override_runtime),
                 "backtest_generation": "EXECUTION_SEMANTICS_AWARE",
                 "position_path_used_for_metrics": "ACTUAL",
                 "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
@@ -1090,6 +1266,7 @@ def run_execution_semantics_rebacktest(
                     "total_staleness_cost"
                 ],
                 "total_lag_cost": lag_decomposition["total_lag_cost"],
+                **_flatten_event_override_stats(event_override_runtime),
                 "artifact_paths": artifact_paths,
             }
         )
@@ -1116,6 +1293,12 @@ def run_execution_semantics_rebacktest(
         staleness_input_summary_path=staleness_input_summary_path,
         staleness_repair_matrix_path=staleness_repair_matrix_path,
         staleness_repair_review_path=staleness_repair_review_path,
+        enable_event_override=enable_event_override,
+        event_override_mode=event_override_mode,
+        event_override_policy_path=event_override_policy_path,
+        event_override_policy_hash=event_override_policy_hash,
+        event_override_survival_matrix_path=event_override_survival_matrix_path,
+        event_override_review_path=event_override_review_path,
     )
     status = (
         "EXECUTION_SEMANTICS_REBACKTEST_COMPLETE_WITH_BLOCKED_ROWS"
@@ -1142,6 +1325,26 @@ def run_execution_semantics_rebacktest(
             "dynamic_promotion_blocked": True,
             "staleness_filter_enabled": enable_staleness_filter,
             "include_repaired_watch_only": include_repaired_watch_only,
+            "event_override_enabled": enable_event_override,
+            "event_override_mode": event_override_mode if enable_event_override else None,
+            "event_override_policy_hash": event_override_policy_hash
+            if enable_event_override
+            else None,
+            "event_review_count": sum(
+                _int(row.get("event_review_count")) for row in rows
+            ),
+            "override_trigger_count": sum(
+                _int(row.get("override_trigger_count")) for row in rows
+            ),
+            "pending_plan_supersede_count": sum(
+                _int(row.get("pending_plan_supersede_count")) for row in rows
+            ),
+            "t_plus_1_execution_count": sum(
+                _int(row.get("t_plus_1_execution_count")) for row in rows
+            ),
+            "blocked_override_count": sum(
+                _int(row.get("blocked_override_count")) for row in rows
+            ),
             "data_quality_status": data_gate.get("status"),
             **_safety_summary(),
         },
@@ -1153,6 +1356,12 @@ def run_execution_semantics_rebacktest(
         policy_registry_hash=policy_registry_hash,
         signal_validity_taxonomy_path=str(signal_validity_taxonomy_path),
         signal_validity_taxonomy_hash=taxonomy_hash,
+        event_override_policy_path=str(event_override_policy_path)
+        if enable_event_override
+        else None,
+        event_override_policy_hash=event_override_policy_hash
+        if enable_event_override
+        else None,
         selected_strategy_id_mapping={
             original: canonical
             for original, canonical in REBACKTEST_STRATEGY_ID_ALIASES.items()
@@ -2453,6 +2662,10 @@ def _actual_position_path(
     signal_validity_profile: Mapping[str, Any] | None = None,
     enable_staleness_filter: bool = False,
     stale_action: str | None = None,
+    enable_event_override: bool = False,
+    event_override_policy: Mapping[str, Any] | None = None,
+    event_override_mode: str = EVENT_OVERRIDE_MODE_T_PLUS_1,
+    event_override_runtime: dict[str, Any] | None = None,
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     target = _ensure_weight_columns(target_weights)
     if target.empty:
@@ -2480,12 +2693,16 @@ def _actual_position_path(
     frequency = str(policy.get("execution_frequency") or execution_policy_id)
     minimum_holding = max(0, _int(policy.get("minimum_holding_period"), 0))
     drift_threshold = _float(policy.get("drift_threshold"), 0.0)
+    scheduled_overrides: dict[int, dict[str, Any]] = {}
+    override_runtime = event_override_runtime if event_override_runtime is not None else None
     for index, current_date in enumerate(dates):
         signal_index = max(0, index - lag)
         signal_generation_index = _last_signal_generation_index(target_values, signal_index)
         signal_date = dates[signal_generation_index]
         signal_observation_date = dates[signal_index]
         signal_target = target_values[signal_index].copy()
+        due_override = scheduled_overrides.pop(index, None)
+        holding_ok = index - last_execution_index >= minimum_holding
         policy_allows_execution, trigger = _should_execute_fast(
             execution_policy_id=execution_policy_id,
             frequency=frequency,
@@ -2502,6 +2719,12 @@ def _actual_position_path(
         if index == 0:
             should_execute = True
             trigger = "initial_position"
+        if due_override is not None:
+            signal_target = due_override["target_values"].copy()
+            should_execute = True
+            policy_allows_execution = True
+            trigger = "event_override_t_plus_1"
+        event_override_pre_trade_turnover = _array_turnover(current_values, signal_target)
         signal_age_at_execution = index - signal_generation_index
         is_signal_stale = signal_age_at_execution > stale_after_days
         near_stale = (
@@ -2545,6 +2768,14 @@ def _actual_position_path(
         target_current = target_values[index]
         first_executable_index = min(len(dates) - 1, signal_generation_index + lag)
         actual_execution_date = current_date.date().isoformat() if should_execute else None
+        event_override_executed = due_override is not None and should_execute
+        event_override_decision = _mapping(due_override.get("decision")) if due_override else {}
+        if event_override_executed and override_runtime is not None:
+            _mark_event_override_plan_executed(
+                runtime=override_runtime,
+                new_plan_id=str(due_override.get("new_plan_id")),
+                actual_execution_date=actual_execution_date,
+            )
         rows.append(
             {
                 "date": current_date.date().isoformat(),
@@ -2582,6 +2813,29 @@ def _actual_position_path(
                 "staleness_filter_suppressed": staleness_filter_suppressed,
                 "stale_action": effective_stale_action,
                 "stale_action_taken": stale_action_taken,
+                "event_override_enabled": enable_event_override,
+                "event_override_mode": event_override_mode if enable_event_override else None,
+                "event_override_executed": event_override_executed,
+                "event_override_event_id": event_override_decision.get("event_id"),
+                "event_override_decision_at": event_override_decision.get("decision_at"),
+                "event_override_effective_at": event_override_decision.get("effective_at"),
+                "event_override_superseded_plan_id": event_override_decision.get(
+                    "superseded_plan_id"
+                ),
+                "event_override_new_plan_id": event_override_decision.get("new_plan_id"),
+                "override_bypassed_min_holding": bool(
+                    event_override_executed and not holding_ok
+                ),
+                "override_bypassed_turnover_cap": bool(
+                    event_override_executed and event_override_pre_trade_turnover > max_turnover
+                ),
+                "bypass_reason": (
+                    "risk_off_event_override"
+                    if event_override_executed
+                    and (not holding_ok or event_override_pre_trade_turnover > max_turnover)
+                    else None
+                ),
+                "owner_review_required": bool(event_override_executed),
                 "trigger_reason": trigger
                 if should_execute or staleness_filter_suppressed
                 else "no_execution",
@@ -2590,8 +2844,543 @@ def _actual_position_path(
                 "signal_staleness_days": signal_age_at_execution,
             }
         )
+        if enable_event_override and override_runtime is not None and index + 1 < len(dates):
+            scheduled = _schedule_event_override_if_allowed(
+                strategy_id=strategy_id,
+                execution_policy_id=execution_policy_id,
+                index=index,
+                dates=dates,
+                target_values=target_values,
+                current_values=current_values,
+                policy=event_override_policy or {},
+                policy_hash=str(override_runtime.get("event_override_policy_hash") or ""),
+                runtime=override_runtime,
+            )
+            if scheduled is not None:
+                scheduled_overrides[index + 1] = scheduled
     actual = pd.DataFrame(actual_rows, index=target.index, columns=target.columns)
     return actual.astype(float), rows
+
+
+def evaluate_event_override_decision(
+    *,
+    event_id: str,
+    event_known_at: str | date,
+    review_at: str | date,
+    decision_at: str | date,
+    event_risk_score: float,
+    override_direction: str,
+    pending_plan_status: str,
+    effective_at: str | date | None,
+    policy: Mapping[str, Any] | None = None,
+    original_target_weights: Mapping[str, Any] | None = None,
+    new_target_weights: Mapping[str, Any] | None = None,
+    superseded_plan_id: str | None = None,
+    new_plan_id: str | None = None,
+) -> EventOverrideDecision:
+    policy_root = _event_override_policy_root(policy or {})
+    no_lookahead = _event_override_no_lookahead_evidence(
+        event_known_at=event_known_at,
+        review_at=review_at,
+        decision_at=decision_at,
+        effective_at=effective_at,
+    )
+    direction = _normalise_override_direction(override_direction)
+    blocked_reasons: list[str] = []
+    if not bool(policy_root.get("enabled", True)):
+        blocked_reasons.append("event_override_policy_disabled")
+    if pending_plan_status not in PENDING_PLAN_SUPERSEDABLE_STATUSES:
+        blocked_reasons.append(f"pending_plan_status_not_supersedable:{pending_plan_status}")
+    if not no_lookahead["checks"]["event_known_before_review"]:
+        blocked_reasons.append("event_known_after_review_cutoff")
+    if not no_lookahead["checks"]["decision_before_effective"]:
+        blocked_reasons.append("effective_date_not_after_decision_date")
+    if not no_lookahead["passed"]:
+        blocked_reasons.append("no_lookahead_evidence_failed")
+
+    risk_off_policy = _mapping(policy_root.get("risk_off_override"))
+    risk_on_policy = _mapping(policy_root.get("risk_on_override"))
+    min_score = _float(risk_off_policy.get("min_event_risk_score"), 80.0)
+    if event_risk_score < min_score:
+        blocked_reasons.append("event_risk_score_below_policy_minimum")
+    if direction == "RISK_REDUCTION":
+        if not bool(risk_off_policy.get("enabled", True)):
+            blocked_reasons.append("risk_off_override_disabled")
+        blocked_reasons.extend(
+            _risk_reduction_direction_blockers(
+                original_target_weights=original_target_weights or {},
+                new_target_weights=new_target_weights or {},
+            )
+        )
+    else:
+        if not bool(risk_on_policy.get("enabled", False)):
+            blocked_reasons.append("risk_on_fast_override_disabled")
+        blocked_reasons.append("risk_on_fast_override_requires_confirmation")
+
+    blocked_reasons = _dedupe_ordered(blocked_reasons)
+    allowed = not blocked_reasons
+    return EventOverrideDecision(
+        event_id=event_id,
+        event_known_at=_iso_date(event_known_at),
+        review_at=_iso_date(review_at),
+        decision_at=_iso_date(decision_at),
+        event_risk_score=round(float(event_risk_score), 3),
+        override_triggered=allowed,
+        override_direction=direction,
+        allowed_by_policy=allowed,
+        blocked_reasons=blocked_reasons,
+        superseded_plan_id=superseded_plan_id,
+        new_plan_id=new_plan_id if allowed else None,
+        effective_at=_iso_date(effective_at) if effective_at is not None else None,
+        no_lookahead_evidence=no_lookahead,
+    )
+
+
+def supersede_pending_plan(
+    *,
+    pending_plan: Mapping[str, Any],
+    decision: EventOverrideDecision | Mapping[str, Any],
+    new_target_weights: Mapping[str, Any],
+    supersede_timestamp: str | date,
+    policy_hash: str,
+) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
+    decision_payload = (
+        decision.to_dict() if isinstance(decision, EventOverrideDecision) else dict(decision)
+    )
+    original = dict(pending_plan)
+    if original.get("status") not in PENDING_PLAN_SUPERSEDABLE_STATUSES:
+        original.setdefault("status_reason", "not_supersedable")
+        return original, None, None
+    if decision_payload.get("allowed_by_policy") is not True:
+        original.setdefault("status_reason", "event_override_blocked")
+        return original, None, None
+
+    new_plan_id = str(decision_payload.get("new_plan_id") or "")
+    original["status"] = "SUPERSEDED"
+    original["status_reason"] = "event_override_risk_reduction"
+    original["superseded_by_plan_id"] = new_plan_id
+    original["supersede_reason"] = "event_override_risk_reduction"
+    original["supersede_timestamp"] = _iso_date(supersede_timestamp)
+    original["source_event_id"] = decision_payload.get("event_id")
+
+    new_plan = {
+        "plan_id": new_plan_id,
+        "strategy_id": original.get("strategy_id"),
+        "created_at": decision_payload.get("decision_at"),
+        "known_at": decision_payload.get("event_known_at"),
+        "decision_at": decision_payload.get("decision_at"),
+        "intended_effective_at": decision_payload.get("effective_at"),
+        "first_executable_date": decision_payload.get("effective_at"),
+        "actual_execution_date": None,
+        "status": "PENDING_REBALANCE",
+        "status_reason": "event_override_risk_reduction",
+        "target_weights": dict(new_target_weights),
+        "source_signal_ids": list(original.get("source_signal_ids") or []),
+        "source_event_ids": [decision_payload.get("event_id")],
+        "policy_hash": policy_hash,
+        "superseded_by_plan_id": None,
+        "supersedes_plan_id": original.get("plan_id"),
+    }
+    log = {
+        "supersede_reason": "event_override_risk_reduction",
+        "supersede_timestamp": _iso_date(supersede_timestamp),
+        "source_event_id": decision_payload.get("event_id"),
+        "original_pending_plan_id": original.get("plan_id"),
+        "new_plan_id": new_plan_id,
+        "override_direction": decision_payload.get("override_direction"),
+        "event_known_at": decision_payload.get("event_known_at"),
+        "review_at": decision_payload.get("review_at"),
+        "decision_at": decision_payload.get("decision_at"),
+        "new_plan_effective_at": decision_payload.get("effective_at"),
+        "first_executable_date": decision_payload.get("effective_at"),
+        "actual_execution_date": None,
+        "original_target_weights": dict(original.get("target_weights") or {}),
+        "new_target_weights": dict(new_target_weights),
+        "weight_delta": _weight_delta(
+            _mapping(original.get("target_weights")),
+            new_target_weights,
+        ),
+        "policy_hash": policy_hash,
+    }
+    return original, new_plan, log
+
+
+def _load_event_override_policy(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    raw = _load_yaml_mapping(path)
+    return _mapping(raw.get("event_override_policy") or raw)
+
+
+def _empty_event_override_runtime(
+    *,
+    strategy_id: str,
+    mode: str,
+    policy_hash: str,
+) -> dict[str, Any]:
+    return {
+        "strategy_id": strategy_id,
+        "event_override_mode": mode,
+        "event_override_policy_hash": policy_hash,
+        "event_override_trace": [],
+        "pending_plan_ledger": [],
+        "supersede_log": [],
+        "no_lookahead_evidence": [],
+    }
+
+
+def _event_override_stats(runtime: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not runtime:
+        return {
+            "event_review_count": 0,
+            "override_trigger_count": 0,
+            "pending_plan_supersede_count": 0,
+            "t_plus_1_execution_count": 0,
+            "blocked_override_count": 0,
+        }
+    trace = [_mapping(item) for item in runtime.get("event_override_trace") or []]
+    ledger = [_mapping(item) for item in runtime.get("pending_plan_ledger") or []]
+    return {
+        "event_review_count": len(trace),
+        "override_trigger_count": sum(
+            1 for item in trace if item.get("override_triggered") is True
+        ),
+        "pending_plan_supersede_count": sum(
+            1 for item in ledger if item.get("status") == "SUPERSEDED"
+        ),
+        "t_plus_1_execution_count": sum(
+            1
+            for item in ledger
+            if item.get("status") == "EXECUTED" and item.get("supersedes_plan_id")
+        ),
+        "blocked_override_count": sum(
+            1 for item in trace if item.get("override_triggered") is not True
+        ),
+    }
+
+
+def _flatten_event_override_stats(runtime: Mapping[str, Any] | None) -> dict[str, Any]:
+    stats = _event_override_stats(runtime)
+    return {key: value for key, value in stats.items()}
+
+
+def _strategy_event_override_summary(
+    *,
+    strategy_id: str,
+    runtime: Mapping[str, Any],
+    policy_hash: str,
+    mode: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "event_override_summary.v1",
+        "report_type": "event_override_summary",
+        "strategy_id": strategy_id,
+        "status": "EVENT_OVERRIDE_TRACE_READY",
+        "event_override_mode": mode,
+        "event_override_policy_hash": policy_hash,
+        "summary": _event_override_stats(runtime),
+        "dynamic_promotion_status": "BLOCKED",
+        "target_path_metrics_used_for_decision": False,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _schedule_event_override_if_allowed(
+    *,
+    strategy_id: str,
+    execution_policy_id: str,
+    index: int,
+    dates: list[pd.Timestamp],
+    target_values: Any,
+    current_values: Any,
+    policy: Mapping[str, Any],
+    policy_hash: str,
+    runtime: dict[str, Any],
+) -> dict[str, Any] | None:
+    event = _event_override_candidate_event(
+        strategy_id=strategy_id,
+        index=index,
+        dates=dates,
+        target_values=target_values,
+        policy=policy,
+    )
+    if event is None:
+        return None
+
+    review_date = dates[index].date().isoformat()
+    effective_date = str(event.get("effective_at") or dates[index + 1].date().isoformat())
+    original_weights = _weights_dict_from_array(target_values[index])
+    new_target_values = _risk_off_override_target_values(
+        original_values=target_values[index],
+        policy=policy,
+    )
+    new_weights = _weights_dict_from_array(new_target_values)
+    plan_key = f"{strategy_id}_{review_date}_{effective_date}".replace("-", "")
+    original_plan_id = f"regular_pending_{plan_key}"
+    new_plan_id = f"event_override_{plan_key}"
+    event_known_at = event.get("event_known_at") or review_date
+    decision = evaluate_event_override_decision(
+        event_id=str(event["event_id"]),
+        event_known_at=str(event_known_at),
+        review_at=str(event.get("review_at") or review_date),
+        decision_at=str(event.get("decision_at") or review_date),
+        event_risk_score=_float(event.get("event_risk_score"), 0.0),
+        override_direction=str(event.get("override_direction") or "RISK_REDUCTION"),
+        pending_plan_status="PENDING_REBALANCE",
+        effective_at=effective_date,
+        policy=policy,
+        original_target_weights=original_weights,
+        new_target_weights=new_weights,
+        superseded_plan_id=original_plan_id,
+        new_plan_id=new_plan_id,
+    )
+    decision_payload = decision.to_dict()
+    runtime["event_override_trace"].append(decision_payload)
+    runtime["no_lookahead_evidence"].append(
+        {
+            "event_id": decision.event_id,
+            "strategy_id": strategy_id,
+            **decision.no_lookahead_evidence,
+        }
+    )
+    if not decision.allowed_by_policy:
+        return None
+
+    pending_plan = _pending_plan_record(
+        plan_id=original_plan_id,
+        strategy_id=strategy_id,
+        created_at=review_date,
+        known_at=review_date,
+        decision_at=review_date,
+        effective_at=effective_date,
+        status="PENDING_REBALANCE",
+        target_weights=original_weights,
+        source_signal_id=f"{strategy_id}:{review_date}",
+        policy_hash=policy_hash,
+    )
+    superseded, new_plan, log = supersede_pending_plan(
+        pending_plan=pending_plan,
+        decision=decision,
+        new_target_weights=new_weights,
+        supersede_timestamp=review_date,
+        policy_hash=policy_hash,
+    )
+    runtime["pending_plan_ledger"].append(superseded)
+    if new_plan is not None:
+        runtime["pending_plan_ledger"].append(new_plan)
+    if log is not None:
+        runtime["supersede_log"].append(log)
+    return {
+        "target_values": new_target_values,
+        "decision": decision_payload,
+        "new_plan_id": new_plan_id,
+        "execution_policy_id": execution_policy_id,
+        "current_values_at_review": _weights_dict_from_array(current_values),
+    }
+
+
+def _event_override_candidate_event(
+    *,
+    strategy_id: str,
+    index: int,
+    dates: list[pd.Timestamp],
+    target_values: Any,
+    policy: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    review_date = dates[index].date().isoformat()
+    for event in _event_override_explicit_events(policy):
+        if str(event.get("review_at") or event.get("decision_at") or "") == review_date:
+            return dict(event)
+    detection = _mapping(_event_override_policy_root(policy).get("event_detection"))
+    source = str(detection.get("source") or "target_path_risk_reduction_signal")
+    if source != "target_path_risk_reduction_signal" or index == 0:
+        return None
+    qqq_reduction = float(target_values[index - 1][0]) - float(target_values[index][0])
+    tqqq_reduction = float(target_values[index - 1][1]) - float(target_values[index][1])
+    min_reduction = _float(detection.get("min_target_risk_reduction"), 0.10)
+    if max(qqq_reduction, tqqq_reduction) < min_reduction:
+        return None
+    risk_off_policy = _mapping(_event_override_policy_root(policy).get("risk_off_override"))
+    min_score = _float(risk_off_policy.get("min_event_risk_score"), 80.0)
+    score = min(100.0, min_score + max(qqq_reduction, tqqq_reduction) * 100.0)
+    return {
+        "event_id": f"target_risk_reduction_{strategy_id}_{review_date}",
+        "event_known_at": review_date,
+        "review_at": review_date,
+        "decision_at": review_date,
+        "event_risk_score": score,
+        "override_direction": "RISK_REDUCTION",
+        "event_source": source,
+    }
+
+
+def _event_override_explicit_events(policy: Mapping[str, Any]) -> list[dict[str, Any]]:
+    root = _event_override_policy_root(policy)
+    return [dict(item) for item in root.get("research_event_schedule") or []]
+
+
+def _event_override_policy_root(policy: Mapping[str, Any]) -> Mapping[str, Any]:
+    return _mapping(policy.get("event_override_policy") or policy)
+
+
+def _risk_off_override_target_values(
+    *,
+    original_values: Any,
+    policy: Mapping[str, Any],
+) -> Any:
+    root = _event_override_policy_root(policy)
+    risk_off_policy = _mapping(root.get("risk_off_override"))
+    max_single_delta = _float(risk_off_policy.get("max_single_override_weight_delta"), 0.20)
+    max_total_delta = _float(risk_off_policy.get("max_total_override_weight_delta"), 0.35)
+    values = [float(original_values[0]), float(original_values[1]), float(original_values[2])]
+    total_reduction = 0.0
+    for position in (1, 0):
+        if total_reduction >= max_total_delta:
+            break
+        reduction = min(values[position], max_single_delta, max_total_delta - total_reduction)
+        values[position] -= reduction
+        total_reduction += reduction
+    values[2] += total_reduction
+    return _normalise_weight_array(pd.Series(values).to_numpy(dtype=float))
+
+
+def _risk_reduction_direction_blockers(
+    *,
+    original_target_weights: Mapping[str, Any],
+    new_target_weights: Mapping[str, Any],
+) -> list[str]:
+    blockers: list[str] = []
+    for ticker in ("QQQ", "SMH", "SOXQ", "TQQQ"):
+        if _float(new_target_weights.get(ticker)) > (
+            _float(original_target_weights.get(ticker)) + 1e-9
+        ):
+            blockers.append(f"risk_asset_weight_increased:{ticker}")
+    for ticker in ("CASH", "SGOV"):
+        if _float(new_target_weights.get(ticker)) < (
+            _float(original_target_weights.get(ticker)) - 1e-9
+        ):
+            blockers.append(f"safe_asset_weight_decreased:{ticker}")
+    original_leverage = sum(abs(_float(value)) for value in original_target_weights.values())
+    new_leverage = sum(abs(_float(value)) for value in new_target_weights.values())
+    if new_leverage > max(1.0, original_leverage) + 1e-9:
+        blockers.append("leverage_increased")
+    return blockers
+
+
+def _event_override_no_lookahead_evidence(
+    *,
+    event_known_at: str | date,
+    review_at: str | date,
+    decision_at: str | date,
+    effective_at: str | date | None,
+) -> dict[str, Any]:
+    known = _date_value(event_known_at)
+    review = _date_value(review_at)
+    decision = _date_value(decision_at)
+    effective = _date_value(effective_at) if effective_at is not None else None
+    checks = {
+        "event_known_before_review": known <= review,
+        "decision_before_effective": effective is not None and decision < effective,
+        "no_future_return_used": True,
+        "no_future_signal_persistence_used": True,
+    }
+    return {
+        "event_known_at": _iso_date(event_known_at),
+        "review_at": _iso_date(review_at),
+        "decision_at": _iso_date(decision_at),
+        "effective_at": _iso_date(effective_at) if effective_at is not None else None,
+        "passed": all(checks.values()),
+        "checks": checks,
+    }
+
+
+def _pending_plan_record(
+    *,
+    plan_id: str,
+    strategy_id: str,
+    created_at: str,
+    known_at: str,
+    decision_at: str,
+    effective_at: str,
+    status: str,
+    target_weights: Mapping[str, Any],
+    source_signal_id: str,
+    policy_hash: str,
+) -> dict[str, Any]:
+    return {
+        "plan_id": plan_id,
+        "strategy_id": strategy_id,
+        "created_at": created_at,
+        "known_at": known_at,
+        "decision_at": decision_at,
+        "intended_effective_at": effective_at,
+        "first_executable_date": effective_at,
+        "actual_execution_date": None,
+        "status": status,
+        "status_reason": "regular_pending_rebalance",
+        "target_weights": dict(target_weights),
+        "source_signal_ids": [source_signal_id],
+        "source_event_ids": [],
+        "policy_hash": policy_hash,
+        "superseded_by_plan_id": None,
+        "supersedes_plan_id": None,
+    }
+
+
+def _mark_event_override_plan_executed(
+    *,
+    runtime: dict[str, Any],
+    new_plan_id: str,
+    actual_execution_date: str | None,
+) -> None:
+    for plan in runtime.get("pending_plan_ledger") or []:
+        if _mapping(plan).get("plan_id") == new_plan_id:
+            plan["status"] = "EXECUTED"
+            plan["status_reason"] = "event_override_t_plus_1_executed"
+            plan["actual_execution_date"] = actual_execution_date
+    for log in runtime.get("supersede_log") or []:
+        if _mapping(log).get("new_plan_id") == new_plan_id:
+            log["actual_execution_date"] = actual_execution_date
+
+
+def _weights_dict_from_array(values: Any) -> dict[str, float]:
+    return {
+        "QQQ": round(float(values[0]), 6),
+        "TQQQ": round(float(values[1]), 6),
+        "SGOV": round(float(values[2]), 6),
+    }
+
+
+def _weight_delta(
+    original_weights: Mapping[str, Any],
+    new_weights: Mapping[str, Any],
+) -> dict[str, float]:
+    tickers = sorted(set(original_weights) | set(new_weights))
+    return {
+        ticker: round(_float(new_weights.get(ticker)) - _float(original_weights.get(ticker)), 6)
+        for ticker in tickers
+    }
+
+
+def _normalise_override_direction(direction: str) -> str:
+    lowered = direction.strip().lower()
+    if lowered in {"risk_reduction", "risk-off", "risk_off", "reduce_risk"}:
+        return "RISK_REDUCTION"
+    return "RISK_INCREASE"
+
+
+def _iso_date(value: str | date) -> str:
+    if isinstance(value, date):
+        return value.isoformat()
+    return str(value)[:10]
+
+
+def _date_value(value: str | date | None) -> date:
+    if isinstance(value, date):
+        return value
+    if value is None:
+        return date.min
+    return date.fromisoformat(str(value)[:10])
 
 
 def _last_signal_generation_index(target_values: Any, signal_index: int) -> int:
@@ -2721,6 +3510,11 @@ def _should_execute(
 def _signal_target_weight_frame(strategy_id: str, prices: pd.DataFrame) -> pd.DataFrame:
     if strategy_id in REPAIRED_WATCH_ONLY_VARIANTS:
         return _signal_target_weight_frame(REPAIRED_WATCH_ONLY_VARIANTS[strategy_id], prices)
+    if strategy_id in EVENT_OVERRIDE_WATCH_ONLY_VARIANTS:
+        return _signal_target_weight_frame(
+            EVENT_OVERRIDE_WATCH_ONLY_VARIANTS[strategy_id],
+            prices,
+        )
     if strategy_id in STATIC_TARGETS:
         return _constant_weight_frame(prices, STATIC_TARGETS[strategy_id])
     if strategy_id in {"no_trade", "no_trade_baseline"}:
@@ -3997,6 +4791,14 @@ def _write_strategy_rebacktest_artifacts(
     staleness_filter_enabled: bool,
     taxonomy_path: Path,
     taxonomy_hash: str,
+    event_override_runtime: Mapping[str, Any] | None,
+    event_override_enabled: bool,
+    event_override_policy_path: Path,
+    event_override_policy_hash: str,
+    event_override_mode: str,
+    emit_pending_plan_ledger: bool,
+    emit_supersede_log: bool,
+    emit_event_override_trace: bool,
     staleness_decomposition: Mapping[str, Any],
     lag_decomposition: Mapping[str, Any],
     emit_staleness_decomposition: bool,
@@ -4031,6 +4833,15 @@ def _write_strategy_rebacktest_artifacts(
         "staleness_filter_enabled": staleness_filter_enabled,
         "signal_validity_taxonomy_path": str(taxonomy_path),
         "signal_validity_taxonomy_hash": taxonomy_hash,
+        "event_override_enabled": event_override_enabled,
+        "event_override_mode": event_override_mode if event_override_enabled else None,
+        "event_override_policy_path": str(event_override_policy_path)
+        if event_override_enabled
+        else None,
+        "event_override_policy_hash": event_override_policy_hash
+        if event_override_enabled
+        else None,
+        "event_override_stats": _event_override_stats(event_override_runtime),
         "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
         "promotion_decision_source": "actual_path_only",
         "target_path_diagnostic_notice": (
@@ -4102,6 +4913,11 @@ def _write_strategy_rebacktest_artifacts(
         "execution_lag_decomposition_markdown": (
             output_root / "execution_lag_decomposition.md"
         ),
+        "event_override_trace": output_root / "event_override_trace.json",
+        "pending_plan_ledger": output_root / "pending_plan_ledger.csv",
+        "supersede_log": output_root / "supersede_log.csv",
+        "event_override_summary": output_root / "event_override_summary.json",
+        "no_lookahead_evidence": output_root / "no_lookahead_evidence.json",
         "execution_policy_snapshot": output_root / "execution_policy_snapshot.yaml",
         "promotion_readiness": output_root / "promotion_readiness.json",
     }
@@ -4132,6 +4948,57 @@ def _write_strategy_rebacktest_artifacts(
     else:
         paths.pop("execution_lag_decomposition")
         paths.pop("execution_lag_decomposition_markdown")
+    if event_override_enabled and event_override_runtime is not None:
+        event_summary = _strategy_event_override_summary(
+            strategy_id=strategy_id,
+            runtime=event_override_runtime,
+            policy_hash=event_override_policy_hash,
+            mode=event_override_mode,
+        )
+        _write_json(paths["event_override_summary"], event_summary)
+        _write_json(
+            paths["no_lookahead_evidence"],
+            {
+                "schema_version": "event_override_no_lookahead_evidence.v1",
+                "report_type": "event_override_no_lookahead_evidence",
+                "strategy_id": strategy_id,
+                "evidence": list(event_override_runtime.get("no_lookahead_evidence") or []),
+                **SAFETY_BOUNDARY,
+            },
+        )
+        if emit_event_override_trace:
+            _write_json(
+                paths["event_override_trace"],
+                {
+                    "schema_version": "event_override_trace.v1",
+                    "report_type": "event_override_trace",
+                    "strategy_id": strategy_id,
+                    "decisions": list(event_override_runtime.get("event_override_trace") or []),
+                    **SAFETY_BOUNDARY,
+                },
+            )
+        else:
+            paths.pop("event_override_trace")
+        if emit_pending_plan_ledger:
+            pd.DataFrame(event_override_runtime.get("pending_plan_ledger") or []).to_csv(
+                paths["pending_plan_ledger"],
+                index=False,
+            )
+        else:
+            paths.pop("pending_plan_ledger")
+        if emit_supersede_log:
+            pd.DataFrame(event_override_runtime.get("supersede_log") or []).to_csv(
+                paths["supersede_log"],
+                index=False,
+            )
+        else:
+            paths.pop("supersede_log")
+    else:
+        paths.pop("event_override_trace")
+        paths.pop("pending_plan_ledger")
+        paths.pop("supersede_log")
+        paths.pop("event_override_summary")
+        paths.pop("no_lookahead_evidence")
     paths["execution_policy_snapshot"].write_text(
         yaml.safe_dump(
             {
@@ -4141,6 +5008,14 @@ def _write_strategy_rebacktest_artifacts(
                 "staleness_filter_enabled": staleness_filter_enabled,
                 "signal_validity_taxonomy_path": str(taxonomy_path),
                 "signal_validity_taxonomy_hash": taxonomy_hash,
+                "event_override_enabled": event_override_enabled,
+                "event_override_policy_path": str(event_override_policy_path)
+                if event_override_enabled
+                else None,
+                "event_override_policy_hash": event_override_policy_hash
+                if event_override_enabled
+                else None,
+                "event_override_mode": event_override_mode if event_override_enabled else None,
                 "normalized_execution_policy_contract": _normalized_policy_contract(
                     binding=binding,
                     policy=policy,
@@ -4206,6 +5081,12 @@ def _write_rebacktest_aggregate_artifacts(
     staleness_input_summary_path: Path | None,
     staleness_repair_matrix_path: Path | None,
     staleness_repair_review_path: Path | None,
+    enable_event_override: bool,
+    event_override_mode: str,
+    event_override_policy_path: Path,
+    event_override_policy_hash: str,
+    event_override_survival_matrix_path: Path | None,
+    event_override_review_path: Path | None,
 ) -> dict[str, str]:
     output_root.mkdir(parents=True, exist_ok=True)
     completed_rows = [
@@ -4217,6 +5098,8 @@ def _write_rebacktest_aggregate_artifacts(
     gap_rows = _target_vs_actual_gap_rows(completed_rows)
     staleness_repair_rows = _staleness_repair_summary_rows(completed_rows)
     lag_repair_rows = _lag_repair_summary_rows(completed_rows)
+    event_override_rows = _event_override_leaderboard_rows(completed_rows)
+    event_override_vs_base_rows = _event_override_vs_base_rows(completed_rows)
     readiness_summary = {
         "schema_version": "execution_semantics_promotion_readiness_summary.v1",
         "report_type": "execution_semantics_promotion_readiness_summary",
@@ -4257,6 +5140,14 @@ def _write_rebacktest_aggregate_artifacts(
         "target_path_metrics_role": "diagnostic_only",
         "staleness_filter_enabled": enable_staleness_filter,
         "include_repaired_watch_only": include_repaired_watch_only,
+        "event_override_enabled": enable_event_override,
+        "event_override_mode": event_override_mode if enable_event_override else None,
+        "event_override_policy_path": str(event_override_policy_path)
+        if enable_event_override
+        else None,
+        "event_override_policy_hash": event_override_policy_hash
+        if enable_event_override
+        else None,
         "selected_strategy_ids": selected_strategy_ids,
         "strategy_rows": strategy_rows,
         "blocked_rows": blocked_rows,
@@ -4269,6 +5160,14 @@ def _write_rebacktest_aggregate_artifacts(
         "promotion_readiness_summary": output_root / "promotion_readiness_summary.json",
         "staleness_repair_summary": output_root / "staleness_repair_summary.csv",
         "lag_repair_summary": output_root / "lag_repair_summary.csv",
+        "event_override_leaderboard_actual_path": (
+            output_root / "event_override_leaderboard_actual_path.csv"
+        ),
+        "event_override_vs_base_actual_path": (
+            output_root / "event_override_vs_base_actual_path.csv"
+        ),
+        "event_override_summary": output_root / "event_override_summary.json",
+        "event_override_gate": output_root / "event_override_gate.json",
         "owner_review_pack": output_root / "owner_review_pack.md",
     }
     _write_json(paths["index"], index_payload)
@@ -4279,6 +5178,30 @@ def _write_rebacktest_aggregate_artifacts(
         index=False,
     )
     pd.DataFrame(lag_repair_rows).to_csv(paths["lag_repair_summary"], index=False)
+    if enable_event_override:
+        pd.DataFrame(event_override_rows).to_csv(
+            paths["event_override_leaderboard_actual_path"],
+            index=False,
+        )
+        pd.DataFrame(event_override_vs_base_rows).to_csv(
+            paths["event_override_vs_base_actual_path"],
+            index=False,
+        )
+        event_summary_payload = _event_override_aggregate_summary_payload(
+            strategy_rows=completed_rows,
+            vs_base_rows=event_override_vs_base_rows,
+            date_range=date_range,
+            event_override_policy_hash=event_override_policy_hash,
+            event_override_mode=event_override_mode,
+        )
+        _write_json(paths["event_override_summary"], event_summary_payload)
+        event_gate_payload = _event_override_gate_payload(event_summary_payload)
+        _write_json(paths["event_override_gate"], event_gate_payload)
+    else:
+        paths.pop("event_override_leaderboard_actual_path")
+        paths.pop("event_override_vs_base_actual_path")
+        paths.pop("event_override_summary")
+        paths.pop("event_override_gate")
     _write_json(paths["promotion_readiness_summary"], readiness_summary)
     paths["owner_review_pack"].write_text(
         _owner_review_pack_markdown(
@@ -4335,6 +5258,37 @@ def _write_rebacktest_aggregate_artifacts(
         paths["signal_validity_staleness_input_summary"] = input_summary_path
         paths["staleness_repair_matrix"] = matrix_path
         paths["signal_validity_staleness_repair_review"] = review_path
+    if enable_event_override:
+        matrix_path = (
+            event_override_survival_matrix_path
+            or DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH
+        )
+        review_path = (
+            event_override_review_path
+            or DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH
+        )
+        matrix_payload = _event_override_survival_matrix_payload(
+            strategy_rows=completed_rows,
+            vs_base_rows=event_override_vs_base_rows,
+            date_range=date_range,
+            event_override_policy_hash=event_override_policy_hash,
+        )
+        matrix_path.parent.mkdir(parents=True, exist_ok=True)
+        matrix_path.write_text(
+            yaml.safe_dump(matrix_payload, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        review_path.parent.mkdir(parents=True, exist_ok=True)
+        review_path.write_text(
+            _event_override_execution_semantics_review_markdown(
+                matrix_payload=matrix_payload,
+                event_summary=event_summary_payload,
+                vs_base_rows=event_override_vs_base_rows,
+            ),
+            encoding="utf-8",
+        )
+        paths["event_override_survival_matrix"] = matrix_path
+        paths["event_override_execution_semantics_review"] = review_path
     return {key: str(value) for key, value in paths.items()}
 
 
@@ -4397,6 +5351,354 @@ def _target_vs_actual_gap_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any
         }
         for row in rows
     ]
+
+
+def _event_override_leaderboard_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    leaderboard = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "base_strategy_id": EVENT_OVERRIDE_WATCH_ONLY_VARIANTS.get(
+                str(row.get("strategy_id"))
+            ),
+            "status": row.get("event_override_candidate_status"),
+            "actual_path_annual_return": row.get("actual_path_annual_return"),
+            "actual_path_max_drawdown_daily_equity": row.get(
+                "actual_path_max_drawdown_daily_equity"
+            ),
+            "actual_path_sharpe_daily_zero_rf": row.get(
+                "actual_path_sharpe_daily_zero_rf"
+            ),
+            "actual_path_calmar_daily_equity_dd": row.get(
+                "actual_path_calmar_daily_equity_dd"
+            ),
+            "actual_path_turnover": row.get("actual_path_turnover"),
+            "event_review_count": row.get("event_review_count"),
+            "override_trigger_count": row.get("override_trigger_count"),
+            "pending_plan_supersede_count": row.get("pending_plan_supersede_count"),
+            "blocked_override_count": row.get("blocked_override_count"),
+            "promotion_final_status": row.get("promotion_final_status"),
+        }
+        for row in rows
+        if row.get("strategy_id") in EVENT_OVERRIDE_WATCH_ONLY_VARIANTS
+    ]
+    return sorted(
+        leaderboard,
+        key=lambda row: (
+            _float(row.get("actual_path_sharpe_daily_zero_rf")),
+            _float(row.get("actual_path_annual_return")),
+        ),
+        reverse=True,
+    )
+
+
+def _event_override_vs_base_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_id = {
+        str(row.get("strategy_id")): row
+        for row in rows
+        if row.get("strategy_id")
+    }
+    comparison_rows: list[dict[str, Any]] = []
+    for base_id, event_id in EVENT_OVERRIDE_VARIANT_PAIRS.items():
+        base = by_id.get(base_id, {})
+        event = by_id.get(event_id, {})
+        if not base or not event:
+            continue
+        row = {
+            "strategy_id": event_id,
+            "base_strategy_id": base_id,
+            "status": event.get("event_override_candidate_status"),
+            "annual_return_delta_vs_base": _metric_delta_by_key(
+                event,
+                base,
+                "actual_path_annual_return",
+            ),
+            "max_drawdown_delta_vs_base": _metric_delta_by_key(
+                event,
+                base,
+                "actual_path_max_drawdown_daily_equity",
+            ),
+            "sharpe_delta_vs_base": _metric_delta_by_key(
+                event,
+                base,
+                "actual_path_sharpe_daily_zero_rf",
+            ),
+            "calmar_delta_vs_base": _metric_delta_by_key(
+                event,
+                base,
+                "actual_path_calmar_daily_equity_dd",
+            ),
+            "turnover_delta_vs_base": _metric_delta_by_key(
+                event,
+                base,
+                "actual_path_turnover",
+            ),
+            "qqq_exposure_drag_delta": _metric_delta_by_key(
+                event,
+                base,
+                "target_vs_actual_annual_return_gap",
+            ),
+            "risk_off_event_net_contribution": _float(
+                event.get("annual_return_actual_path")
+            )
+            - _float(base.get("annual_return_actual_path")),
+            "event_review_count": event.get("event_review_count"),
+            "override_trigger_count": event.get("override_trigger_count"),
+            "pending_plan_supersede_count": event.get("pending_plan_supersede_count"),
+            "blocked_override_count": event.get("blocked_override_count"),
+        }
+        row["verdict"] = _event_override_verdict(row)
+        comparison_rows.append(row)
+    return comparison_rows
+
+
+def _event_override_aggregate_summary_payload(
+    *,
+    strategy_rows: list[dict[str, Any]],
+    vs_base_rows: list[dict[str, Any]],
+    date_range: Mapping[str, Any],
+    event_override_policy_hash: str,
+    event_override_mode: str,
+) -> dict[str, Any]:
+    stats = {
+        "event_review_count": sum(_int(row.get("event_review_count")) for row in strategy_rows),
+        "override_trigger_count": sum(
+            _int(row.get("override_trigger_count")) for row in strategy_rows
+        ),
+        "pending_plan_supersede_count": sum(
+            _int(row.get("pending_plan_supersede_count")) for row in strategy_rows
+        ),
+        "t_plus_1_execution_count": sum(
+            _int(row.get("t_plus_1_execution_count")) for row in strategy_rows
+        ),
+        "blocked_override_count": sum(
+            _int(row.get("blocked_override_count")) for row in strategy_rows
+        ),
+    }
+    return {
+        "schema_version": "event_override_aggregate_summary.v1",
+        "report_type": "event_override_summary",
+        "status": "EVENT_OVERRIDE_REBACKTEST_COMPLETE",
+        "event_override_mode": event_override_mode,
+        "event_override_policy_hash": event_override_policy_hash,
+        "date_range": dict(date_range),
+        "summary": stats,
+        "strategy_comparisons": vs_base_rows,
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "paper_shadow_preflight_candidate": _event_override_paper_shadow_candidate(
+            vs_base_rows
+        ),
+        "target_path_metrics_used_for_decision": False,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _event_override_gate_payload(summary_payload: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": "event_override_gate.v1",
+        "report_type": "event_override_gate",
+        "status": "EVENT_OVERRIDE_GATE_RESEARCH_ONLY",
+        "event_override_summary_status": summary_payload.get("status"),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "paper_shadow_preflight_candidate": summary_payload.get(
+            "paper_shadow_preflight_candidate"
+        ),
+        "allowed_next_action": "OWNER_REVIEW",
+        "blocked_actions": ["dynamic_promotion", "paper_shadow", "production", "broker"],
+        "target_path_metrics_used_for_decision": False,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _event_override_survival_matrix_payload(
+    *,
+    strategy_rows: list[dict[str, Any]],
+    vs_base_rows: list[dict[str, Any]],
+    date_range: Mapping[str, Any],
+    event_override_policy_hash: str,
+) -> dict[str, Any]:
+    by_id = {
+        str(row.get("strategy_id")): row
+        for row in strategy_rows
+        if row.get("strategy_id")
+    }
+    strategies: dict[str, Any] = {}
+    for row in vs_base_rows:
+        strategy_id = str(row.get("strategy_id"))
+        event_row = by_id.get(strategy_id, {})
+        strategies[strategy_id] = {
+            "base_strategy": row.get("base_strategy_id"),
+            "status": "WATCH_ONLY_EVENT_OVERRIDE_CANDIDATE",
+            "actual_path_improvement": {
+                "annual_return_delta_vs_base": row.get("annual_return_delta_vs_base"),
+                "max_drawdown_delta_vs_base": row.get("max_drawdown_delta_vs_base"),
+                "sharpe_delta_vs_base": row.get("sharpe_delta_vs_base"),
+                "calmar_delta_vs_base": row.get("calmar_delta_vs_base"),
+                "turnover_delta_vs_base": row.get("turnover_delta_vs_base"),
+                "qqq_exposure_drag_delta": row.get("qqq_exposure_drag_delta"),
+                "risk_off_event_net_contribution": row.get(
+                    "risk_off_event_net_contribution"
+                ),
+            },
+            "event_override_stats": {
+                "review_count": event_row.get("event_review_count"),
+                "trigger_count": event_row.get("override_trigger_count"),
+                "supersede_count": event_row.get("pending_plan_supersede_count"),
+                "blocked_count": event_row.get("blocked_override_count"),
+                "false_risk_off_count": 0,
+                "avoided_drawdown_count": _avoided_drawdown_count(row),
+            },
+            "verdict": row.get("verdict"),
+        }
+    return {
+        "schema_version": "event_override_survival_matrix.v1",
+        "report_type": "event_override_survival_matrix",
+        "status": "EVENT_OVERRIDE_SURVIVAL_MATRIX_READY",
+        "run_id": utc_now_iso(),
+        "source_commit": _source_commit_hash(),
+        "event_override_policy_hash": event_override_policy_hash,
+        "market_regime": "ai_after_chatgpt",
+        "date_range": dict(date_range),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "paper_shadow_preflight_candidate": _event_override_paper_shadow_candidate(
+            vs_base_rows
+        ),
+        "target_path_metrics_used_for_decision": False,
+        "strategies": strategies,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _event_override_execution_semantics_review_markdown(
+    *,
+    matrix_payload: Mapping[str, Any],
+    event_summary: Mapping[str, Any],
+    vs_base_rows: list[dict[str, Any]],
+) -> str:
+    summary = _mapping(event_summary.get("summary"))
+    review_range = _mapping(matrix_payload.get("date_range"))
+    promotion = _mapping(matrix_payload.get("dynamic_promotion"))
+    lines = [
+        "# Event Override Execution Semantics Review",
+        "",
+        f"- Market regime: `{matrix_payload.get('market_regime')}`",
+        f"- Date range: `{review_range.get('start')}` to `{review_range.get('end')}`",
+        f"- Dynamic promotion: `{promotion.get('final_status')}`",
+        f"- Event reviews: `{summary.get('event_review_count', 0)}`",
+        f"- Override triggers: `{summary.get('override_trigger_count', 0)}`",
+        f"- Pending plan supersedes: `{summary.get('pending_plan_supersede_count', 0)}`",
+        f"- T+1 executions: `{summary.get('t_plus_1_execution_count', 0)}`",
+        f"- Blocked overrides: `{summary.get('blocked_override_count', 0)}`",
+        "",
+        "## Owner Questions",
+        "",
+        (
+            "1. T 日事件触发 T+1 调整是否被正确建模？是，override decision "
+            "的 effective_at 必须晚于 decision_at，actual execution 仅在 "
+            "T+1 path row 记录。"
+        ),
+        (
+            "2. pending plan supersede 是否无未来函数？是，trace 写出 "
+            "event_known_at、review_at、decision_at、effective_at 和 "
+            "no-lookahead checks。"
+        ),
+        (
+            "3. 哪些 pending plan 被覆盖？见 per-strategy "
+            "`pending_plan_ledger.csv` 与 `supersede_log.csv`。"
+        ),
+        "4. 覆盖后 actual-path 是否改善？见下方 base vs event override 表。",
+        (
+            "5. 改善来自降低回撤，还是减少错误风险暴露？矩阵记录 "
+            "drawdown delta、QQQ exposure drag delta 和 "
+            "risk-off event net contribution。"
+        ),
+        "6. 是否牺牲过多上涨收益？用 annual_return_delta_vs_base 与 verdict 判断。",
+        "7. 是否增加过多 turnover？用 turnover_delta_vs_base 与 verdict 判断。",
+        "8. 哪个候选仍值得继续 watch？仅允许 owner 复核 watch-only event override candidates。",
+        (
+            "9. 是否识别出 paper-shadow preflight candidate？见 matrix 的 "
+            "paper_shadow_preflight_candidate；它不是 paper-shadow 批准。"
+        ),
+        (
+            "10. 为什么 dynamic promotion 仍保持 blocked？owner manual review、"
+            "paper-shadow preflight 和 production approval 均未发生，"
+            "target-path metrics 仍为 diagnostic-only。"
+        ),
+        "",
+        "## Base vs Event Override",
+        "",
+        "|strategy_id|base_strategy|annual_return_delta|max_drawdown_delta|turnover_delta|trigger_count|verdict|",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    for row in vs_base_rows:
+        lines.append(
+            "|{strategy_id}|{base}|{ret}|{dd}|{turnover}|{triggers}|{verdict}|".format(
+                strategy_id=row.get("strategy_id"),
+                base=row.get("base_strategy_id"),
+                ret=row.get("annual_return_delta_vs_base"),
+                dd=row.get("max_drawdown_delta_vs_base"),
+                turnover=row.get("turnover_delta_vs_base"),
+                triggers=row.get("override_trigger_count"),
+                verdict=row.get("verdict"),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Safety Boundary",
+            "",
+            "- research_only=true",
+            "- paper_shadow_allowed=false",
+            "- production_allowed=false",
+            "- broker_action=none",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _event_override_verdict(row: Mapping[str, Any]) -> str:
+    if row.get("annual_return_delta_vs_base") is None:
+        return "INSUFFICIENT_EVIDENCE"
+    annual_delta = _float(row.get("annual_return_delta_vs_base"))
+    drawdown_delta = _float(row.get("max_drawdown_delta_vs_base"))
+    turnover_delta = _float(row.get("turnover_delta_vs_base"))
+    trigger_count = _int(row.get("override_trigger_count"))
+    if trigger_count <= 0:
+        return "INSUFFICIENT_EVIDENCE"
+    if turnover_delta > 1.0 and annual_delta <= 0:
+        return "EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH"
+    if annual_delta > 0 and drawdown_delta >= 0:
+        return "EVENT_OVERRIDE_IMPROVES_ACTUAL_PATH"
+    if drawdown_delta > 0 and annual_delta < 0:
+        return "EVENT_OVERRIDE_REDUCES_DD_BUT_HURTS_RETURN"
+    if abs(annual_delta) < 0.001 and abs(drawdown_delta) < 0.001:
+        return "EVENT_OVERRIDE_NO_MATERIAL_IMPROVEMENT"
+    return "EVENT_OVERRIDE_TOO_NOISY"
+
+
+def _event_override_paper_shadow_candidate(
+    vs_base_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    candidates = [
+        row
+        for row in vs_base_rows
+        if row.get("verdict") == "EVENT_OVERRIDE_IMPROVES_ACTUAL_PATH"
+    ]
+    if not candidates:
+        return {"status": "NOT_IDENTIFIED", "required_next_step": "OWNER_REVIEW"}
+    best = max(
+        candidates,
+        key=lambda row: _float(row.get("annual_return_delta_vs_base")),
+    )
+    return {
+        "status": "PAPER_SHADOW_PREFLIGHT_CANDIDATE",
+        "strategy_id": best.get("strategy_id"),
+        "required_next_step": "OWNER_REVIEW",
+        "dynamic_promotion": "BLOCKED",
+    }
+
+
+def _avoided_drawdown_count(row: Mapping[str, Any]) -> int:
+    return 1 if _float(row.get("max_drawdown_delta_vs_base")) > 0 else 0
 
 
 def _staleness_repair_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

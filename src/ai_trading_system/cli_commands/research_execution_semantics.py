@@ -16,6 +16,9 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
     DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH,
+    DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
+    DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH,
     DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
     DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS,
     DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
@@ -30,6 +33,7 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
+    EVENT_OVERRIDE_MODE_T_PLUS_1,
     run_dynamic_actual_path_owner_review_decision,
     run_dynamic_actual_path_policy_sensitivity_review,
     run_dynamic_backtest_engine_contract_update,
@@ -156,6 +160,9 @@ def _execution_semantics_rebacktest_command(
     signal_validity_taxonomy_path: Annotated[
         Path, typer.Option("--signal-validity-taxonomy")
     ] = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
+    event_override_policy_path: Annotated[
+        Path, typer.Option("--event-override-policy")
+    ] = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
     output_root: Annotated[
         Path, typer.Option("--output", "--output-root")
     ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
@@ -205,6 +212,34 @@ def _execution_semantics_rebacktest_command(
         Path,
         typer.Option("--staleness-repair-review-path"),
     ] = DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH,
+    enable_event_override: Annotated[
+        bool,
+        typer.Option("--enable-event-override"),
+    ] = False,
+    event_override_mode: Annotated[
+        str,
+        typer.Option("--event-override-mode"),
+    ] = EVENT_OVERRIDE_MODE_T_PLUS_1,
+    emit_pending_plan_ledger: Annotated[
+        bool,
+        typer.Option("--emit-pending-plan-ledger"),
+    ] = False,
+    emit_supersede_log: Annotated[
+        bool,
+        typer.Option("--emit-supersede-log"),
+    ] = False,
+    emit_event_override_trace: Annotated[
+        bool,
+        typer.Option("--emit-event-override-trace"),
+    ] = False,
+    event_override_survival_matrix_path: Annotated[
+        Path,
+        typer.Option("--event-override-survival-matrix-path"),
+    ] = DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH,
+    event_override_review_path: Annotated[
+        Path,
+        typer.Option("--event-override-review-path"),
+    ] = DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH,
     as_of: Annotated[str | None, typer.Option("--as-of")] = None,
     start_date: Annotated[str | None, typer.Option("--start-date")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date")] = None,
@@ -216,6 +251,7 @@ def _execution_semantics_rebacktest_command(
         simple_config_path=simple_config_path,
         policy_registry_path=policy_registry_path,
         signal_validity_taxonomy_path=signal_validity_taxonomy_path,
+        event_override_policy_path=event_override_policy_path,
         output_root=output_root,
         strategy_ids=strategy or list(DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS),
         execution_policy_id=execution_policy_id,
@@ -230,6 +266,13 @@ def _execution_semantics_rebacktest_command(
         staleness_input_summary_path=staleness_input_summary_path,
         staleness_repair_matrix_path=staleness_repair_matrix_path,
         staleness_repair_review_path=staleness_repair_review_path,
+        enable_event_override=enable_event_override,
+        event_override_mode=event_override_mode,
+        emit_pending_plan_ledger=emit_pending_plan_ledger,
+        emit_supersede_log=emit_supersede_log,
+        emit_event_override_trace=emit_event_override_trace,
+        event_override_survival_matrix_path=event_override_survival_matrix_path,
+        event_override_review_path=event_override_review_path,
     )
     _print_execution_semantics_payload("Execution semantics rebacktest", payload)
 
