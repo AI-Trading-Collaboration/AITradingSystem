@@ -7,6 +7,7 @@
 - promotion_decision_source：`actual_path_only`
 - target_path_metrics_role：`diagnostic_only`
 - dynamic_promotion：`BLOCKED`
+- closeout_label：`CLOSEOUT_REVIEWED_LEGACY_EVIDENCE`
 - paper_shadow_allowed：`false`
 - production_allowed：`false`
 - broker_action：`none`
@@ -44,4 +45,6 @@
 
 ## Gate 结论
 
-本报告只用于 research-only owner review；任何 positive row 都不是 paper-shadow、production、broker 或 dynamic promotion approval。
+TRADING-1486～1505 closeout 后，legacy dynamic result 与 target-path artifacts 只允许作为
+`CLOSEOUT_REVIEWED_LEGACY_EVIDENCE` / diagnostic evidence。任何 positive row 都不是
+paper-shadow、production、broker 或 dynamic promotion approval。

@@ -1,0 +1,106 @@
+schema_version: 1
+policy_id: dynamic_strategy_closeout_policy_v1
+status: active_closeout_baseline
+owner: research_governance
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+closeout_date: '2026-06-27'
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+metric_namespace: actual_path_only
+actual_path_only: true
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+target_path_metrics_role: diagnostic_only
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  anchor_event: ChatGPT public launch
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    TRADING-1326 to 1485 did not establish enough actual-path, net-of-cost,
+    stress, regime, PIT and walk-forward evidence to keep dynamic strategy on a
+    full allocation promotion route. The remaining useful capability is risk
+    advisory and defensive overlay research.
+  intended_effect: >
+    Close out full allocation promotion, preserve audit evidence, and allow
+    observe-only defensive overlay research without enabling automatic trading,
+    production weights, paper-shadow enrollment, or broker execution.
+  validation_evidence: >
+    TRADING-1486 to 1505 closeout artifacts and guardrail tests verify blocked
+    promotion, target-path diagnostic-only use, legacy evidence labeling,
+    observe-only overlay status, and disabled broker/production paths.
+  review_condition: >
+    Review only after owner decision on the closeout pack or before reopening
+    full allocation research under the reopen criteria.
+dynamic_strategy_policy:
+  full_allocation:
+    status: PAUSED
+    promotion_enabled: false
+    production_enabled: false
+    broker_enabled: false
+    research_route: STOPPED_UNTIL_REOPEN_CRITERIA_MET
+    current_conclusion: PAUSE_FULL_ALLOCATION_RESEARCH
+    blocked_reasons:
+      - ACTUAL_PATH_EDGE_NOT_STABLE_ENOUGH_FOR_FULL_ALLOCATION
+      - SIMPLE_BASELINES_NOT_CONSISTENTLY_BEATEN
+      - RISK_OFF_TOO_NOISY
+      - WALK_FORWARD_AND_REGIME_BLOCKERS_REMAIN
+      - OWNER_CLOSEOUT_DECISION_REQUIRED
+  defensive_overlay:
+    status: RESEARCH_ACTIVE
+    execution_mode: observe_only
+    promotion_enabled: false
+    production_enabled: false
+    broker_enabled: false
+    allowed_actions:
+      - advisory_risk_reduction
+      - manual_review_required
+      - observe_only_forward_watch
+    disallowed_actions:
+      - automatic_trade
+      - automatic_risk_on
+      - full_allocation_weight_control
+      - broker_order
+    risk_direction_policy: risk_reduction_only
+    risk_on_policy: slow_confirmation_required
+  advisory_diagnostic:
+    status: ACTIVE
+    output_only: true
+    promotion_enabled: false
+    production_enabled: false
+    broker_enabled: false
+    allowed_outputs:
+      - event_risk_score
+      - regime_diagnosis
+      - high_vol_stress_flag
+      - manual_review_advisory
+  paper_shadow:
+    status: NOT_READY
+    enabled: false
+    owner_preflight_required: true
+  production:
+    status: DISABLED
+    enabled: false
+  broker:
+    status: DISABLED
+    enabled: false
+legacy_evidence_policy:
+  closeout_label: CLOSEOUT_REVIEWED_LEGACY_EVIDENCE
+  legacy_dynamic_result_role: historical_research_evidence_only
+  target_path_metrics_role: diagnostic_only
+  target_path_metrics_can_reopen_full_allocation: false
+reopen_policy:
+  criteria_path: inputs/research_reviews/dynamic_full_allocation_reopen_criteria.yaml
+  owner_approval_required: true
+  paper_shadow_preflight_required: true
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

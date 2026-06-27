@@ -1,0 +1,60 @@
+schema_version: dynamic_strategy_final_status.v1
+report_type: dynamic_strategy_final_status
+status: DYNAMIC_STRATEGY_FINAL_STATUS_READY
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: 7fd0905654ff11f436d407bee1fd123760c74f76750401b12de57f50abbe8bf7
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+metric_namespace: actual_path_only
+actual_path_only: true
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+target_path_metrics_role: diagnostic_only
+final_statuses:
+  - FULL_ALLOCATION_RESEARCH_PAUSED
+  - DEFENSIVE_OVERLAY_RESEARCH_ACTIVE
+  - ADVISORY_DIAGNOSTIC_ACTIVE
+  - PAPER_SHADOW_NOT_READY
+  - PROMOTION_BLOCKED
+  - PRODUCTION_DISABLED
+  - BROKER_DISABLED
+status_controls:
+  full_allocation_research:
+    status: PAUSED
+    promotion_enabled: false
+    reopen_requires: inputs/research_reviews/dynamic_full_allocation_reopen_criteria.yaml
+  defensive_overlay_research:
+    status: ACTIVE
+    execution_mode: observe_only
+    promotion_enabled: false
+    production_enabled: false
+    broker_enabled: false
+  advisory_diagnostic:
+    status: ACTIVE
+    output_only: true
+    broker_enabled: false
+  paper_shadow:
+    status: NOT_READY
+    enabled: false
+  promotion:
+    status: BLOCKED
+    enabled: false
+  production:
+    status: DISABLED
+    enabled: false
+  broker:
+    status: DISABLED
+    enabled: false
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

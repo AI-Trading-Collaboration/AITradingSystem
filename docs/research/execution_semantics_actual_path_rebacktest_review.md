@@ -4,6 +4,7 @@
 
 - Review status: `NON_BLOCKING_WARNING`
 - Dynamic promotion status: `BLOCKED`
+- Closeout label after TRADING-1486～1505: `CLOSEOUT_REVIEWED_LEGACY_EVIDENCE`
 - Runtime source: `outputs/research_strategies/execution_semantics/`
 - Snapshot: `docs/research/artifact_snapshots/execution_semantics_actual_path_rebacktest_snapshot.yaml`
 
@@ -13,7 +14,9 @@
 actual-path strategy ranking；actual 与 target 排序差异来自 execution policy、lag 和
 staleness，而不是数据质量 gate failure。
 
-Dynamic promotion 没有重新打开。4 个 dynamic 策略仍为 `NOT_PROMOTION_ELIGIBLE`，主要阻断
+Dynamic promotion 没有重新打开。TRADING-1486～1505 closeout 后，本报告及其引用的旧
+dynamic evidence 只能作为 `CLOSEOUT_REVIEWED_LEGACY_EVIDENCE` 使用，不能作为 promotion
+evidence。4 个 dynamic 策略仍为 `NOT_PROMOTION_ELIGIBLE`，主要阻断
 原因是 `SIGNAL_STALENESS_COST_MATERIAL`、`EXECUTION_LAG_COST_MATERIAL` 和
 `OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION`。
 

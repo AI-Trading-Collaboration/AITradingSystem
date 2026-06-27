@@ -1,0 +1,122 @@
+schema_version: dynamic_defensive_overlay_feasibility.v1
+report_type: dynamic_defensive_overlay_feasibility
+status: DEFENSIVE_OVERLAY_FEASIBILITY_READY_WITH_GUARDRAILS
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: 7fd0905654ff11f436d407bee1fd123760c74f76750401b12de57f50abbe8bf7
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+metric_namespace: actual_path_only
+actual_path_only: true
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+target_path_metrics_role: diagnostic_only
+overlay_conclusion:
+  defensive_overlay_research: ACTIVE
+  advisory_diagnostic: ACTIVE
+  observe_only_forward_watch_allowed: true
+  automatic_production_execution_allowed: false
+  automatic_risk_on_allowed: false
+  defensive_overlay_risk_direction: risk_reduction_only
+  risk_on_policy: slow_confirmation_required
+module_rows:
+  - module_id: event_risk_score
+    independent_risk_control_value: conditional
+    recommended_role: advisory_only
+    may_control_position: false
+    allowed_actions:
+      - manual_review_advisory
+    blocked_actions:
+      - automatic_trade
+      - broker_order
+    evidence: inputs/research_reviews/event_override_ex_ante_taxonomy.yaml
+    limitation: Runtime event override traces lack event_type/source taxonomy provenance.
+  - module_id: risk_off_override
+    independent_risk_control_value: conditional
+    recommended_role: observe_only_defensive_overlay_candidate
+    may_control_position: false
+    allowed_actions:
+      - advisory_risk_reduction
+      - observe_only_forward_watch
+    blocked_actions:
+      - automatic_risk_on
+      - full_allocation_weight_control
+      - broker_order
+    evidence: inputs/research_reviews/risk_timing_quality_matrix.yaml
+    limitation: Risk-off timing remains too noisy and false-positive cost is material.
+  - module_id: regime_diagnosis
+    independent_risk_control_value: medium
+    recommended_role: advisory_diagnostic
+    may_control_position: false
+    allowed_actions:
+      - regime_diagnosis_output
+      - manual_review_required
+    blocked_actions:
+      - automatic_trade
+      - full_allocation_weight_control
+    evidence: inputs/research_reviews/regime_baseline_expansion_matrix.yaml
+    limitation: Dynamic strategies do not consistently beat simple transparent baselines.
+  - module_id: high_vol_stress_flag
+    independent_risk_control_value: medium
+    recommended_role: advisory_diagnostic
+    may_control_position: false
+    allowed_actions:
+      - stress_warning_output
+      - manual_review_required
+    blocked_actions:
+      - automatic_trade
+      - broker_order
+    evidence: inputs/research_reviews/stress_risk_metrics_matrix.yaml
+    limitation: Stress gate remains blocked for dynamic variants.
+  - module_id: cash_sgov_fallback
+    independent_risk_control_value: medium
+    recommended_role: defensive_overlay_candidate
+    may_control_position: false
+    allowed_actions:
+      - advisory_risk_reduction
+      - manual_review_required
+    blocked_actions:
+      - automatic_cash_shift
+      - production_weight_change
+      - broker_order
+    evidence: inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml
+    limitation: SGOV/cash yield proxy is research-only and not a production settlement model.
+  - module_id: manual_review_advisory
+    independent_risk_control_value: high
+    recommended_role: advisory_diagnostic
+    may_control_position: false
+    allowed_actions:
+      - owner_review_prompt
+      - observe_only_forward_watch
+    blocked_actions:
+      - automatic_trade
+      - automatic_paper_shadow_enrollment
+    evidence: docs/research/dynamic_strategy_closeout_decision_pack.md
+    limitation: Owner decision is still required before any next-stage watch program.
+required_answers:
+  which_modules_have_independent_value:
+    - regime_diagnosis
+    - high_vol_stress_flag
+    - manual_review_advisory
+    - risk_off_override_as_observe_only_candidate
+  modules_that_must_not_control_positions:
+    - event_risk_score
+    - risk_off_override
+    - regime_diagnosis
+    - high_vol_stress_flag
+    - cash_sgov_fallback
+  defensive_overlay_only_allows_risk_reduction: true
+  risk_on_requires_slow_confirmation: true
+  observe_only_forward_watch_allowed: true
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

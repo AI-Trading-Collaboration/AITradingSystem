@@ -1,0 +1,69 @@
+schema_version: dynamic_full_allocation_reopen_criteria.v1
+report_type: dynamic_full_allocation_reopen_criteria
+status: FULL_ALLOCATION_REOPEN_CRITERIA_READY
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: 7fd0905654ff11f436d407bee1fd123760c74f76750401b12de57f50abbe8bf7
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+metric_namespace: actual_path_only
+actual_path_only: true
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+target_path_metrics_role: diagnostic_only
+current_reopen_status: NOT_ALLOWED
+criteria:
+  - criterion_id: LOCKED_SAMPLE_ACTUAL_PATH_EDGE
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: New actual-path candidate must stably beat qqq_60_sgov_40 on locked validation sample.
+  - criterion_id: MULTI_REGIME_POSITIVE_CONTRIBUTION
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Net contribution must be positive in at least two different market regimes.
+  - criterion_id: RISK_TIMING_ATTRIBUTION_POSITIVE
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Risk-off and risk-on timing attribution must show net positive value after missed-upside cost.
+  - criterion_id: NET_OF_COST_EDGE_SURVIVES
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Net-of-cost annual return and risk-adjusted metrics must remain valid after governed transaction cost and cash-yield assumptions.
+  - criterion_id: STRESS_METRICS_NOT_WORSE
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Stress-day worst-window metrics and high-vol loss must not worsen versus qqq_60_sgov_40 and qqq_50_sgov_50.
+  - criterion_id: TURNOVER_CONTROLLED
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Turnover must remain within reviewed policy and not be driven by noisy event overrides.
+  - criterion_id: PIT_DATA_AVAILABILITY_AUDIT_PASS
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Timestamped PIT availability audit must pass without promotion-blocking unknown or approximated decision inputs.
+  - criterion_id: WALK_FORWARD_OUT_OF_SAMPLE_PASS
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Walk-forward and out-of-sample validation must pass without regime overfit or parameter sensitivity blocker.
+  - criterion_id: OWNER_APPROVED_PAPER_SHADOW_PREFLIGHT
+    required_status: PASS
+    current_status: NOT_MET
+    acceptance_condition: Owner must manually approve a paper-shadow preflight after all criteria above pass.
+disallowed_reopen_evidence:
+  - target_path_metrics
+  - PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE
+  - CLOSEOUT_REVIEWED_LEGACY_EVIDENCE
+  - single_sample_historical_tuning
+  - untracked_runtime_artifacts_without_hash
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

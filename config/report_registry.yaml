@@ -18705,6 +18705,155 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_blocker_inventory
+    title: Dynamic Strategy Blocker Inventory
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-strategy-blocker-inventory
+    artifact_globs:
+      - docs/research/dynamic_strategy_blocker_inventory.md
+      - inputs/research_reviews/dynamic_strategy_blocker_inventory.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1486 blocker inventory must be refreshed after any source evidence in TRADING-1326 to 1485 changes or before reopening full allocation research.
+    owner_action: review_dynamic_strategy_blocker_inventory_before_closeout_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_candidate_disposition_matrix
+    title: Dynamic Strategy Candidate Disposition Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-strategy-candidate-disposition
+    artifact_globs:
+      - inputs/research_reviews/dynamic_strategy_candidate_disposition_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1487 disposition matrix must be refreshed after candidate actual-path, staleness, event override, cost, stress, or regime evidence changes.
+    owner_action: review_candidate_disposition_before_dynamic_closeout_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_full_allocation_viability_assessment
+    title: Dynamic Full Allocation Viability Assessment
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-full-allocation-viability
+    artifact_globs:
+      - docs/research/dynamic_full_allocation_viability_assessment.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1488 viability assessment must be refreshed before changing full allocation research status.
+    owner_action: review_full_allocation_viability_before_reopening_dynamic_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_defensive_overlay_feasibility_review
+    title: Dynamic Defensive Overlay Feasibility Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-defensive-overlay-feasibility
+    artifact_globs:
+      - docs/research/dynamic_defensive_overlay_feasibility_review.md
+      - inputs/research_reviews/dynamic_defensive_overlay_feasibility.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1489 overlay feasibility must be refreshed before any observe-only defensive overlay watch starts.
+    owner_action: review_overlay_feasibility_before_observe_only_forward_watch
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_final_status
+    title: Dynamic Strategy Final Status
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-strategy-final-status
+    artifact_globs:
+      - config/research/dynamic_strategy_closeout_policy.yaml
+      - inputs/research_reviews/dynamic_strategy_final_status.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1490 final status must be refreshed after closeout policy or owner decision changes.
+    owner_action: review_dynamic_strategy_final_status_before_any_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_closeout_decision_pack
+    title: Dynamic Strategy Closeout Decision Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-strategy-closeout-decision-pack
+    artifact_globs:
+      - docs/research/dynamic_strategy_closeout_decision_pack.md
+      - inputs/research_reviews/dynamic_strategy_closeout_snapshot.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1491 and TRADING-1496 owner closeout pack and snapshot must be refreshed after any closeout source evidence changes.
+    owner_action: review_dynamic_strategy_closeout_decision_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_full_allocation_reopen_criteria
+    title: Dynamic Full Allocation Reopen Criteria
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-full-allocation-reopen-criteria
+    artifact_globs:
+      - docs/research/dynamic_full_allocation_reopen_criteria.md
+      - inputs/research_reviews/dynamic_full_allocation_reopen_criteria.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1492 reopen criteria must be reviewed before any new full allocation research route is started.
+    owner_action: review_reopen_criteria_before_full_allocation_restart
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_closeout_reader_brief
+    title: Dynamic Strategy Closeout Reader Brief
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review dynamic-strategy-closeout-reader-brief
+    artifact_globs:
+      - docs/research/dynamic_strategy_closeout_reader_brief.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1497 reader brief must be refreshed after closeout disposition, owner recommendation, or safety boundary changes.
+    owner_action: review_reader_brief_summary_before_owner_handoff
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

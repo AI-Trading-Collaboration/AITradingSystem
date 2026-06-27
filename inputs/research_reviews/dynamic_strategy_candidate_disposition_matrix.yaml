@@ -1,0 +1,155 @@
+schema_version: dynamic_strategy_candidate_disposition_matrix.v1
+report_type: dynamic_strategy_candidate_disposition_matrix
+status: DYNAMIC_STRATEGY_CANDIDATE_DISPOSITION_READY
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: 7fd0905654ff11f436d407bee1fd123760c74f76750401b12de57f50abbe8bf7
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+metric_namespace: actual_path_only
+actual_path_only: true
+target_path_metrics_role: diagnostic_only
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+final_recommendation: APPROVE_DOWNGRADE_TO_DEFENSIVE_OVERLAY
+candidate_rows:
+  - strategy_id: limited_adjustment
+    current_status: OVERLAY_CANDIDATE
+    actual_path_rank: 1_of_dynamic_candidates
+    relative_vs_100_qqq:
+      annual_return_delta: -0.096255
+      interpretation: underperforms_100_qqq
+    relative_vs_60_40:
+      annual_return_delta: 0.000671
+      interpretation: marginally_above_reference_baseline
+    relative_vs_50_50:
+      annual_return_delta: 0.024928
+      interpretation: above_lower_risk_reference_baseline
+    major_strengths:
+      - EDGE_SURVIVES_ACTUAL_PATH
+      - STABLE_ACROSS_WINDOWS
+      - lower_drawdown_than_100_qqq
+      - cost_drag_low_relative_to_other_dynamic_variants
+    major_failures:
+      - underperforms_100_qqq
+      - stress_gate_status_BLOCKED
+      - risk_off_net_contribution_negative
+      - not_enough_full_allocation_edge
+    promotion_readiness: BLOCKED
+    recommended_disposition: DOWNGRADE_TO_DEFENSIVE_OVERLAY
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+    current_status: WATCH_ONLY
+    actual_path_rank: 2_of_dynamic_candidates
+    relative_vs_100_qqq:
+      annual_return_delta: -0.106527
+      interpretation: underperforms_100_qqq
+    relative_vs_60_40:
+      annual_return_delta: -0.009601
+      interpretation: underperforms_reference_baseline
+    relative_vs_50_50:
+      annual_return_delta: 0.014656
+      interpretation: above_lower_risk_reference_baseline
+    major_strengths:
+      - lower_drawdown_than_100_qqq
+      - advisory_regime_signal_has_diagnostic_value
+    major_failures:
+      - FALSE_RISK_OFF_DOMINATES
+      - REGIME_OVERFITTED
+      - turnover_high
+      - risk_timing_verdict_RISK_OFF_TOO_NOISY
+    promotion_readiness: BLOCKED
+    recommended_disposition: ADVISORY_DIAGNOSTIC_ONLY
+  - strategy_id: limited_adjustment_staleness_aware_v1
+    current_status: REJECTED
+    actual_path_rank: not_ranked_no_material_improvement
+    relative_vs_100_qqq:
+      annual_return_delta: -0.096255
+      interpretation: inherits_parent_underperformance
+    relative_vs_60_40:
+      annual_return_delta: 0.000671
+      interpretation: no_improvement_vs_parent
+    relative_vs_50_50:
+      annual_return_delta: 0.024928
+      interpretation: no_improvement_vs_parent
+    major_strengths:
+      - tested_staleness_repair_path
+    major_failures:
+      - NO_MATERIAL_IMPROVEMENT
+      - repaired_candidate_cannot_unlock_promotion
+    promotion_readiness: BLOCKED
+    recommended_disposition: ARCHIVE_AS_RESEARCH_EVIDENCE
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1
+    current_status: REJECTED
+    actual_path_rank: not_ranked_no_material_improvement
+    relative_vs_100_qqq:
+      annual_return_delta: -0.106527
+      interpretation: inherits_parent_underperformance
+    relative_vs_60_40:
+      annual_return_delta: -0.009601
+      interpretation: no_improvement_vs_parent
+    relative_vs_50_50:
+      annual_return_delta: 0.014656
+      interpretation: no_improvement_vs_parent
+    major_strengths:
+      - tested_staleness_repair_path
+    major_failures:
+      - NO_MATERIAL_IMPROVEMENT
+      - parent_signal_remains_false_risk_off_dominated
+    promotion_readiness: BLOCKED
+    recommended_disposition: ARCHIVE_AS_RESEARCH_EVIDENCE
+  - strategy_id: limited_adjustment_event_override_v1
+    current_status: WATCH_ONLY
+    actual_path_rank: 3_of_dynamic_candidates
+    relative_vs_100_qqq:
+      annual_return_delta: -0.098339
+      interpretation: underperforms_100_qqq
+    relative_vs_60_40:
+      annual_return_delta: -0.001413
+      interpretation: underperforms_reference_baseline
+    relative_vs_50_50:
+      annual_return_delta: 0.022844
+      interpretation: above_lower_risk_reference_baseline
+    major_strengths:
+      - event_response_semantics_are_audited
+      - avoided_drawdown_case_exists
+    major_failures:
+      - EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH
+      - runtime_taxonomy_gap
+      - FALSE_RISK_OFF_DOMINATES
+      - risk_timing_verdict_RISK_OFF_TOO_NOISY
+    promotion_readiness: BLOCKED
+    recommended_disposition: ADVISORY_DIAGNOSTIC_ONLY
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    current_status: WATCH_ONLY
+    actual_path_rank: 4_of_dynamic_candidates
+    relative_vs_100_qqq:
+      annual_return_delta: -0.104416
+      interpretation: underperforms_100_qqq
+    relative_vs_60_40:
+      annual_return_delta: -0.00749
+      interpretation: underperforms_reference_baseline
+    relative_vs_50_50:
+      annual_return_delta: 0.016767
+      interpretation: above_lower_risk_reference_baseline
+    major_strengths:
+      - fast_risk_off_research_trace_available
+      - lower_drawdown_than_100_qqq
+    major_failures:
+      - EVENT_OVERRIDE_TOO_NOISY
+      - turnover_extreme
+      - runtime_taxonomy_gap
+      - risk_timing_verdict_RISK_OFF_TOO_NOISY
+    promotion_readiness: BLOCKED
+    recommended_disposition: ADVISORY_DIAGNOSTIC_ONLY
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

@@ -1,0 +1,202 @@
+schema_version: dynamic_strategy_blocker_inventory.v1
+report_type: dynamic_strategy_blocker_inventory
+status: DYNAMIC_STRATEGY_BLOCKER_INVENTORY_READY
+review_id: dynamic_strategy_closeout_2026-06-27
+run_id: closeout_2026-06-27
+source_commit: 28cabc10b042bd9da98780070aea9f85d54c5b5d
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: 7fd0905654ff11f436d407bee1fd123760c74f76750401b12de57f50abbe8bf7
+closeout_policy_path: config/research/dynamic_strategy_closeout_policy.yaml
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+metric_namespace: actual_path_only
+actual_path_only: true
+promotion_status: BLOCKED
+owner_review_status: OWNER_REVIEW_REQUIRED
+target_path_metrics_role: diagnostic_only
+source_evidence:
+  actual_path_edge_attribution_matrix:
+    path: inputs/research_reviews/actual_path_edge_attribution_matrix.yaml
+    sha256: 9ddf4e68d3aac43fb0dfad558c681ed965cfb924b4288f56f69b7cca350619e4
+  dynamic_strategy_objective_gate_matrix:
+    path: inputs/research_reviews/dynamic_strategy_objective_gate_matrix.yaml
+    sha256: 33cd8759b36088a36c68d21f1b7cf5030a36b7611e1144d82baea9812ded7218
+  staleness_repair_matrix:
+    path: inputs/research_reviews/staleness_repair_matrix.yaml
+    sha256: 15dad80e003e715981a3a75e6016ec805e7f7669aca0f02fc4fa1bd5e7f189da
+  event_override_survival_matrix:
+    path: inputs/research_reviews/event_override_survival_matrix.yaml
+    sha256: a33fc21a4cd8061d625ff9400b8eef02dd38cc4066ff868192d2e4320eb7f9cc
+  dynamic_strategy_walk_forward_matrix:
+    path: inputs/research_reviews/dynamic_strategy_walk_forward_matrix.yaml
+    sha256: dc162b336c0353668cff7865203c456a79aa6ac145f44420385881700280617e
+  event_override_ex_ante_taxonomy:
+    path: inputs/research_reviews/event_override_ex_ante_taxonomy.yaml
+    sha256: 82416bbfdcfb355b0f91affba2caf757964207de9518f03675f9c608154fc82d
+  risk_timing_quality_matrix:
+    path: inputs/research_reviews/risk_timing_quality_matrix.yaml
+    sha256: 34ce44d9114d4792a0c777b455a82e34289fae7393cd8785a746b8c39872b3e1
+  transaction_cost_cash_yield_matrix:
+    path: inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml
+    sha256: e70569feb856fc0c8de5ad58e5682a875f9ea356a857a8289ba9cc1f981c98c6
+  stress_risk_metrics_matrix:
+    path: inputs/research_reviews/stress_risk_metrics_matrix.yaml
+    sha256: 781b00fe222dcffb244ea20c6d6c484aacc9973c42a0a32f174737744db72f0c
+  regime_baseline_expansion_matrix:
+    path: inputs/research_reviews/regime_baseline_expansion_matrix.yaml
+    sha256: 4b1b0a257c94604ccac6331656cef53093c63dc7ff720a6a9e74dc5884b69bef
+blockers:
+  - blocker_id: DYN-CLOSEOUT-001_TARGET_PATH_LEGACY_EVIDENCE
+    category: governance
+    severity: blocking
+    status: accepted
+    evidence_artifact: inputs/research_reviews/research_artifact_governance_snapshot.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: medium
+    expected_value_of_fix: low
+    recommendation: Keep target-path metrics diagnostic-only and label old dynamic evidence as CLOSEOUT_REVIEWED_LEGACY_EVIDENCE.
+  - blocker_id: DYN-CLOSEOUT-002_FULL_ALLOCATION_EDGE_NOT_STABLE
+    category: execution
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/actual_path_edge_attribution_matrix.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+    can_be_fixed: false
+    fix_cost: high
+    expected_value_of_fix: low
+    recommendation: Pause full allocation research; do not continue historical tuning without new locked-sample evidence.
+  - blocker_id: DYN-CLOSEOUT-003_STALENESS_REPAIR_NO_IMPROVEMENT
+    category: staleness
+    severity: material
+    status: closed
+    evidence_artifact: inputs/research_reviews/staleness_repair_matrix.yaml
+    affected_strategies:
+      - limited_adjustment_staleness_aware_v1
+      - dynamic_v0_5_ai_trend_confirmed_staleness_aware_v1
+    can_be_fixed: false
+    fix_cost: medium
+    expected_value_of_fix: low
+    recommendation: Archive staleness-aware repaired variants as research evidence.
+  - blocker_id: DYN-CLOSEOUT-004_EVENT_OVERRIDE_TAXONOMY_RUNTIME_GAP
+    category: event_override
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/event_override_ex_ante_taxonomy.yaml
+    affected_strategies:
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: high
+    expected_value_of_fix: medium
+    recommendation: Require timestamped external event taxonomy provenance before any event-override preflight.
+  - blocker_id: DYN-CLOSEOUT-005_EVENT_OVERRIDE_TURNOVER_AND_NOISE
+    category: event_override
+    severity: material
+    status: open
+    evidence_artifact: inputs/research_reviews/event_override_survival_matrix.yaml
+    affected_strategies:
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: high
+    expected_value_of_fix: low
+    recommendation: Keep event override as observe-only diagnostic; do not let it control full allocation weights.
+  - blocker_id: DYN-CLOSEOUT-006_RISK_OFF_TOO_NOISY
+    category: stress
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/risk_timing_quality_matrix.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: high
+    expected_value_of_fix: medium
+    recommendation: Restrict surviving value to risk-reduction advisory and manual review until forward evidence improves timing quality.
+  - blocker_id: DYN-CLOSEOUT-007_PIT_DATE_LEVEL_CAVEAT
+    category: data
+    severity: material
+    status: accepted
+    evidence_artifact: inputs/research_reviews/pit_data_availability_inventory.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: high
+    expected_value_of_fix: medium
+    recommendation: Require stronger timestamped PIT source audit before reopening full allocation research.
+  - blocker_id: DYN-CLOSEOUT-008_WALK_FORWARD_REGIME_FRAGILITY
+    category: overfitting
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/dynamic_strategy_walk_forward_matrix.yaml
+    affected_strategies:
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: false
+    fix_cost: high
+    expected_value_of_fix: low
+    recommendation: Treat continued historical tuning as overfitting risk unless a new locked validation candidate appears.
+  - blocker_id: DYN-CLOSEOUT-009_COST_TURNOVER_DRAG
+    category: cost
+    severity: material
+    status: open
+    evidence_artifact: inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml
+    affected_strategies:
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: medium
+    expected_value_of_fix: low
+    recommendation: Do not promote high-turnover variants; preserve net-of-cost disclosure in any overlay watch.
+  - blocker_id: DYN-CLOSEOUT-010_STRESS_GATE_BLOCKED
+    category: stress
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/stress_risk_metrics_matrix.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: true
+    fix_cost: high
+    expected_value_of_fix: medium
+    recommendation: Allow stress signals only as advisory flags until stress-day metrics stop blocking.
+  - blocker_id: DYN-CLOSEOUT-011_SIMPLE_BASELINES_NOT_BEATEN
+    category: regime
+    severity: blocking
+    status: open
+    evidence_artifact: inputs/research_reviews/regime_baseline_expansion_matrix.yaml
+    affected_strategies:
+      - limited_adjustment
+      - dynamic_v0_5_ai_trend_confirmed_only
+      - limited_adjustment_event_override_v1
+      - dynamic_v0_5_ai_trend_confirmed_event_override_v1
+    can_be_fixed: false
+    fix_cost: high
+    expected_value_of_fix: low
+    recommendation: Prefer simple transparent baselines for allocation conclusions; keep dynamic modules as overlay diagnostics.
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true
