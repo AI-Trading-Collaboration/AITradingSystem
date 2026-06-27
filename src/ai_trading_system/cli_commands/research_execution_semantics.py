@@ -13,6 +13,7 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS,
     DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
     DEFAULT_LAYER1_SELECTOR_CONFIG_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
@@ -31,6 +32,8 @@ from ai_trading_system.execution_semantics import (
     run_execution_semantics_data_lineage_audit,
     run_execution_semantics_external_validation_update,
     run_execution_semantics_master_review,
+    run_execution_semantics_rebacktest,
+    run_execution_semantics_rebacktest_gate,
     run_execution_semantics_reporting_update,
     run_implicit_monthly_rebalance_assumption_audit,
     run_reader_brief_execution_semantics_safe_preview,
@@ -48,6 +51,9 @@ console = Console()
 
 
 def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) -> None:
+    strategies_app.command("execution-semantics-rebacktest")(
+        _execution_semantics_rebacktest_command
+    )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -118,6 +124,49 @@ def _make_execution_semantics_command(
     return command
 
 
+def _execution_semantics_rebacktest_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output", "--output-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    strategy: Annotated[
+        list[str] | None,
+        typer.Option("--strategy", help="Strategy id; may be repeated."),
+    ] = None,
+    execution_policy_id: Annotated[
+        str | None,
+        typer.Option("--execution-policy-id"),
+    ] = None,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_execution_semantics_rebacktest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        output_root=output_root,
+        strategy_ids=strategy or list(DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS),
+        execution_policy_id=execution_policy_id,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Execution semantics rebacktest", payload)
+
+
 def _call_builder(
     builder: Callable[..., dict[str, object]],
     kwargs: dict[str, object],
@@ -183,6 +232,11 @@ _EXECUTION_SEMANTICS_COMMANDS: tuple[
         "target-vs-actual-position-path-builder",
         run_target_vs_actual_position_path_builder,
         "Target vs actual position path builder",
+    ),
+    (
+        "execution-semantics-rebacktest-gate",
+        run_execution_semantics_rebacktest_gate,
+        "Execution semantics rebacktest gate",
     ),
     (
         "rebalance-frequency-sensitivity-suite",

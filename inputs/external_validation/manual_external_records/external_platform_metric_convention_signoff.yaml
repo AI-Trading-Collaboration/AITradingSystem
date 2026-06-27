@@ -17,6 +17,40 @@ owner_signoff:
     This signoff explains metric convention differences for static baseline
     reconciliation only. It does not sign off SGOV-specific convention handling,
     dynamic weight-path replay, paper-shadow, production, or broker action.
+portfolio_visualizer:
+  platform_role: external_static_baseline_sanity_check
+  return_metrics:
+    annual_return:
+      external_metric_id: annual_return_total_return_monthly_rebalanced_portfolio
+      external_convention: total_return_monthly_rebalanced_portfolio
+      internal_metric_id: annual_return_total_return_portfolio_path
+      internal_convention: total_return_portfolio_path
+      acceptance_tolerance_abs_pct: 0.5
+      status: reconciled
+      promotion_usage: allowed_for_static_baseline_validation_only
+  risk_metrics:
+    max_drawdown:
+      external_metric_id: max_drawdown_monthly_return
+      external_convention: monthly_return_series_drawdown
+      internal_metric_id: max_drawdown_daily_equity
+      internal_convention: daily_equity_path_drawdown
+      expected_relation: internal_should_be_equal_or_more_conservative
+      status: convention_mismatch_accepted
+      promotion_usage: not_cross_comparable
+    sharpe:
+      external_metric_id: sharpe_monthly_tbill_rf
+      external_convention: monthly_excess_return_with_us_3m_tbill_rate
+      internal_metric_id: sharpe_daily_zero_rf
+      internal_convention: daily_excess_return_zero_risk_free_baseline
+      status: convention_mismatch_accepted
+      promotion_usage: not_cross_comparable
+    calmar:
+      external_metric_id: calmar_monthly_return_dd
+      external_convention: annual_return_divided_by_monthly_return_drawdown
+      internal_metric_id: calmar_daily_equity_dd
+      internal_convention: annual_return_divided_by_daily_equity_drawdown
+      status: convention_mismatch_accepted
+      promotion_usage: not_cross_comparable
 records:
   - external_tool: Portfolio Visualizer
     metric_name: annual_return

@@ -32,6 +32,97 @@ safety_boundary:
   manual_review_required: true
   research_only: true
   observe_only: true
+strategy_execution_policies:
+  - strategy_id: 100_qqq
+    strategy_type: static
+    policy_status: active
+    execution_policy_id: no_rebalance
+    signal_policy: {signal_source: static_weight, signal_observation_time: not_applicable, signal_effective_earliest: start_date, signal_validity_window_bdays: 9999, stale_signal_behavior: not_applicable}
+    rebalance_policy: {rebalance_frequency: no_rebalance, rebalance_anchor: not_applicable, allow_intramonth_rebalance: false, execution_lag_bdays: 0}
+    position_policy: {target_weight_rule: static_100_qqq, actual_weight_fill_rule: hold_static_weight, no_signal_behavior: hold_static_weight, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 0.0, slippage_bps: 0.0, turnover_calculation: static_no_trade}
+    validation_policy: {requires_actual_position_rebacktest: false, promotion_allowed_from_target_path: true, backtest_generation: static_baseline}
+  - strategy_id: qqq_50_sgov_50
+    strategy_type: static
+    policy_status: active
+    execution_policy_id: monthly_eom_v1
+    signal_policy: {signal_source: static_weight, signal_observation_time: not_applicable, signal_effective_earliest: start_date, signal_validity_window_bdays: 9999, stale_signal_behavior: not_applicable}
+    rebalance_policy: {rebalance_frequency: monthly, rebalance_anchor: month_end, allow_intramonth_rebalance: false, execution_lag_bdays: 0}
+    position_policy: {target_weight_rule: static_50_50, actual_weight_fill_rule: rebalance_to_static_weight, no_signal_behavior: hold_static_weight, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 0.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: false, promotion_allowed_from_target_path: true, backtest_generation: static_baseline}
+  - strategy_id: qqq_60_sgov_40
+    strategy_type: static
+    policy_status: active
+    execution_policy_id: monthly_eom_v1
+    signal_policy: {signal_source: static_weight, signal_observation_time: not_applicable, signal_effective_earliest: start_date, signal_validity_window_bdays: 9999, stale_signal_behavior: not_applicable}
+    rebalance_policy: {rebalance_frequency: monthly, rebalance_anchor: month_end, allow_intramonth_rebalance: false, execution_lag_bdays: 0}
+    position_policy: {target_weight_rule: static_60_40, actual_weight_fill_rule: rebalance_to_static_weight, no_signal_behavior: hold_static_weight, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 0.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: false, promotion_allowed_from_target_path: true, backtest_generation: static_baseline}
+  - strategy_id: equal_risk_qqq_sgov
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: monthly_plus_threshold_5pct_v1
+    signal_policy: {signal_source: close_based_inverse_volatility, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: monthly_plus_threshold, rebalance_anchor: month_end, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: inverse_volatility_qqq_sgov, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
+  - strategy_id: equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: monthly_plus_vol_shock_v1
+    signal_policy: {signal_source: close_based_vol_target, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 10, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: monthly_plus_override, rebalance_anchor: month_end, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: balanced_core_vol_target, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
+  - strategy_id: no_trade
+    strategy_type: static
+    policy_status: active
+    execution_policy_id: no_rebalance
+    signal_policy: {signal_source: no_trade_baseline, signal_observation_time: not_applicable, signal_effective_earliest: start_date, signal_validity_window_bdays: 9999, stale_signal_behavior: not_applicable}
+    rebalance_policy: {rebalance_frequency: no_rebalance, rebalance_anchor: not_applicable, allow_intramonth_rebalance: false, execution_lag_bdays: 0}
+    position_policy: {target_weight_rule: safe_asset_baseline, actual_weight_fill_rule: hold_static_weight, no_signal_behavior: hold_static_weight, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 0.0, slippage_bps: 0.0, turnover_calculation: static_no_trade}
+    validation_policy: {requires_actual_position_rebacktest: false, promotion_allowed_from_target_path: true, backtest_generation: static_baseline}
+  - strategy_id: limited_adjustment
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: monthly_plus_threshold_5pct_v1
+    signal_policy: {signal_source: close_based_dynamic_v3_target, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: monthly_plus_threshold, rebalance_anchor: month_end, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: limited_adjustment_research_method, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
+  - strategy_id: defensive_limited_adjustment
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: monthly_plus_drawdown_shock_v1
+    signal_policy: {signal_source: close_based_dynamic_v3_defensive_target, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 10, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: monthly_plus_override, rebalance_anchor: month_end, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: defensive_limited_adjustment_research_method, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
+  - strategy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: min_holding_20d_v1
+    signal_policy: {signal_source: close_based_regime_overlay, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: threshold_with_min_holding, rebalance_anchor: policy_defined, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: lower_turnover_dynamic_overlay, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
+  - strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+    strategy_type: dynamic
+    policy_status: active
+    execution_policy_id: hysteresis_band_v1
+    signal_policy: {signal_source: close_based_ai_trend_confirmation, signal_observation_time: after_market_close, signal_effective_earliest: next_trading_day, signal_validity_window_bdays: 20, stale_signal_behavior: hold_previous_actual_position}
+    rebalance_policy: {rebalance_frequency: hysteresis_threshold, rebalance_anchor: policy_defined, allow_intramonth_rebalance: true, execution_lag_bdays: 1}
+    position_policy: {target_weight_rule: ai_trend_confirmed_only, actual_weight_fill_rule: hold_until_next_executable_rebalance, no_signal_behavior: hold_previous_actual_position, cash_or_safe_asset: SGOV}
+    cost_policy: {transaction_cost_bps: 1.0, slippage_bps: 0.0, turnover_calculation: two_way_abs_weight_change}
+    validation_policy: {requires_actual_position_rebacktest: true, promotion_allowed_from_target_path: false, backtest_generation: execution_semantics_aware_required}
 defaults:
   cost_model:
     model_id: research_execution_cost_model_v1
@@ -56,6 +147,25 @@ policy_groups:
   validity_holding_hysteresis:
     description: Recommendation expiry, holding-period and hysteresis policies.
 policies:
+  - execution_policy_id: no_rebalance
+    execution_frequency: no_rebalance
+    rebalance_calendar: no_rebalance
+    signal_to_execution_lag: 0
+    minimum_holding_period: 0
+    drift_threshold: null
+    volatility_override_trigger: none
+    drawdown_override_trigger: none
+    trend_override_trigger: none
+    validity_period_days: 9999
+    max_turnover_per_period: 0.0
+    cost_model: {model_id: research_execution_cost_model_v1, explicit_cost_bps: 0.0, slippage_bps: 0.0}
+    policy_metadata:
+      owner: research_governance
+      status: static_baseline_only
+      rationale: Explicitly represents static no-trade or single-asset hold semantics without monthly fallback.
+      intended_effect: Allow static baselines to pass execution-semantics checks without dynamic actual-path rebacktest.
+      validation_evidence: Covered by TRADING-1187 to 1200 execution semantics repair tests.
+      review_condition: Review before applying to any dynamic signal or promotion-facing ranking.
   - execution_policy_id: monthly_eom_v1
     execution_frequency: monthly
     rebalance_calendar: us_equity_month_end

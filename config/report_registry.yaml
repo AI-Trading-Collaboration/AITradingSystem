@@ -18195,6 +18195,52 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: execution_semantics_rebacktest_gate
+    title: Execution Semantics Rebacktest Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest-gate
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_rebacktest_gate.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_rebacktest_gate.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1187 to 1200 freezes legacy dynamic target-path results until execution-semantics-aware actual-path rebacktest exists.
+    owner_action: review_execution_semantics_rebacktest_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: execution_semantics_rebacktest
+    title: Execution Semantics Aware Rebacktest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies execution-semantics-rebacktest
+    artifact_globs:
+      - outputs/research_strategies/execution_semantics/execution_semantics_rebacktest.json
+      - outputs/research_strategies/execution_semantics/execution_semantics_rebacktest.md
+      - outputs/research_strategies/execution_semantics/*/summary.json
+      - outputs/research_strategies/execution_semantics/*/metrics_actual_path.json
+      - outputs/research_strategies/execution_semantics/*/metrics_target_path.json
+      - outputs/research_strategies/execution_semantics/*/target_vs_actual_position_path.csv
+      - outputs/research_strategies/execution_semantics/*/lag_cost_report.md
+      - outputs/research_strategies/execution_semantics/*/signal_staleness_report.md
+      - outputs/research_strategies/execution_semantics/*/execution_policy_snapshot.yaml
+      - outputs/research_strategies/execution_semantics/*/promotion_readiness.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1187 to 1200 actual-path rebacktests must be regenerated after strategy binding, execution policy, metric convention or cached data changes.
+    owner_action: review_execution_semantics_actual_path_rebacktest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

@@ -1942,6 +1942,7 @@ def run_external_platform_metric_convention_signoff(
     signoff_rows, parse_errors = _load_metric_convention_signoff_rows(signoff_path)
     external_tools = _manual_external_tools(manual_input)
     rows = _metric_convention_rows(signoff_rows, external_tools)
+    convention_namespace = load_external_metric_convention_namespace(signoff_path)
     unknown_rows = [
         row for row in rows if str(row["manual_confirmation_status"]).lower() == "unknown"
     ]
@@ -1971,6 +1972,7 @@ def run_external_platform_metric_convention_signoff(
             **_safety_summary(),
         },
         signoff_input_path=str(signoff_path),
+        convention_namespace=convention_namespace,
         metric_rows=rows,
         parse_errors=parse_errors,
         source_statuses={
@@ -1988,6 +1990,110 @@ def run_external_platform_metric_convention_signoff(
     )
     _write_pair(payload, output_root, payload["report_type"])
     return payload
+
+
+def load_external_metric_convention_namespace(
+    signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+) -> dict[str, Any]:
+    if not signoff_path.exists():
+        return {
+            "status": "METRIC_CONVENTION_NAMESPACE_MISSING",
+            "signoff_path": str(signoff_path),
+            "return_metrics": {},
+            "risk_metrics": {},
+        }
+    try:
+        import yaml
+
+        raw = yaml.safe_load(signoff_path.read_text(encoding="utf-8")) or {}
+    except (OSError, ValueError) as exc:
+        return {
+            "status": "METRIC_CONVENTION_NAMESPACE_BLOCKED",
+            "signoff_path": str(signoff_path),
+            "parse_error": str(exc),
+            "return_metrics": {},
+            "risk_metrics": {},
+        }
+    if not isinstance(raw, Mapping):
+        return {
+            "status": "METRIC_CONVENTION_NAMESPACE_BLOCKED",
+            "signoff_path": str(signoff_path),
+            "parse_error": "signoff YAML root must be a mapping",
+            "return_metrics": {},
+            "risk_metrics": {},
+        }
+    platform = _mapping(raw.get("portfolio_visualizer"))
+    return {
+        "status": (
+            "METRIC_CONVENTION_NAMESPACE_READY"
+            if platform
+            else "METRIC_CONVENTION_NAMESPACE_LEGACY_RECORDS_ONLY"
+        ),
+        "signoff_path": str(signoff_path),
+        "platform": "portfolio_visualizer",
+        "platform_role": platform.get("platform_role"),
+        "return_metrics": _mapping(platform.get("return_metrics")),
+        "risk_metrics": _mapping(platform.get("risk_metrics")),
+    }
+
+
+def validate_external_metric_convention_usage(
+    *,
+    external_metric_id: str,
+    internal_metric_id: str,
+    usage_context: str = "promotion_gate",
+    signoff_path: Path = DEFAULT_METRIC_CONVENTION_SIGNOFF_INPUT_PATH,
+) -> dict[str, Any]:
+    namespace = load_external_metric_convention_namespace(signoff_path)
+    rows: list[dict[str, Any]] = []
+    for metric_group in ("return_metrics", "risk_metrics"):
+        for metric_name, raw in _mapping(namespace.get(metric_group)).items():
+            if isinstance(raw, Mapping):
+                row = dict(raw)
+                row["metric_name"] = metric_name
+                row["metric_group"] = metric_group
+                rows.append(row)
+    match = next(
+        (
+            row
+            for row in rows
+            if row.get("external_metric_id") == external_metric_id
+            and row.get("internal_metric_id") == internal_metric_id
+        ),
+        None,
+    )
+    if not match:
+        return {
+            "status": "METRIC_CONVENTION_USAGE_UNKNOWN",
+            "hard_warning": True,
+            "external_metric_id": external_metric_id,
+            "internal_metric_id": internal_metric_id,
+            "usage_context": usage_context,
+            "reason": "metric_pair_not_signed_off",
+            "namespace_status": namespace.get("status"),
+        }
+    promotion_usage = str(match.get("promotion_usage") or "")
+    if promotion_usage == "not_cross_comparable":
+        return {
+            "status": "METRIC_CONVENTION_USAGE_BLOCKED",
+            "hard_warning": True,
+            "external_metric_id": external_metric_id,
+            "internal_metric_id": internal_metric_id,
+            "usage_context": usage_context,
+            "reason": "signed_off_as_not_cross_comparable",
+            "metric_group": match.get("metric_group"),
+            "promotion_usage": promotion_usage,
+        }
+    return {
+        "status": "METRIC_CONVENTION_USAGE_ALLOWED",
+        "hard_warning": False,
+        "external_metric_id": external_metric_id,
+        "internal_metric_id": internal_metric_id,
+        "usage_context": usage_context,
+        "reason": "signed_off_usage_allowed",
+        "metric_group": match.get("metric_group"),
+        "promotion_usage": promotion_usage,
+    }
 
 
 def run_sgov_external_convention_signoff(

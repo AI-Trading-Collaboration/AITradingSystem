@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from collections.abc import Mapping
 from datetime import date
@@ -89,6 +90,57 @@ REQUIRED_EXECUTION_POLICY_FIELDS: tuple[str, ...] = (
     "cost_model",
 )
 
+REQUIRED_STRATEGY_EXECUTION_POLICY_FIELDS: tuple[str, ...] = (
+    "strategy_id",
+    "strategy_type",
+    "policy_status",
+    "execution_policy_id",
+    "signal_policy",
+    "rebalance_policy",
+    "position_policy",
+    "cost_policy",
+    "validation_policy",
+)
+
+REQUIRED_STRATEGY_POLICY_SECTIONS: dict[str, tuple[str, ...]] = {
+    "signal_policy": (
+        "signal_source",
+        "signal_observation_time",
+        "signal_effective_earliest",
+        "signal_validity_window_bdays",
+        "stale_signal_behavior",
+    ),
+    "rebalance_policy": (
+        "rebalance_frequency",
+        "rebalance_anchor",
+        "allow_intramonth_rebalance",
+        "execution_lag_bdays",
+    ),
+    "position_policy": (
+        "target_weight_rule",
+        "actual_weight_fill_rule",
+        "no_signal_behavior",
+        "cash_or_safe_asset",
+    ),
+    "cost_policy": (
+        "transaction_cost_bps",
+        "slippage_bps",
+        "turnover_calculation",
+    ),
+    "validation_policy": (
+        "requires_actual_position_rebacktest",
+        "promotion_allowed_from_target_path",
+    ),
+}
+
+DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS: tuple[str, ...] = (
+    "defensive_limited_adjustment",
+    "limited_adjustment",
+    "no_trade",
+    "dynamic_regime_overlay_v0_4_lower_turnover",
+    "dynamic_v0_5_ai_trend_confirmed_only",
+)
+
 EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
     {
         "report_id": "dynamic_strategy_execution_semantics_contract",
@@ -114,6 +166,16 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "target_vs_actual_position_path_builder",
         "title": "Target vs Actual Position Path Builder",
         "command": "aits research strategies target-vs-actual-position-path-builder",
+    },
+    {
+        "report_id": "execution_semantics_rebacktest_gate",
+        "title": "Execution Semantics Rebacktest Gate",
+        "command": "aits research strategies execution-semantics-rebacktest-gate",
+    },
+    {
+        "report_id": "execution_semantics_rebacktest",
+        "title": "Execution Semantics Aware Rebacktest",
+        "command": "aits research strategies execution-semantics-rebacktest",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -354,6 +416,7 @@ def run_strategy_execution_policy_registry_review(
 ) -> dict[str, Any]:
     registry = _load_policy_registry(policy_registry_path)
     policies = _records(registry.get("policies"))
+    strategy_bindings = _strategy_execution_bindings(registry)
     issues = []
     for policy in policies:
         missing = [field for field in REQUIRED_EXECUTION_POLICY_FIELDS if field not in policy]
@@ -377,6 +440,7 @@ def run_strategy_execution_policy_registry_review(
                 )
     policy_ids = {str(policy.get("execution_policy_id")) for policy in policies}
     required_ids = {
+        "no_rebalance",
         "monthly_eom_v1",
         "monthly_bom_v1",
         "weekly_friday_v1",
@@ -395,9 +459,10 @@ def run_strategy_execution_policy_registry_review(
     missing_required_ids = sorted(required_ids - policy_ids)
     if missing_required_ids:
         issues.append({"issue": "missing_required_policy_ids", "policy_ids": missing_required_ids})
+    issues.extend(_strategy_binding_issues(strategy_bindings, policy_ids))
     status = (
         "EXECUTION_POLICY_REGISTRY_BLOCKED"
-        if not policies
+        if not policies or not strategy_bindings
         else "EXECUTION_POLICY_REGISTRY_PARTIAL"
         if issues
         else "EXECUTION_POLICY_REGISTRY_READY"
@@ -408,14 +473,17 @@ def run_strategy_execution_policy_registry_review(
         status=status,
         summary={
             "policy_count": len(policies),
+            "strategy_binding_count": len(strategy_bindings),
             "issue_count": len(issues),
             "required_policy_count": len(required_ids),
             **_safety_summary(),
         },
         policy_registry_path=str(policy_registry_path),
         policies=policies,
+        strategy_execution_policies=strategy_bindings,
         issues=issues,
         required_fields=list(REQUIRED_EXECUTION_POLICY_FIELDS),
+        required_strategy_binding_fields=list(REQUIRED_STRATEGY_EXECUTION_POLICY_FIELDS),
         report_registry_entry=_report_registry_entry("strategy_execution_policy_registry_review"),
     )
     _write_pair(payload, output_root, payload["report_type"])
@@ -514,6 +582,13 @@ def run_target_vs_actual_position_path_builder(
         target_weights=target_weights,
         policy=policies.get(execution_policy_id, _synthetic_policy(execution_policy_id)),
     )
+    _attach_path_return_columns(
+        prices=prices,
+        target_weights=target_weights,
+        actual_weights=actual,
+        path_rows=path_rows,
+        cost_bps=_policy_cost_bps(policies.get(execution_policy_id)),
+    )
     metrics = _performance_metrics(
         prices, actual, _policy_cost_bps(policies.get(execution_policy_id))
     )
@@ -536,6 +611,222 @@ def run_target_vs_actual_position_path_builder(
         performance_metrics=metrics,
         target_vs_actual_mode="execution_policy_constrained_actual_position",
         report_registry_entry=_report_registry_entry("target_vs_actual_position_path_builder"),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_execution_semantics_rebacktest_gate(
+    *,
+    strategy_id: str = "limited_adjustment",
+    backtest_generation: str = "PRE_EXECUTION_SEMANTICS",
+    position_path_used_for_metrics: str = "TARGET",
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    registry = _load_policy_registry(policy_registry_path)
+    binding = _strategy_execution_binding_by_id(registry).get(strategy_id)
+    gate = _execution_semantics_promotion_gate_decision(
+        strategy_id=strategy_id,
+        strategy_binding=binding,
+        backtest_generation=backtest_generation,
+        position_path_used_for_metrics=position_path_used_for_metrics,
+        actual_rebacktest_available=(
+            backtest_generation == "EXECUTION_SEMANTICS_AWARE"
+            and position_path_used_for_metrics == "ACTUAL"
+        ),
+    )
+    payload = _payload(
+        report_type="execution_semantics_rebacktest_gate",
+        title=REPORT_SPEC_BY_ID["execution_semantics_rebacktest_gate"]["title"],
+        status=gate["status"],
+        summary={
+            "strategy_id": strategy_id,
+            "strategy_type": gate["strategy_type"],
+            "promotion_eligible": gate["promotion_eligible"],
+            "rebacktest_required": gate["rebacktest_required"],
+            "backtest_generation": backtest_generation,
+            "position_path_used_for_metrics": position_path_used_for_metrics,
+            **_safety_summary(),
+        },
+        gate_decision=gate,
+        legacy_result_tags=[
+            "PRE_EXECUTION_SEMANTICS",
+            "REBACKTEST_REQUIRED",
+            "NOT_PROMOTION_ELIGIBLE",
+        ]
+        if gate["rebacktest_required"]
+        else [],
+        report_registry_entry=_report_registry_entry("execution_semantics_rebacktest_gate"),
+    )
+    _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_execution_semantics_rebacktest(
+    *,
+    strategy_id: str | None = None,
+    strategy_ids: list[str] | tuple[str, ...] | None = None,
+    execution_policy_id: str | None = None,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="execution_semantics_rebacktest",
+            title=REPORT_SPEC_BY_ID["execution_semantics_rebacktest"]["title"],
+            status="EXECUTION_SEMANTICS_REBACKTEST_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_pair(payload, output_root, payload["report_type"])
+        return payload
+
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    registry = _load_policy_registry(policy_registry_path)
+    policies = _policies_by_id(registry)
+    bindings = _strategy_execution_binding_by_id(registry)
+    selected_strategy_ids = _selected_rebacktest_strategy_ids(strategy_id, strategy_ids)
+    rows: list[dict[str, Any]] = []
+    blocked_rows: list[dict[str, Any]] = []
+
+    for current_strategy_id in selected_strategy_ids:
+        binding = bindings.get(current_strategy_id)
+        gate = _execution_semantics_promotion_gate_decision(
+            strategy_id=current_strategy_id,
+            strategy_binding=binding,
+            backtest_generation="EXECUTION_SEMANTICS_AWARE",
+            position_path_used_for_metrics="ACTUAL",
+            actual_rebacktest_available=True,
+        )
+        policy_id = str(execution_policy_id or _mapping(binding).get("execution_policy_id") or "")
+        policy = policies.get(policy_id)
+        if not binding or not policy:
+            blocked = {
+                "strategy_id": current_strategy_id,
+                "status": "EXECUTION_POLICY_MISSING",
+                "promotion_eligible": False,
+                "rebacktest_required": True,
+                "blocking_reasons": gate["blocking_reasons"]
+                + ([] if policy else [f"execution_policy_not_found:{policy_id or 'missing'}"]),
+            }
+            blocked_rows.append(blocked)
+            rows.append(blocked)
+            continue
+
+        target_weights = _signal_target_weight_frame(current_strategy_id, prices)
+        actual_weights, path_rows = _actual_position_path(
+            strategy_id=current_strategy_id,
+            execution_policy_id=policy_id,
+            target_weights=target_weights,
+            policy=policy,
+        )
+        _attach_path_return_columns(
+            prices=prices,
+            target_weights=target_weights,
+            actual_weights=actual_weights,
+            path_rows=path_rows,
+            cost_bps=_policy_cost_bps(policy),
+        )
+        metrics_target = _performance_metrics(prices, target_weights, cost_bps=0.0)
+        metrics_actual = _performance_metrics(
+            prices,
+            actual_weights,
+            cost_bps=_policy_cost_bps(policy),
+        )
+        lag_cost = _lag_cost_summary(metrics_target, metrics_actual, path_rows)
+        staleness = _signal_staleness_summary(path_rows)
+        promotion_readiness = _promotion_readiness_for_rebacktest(
+            strategy_id=current_strategy_id,
+            binding=binding,
+            policy=policy,
+            metrics_actual=metrics_actual,
+            lag_cost=lag_cost,
+            staleness=staleness,
+            gate=gate,
+        )
+        artifact_paths = _write_strategy_rebacktest_artifacts(
+            output_root=output_root / current_strategy_id,
+            strategy_id=current_strategy_id,
+            binding=binding,
+            policy=policy,
+            path_rows=path_rows,
+            metrics_target=metrics_target,
+            metrics_actual=metrics_actual,
+            lag_cost=lag_cost,
+            staleness=staleness,
+            promotion_readiness=promotion_readiness,
+            date_range_start=prices.index.min().date().isoformat(),
+            date_range_end=prices.index.max().date().isoformat(),
+        )
+        rows.append(
+            {
+                "strategy_id": current_strategy_id,
+                "status": "EXECUTION_SEMANTICS_AWARE_REBACKTEST_COMPLETE",
+                "strategy_type": binding.get("strategy_type"),
+                "execution_policy_id": policy_id,
+                "backtest_generation": "EXECUTION_SEMANTICS_AWARE",
+                "position_path_used_for_metrics": "ACTUAL",
+                "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
+                "promotion_eligible": promotion_readiness["promotion_eligible"],
+                "rebacktest_required": promotion_readiness["rebacktest_required"],
+                "annual_return_actual_path": metrics_actual["annual_return"],
+                "annual_return_target_path": metrics_target["annual_return"],
+                "annual_return_lag_cost": lag_cost["annual_return_lag_cost"],
+                "average_signal_age_bdays": staleness["average_signal_age_bdays"],
+                "stale_signal_day_pct": staleness["stale_signal_day_pct"],
+                "artifact_paths": artifact_paths,
+            }
+        )
+
+    status = (
+        "EXECUTION_SEMANTICS_REBACKTEST_COMPLETE_WITH_BLOCKED_ROWS"
+        if blocked_rows
+        else "EXECUTION_SEMANTICS_AWARE_REBACKTEST_COMPLETE"
+    )
+    payload = _payload(
+        report_type="execution_semantics_rebacktest",
+        title=REPORT_SPEC_BY_ID["execution_semantics_rebacktest"]["title"],
+        status=status,
+        summary={
+            "strategy_count": len(selected_strategy_ids),
+            "completed_count": sum(
+                1
+                for row in rows
+                if row.get("status") == "EXECUTION_SEMANTICS_AWARE_REBACKTEST_COMPLETE"
+            ),
+            "blocked_count": len(blocked_rows),
+            "promotion_eligible_count": sum(
+                1 for row in rows if row.get("promotion_eligible") is True
+            ),
+            "dynamic_promotion_blocked": True,
+            "data_quality_status": data_gate.get("status"),
+            **_safety_summary(),
+        },
+        strategy_rows=rows,
+        blocked_rows=blocked_rows,
+        data_quality=data_gate,
+        date_range={
+            "start": prices.index.min().date().isoformat(),
+            "end": prices.index.max().date().isoformat(),
+            "market_regime": "ai_after_chatgpt",
+        },
+        report_registry_entry=_report_registry_entry("execution_semantics_rebacktest"),
     )
     _write_pair(payload, output_root, payload["report_type"])
     return payload
@@ -1512,8 +1803,10 @@ def _actual_position_path(
     max_turnover = _float(policy.get("max_turnover_per_period"), 1.0)
     cost_bps = _policy_cost_bps(policy)
     lag = max(0, _int(policy.get("signal_to_execution_lag"), 1))
+    validity_days = max(1, _int(policy.get("validity_period_days"), 20))
     for index, current_date in enumerate(target.index):
         signal_index = max(0, index - lag)
+        signal_date = target.index[signal_index]
         signal_target = target.iloc[signal_index].copy()
         should_execute, trigger = _should_execute(
             policy=policy,
@@ -1540,22 +1833,30 @@ def _actual_position_path(
         else:
             turnover = 0.0
         actual.iloc[index] = current
+        signal_age = index - last_signal_index
         rows.append(
             {
                 "date": current_date.date().isoformat(),
                 "strategy_id": strategy_id,
                 "execution_policy_id": execution_policy_id,
+                "signal_date": signal_date.date().isoformat(),
+                "signal_asof_date": signal_date.date().isoformat(),
                 "target_weight_qqq": round(_float(target.iloc[index].get("QQQ")), 6),
                 "target_weight_tqqq": round(_float(target.iloc[index].get("TQQQ")), 6),
                 "target_weight_sgov": round(_float(target.iloc[index].get("SGOV")), 6),
                 "actual_weight_qqq": round(_float(current.get("QQQ")), 6),
                 "actual_weight_tqqq": round(_float(current.get("TQQQ")), 6),
                 "actual_weight_sgov": round(_float(current.get("SGOV")), 6),
+                "rebalance_allowed": should_execute,
                 "rebalance_executed": should_execute,
+                "execution_date": current_date.date().isoformat() if should_execute else None,
+                "execution_lag_bdays": lag,
+                "signal_age_bdays": signal_age,
+                "is_signal_stale": signal_age > validity_days,
                 "trigger_reason": trigger if should_execute else "no_execution",
                 "turnover": round(turnover, 6),
                 "cost": round(turnover * (cost_bps / 10000.0), 8),
-                "signal_staleness_days": index - last_signal_index,
+                "signal_staleness_days": signal_age,
             }
         )
     return actual.astype(float), rows
@@ -1617,7 +1918,44 @@ def _should_execute(
 def _signal_target_weight_frame(strategy_id: str, prices: pd.DataFrame) -> pd.DataFrame:
     if strategy_id in STATIC_TARGETS:
         return _constant_weight_frame(prices, STATIC_TARGETS[strategy_id])
+    if strategy_id in {"no_trade", "no_trade_baseline"}:
+        return _constant_weight_frame(prices, {"QQQ": 0.0, "TQQQ": 0.0, "SGOV": 1.0})
     annualization = 252
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    qqq_ma_60 = prices["QQQ"].rolling(60, min_periods=20).mean()
+    qqq_ma_120 = prices["QQQ"].rolling(120, min_periods=40).mean()
+    trend_on = prices["QQQ"] >= qqq_ma_120.fillna(prices["QQQ"])
+    vol_20 = qqq_returns.rolling(20, min_periods=10).std().shift(1) * math.sqrt(annualization)
+    vol_high = vol_20 >= vol_20.rolling(120, min_periods=30).quantile(0.80)
+    drawdown = prices["QQQ"] / prices["QQQ"].cummax() - 1.0
+    if strategy_id == "limited_adjustment":
+        qqq = pd.Series(0.45, index=prices.index)
+        qqq.loc[trend_on] = 0.65
+        return _ensure_weight_columns(pd.DataFrame({"QQQ": qqq, "SGOV": 1.0 - qqq}))
+    if strategy_id == "defensive_limited_adjustment":
+        qqq = pd.Series(0.35, index=prices.index)
+        qqq.loc[trend_on & (drawdown > -0.08)] = 0.55
+        qqq.loc[drawdown <= -0.12] = 0.20
+        return _ensure_weight_columns(pd.DataFrame({"QQQ": qqq, "SGOV": 1.0 - qqq}))
+    if strategy_id == "dynamic_regime_overlay_v0_4_lower_turnover":
+        qqq = pd.Series(0.40, index=prices.index)
+        qqq.loc[trend_on] = 0.70
+        qqq = qqq.rolling(5, min_periods=1).mean()
+        return _ensure_weight_columns(pd.DataFrame({"QQQ": qqq, "SGOV": 1.0 - qqq}))
+    if strategy_id in {
+        "dynamic_v0_5_ai_trend_confirmed_only",
+        "ai_trend_confirmed_only",
+    }:
+        confirmed = (prices["QQQ"] >= qqq_ma_60.fillna(prices["QQQ"])) & trend_on & ~vol_high
+        qqq = pd.Series(0.30, index=prices.index)
+        qqq.loc[confirmed] = 0.75
+        return _ensure_weight_columns(pd.DataFrame({"QQQ": qqq, "SGOV": 1.0 - qqq}))
+    if strategy_id == "smooth_weights_3d_limited_adjustment":
+        base = _signal_target_weight_frame("limited_adjustment", prices)
+        return _ensure_weight_columns(base.rolling(3, min_periods=1).mean())
+    if strategy_id == "smooth_weights_5d_limited_adjustment":
+        base = _signal_target_weight_frame("limited_adjustment", prices)
+        return _ensure_weight_columns(base.rolling(5, min_periods=1).mean())
     if strategy_id == "equal_risk_qqq_sgov":
         qqq_vol = _realized_vol(prices["QQQ"], 60, annualization).replace(0.0, math.nan)
         sgov_vol = _realized_vol(prices["SGOV"], 60, annualization).replace(0.0, math.nan)
@@ -1649,9 +1987,14 @@ def _performance_metrics(
     if returns.empty:
         return {
             "annual_return": 0.0,
+            "annual_return_total_return_path": 0.0,
             "max_drawdown": 0.0,
+            "max_drawdown_daily_equity": 0.0,
+            "max_drawdown_monthly_return": 0.0,
             "sharpe": 0.0,
+            "sharpe_daily_zero_rf": 0.0,
             "calmar": 0.0,
+            "calmar_daily_equity_dd": 0.0,
             "turnover": 0.0,
             "cost_drag": 0.0,
             "recovery_days": 0,
@@ -1661,12 +2004,24 @@ def _performance_metrics(
     drawdown = equity / equity.cummax() - 1.0
     annual_return = float(equity.iloc[-1] ** (252 / max(1, len(returns))) - 1.0)
     annual_vol = float(returns.std(ddof=0) * math.sqrt(252))
-    worst_month = float(((1.0 + returns).resample("ME").prod() - 1.0).min())
+    monthly_returns = (1.0 + returns).resample("ME").prod() - 1.0
+    monthly_equity = (1.0 + monthly_returns).cumprod()
+    monthly_drawdown = monthly_equity / monthly_equity.cummax() - 1.0
+    worst_month = float(monthly_returns.min())
+    max_drawdown_daily = float(drawdown.min())
+    max_drawdown_monthly = float(monthly_drawdown.min())
+    sharpe_daily = _ratio(annual_return, annual_vol)
+    calmar_daily = _ratio(annual_return, abs(max_drawdown_daily))
     return {
         "annual_return": round(annual_return, 6),
-        "max_drawdown": round(float(drawdown.min()), 6),
-        "sharpe": round(_ratio(annual_return, annual_vol), 6),
-        "calmar": round(_ratio(annual_return, abs(float(drawdown.min()))), 6),
+        "annual_return_total_return_path": round(annual_return, 6),
+        "max_drawdown": round(max_drawdown_daily, 6),
+        "max_drawdown_daily_equity": round(max_drawdown_daily, 6),
+        "max_drawdown_monthly_return": round(max_drawdown_monthly, 6),
+        "sharpe": round(sharpe_daily, 6),
+        "sharpe_daily_zero_rf": round(sharpe_daily, 6),
+        "calmar": round(calmar_daily, 6),
+        "calmar_daily_equity_dd": round(calmar_daily, 6),
         "turnover": round(float(turnover.sum()), 6),
         "cost_drag": round(float(cost.sum()), 6),
         "recovery_days": _max_drawdown_recovery_days(equity),
@@ -2017,6 +2372,415 @@ def _module_audit_row(
         "risk_level": risk_level,
         "recommended_fix": "add execution_policy_id and target-vs-actual actual position path",
     }
+
+
+def _strategy_execution_bindings(registry: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return _records(registry.get("strategy_execution_policies"))
+
+
+def _strategy_execution_binding_by_id(registry: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(binding.get("strategy_id")): dict(binding)
+        for binding in _strategy_execution_bindings(registry)
+        if binding.get("strategy_id")
+    }
+
+
+def _strategy_binding_issues(
+    bindings: list[dict[str, Any]],
+    policy_ids: set[str],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for binding in bindings:
+        strategy_id = str(binding.get("strategy_id") or "unknown")
+        if strategy_id in seen:
+            issues.append({"strategy_id": strategy_id, "issue": "duplicate_strategy_binding"})
+        seen.add(strategy_id)
+        missing = [
+            field for field in REQUIRED_STRATEGY_EXECUTION_POLICY_FIELDS if field not in binding
+        ]
+        if missing:
+            issues.append(
+                {
+                    "strategy_id": strategy_id,
+                    "issue": "missing_required_strategy_binding_fields",
+                    "fields": missing,
+                }
+            )
+        for section, fields in REQUIRED_STRATEGY_POLICY_SECTIONS.items():
+            raw_section = _mapping(binding.get(section))
+            missing_section_fields = [field for field in fields if field not in raw_section]
+            if missing_section_fields:
+                issues.append(
+                    {
+                        "strategy_id": strategy_id,
+                        "issue": "missing_required_strategy_policy_section_fields",
+                        "section": section,
+                        "fields": missing_section_fields,
+                    }
+                )
+        policy_id = str(binding.get("execution_policy_id") or "")
+        if policy_id not in policy_ids:
+            issues.append(
+                {
+                    "strategy_id": strategy_id,
+                    "issue": "execution_policy_id_not_registered",
+                    "execution_policy_id": policy_id or "missing",
+                }
+            )
+        validation = _mapping(binding.get("validation_policy"))
+        if (
+            str(binding.get("strategy_type")) == "dynamic"
+            and validation.get("promotion_allowed_from_target_path") is not False
+        ):
+            issues.append(
+                {
+                    "strategy_id": strategy_id,
+                    "issue": "dynamic_strategy_target_path_promotion_not_blocked",
+                }
+            )
+    return issues
+
+
+def _selected_rebacktest_strategy_ids(
+    strategy_id: str | None,
+    strategy_ids: list[str] | tuple[str, ...] | None,
+) -> list[str]:
+    raw: list[str] = []
+    if strategy_ids:
+        raw.extend(str(item) for item in strategy_ids)
+    if strategy_id:
+        raw.extend(str(item) for item in strategy_id.split(","))
+    selected = [item.strip() for item in raw if item.strip()]
+    return selected or list(DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS)
+
+
+def _execution_semantics_promotion_gate_decision(
+    *,
+    strategy_id: str,
+    strategy_binding: Mapping[str, Any] | None,
+    backtest_generation: str,
+    position_path_used_for_metrics: str,
+    actual_rebacktest_available: bool,
+) -> dict[str, Any]:
+    binding = _mapping(strategy_binding)
+    strategy_type = str(binding.get("strategy_type") or "dynamic")
+    blocking_reasons: list[str] = []
+    if not binding:
+        blocking_reasons.append("EXECUTION_POLICY_MISSING")
+    if strategy_type == "dynamic":
+        validation = _mapping(binding.get("validation_policy"))
+        if backtest_generation != "EXECUTION_SEMANTICS_AWARE":
+            blocking_reasons.append("PRE_EXECUTION_SEMANTICS")
+        if position_path_used_for_metrics != "ACTUAL":
+            blocking_reasons.append("TARGET_PATH_NOT_PROMOTION_ELIGIBLE")
+        if not actual_rebacktest_available:
+            blocking_reasons.append("EXECUTION_SEMANTICS_REBACKTEST_REQUIRED")
+        if validation.get("promotion_allowed_from_target_path") is not False:
+            blocking_reasons.append("PROMOTION_ALLOWED_FROM_TARGET_PATH_NOT_FALSE")
+    if strategy_type == "static" and not blocking_reasons:
+        return {
+            "strategy_id": strategy_id,
+            "strategy_type": strategy_type,
+            "status": "STATIC_BASELINE_NOT_BLOCKED_BY_EXECUTION_SEMANTICS",
+            "promotion_eligible": True,
+            "rebacktest_required": False,
+            "blocking_reasons": [],
+        }
+    if blocking_reasons:
+        return {
+            "strategy_id": strategy_id,
+            "strategy_type": strategy_type,
+            "status": "EXECUTION_SEMANTICS_REBACKTEST_REQUIRED",
+            "promotion_eligible": False,
+            "rebacktest_required": True,
+            "blocking_reasons": _dedupe_ordered(blocking_reasons),
+        }
+    return {
+        "strategy_id": strategy_id,
+        "strategy_type": strategy_type,
+        "status": "EXECUTION_SEMANTICS_ACTUAL_PATH_REVIEWABLE",
+        "promotion_eligible": True,
+        "rebacktest_required": False,
+        "blocking_reasons": [],
+    }
+
+
+def _attach_path_return_columns(
+    *,
+    prices: pd.DataFrame,
+    target_weights: pd.DataFrame,
+    actual_weights: pd.DataFrame,
+    path_rows: list[dict[str, Any]],
+    cost_bps: float,
+) -> None:
+    asset_returns = prices.reindex(columns=["QQQ", "TQQQ", "SGOV"]).pct_change().fillna(0.0)
+    target_applied = _ensure_weight_columns(target_weights).shift(1).ffill().fillna(0.0)
+    actual_applied = _ensure_weight_columns(actual_weights).shift(1).ffill().fillna(0.0)
+    target_returns = (target_applied * asset_returns).sum(axis=1)
+    actual_gross_returns = (actual_applied * asset_returns).sum(axis=1)
+    cost = pd.Series(
+        [float(row.get("turnover", 0.0)) * (cost_bps / 10000.0) for row in path_rows],
+        index=asset_returns.index,
+    )
+    actual_returns = actual_gross_returns - cost
+    for index, row in enumerate(path_rows):
+        current_date = asset_returns.index[index]
+        target_return = _float(target_returns.loc[current_date])
+        actual_return = _float(actual_returns.loc[current_date])
+        row["portfolio_return_target_path"] = round(target_return, 8)
+        row["portfolio_return_actual_path"] = round(actual_return, 8)
+        row["lag_cost_return_diff"] = round(target_return - actual_return, 8)
+
+
+def _lag_cost_summary(
+    metrics_target: Mapping[str, Any],
+    metrics_actual: Mapping[str, Any],
+    path_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    annual_lag_cost = _float(metrics_target.get("annual_return")) - _float(
+        metrics_actual.get("annual_return")
+    )
+    drawdown_lag_cost = abs(_float(metrics_actual.get("max_drawdown_daily_equity"))) - abs(
+        _float(metrics_target.get("max_drawdown_daily_equity"))
+    )
+    sharpe_lag_cost = _float(metrics_target.get("sharpe_daily_zero_rf")) - _float(
+        metrics_actual.get("sharpe_daily_zero_rf")
+    )
+    execution_lags = [_float(row.get("execution_lag_bdays")) for row in path_rows]
+    return {
+        "annual_return_target_path": metrics_target.get("annual_return"),
+        "annual_return_actual_path": metrics_actual.get("annual_return"),
+        "annual_return_lag_cost": round(annual_lag_cost, 6),
+        "max_drawdown_target_path": metrics_target.get("max_drawdown_daily_equity"),
+        "max_drawdown_actual_path": metrics_actual.get("max_drawdown_daily_equity"),
+        "drawdown_lag_cost": round(drawdown_lag_cost, 6),
+        "sharpe_target_path": metrics_target.get("sharpe_daily_zero_rf"),
+        "sharpe_actual_path": metrics_actual.get("sharpe_daily_zero_rf"),
+        "sharpe_lag_cost": round(sharpe_lag_cost, 6),
+        "execution_lag_days_mean": round(_mean(execution_lags), 3),
+        "execution_lag_days_p95": round(_percentile(execution_lags, 0.95), 3),
+        "status": _lag_cost_status(annual_lag_cost, drawdown_lag_cost, sharpe_lag_cost),
+    }
+
+
+def _signal_staleness_summary(path_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    ages = [_float(row.get("signal_age_bdays")) for row in path_rows]
+    stale_days = [row for row in path_rows if row.get("is_signal_stale") is True]
+    return {
+        "average_signal_age_bdays": round(_mean(ages), 3),
+        "p95_signal_age_bdays": round(_percentile(ages, 0.95), 3),
+        "stale_signal_days": len(stale_days),
+        "stale_signal_day_pct": round(len(stale_days) / max(1, len(path_rows)), 6),
+        "status": "SIGNAL_STALENESS_COST_MATERIAL"
+        if stale_days
+        else "SIGNAL_STALENESS_COST_READY",
+    }
+
+
+def _promotion_readiness_for_rebacktest(
+    *,
+    strategy_id: str,
+    binding: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    metrics_actual: Mapping[str, Any],
+    lag_cost: Mapping[str, Any],
+    staleness: Mapping[str, Any],
+    gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    dynamic = str(binding.get("strategy_type")) == "dynamic"
+    warnings = []
+    if str(lag_cost.get("status")) == "EXECUTION_LAG_COST_MATERIAL":
+        warnings.append("EXECUTION_LAG_COST_MATERIAL")
+    if str(staleness.get("status")) == "SIGNAL_STALENESS_COST_MATERIAL":
+        warnings.append("SIGNAL_STALENESS_COST_MATERIAL")
+    if dynamic:
+        warnings.append("OWNER_REVIEW_REQUIRED_BEFORE_DYNAMIC_PROMOTION")
+    promotion_eligible = bool(gate.get("promotion_eligible")) and not dynamic and not warnings
+    return {
+        "schema_version": "1.0",
+        "report_type": "execution_semantics_promotion_readiness",
+        "strategy_id": strategy_id,
+        "status": "NOT_PROMOTION_ELIGIBLE" if not promotion_eligible else "PROMOTION_REVIEWABLE",
+        "backtest_generation": "EXECUTION_SEMANTICS_AWARE",
+        "position_path_used_for_metrics": "ACTUAL",
+        "execution_policy_id": policy.get("execution_policy_id"),
+        "execution_lag_bdays": policy.get("signal_to_execution_lag"),
+        "rebalance_frequency": policy.get("execution_frequency"),
+        "signal_validity_window_bdays": policy.get("validity_period_days"),
+        "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
+        "promotion_eligible": promotion_eligible,
+        "rebacktest_required": False,
+        "actual_path_metrics": dict(metrics_actual),
+        "blocking_reasons": _dedupe_ordered(
+            list(gate.get("blocking_reasons") or []) + warnings
+        ),
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _write_strategy_rebacktest_artifacts(
+    *,
+    output_root: Path,
+    strategy_id: str,
+    binding: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    path_rows: list[dict[str, Any]],
+    metrics_target: Mapping[str, Any],
+    metrics_actual: Mapping[str, Any],
+    lag_cost: Mapping[str, Any],
+    staleness: Mapping[str, Any],
+    promotion_readiness: Mapping[str, Any],
+    date_range_start: str,
+    date_range_end: str,
+) -> dict[str, str]:
+    import yaml
+
+    output_root.mkdir(parents=True, exist_ok=True)
+    summary = {
+        "schema_version": "1.0",
+        "report_type": "execution_semantics_rebacktest_summary",
+        "strategy_id": strategy_id,
+        "status": "EXECUTION_SEMANTICS_AWARE_REBACKTEST_COMPLETE",
+        "backtest_generation": "EXECUTION_SEMANTICS_AWARE",
+        "position_path_used_for_metrics": "ACTUAL",
+        "target_path_role": "diagnostic_only_not_promotion_eligible",
+        "date_range": {"start": date_range_start, "end": date_range_end},
+        "execution_policy_id": policy.get("execution_policy_id"),
+        "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
+        "promotion_eligible": promotion_readiness.get("promotion_eligible"),
+        "rebacktest_required": promotion_readiness.get("rebacktest_required"),
+        **SAFETY_BOUNDARY,
+    }
+    metrics_actual_payload = {
+        "schema_version": "1.0",
+        "report_type": "metrics_actual_path",
+        "strategy_id": strategy_id,
+        "position_path_used_for_metrics": "ACTUAL",
+        "metric_convention_namespace": "internal.execution_semantics.actual_path.v1",
+        "promotion_metric_source": True,
+        "metrics": dict(metrics_actual),
+    }
+    metrics_target_payload = {
+        "schema_version": "1.0",
+        "report_type": "metrics_target_path",
+        "strategy_id": strategy_id,
+        "position_path_used_for_metrics": "TARGET",
+        "metric_convention_namespace": "internal.execution_semantics.target_path.v1",
+        "promotion_metric_source": False,
+        "promotion_eligible": False,
+        "metrics": dict(metrics_target),
+    }
+    paths = {
+        "summary": output_root / "summary.json",
+        "metrics_actual_path": output_root / "metrics_actual_path.json",
+        "metrics_target_path": output_root / "metrics_target_path.json",
+        "target_vs_actual_position_path": output_root / "target_vs_actual_position_path.csv",
+        "lag_cost_report": output_root / "lag_cost_report.md",
+        "signal_staleness_report": output_root / "signal_staleness_report.md",
+        "execution_policy_snapshot": output_root / "execution_policy_snapshot.yaml",
+        "promotion_readiness": output_root / "promotion_readiness.json",
+    }
+    _write_json(paths["summary"], summary)
+    _write_json(paths["metrics_actual_path"], metrics_actual_payload)
+    _write_json(paths["metrics_target_path"], metrics_target_payload)
+    pd.DataFrame(path_rows).to_csv(paths["target_vs_actual_position_path"], index=False)
+    paths["lag_cost_report"].write_text(_lag_cost_markdown(strategy_id, lag_cost), encoding="utf-8")
+    paths["signal_staleness_report"].write_text(
+        _signal_staleness_markdown(strategy_id, staleness),
+        encoding="utf-8",
+    )
+    paths["execution_policy_snapshot"].write_text(
+        yaml.safe_dump(
+            {
+                "strategy_execution_policy": dict(binding),
+                "execution_policy": dict(policy),
+            },
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    _write_json(paths["promotion_readiness"], dict(promotion_readiness))
+    return {key: str(value) for key, value in paths.items()}
+
+
+def _lag_cost_markdown(strategy_id: str, lag_cost: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Lag Cost Report: {strategy_id}",
+            "",
+            f"- status: `{lag_cost.get('status')}`",
+            f"- annual_return_target_path: `{lag_cost.get('annual_return_target_path')}`",
+            f"- annual_return_actual_path: `{lag_cost.get('annual_return_actual_path')}`",
+            f"- annual_return_lag_cost: `{lag_cost.get('annual_return_lag_cost')}`",
+            f"- drawdown_lag_cost: `{lag_cost.get('drawdown_lag_cost')}`",
+            f"- sharpe_lag_cost: `{lag_cost.get('sharpe_lag_cost')}`",
+            "",
+            "Target path is diagnostic only. Actual path is the execution-realistic result.",
+        ]
+    ) + "\n"
+
+
+def _signal_staleness_markdown(strategy_id: str, staleness: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Signal Staleness Report: {strategy_id}",
+            "",
+            f"- status: `{staleness.get('status')}`",
+            f"- average_signal_age_bdays: `{staleness.get('average_signal_age_bdays')}`",
+            f"- p95_signal_age_bdays: `{staleness.get('p95_signal_age_bdays')}`",
+            f"- stale_signal_days: `{staleness.get('stale_signal_days')}`",
+            f"- stale_signal_day_pct: `{staleness.get('stale_signal_day_pct')}`",
+            "",
+            "Target path is not promotion-eligible. Actual path is the execution-realistic result.",
+        ]
+    ) + "\n"
+
+
+def _lag_cost_status(
+    annual_lag_cost: float,
+    drawdown_lag_cost: float,
+    sharpe_lag_cost: float,
+) -> str:
+    if (
+        abs(annual_lag_cost) >= 0.01
+        or abs(drawdown_lag_cost) >= 0.05
+        or abs(sharpe_lag_cost) >= 0.20
+    ):
+        return "EXECUTION_LAG_COST_MATERIAL"
+    if (
+        abs(annual_lag_cost) >= 0.005
+        or abs(drawdown_lag_cost) >= 0.02
+        or abs(sharpe_lag_cost) >= 0.10
+    ):
+        return "EXECUTION_LAG_COST_WARN"
+    return "EXECUTION_LAG_COST_READY"
+
+
+def _percentile(values: list[float], percentile: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = min(len(ordered) - 1, max(0, math.ceil(percentile * len(ordered)) - 1))
+    return ordered[index]
+
+
+def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _dedupe_ordered(values: list[str]) -> list[str]:
+    result: list[str] = []
+    for value in values:
+        if value not in result:
+            result.append(value)
+    return result
 
 
 def _load_policy_registry(path: Path) -> dict[str, Any]:
