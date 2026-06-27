@@ -20753,6 +20753,82 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_v2_universal_layer_closeout
+    title: First-Layer V2 Universal Layer Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review for two-lane lane-separation phase
+    artifact_globs:
+      - docs/research/first_layer_v2_universal_layer_closeout.md
+      - inputs/research_reviews/first_layer_v2_universal_layer_closeout.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Universal-layer closeout changes after first-layer v2 defensive regression diagnosis or lane-separation policy changes.
+    owner_action: review_first_layer_v2_closeout_and_lane_separation_policy_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: two_lane_signal_policy
+    title: Two-Lane Signal Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed policy artifact
+    artifact_globs:
+      - config/research/two_lane_signal_policy.yaml
+      - docs/research/two_lane_signal_policy.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Lane separation policy changes after defensive-channel, return-seeking-channel, gated-integration, or risk-off veto rules change.
+    owner_action: review_first_layer_v2_closeout_and_lane_separation_policy_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_signal_usage_matrix
+    title: First-Layer Signal Usage Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked signal usage matrix
+    artifact_globs:
+      - docs/research/first_layer_signal_usage_matrix.md
+      - inputs/research_reviews/first_layer_signal_usage_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Signal usage matrix changes after allowed usage, blocked usage, required gate, or signal taxonomy changes.
+    owner_action: review_first_layer_v2_closeout_and_lane_separation_policy_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: two_layer_lane_separation_closeout
+    title: Two-Layer Lane Separation Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review for TRADING-1806_to_1820
+    artifact_globs:
+      - docs/research/two_layer_lane_separation_closeout.md
+      - inputs/research_reviews/two_layer_lane_separation_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Lane separation closeout changes after universal closeout, signal policy, usage matrix, or guardrail decisions change.
+    owner_action: review_first_layer_v2_closeout_and_lane_separation_policy_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

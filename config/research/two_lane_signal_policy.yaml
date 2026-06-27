@@ -1,0 +1,164 @@
+schema_version: two_lane_signal_policy.v1
+policy_id: two_lane_signal_policy_v1
+status: LANE_SEPARATION_POLICY_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    First-layer v2 improves some return-seeking diagnostics but causes defensive
+    probe regression through false add-risk. A single universal trend layer is
+    therefore rejected, and signal usage must be split by purpose.
+  intended_effect: >
+    Preserve defensive overlay safety while retaining return-seeking signals
+    only as diagnostic evidence or future gated growth-overlay inputs.
+  validation_evidence: >
+    TRADING-1786 to 1805 final matrix records final_diagnosis
+    RETURN_SEEKING_ONLY_DIAGNOSTIC and signal attribution
+    DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK. Guardrail tests verify lane
+    separation, risk-off veto and blocked promotion paths.
+  review_condition: >
+    Review before enabling any gated integration actual-path run, changing
+    allowed/blocked usage, or allowing return-seeking signals to influence
+    defensive overlay, paper-shadow, production or broker paths.
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+upstream_evidence:
+  final_matrix: inputs/research_reviews/first_layer_v2_defensive_regression_diagnosis_final_matrix.yaml
+  universal_layer_status: UNIVERSAL_FIRST_LAYER_REJECTED
+  retained_status: RETURN_SEEKING_DIAGNOSTIC_ONLY
+  defensive_usage_status: DEFENSIVE_USAGE_BLOCKED
+  signal_error_attribution: DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK
+channels:
+  defensive_channel:
+    channel_id: defensive_channel
+    status: POLICY_READY_MODEL_NOT_IMPLEMENTED
+    purpose: defensive_preservation
+    allowed_outputs:
+      - risk_off
+      - defensive
+      - do_not_de_risk
+      - re_risk_allowed_but_not_add_risk
+    disallowed_outputs:
+      - add_risk
+      - high_confidence_risk_on
+      - risk_on_diagnostic
+    allowed_downstream_usage:
+      - defensive_overlay
+      - drawdown_control_diagnostic
+      - gated_growth_overlay_blocker
+    blocked_downstream_usage:
+      - add_risk_allocation
+      - high_confidence_risk_on_allocation
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    can_drive_defensive_overlay: true
+    can_add_risk: false
+    veto_power_over_growth_overlay: true
+  return_seeking_channel:
+    channel_id: return_seeking_channel
+    status: DIAGNOSTIC_ONLY
+    purpose: return_seeking_diagnostic
+    source_model: first_layer_v2_return_seeking_diagnostic
+    allowed_outputs:
+      - stay_constructive
+      - add_risk
+      - high_confidence_risk_on
+      - risk_on_diagnostic
+    allowed_downstream_usage:
+      - return_seeking_diagnostic
+      - gated_growth_overlay
+    blocked_downstream_usage:
+      - defensive_overlay
+      - universal_trend_layer
+      - balanced_allocation
+      - owner_review
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_gates:
+      - defensive_channel_not_risk_off
+      - volatility_not_high
+      - event_risk_not_high
+      - defensive_probe_not_in_stress_state
+      - risk_off_veto_clear
+    can_drive_defensive_overlay: false
+    promotion_allowed: false
+  gated_integration_channel:
+    channel_id: gated_integration_channel
+    status: POLICY_DEFINED_NOT_ENABLED
+    purpose: future_two_lane_gated_overlay_research
+    blocked_until:
+      - DEFENSIVE_LANE_VALIDATED_WITHOUT_REGRESSION
+      - RETURN_SEEKING_DIAGNOSTIC_EDGE_REVIEWED
+      - OWNER_APPROVES_GATED_INTEGRATION_RESEARCH_SCOPE
+    base_portfolio:
+      QQQ: 0.60
+      SGOV: 0.40
+      TQQQ: 0.00
+    defensive_overlay:
+      risk_off:
+        QQQ_delta: -0.30
+        SGOV_delta: 0.30
+        TQQQ_delta: 0.00
+      defensive:
+        QQQ_delta: -0.15
+        SGOV_delta: 0.15
+        TQQQ_delta: 0.00
+    growth_overlay:
+      enabled: false
+      policy_defined_for_future_research: true
+      requires_risk_off_veto_clear: true
+      allowed_only_when_defensive_overlay_inactive: true
+      add_risk:
+        QQQ_delta: 0.15
+        SGOV_delta: -0.15
+        TQQQ_delta: 0.00
+      high_confidence_risk_on:
+        QQQ_delta: 0.10
+        SGOV_delta: -0.15
+        TQQQ_delta: 0.05
+    blocked_downstream_usage:
+      - owner_review
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+risk_off_veto:
+  enabled: true
+  priority: risk_off_has_veto_power_over_add_risk
+  veto_states:
+    - risk_off
+    - defensive_stress
+    - event_risk_high
+    - volatility_high
+    - defensive_probe_stress_state
+  vetoed_actions:
+    - add_risk
+    - high_confidence_risk_on
+    - TQQQ_growth_overlay
+    - gated_growth_overlay
+  clear_condition: all_veto_states_false
+lane_rules:
+  universal_first_layer_v2_allowed: false
+  add_risk_can_drive_defensive_overlay: false
+  return_seeking_can_enable_promotion: false
+  growth_overlay_requires_defensive_inactive: true
+  risk_off_veto_blocks_growth_overlay: true
+  target_path_metrics_role: diagnostic_only
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
