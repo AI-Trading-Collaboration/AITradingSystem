@@ -10,6 +10,7 @@ from ai_trading_system.cli import app
 from ai_trading_system.expanded_allocation_universe import (
     classify_monotonic_risk_profile,
     run_expanded_actual_path_rebacktest,
+    run_expanded_candidate_failure_matrix,
     run_expanded_universe_owner_review_pack,
     run_risk_bucket_representatives,
     run_state_portfolio_candidates,
@@ -169,6 +170,34 @@ def test_actual_path_rebacktest_and_owner_pack_keep_promotion_blocked(tmp_path: 
         encoding="utf-8"
     )
 
+    failure_matrix = run_expanded_candidate_failure_matrix(
+        static_grid_root=static_root,
+        actual_path_root=tmp_path / "actual_path",
+        candidates_path=candidates_path,
+        csv_path=tmp_path / "candidate_failure_matrix.csv",
+        yaml_path=tmp_path / "candidate_failure_matrix.yaml",
+        docs_path=tmp_path / "candidate_failure_matrix.md",
+    )
+    assert failure_matrix["status"] == "CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED"
+    matrix = pd.read_csv(tmp_path / "candidate_failure_matrix.csv")
+    assert len(matrix) == len(leaderboard)
+    assert {
+        "candidate_id",
+        "weights_by_state",
+        "tqqq_weight_profile",
+        "qqq_equivalent_exposure",
+        "actual_return",
+        "max_dd",
+        "sharpe",
+        "calmar",
+        "same_risk_baseline",
+        "delta_vs_same_risk_baseline",
+        "failure_reason",
+        "next_action",
+    } <= set(matrix.columns)
+    assert matrix["failure_reason"].str.contains("walk_forward_failed").all()
+    assert (tmp_path / "candidate_failure_matrix.yaml").exists()
+
 
 def test_expanded_universe_cli_is_registered() -> None:
     runner = CliRunner()
@@ -181,6 +210,7 @@ def test_expanded_universe_cli_is_registered() -> None:
     assert result.exit_code == 0, result.output
     assert "static-simplex-grid" in result.output
     assert "actual-path-rebacktest" in result.output
+    assert "candidate-failure-matrix" in result.output
 
 
 def _write_market_cache(tmp_path: Path) -> tuple[Path, Path, Path, date]:

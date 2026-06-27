@@ -172,6 +172,22 @@ survival_policy:
   positive_edge_floor: 0.0
   max_drawdown_worse_tolerance_abs: 0.02
   tqqq_beta_only_exposure_floor: 1.3
+stress_policy:
+  max_qqq_equivalent_exposure_for_promotion: 1.5
+  max_tqqq_weight_for_promotion: 0.2
+failure_matrix_policy:
+  same_risk_return_edge_floor: 0.0
+  net_of_cost_edge_floor: 0.0
+  walk_forward_blocking_statuses:
+    - WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  next_action_by_primary_failure:
+    static_frontier_dominates: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+    tqqq_beta_only: REQUIRE_TQQQ_BETA_ATTRIBUTION_AND_LOWER_EXPOSURE
+    same_risk_not_advantaged: REJECT_FOR_NOW_NO_SAME_RISK_EDGE
+    walk_forward_failed: COLLECT_FORWARD_SPLIT_EVIDENCE_BEFORE_OWNER_REVIEW
+    stress_risk_too_high: CAP_EXPOSURE_OR_REJECT_BEFORE_RETEST
+    net_of_cost_failed: REJECT_FOR_NOW_NO_NET_OF_COST_EDGE
+    no_material_improvement: KEEP_AS_RESEARCH_REFERENCE_ONLY
 survival_verdicts:
   - SURVIVES_EXPANDED_UNIVERSE
   - STATIC_FRONTIER_DOMINATES

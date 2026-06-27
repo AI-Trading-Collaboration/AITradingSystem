@@ -1,0 +1,738 @@
+schema_version: expanded_actual_path_candidate_failure_matrix.v1
+report_type: expanded_actual_path_candidate_failure_matrix
+title: Expanded Actual Path Candidate Failure Matrix
+status: CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T11:46:39Z'
+source_commit: f49419f5
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 11
+  promotion_status: BLOCKED
+  candidate_count: 11
+research_only: true
+candidate_only: true
+actual_path_required: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 7bbf8d4b4abad60a3f975b39ec20b544b8f034b142fb2620ee9724b3b07c672f
+rows:
+- candidate_id: expanded_state_highest_return_under_max_dd_cap
+  strategy_id: expanded_state_highest_return_under_max_dd_cap
+  candidate_family: expanded_state_portfolio_candidate
+  selection_rank: 10
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0900_sgov0050_tqqq0050
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: true
+  stress_status: STRESS_RISK_BLOCKS_PROMOTION
+  net_of_cost_failed: true
+  weights_by_state:
+    constructive:
+      QQQ: 0.95
+      SGOV: 0.0
+      TQQQ: 0.05
+    defensive:
+      QQQ: 0.65
+      SGOV: 0.35
+      TQQQ: 0.0
+    neutral:
+      QQQ: 0.95
+      SGOV: 0.05
+      TQQQ: 0.0
+    risk_off:
+      QQQ: 0.35
+      SGOV: 0.65
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.65
+      SGOV: 0.05
+      TQQQ: 0.3
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.3
+    tqqq_avg_weight: 0.091667
+    tqqq_days_positive: 494
+    state_tqqq_weights:
+      constructive: 0.05
+      defensive: 0.0
+      neutral: 0.0
+      risk_off: 0.0
+      risk_on: 0.3
+  qqq_equivalent_exposure: 1.0599
+  actual_return: 0.273317
+  max_dd: -0.152434
+  sharpe: 1.455696
+  calmar: 1.793025
+  same_risk_baseline: simplex_qqq0900_sgov0050_tqqq0050
+  same_risk_baseline_metrics:
+    annual_return: 0.29912
+    max_drawdown: -0.237554
+    sharpe: 1.417946
+    calmar: 1.259167
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.025803
+    drawdown_delta: 0.08512
+    sharpe_edge: 0.03775
+    calmar_edge: 0.533858
+    net_annual_return_edge: -0.025803
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0900_sgov0050_tqqq0050
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | stress_risk_too_high=STRESS_RISK_BLOCKS_PROMOTION | net_of_cost_failed=edge:-0.025803
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0900_sgov0050_tqqq0050
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - stress_risk_too_high=STRESS_RISK_BLOCKS_PROMOTION
+  - net_of_cost_failed=edge:-0.025803
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_lowest_turnover
+  strategy_id: expanded_state_lowest_turnover
+  candidate_family: expanded_state_portfolio_candidate
+  selection_rank: 11
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0950_sgov0050_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    constructive:
+      QQQ: 1.0
+      SGOV: 0.0
+      TQQQ: 0.0
+    defensive:
+      QQQ: 0.65
+      SGOV: 0.35
+      TQQQ: 0.0
+    neutral:
+      QQQ: 0.95
+      SGOV: 0.05
+      TQQQ: 0.0
+    risk_off:
+      QQQ: 0.0
+      SGOV: 1.0
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.85
+      SGOV: 0.0
+      TQQQ: 0.15
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.15
+    tqqq_avg_weight: 0.038423
+    tqqq_days_positive: 229
+    state_tqqq_weights:
+      constructive: 0.0
+      defensive: 0.0
+      neutral: 0.0
+      risk_off: 0.0
+      risk_on: 0.15
+  qqq_equivalent_exposure: 0.94273
+  actual_return: 0.243321
+  max_dd: -0.119775
+  sharpe: 1.445702
+  calmar: 2.031489
+  same_risk_baseline: simplex_qqq0950_sgov0050_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.276667
+    max_drawdown: -0.217009
+    sharpe: 1.443142
+    calmar: 1.274912
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.033346
+    drawdown_delta: 0.097234
+    sharpe_edge: 0.00256
+    calmar_edge: 0.756577
+    net_annual_return_edge: -0.033346
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0950_sgov0050_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:-0.033346
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0950_sgov0050_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:-0.033346
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_highest_calmar
+  strategy_id: expanded_state_highest_calmar
+  candidate_family: expanded_state_portfolio_candidate
+  selection_rank: 9
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    constructive:
+      QQQ: 1.0
+      SGOV: 0.0
+      TQQQ: 0.0
+    defensive:
+      QQQ: 0.4
+      SGOV: 0.6
+      TQQQ: 0.0
+    neutral:
+      QQQ: 0.7
+      SGOV: 0.3
+      TQQQ: 0.0
+    risk_off:
+      QQQ: 0.0
+      SGOV: 1.0
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.85
+      SGOV: 0.0
+      TQQQ: 0.15
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.15
+    tqqq_avg_weight: 0.038423
+    tqqq_days_positive: 229
+    state_tqqq_weights:
+      constructive: 0.0
+      defensive: 0.0
+      neutral: 0.0
+      risk_off: 0.0
+      risk_on: 0.15
+  qqq_equivalent_exposure: 0.847652
+  actual_return: 0.216065
+  max_dd: -0.099832
+  sharpe: 1.427724
+  calmar: 2.164279
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.252203
+    max_drawdown: -0.195371
+    sharpe: 1.472508
+    calmar: 1.290893
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.036138
+    drawdown_delta: 0.095539
+    sharpe_edge: -0.044784
+    calmar_edge: 0.873386
+    net_annual_return_edge: -0.036138
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:-0.036138
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:-0.036138
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_highest_sharpe
+  strategy_id: expanded_state_highest_sharpe
+  candidate_family: expanded_state_portfolio_candidate
+  selection_rank: 7
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    constructive:
+      QQQ: 1.0
+      SGOV: 0.0
+      TQQQ: 0.0
+    defensive:
+      QQQ: 0.25
+      SGOV: 0.7
+      TQQQ: 0.05
+    neutral:
+      QQQ: 0.7
+      SGOV: 0.3
+      TQQQ: 0.0
+    risk_off:
+      QQQ: 0.0
+      SGOV: 1.0
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.85
+      SGOV: 0.0
+      TQQQ: 0.15
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.15
+    tqqq_avg_weight: 0.046421
+    tqqq_days_positive: 372
+    state_tqqq_weights:
+      constructive: 0.0
+      defensive: 0.05
+      neutral: 0.0
+      risk_off: 0.0
+      risk_on: 0.15
+  qqq_equivalent_exposure: 0.847652
+  actual_return: 0.215914
+  max_dd: -0.099769
+  sharpe: 1.427044
+  calmar: 2.164132
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.252203
+    max_drawdown: -0.195371
+    sharpe: 1.472508
+    calmar: 1.290893
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.036289
+    drawdown_delta: 0.095602
+    sharpe_edge: -0.045464
+    calmar_edge: 0.873239
+    net_annual_return_edge: -0.036289
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:-0.036289
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:-0.036289
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_lowest_drawdown
+  strategy_id: expanded_state_lowest_drawdown
+  candidate_family: expanded_state_portfolio_candidate
+  selection_rank: 8
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    constructive:
+      QQQ: 0.55
+      SGOV: 0.3
+      TQQQ: 0.15
+    defensive:
+      QQQ: 0.1
+      SGOV: 0.8
+      TQQQ: 0.1
+    neutral:
+      QQQ: 0.25
+      SGOV: 0.6
+      TQQQ: 0.15
+    risk_off:
+      QQQ: 0.0
+      SGOV: 1.0
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.85
+      SGOV: 0.0
+      TQQQ: 0.15
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.15
+    tqqq_avg_weight: 0.131935
+    tqqq_days_positive: 834
+    state_tqqq_weights:
+      constructive: 0.15
+      defensive: 0.1
+      neutral: 0.15
+      risk_off: 0.0
+      risk_on: 0.15
+  qqq_equivalent_exposure: 0.847651
+  actual_return: 0.214041
+  max_dd: -0.099718
+  sharpe: 1.418225
+  calmar: 2.146465
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.252203
+    max_drawdown: -0.195371
+    sharpe: 1.472508
+    calmar: 1.290893
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.038162
+    drawdown_delta: 0.095653
+    sharpe_edge: -0.054283
+    calmar_edge: 0.855572
+    net_annual_return_edge: -0.038162
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:-0.038162
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0850_sgov0150_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:-0.038162
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: limited_adjustment
+  strategy_id: limited_adjustment
+  candidate_family: limited_adjustment_baseline
+  selection_rank: 1
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0600_sgov0400_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    risk_off:
+      QQQ: 0.45
+      SGOV: 0.55
+      TQQQ: 0.0
+    defensive:
+      QQQ: 0.45
+      SGOV: 0.55
+      TQQQ: 0.0
+    neutral:
+      QQQ: 0.65
+      SGOV: 0.35
+      TQQQ: 0.0
+    constructive:
+      QQQ: 0.65
+      SGOV: 0.35
+      TQQQ: 0.0
+    risk_on:
+      QQQ: 0.65
+      SGOV: 0.35
+      TQQQ: 0.0
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.0
+    tqqq_avg_weight: 0.0
+    tqqq_days_positive: 0
+    state_tqqq_weights:
+      risk_off: 0.0
+      defensive: 0.0
+      neutral: 0.0
+      constructive: 0.0
+      risk_on: 0.0
+  qqq_equivalent_exposure: 0.604586
+  actual_return: 0.186361
+  max_dd: -0.11674
+  sharpe: 1.626394
+  calmar: 1.596379
+  same_risk_baseline: simplex_qqq0600_sgov0400_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.191264
+    max_drawdown: -0.139481
+    sharpe: 1.587324
+    calmar: 1.371251
+  delta_vs_same_risk_baseline:
+    annual_return_edge: -0.004903
+    drawdown_delta: 0.022741
+    sharpe_edge: 0.03907
+    calmar_edge: 0.225128
+    net_annual_return_edge: -0.004903
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0600_sgov0400_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:-0.004903
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0600_sgov0400_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:-0.004903
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  strategy_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  candidate_family: static_frontier_candidate
+  selection_rank: 6
+  verdict: NO_MATERIAL_IMPROVEMENT
+  dominated_by_static_frontier: false
+  dominating_static_frontier_baseline: ''
+  tqqq_beta_only: false
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: false
+  weights_by_state:
+    static:
+      QQQ: 0.15
+      SGOV: 0.85
+      TQQQ: 0.0
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.0
+    tqqq_avg_weight: 0.0
+    tqqq_days_positive: 0
+    state_tqqq_weights:
+      static: 0.0
+  qqq_equivalent_exposure: 0.15
+  actual_return: 0.083173
+  max_dd: -0.03251
+  sharpe: 2.738531
+  calmar: 2.558415
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  same_risk_baseline_metrics:
+    annual_return: 0.081357
+    max_drawdown: -0.031415
+    sharpe: 2.784425
+    calmar: 2.589786
+  delta_vs_same_risk_baseline:
+    annual_return_edge: 0.001816
+    drawdown_delta: -0.001095
+    sharpe_edge: -0.045894
+    calmar_edge: -0.031371
+    net_annual_return_edge: 0.001816
+  failure_reason: verdict=NO_MATERIAL_IMPROVEMENT | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | no_material_improvement=true
+  failure_codes:
+  - verdict=NO_MATERIAL_IMPROVEMENT
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - no_material_improvement=true
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  strategy_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  candidate_family: static_frontier_candidate
+  selection_rank: 5
+  verdict: NO_MATERIAL_IMPROVEMENT
+  dominated_by_static_frontier: false
+  dominating_static_frontier_baseline: ''
+  tqqq_beta_only: false
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: false
+  weights_by_state:
+    static:
+      QQQ: 0.0
+      SGOV: 0.95
+      TQQQ: 0.05
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.05
+    tqqq_avg_weight: 0.05
+    tqqq_days_positive: 894
+    state_tqqq_weights:
+      static: 0.05
+  qqq_equivalent_exposure: 0.15
+  actual_return: 0.082033
+  max_dd: -0.032772
+  sharpe: 2.728452
+  calmar: 2.503129
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  same_risk_baseline_metrics:
+    annual_return: 0.081357
+    max_drawdown: -0.031415
+    sharpe: 2.784425
+    calmar: 2.589786
+  delta_vs_same_risk_baseline:
+    annual_return_edge: 0.000676
+    drawdown_delta: -0.001357
+    sharpe_edge: -0.055973
+    calmar_edge: -0.086657
+    net_annual_return_edge: 0.000676
+  failure_reason: verdict=NO_MATERIAL_IMPROVEMENT | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | no_material_improvement=true
+  failure_codes:
+  - verdict=NO_MATERIAL_IMPROVEMENT
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - no_material_improvement=true
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  strategy_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  candidate_family: static_frontier_candidate
+  selection_rank: 4
+  verdict: NO_MATERIAL_IMPROVEMENT
+  dominated_by_static_frontier: false
+  dominating_static_frontier_baseline: ''
+  tqqq_beta_only: false
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: false
+  weights_by_state:
+    static:
+      QQQ: 0.1
+      SGOV: 0.9
+      TQQQ: 0.0
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.0
+    tqqq_avg_weight: 0.0
+    tqqq_days_positive: 0
+    state_tqqq_weights:
+      static: 0.0
+  qqq_equivalent_exposure: 0.1
+  actual_return: 0.071167
+  max_dd: -0.019947
+  sharpe: 3.502283
+  calmar: 3.567777
+  same_risk_baseline: simplex_qqq0100_sgov0900_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.07095
+    max_drawdown: -0.019722
+    sharpe: 3.530072
+    calmar: 3.597535
+  delta_vs_same_risk_baseline:
+    annual_return_edge: 0.000217
+    drawdown_delta: -0.000225
+    sharpe_edge: -0.027789
+    calmar_edge: -0.029758
+    net_annual_return_edge: 0.000217
+  failure_reason: verdict=NO_MATERIAL_IMPROVEMENT | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | no_material_improvement=true
+  failure_codes:
+  - verdict=NO_MATERIAL_IMPROVEMENT
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - no_material_improvement=true
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  strategy_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  candidate_family: static_frontier_candidate
+  selection_rank: 3
+  verdict: NO_MATERIAL_IMPROVEMENT
+  dominated_by_static_frontier: false
+  dominating_static_frontier_baseline: ''
+  tqqq_beta_only: false
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: false
+  weights_by_state:
+    static:
+      QQQ: 0.05
+      SGOV: 0.95
+      TQQQ: 0.0
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.0
+    tqqq_avg_weight: 0.0
+    tqqq_days_positive: 0
+    state_tqqq_weights:
+      static: 0.0
+  qqq_equivalent_exposure: 0.05
+  actual_return: 0.059185
+  max_dd: -0.007259
+  sharpe: 5.712763
+  calmar: 8.15297
+  same_risk_baseline: simplex_qqq0050_sgov0950_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.059073
+    max_drawdown: -0.00714
+    sharpe: 5.764876
+    calmar: 8.273366
+  delta_vs_same_risk_baseline:
+    annual_return_edge: 0.000112
+    drawdown_delta: -0.000119
+    sharpe_edge: -0.052113
+    calmar_edge: -0.120396
+    net_annual_return_edge: 0.000112
+  failure_reason: verdict=NO_MATERIAL_IMPROVEMENT | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | no_material_improvement=true
+  failure_codes:
+  - verdict=NO_MATERIAL_IMPROVEMENT
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - no_material_improvement=true
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  strategy_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  candidate_family: static_frontier_candidate
+  selection_rank: 2
+  verdict: STATIC_FRONTIER_DOMINATES
+  dominated_by_static_frontier: true
+  dominating_static_frontier_baseline: simplex_qqq0000_sgov1000_tqqq0000
+  tqqq_beta_only: false
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  stress_risk_too_high: false
+  stress_status: STRESS_REVIEW_READY
+  net_of_cost_failed: true
+  weights_by_state:
+    static:
+      QQQ: 0.0
+      SGOV: 1.0
+      TQQQ: 0.0
+  tqqq_weight_profile:
+    tqqq_max_weight: 0.0
+    tqqq_avg_weight: 0.0
+    tqqq_days_positive: 0
+    state_tqqq_weights:
+      static: 0.0
+  qqq_equivalent_exposure: 0.0
+  actual_return: 0.04723
+  max_dd: -0.000231
+  sharpe: 19.775242
+  calmar: 204.624167
+  same_risk_baseline: simplex_qqq0000_sgov1000_tqqq0000
+  same_risk_baseline_metrics:
+    annual_return: 0.04723
+    max_drawdown: -0.000231
+    sharpe: 19.775242
+    calmar: 204.624167
+  delta_vs_same_risk_baseline:
+    annual_return_edge: 0.0
+    drawdown_delta: 0.0
+    sharpe_edge: 0.0
+    calmar_edge: 0.0
+    net_annual_return_edge: 0.0
+  failure_reason: verdict=STATIC_FRONTIER_DOMINATES | static_frontier_dominates=simplex_qqq0000_sgov1000_tqqq0000
+    | same_risk_not_advantaged=true | walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+    | net_of_cost_failed=edge:0.0
+  failure_codes:
+  - verdict=STATIC_FRONTIER_DOMINATES
+  - static_frontier_dominates=simplex_qqq0000_sgov1000_tqqq0000
+  - same_risk_not_advantaged=true
+  - walk_forward_failed=WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  - net_of_cost_failed=edge:0.0
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+dynamic_promotion:
+  final_status: BLOCKED
+artifact_paths:
+  csv_path: D:\Work\AITradingSystem\outputs\research_strategies\expanded_universe\actual_path_rebacktest\candidate_failure_matrix.csv
+  yaml_path: D:\Work\AITradingSystem\inputs\research_reviews\expanded_actual_path_candidate_failure_matrix.yaml
+  markdown_path: D:\Work\AITradingSystem\docs\research\expanded_actual_path_candidate_failure_matrix.md

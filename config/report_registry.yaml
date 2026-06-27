@@ -19313,6 +19313,26 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: expanded_actual_path_candidate_failure_matrix
+    title: Expanded Actual Path Candidate Failure Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe candidate-failure-matrix
+    artifact_globs:
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/candidate_failure_matrix.csv
+      - docs/research/expanded_actual_path_candidate_failure_matrix.md
+      - inputs/research_reviews/expanded_actual_path_candidate_failure_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1526 candidate failure matrix is regenerated after expanded actual-path, same-risk, TQQQ risk, walk-forward, stress, cost, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: expanded_universe_owner_review_pack
     title: Expanded Universe Owner Review Pack
     group: research

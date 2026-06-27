@@ -13,8 +13,10 @@ from ai_trading_system.expanded_allocation_universe import (
     DEFAULT_MARKETSTACK_PRICES_PATH,
     DEFAULT_PRICES_PATH,
     DEFAULT_RATES_PATH,
+    DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH,
     DEFAULT_STATIC_SIMPLEX_GRID_OUTPUT_ROOT,
     run_expanded_actual_path_rebacktest,
+    run_expanded_candidate_failure_matrix,
     run_expanded_universe_owner_review_pack,
     run_expanded_universe_scope_review,
     run_risk_bucket_representatives,
@@ -204,6 +206,28 @@ def owner_review_pack_command(
         actual_path_root=actual_path_root,
     )
     _print_payload("Expanded owner review pack", payload)
+
+
+@expanded_universe_app.command("candidate-failure-matrix")
+def candidate_failure_matrix_command(
+    config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    static_grid_root: Annotated[
+        Path, typer.Option("--static-grid-root")
+    ] = DEFAULT_STATIC_SIMPLEX_GRID_OUTPUT_ROOT,
+    actual_path_root: Annotated[
+        Path, typer.Option("--actual-path-root")
+    ] = DEFAULT_ACTUAL_PATH_OUTPUT_ROOT,
+    candidates_path: Annotated[
+        Path, typer.Option("--candidates")
+    ] = DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH,
+) -> None:
+    payload = run_expanded_candidate_failure_matrix(
+        config_path=config_path,
+        static_grid_root=static_grid_root,
+        actual_path_root=actual_path_root,
+        candidates_path=candidates_path,
+    )
+    _print_payload("Expanded candidate failure matrix", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

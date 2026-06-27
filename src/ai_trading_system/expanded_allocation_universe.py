@@ -29,6 +29,10 @@ DEFAULT_STATIC_SIMPLEX_GRID_OUTPUT_ROOT = (
 DEFAULT_ACTUAL_PATH_OUTPUT_ROOT = (
     DEFAULT_EXPANDED_UNIVERSE_OUTPUT_ROOT / "actual_path_rebacktest"
 )
+DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH = (
+    DEFAULT_EXPANDED_UNIVERSE_OUTPUT_ROOT / "state_portfolio_candidates.json"
+)
+DEFAULT_FAILURE_MATRIX_CSV_PATH = DEFAULT_ACTUAL_PATH_OUTPUT_ROOT / "candidate_failure_matrix.csv"
 DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
 DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
@@ -86,6 +90,15 @@ DEFAULT_NET_COST_REVIEW_DOC_PATH = (
 )
 DEFAULT_STRESS_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "expanded_universe_stress_risk_review.md"
+)
+DEFAULT_FAILURE_MATRIX_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "expanded_actual_path_candidate_failure_matrix.md"
+)
+DEFAULT_FAILURE_MATRIX_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "expanded_actual_path_candidate_failure_matrix.yaml"
 )
 DEFAULT_OWNER_REVIEW_PACK_DOC_PATH = (
     PROJECT_ROOT
@@ -447,9 +460,7 @@ def run_state_portfolio_candidates(
     representatives_path = representatives_path or (
         DEFAULT_EXPANDED_UNIVERSE_OUTPUT_ROOT / "risk_bucket_representatives.csv"
     )
-    output_path = output_path or (
-        DEFAULT_EXPANDED_UNIVERSE_OUTPUT_ROOT / "state_portfolio_candidates.json"
-    )
+    output_path = output_path or DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH
     if not representatives_path.exists():
         payload = _payload(
             report_type="state_portfolio_candidates",
@@ -595,8 +606,7 @@ def run_expanded_actual_path_rebacktest(
         prices=prices,
         states=state_series,
         static_grid_root=static_grid_root,
-        candidates_path=candidates_path
-        or DEFAULT_EXPANDED_UNIVERSE_OUTPUT_ROOT / "state_portfolio_candidates.json",
+        candidates_path=candidates_path or DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH,
         config=config,
     )
 
@@ -826,6 +836,75 @@ def run_expanded_universe_owner_review_pack(
     )
     _write_markdown(owner_doc_path, _render_owner_review_doc(owner_payload))
     return owner_payload
+
+
+def run_expanded_candidate_failure_matrix(
+    *,
+    config_path: Path = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    static_grid_root: Path = DEFAULT_STATIC_SIMPLEX_GRID_OUTPUT_ROOT,
+    actual_path_root: Path = DEFAULT_ACTUAL_PATH_OUTPUT_ROOT,
+    candidates_path: Path = DEFAULT_STATE_PORTFOLIO_CANDIDATES_PATH,
+    csv_path: Path = DEFAULT_FAILURE_MATRIX_CSV_PATH,
+    yaml_path: Path = DEFAULT_FAILURE_MATRIX_YAML_PATH,
+    docs_path: Path = DEFAULT_FAILURE_MATRIX_DOC_PATH,
+) -> dict[str, Any]:
+    config = _load_config(config_path)
+    metrics_path = static_grid_root / "static_simplex_grid_metrics.csv"
+    actual_path = actual_path_root / "leaderboard_actual_path.csv"
+    tqqq_risk_path = actual_path_root / "tqqq_risk_summary.csv"
+    missing = [
+        str(path)
+        for path in (metrics_path, actual_path, tqqq_risk_path, candidates_path)
+        if not path.exists()
+    ]
+    if missing:
+        payload = _payload(
+            report_type="expanded_actual_path_candidate_failure_matrix",
+            title="Expanded Actual-Path Candidate Failure Matrix",
+            status="CANDIDATE_FAILURE_MATRIX_BLOCKED",
+            summary={"missing_input_count": len(missing)},
+            blockers=missing,
+        )
+        _write_markdown(docs_path, _render_review_doc(payload))
+        return payload
+
+    static_metrics = pd.read_csv(metrics_path)
+    actual_metrics = pd.read_csv(actual_path)
+    tqqq_risk = pd.read_csv(tqqq_risk_path)
+    candidates = _read_json_or_empty(candidates_path)
+    same_risk_rows = _same_risk_rows(actual_metrics, static_metrics)
+    survival_rows = _survival_rows(same_risk_rows, config)
+    walk_forward = _walk_forward_review_payload(actual_metrics, config_path)
+    net_cost = _net_cost_review_payload(actual_metrics, config_path)
+    stress = _stress_review_payload(tqqq_risk, config_path, config)
+    rows = _candidate_failure_matrix_rows(
+        actual_metrics=actual_metrics,
+        same_risk_rows=same_risk_rows,
+        survival_rows=survival_rows,
+        walk_forward_rows=_records(walk_forward.get("rows")),
+        net_cost_rows=_records(net_cost.get("rows")),
+        stress_rows=_records(stress.get("rows")),
+        tqqq_risk_rows=_json_records(tqqq_risk.to_dict("records")),
+        candidates=candidates,
+        config=config,
+    )
+    payload = _review_payload(
+        report_type="expanded_actual_path_candidate_failure_matrix",
+        status="CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED",
+        rows=rows,
+        config_hash=_file_sha256(config_path),
+    )
+    payload["schema_version"] = "expanded_actual_path_candidate_failure_matrix.v1"
+    payload["summary"]["candidate_count"] = len(rows)
+    payload["artifact_paths"] = {
+        "csv_path": str(csv_path),
+        "yaml_path": str(yaml_path),
+        "markdown_path": str(docs_path),
+    }
+    _write_failure_matrix_csv(csv_path, rows)
+    _write_yaml(yaml_path, payload)
+    _write_markdown(docs_path, _render_failure_matrix_doc(payload))
+    return payload
 
 
 def _payload(
@@ -1646,13 +1725,26 @@ def _net_cost_review_payload(actual_metrics: pd.DataFrame, config_path: Path) ->
     )
 
 
-def _stress_review_payload(tqqq_risk: pd.DataFrame, config_path: Path) -> dict[str, Any]:
+def _stress_review_payload(
+    tqqq_risk: pd.DataFrame,
+    config_path: Path,
+    config: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    stress_policy = _mapping((config or _load_config(config_path)).get("stress_policy"))
+    max_exposure = _float(
+        stress_policy.get("max_qqq_equivalent_exposure_for_promotion"),
+        default=1.5,
+    )
+    max_tqqq_weight = _float(
+        stress_policy.get("max_tqqq_weight_for_promotion"),
+        default=0.2,
+    )
     rows = []
     for _, row in tqqq_risk.iterrows():
         exposure = _float(row.get("qqq_equivalent_exposure_max"))
         tqqq_weight = _float(row.get("tqqq_max_weight"))
         status = "STRESS_REVIEW_READY"
-        if exposure > 1.5 or tqqq_weight > 0.2:
+        if exposure > max_exposure or tqqq_weight > max_tqqq_weight:
             status = "STRESS_RISK_BLOCKS_PROMOTION"
         rows.append(
             {
@@ -1667,6 +1759,265 @@ def _stress_review_payload(tqqq_risk: pd.DataFrame, config_path: Path) -> dict[s
         rows=rows,
         config_hash=_file_sha256(config_path),
     )
+
+
+def _candidate_failure_matrix_rows(
+    *,
+    actual_metrics: pd.DataFrame,
+    same_risk_rows: list[dict[str, Any]],
+    survival_rows: list[dict[str, Any]],
+    walk_forward_rows: list[dict[str, Any]],
+    net_cost_rows: list[dict[str, Any]],
+    stress_rows: list[dict[str, Any]],
+    tqqq_risk_rows: list[dict[str, Any]],
+    candidates: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    policy = _mapping(config.get("failure_matrix_policy"))
+    survival_policy = _mapping(config.get("survival_policy"))
+    return_edge_floor = _float(policy.get("same_risk_return_edge_floor"))
+    net_cost_edge_floor = _float(policy.get("net_of_cost_edge_floor"))
+    beta_only_exposure_floor = _float(survival_policy.get("tqqq_beta_only_exposure_floor"))
+    walk_forward_blockers = {
+        str(value) for value in policy.get("walk_forward_blocking_statuses", [])
+    }
+    next_actions = _mapping(policy.get("next_action_by_primary_failure"))
+    same_risk_by_id = {str(row["strategy_id"]): row for row in same_risk_rows}
+    survival_by_id = {str(row["strategy_id"]): row for row in survival_rows}
+    walk_forward_by_id = {str(row["strategy_id"]): row for row in walk_forward_rows}
+    net_cost_by_id = {str(row["strategy_id"]): row for row in net_cost_rows}
+    stress_by_id = {str(row["strategy_id"]): row for row in stress_rows}
+    tqqq_by_id = {str(row["strategy_id"]): row for row in tqqq_risk_rows}
+    weights_lookup = _weights_by_state_lookup(actual_metrics, candidates, config)
+
+    rows: list[dict[str, Any]] = []
+    for _, actual in actual_metrics.iterrows():
+        candidate_id = str(actual["strategy_id"])
+        same_risk = same_risk_by_id[candidate_id]
+        survival = survival_by_id[candidate_id]
+        walk_forward = walk_forward_by_id.get(candidate_id, {})
+        net_cost = net_cost_by_id.get(candidate_id, {})
+        stress = stress_by_id.get(candidate_id, {})
+        tqqq = tqqq_by_id.get(candidate_id, {})
+        annual_return_edge = _float(same_risk.get("annual_return_edge"))
+        net_return_edge = round(
+            _float(net_cost.get("net_annual_return"))
+            - _float(same_risk.get("comparable_static_annual_return")),
+            GRID_ROUND_DIGITS,
+        )
+        verdict = str(survival.get("verdict"))
+        walk_status = str(walk_forward.get("status", "UNKNOWN"))
+        stress_status = str(stress.get("status", "UNKNOWN"))
+        same_risk_not_advantaged = annual_return_edge <= return_edge_floor
+        tqqq_beta_only = (
+            verdict == "TQQQ_BETA_ONLY"
+            or (
+                _float(tqqq.get("tqqq_max_weight")) > 0.0
+                and _float(same_risk.get("qqq_equivalent_exposure"))
+                > beta_only_exposure_floor
+                and annual_return_edge > return_edge_floor
+            )
+        )
+        walk_forward_failed = walk_status in walk_forward_blockers or "BLOCKED" in walk_status
+        stress_risk_too_high = stress_status == "STRESS_RISK_BLOCKS_PROMOTION"
+        net_of_cost_failed = net_return_edge <= net_cost_edge_floor
+        dominated_by_static = verdict == "STATIC_FRONTIER_DOMINATES" or same_risk_not_advantaged
+        failure_codes = _candidate_failure_codes(
+            verdict=verdict,
+            same_risk_baseline=str(same_risk.get("comparable_static_strategy_id")),
+            same_risk_not_advantaged=same_risk_not_advantaged,
+            tqqq_beta_only=tqqq_beta_only,
+            walk_forward_failed=walk_forward_failed,
+            walk_forward_status=walk_status,
+            stress_risk_too_high=stress_risk_too_high,
+            stress_status=stress_status,
+            net_of_cost_failed=net_of_cost_failed,
+            net_return_edge=net_return_edge,
+        )
+        weights_by_state = weights_lookup.get(candidate_id, {})
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "strategy_id": candidate_id,
+                "candidate_family": str(actual.get("candidate_family")),
+                "selection_rank": _int(actual.get("selection_rank")),
+                "verdict": verdict,
+                "dominated_by_static_frontier": dominated_by_static,
+                "dominating_static_frontier_baseline": (
+                    str(same_risk.get("comparable_static_strategy_id"))
+                    if dominated_by_static
+                    else ""
+                ),
+                "tqqq_beta_only": tqqq_beta_only,
+                "same_risk_not_advantaged": same_risk_not_advantaged,
+                "walk_forward_failed": walk_forward_failed,
+                "walk_forward_status": walk_status,
+                "stress_risk_too_high": stress_risk_too_high,
+                "stress_status": stress_status,
+                "net_of_cost_failed": net_of_cost_failed,
+                "weights_by_state": weights_by_state,
+                "tqqq_weight_profile": _tqqq_weight_profile(tqqq, weights_by_state),
+                "qqq_equivalent_exposure": _float(same_risk.get("qqq_equivalent_exposure")),
+                "actual_return": _float(same_risk.get("actual_path_annual_return")),
+                "max_dd": _float(same_risk.get("actual_path_max_drawdown")),
+                "sharpe": _float(same_risk.get("actual_path_sharpe")),
+                "calmar": _float(same_risk.get("actual_path_calmar")),
+                "same_risk_baseline": str(same_risk.get("comparable_static_strategy_id")),
+                "same_risk_baseline_metrics": {
+                    "annual_return": _float(same_risk.get("comparable_static_annual_return")),
+                    "max_drawdown": _float(same_risk.get("comparable_static_max_drawdown")),
+                    "sharpe": _float(same_risk.get("comparable_static_sharpe")),
+                    "calmar": _float(same_risk.get("comparable_static_calmar")),
+                },
+                "delta_vs_same_risk_baseline": {
+                    "annual_return_edge": annual_return_edge,
+                    "drawdown_delta": _float(same_risk.get("drawdown_delta")),
+                    "sharpe_edge": _float(same_risk.get("sharpe_edge")),
+                    "calmar_edge": _float(same_risk.get("calmar_edge")),
+                    "net_annual_return_edge": net_return_edge,
+                },
+                "failure_reason": " | ".join(failure_codes),
+                "failure_codes": failure_codes,
+                "next_action": _next_action_for_failure(
+                    verdict=verdict,
+                    same_risk_not_advantaged=same_risk_not_advantaged,
+                    tqqq_beta_only=tqqq_beta_only,
+                    stress_risk_too_high=stress_risk_too_high,
+                    net_of_cost_failed=net_of_cost_failed,
+                    walk_forward_failed=walk_forward_failed,
+                    next_actions=next_actions,
+                ),
+                "promotion_gate_status": "BLOCKED",
+                "target_path_metrics_role": "diagnostic_only",
+            }
+        )
+    return rows
+
+
+def _candidate_failure_codes(
+    *,
+    verdict: str,
+    same_risk_baseline: str,
+    same_risk_not_advantaged: bool,
+    tqqq_beta_only: bool,
+    walk_forward_failed: bool,
+    walk_forward_status: str,
+    stress_risk_too_high: bool,
+    stress_status: str,
+    net_of_cost_failed: bool,
+    net_return_edge: float,
+) -> list[str]:
+    codes = [f"verdict={verdict}"]
+    if verdict == "STATIC_FRONTIER_DOMINATES" or same_risk_not_advantaged:
+        codes.append(f"static_frontier_dominates={same_risk_baseline}")
+    if tqqq_beta_only:
+        codes.append("tqqq_beta_only=true")
+    if same_risk_not_advantaged:
+        codes.append("same_risk_not_advantaged=true")
+    if walk_forward_failed:
+        codes.append(f"walk_forward_failed={walk_forward_status}")
+    if stress_risk_too_high:
+        codes.append(f"stress_risk_too_high={stress_status}")
+    if net_of_cost_failed:
+        codes.append(f"net_of_cost_failed=edge:{net_return_edge}")
+    if verdict == "NO_MATERIAL_IMPROVEMENT":
+        codes.append("no_material_improvement=true")
+    return codes
+
+
+def _next_action_for_failure(
+    *,
+    verdict: str,
+    same_risk_not_advantaged: bool,
+    tqqq_beta_only: bool,
+    stress_risk_too_high: bool,
+    net_of_cost_failed: bool,
+    walk_forward_failed: bool,
+    next_actions: Mapping[str, Any],
+) -> str:
+    if verdict == "STATIC_FRONTIER_DOMINATES":
+        return str(next_actions.get("static_frontier_dominates"))
+    if tqqq_beta_only:
+        return str(next_actions.get("tqqq_beta_only"))
+    if same_risk_not_advantaged:
+        return str(next_actions.get("same_risk_not_advantaged"))
+    if verdict == "NO_MATERIAL_IMPROVEMENT":
+        return str(next_actions.get("no_material_improvement"))
+    if stress_risk_too_high:
+        return str(next_actions.get("stress_risk_too_high"))
+    if net_of_cost_failed:
+        return str(next_actions.get("net_of_cost_failed"))
+    if walk_forward_failed:
+        return str(next_actions.get("walk_forward_failed"))
+    return "KEEP_RESEARCH_ONLY_OWNER_REVIEW_REQUIRED"
+
+
+def _weights_by_state_lookup(
+    actual_metrics: pd.DataFrame,
+    candidates: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> dict[str, dict[str, dict[str, float]]]:
+    lookup: dict[str, dict[str, dict[str, float]]] = {
+        "limited_adjustment": _normalized_state_weights(
+            _mapping(config.get("limited_adjustment_baseline"))
+        )
+    }
+    for candidate in _records(candidates.get("candidates")):
+        strategy_id = str(candidate.get("strategy_id"))
+        if strategy_id:
+            lookup[strategy_id] = _normalized_state_weights(
+                _mapping(candidate.get("state_portfolios"))
+            )
+    for _, row in actual_metrics.iterrows():
+        strategy_id = str(row["strategy_id"])
+        if strategy_id not in lookup:
+            lookup[strategy_id] = {"static": _weights_from_row(row.to_dict())}
+    return lookup
+
+
+def _normalized_state_weights(
+    state_weights: Mapping[str, Any],
+) -> dict[str, dict[str, float]]:
+    output: dict[str, dict[str, float]] = {}
+    for state, weights in state_weights.items():
+        output[str(state)] = {
+            asset: round(_float(weight), GRID_ROUND_DIGITS)
+            for asset, weight in _mapping(weights).items()
+        }
+    return output
+
+
+def _tqqq_weight_profile(
+    tqqq_row: Mapping[str, Any],
+    weights_by_state: Mapping[str, Mapping[str, float]],
+) -> dict[str, Any]:
+    state_weights = {
+        str(state): round(_float(_mapping(weights).get("TQQQ")), GRID_ROUND_DIGITS)
+        for state, weights in weights_by_state.items()
+    }
+    return {
+        "tqqq_max_weight": _float(tqqq_row.get("tqqq_max_weight")),
+        "tqqq_avg_weight": _float(tqqq_row.get("tqqq_avg_weight")),
+        "tqqq_days_positive": _int(tqqq_row.get("tqqq_days_positive")),
+        "state_tqqq_weights": state_weights,
+    }
+
+
+def _write_failure_matrix_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    csv_rows = []
+    for row in rows:
+        csv_rows.append(
+            {
+                key: (
+                    json.dumps(value, ensure_ascii=False, sort_keys=True)
+                    if isinstance(value, (Mapping, list))
+                    else value
+                )
+                for key, value in row.items()
+            }
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(csv_rows).to_csv(path, index=False)
 
 
 def _annual_return(equity: pd.Series, periods: int, annualization: int) -> float:
@@ -1982,6 +2333,38 @@ def _render_table_doc(title: str, payload: Mapping[str, Any]) -> str:
         strategy = row.get("strategy_id", row.get("report_type", "row"))
         status = row.get("status", row.get("verdict", "READY"))
         lines.append(f"- `{strategy}`：`{status}`")
+    return "\n".join(lines) + "\n"
+
+
+def _render_failure_matrix_doc(payload: Mapping[str, Any]) -> str:
+    rows = _records(payload.get("rows"))
+    lines = [
+        "# Expanded Actual-Path Candidate Failure Matrix",
+        "",
+        f"- 状态：`{payload.get('status')}`",
+        f"- candidate_count：`{len(rows)}`",
+        "- market_regime：`ai_after_chatgpt`",
+        "- dynamic_promotion：`BLOCKED`",
+        "- production_effect：`none`",
+        "- broker_action：`none`",
+        "",
+        "|candidate_id|verdict|same_risk_baseline|failure_reason|next_action|",
+        "|---|---|---|---|---|",
+    ]
+    for row in rows:
+        lines.append(
+            "|"
+            + "|".join(
+                [
+                    str(row.get("candidate_id")),
+                    str(row.get("verdict")),
+                    str(row.get("same_risk_baseline")),
+                    str(row.get("failure_reason")).replace("|", ";"),
+                    str(row.get("next_action")),
+                ]
+            )
+            + "|"
+        )
     return "\n".join(lines) + "\n"
 
 
