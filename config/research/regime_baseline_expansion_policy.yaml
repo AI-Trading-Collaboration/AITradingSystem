@@ -1,0 +1,59 @@
+schema_version: 1
+policy_id: regime_baseline_expansion_policy_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic strategy complexity is not justified unless it survives regime
+    segmentation and comparison against simple transparent baselines.
+  intended_effect: >
+    Segment actual-path results by AI-cycle market regimes and add a simple
+    baseline set before any paper-shadow preflight discussion.
+  validation_evidence: >
+    TRADING-1461 to 1475 tests cover expanded baseline artifacts, regime matrix
+    emission, policy hash recording, and blocked promotion status.
+  review_condition: >
+    Review before adding new regimes, changing baseline parameters, or using a
+    regime conclusion outside research-only owner review.
+regime_definitions:
+  sideways_abs_63d_return: 0.05
+  rate_change_window_days: 63
+  semiconductor_proxy_caveat: >
+    Current cache does not include a dedicated semiconductor ETF in this path.
+    The first implementation uses a TQQQ-vs-QQQ rally proxy and marks the result
+    as diagnostic-only.
+expanded_baselines:
+  qqq_sgov_grid:
+    - 0.9
+    - 0.8
+    - 0.7
+    - 0.6
+    - 0.5
+  trend_filters:
+    - qqq_200dma_trend_filter
+    - qqq_100dma_trend_filter
+  vol_target:
+    target_annual_volatility: 0.15
+    max_qqq_weight: 1.0
+  drawdown_derisk:
+    drawdown_trigger: -0.10
+    risk_off_qqq_weight: 0.5
+  simple_event:
+    daily_loss_trigger: -0.03
+    cooldown_days: 5
+gate_policy:
+  complex_dynamic_must_beat_reasonable_simple_baseline: true
+  dynamic_promotion_final_status: BLOCKED
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

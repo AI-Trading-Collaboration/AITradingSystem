@@ -1,0 +1,43 @@
+schema_version: 1
+policy_id: cash_yield_model_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Defensive allocations should expose whether cash-like yield and SGOV total
+    return explain part of actual-path performance.
+  intended_effect: >
+    Record cash sweep and SGOV dividend timing assumptions explicitly instead
+    of burying yield treatment inside portfolio returns.
+  validation_evidence: >
+    TRADING-1431 to 1445 tests cover cash-yield matrix fields, policy hash
+    recording, and blocked promotion status.
+  review_condition: >
+    Review before replacing this research approximation with broker cash sweep,
+    settlement, dividend accrual, or tax-lot accounting.
+cash_sweep:
+  annual_yield: 0.0
+  yield_source: disabled_research_placeholder
+  rationale: >
+    Current actual-path strategies use SGOV as the cash-like yield carrier.
+    Uninvested cash sweep yield is left at zero until broker-specific terms are
+    reviewed.
+sgov_dividend_policy:
+  source: adjusted_close_total_return_proxy
+  timing: daily_adjusted_close_return
+  caveat: >
+    SGOV yield is inferred from adjusted close returns, not from dividend
+    ex-date cash-flow accounting.
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

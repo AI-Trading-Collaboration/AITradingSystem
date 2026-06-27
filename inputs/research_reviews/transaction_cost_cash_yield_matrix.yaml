@@ -1,0 +1,167 @@
+schema_version: transaction_cost_cash_yield_matrix.v1
+report_type: transaction_cost_cash_yield_matrix
+status: TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\cost_cash_yield\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: 6f7313e4002281bc83f460e9101d397da5b1d99c
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+transaction_cost_model_hash: 5869b1f47b8e6096ff399c7c747bcee873795df921e24d5e96ae7d0bd7aaca52
+cash_yield_model_hash: 1bd3a0e88963b910a0c942eef93ff7003db9803b64e22e02256315988c501982
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  transaction_cost_cash_yield_matrix: f7c363cc30ac3c74656aeedc0d69c963f65828227acc104e39315739f282202b
+strategy_cost_cash_yield_rows:
+- strategy_id: no_trade
+  strategy_family: baseline
+  gross_annual_return: 0.04723
+  net_annual_return: 0.04723
+  execution_policy_net_annual_return: 0.04723
+  incremental_cost_delta_vs_execution_policy: 0.0
+  turnover_cost: 0.0
+  slippage_cost: 0.0
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.163743
+  cost_adjusted_sharpe: 19.775242
+  cost_adjusted_calmar: 204.624167
+  transaction_cost_bps: 4.0
+  turnover: 0.0
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: 100_qqq
+  strategy_family: baseline
+  gross_annual_return: 0.288913
+  net_annual_return: 0.288913
+  execution_policy_net_annual_return: 0.288913
+  incremental_cost_delta_vs_execution_policy: 0.0
+  turnover_cost: 0.0
+  slippage_cost: 0.0
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.0
+  cost_adjusted_sharpe: 1.430543
+  cost_adjusted_calmar: 1.268959
+  transaction_cost_bps: 4.0
+  turnover: 0.0
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: qqq_60_sgov_40
+  strategy_family: baseline
+  gross_annual_return: 0.191987
+  net_annual_return: 0.191987
+  execution_policy_net_annual_return: 0.191987
+  incremental_cost_delta_vs_execution_policy: 0.0
+  turnover_cost: 0.0
+  slippage_cost: 0.0
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.065497
+  cost_adjusted_sharpe: 1.584257
+  cost_adjusted_calmar: 1.370666
+  transaction_cost_bps: 4.0
+  turnover: 0.0
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: qqq_50_sgov_50
+  strategy_family: baseline
+  gross_annual_return: 0.16773
+  net_annual_return: 0.16773
+  execution_policy_net_annual_return: 0.16773
+  incremental_cost_delta_vs_execution_policy: 0.0
+  turnover_cost: 0.0
+  slippage_cost: 0.0
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.081871
+  cost_adjusted_sharpe: 1.660816
+  cost_adjusted_calmar: 1.433493
+  transaction_cost_bps: 4.0
+  turnover: 0.0
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment
+  strategy_family: dynamic
+  gross_annual_return: 0.192739
+  net_annual_return: 0.192416
+  execution_policy_net_annual_return: 0.192658
+  incremental_cost_delta_vs_execution_policy: -0.000242
+  turnover_cost: 0.000323
+  slippage_cost: 0.00048
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.060909
+  cost_adjusted_sharpe: 1.607126
+  cost_adjusted_calmar: 1.6551
+  transaction_cost_bps: 4.0
+  turnover: 2.4
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  strategy_family: dynamic
+  gross_annual_return: 0.182912
+  net_annual_return: 0.180811
+  execution_policy_net_annual_return: 0.182386
+  incremental_cost_delta_vs_execution_policy: -0.001575
+  turnover_cost: 0.002101
+  slippage_cost: 0.00315
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.065792
+  cost_adjusted_sharpe: 1.620478
+  cost_adjusted_calmar: 1.969883
+  transaction_cost_bps: 4.0
+  turnover: 15.75
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  strategy_family: dynamic
+  gross_annual_return: 0.190802
+  net_annual_return: 0.18989
+  execution_policy_net_annual_return: 0.190574
+  incremental_cost_delta_vs_execution_policy: -0.000684
+  turnover_cost: 0.000912
+  slippage_cost: 0.00136
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.061366
+  cost_adjusted_sharpe: 1.588681
+  cost_adjusted_calmar: 1.642716
+  transaction_cost_bps: 4.0
+  turnover: 6.8
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  strategy_family: dynamic
+  gross_annual_return: 0.185534
+  net_annual_return: 0.181393
+  execution_policy_net_annual_return: 0.184497
+  incremental_cost_delta_vs_execution_policy: -0.003104
+  turnover_cost: 0.004141
+  slippage_cost: 0.00621
+  cash_yield_contribution: 0.0
+  sgov_dividend_contribution: 0.067057
+  cost_adjusted_sharpe: 1.639837
+  cost_adjusted_calmar: 1.964729
+  transaction_cost_bps: 4.0
+  turnover: 31.05
+  net_cost_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

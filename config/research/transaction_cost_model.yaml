@@ -1,0 +1,45 @@
+schema_version: 1
+policy_id: transaction_cost_model_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic strategy conclusions must separate gross returns from cost-adjusted
+    returns before any paper-shadow preflight discussion.
+  intended_effect: >
+    Apply a governed research-only turnover cost model for bid/ask spread,
+    slippage, commission, ETF spread, currency conversion, and tax placeholders.
+  validation_evidence: >
+    TRADING-1431 to 1445 tests cover matrix emission, net-of-cost metrics,
+    policy hash recording, and blocked promotion status.
+  review_condition: >
+    Review before using live broker fills, taxable-account assumptions, or
+    production execution cost estimates.
+cost_components_bps:
+  bid_ask_spread_bps: 1.0
+  slippage_bps: 2.0
+  commission_bps: 0.0
+  etf_spread_bps: 1.0
+  fx_conversion_bps: 0.0
+  tax_drag_placeholder_bps: 0.0
+tax_drag_placeholder:
+  enabled: false
+  reason: >
+    Tax drag depends on account type, lot history, and realized gains. It is
+    recorded as an explicit placeholder and must not be silently assumed.
+gate_policy:
+  gross_edge_without_net_edge_blocks_preflight: true
+  dynamic_promotion_final_status: BLOCKED
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

@@ -12,7 +12,10 @@ from rich.console import Console
 from ai_trading_system.execution_semantics import (
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
+    DEFAULT_ARTIFACT_GOVERNANCE_OUTPUT_ROOT,
+    DEFAULT_CASH_YIELD_MODEL_PATH,
     DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    DEFAULT_COST_CASH_YIELD_OUTPUT_ROOT,
     DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH,
     DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH,
     DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
@@ -45,6 +48,12 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_PRICES_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
     DEFAULT_RATES_PATH,
+    DEFAULT_REGIME_BASELINE_EXPANSION_MATRIX_YAML_PATH,
+    DEFAULT_REGIME_BASELINE_EXPANSION_POLICY_PATH,
+    DEFAULT_REGIME_BASELINE_EXPANSION_REVIEW_PATH,
+    DEFAULT_REGIME_BASELINE_OUTPUT_ROOT,
+    DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_PATH,
+    DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_SNAPSHOT_PATH,
     DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH,
     DEFAULT_RISK_TIMING_QUALITY_POLICY_PATH,
     DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH,
@@ -53,7 +62,14 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
+    DEFAULT_STRESS_RISK_METRICS_MATRIX_YAML_PATH,
+    DEFAULT_STRESS_RISK_METRICS_POLICY_PATH,
+    DEFAULT_STRESS_RISK_METRICS_REVIEW_PATH,
+    DEFAULT_STRESS_RISK_OUTPUT_ROOT,
     DEFAULT_TIMING_QUALITY_OUTPUT_ROOT,
+    DEFAULT_TRANSACTION_COST_CASH_YIELD_MATRIX_YAML_PATH,
+    DEFAULT_TRANSACTION_COST_CASH_YIELD_REVIEW_PATH,
+    DEFAULT_TRANSACTION_COST_MODEL_PATH,
     DEFAULT_WALK_FORWARD_OUTPUT_ROOT,
     EVENT_OVERRIDE_MODE_T_PLUS_1,
     run_actual_path_edge_attribution_review,
@@ -82,12 +98,16 @@ from ai_trading_system.execution_semantics import (
     run_rebalance_assumption_owner_review_pack,
     run_rebalance_frequency_sensitivity_suite,
     run_rebalance_sensitive_candidate_recovery_review,
+    run_regime_segmentation_baseline_expansion_review,
+    run_research_artifact_governance_review,
     run_risk_timing_quality_review,
     run_roadmap_update_after_execution_semantics_review,
     run_signal_staleness_cost_review,
     run_strategy_execution_policy_registry_review,
+    run_stress_risk_metrics_review,
     run_target_vs_actual_position_path_builder,
     run_threshold_hybrid_rebalance_review,
+    run_transaction_cost_cash_yield_audit,
 )
 
 console = Console()
@@ -120,6 +140,18 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("risk-timing-quality-review")(
         _risk_timing_quality_review_command
+    )
+    strategies_app.command("transaction-cost-cash-yield-audit")(
+        _transaction_cost_cash_yield_audit_command
+    )
+    strategies_app.command("stress-risk-metrics-review")(
+        _stress_risk_metrics_review_command
+    )
+    strategies_app.command("regime-segmentation-baseline-expansion-review")(
+        _regime_segmentation_baseline_expansion_review_command
+    )
+    strategies_app.command("research-artifact-governance-review")(
+        _research_artifact_governance_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -669,6 +701,205 @@ def _risk_timing_quality_review_command(
         end_date=_parse_optional_date(end_date),
     )
     _print_execution_semantics_payload("Risk-off risk-on timing quality review", payload)
+
+
+def _transaction_cost_cash_yield_audit_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    transaction_cost_model_path: Annotated[
+        Path, typer.Option("--transaction-cost-model")
+    ] = DEFAULT_TRANSACTION_COST_MODEL_PATH,
+    cash_yield_model_path: Annotated[
+        Path, typer.Option("--cash-yield-model")
+    ] = DEFAULT_CASH_YIELD_MODEL_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_COST_CASH_YIELD_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_TRANSACTION_COST_CASH_YIELD_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_TRANSACTION_COST_CASH_YIELD_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_transaction_cost_cash_yield_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        transaction_cost_model_path=transaction_cost_model_path,
+        cash_yield_model_path=cash_yield_model_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Transaction cost cash yield audit", payload)
+
+
+def _stress_risk_metrics_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    stress_policy_path: Annotated[
+        Path, typer.Option("--stress-policy")
+    ] = DEFAULT_STRESS_RISK_METRICS_POLICY_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_STRESS_RISK_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_STRESS_RISK_METRICS_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_STRESS_RISK_METRICS_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_stress_risk_metrics_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        stress_policy_path=stress_policy_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Stress risk metrics review", payload)
+
+
+def _regime_segmentation_baseline_expansion_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    regime_policy_path: Annotated[
+        Path, typer.Option("--regime-policy")
+    ] = DEFAULT_REGIME_BASELINE_EXPANSION_POLICY_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_REGIME_BASELINE_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_REGIME_BASELINE_EXPANSION_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_REGIME_BASELINE_EXPANSION_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_regime_segmentation_baseline_expansion_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        regime_policy_path=regime_policy_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload(
+        "Regime segmentation baseline expansion review",
+        payload,
+    )
+
+
+def _research_artifact_governance_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_ARTIFACT_GOVERNANCE_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--snapshot-path")
+    ] = DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_SNAPSHOT_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_research_artifact_governance_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload("Research artifact governance review", payload)
 
 
 def _call_builder(

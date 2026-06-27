@@ -1,0 +1,48 @@
+schema_version: 1
+policy_id: stress_risk_metrics_policy_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic strategies that claim risk reduction must be checked on stress loss,
+    gap proxy, and reaction-delay metrics beyond daily close max drawdown.
+  intended_effect: >
+    Surface whether risk-off behavior reduces worst short-window losses or only
+    shifts full-sample return/risk statistics.
+  validation_evidence: >
+    TRADING-1446 to 1460 tests cover stress metric generation, policy hash
+    recording, actual-path-only inputs, and blocked promotion status.
+  review_condition: >
+    Review before adding intraday data, option-implied gap models, or production
+    stress limits.
+risk_exposure_policy:
+  risk_asset_exposure_weights:
+    QQQ: 1.0
+    TQQQ: 3.0
+    SGOV: 0.0
+  exposure_change_epsilon: 0.02
+stress_windows_trading_days:
+  - 1
+  - 5
+  - 20
+high_volatility_policy:
+  rolling_window_days: 20
+  top_quantile: 0.8
+intraday_proxy_policy:
+  daily_loss_multiplier: 1.25
+  caveat: >
+    Intraday drawdown is not available from daily close cache. The proxy is a
+    conservative research multiplier and must be replaced before production use.
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

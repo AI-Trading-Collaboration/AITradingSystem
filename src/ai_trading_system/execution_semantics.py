@@ -167,6 +167,54 @@ DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH = (
 DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH = (
     PROJECT_ROOT / "inputs" / "research_reviews" / "risk_timing_quality_matrix.yaml"
 )
+DEFAULT_COST_CASH_YIELD_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "cost_cash_yield"
+)
+DEFAULT_TRANSACTION_COST_MODEL_PATH = (
+    PROJECT_ROOT / "config" / "research" / "transaction_cost_model.yaml"
+)
+DEFAULT_CASH_YIELD_MODEL_PATH = (
+    PROJECT_ROOT / "config" / "research" / "cash_yield_model.yaml"
+)
+DEFAULT_TRANSACTION_COST_CASH_YIELD_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "transaction_cost_cash_yield_audit.md"
+)
+DEFAULT_TRANSACTION_COST_CASH_YIELD_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "transaction_cost_cash_yield_matrix.yaml"
+)
+DEFAULT_STRESS_RISK_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "stress_risk"
+)
+DEFAULT_STRESS_RISK_METRICS_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "stress_risk_metrics_policy.yaml"
+)
+DEFAULT_STRESS_RISK_METRICS_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "stress_risk_metrics_review.md"
+)
+DEFAULT_STRESS_RISK_METRICS_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "stress_risk_metrics_matrix.yaml"
+)
+DEFAULT_REGIME_BASELINE_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "regime_review"
+)
+DEFAULT_REGIME_BASELINE_EXPANSION_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "regime_baseline_expansion_policy.yaml"
+)
+DEFAULT_REGIME_BASELINE_EXPANSION_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "regime_segmentation_baseline_expansion_review.md"
+)
+DEFAULT_REGIME_BASELINE_EXPANSION_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "regime_baseline_expansion_matrix.yaml"
+)
+DEFAULT_ARTIFACT_GOVERNANCE_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "artifact_governance"
+)
+DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "research_artifact_governance_review.md"
+)
+DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_SNAPSHOT_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "research_artifact_governance_snapshot.yaml"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -583,6 +631,26 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "risk_timing_quality_review",
         "title": "Risk-Off Risk-On Timing Quality Review",
         "command": "aits research strategies risk-timing-quality-review",
+    },
+    {
+        "report_id": "transaction_cost_cash_yield_audit",
+        "title": "Transaction Cost Cash Yield Audit",
+        "command": "aits research strategies transaction-cost-cash-yield-audit",
+    },
+    {
+        "report_id": "stress_risk_metrics_review",
+        "title": "Stress Risk Metrics Review",
+        "command": "aits research strategies stress-risk-metrics-review",
+    },
+    {
+        "report_id": "regime_segmentation_baseline_expansion_review",
+        "title": "Regime Segmentation Baseline Expansion Review",
+        "command": "aits research strategies regime-segmentation-baseline-expansion-review",
+    },
+    {
+        "report_id": "research_artifact_governance_review",
+        "title": "Research Artifact Governance Review",
+        "command": "aits research strategies research-artifact-governance-review",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -2708,6 +2776,526 @@ def run_risk_timing_quality_review(
         strategy_rows=strategy_rows,
     )
     payload["artifact_paths"] = artifact_paths
+    return payload
+
+
+def run_transaction_cost_cash_yield_audit(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    transaction_cost_model_path: Path = DEFAULT_TRANSACTION_COST_MODEL_PATH,
+    cash_yield_model_path: Path = DEFAULT_CASH_YIELD_MODEL_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_COST_CASH_YIELD_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_TRANSACTION_COST_CASH_YIELD_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_TRANSACTION_COST_CASH_YIELD_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("cost_cash"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="transaction_cost_cash_yield_audit",
+            title=REPORT_SPEC_BY_ID["transaction_cost_cash_yield_audit"]["title"],
+            status="TRANSACTION_COST_CASH_YIELD_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_cost_cash_yield_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            rows=[],
+        )
+        return payload
+
+    transaction_policy = _load_yaml_mapping(transaction_cost_model_path)
+    cash_policy = _load_yaml_mapping(cash_yield_model_path)
+    missing = _missing_runtime_strategy_artifacts(
+        source_root,
+        [*ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES, *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES],
+    )
+    if not transaction_policy:
+        missing.append(f"missing_or_empty_transaction_cost_model:{transaction_cost_model_path}")
+    if not cash_policy:
+        missing.append(f"missing_or_empty_cash_yield_model:{cash_yield_model_path}")
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    date_range = _date_range_from_prices(prices)
+    if missing:
+        payload = _payload(
+            report_type="transaction_cost_cash_yield_audit",
+            title=REPORT_SPEC_BY_ID["transaction_cost_cash_yield_audit"]["title"],
+            status="TRANSACTION_COST_CASH_YIELD_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            date_range=date_range,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry(
+                "transaction_cost_cash_yield_audit"
+            ),
+        )
+        _write_cost_cash_yield_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            rows=[],
+        )
+        return payload
+
+    registry = _load_policy_registry(policy_registry_path)
+    strategy_ids = [
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES,
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    ]
+    rows = [
+        _cost_cash_yield_row(
+            strategy_id=strategy_id,
+            prices=prices,
+            source_root=source_root,
+            policy_registry=registry,
+            transaction_policy=transaction_policy,
+            cash_policy=cash_policy,
+        )
+        for strategy_id in strategy_ids
+    ]
+    blocker_rows = [
+        row for row in rows if row.get("net_cost_gate_status") == "BLOCKED"
+    ]
+    payload = _payload(
+        report_type="transaction_cost_cash_yield_audit",
+        title=REPORT_SPEC_BY_ID["transaction_cost_cash_yield_audit"]["title"],
+        status="TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS",
+        summary={
+            "strategy_count": len(rows),
+            "blocked_strategy_count": len(blocker_rows),
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        transaction_cost_model_hash=_file_sha256(transaction_cost_model_path),
+        cash_yield_model_hash=_file_sha256(cash_yield_model_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        transaction_cost_policy=_cost_policy_summary(transaction_policy),
+        cash_yield_policy=_cash_yield_policy_summary(cash_policy),
+        strategy_cost_cash_yield_rows=rows,
+        report_registry_entry=_report_registry_entry(
+            "transaction_cost_cash_yield_audit"
+        ),
+    )
+    payload["artifact_paths"] = _write_cost_cash_yield_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        rows=rows,
+    )
+    return payload
+
+
+def run_stress_risk_metrics_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    stress_policy_path: Path = DEFAULT_STRESS_RISK_METRICS_POLICY_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_STRESS_RISK_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_STRESS_RISK_METRICS_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_STRESS_RISK_METRICS_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("stress_risk"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="stress_risk_metrics_review",
+            title=REPORT_SPEC_BY_ID["stress_risk_metrics_review"]["title"],
+            status="STRESS_RISK_METRICS_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_stress_risk_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            rows=[],
+        )
+        return payload
+
+    policy = _load_yaml_mapping(stress_policy_path)
+    missing = _missing_runtime_strategy_artifacts(
+        source_root,
+        [*ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES, *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES],
+    )
+    if not policy:
+        missing.append(f"missing_or_empty_stress_policy:{stress_policy_path}")
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    date_range = _date_range_from_prices(prices)
+    if missing:
+        payload = _payload(
+            report_type="stress_risk_metrics_review",
+            title=REPORT_SPEC_BY_ID["stress_risk_metrics_review"]["title"],
+            status="STRESS_RISK_METRICS_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            date_range=date_range,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry("stress_risk_metrics_review"),
+        )
+        _write_stress_risk_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            rows=[],
+        )
+        return payload
+
+    registry = _load_policy_registry(policy_registry_path)
+    strategy_ids = [
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES,
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    ]
+    rows = [
+        _stress_risk_row(
+            strategy_id=strategy_id,
+            prices=prices,
+            source_root=source_root,
+            policy_registry=registry,
+            stress_policy=policy,
+        )
+        for strategy_id in strategy_ids
+    ]
+    payload = _payload(
+        report_type="stress_risk_metrics_review",
+        title=REPORT_SPEC_BY_ID["stress_risk_metrics_review"]["title"],
+        status="STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS",
+        summary={
+            "strategy_count": len(rows),
+            "stress_blocker_count": sum(
+                1 for row in rows if row.get("stress_gate_status") == "BLOCKED"
+            ),
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        stress_policy_hash=_file_sha256(stress_policy_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        stress_policy=_stress_policy_summary(policy),
+        strategy_stress_rows=rows,
+        report_registry_entry=_report_registry_entry("stress_risk_metrics_review"),
+    )
+    payload["artifact_paths"] = _write_stress_risk_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        rows=rows,
+    )
+    return payload
+
+
+def run_regime_segmentation_baseline_expansion_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    regime_policy_path: Path = DEFAULT_REGIME_BASELINE_EXPANSION_POLICY_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_REGIME_BASELINE_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_REGIME_BASELINE_EXPANSION_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_REGIME_BASELINE_EXPANSION_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("regime_review"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="regime_segmentation_baseline_expansion_review",
+            title=REPORT_SPEC_BY_ID[
+                "regime_segmentation_baseline_expansion_review"
+            ]["title"],
+            status="REGIME_BASELINE_EXPANSION_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_regime_baseline_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            regime_rows=[],
+            baseline_rows=[],
+        )
+        return payload
+
+    policy = _load_yaml_mapping(regime_policy_path)
+    missing = _missing_runtime_strategy_artifacts(
+        source_root,
+        list(ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES),
+    )
+    if not policy:
+        missing.append(f"missing_or_empty_regime_policy:{regime_policy_path}")
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    rates = _load_rates_series(rates_path, prices.index)
+    date_range = _date_range_from_prices(prices)
+    if missing:
+        payload = _payload(
+            report_type="regime_segmentation_baseline_expansion_review",
+            title=REPORT_SPEC_BY_ID[
+                "regime_segmentation_baseline_expansion_review"
+            ]["title"],
+            status="REGIME_BASELINE_EXPANSION_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            date_range=date_range,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry(
+                "regime_segmentation_baseline_expansion_review"
+            ),
+        )
+        _write_regime_baseline_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            regime_rows=[],
+            baseline_rows=[],
+        )
+        return payload
+
+    registry = _load_policy_registry(policy_registry_path)
+    regime_masks = _regime_masks(prices=prices, rates=rates, policy=policy)
+    baseline_weights = _expanded_baseline_weights(prices=prices, policy=policy)
+    regime_rows = _regime_metric_rows(
+        prices=prices,
+        source_root=source_root,
+        policy_registry=registry,
+        regime_masks=regime_masks,
+        baseline_weights=baseline_weights,
+    )
+    baseline_rows = _expanded_baseline_leaderboard_rows(
+        prices=prices,
+        baseline_weights=baseline_weights,
+    )
+    dynamic_rows = [row for row in regime_rows if row.get("strategy_family") == "dynamic"]
+    dynamic_beat_simple = any(
+        bool(row.get("beats_simple_baseline"))
+        for row in dynamic_rows
+        if row.get("regime_id") == "all_ai_after_chatgpt"
+    )
+    payload = _payload(
+        report_type="regime_segmentation_baseline_expansion_review",
+        title=REPORT_SPEC_BY_ID[
+            "regime_segmentation_baseline_expansion_review"
+        ]["title"],
+        status="REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS",
+        summary={
+            "regime_row_count": len(regime_rows),
+            "expanded_baseline_count": len(baseline_weights),
+            "dynamic_candidate_beats_simple_baseline": dynamic_beat_simple,
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        regime_policy_hash=_file_sha256(regime_policy_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        regime_policy=_regime_policy_summary(policy),
+        regime_metric_rows=regime_rows,
+        report_registry_entry=_report_registry_entry(
+            "regime_segmentation_baseline_expansion_review"
+        ),
+    )
+    payload["artifact_paths"] = _write_regime_baseline_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        regime_rows=regime_rows,
+        baseline_rows=baseline_rows,
+    )
+    return payload
+
+
+def run_research_artifact_governance_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_ARTIFACT_GOVERNANCE_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_RESEARCH_ARTIFACT_GOVERNANCE_SNAPSHOT_PATH,
+    as_of_date: date | None = None,
+    tracked_snapshot_paths: Mapping[str, Path] | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("artifact_gov"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="research_artifact_governance_review",
+            title=REPORT_SPEC_BY_ID["research_artifact_governance_review"]["title"],
+            status="RESEARCH_ARTIFACT_GOVERNANCE_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_artifact_governance_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            rows=[],
+        )
+        return payload
+
+    rows = _artifact_governance_inventory_rows(
+        source_root=source_root,
+        tracked_snapshot_paths=tracked_snapshot_paths,
+    )
+    blocker_rows = [row for row in rows if row.get("governance_status") == "BLOCKED"]
+    payload = _payload(
+        report_type="research_artifact_governance_review",
+        title=REPORT_SPEC_BY_ID["research_artifact_governance_review"]["title"],
+        status=(
+            "RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY_WITH_BLOCKERS"
+            if blocker_rows
+            else "RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY"
+        ),
+        summary={
+            "artifact_count": len(rows),
+            "blocker_count": len(blocker_rows),
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=_date_range_from_runtime_or_gate(source_root),
+        data_quality=data_gate,
+        artifact_governance_rows=rows,
+        blockers=[str(row.get("artifact_id")) for row in blocker_rows],
+        report_registry_entry=_report_registry_entry(
+            "research_artifact_governance_review"
+        ),
+    )
+    payload["artifact_paths"] = _write_artifact_governance_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        rows=rows,
+    )
     return payload
 
 
@@ -9170,6 +9758,968 @@ def _risk_timing_quality_markdown(
             "",
         ]
     )
+
+
+def _date_range_from_prices(prices: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "start": prices.index.min().date().isoformat(),
+        "end": prices.index.max().date().isoformat(),
+        "market_regime": "ai_after_chatgpt",
+    }
+
+
+def _cost_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "cost_components_bps": _mapping(policy.get("cost_components_bps")),
+        "tax_drag_placeholder": _mapping(policy.get("tax_drag_placeholder")),
+    }
+
+
+def _cash_yield_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "cash_sweep": _mapping(policy.get("cash_sweep")),
+        "sgov_dividend_policy": _mapping(policy.get("sgov_dividend_policy")),
+    }
+
+
+def _transaction_cost_total_bps(policy: Mapping[str, Any]) -> float:
+    components = _mapping(policy.get("cost_components_bps"))
+    return round(
+        sum(
+            _float(components.get(key))
+            for key in (
+                "bid_ask_spread_bps",
+                "slippage_bps",
+                "commission_bps",
+                "etf_spread_bps",
+                "fx_conversion_bps",
+                "tax_drag_placeholder_bps",
+            )
+        ),
+        6,
+    )
+
+
+def _cost_cash_yield_row(
+    *,
+    strategy_id: str,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    transaction_policy: Mapping[str, Any],
+    cash_policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    weights = _actual_weights_for_strategy(strategy_id, source_root, prices)
+    existing_cost_bps = _strategy_cost_bps(strategy_id, policy_registry)
+    incremental_cost_bps = _transaction_cost_total_bps(transaction_policy)
+    gross = _performance_metrics(prices, weights, cost_bps=0.0)
+    net = _performance_metrics(prices, weights, cost_bps=incremental_cost_bps)
+    execution_net = _performance_metrics(prices, weights, cost_bps=existing_cost_bps)
+    turnover = _float(gross.get("turnover"))
+    components = _mapping(transaction_policy.get("cost_components_bps"))
+    slippage_cost = round(turnover * _float(components.get("slippage_bps")) / 10000.0, 6)
+    cash_yield = _cash_yield_contribution(weights, prices, cash_policy)
+    sgov_dividend = _sgov_dividend_contribution(weights, prices)
+    net_minus_execution = round(
+        _float(net.get("annual_return")) - _float(execution_net.get("annual_return")),
+        6,
+    )
+    gate_status = "BLOCKED" if _float(net.get("annual_return")) <= 0 else "REVIEWABLE"
+    return {
+        "strategy_id": strategy_id,
+        "strategy_family": (
+            "dynamic"
+            if strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES
+            else "baseline"
+        ),
+        "gross_annual_return": gross.get("annual_return"),
+        "net_annual_return": net.get("annual_return"),
+        "execution_policy_net_annual_return": execution_net.get("annual_return"),
+        "incremental_cost_delta_vs_execution_policy": net_minus_execution,
+        "turnover_cost": round(
+            _float(gross.get("annual_return")) - _float(net.get("annual_return")),
+            6,
+        ),
+        "slippage_cost": slippage_cost,
+        "cash_yield_contribution": cash_yield,
+        "sgov_dividend_contribution": sgov_dividend,
+        "cost_adjusted_sharpe": net.get("sharpe_daily_zero_rf"),
+        "cost_adjusted_calmar": net.get("calmar_daily_equity_dd"),
+        "transaction_cost_bps": incremental_cost_bps,
+        "turnover": turnover,
+        "net_cost_gate_status": gate_status,
+        "promotion_gate_status": "BLOCKED",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+
+
+def _actual_weights_for_strategy(
+    strategy_id: str,
+    source_root: Path,
+    prices: pd.DataFrame,
+) -> pd.DataFrame:
+    path = source_root / strategy_id / "target_vs_actual_position_path.csv"
+    frame = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    return _actual_weights_from_path(frame, prices.index)
+
+
+def _portfolio_return_series(
+    prices: pd.DataFrame,
+    weights: pd.DataFrame,
+    *,
+    cost_bps: float,
+) -> pd.Series:
+    weights = _ensure_weight_columns(weights).reindex(prices.index).ffill().fillna(0.0)
+    asset_returns = prices.reindex(columns=weights.columns).pct_change().fillna(0.0)
+    applied = weights.shift(1).ffill().fillna(0.0)
+    gross_returns = (applied * asset_returns).sum(axis=1)
+    turnover = _turnover_series(weights)
+    return (gross_returns - turnover * (cost_bps / 10000.0)).fillna(0.0)
+
+
+def _cash_yield_contribution(
+    weights: pd.DataFrame,
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+) -> float:
+    cash_policy = _mapping(policy.get("cash_sweep"))
+    annual_yield = _float(cash_policy.get("annual_yield"))
+    cash_weight = (1.0 - weights.sum(axis=1)).clip(lower=0.0)
+    return round(float(cash_weight.mean()) * annual_yield, 6) if len(prices) else 0.0
+
+
+def _sgov_dividend_contribution(weights: pd.DataFrame, prices: pd.DataFrame) -> float:
+    if "SGOV" not in prices or "SGOV" not in weights:
+        return 0.0
+    sgov_returns = prices["SGOV"].pct_change().fillna(0.0)
+    applied = weights["SGOV"].shift(1).reindex(prices.index).ffill().fillna(0.0)
+    return round(float((applied * sgov_returns).sum()), 6)
+
+
+def _write_cost_cash_yield_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "transaction_cost_cash_yield_matrix": runtime_root
+        / "transaction_cost_cash_yield_matrix.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(rows).to_csv(paths["transaction_cost_cash_yield_matrix"], index=False)
+    artifact_hashes = {
+        "transaction_cost_cash_yield_matrix": _file_sha256(
+            paths["transaction_cost_cash_yield_matrix"]
+        )
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _batch4_matrix_payload(
+                payload=payload,
+                schema_version="transaction_cost_cash_yield_matrix.v1",
+                report_type="transaction_cost_cash_yield_matrix",
+                runtime_root=runtime_root,
+                artifact_hashes=artifact_hashes,
+                row_key="strategy_cost_cash_yield_rows",
+                rows=rows,
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _batch4_markdown(
+            payload,
+            title="Transaction Cost Cash Yield Audit",
+            rows=rows,
+            columns=[
+                "strategy_id",
+                "gross_annual_return",
+                "net_annual_return",
+                "turnover_cost",
+                "cash_yield_contribution",
+                "sgov_dividend_contribution",
+                "net_cost_gate_status",
+            ],
+        ),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _stress_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "stress_windows_trading_days": policy.get("stress_windows_trading_days"),
+        "high_volatility_policy": _mapping(policy.get("high_volatility_policy")),
+        "intraday_proxy_policy": _mapping(policy.get("intraday_proxy_policy")),
+    }
+
+
+def _stress_risk_row(
+    *,
+    strategy_id: str,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    stress_policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    weights = _actual_weights_for_strategy(strategy_id, source_root, prices)
+    returns = _portfolio_return_series(
+        prices,
+        weights,
+        cost_bps=_strategy_cost_bps(strategy_id, policy_registry),
+    )
+    exposure = _risk_exposure_from_weights(weights, stress_policy)
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    high_vol_mask = _high_volatility_mask(prices, stress_policy)
+    worst_1d = round(float(returns.min()), 6) if not returns.empty else 0.0
+    worst_5d = _worst_window_loss(returns, 5)
+    worst_20d = _worst_window_loss(returns, 20)
+    gap_down = round(float((qqq_returns * exposure.shift(1).fillna(0.0)).min()), 6)
+    proxy_multiplier = _float(
+        _mapping(stress_policy.get("intraday_proxy_policy")).get("daily_loss_multiplier"),
+        1.25,
+    )
+    high_vol_loss = round(float(returns[high_vol_mask].sum()), 6)
+    crash_delay = _crash_reaction_delay(weights=weights, returns=returns, policy=stress_policy)
+    return {
+        "strategy_id": strategy_id,
+        "strategy_family": (
+            "dynamic"
+            if strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES
+            else "baseline"
+        ),
+        "worst_1d_loss": worst_1d,
+        "worst_5d_loss": worst_5d,
+        "worst_20d_loss": worst_20d,
+        "gap_down_exposure": gap_down,
+        "overnight_risk_proxy": worst_1d,
+        "intraday_drawdown_proxy_if_available": round(worst_1d * proxy_multiplier, 6),
+        "crash_reaction_delay": crash_delay,
+        "high_vol_period_loss": high_vol_loss,
+        "stress_gate_status": "BLOCKED"
+        if strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES and worst_5d < 0
+        else "REVIEWABLE",
+        "promotion_gate_status": "BLOCKED",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+
+
+def _risk_exposure_from_weights(weights: pd.DataFrame, policy: Mapping[str, Any]) -> pd.Series:
+    exposure_policy = _mapping(policy.get("risk_exposure_policy"))
+    exposure_weights = _mapping(exposure_policy.get("risk_asset_exposure_weights"))
+    return (
+        weights["QQQ"].astype(float) * _float(exposure_weights.get("QQQ"), 1.0)
+        + weights["TQQQ"].astype(float) * _float(exposure_weights.get("TQQQ"), 3.0)
+        + weights["SGOV"].astype(float) * _float(exposure_weights.get("SGOV"), 0.0)
+    )
+
+
+def _worst_window_loss(returns: pd.Series, window: int) -> float:
+    if returns.empty or len(returns) < window:
+        return round(float(returns.sum()), 6) if not returns.empty else 0.0
+    compounded = (1.0 + returns).rolling(window).apply(lambda value: value.prod() - 1.0)
+    return round(float(compounded.min()), 6)
+
+
+def _high_volatility_mask(prices: pd.DataFrame, policy: Mapping[str, Any]) -> pd.Series:
+    vol_policy = _mapping(policy.get("high_volatility_policy"))
+    window = max(2, _int(vol_policy.get("rolling_window_days"), 20))
+    quantile = _float(vol_policy.get("top_quantile"), 0.8)
+    vol = prices["QQQ"].pct_change().rolling(window).std()
+    threshold = vol.quantile(quantile)
+    return (vol >= threshold).reindex(prices.index).fillna(False)
+
+
+def _crash_reaction_delay(
+    *,
+    weights: pd.DataFrame,
+    returns: pd.Series,
+    policy: Mapping[str, Any],
+) -> int:
+    if returns.empty:
+        return 0
+    worst_date = returns.idxmin()
+    exposure = _risk_exposure_from_weights(weights, policy)
+    epsilon = _float(
+        _mapping(policy.get("risk_exposure_policy")).get("exposure_change_epsilon"),
+        0.02,
+    )
+    start = _nearest_index_position(exposure.index, pd.Timestamp(worst_date))
+    before = _float(exposure.iloc[start])
+    for index in range(start + 1, len(exposure)):
+        if _float(exposure.iloc[index]) <= before - epsilon:
+            return int(index - start)
+    return int(len(exposure) - start - 1)
+
+
+def _write_stress_risk_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "stress_risk_metrics_by_strategy": runtime_root
+        / "stress_risk_metrics_by_strategy.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(rows).to_csv(paths["stress_risk_metrics_by_strategy"], index=False)
+    artifact_hashes = {
+        "stress_risk_metrics_by_strategy": _file_sha256(
+            paths["stress_risk_metrics_by_strategy"]
+        )
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _batch4_matrix_payload(
+                payload=payload,
+                schema_version="stress_risk_metrics_matrix.v1",
+                report_type="stress_risk_metrics_matrix",
+                runtime_root=runtime_root,
+                artifact_hashes=artifact_hashes,
+                row_key="strategy_stress_rows",
+                rows=rows,
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _batch4_markdown(
+            payload,
+            title="Stress Risk Metrics Review",
+            rows=rows,
+            columns=[
+                "strategy_id",
+                "worst_1d_loss",
+                "worst_5d_loss",
+                "worst_20d_loss",
+                "crash_reaction_delay",
+                "stress_gate_status",
+            ],
+        ),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _load_rates_series(path: Path, index: pd.Index) -> pd.Series:
+    if not path.exists():
+        return pd.Series(0.0, index=index)
+    frame = pd.read_csv(path)
+    if frame.empty or "date" not in frame or "value" not in frame:
+        return pd.Series(0.0, index=index)
+    if "series" in frame:
+        frame = frame[frame["series"] == "DGS10"]
+    frame["date"] = pd.to_datetime(frame["date"])
+    series = frame.set_index("date")["value"].astype(float)
+    return series.reindex(index).ffill().bfill().fillna(0.0)
+
+
+def _regime_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "regime_definitions": _mapping(policy.get("regime_definitions")),
+        "expanded_baselines": _mapping(policy.get("expanded_baselines")),
+    }
+
+
+def _regime_masks(
+    *,
+    prices: pd.DataFrame,
+    rates: pd.Series,
+    policy: Mapping[str, Any],
+) -> dict[str, pd.Series]:
+    qqq = prices["QQQ"]
+    returns_63 = qqq.pct_change(63).fillna(0.0)
+    sma_100 = qqq.rolling(100, min_periods=20).mean()
+    sma_200 = qqq.rolling(200, min_periods=20).mean()
+    vol = qqq.pct_change().rolling(20).std()
+    vol_threshold = vol.quantile(0.7)
+    rate_change = rates.diff(63).fillna(0.0)
+    sideways_threshold = _float(
+        _mapping(policy.get("regime_definitions")).get("sideways_abs_63d_return"),
+        0.05,
+    )
+    masks = {
+        "all_ai_after_chatgpt": pd.Series(True, index=prices.index),
+        "bull_regime": (qqq >= sma_200) & (returns_63 > 0),
+        "bear_regime": (qqq < sma_200) & (returns_63 < 0),
+        "sideways_regime": returns_63.abs() <= sideways_threshold,
+        "high_vol_regime": vol >= vol_threshold,
+        "low_vol_regime": vol < vol_threshold,
+        "rate_hike_regime": rate_change > 0,
+        "rate_cut_regime": rate_change < 0,
+        "AI_led_bull_regime": (qqq >= sma_100) & (returns_63 > sideways_threshold),
+        "semiconductor_led_rally_proxy": (
+            prices["TQQQ"].pct_change(20).fillna(0.0)
+            > qqq.pct_change(20).fillna(0.0)
+        ),
+        "liquidity_tightening_regime": (rate_change > 0) & (qqq < sma_100),
+    }
+    return {key: value.reindex(prices.index).fillna(False) for key, value in masks.items()}
+
+
+def _expanded_baseline_weights(
+    *,
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+) -> dict[str, pd.DataFrame]:
+    baselines: dict[str, pd.DataFrame] = {}
+    expanded = _mapping(policy.get("expanded_baselines"))
+    for qqq_weight in expanded.get("qqq_sgov_grid", [0.9, 0.8, 0.7, 0.6, 0.5]):
+        qqq = _float(qqq_weight)
+        baselines[f"qqq_{int(qqq * 100)}_sgov_{int((1.0 - qqq) * 100)}"] = (
+            _constant_weight_frame(prices, {"QQQ": qqq, "TQQQ": 0.0, "SGOV": 1.0 - qqq})
+        )
+    baselines["qqq_200dma_trend_filter"] = _trend_filter_weights(prices, window=200)
+    baselines["qqq_100dma_trend_filter"] = _trend_filter_weights(prices, window=100)
+    baselines["volatility_targeting_baseline"] = _vol_target_weights(prices, policy)
+    baselines["drawdown_derisk_baseline"] = _drawdown_derisk_weights(prices, policy)
+    baselines["simple_event_risk_off_baseline"] = _simple_event_risk_off_weights(
+        prices,
+        policy,
+    )
+    return baselines
+
+
+def _trend_filter_weights(prices: pd.DataFrame, *, window: int) -> pd.DataFrame:
+    qqq = prices["QQQ"]
+    sma = qqq.rolling(window, min_periods=20).mean()
+    risk_on = (qqq >= sma).astype(float).fillna(0.0)
+    return _ensure_weight_columns(
+        pd.DataFrame({"QQQ": risk_on, "SGOV": 1.0 - risk_on}, index=prices.index)
+    )
+
+
+def _vol_target_weights(prices: pd.DataFrame, policy: Mapping[str, Any]) -> pd.DataFrame:
+    baseline_policy = _mapping(_mapping(policy.get("expanded_baselines")).get("vol_target"))
+    target_vol = _float(baseline_policy.get("target_annual_volatility"), 0.15)
+    max_weight = _float(baseline_policy.get("max_qqq_weight"), 1.0)
+    qqq_vol = prices["QQQ"].pct_change().rolling(63).std() * math.sqrt(252)
+    qqq_weight = (target_vol / qqq_vol.replace(0.0, math.nan)).clip(0.0, max_weight)
+    qqq_weight = qqq_weight.fillna(0.5)
+    return _ensure_weight_columns(
+        pd.DataFrame({"QQQ": qqq_weight, "SGOV": 1.0 - qqq_weight}, index=prices.index)
+    )
+
+
+def _drawdown_derisk_weights(prices: pd.DataFrame, policy: Mapping[str, Any]) -> pd.DataFrame:
+    baseline_policy = _mapping(_mapping(policy.get("expanded_baselines")).get("drawdown_derisk"))
+    trigger = _float(baseline_policy.get("drawdown_trigger"), -0.10)
+    derisk_weight = _float(baseline_policy.get("risk_off_qqq_weight"), 0.5)
+    equity = prices["QQQ"] / prices["QQQ"].iloc[0]
+    drawdown = equity / equity.cummax() - 1.0
+    qqq_weight = pd.Series(1.0, index=prices.index)
+    qqq_weight[drawdown <= trigger] = derisk_weight
+    return _ensure_weight_columns(
+        pd.DataFrame({"QQQ": qqq_weight, "SGOV": 1.0 - qqq_weight}, index=prices.index)
+    )
+
+
+def _simple_event_risk_off_weights(
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+) -> pd.DataFrame:
+    baseline_policy = _mapping(_mapping(policy.get("expanded_baselines")).get("simple_event"))
+    trigger = _float(baseline_policy.get("daily_loss_trigger"), -0.03)
+    cooldown = max(1, _int(baseline_policy.get("cooldown_days"), 5))
+    qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
+    qqq_weight = pd.Series(1.0, index=prices.index)
+    for index, value in enumerate(qqq_returns):
+        if value <= trigger:
+            qqq_weight.iloc[index : index + cooldown] = 0.5
+    return _ensure_weight_columns(
+        pd.DataFrame({"QQQ": qqq_weight, "SGOV": 1.0 - qqq_weight}, index=prices.index)
+    )
+
+
+def _regime_metric_rows(
+    *,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    regime_masks: Mapping[str, pd.Series],
+    baseline_weights: Mapping[str, pd.DataFrame],
+) -> list[dict[str, Any]]:
+    weights_by_strategy = {
+        strategy_id: _actual_weights_for_strategy(strategy_id, source_root, prices)
+        for strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES
+    }
+    weights_by_strategy.update(baseline_weights)
+    baseline_full_returns = {
+        baseline_id: _metrics_from_returns(
+            _portfolio_return_series(prices, weights, cost_bps=0.0)
+        ).get("annual_return")
+        for baseline_id, weights in baseline_weights.items()
+    }
+    best_simple = max((_float(value) for value in baseline_full_returns.values()), default=0.0)
+    rows: list[dict[str, Any]] = []
+    for regime_id, mask in regime_masks.items():
+        for strategy_id, weights in weights_by_strategy.items():
+            cost_bps = (
+                _strategy_cost_bps(strategy_id, policy_registry)
+                if strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES
+                else 0.0
+            )
+            returns = _portfolio_return_series(prices, weights, cost_bps=cost_bps)
+            metrics = _metrics_from_returns(returns[mask])
+            annual_return = _float(metrics.get("annual_return"))
+            rows.append(
+                {
+                    "regime_id": regime_id,
+                    "strategy_id": strategy_id,
+                    "strategy_family": (
+                        "dynamic"
+                        if strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES
+                        else "expanded_baseline"
+                    ),
+                    "trading_day_count": int(mask.sum()),
+                    "annual_return": metrics.get("annual_return"),
+                    "max_drawdown": metrics.get("max_drawdown"),
+                    "sharpe": metrics.get("sharpe"),
+                    "worst_5d_loss": _worst_window_loss(returns[mask], 5),
+                    "beats_simple_baseline": annual_return > best_simple,
+                    "promotion_gate_status": "BLOCKED",
+                    "target_path_metrics_role": "diagnostic_only",
+                }
+            )
+    return rows
+
+
+def _metrics_from_returns(returns: pd.Series) -> dict[str, Any]:
+    returns = returns.dropna()
+    if returns.empty:
+        return {"annual_return": 0.0, "max_drawdown": 0.0, "sharpe": 0.0}
+    equity = (1.0 + returns).cumprod()
+    drawdown = equity / equity.cummax() - 1.0
+    annual_return = float(equity.iloc[-1] ** (252 / max(1, len(returns))) - 1.0)
+    vol = float(returns.std(ddof=0) * math.sqrt(252))
+    return {
+        "annual_return": round(annual_return, 6),
+        "max_drawdown": round(float(drawdown.min()), 6),
+        "sharpe": round(_ratio(annual_return, vol), 6),
+    }
+
+
+def _expanded_baseline_leaderboard_rows(
+    *,
+    prices: pd.DataFrame,
+    baseline_weights: Mapping[str, pd.DataFrame],
+) -> list[dict[str, Any]]:
+    rows = []
+    for baseline_id, weights in baseline_weights.items():
+        metrics = _performance_metrics(prices, weights, cost_bps=0.0)
+        rows.append(
+            {
+                "baseline_id": baseline_id,
+                "annual_return": metrics.get("annual_return"),
+                "max_drawdown": metrics.get("max_drawdown_daily_equity"),
+                "sharpe": metrics.get("sharpe_daily_zero_rf"),
+                "calmar": metrics.get("calmar_daily_equity_dd"),
+                "turnover": metrics.get("turnover"),
+            }
+        )
+    return sorted(rows, key=lambda row: _float(row.get("annual_return")), reverse=True)
+
+
+def _write_regime_baseline_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    regime_rows: list[dict[str, Any]],
+    baseline_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "regime_metrics_by_strategy": runtime_root / "regime_metrics_by_strategy.csv",
+        "expanded_baseline_leaderboard": runtime_root / "expanded_baseline_leaderboard.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(regime_rows).to_csv(paths["regime_metrics_by_strategy"], index=False)
+    pd.DataFrame(baseline_rows).to_csv(paths["expanded_baseline_leaderboard"], index=False)
+    artifact_hashes = {
+        "regime_metrics_by_strategy": _file_sha256(paths["regime_metrics_by_strategy"]),
+        "expanded_baseline_leaderboard": _file_sha256(
+            paths["expanded_baseline_leaderboard"]
+        ),
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _batch4_matrix_payload(
+                payload=payload,
+                schema_version="regime_baseline_expansion_matrix.v1",
+                report_type="regime_baseline_expansion_matrix",
+                runtime_root=runtime_root,
+                artifact_hashes=artifact_hashes,
+                row_key="regime_metric_rows",
+                rows=regime_rows,
+                extra={"expanded_baseline_leaderboard": baseline_rows},
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _batch4_markdown(
+            payload,
+            title="Regime Segmentation Baseline Expansion Review",
+            rows=baseline_rows[:10],
+            columns=[
+                "baseline_id",
+                "annual_return",
+                "max_drawdown",
+                "sharpe",
+                "calmar",
+                "turnover",
+            ],
+        ),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _batch4_matrix_payload(
+    *,
+    payload: Mapping[str, Any],
+    schema_version: str,
+    report_type: str,
+    runtime_root: Path,
+    artifact_hashes: Mapping[str, str],
+    row_key: str,
+    rows: list[dict[str, Any]],
+    extra: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    hash_fields = {
+        key: value
+        for key, value in payload.items()
+        if key in {"config_hash", "policy_hash", "data_snapshot_hash"}
+        or key.endswith("_hash")
+    }
+    return {
+        "schema_version": schema_version,
+        "report_type": report_type,
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        **hash_fields,
+        "date_range": _mapping(payload.get("date_range")),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        row_key: rows,
+        **(dict(extra) if extra else {}),
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _batch4_markdown(
+    payload: Mapping[str, Any],
+    *,
+    title: str,
+    rows: list[dict[str, Any]],
+    columns: list[str],
+) -> str:
+    date_range = _mapping(payload.get("date_range"))
+    return "\n".join(
+        [
+            f"# {title}",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+            (
+                "- data_quality_status：`"
+                f"{_mapping(payload.get('summary')).get('data_quality_status')}`"
+            ),
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Review Table",
+            "",
+            _markdown_table(rows, columns),
+            "",
+            "## Gate 结论",
+            "",
+            (
+                "本报告只用于 research-only owner review；任何 positive row 都不是 "
+                "paper-shadow、production、broker 或 dynamic promotion approval。"
+            ),
+            "",
+        ]
+    )
+
+
+def _artifact_governance_inventory_rows(
+    source_root: Path,
+    tracked_snapshot_paths: Mapping[str, Path] | None = None,
+) -> list[dict[str, Any]]:
+    default_tracked_paths = {
+        "actual_path_edge_attribution_matrix": (
+            DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH
+        ),
+        "dynamic_strategy_objective_gate_matrix": (
+            DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH
+        ),
+        "pit_data_availability_inventory": DEFAULT_PIT_DATA_AVAILABILITY_INVENTORY_PATH,
+        "dynamic_strategy_walk_forward_matrix": (
+            DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH
+        ),
+        "event_override_ex_ante_taxonomy": DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_SNAPSHOT_PATH,
+        "risk_timing_quality_matrix": DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH,
+        "transaction_cost_cash_yield_matrix": DEFAULT_TRANSACTION_COST_CASH_YIELD_MATRIX_YAML_PATH,
+        "stress_risk_metrics_matrix": DEFAULT_STRESS_RISK_METRICS_MATRIX_YAML_PATH,
+        "regime_baseline_expansion_matrix": DEFAULT_REGIME_BASELINE_EXPANSION_MATRIX_YAML_PATH,
+    }
+    tracked_paths = dict(tracked_snapshot_paths or default_tracked_paths)
+    rows = [
+        _tracked_snapshot_governance_row(artifact_id=artifact_id, path=path)
+        for artifact_id, path in tracked_paths.items()
+    ]
+    for strategy_id in [
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES,
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    ]:
+        rows.extend(_metric_namespace_governance_rows(source_root, strategy_id))
+    rows.append(_legacy_dynamic_result_guard_row(source_root))
+    return rows
+
+
+def _tracked_snapshot_governance_row(*, artifact_id: str, path: Path) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    checks = {
+        "exists": path.exists(),
+        "source_commit": bool(payload.get("source_commit")),
+        "config_hash": bool(payload.get("config_hash")),
+        "policy_hash": any(
+            key.endswith("policy_hash") or key == "policy_hash" for key in payload
+        ),
+        "data_snapshot_hash": bool(payload.get("data_snapshot_hash")),
+        "artifact_sha256": bool(payload.get("artifact_sha256")) or path.exists(),
+        "dynamic_promotion_blocked": _dynamic_promotion_blocked(payload),
+        "target_path_diagnostic_only": (
+            payload.get("target_path_metrics_role") == "diagnostic_only"
+        ),
+    }
+    failed = [key for key, value in checks.items() if not value]
+    return {
+        "artifact_id": artifact_id,
+        "artifact_path": str(path),
+        "schema_version": payload.get("schema_version"),
+        "status": payload.get("status"),
+        "source_commit": payload.get("source_commit"),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash_present": checks["policy_hash"],
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "artifact_sha256": _file_sha256(path) if path.exists() else "missing",
+        "promotion_status": "BLOCKED" if checks["dynamic_promotion_blocked"] else "UNKNOWN",
+        "owner_review_status": "OWNER_REVIEW_REQUIRED",
+        "legacy_status": "current_snapshot",
+        "metric_namespace": payload.get("promotion_decision_source", "actual_path_only"),
+        "failed_checks": ";".join(failed),
+        "governance_status": "PASS" if not failed else "BLOCKED",
+    }
+
+
+def _dynamic_promotion_blocked(payload: Mapping[str, Any]) -> bool:
+    promotion = _mapping(payload.get("dynamic_promotion"))
+    promotion_gate = _mapping(payload.get("promotion_gate"))
+    return (
+        promotion.get("final_status") == "BLOCKED"
+        or promotion_gate.get("dynamic_promotion_final_status") == "BLOCKED"
+        or payload.get("dynamic_promotion_blocked") is True
+        or _mapping(payload.get("summary")).get("dynamic_promotion_blocked") is True
+    )
+
+
+def _metric_namespace_governance_rows(
+    source_root: Path,
+    strategy_id: str,
+) -> list[dict[str, Any]]:
+    rows = []
+    for namespace, filename, expected_promotion_source in (
+        ("actual_path", "metrics_actual_path.json", True),
+        ("target_path", "metrics_target_path.json", False),
+    ):
+        path = source_root / strategy_id / filename
+        payload = _read_json_mapping(path)
+        metric_namespace = str(payload.get("metric_convention_namespace") or "")
+        promotion_source = bool(payload.get("promotion_metric_source"))
+        namespace_ok = namespace in metric_namespace
+        promotion_ok = promotion_source is expected_promotion_source
+        failed = []
+        if not path.exists():
+            failed.append("missing_metric_artifact")
+        if not namespace_ok:
+            failed.append("metric_namespace_mismatch")
+        if not promotion_ok:
+            failed.append("promotion_metric_source_mismatch")
+        if namespace == "target_path" and payload.get("target_path_role") != "diagnostic_only":
+            failed.append("target_path_not_diagnostic_only")
+        rows.append(
+            {
+                "artifact_id": f"{strategy_id}:{filename}",
+                "artifact_path": str(path),
+                "schema_version": payload.get("schema_version"),
+                "status": payload.get("report_type"),
+                "source_commit": "runtime_source",
+                "config_hash": "runtime_source",
+                "policy_hash_present": True,
+                "data_snapshot_hash": "runtime_source",
+                "artifact_sha256": _file_sha256(path) if path.exists() else "missing",
+                "promotion_status": "BLOCKED" if not expected_promotion_source else "INPUT_ONLY",
+                "owner_review_status": "OWNER_REVIEW_REQUIRED",
+                "legacy_status": "not_legacy",
+                "metric_namespace": metric_namespace,
+                "failed_checks": ";".join(failed),
+                "governance_status": "PASS" if not failed else "BLOCKED",
+            }
+        )
+    return rows
+
+
+def _legacy_dynamic_result_guard_row(source_root: Path) -> dict[str, Any]:
+    readiness_path = source_root / "promotion_readiness_summary.json"
+    payload = _read_json_mapping(readiness_path)
+    status = payload.get("status")
+    blocked = status == "DYNAMIC_PROMOTION_BLOCKED"
+    return {
+        "artifact_id": "legacy_dynamic_result_cannot_unlock_promotion",
+        "artifact_path": str(readiness_path),
+        "schema_version": payload.get("schema_version"),
+        "status": status,
+        "source_commit": "runtime_source",
+        "config_hash": "runtime_source",
+        "policy_hash_present": True,
+        "data_snapshot_hash": "runtime_source",
+        "artifact_sha256": _file_sha256(readiness_path)
+        if readiness_path.exists()
+        else "missing",
+        "promotion_status": "BLOCKED" if blocked else "UNKNOWN",
+        "owner_review_status": "OWNER_REVIEW_REQUIRED",
+        "legacy_status": "legacy_result_guard",
+        "metric_namespace": "actual_path_only",
+        "failed_checks": "" if blocked else "dynamic_promotion_not_blocked",
+        "governance_status": "PASS" if blocked else "BLOCKED",
+    }
+
+
+def _write_artifact_governance_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "artifact_governance_inventory": runtime_root
+        / "artifact_governance_inventory.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(rows).to_csv(paths["artifact_governance_inventory"], index=False)
+    artifact_hashes = {
+        "artifact_governance_inventory": _file_sha256(
+            paths["artifact_governance_inventory"]
+        )
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _artifact_governance_snapshot_payload(
+                payload=payload,
+                runtime_root=runtime_root,
+                rows=rows,
+                artifact_hashes=artifact_hashes,
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _batch4_markdown(
+            payload,
+            title="Research Artifact Governance Review",
+            rows=rows,
+            columns=[
+                "artifact_id",
+                "schema_version",
+                "promotion_status",
+                "metric_namespace",
+                "failed_checks",
+                "governance_status",
+            ],
+        ),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _artifact_governance_snapshot_payload(
+    *,
+    payload: Mapping[str, Any],
+    runtime_root: Path,
+    rows: list[dict[str, Any]],
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "research_artifact_governance_snapshot.v1",
+        "report_type": "research_artifact_governance_snapshot",
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        "artifact_governance_rows": rows,
+        **SAFETY_BOUNDARY,
+    }
 
 
 def _edge_attribution_policy_from_config(

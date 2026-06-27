@@ -159,6 +159,56 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
 - `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
 - Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
 
+## Batch 4 设计决策
+
+- Batch 4 覆盖 TRADING-1431～1485：transaction cost / slippage / cash yield audit、
+  stress risk metrics、regime segmentation / baseline expansion 和 research artifact governance。
+- Cost / cash yield audit 必须使用显式 policy config：`config/research/transaction_cost_model.yaml`
+  与 `config/research/cash_yield_model.yaml`。Gross 与 net metric 必须分离；cash yield / SGOV
+  dividend timing 当前只能作为 governed research approximation，不能解释为生产级税务或券商结算模型。
+- Stress risk metrics 必须用 actual-path daily returns 计算 worst 1d/5d/20d、gap proxy、
+  overnight/intraday proxy、crash reaction delay 和 high-vol period loss；若动态策略声称降低风险，
+  stress metrics 必须能解释改善，否则保持 blocker。
+- Regime / baseline expansion 必须按 configured regime policy 切分 bull/bear/sideways/high-vol/
+  low-vol/rate/AI-led/semiconductor/liquidity regimes，并加入 QQQ/SGOV grid、200DMA/100DMA trend
+  filter、vol targeting、drawdown de-risk 和 simple event risk-off baselines。复杂动态策略若不能
+  优于至少一个合理简单 baseline，不得进入 paper-shadow preflight。
+- Artifact governance 必须扫描本批及 Batch 1～3 tracked snapshots，检查 source_commit、
+  config_hash、policy_hash、data_snapshot_hash、metric namespace、artifact sha256、promotion status、
+  owner review status 和 legacy/target-path misuse guard。缺字段时输出 governance blocker，不静默通过。
+
+## Batch 4 验收标准
+
+- 新增 CLI：
+  - `aits research strategies transaction-cost-cash-yield-audit`
+  - `aits research strategies stress-risk-metrics-review`
+  - `aits research strategies regime-segmentation-baseline-expansion-review`
+  - `aits research strategies research-artifact-governance-review`
+- 新增 runtime artifacts：
+  - `outputs/research_strategies/cost_cash_yield/<run_id>/transaction_cost_cash_yield_matrix.csv`
+  - `outputs/research_strategies/stress_risk/<run_id>/stress_risk_metrics_by_strategy.csv`
+  - `outputs/research_strategies/regime_review/<run_id>/regime_metrics_by_strategy.csv`
+  - `outputs/research_strategies/regime_review/<run_id>/expanded_baseline_leaderboard.csv`
+  - `outputs/research_strategies/artifact_governance/<run_id>/artifact_governance_inventory.csv`
+- 新增 tracked artifacts：
+  - `config/research/transaction_cost_model.yaml`
+  - `config/research/cash_yield_model.yaml`
+  - `config/research/stress_risk_metrics_policy.yaml`
+  - `config/research/regime_baseline_expansion_policy.yaml`
+  - `docs/research/transaction_cost_cash_yield_audit.md`
+  - `inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml`
+  - `docs/research/stress_risk_metrics_review.md`
+  - `inputs/research_reviews/stress_risk_metrics_matrix.yaml`
+  - `docs/research/regime_segmentation_baseline_expansion_review.md`
+  - `inputs/research_reviews/regime_baseline_expansion_matrix.yaml`
+  - `docs/research/research_artifact_governance_review.md`
+  - `inputs/research_reviews/research_artifact_governance_snapshot.yaml`
+- 新增 `tests/test_research_artifact_governance.py`，覆盖 source/config/policy hash、actual-path
+  metric namespace、legacy dynamic result cannot unlock promotion、target-path metrics cannot enter
+  promotion gate。
+- `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
+- Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
+
 ## 进展记录
 
 - 2026-06-27：新增总路线并进入 `IN_PROGRESS`；本轮先实现 TRADING-1326～1360 Batch 1，
@@ -211,3 +261,26 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
   `RISK_OFF_TOO_NOISY`。Dynamic promotion 继续 `BLOCKED`，target-path metrics 继续
   `diagnostic_only`，paper-shadow / production / broker 均不允许。验证通过 focused parallel
   pytest、文档/registry contract parallel pytest、Ruff、compileall 和 `git diff --check`。
+- 2026-06-27：继续推进 TRADING-1431～1485 Batch 4，范围为 cost / cash yield、stress risk、
+  regime / baseline expansion 与 research artifact governance。总任务从 Batch 3 `VALIDATING`
+  回到 `IN_PROGRESS`；dynamic promotion 继续 `BLOCKED`，target-path metrics 继续
+  `diagnostic_only`，不得进入 paper-shadow / production / broker。
+- 2026-06-27：TRADING-1431～1485 Batch 4 实现完成并转入 `VALIDATING`。新增
+  `transaction-cost-cash-yield-audit`、`stress-risk-metrics-review`、
+  `regime-segmentation-baseline-expansion-review` 和 `research-artifact-governance-review`
+  CLI，真实运行生成 `docs/research/transaction_cost_cash_yield_audit.md`、
+  `inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml`、
+  `docs/research/stress_risk_metrics_review.md`、
+  `inputs/research_reviews/stress_risk_metrics_matrix.yaml`、
+  `docs/research/regime_segmentation_baseline_expansion_review.md`、
+  `inputs/research_reviews/regime_baseline_expansion_matrix.yaml`、
+  `docs/research/research_artifact_governance_review.md` 和
+  `inputs/research_reviews/research_artifact_governance_snapshot.yaml`。真实 date range 为
+  `2022-12-01`～`2026-06-26`，market_regime 为 `ai_after_chatgpt`，
+  data_quality_status 为 `PASS_WITH_WARNINGS`。Cost/cash、stress 和 regime statuses 均为
+  `*_READY_WITH_BLOCKERS`，artifact governance status 为
+  `RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`，tracked snapshot hash / metric namespace /
+  legacy dynamic blocker 检查通过。Dynamic promotion 继续 `BLOCKED`，target-path metrics 继续
+  `diagnostic_only`，paper-shadow / production / broker 均不允许。验证通过 focused parallel
+  pytest、文档/registry contract parallel pytest、相关 execution semantics / Batch 1～4 回归
+  62 用例 parallel pytest、Ruff、compileall 和 `git diff --check`。

@@ -18620,6 +18620,91 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: transaction_cost_cash_yield_audit
+    title: Transaction Cost Cash Yield Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies transaction-cost-cash-yield-audit
+    artifact_globs:
+      - config/research/transaction_cost_model.yaml
+      - config/research/cash_yield_model.yaml
+      - outputs/research_strategies/cost_cash_yield/*/transaction_cost_cash_yield_matrix.csv
+      - docs/research/transaction_cost_cash_yield_audit.md
+      - inputs/research_reviews/transaction_cost_cash_yield_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1431 to 1445 transaction cost and cash yield audit must be regenerated after actual-path runtime artifacts, transaction cost policy, cash-yield policy, cached data, or strategy candidate set changes.
+    owner_action: review_cost_cash_yield_before_any_dynamic_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: stress_risk_metrics_review
+    title: Stress Risk Metrics Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies stress-risk-metrics-review
+    artifact_globs:
+      - config/research/stress_risk_metrics_policy.yaml
+      - outputs/research_strategies/stress_risk/*/stress_risk_metrics_by_strategy.csv
+      - docs/research/stress_risk_metrics_review.md
+      - inputs/research_reviews/stress_risk_metrics_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1446 to 1460 stress risk metrics review must be regenerated after actual-path runtime artifacts, stress policy, cached data, or strategy candidate set changes.
+    owner_action: review_stress_risk_metrics_before_any_dynamic_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: regime_segmentation_baseline_expansion_review
+    title: Regime Segmentation Baseline Expansion Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies regime-segmentation-baseline-expansion-review
+    artifact_globs:
+      - config/research/regime_baseline_expansion_policy.yaml
+      - outputs/research_strategies/regime_review/*/regime_metrics_by_strategy.csv
+      - outputs/research_strategies/regime_review/*/expanded_baseline_leaderboard.csv
+      - docs/research/regime_segmentation_baseline_expansion_review.md
+      - inputs/research_reviews/regime_baseline_expansion_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1461 to 1475 regime segmentation and baseline expansion review must be regenerated after actual-path runtime artifacts, regime policy, cached data, or strategy candidate set changes.
+    owner_action: review_regime_baseline_expansion_before_any_dynamic_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: research_artifact_governance_review
+    title: Research Artifact Governance Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies research-artifact-governance-review
+    artifact_globs:
+      - outputs/research_strategies/artifact_governance/*/artifact_governance_inventory.csv
+      - docs/research/research_artifact_governance_review.md
+      - inputs/research_reviews/research_artifact_governance_snapshot.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1476 to 1485 artifact governance review must be regenerated after any tracked dynamic strategy review snapshot, actual-path runtime artifact, report registry, or candidate metric namespace changes.
+    owner_action: review_research_artifact_governance_before_any_dynamic_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

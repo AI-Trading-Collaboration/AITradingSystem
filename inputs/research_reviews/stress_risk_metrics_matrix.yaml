@@ -1,0 +1,134 @@
+schema_version: stress_risk_metrics_matrix.v1
+report_type: stress_risk_metrics_matrix
+status: STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\stress_risk\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: 6f7313e4002281bc83f460e9101d397da5b1d99c
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+stress_policy_hash: 9d6d091fc42e4ab87aa60d677e6b21e4029e5f46ff4c3c1397115078d518714d
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  stress_risk_metrics_by_strategy: a21a456c5ac99a577fd9563d1b74058d826a50c27f5a5bc513ee38b746db5697
+strategy_stress_rows:
+- strategy_id: no_trade
+  strategy_family: baseline
+  worst_1d_loss: -0.000231
+  worst_5d_loss: 0.000345
+  worst_20d_loss: 0.002613
+  gap_down_exposure: -0.0
+  overnight_risk_proxy: -0.000231
+  intraday_drawdown_proxy_if_available: -0.000289
+  crash_reaction_delay: 815
+  high_vol_period_loss: 0.031261
+  stress_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: 100_qqq
+  strategy_family: baseline
+  worst_1d_loss: -0.062098
+  worst_5d_loss: -0.11981
+  worst_20d_loss: -0.139258
+  gap_down_exposure: -0.062098
+  overnight_risk_proxy: -0.062098
+  intraday_drawdown_proxy_if_available: -0.077622
+  crash_reaction_delay: 307
+  high_vol_period_loss: 0.443264
+  stress_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: qqq_60_sgov_40
+  strategy_family: baseline
+  worst_1d_loss: -0.037134
+  worst_5d_loss: -0.072633
+  worst_20d_loss: -0.083535
+  gap_down_exposure: -0.037259
+  overnight_risk_proxy: -0.037134
+  intraday_drawdown_proxy_if_available: -0.046418
+  crash_reaction_delay: 307
+  high_vol_period_loss: 0.278463
+  stress_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: qqq_50_sgov_50
+  strategy_family: baseline
+  worst_1d_loss: -0.030893
+  worst_5d_loss: -0.060632
+  worst_20d_loss: -0.069335
+  gap_down_exposure: -0.031049
+  overnight_risk_proxy: -0.030893
+  intraday_drawdown_proxy_if_available: -0.038616
+  crash_reaction_delay: 307
+  high_vol_period_loss: 0.237262
+  stress_gate_status: REVIEWABLE
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment
+  strategy_family: dynamic
+  worst_1d_loss: -0.031095
+  worst_5d_loss: -0.0546
+  worst_20d_loss: -0.088075
+  gap_down_exposure: -0.0312
+  overnight_risk_proxy: -0.031095
+  intraday_drawdown_proxy_if_available: -0.038869
+  crash_reaction_delay: 14
+  high_vol_period_loss: 0.249625
+  stress_gate_status: BLOCKED
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  strategy_family: dynamic
+  worst_1d_loss: -0.035925
+  worst_5d_loss: -0.048062
+  worst_20d_loss: -0.079751
+  gap_down_exposure: -0.036
+  overnight_risk_proxy: -0.035925
+  intraday_drawdown_proxy_if_available: -0.044906
+  crash_reaction_delay: 2
+  high_vol_period_loss: 0.193633
+  stress_gate_status: BLOCKED
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  strategy_family: dynamic
+  worst_1d_loss: -0.031095
+  worst_5d_loss: -0.0546
+  worst_20d_loss: -0.089809
+  gap_down_exposure: -0.0312
+  overnight_risk_proxy: -0.031095
+  intraday_drawdown_proxy_if_available: -0.038869
+  crash_reaction_delay: 14
+  high_vol_period_loss: 0.245868
+  stress_gate_status: BLOCKED
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  strategy_family: dynamic
+  worst_1d_loss: -0.035925
+  worst_5d_loss: -0.048062
+  worst_20d_loss: -0.081629
+  gap_down_exposure: -0.036
+  overnight_risk_proxy: -0.035925
+  intraday_drawdown_proxy_if_available: -0.044906
+  crash_reaction_delay: 2
+  high_vol_period_loss: 0.180896
+  stress_gate_status: BLOCKED
+  promotion_gate_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true
