@@ -7,6 +7,9 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.first_layer_defensive_regression_diagnosis import (
+    run_first_layer_defensive_regression_diagnosis_pack,
+)
 from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
@@ -25,9 +28,16 @@ from ai_trading_system.first_layer_up_state_learning import (
     run_first_layer_up_state_learning_repair_pack,
 )
 from ai_trading_system.first_layer_walk_forward_coverage import (
+    DEFAULT_2022_SLICE_YAML_PATH,
+    DEFAULT_ACTUAL_PATH_YAML_PATH,
+    DEFAULT_COVERAGE_MODEL_ROOT,
     DEFAULT_COVERAGE_POLICY_PATH,
     DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    DEFAULT_COVERAGE_SIMULATION_YAML_PATH,
+    DEFAULT_FAILURE_YAML_PATH,
     DEFAULT_FEATURE_OPTIONALIZATION_POLICY_PATH,
+    DEFAULT_FINAL_MATRIX_YAML_PATH,
+    DEFAULT_MODEL_MATRIX_YAML_PATH,
     run_first_layer_walk_forward_coverage_rebuild_pack,
 )
 from ai_trading_system.research_window_extension import (
@@ -393,6 +403,58 @@ def first_layer_walk_forward_coverage_rebuild_command(
         output_root=output_root,
     )
     _print_payload("First-layer walk-forward coverage rebuild", payload)
+
+
+@trends_app.command("first-layer-defensive-regression-diagnosis")
+def first_layer_defensive_regression_diagnosis_command(
+    actual_path_path: Annotated[
+        Path, typer.Option("--actual-path")
+    ] = DEFAULT_ACTUAL_PATH_YAML_PATH,
+    prior_slice_path: Annotated[
+        Path, typer.Option("--prior-slice")
+    ] = DEFAULT_2022_SLICE_YAML_PATH,
+    coverage_final_path: Annotated[
+        Path, typer.Option("--coverage-final")
+    ] = DEFAULT_FINAL_MATRIX_YAML_PATH,
+    coverage_failure_path: Annotated[
+        Path, typer.Option("--coverage-failure")
+    ] = DEFAULT_FAILURE_YAML_PATH,
+    coverage_simulation_path: Annotated[
+        Path, typer.Option("--coverage-simulation")
+    ] = DEFAULT_COVERAGE_SIMULATION_YAML_PATH,
+    coverage_model_matrix_path: Annotated[
+        Path, typer.Option("--coverage-model-matrix")
+    ] = DEFAULT_MODEL_MATRIX_YAML_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    coverage_model_root: Annotated[
+        Path, typer.Option("--coverage-model-root")
+    ] = DEFAULT_COVERAGE_MODEL_ROOT,
+) -> None:
+    payload = run_first_layer_defensive_regression_diagnosis_pack(
+        actual_path_path=actual_path_path,
+        prior_slice_path=prior_slice_path,
+        coverage_final_path=coverage_final_path,
+        coverage_failure_path=coverage_failure_path,
+        coverage_simulation_path=coverage_simulation_path,
+        coverage_model_matrix_path=coverage_model_matrix_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        coverage_model_root=coverage_model_root,
+    )
+    _print_payload("First-layer defensive regression diagnosis", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

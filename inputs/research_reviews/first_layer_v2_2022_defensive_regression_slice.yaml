@@ -1,0 +1,326 @@
+schema_version: first_layer_v2_2022_defensive_regression_slice.v1
+report_type: first_layer_v2_2022_defensive_regression_slice
+title: First-Layer V2 2022 Defensive Regression Slice Review
+status: FIRST_LAYER_V2_2022_DEFENSIVE_REGRESSION_SLICE_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:52:32Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  data_quality_status: PASS_WITH_WARNINGS
+  prior_slice_status: FIRST_LAYER_V2_2022_STRESS_RECOVERY_SLICE_READY_PROMOTION_BLOCKED
+  slice_count: 3
+  policy_count: 5
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  coverage_pass_average_false_re_risk_cost: 0.000277
+  coverage_pass_average_false_add_risk_cost: 0.000237
+  coverage_pass_average_avoided_drawdown: 0.023557
+  2022_regression_conclusion: DEFENSIVE_REGRESSION_PRESENT_IN_2022_AND_TRANSITION_SLICE
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 5
+  pre_registered_selection_rule: true
+slice_rows:
+- policy_id: wf_504d_baseline
+  slice_id: 2022_drawdown_slice
+  slice_start: '2022-02-18'
+  slice_end: '2022-06-30'
+  interpretation: early_2022_drawdown
+  prediction_count: 0
+  state_distribution: {}
+  defensive_exposure: 0.0
+  qqq_equivalent_exposure: 0.0
+  drawdown: -0.26885
+  missed_defensive_benefit: 0.0
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_504d_baseline
+  slice_id: 2022_recovery_slice
+  slice_start: '2022-07-01'
+  slice_end: '2022-10-31'
+  interpretation: mid_2022_recovery_and_second_leg_down
+  prediction_count: 0
+  state_distribution: {}
+  defensive_exposure: 0.0
+  qqq_equivalent_exposure: 0.0
+  drawdown: -0.215741
+  missed_defensive_benefit: 0.0
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_504d_baseline
+  slice_id: post_chatgpt_transition_slice
+  slice_start: '2022-11-01'
+  slice_end: '2023-02-21'
+  interpretation: pre_effective_late_window_transition
+  prediction_count: 0
+  state_distribution: {}
+  defensive_exposure: 0.0
+  qqq_equivalent_exposure: 0.0
+  drawdown: -0.112315
+  missed_defensive_benefit: 0.0
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_378d_initial
+  slice_id: 2022_drawdown_slice
+  slice_start: '2022-02-18'
+  slice_end: '2022-06-30'
+  interpretation: early_2022_drawdown
+  prediction_count: 0
+  state_distribution: {}
+  defensive_exposure: 0.0
+  qqq_equivalent_exposure: 0.0
+  drawdown: -0.26885
+  missed_defensive_benefit: 0.0
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_378d_initial
+  slice_id: 2022_recovery_slice
+  slice_start: '2022-07-01'
+  slice_end: '2022-10-31'
+  interpretation: mid_2022_recovery_and_second_leg_down
+  prediction_count: 87
+  state_distribution:
+    risk_off: 84
+    defensive: 3
+  defensive_exposure: 0.723707
+  qqq_equivalent_exposure: 0.276293
+  drawdown: -0.215741
+  missed_defensive_benefit: 0.000882
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.033593
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_378d_initial
+  slice_id: post_chatgpt_transition_slice
+  slice_start: '2022-11-01'
+  slice_end: '2023-02-21'
+  interpretation: pre_effective_late_window_transition
+  prediction_count: 228
+  state_distribution:
+    risk_off: 142
+    defensive: 46
+    constructive: 22
+    neutral: 18
+  defensive_exposure: 0.604298
+  qqq_equivalent_exposure: 0.401732
+  drawdown: -0.112315
+  missed_defensive_benefit: 0.007632
+  false_re_risk_cost: 0.00126
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.015952
+  false_do_not_de_risk_cost: 0.005377
+  false_risk_on_cost: 0.0
+- policy_id: wf_252d_initial
+  slice_id: 2022_drawdown_slice
+  slice_start: '2022-02-18'
+  slice_end: '2022-06-30'
+  interpretation: early_2022_drawdown
+  prediction_count: 210
+  state_distribution:
+    risk_off: 172
+    defensive: 36
+    neutral: 2
+  defensive_exposure: 0.69006
+  qqq_equivalent_exposure: 0.30994
+  drawdown: -0.26885
+  missed_defensive_benefit: 0.003612
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.036839
+  false_do_not_de_risk_cost: 0.00056
+  false_risk_on_cost: 0.0
+- policy_id: wf_252d_initial
+  slice_id: 2022_recovery_slice
+  slice_start: '2022-07-01'
+  slice_end: '2022-10-31'
+  interpretation: mid_2022_recovery_and_second_leg_down
+  prediction_count: 255
+  state_distribution:
+    defensive: 241
+    risk_off: 14
+  defensive_exposure: 0.52451
+  qqq_equivalent_exposure: 0.47549
+  drawdown: -0.215741
+  missed_defensive_benefit: 0.018632
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.015274
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_252d_initial
+  slice_id: post_chatgpt_transition_slice
+  slice_start: '2022-11-01'
+  slice_end: '2023-02-21'
+  interpretation: pre_effective_late_window_transition
+  prediction_count: 228
+  state_distribution:
+    defensive: 228
+  defensive_exposure: 0.5125
+  qqq_equivalent_exposure: 0.4875
+  drawdown: -0.112315
+  missed_defensive_benefit: 0.012603
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.009722
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_expanding_initial
+  slice_id: 2022_drawdown_slice
+  slice_start: '2022-02-18'
+  slice_end: '2022-06-30'
+  interpretation: early_2022_drawdown
+  prediction_count: 210
+  state_distribution:
+    risk_off: 206
+    neutral: 2
+    defensive: 2
+  defensive_exposure: 0.725476
+  qqq_equivalent_exposure: 0.274524
+  drawdown: -0.26885
+  missed_defensive_benefit: 0.000836
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.039615
+  false_do_not_de_risk_cost: 0.00056
+  false_risk_on_cost: 0.0
+- policy_id: wf_expanding_initial
+  slice_id: 2022_recovery_slice
+  slice_start: '2022-07-01'
+  slice_end: '2022-10-31'
+  interpretation: mid_2022_recovery_and_second_leg_down
+  prediction_count: 255
+  state_distribution:
+    risk_off: 194
+    neutral: 48
+    defensive: 13
+  defensive_exposure: 0.647157
+  qqq_equivalent_exposure: 0.352843
+  drawdown: -0.215741
+  missed_defensive_benefit: 0.008996
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.02491
+  false_do_not_de_risk_cost: 0.008004
+  false_risk_on_cost: 0.0
+- policy_id: wf_expanding_initial
+  slice_id: post_chatgpt_transition_slice
+  slice_start: '2022-11-01'
+  slice_end: '2023-02-21'
+  interpretation: pre_effective_late_window_transition
+  prediction_count: 228
+  state_distribution:
+    risk_off: 154
+    neutral: 44
+    risk_on: 14
+    defensive: 12
+    constructive: 4
+  defensive_exposure: 0.598235
+  qqq_equivalent_exposure: 0.41284
+  drawdown: -0.112315
+  missed_defensive_benefit: 0.009002
+  false_re_risk_cost: 0.001661
+  false_add_risk_cost: 0.001422
+  avoided_drawdown: 0.014984
+  false_do_not_de_risk_cost: 0.008311
+  false_risk_on_cost: 0.001422
+- policy_id: wf_warm_start_diagnostic
+  slice_id: 2022_drawdown_slice
+  slice_start: '2022-02-18'
+  slice_end: '2022-06-30'
+  interpretation: early_2022_drawdown
+  prediction_count: 91
+  state_distribution:
+    neutral: 91
+  defensive_exposure: 0.34375
+  qqq_equivalent_exposure: 0.65625
+  drawdown: -0.26885
+  missed_defensive_benefit: 0.03974
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_warm_start_diagnostic
+  slice_id: 2022_recovery_slice
+  slice_start: '2022-07-01'
+  slice_end: '2022-10-31'
+  interpretation: mid_2022_recovery_and_second_leg_down
+  prediction_count: 85
+  state_distribution:
+    neutral: 85
+  defensive_exposure: 0.34375
+  qqq_equivalent_exposure: 0.65625
+  drawdown: -0.215741
+  missed_defensive_benefit: 0.033906
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+- policy_id: wf_warm_start_diagnostic
+  slice_id: post_chatgpt_transition_slice
+  slice_start: '2022-11-01'
+  slice_end: '2023-02-21'
+  interpretation: pre_effective_late_window_transition
+  prediction_count: 76
+  state_distribution:
+    neutral: 76
+  defensive_exposure: 0.34375
+  qqq_equivalent_exposure: 0.65625
+  drawdown: -0.112315
+  missed_defensive_benefit: 0.022324
+  false_re_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  avoided_drawdown: 0.0
+  false_do_not_de_risk_cost: 0.0
+  false_risk_on_cost: 0.0

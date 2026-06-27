@@ -1,0 +1,71 @@
+schema_version: first_layer_v2_coverage_rebuild_reclassification.v1
+report_type: first_layer_v2_coverage_rebuild_reclassification
+title: First-Layer V2 Coverage Rebuild Reclassification
+status: FIRST_LAYER_V2_COVERAGE_REBUILD_RECLASSIFIED_LATE_WINDOW_ONLY
+generated_at: '2026-06-27T17:52:32Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  previous_status: WINDOW_COVERAGE_INCOMPLETE
+  coverage_rebuild_result: COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES
+  positive_late_window_evidence: true
+  positive_late_window_policy_ids:
+  - wf_504d_baseline
+  - wf_378d_initial
+  coverage_pass_variant_count: 2
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  coverage_pass_selection: false
+  coverage_aware_selection_pass_count: 0
+  primary_failure_reason: DEFENSIVE_PROBE_REGRESSION
+  owner_review_allowed: false
+  promotion_blocked: true
+  late_window_only_partial_evidence: true
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
+reclassification_decision:
+  prior_8_of_8_evidence_status: LATE_WINDOW_ONLY_PARTIAL_EVIDENCE
+  coverage_pass_evidence_status: DEFENSIVE_REGRESSION_BLOCKED
+  owner_review_allowed: false
+  promotion: blocked
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

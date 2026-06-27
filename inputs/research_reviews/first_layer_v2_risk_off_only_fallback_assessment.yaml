@@ -1,0 +1,149 @@
+schema_version: first_layer_v2_risk_off_only_fallback_assessment.v1
+report_type: first_layer_v2_risk_off_only_fallback_assessment
+title: First-Layer V2 Risk-Off-Only Fallback Assessment
+status: RISK_OFF_ONLY_FALLBACK_NOT_SUPPORTED
+generated_at: '2026-06-27T17:52:33Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  risk_off_only_fallback_status: RISK_OFF_ONLY_FALLBACK_NOT_SUPPORTED
+  defensive_probe_count: 4
+  defensive_regressed_count: 4
+  regressed_probe_ids:
+  - defensive_overlay_probe
+  - drawdown_control_probe
+  fallback_watch_allowed: false
+  owner_review_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  role_group_conclusion: RETURN_SEEKING_DIAGNOSTIC_LAYER_POSSIBLE_DEFENSIVE_BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
+defensive_probe_rows:
+- policy_id: wf_252d_initial
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  probe_role_group: defensive_overlay
+  coverage_pass: true
+  improved_vs_flat: false
+  annual_return_delta: -0.01401
+  max_drawdown_delta: 0.072172
+  sharpe_delta: 0.160564
+  calmar_delta: 0.257374
+  turnover_delta: 32.376149
+  delta_reference_source: same_window_neutral_state_probe_reference
+  legacy_flat_annual_return_delta_reference: -0.006195
+  legacy_flat_calmar_delta_reference: -0.11672
+  v2_annual_return: 0.09113
+  v2_max_drawdown: -0.108632
+  v2_sharpe: 0.920173
+  v2_calmar: 0.83889
+  v2_turnover: 38.545391
+  regression_type:
+  - defensive_probe_regression
+  regression_reason: legacy_flat_return_and_calmar_below_reference
+- policy_id: wf_252d_initial
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  probe_role_group: drawdown_control
+  coverage_pass: true
+  improved_vs_flat: false
+  annual_return_delta: -0.028335
+  max_drawdown_delta: 0.059972
+  sharpe_delta: 0.178233
+  calmar_delta: 0.027834
+  turnover_delta: 91.287265
+  delta_reference_source: same_window_neutral_state_probe_reference
+  legacy_flat_annual_return_delta_reference: -0.016225
+  legacy_flat_calmar_delta_reference: -0.634072
+  v2_annual_return: 0.085665
+  v2_max_drawdown: -0.150281
+  v2_sharpe: 0.884197
+  v2_calmar: 0.570035
+  v2_turnover: 96.810447
+  regression_type:
+  - defensive_probe_regression
+  regression_reason: legacy_flat_return_and_calmar_below_reference
+- policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  probe_role_group: defensive_overlay
+  coverage_pass: true
+  improved_vs_flat: false
+  annual_return_delta: -0.012112
+  max_drawdown_delta: 0.07982
+  sharpe_delta: 0.265044
+  calmar_delta: 0.339695
+  turnover_delta: 45.791678
+  delta_reference_source: same_window_neutral_state_probe_reference
+  legacy_flat_annual_return_delta_reference: -0.004297
+  legacy_flat_calmar_delta_reference: -0.034399
+  v2_annual_return: 0.093028
+  v2_max_drawdown: -0.100984
+  v2_sharpe: 1.024653
+  v2_calmar: 0.921211
+  v2_turnover: 51.96092
+  regression_type:
+  - defensive_probe_regression
+  regression_reason: legacy_flat_return_and_calmar_below_reference
+- policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  probe_role_group: drawdown_control
+  coverage_pass: true
+  improved_vs_flat: false
+  annual_return_delta: -0.01737
+  max_drawdown_delta: 0.090514
+  sharpe_delta: 0.135106
+  calmar_delta: 0.264806
+  turnover_delta: 141.696805
+  delta_reference_source: same_window_neutral_state_probe_reference
+  legacy_flat_annual_return_delta_reference: -0.00526
+  legacy_flat_calmar_delta_reference: -0.3971
+  v2_annual_return: 0.09663
+  v2_max_drawdown: -0.119739
+  v2_sharpe: 0.84107
+  v2_calmar: 0.807007
+  v2_turnover: 147.219987
+  regression_type:
+  - defensive_probe_regression
+  regression_reason: legacy_flat_return_and_calmar_below_reference

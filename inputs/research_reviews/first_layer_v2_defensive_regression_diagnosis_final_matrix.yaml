@@ -1,0 +1,118 @@
+schema_version: first_layer_v2_defensive_regression_diagnosis_final_matrix.v1
+report_type: first_layer_v2_defensive_regression_diagnosis_final_matrix
+title: First-Layer V2 Defensive Regression Diagnosis Final Matrix
+status: FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY
+generated_at: '2026-06-27T17:52:33Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  final_status: FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY
+  data_quality_status: PASS_WITH_WARNINGS
+  policy_variants_analyzed:
+  - wf_504d_baseline
+  - wf_378d_initial
+  - wf_252d_initial
+  - wf_expanding_initial
+  - wf_warm_start_diagnostic
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  regressed_probes:
+  - balanced_dynamic_probe
+  - defensive_overlay_probe
+  - drawdown_control_probe
+  role_group_comparison: RETURN_SEEKING_DIAGNOSTIC_LAYER_POSSIBLE_DEFENSIVE_BLOCKED
+  2022_slice_diagnosis: DEFENSIVE_REGRESSION_PRESENT_IN_2022_AND_TRANSITION_SLICE
+  signal_error_attribution: DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK
+  final_diagnosis: RETURN_SEEKING_ONLY_DIAGNOSTIC
+  owner_review_allowed: false
+  promotion_status: blocked
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  remaining_blockers:
+  - DEFENSIVE_PROBE_REGRESSION
+  - RISK_OFF_ONLY_FALLBACK_NOT_SUPPORTED
+  - OWNER_REVIEW_DISABLED
+  - PROMOTION_BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
+final_decision:
+  second_layer_registry: dynamic_second_layer_probe_registry_v2
+  selected_policy: ''
+  first_layer_v2_disposition: RETURN_SEEKING_DIAGNOSTIC_ONLY_DEFENSIVE_BLOCKED
+  owner_review_allowed: false
+  promotion: blocked
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  next_action: KEEP_FIRST_LAYER_V2_BLOCKED_OR_PREPARE_DIAGNOSTIC_FORWARD_WATCH
+upstream_statuses:
+  reclassification: FIRST_LAYER_V2_COVERAGE_REBUILD_RECLASSIFIED_LATE_WINDOW_ONLY
+  inventory: FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_INVENTORY_READY_PROMOTION_BLOCKED
+  role_group: FIRST_LAYER_V2_PROBE_ROLE_GROUP_COMPARISON_READY_PROMOTION_BLOCKED
+  defensive_slice: FIRST_LAYER_V2_2022_DEFENSIVE_REGRESSION_SLICE_READY_PROMOTION_BLOCKED
+  signal_attribution: FIRST_LAYER_V2_SIGNAL_ERROR_ATTRIBUTION_READY_PROMOTION_BLOCKED
+  stability: FIRST_LAYER_V2_POLICY_VARIANT_STABILITY_READY_PROMOTION_BLOCKED
+  return_seeking: RETURN_SEEKING_ONLY_BUT_DEFENSIVE_BLOCKED
+  risk_off_only: RISK_OFF_ONLY_FALLBACK_NOT_SUPPORTED
+  decision: FIRST_LAYER_V2_DEFENSIVE_REGRESSION_DIAGNOSIS_READY_PROMOTION_BLOCKED
+artifact_paths:
+  coverage_reclassification_doc: docs\research\first_layer_v2_coverage_rebuild_reclassification.md
+  coverage_reclassification_yaml: inputs\research_reviews\first_layer_v2_coverage_rebuild_reclassification.yaml
+  regression_inventory_doc: docs\research\first_layer_v2_defensive_probe_regression_inventory.md
+  regression_inventory_yaml: inputs\research_reviews\first_layer_v2_defensive_probe_regression_inventory.yaml
+  role_group_doc: docs\research\first_layer_v2_probe_role_group_comparison.md
+  role_group_yaml: inputs\research_reviews\first_layer_v2_probe_role_group_matrix.yaml
+  defensive_2022_slice_doc: docs\research\first_layer_v2_2022_defensive_regression_slice_review.md
+  defensive_2022_slice_yaml: inputs\research_reviews\first_layer_v2_2022_defensive_regression_slice.yaml
+  signal_attribution_doc: docs\research\first_layer_v2_signal_error_attribution.md
+  signal_attribution_yaml: inputs\research_reviews\first_layer_v2_signal_error_attribution.yaml
+  stability_doc: docs\research\first_layer_v2_policy_variant_stability_review.md
+  stability_yaml: inputs\research_reviews\first_layer_v2_policy_variant_stability_matrix.yaml
+  return_seeking_doc: docs\research\first_layer_v2_return_seeking_diagnostic_reclassification.md
+  return_seeking_yaml: inputs\research_reviews\first_layer_v2_return_seeking_diagnostic_reclassification.yaml
+  risk_off_only_doc: docs\research\first_layer_v2_risk_off_only_fallback_assessment.md
+  risk_off_only_yaml: inputs\research_reviews\first_layer_v2_risk_off_only_fallback_assessment.yaml
+  decision_doc: docs\research\first_layer_v2_defensive_regression_diagnosis_review.md
+  decision_yaml: inputs\research_reviews\first_layer_v2_defensive_regression_diagnosis_matrix.yaml
+  owner_brief_doc: docs\research\first_layer_v2_defensive_regression_owner_brief.md
+  closeout_doc: docs\research\first_layer_v2_defensive_regression_diagnosis_closeout.md
+  final_matrix_yaml: inputs\research_reviews\first_layer_v2_defensive_regression_diagnosis_final_matrix.yaml

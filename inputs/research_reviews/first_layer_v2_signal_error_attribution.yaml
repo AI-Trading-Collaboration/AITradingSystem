@@ -1,0 +1,1209 @@
+schema_version: first_layer_v2_signal_error_attribution.v1
+report_type: first_layer_v2_signal_error_attribution
+title: First-Layer V2 Signal Error Attribution
+status: FIRST_LAYER_V2_SIGNAL_ERROR_ATTRIBUTION_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:52:33Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  regressed_probe_ids:
+  - balanced_dynamic_probe
+  - defensive_overlay_probe
+  - drawdown_control_probe
+  episode_row_count: 54
+  episode_selection_policy: top_cost_events_per_regressed_probe_policy; reporting
+    cap does not affect diagnosis
+  episode_report_limit_per_probe_policy: 16
+  forward_return_horizon_days: 20
+  primary_signal_error_diagnosis: DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK
+  error_type_counts:
+    ADD_RISK_FALSE_POSITIVE: 42
+    DO_NOT_DE_RISK_FALSE_POSITIVE: 279
+    HIGH_CONFIDENCE_RISK_ON_FALSE_POSITIVE: 21
+  feature_coverage_gap_detected: false
+  train_window_instability_detected: true
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 54
+  pre_registered_selection_rule: true
+error_type_rows:
+- error_type: ADD_RISK_FALSE_POSITIVE
+  episode_count: 42
+- error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  episode_count: 279
+- error_type: HIGH_CONFIDENCE_RISK_ON_FALSE_POSITIVE
+  episode_count: 21
+episode_rows:
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: drawdown_control_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.0
+    SGOV: 1.0
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.106235
+  false_do_not_de_risk_cost: 0.106235
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.21247
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.0
+    SGOV: 1.0
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.106235
+  false_do_not_de_risk_cost: 0.106235
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.21247
+- date: '2023-02-13'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.023425
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.086434
+  false_do_not_de_risk_cost: 0.039893
+  false_add_risk_cost: 0.039893
+  false_risk_on_cost: 0.039893
+  total_signal_error_cost: 0.126327
+- date: '2023-02-14'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.025482
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.086434
+  false_do_not_de_risk_cost: 0.039893
+  false_add_risk_cost: 0.039893
+  false_risk_on_cost: 0.039893
+  total_signal_error_cost: 0.126327
+- date: '2023-02-15'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.007428
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.086434
+  false_do_not_de_risk_cost: 0.039893
+  false_add_risk_cost: 0.039893
+  false_risk_on_cost: 0.039893
+  total_signal_error_cost: 0.126327
+- date: '2023-01-31'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.011638
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.085583
+  false_do_not_de_risk_cost: 0.0395
+  false_add_risk_cost: 0.0395
+  false_risk_on_cost: 0.0395
+  total_signal_error_cost: 0.125083
+- date: '2023-02-01'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.02428
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.085583
+  false_do_not_de_risk_cost: 0.0395
+  false_add_risk_cost: 0.0395
+  false_risk_on_cost: 0.0395
+  total_signal_error_cost: 0.125083
+- date: '2023-01-23'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: defensive
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.4
+    SGOV: 0.6
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: 0.017551
+  market_forward_drawdown: -0.056732
+  missed_defensive_benefit: 0.073752
+  false_do_not_de_risk_cost: 0.051059
+  false_add_risk_cost: 0.051059
+  false_risk_on_cost: 0.051059
+  total_signal_error_cost: 0.124811
+- date: '2023-01-26'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.005079
+  market_forward_drawdown: -0.063738
+  missed_defensive_benefit: 0.082859
+  false_do_not_de_risk_cost: 0.038243
+  false_add_risk_cost: 0.038243
+  false_risk_on_cost: 0.038243
+  total_signal_error_cost: 0.121102
+- date: '2023-01-27'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.007819
+  market_forward_drawdown: -0.063738
+  missed_defensive_benefit: 0.082859
+  false_do_not_de_risk_cost: 0.038243
+  false_add_risk_cost: 0.038243
+  false_risk_on_cost: 0.038243
+  total_signal_error_cost: 0.121102
+- date: '2023-02-03'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.020097
+  market_forward_drawdown: -0.060296
+  missed_defensive_benefit: 0.078385
+  false_do_not_de_risk_cost: 0.036178
+  false_add_risk_cost: 0.036178
+  false_risk_on_cost: 0.036178
+  total_signal_error_cost: 0.114563
+- date: '2023-02-08'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.038455
+  market_forward_drawdown: -0.057938
+  missed_defensive_benefit: 0.075319
+  false_do_not_de_risk_cost: 0.034763
+  false_add_risk_cost: 0.034763
+  false_risk_on_cost: 0.034763
+  total_signal_error_cost: 0.110082
+- date: '2022-12-02'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: defensive
+  new_state: neutral
+  old_weights:
+    QQQ: 0.4
+    SGOV: 0.6
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  market_forward_return: -0.093776
+  market_forward_drawdown: -0.108776
+  missed_defensive_benefit: 0.076143
+  false_do_not_de_risk_cost: 0.032633
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.108776
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: balanced_dynamic_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.25
+    SGOV: 0.75
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.053118
+  false_do_not_de_risk_cost: 0.053118
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.106236
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.25
+    SGOV: 0.75
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.053118
+  false_do_not_de_risk_cost: 0.053118
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.106236
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: drawdown_control_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.106235
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.106235
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.106235
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.106235
+- date: '2023-02-02'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: constructive
+  new_state: risk_on
+  old_weights:
+    QQQ: 1.0
+    SGOV: 0.0
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.038629
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.085583
+  false_do_not_de_risk_cost: 0.01975
+  false_add_risk_cost: 0.01975
+  false_risk_on_cost: 0.01975
+  total_signal_error_cost: 0.105333
+- date: '2023-02-07'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: constructive
+  new_state: risk_on
+  old_weights:
+    QQQ: 1.0
+    SGOV: 0.0
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: -0.038924
+  market_forward_drawdown: -0.060296
+  missed_defensive_benefit: 0.078385
+  false_do_not_de_risk_cost: 0.018089
+  false_add_risk_cost: 0.018089
+  false_risk_on_cost: 0.018089
+  total_signal_error_cost: 0.096474
+- date: '2023-02-16'
+  policy_id: wf_expanding_initial
+  probe_id: drawdown_control_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.7
+    SGOV: 0.3
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.85
+    SGOV: 0.0
+    TQQQ: 0.15
+  market_forward_return: 0.006796
+  market_forward_drawdown: -0.048617
+  missed_defensive_benefit: 0.063202
+  false_do_not_de_risk_cost: 0.02917
+  false_add_risk_cost: 0.02917
+  false_risk_on_cost: 0.02917
+  total_signal_error_cost: 0.092372
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.3
+    SGOV: 0.7
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.04553
+  false_do_not_de_risk_cost: 0.04553
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.09106
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: risk_off
+  new_state: neutral
+  old_weights:
+    QQQ: 0.3
+    SGOV: 0.7
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.04553
+  false_do_not_de_risk_cost: 0.04553
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.09106
+- date: '2023-02-13'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.023425
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.049866
+  false_do_not_de_risk_cost: 0.026595
+  false_add_risk_cost: 0.026595
+  false_risk_on_cost: 0.026595
+  total_signal_error_cost: 0.076461
+- date: '2023-02-14'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.025482
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.049866
+  false_do_not_de_risk_cost: 0.026595
+  false_add_risk_cost: 0.026595
+  false_risk_on_cost: 0.026595
+  total_signal_error_cost: 0.076461
+- date: '2023-02-15'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.007428
+  market_forward_drawdown: -0.066488
+  missed_defensive_benefit: 0.049866
+  false_do_not_de_risk_cost: 0.026595
+  false_add_risk_cost: 0.026595
+  false_risk_on_cost: 0.026595
+  total_signal_error_cost: 0.076461
+- date: '2023-01-31'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.011638
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.049375
+  false_do_not_de_risk_cost: 0.026333
+  false_add_risk_cost: 0.026333
+  false_risk_on_cost: 0.026333
+  total_signal_error_cost: 0.075708
+- date: '2023-02-01'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.02428
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.049375
+  false_do_not_de_risk_cost: 0.026333
+  false_add_risk_cost: 0.026333
+  false_risk_on_cost: 0.026333
+  total_signal_error_cost: 0.075708
+- date: '2023-01-23'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: defensive
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.45
+    SGOV: 0.55
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: 0.017551
+  market_forward_drawdown: -0.056732
+  missed_defensive_benefit: 0.042549
+  false_do_not_de_risk_cost: 0.031203
+  false_add_risk_cost: 0.031203
+  false_risk_on_cost: 0.031203
+  total_signal_error_cost: 0.073752
+- date: '2023-01-26'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.005079
+  market_forward_drawdown: -0.063738
+  missed_defensive_benefit: 0.047803
+  false_do_not_de_risk_cost: 0.025495
+  false_add_risk_cost: 0.025495
+  false_risk_on_cost: 0.025495
+  total_signal_error_cost: 0.073298
+- date: '2023-01-27'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.007819
+  market_forward_drawdown: -0.063738
+  missed_defensive_benefit: 0.047803
+  false_do_not_de_risk_cost: 0.025495
+  false_add_risk_cost: 0.025495
+  false_risk_on_cost: 0.025495
+  total_signal_error_cost: 0.073298
+- date: '2023-02-03'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.020097
+  market_forward_drawdown: -0.060296
+  missed_defensive_benefit: 0.045222
+  false_do_not_de_risk_cost: 0.024118
+  false_add_risk_cost: 0.024118
+  false_risk_on_cost: 0.024118
+  total_signal_error_cost: 0.06934
+- date: '2023-02-08'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.038455
+  market_forward_drawdown: -0.057938
+  missed_defensive_benefit: 0.043454
+  false_do_not_de_risk_cost: 0.023175
+  false_add_risk_cost: 0.023175
+  false_risk_on_cost: 0.023175
+  total_signal_error_cost: 0.066629
+- date: '2023-02-02'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: constructive
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.68
+    SGOV: 0.27
+    TQQQ: 0.05
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.038629
+  market_forward_drawdown: -0.065833
+  missed_defensive_benefit: 0.049375
+  false_do_not_de_risk_cost: 0.011192
+  false_add_risk_cost: 0.011192
+  false_risk_on_cost: 0.011192
+  total_signal_error_cost: 0.060567
+- date: '2023-02-16'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: 0.006796
+  market_forward_drawdown: -0.048617
+  missed_defensive_benefit: 0.036463
+  false_do_not_de_risk_cost: 0.019447
+  false_add_risk_cost: 0.019447
+  false_risk_on_cost: 0.019447
+  total_signal_error_cost: 0.05591
+- date: '2023-02-07'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: ADD_RISK_FALSE_POSITIVE
+  old_state: constructive
+  new_state: risk_on
+  old_weights:
+    QQQ: 0.68
+    SGOV: 0.27
+    TQQQ: 0.05
+  new_weights:
+    QQQ: 0.7
+    SGOV: 0.2
+    TQQQ: 0.1
+  market_forward_return: -0.038924
+  market_forward_drawdown: -0.060296
+  missed_defensive_benefit: 0.045222
+  false_do_not_de_risk_cost: 0.01025
+  false_add_risk_cost: 0.01025
+  false_risk_on_cost: 0.01025
+  total_signal_error_cost: 0.055472
+- date: '2022-12-02'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: defensive
+  new_state: neutral
+  old_weights:
+    QQQ: 0.45
+    SGOV: 0.55
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.093776
+  market_forward_drawdown: -0.108776
+  missed_defensive_benefit: 0.038072
+  false_do_not_de_risk_cost: 0.016316
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.054388
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: balanced_dynamic_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.053118
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.053118
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: balanced_dynamic_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.053118
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.053118
+- date: '2022-12-02'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: defensive
+  new_state: neutral
+  old_weights:
+    QQQ: 0.45
+    SGOV: 0.55
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.093776
+  market_forward_drawdown: -0.108776
+  missed_defensive_benefit: 0.032633
+  false_do_not_de_risk_cost: 0.016316
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.048949
+- date: '2022-04-04'
+  policy_id: wf_252d_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.04553
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.04553
+- date: '2022-04-04'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.136697
+  market_forward_drawdown: -0.151765
+  missed_defensive_benefit: 0.04553
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.04553
+- date: '2022-08-18'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.121339
+  market_forward_drawdown: -0.121339
+  missed_defensive_benefit: 0.036402
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036402
+- date: '2022-08-18'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.121339
+  market_forward_drawdown: -0.121339
+  missed_defensive_benefit: 0.036402
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036402
+- date: '2022-08-18'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.121339
+  market_forward_drawdown: -0.121339
+  missed_defensive_benefit: 0.036402
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036402
+- date: '2022-08-08'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.086238
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-08'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.086238
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-08'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.086238
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-09'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.057105
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-09'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.057105
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-09'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.057105
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-10'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.07797
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-10'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.07797
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-10'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.07797
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035
+- date: '2022-08-11'
+  policy_id: wf_expanding_initial
+  probe_id: defensive_overlay_probe
+  error_type: DO_NOT_DE_RISK_FALSE_POSITIVE
+  old_state: neutral
+  new_state: neutral
+  old_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  new_weights:
+    QQQ: 0.6
+    SGOV: 0.4
+    TQQQ: 0.0
+  market_forward_return: -0.052425
+  market_forward_drawdown: -0.120116
+  missed_defensive_benefit: 0.036035
+  false_do_not_de_risk_cost: 0.0
+  false_add_risk_cost: 0.0
+  false_risk_on_cost: 0.0
+  total_signal_error_cost: 0.036035

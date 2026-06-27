@@ -20545,6 +20545,214 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_v2_coverage_rebuild_reclassification
+    title: First-Layer V2 Coverage Rebuild Reclassification
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_rebuild_reclassification.md
+      - inputs/research_reviews/first_layer_v2_coverage_rebuild_reclassification.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Reclassification changes after coverage rebuild final matrix, actual-path matrix, or defensive regression diagnosis changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_defensive_probe_regression_inventory
+    title: First-Layer V2 Defensive Probe Regression Inventory
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_defensive_probe_regression_inventory.md
+      - inputs/research_reviews/first_layer_v2_defensive_probe_regression_inventory.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Inventory changes after frozen probe actual-path rows, coverage-pass policy selection, or probe registry roles change.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_probe_role_group_comparison
+    title: First-Layer V2 Probe Role Group Comparison
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_probe_role_group_comparison.md
+      - inputs/research_reviews/first_layer_v2_probe_role_group_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Role-group comparison changes after probe roles, coverage-pass inventory, or return-seeking diagnostic classification changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_2022_defensive_regression_slice_review
+    title: First-Layer V2 2022 Defensive Regression Slice Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_2022_defensive_regression_slice_review.md
+      - inputs/research_reviews/first_layer_v2_2022_defensive_regression_slice.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: 2022 slice review changes after composer predictions, validated prices, or coverage-pass policy rows change.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_signal_error_attribution
+    title: First-Layer V2 Signal Error Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_signal_error_attribution.md
+      - inputs/research_reviews/first_layer_v2_signal_error_attribution.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Signal attribution changes after predictions, forward market path, or regressed probe inventory changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_policy_variant_stability_review
+    title: First-Layer V2 Policy Variant Stability Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_policy_variant_stability_review.md
+      - inputs/research_reviews/first_layer_v2_policy_variant_stability_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Stability review changes after coverage simulation, model metrics, prediction distributions, or actual-path rows change.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_return_seeking_diagnostic_reclassification
+    title: First-Layer V2 Return-Seeking Diagnostic Reclassification
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_return_seeking_diagnostic_reclassification.md
+      - inputs/research_reviews/first_layer_v2_return_seeking_diagnostic_reclassification.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Reclassification changes after role-group comparison or defensive regression blocker status changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_risk_off_only_fallback_assessment
+    title: First-Layer V2 Risk-Off-Only Fallback Assessment
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_risk_off_only_fallback_assessment.md
+      - inputs/research_reviews/first_layer_v2_risk_off_only_fallback_assessment.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-off fallback assessment changes after defensive or drawdown-control probe results change.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_defensive_regression_diagnosis_review
+    title: First-Layer V2 Defensive Regression Diagnosis Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_defensive_regression_diagnosis_review.md
+      - inputs/research_reviews/first_layer_v2_defensive_regression_diagnosis_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Diagnosis review changes after any reclassification, inventory, slice, signal attribution, stability, or fallback assessment changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_defensive_regression_owner_brief
+    title: First-Layer V2 Defensive Regression Owner Brief
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_defensive_regression_owner_brief.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner brief changes after the final diagnosis matrix changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_defensive_regression_diagnosis_closeout
+    title: First-Layer V2 Defensive Regression Diagnosis Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-defensive-regression-diagnosis
+    artifact_globs:
+      - docs/research/first_layer_v2_defensive_regression_diagnosis_closeout.md
+      - inputs/research_reviews/first_layer_v2_defensive_regression_diagnosis_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout changes after any defensive regression diagnosis input or safety decision changes.
+    owner_action: review_first_layer_v2_defensive_regression_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

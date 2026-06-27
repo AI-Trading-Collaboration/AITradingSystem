@@ -1,0 +1,140 @@
+schema_version: first_layer_v2_probe_role_group_matrix.v1
+report_type: first_layer_v2_probe_role_group_matrix
+title: First-Layer V2 Probe Role Group Comparison
+status: FIRST_LAYER_V2_PROBE_ROLE_GROUP_COMPARISON_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:52:32Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  defensive_or_drawdown_regressed_count: 5
+  pure_return_seeking_probe_count: 8
+  pure_return_seeking_improved_count: 8
+  risk_on_diagnostic_probe_count: 2
+  risk_on_diagnostic_improved_count: 2
+  regression_concentration: DEFENSIVE_AND_DRAWDOWN_CONTROL_WITH_BALANCED_EXCEPTION
+  return_seeking_value_supported: true
+  risk_on_diagnostic_value_supported: true
+  role_group_conclusion: RETURN_SEEKING_DIAGNOSTIC_LAYER_POSSIBLE_DEFENSIVE_BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 10
+  pre_registered_selection_rule: true
+role_group_rows:
+- policy_id: wf_252d_initial
+  probe_role_group: defensive_overlay
+  probe_count: 1
+  improved_count: 0
+  regressed_count: 1
+  average_annual_return_delta: -0.01401
+  average_calmar_delta: 0.257374
+  group_conclusion: DEFENSIVE_OR_DRAWDOWN_REGRESSION
+- policy_id: wf_252d_initial
+  probe_role_group: drawdown_control
+  probe_count: 1
+  improved_count: 0
+  regressed_count: 1
+  average_annual_return_delta: -0.028335
+  average_calmar_delta: 0.027834
+  group_conclusion: DEFENSIVE_OR_DRAWDOWN_REGRESSION
+- policy_id: wf_252d_initial
+  probe_role_group: balanced_dynamic
+  probe_count: 1
+  improved_count: 0
+  regressed_count: 1
+  average_annual_return_delta: -0.012391
+  average_calmar_delta: 0.214551
+  group_conclusion: DEFENSIVE_OR_DRAWDOWN_REGRESSION
+- policy_id: wf_252d_initial
+  probe_role_group: return_seeking
+  probe_count: 4
+  improved_count: 4
+  regressed_count: 0
+  average_annual_return_delta: -0.012127
+  average_calmar_delta: 0.213485
+  group_conclusion: RETURN_SEEKING_IMPROVES
+- policy_id: wf_252d_initial
+  probe_role_group: risk_on_diagnostic
+  probe_count: 1
+  improved_count: 1
+  regressed_count: 0
+  average_annual_return_delta: -0.010118
+  average_calmar_delta: 0.167393
+  group_conclusion: RISK_ON_DIAGNOSTIC_IMPROVES
+- policy_id: wf_expanding_initial
+  probe_role_group: defensive_overlay
+  probe_count: 1
+  improved_count: 0
+  regressed_count: 1
+  average_annual_return_delta: -0.012112
+  average_calmar_delta: 0.339695
+  group_conclusion: DEFENSIVE_OR_DRAWDOWN_REGRESSION
+- policy_id: wf_expanding_initial
+  probe_role_group: drawdown_control
+  probe_count: 1
+  improved_count: 0
+  regressed_count: 1
+  average_annual_return_delta: -0.01737
+  average_calmar_delta: 0.264806
+  group_conclusion: DEFENSIVE_OR_DRAWDOWN_REGRESSION
+- policy_id: wf_expanding_initial
+  probe_role_group: balanced_dynamic
+  probe_count: 1
+  improved_count: 1
+  regressed_count: 0
+  average_annual_return_delta: -0.003391
+  average_calmar_delta: 0.564555
+  group_conclusion: RETURN_SEEKING_IMPROVES
+- policy_id: wf_expanding_initial
+  probe_role_group: return_seeking
+  probe_count: 4
+  improved_count: 4
+  regressed_count: 0
+  average_annual_return_delta: -0.004465
+  average_calmar_delta: 0.421216
+  group_conclusion: RETURN_SEEKING_IMPROVES
+- policy_id: wf_expanding_initial
+  probe_role_group: risk_on_diagnostic
+  probe_count: 1
+  improved_count: 1
+  regressed_count: 0
+  average_annual_return_delta: 0.004895
+  average_calmar_delta: 0.406803
+  group_conclusion: RISK_ON_DIAGNOSTIC_IMPROVES

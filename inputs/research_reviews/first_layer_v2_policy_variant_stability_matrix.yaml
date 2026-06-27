@@ -1,0 +1,182 @@
+schema_version: first_layer_v2_policy_variant_stability_matrix.v1
+report_type: first_layer_v2_policy_variant_stability_matrix
+title: First-Layer V2 Policy Variant Stability Review
+status: FIRST_LAYER_V2_POLICY_VARIANT_STABILITY_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:52:33Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  policy_count: 5
+  coverage_pass_policy_ids:
+  - wf_252d_initial
+  - wf_expanding_initial
+  late_window_improved_policy_ids:
+  - wf_504d_baseline
+  - wf_378d_initial
+  coverage_pass_average_risk_off_recall: 0.292042
+  shorter_train_window_instability_detected: true
+  expanding_mitigates_but_does_not_remove_defensive_regression: true
+  why_504d_378d_still_8_of_8_improved: their effective windows start after, or too
+    late within, 2022 stress and are not eligible for coverage-aware owner review
+  target_path_metrics_used_for_pass: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 5
+  pre_registered_selection_rule: true
+policy_rows:
+- policy_id: wf_504d_baseline
+  coverage_pass: false
+  first_prediction_date: '2023-02-22'
+  train_sample_count_min: 504
+  train_sample_count_max: 504
+  label_distribution:
+    do_not_de_risk_label: 31
+    stay_constructive_label: 41
+    add_risk_label: 19
+    high_confidence_risk_on_label: 20
+  risk_off_label_count: 31
+  do_not_de_risk_count: 31
+  add_risk_count: 19
+  prediction_distribution:
+    risk_off: 1103
+    risk_on: 551
+    constructive: 322
+    neutral: 139
+    defensive: 90
+  risk_off_recall: 0.526508
+  do_not_de_risk_false_positive: 724
+  add_risk_false_positive: 611
+  actual_path_improved_probe_count: 8
+  probe_count: 8
+  no_major_regression_in_defensive_probe: true
+  stability_diagnosis: LATE_WINDOW_8_OF_8_NOT_COVERAGE_ELIGIBLE
+- policy_id: wf_378d_initial
+  coverage_pass: false
+  first_prediction_date: '2022-08-22'
+  train_sample_count_min: 378
+  train_sample_count_max: 378
+  label_distribution:
+    do_not_de_risk_label: 4
+    stay_constructive_label: 7
+    add_risk_label: 2
+    high_confidence_risk_on_label: 4
+  risk_off_label_count: 4
+  do_not_de_risk_count: 4
+  add_risk_count: 2
+  prediction_distribution:
+    risk_off: 1384
+    constructive: 523
+    defensive: 262
+    risk_on: 210
+    neutral: 204
+  risk_off_recall: 0.393891
+  do_not_de_risk_false_positive: 692
+  add_risk_false_positive: 223
+  actual_path_improved_probe_count: 8
+  probe_count: 8
+  no_major_regression_in_defensive_probe: true
+  stability_diagnosis: LATE_WINDOW_8_OF_8_NOT_COVERAGE_ELIGIBLE
+- policy_id: wf_252d_initial
+  coverage_pass: true
+  first_prediction_date: '2022-02-18'
+  train_sample_count_min: 252
+  train_sample_count_max: 252
+  label_distribution:
+    do_not_de_risk_label: 2
+    stay_constructive_label: 11
+    add_risk_label: 1
+    high_confidence_risk_on_label: 3
+  risk_off_label_count: 2
+  do_not_de_risk_count: 2
+  add_risk_count: 1
+  prediction_distribution:
+    defensive: 1439
+    risk_off: 1059
+    constructive: 361
+    neutral: 102
+  risk_off_recall: 0.136637
+  do_not_de_risk_false_positive: 372
+  add_risk_false_positive: 90
+  actual_path_improved_probe_count: 5
+  probe_count: 8
+  no_major_regression_in_defensive_probe: false
+  stability_diagnosis: COVERAGE_PASS_SHORT_TRAIN_DEFENSIVE_REGRESSION
+- policy_id: wf_expanding_initial
+  coverage_pass: true
+  first_prediction_date: '2022-02-18'
+  train_sample_count_min: 252
+  train_sample_count_max: 504
+  label_distribution:
+    do_not_de_risk_label: 2
+    stay_constructive_label: 11
+    add_risk_label: 1
+    high_confidence_risk_on_label: 3
+  risk_off_label_count: 2
+  do_not_de_risk_count: 2
+  add_risk_count: 1
+  prediction_distribution:
+    risk_off: 1658
+    risk_on: 597
+    constructive: 333
+    neutral: 239
+    defensive: 134
+  risk_off_recall: 0.447447
+  do_not_de_risk_false_positive: 871
+  add_risk_false_positive: 657
+  actual_path_improved_probe_count: 6
+  probe_count: 8
+  no_major_regression_in_defensive_probe: false
+  stability_diagnosis: EXPANDING_MITIGATES_RETURN_SEEKING_BUT_DEFENSIVE_REGRESSION_REMAINS
+- policy_id: wf_warm_start_diagnostic
+  coverage_pass: false
+  first_prediction_date: '2021-02-22'
+  train_sample_count_min: 0
+  train_sample_count_max: 0
+  label_distribution: {}
+  risk_off_label_count: 0
+  do_not_de_risk_count: 0
+  add_risk_count: 0
+  prediction_distribution:
+    neutral: 1343
+  risk_off_recall: 0.0
+  do_not_de_risk_false_positive: 0
+  add_risk_false_positive: 0
+  actual_path_improved_probe_count: 5
+  probe_count: 8
+  no_major_regression_in_defensive_probe: false
+  stability_diagnosis: DIAGNOSTIC_ONLY_NOT_OWNER_REVIEWABLE
