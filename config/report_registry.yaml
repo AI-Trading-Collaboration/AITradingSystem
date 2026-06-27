@@ -21062,6 +21062,25 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: two_lane_optimization_master_closeout
+    title: Two-Lane Optimization Master Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review for TRADING-1806_to_1885
+    artifact_globs:
+      - docs/research/two_lane_optimization_master_closeout.md
+      - inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Master closeout changes after Phase 1 lane separation, Phase 2 defensive lane, Phase 3 return-seeking lane, or Phase 4/5 gating status changes.
+    owner_action: review_two_lane_optimization_master_closeout
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

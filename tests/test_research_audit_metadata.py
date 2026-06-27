@@ -282,6 +282,24 @@ def test_return_seeking_final_matrix_records_dependent_upside_only() -> None:
     assert artifact["phase_decision"]["gated_integration_allowed_now"] is False
 
 
+def test_two_lane_optimization_master_closeout_has_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml")
+    )
+    metadata = artifact["research_audit_metadata"]
+
+    assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+    assert metadata["modified_layer"] == "validation_only"
+    assert metadata["candidate_count"] == 0
+    assert metadata["pre_registered_selection_rule"] == "owner_attachment_phase_gates_1806_to_1885"
+    assert artifact["research_window_id"] == "exact_three_asset_validated"
+    assert artifact["promotion_allowed"] is False
+    assert artifact["paper_shadow_allowed"] is False
+    assert artifact["production_allowed"] is False
+    assert artifact["broker_action"] == "none"
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

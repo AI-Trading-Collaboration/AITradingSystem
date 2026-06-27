@@ -1,0 +1,131 @@
+schema_version: two_lane_optimization_master_final_matrix.v1
+report_type: two_lane_optimization_master_final_matrix
+title: Two-Lane Optimization Master Final Matrix
+status: TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED
+generated_at: '2026-06-28T00:00:00+09:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  final_status: TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED
+  phase_1_status: LANE_SEPARATION_POLICY_READY
+  phase_2_status: DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+  phase_3_status: RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED
+  phase_4_status: BLOCKED_OWNER_INPUT
+  phase_5_status: BLOCKED_OWNER_INPUT
+  defensive_lane_material_improvement: false
+  defensive_probe_no_regression: true
+  return_seeking_positive_return_delta_probe_count: 7
+  return_seeking_drawdown_regression_probe_count: 7
+  return_seeking_diagnostic_value_probe_count: 0
+  beta_or_tqqq_dependency_suspected: true
+  depends_on_2023_plus: true
+  gated_integration_allowed: false
+  candidate_locked_for_validation: false
+  final_recommendation: PAUSE_AUTOMATIC_FIRST_LAYER_TREND_STRATEGY_KEEP_DIAGNOSTIC_ONLY
+  owner_review_allowed: false
+  promotion_status: blocked
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+phase_rows:
+  - phase_id: TRADING-1806_to_1820
+    phase_name: First-Layer V2 Closeout and Lane Separation Policy
+    status: LANE_SEPARATION_POLICY_READY
+    evidence_paths:
+      - inputs/research_reviews/two_layer_lane_separation_final_matrix.yaml
+      - docs/research/two_layer_lane_separation_closeout.md
+      - config/research/two_lane_signal_policy.yaml
+      - inputs/research_reviews/first_layer_signal_usage_matrix.yaml
+    gate_result: PASS_POLICY_ONLY
+    conclusion: Universal first-layer v2 is rejected; return-seeking diagnostic is retained but cannot enable promotion.
+    next_action_allowed: Continue only to independent defensive and diagnostic lanes.
+  - phase_id: TRADING-1821_to_1840
+    phase_name: Defensive Preservation Lane Research
+    status: DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+    evidence_paths:
+      - inputs/research_reviews/defensive_preservation_lane_final_matrix.yaml
+      - docs/research/defensive_preservation_lane_closeout.md
+      - inputs/research_reviews/defensive_lane_actual_path_matrix.yaml
+      - inputs/research_reviews/defensive_lane_2022_slice_matrix.yaml
+    gate_result: NO_MATERIAL_IMPROVEMENT
+    conclusion: Defensive probes do not regress, but false risk-off cost does not decline and no promoted defensive lane is established.
+    next_action_allowed: Keep blocked or review defensive feature limitations; do not unlock gated integration.
+  - phase_id: TRADING-1841_to_1860
+    phase_name: Return-Seeking Diagnostic Lane Research
+    status: RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED
+    evidence_paths:
+      - inputs/research_reviews/return_seeking_diagnostic_lane_final_matrix.yaml
+      - docs/research/return_seeking_diagnostic_lane_closeout.md
+      - inputs/research_reviews/return_seeking_actual_path_matrix.yaml
+      - inputs/research_reviews/return_seeking_beta_tqqq_attribution.yaml
+      - inputs/research_reviews/return_seeking_2022_vs_2023_contrast.yaml
+    gate_result: UPSIDE_WITH_DRAWDOWN_REGRESSION
+    conclusion: Return-seeking signals produce positive return deltas, but all tested probes regress on drawdown and the evidence is TQQQ/2023+ dependent.
+    next_action_allowed: Keep as diagnostic-only explanation; do not connect to allocation, promotion, or gated integration.
+  - phase_id: TRADING-1861_to_1875
+    phase_name: Two-Lane Gated Overlay Integration
+    status: BLOCKED_OWNER_INPUT
+    evidence_paths:
+      - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+      - docs/task_register.md
+    gate_result: NOT_ENTERED_PHASE_2_3_GATES_FAILED
+    conclusion: Gated integration prerequisites are not met because Phase 2 lacks material defensive improvement and Phase 3 lacks risk-adjusted diagnostic value.
+    next_action_allowed: Do not implement actual-path gated overlay unless owner explicitly reopens policy or new evidence changes Phase 2/3 conclusions.
+  - phase_id: TRADING-1876_to_1885
+    phase_name: Multi-Window Validation and Overfitting Pre-Review
+    status: BLOCKED_OWNER_INPUT
+    evidence_paths:
+      - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+      - docs/task_register.md
+    gate_result: NOT_ENTERED_NO_LOCKED_CANDIDATE
+    conclusion: No candidate is locked because Phase 4 is blocked; validation must not be used as continued tuning.
+    next_action_allowed: Do not run candidate validation until a candidate is legitimately locked by a reopened and evidence-backed gate.
+blocked_actions:
+  - action: implement_two_lane_gated_overlay_actual_path
+    reason: Phase 2 and Phase 3 gates failed.
+  - action: run_multi_window_candidate_validation
+    reason: No locked candidate exists.
+  - action: enable_owner_review_for_promotion
+    reason: No promoted candidate or watch candidate exists.
+  - action: enable_paper_shadow
+    reason: Dynamic promotion remains blocked and all lanes are research-only.
+  - action: enable_production_or_broker
+    reason: No production-approved strategy or broker action exists.
+final_decision:
+  strategy_path: PAUSE_AUTOMATIC_FIRST_LAYER_TREND_STRATEGY
+  retained_use: DIAGNOSTIC_ONLY
+  forward_observation_allowed: OWNER_REVIEWED_DIAGNOSTIC_ONLY
+  gated_integration_allowed_now: false
+  candidate_validation_allowed_now: false
+  reason: Defensive lane did not materially improve, and return-seeking upside is drawdown-regressed, TQQQ/beta dependent, and 2023+ dependent.
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: mixed_phase_closeout
+  feature_set_version: mixed_phase_closeout
+  model_version: phase_1_to_3_evidence
+  threshold_policy: two_lane_signal_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: owner_attachment_phase_gates_1806_to_1885
