@@ -8,6 +8,9 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.cli_commands.research_defensive_overlay import (
+    register_defensive_overlay_strategy_commands,
+)
 from ai_trading_system.cli_commands.research_execution_semantics import (
     register_execution_semantics_strategy_commands,
 )
@@ -258,6 +261,7 @@ def register_simple_baseline_strategy_commands(strategies_app: typer.Typer) -> N
     register_external_validation_strategy_commands(strategies_app)
     register_execution_semantics_strategy_commands(strategies_app)
     register_expanded_universe_strategy_commands(strategies_app)
+    register_defensive_overlay_strategy_commands(strategies_app)
 
 
 def strategies_simple_baseline_registry_review_command(

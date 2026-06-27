@@ -1,0 +1,254 @@
+schema_version: expanded_candidate_reclassification_matrix.v1
+report_type: expanded_candidate_reclassification_matrix
+title: Expanded Candidate Reclassification Matrix
+status: EXPANDED_CANDIDATE_RECLASSIFICATION_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T12:20:16Z'
+source_commit: 8e441107
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  candidate_count: 11
+  watch_pending_count: 1
+  overlay_gate_pass_count: 0
+research_only: true
+defensive_overlay_only: true
+watch_only: true
+full_allocation_promotion_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 4a32a424983c44e64d1bb28a6ddbe3476dbc0252337effd521afdfbef557d71d
+failure_matrix_path: D:\Work\AITradingSystem\outputs\research_strategies\expanded_universe\actual_path_rebacktest\candidate_failure_matrix.csv
+rows:
+- candidate_id: expanded_state_highest_return_under_max_dd_cap
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0900_sgov0050_tqqq0050
+  overlay_classification: TQQQ_OVERLAY_DIAGNOSTIC_RESEARCH_ONLY
+  overlay_gate_passed: false
+  allowed_use: tqqq_research_diagnostic_only
+  overlay_blockers:
+  - stress_risk_too_high
+  - overlay_stress_watch_cap_exceeded
+  next_action: REQUIRE_TQQQ_SAFETY_AND_STRESS_REVIEW_BEFORE_ANY_WATCH_USE
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_lowest_turnover
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0950_sgov0050_tqqq0000
+  overlay_classification: DRAWDOWN_CONTROL_DIAGNOSTIC_WITH_COST_OR_RETURN_BLOCKER
+  overlay_gate_passed: false
+  allowed_use: risk_control_diagnostic_only
+  overlay_blockers: []
+  next_action: KEEP_AS_RISK_CONTROL_DIAGNOSTIC_ONLY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_highest_calmar
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  overlay_classification: DRAWDOWN_CONTROL_DIAGNOSTIC_WITH_COST_OR_RETURN_BLOCKER
+  overlay_gate_passed: false
+  allowed_use: risk_control_diagnostic_only
+  overlay_blockers: []
+  next_action: KEEP_AS_RISK_CONTROL_DIAGNOSTIC_ONLY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_highest_sharpe
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  overlay_classification: DRAWDOWN_CONTROL_DIAGNOSTIC_WITH_COST_OR_RETURN_BLOCKER
+  overlay_gate_passed: false
+  allowed_use: risk_control_diagnostic_only
+  overlay_blockers: []
+  next_action: KEEP_AS_RISK_CONTROL_DIAGNOSTIC_ONLY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: expanded_state_lowest_drawdown
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  overlay_classification: DRAWDOWN_CONTROL_DIAGNOSTIC_WITH_COST_OR_RETURN_BLOCKER
+  overlay_gate_passed: false
+  allowed_use: risk_control_diagnostic_only
+  overlay_blockers: []
+  next_action: KEEP_AS_RISK_CONTROL_DIAGNOSTIC_ONLY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: limited_adjustment
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0600_sgov0400_tqqq0000
+  overlay_classification: DEFENSIVE_OVERLAY_WATCH_PENDING_SPLIT_EVIDENCE
+  overlay_gate_passed: false
+  allowed_use: research_overlay_watch_only
+  overlay_blockers:
+  - walk_forward_split_evidence_pending
+  next_action: COLLECT_WALK_FORWARD_SPLIT_AND_FORWARD_WATCH_EVIDENCE
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  full_allocation_verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  overlay_classification: STATIC_REFERENCE_ONLY
+  overlay_gate_passed: false
+  allowed_use: static_reference_only
+  overlay_blockers: []
+  next_action: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  full_allocation_verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  overlay_classification: STATIC_REFERENCE_ONLY
+  overlay_gate_passed: false
+  allowed_use: static_reference_only
+  overlay_blockers: []
+  next_action: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  full_allocation_verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0100_sgov0900_tqqq0000
+  overlay_classification: STATIC_REFERENCE_ONLY
+  overlay_gate_passed: false
+  allowed_use: static_reference_only
+  overlay_blockers: []
+  next_action: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  full_allocation_verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0050_sgov0950_tqqq0000
+  overlay_classification: STATIC_REFERENCE_ONLY
+  overlay_gate_passed: false
+  allowed_use: static_reference_only
+  overlay_blockers: []
+  next_action: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
+- candidate_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  full_allocation_verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0000_sgov1000_tqqq0000
+  overlay_classification: STATIC_REFERENCE_ONLY
+  overlay_gate_passed: false
+  allowed_use: static_reference_only
+  overlay_blockers: []
+  next_action: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only

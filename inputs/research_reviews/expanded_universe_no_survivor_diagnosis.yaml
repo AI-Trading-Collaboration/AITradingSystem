@@ -1,0 +1,270 @@
+schema_version: expanded_universe_no_survivor_diagnosis.v1
+report_type: expanded_universe_no_survivor_diagnosis
+title: Expanded Universe No-Survivor Diagnosis
+status: EXPANDED_UNIVERSE_NO_SURVIVOR_DIAGNOSIS_READY
+generated_at: '2026-06-27T12:20:16Z'
+source_commit: 8e441107
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  candidate_count: 11
+  full_allocation_survivor_count: 0
+  static_frontier_dominates_count: 7
+  no_material_improvement_count: 4
+  walk_forward_failed_count: 11
+  stress_risk_too_high_count: 1
+  net_of_cost_failed_count: 7
+  data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+defensive_overlay_only: true
+watch_only: true
+full_allocation_promotion_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 4a32a424983c44e64d1bb28a6ddbe3476dbc0252337effd521afdfbef557d71d
+failure_matrix_path: D:\Work\AITradingSystem\outputs\research_strategies\expanded_universe\actual_path_rebacktest\candidate_failure_matrix.csv
+data_quality:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  checked_at: '2026-06-27T12:20:12.026632+00:00'
+  as_of: '2026-06-26'
+  price_path: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  rates_path: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  secondary_prices_path: D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv
+  expected_price_tickers:
+  - QQQ
+  - SGOV
+  - TQQQ
+  expected_rate_series:
+  - DGS2
+  - DGS10
+  - DTWEXBGS
+  price_row_count: 56184
+  rate_row_count: 6352
+  price_checksum: 5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d
+  rate_checksum: 279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a
+  warning_count: 1
+  error_count: 0
+  issues:
+  - severity: INFO
+    code: prices_index_volume_not_applicable
+    message: 价格数据缺少成交量，但该 ticker 已配置为指数/非成交标的，volume 不适用于质量阻断。
+    rows: 2163
+    sample: '{''date'': ''2018-01-02'', ''ticker'': ''^VIX'', ''volume'': nan}; {''date'':
+      ''2018-01-03'', ''ticker'': ''^VIX'', ''volume'': nan}; {''date'': ''2018-01-04'',
+      ''ticker'': ''^VIX'', ''volume'': nan}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_suspicious_adj_close_move
+    message: 价格数据包含较大调整收盘价单日波动；未达到极端错误阈值，作为可审计市场波动信息记录。
+    rows: 20
+    sample: '{''date'': ''2025-04-09'', ''ticker'': ''AMD'', ''adj_close'': 96.84,
+      ''_return'': 0.23820483314154206, ''_suspicious_return_threshold'': 0.2}; {''date'':
+      ''2025-10-06'', ''ticker'': ''AMD'', ''adj_close'': 203.71, ''_return'': 0.23708022104815707,
+      ''_suspicious_return_threshold'': 0.2}; {''date'': ''2024-12-13'', ''ticker'':
+      ''AVGO'', ''adj_close'': 221.38, ''_return'': 0.2443370243381484, ''_suspicious_return_threshold'':
+      0.2}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_known_split_adjustment_ratio_jump
+    message: 复权比例跳变匹配已配置 corporate action 拆股事件。
+    rows: 6
+    sample: '{''date'': ''2024-07-15'', ''ticker'': ''AVGO'', ''_adjustment_ratio'':
+      0.9815657449539144, ''_adjustment_ratio_change'': 8.999693677028406}; {''date'':
+      ''2024-10-03'', ''ticker'': ''LRCX'', ''_adjustment_ratio'': 0.9860683023055111,
+      ''_adjustment_ratio_change'': 9.00072511407645}; {''date'': ''2025-12-18'',
+      ''ticker'': ''NOW'', ''_adjustment_ratio'': 1.0, ''_adjustment_ratio_change'':
+      4.0}'
+    source: 价格主源
+  - severity: WARNING
+    code: prices_adjustment_ratio_jump
+    message: 价格数据的复权比例出现明显跳变
+    rows: 1
+    sample: '{''date'': ''2025-11-20'', ''ticker'': ''TQQQ'', ''_adjustment_ratio'':
+      0.9946178686759957, ''_adjustment_ratio_change'': 1.0000294200104527}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_non_positive_close
+    message: 价格数据的 close 包含非正数
+    rows: 14
+    sample: '{''date'': ''2026-04-07'', ''ticker'': ''META'', ''close'': 0.0}; {''date'':
+      ''2026-04-08'', ''ticker'': ''META'', ''close'': 0.0}; {''date'': ''2026-06-04'',
+      ''ticker'': ''META'', ''close'': 0.0}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_non_positive_adj_close
+    message: 价格数据的 adj_close 包含非正数
+    rows: 14
+    sample: '{''date'': ''2026-04-07'', ''ticker'': ''META'', ''adj_close'': 0.0};
+      {''date'': ''2026-04-08'', ''ticker'': ''META'', ''adj_close'': 0.0}; {''date'':
+      ''2026-06-04'', ''ticker'': ''META'', ''adj_close'': 0.0}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_invalid_ohlc
+    message: 价格数据违反 OHLC 逻辑约束
+    rows: 28
+    sample: '{''date'': ''2026-01-13'', ''ticker'': ''AMAT'', ''open'': 301.81, ''high'':
+      310.6413, ''low'': 302.59, ''close'': 304.87}; {''date'': ''2025-12-17'', ''ticker'':
+      ''CRM'', ''open'': 256.33, ''high'': 261.97, ''low'': 256.37, ''close'': 258.14};
+      {''date'': ''2025-12-29'', ''ticker'': ''CRM'', ''open'': 264.71, ''high'':
+      269.11, ''low'': 265.0, ''close'': 266.23}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_extreme_adj_close_move
+    message: 价格数据包含极端的调整收盘价单日波动
+    rows: 5
+    sample: '{''date'': ''2024-07-12'', ''ticker'': ''AVGO'', ''adj_close'': 170.087,
+      ''_return'': -0.9002977812948797, ''_extreme_return_threshold'': 0.5}; {''date'':
+      ''2024-10-02'', ''ticker'': ''LRCX'', ''adj_close'': 81.409, ''_return'': -0.8979043868669894,
+      ''_extreme_return_threshold'': 0.5}; {''date'': ''2025-12-17'', ''ticker'':
+      ''NOW'', ''adj_close'': 156.478, ''_return'': -0.7996748258910282, ''_extreme_return_threshold'':
+      0.5}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_suspicious_adj_close_move
+    message: 价格数据包含较大调整收盘价单日波动；未达到极端错误阈值，作为可审计市场波动信息记录。
+    rows: 21
+    sample: '{''date'': ''2025-04-09'', ''ticker'': ''AMD'', ''adj_close'': 96.84,
+      ''_return'': 0.23820483314154206, ''_suspicious_return_threshold'': 0.2}; {''date'':
+      ''2025-10-06'', ''ticker'': ''AMD'', ''adj_close'': 203.71, ''_return'': 0.23708022104815707,
+      ''_suspicious_return_threshold'': 0.2}; {''date'': ''2024-12-13'', ''ticker'':
+      ''AVGO'', ''adj_close'': 224.8, ''_return'': 0.24432635890623278, ''_suspicious_return_threshold'':
+      0.2}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_known_split_adjustment_ratio_jump
+    message: 复权比例跳变匹配已配置 corporate action 拆股事件。
+    rows: 7
+    sample: '{''date'': ''2024-07-12'', ''ticker'': ''AVGO'', ''_adjustment_ratio'':
+      0.1, ''_adjustment_ratio_change'': -0.9}; {''date'': ''2024-07-15'', ''ticker'':
+      ''AVGO'', ''_adjustment_ratio'': 1.0, ''_adjustment_ratio_change'': 9.0}; {''date'':
+      ''2024-10-02'', ''ticker'': ''LRCX'', ''_adjustment_ratio'': 0.1, ''_adjustment_ratio_change'':
+      -0.9}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: secondary_prices_adjustment_basis_warning
+    message: Marketstack 调整收盘价与主缓存差异超过错误阈值，但未调整收盘价通过核验；这通常表示供应商 adjusted close 分红调整口径不同，需在报告中保留限制说明。
+    rows: 1328
+    sample: '{''date'': ''2022-12-01'', ''ticker'': ''SGOV'', ''_primary_close'':
+      100.13, ''_secondary_close'': 100.13, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.45, ''_secondary_adj_close'': 100.13, ''_adj_close_diff_pct'': 0.17179637214745455};
+      {''date'': ''2022-12-02'', ''ticker'': ''SGOV'', ''_primary_close'': 100.14,
+      ''_secondary_close'': 100.14, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.46, ''_secondary_adj_close'': 100.14, ''_adj_close_diff_pct'': 0.17177626959981288};
+      {''date'': ''2022-12-05'', ''ticker'': ''SGOV'', ''_primary_close'': 100.17,
+      ''_secondary_close'': 100.17, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.48, ''_secondary_adj_close'': 100.17, ''_adj_close_diff_pct'': 0.1718530650444548}'
+    source: 跨源核验：主价格源 vs Marketstack
+  - severity: INFO
+    code: secondary_prices_adjustment_basis_info
+    message: Marketstack 调整收盘价与主缓存超过警告阈值，但未调整收盘价通过核验；按分红复权口径差异记录。
+    rows: 681
+    sample: '{''date'': ''2022-12-01'', ''ticker'': ''QQQ'', ''_primary_close'': 293.72,
+      ''_secondary_close'': 293.72, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      287.14, ''_secondary_adj_close'': 293.72, ''_adj_close_diff_pct'': 0.02291565090199917};
+      {''date'': ''2022-12-02'', ''ticker'': ''QQQ'', ''_primary_close'': 292.55,
+      ''_secondary_close'': 292.55, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      286.0, ''_secondary_adj_close'': 292.55, ''_adj_close_diff_pct'': 0.02290209790209794};
+      {''date'': ''2022-12-05'', ''ticker'': ''QQQ'', ''_primary_close'': 287.64,
+      ''_secondary_close'': 287.64, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      281.2, ''_secondary_adj_close'': 287.64, ''_adj_close_diff_pct'': 0.022901849217638683}'
+    source: 跨源核验：主价格源 vs Marketstack
+rows:
+- candidate_id: expanded_state_highest_return_under_max_dd_cap
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0900_sgov0050_tqqq0050
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: true
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: expanded_state_lowest_turnover
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0950_sgov0050_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: expanded_state_highest_calmar
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: expanded_state_highest_sharpe
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: expanded_state_lowest_drawdown
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0850_sgov0150_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: limited_adjustment
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0600_sgov0400_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES
+- candidate_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: false
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+- candidate_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0000_sgov0950_tqqq0050
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: false
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+- candidate_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0100_sgov0900_tqqq0000
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: false
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+- candidate_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  verdict: NO_MATERIAL_IMPROVEMENT
+  same_risk_baseline: simplex_qqq0050_sgov0950_tqqq0000
+  same_risk_not_advantaged: false
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: false
+  next_action: KEEP_AS_RESEARCH_REFERENCE_ONLY
+- candidate_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  verdict: STATIC_FRONTIER_DOMINATES
+  same_risk_baseline: simplex_qqq0000_sgov1000_tqqq0000
+  same_risk_not_advantaged: true
+  walk_forward_failed: true
+  stress_risk_too_high: false
+  net_of_cost_failed: true
+  next_action: REJECT_FOR_NOW_STATIC_FRONTIER_DOMINATES

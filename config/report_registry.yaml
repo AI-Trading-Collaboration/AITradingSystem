@@ -19360,3 +19360,142 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: expanded_universe_no_survivor_diagnosis
+    title: Expanded Universe No-Survivor Diagnosis
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - docs/research/expanded_universe_no_survivor_diagnosis.md
+      - inputs/research_reviews/expanded_universe_no_survivor_diagnosis.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1527 to 1546 no-survivor diagnosis is regenerated after candidate failure matrix, overlay gate policy, or expanded actual-path evidence changes.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_candidate_reclassification_matrix
+    title: Expanded Candidate Reclassification Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - inputs/research_reviews/expanded_candidate_reclassification_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Candidate reclassification must be regenerated after failure-matrix or defensive overlay gate policy changes.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_overlay_gate_policy
+    title: Defensive Overlay Gate Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - config/research/defensive_overlay_gate.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive overlay pilot thresholds are investment-facing heuristics and must remain visible with owner/rationale/review metadata.
+    owner_action: review_defensive_overlay_policy_before_interpreting_watch_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_overlay_metrics
+    title: Defensive Overlay Metrics
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - outputs/research_strategies/defensive_overlay/overlay_metrics.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Overlay metrics are regenerated after actual position paths, same-risk baselines, price cache, or overlay policy changes.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_overlay_survival_matrix
+    title: Defensive Overlay Survival Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - docs/research/defensive_overlay_survival_review.md
+      - inputs/research_reviews/defensive_overlay_survival_matrix.yaml
+      - inputs/research_reviews/defensive_overlay_candidate_set.yaml
+      - inputs/research_reviews/defensive_overlay_stress_gate.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive overlay survival must be regenerated after overlay metrics, stress gate, net-cost, or walk-forward split evidence changes.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_overlay_owner_review_pack
+    title: Defensive Overlay Owner Review Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - docs/research/defensive_overlay_owner_review_pack.md
+      - docs/research/defensive_overlay_risk_off_attribution_review.md
+      - inputs/research_reviews/defensive_overlay_risk_off_attribution.yaml
+      - docs/research/defensive_overlay_re_risk_timing_review.md
+      - docs/research/defensive_overlay_downside_stress_review.md
+      - docs/research/static_frontier_domination_overlay_interpretation.md
+      - docs/research/tqqq_overlay_safety_review.md
+      - docs/research/defensive_overlay_net_of_cost_review.md
+      - docs/research/expanded_universe_walk_forward_split_evidence_review.md
+      - inputs/research_reviews/expanded_universe_walk_forward_split_evidence.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Defensive overlay owner pack is regenerated after no-survivor diagnosis, metrics, candidate set, split evidence, TQQQ safety, or owner-review changes.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: defensive_overlay_forward_watch_plan
+    title: Defensive Overlay Forward Watch Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies defensive-overlay full-pack
+    artifact_globs:
+      - docs/research/defensive_overlay_forward_watch_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Forward watch plan is regenerated after owner review, candidate-set, walk-forward, or forward-evidence requirements change.
+    owner_action: review_defensive_overlay_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

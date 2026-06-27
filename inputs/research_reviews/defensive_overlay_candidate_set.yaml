@@ -1,0 +1,47 @@
+schema_version: defensive_overlay_candidate_set.v1
+report_type: defensive_overlay_candidate_set
+title: Defensive Overlay Candidate Set
+status: DEFENSIVE_OVERLAY_CANDIDATE_SET_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T12:20:16Z'
+source_commit: 8e441107
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  primary_watch_count: 1
+  drawdown_control_diagnostic_count: 4
+  tqqq_diagnostic_count: 1
+  static_reference_count: 5
+  archive_count: 0
+research_only: true
+defensive_overlay_only: true
+watch_only: true
+full_allocation_promotion_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 4a32a424983c44e64d1bb28a6ddbe3476dbc0252337effd521afdfbef557d71d
+primary_watch_candidates:
+- limited_adjustment
+drawdown_control_diagnostics:
+- expanded_state_lowest_turnover
+- expanded_state_highest_calmar
+- expanded_state_highest_sharpe
+- expanded_state_lowest_drawdown
+tqqq_diagnostic_candidates:
+- expanded_state_highest_return_under_max_dd_cap
+static_references:
+- static_simplex_qqq0150_sgov0850_tqqq0000
+- static_simplex_qqq0000_sgov0950_tqqq0050
+- static_simplex_qqq0100_sgov0900_tqqq0000
+- static_simplex_qqq0050_sgov0950_tqqq0000
+- static_simplex_qqq0000_sgov1000_tqqq0000
+archive_references: []

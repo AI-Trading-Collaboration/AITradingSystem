@@ -1,0 +1,93 @@
+schema_version: defensive_overlay_gate.v1
+policy_id: defensive_overlay_gate_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Expanded QQQ / SGOV / TQQQ actual-path research found no full-allocation
+    survivor. This policy separates the stricter full-allocation promotion gate
+    from a defensive overlay watch-only gate that can diagnose risk-off value
+    without allowing promotion, paper-shadow, production allocation, or broker
+    action.
+  intended_effect: >
+    Reclassify failed full-allocation candidates into archive, diagnostic,
+    or defensive-overlay watch-only buckets based on actual-path downside
+    behavior, cost drag, stress exposure, and split-evidence readiness.
+  validation_evidence: >
+    TRADING-1527 to 1546 guardrail tests cover no dynamic promotion, no broker
+    universe eligibility, target-path rejection, TQQQ research-only handling,
+    and full-allocation failure reclassification into overlay watch-only status.
+  review_condition: >
+    Review before using any overlay row for paper-shadow preflight, before
+    lowering return/cost tolerances, before allowing TQQQ overlay candidates
+    outside research-only diagnostics, and after walk-forward split evidence
+    is available.
+input_contract:
+  failure_matrix_path: outputs/research_strategies/expanded_universe/actual_path_rebacktest/candidate_failure_matrix.csv
+  actual_path_root: outputs/research_strategies/expanded_universe/actual_path_rebacktest
+  required_evidence_source: actual_path
+  target_path_metrics_allowed_for_gate: false
+data_quality:
+  expected_price_tickers:
+    - QQQ
+    - SGOV
+    - TQQQ
+  expected_rate_series:
+    - DGS2
+    - DGS10
+    - DTWEXBGS
+overlay_gate:
+  evidence_source_required: actual_path
+  allow_target_path_metrics: false
+  drawdown_improvement_min_abs: 0.02
+  calmar_edge_min: 0.0
+  sharpe_edge_min: 0.0
+  annual_return_edge_tolerance: -0.01
+  net_annual_return_edge_tolerance: -0.01
+  risk_off_exposure_reduction_min: 0.05
+  downside_capture_max: 0.95
+  upside_capture_min_for_watch: 0.70
+  max_rerisk_delay_days_for_watch: 10
+  require_actual_position_path: true
+  require_walk_forward_split_evidence_for_pass: true
+  pending_walk_forward_status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+stress_gate:
+  max_tqqq_weight_for_watch: 0.15
+  max_tqqq_weight_for_primary_watch: 0.0
+  max_qqq_equivalent_exposure_for_watch: 1.20
+  max_qqq_equivalent_exposure_for_primary_watch: 0.80
+  stress_risk_too_high_blocks_watch: true
+classification_policy:
+  primary_watch_candidate_ids:
+    - limited_adjustment
+  drawdown_control_candidate_ids:
+    - expanded_state_highest_calmar
+    - expanded_state_highest_sharpe
+    - expanded_state_lowest_drawdown
+    - expanded_state_lowest_turnover
+  tqqq_diagnostic_candidate_ids:
+    - expanded_state_highest_return_under_max_dd_cap
+  static_reference_family: static_frontier_candidate
+  next_action_by_classification:
+    DEFENSIVE_OVERLAY_WATCH_PENDING_SPLIT_EVIDENCE: COLLECT_WALK_FORWARD_SPLIT_AND_FORWARD_WATCH_EVIDENCE
+    DRAWDOWN_CONTROL_DIAGNOSTIC_WITH_COST_OR_RETURN_BLOCKER: KEEP_AS_RISK_CONTROL_DIAGNOSTIC_ONLY
+    TQQQ_OVERLAY_DIAGNOSTIC_RESEARCH_ONLY: REQUIRE_TQQQ_SAFETY_AND_STRESS_REVIEW_BEFORE_ANY_WATCH_USE
+    STATIC_REFERENCE_ONLY: KEEP_AS_STATIC_REFERENCE_NOT_OVERLAY
+    ARCHIVE_REFERENCE_ONLY: ARCHIVE_FOR_NO_OVERLAY_EDGE
+safety_boundary:
+  research_only: true
+  defensive_overlay_only: true
+  watch_only: true
+  full_allocation_promotion_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+  target_path_metrics_role: diagnostic_only
