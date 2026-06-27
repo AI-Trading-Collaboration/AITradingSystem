@@ -143,6 +143,30 @@ DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH = (
     / "research_reviews"
     / "dynamic_strategy_walk_forward_matrix.yaml"
 )
+DEFAULT_EVENT_TAXONOMY_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "event_taxonomy"
+)
+DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "research" / "event_override_ex_ante_taxonomy.yaml"
+)
+DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "event_override_ex_ante_taxonomy_review.md"
+)
+DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_SNAPSHOT_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "event_override_ex_ante_taxonomy.yaml"
+)
+DEFAULT_TIMING_QUALITY_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "timing_quality"
+)
+DEFAULT_RISK_TIMING_QUALITY_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "risk_timing_quality_policy.yaml"
+)
+DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "risk_off_risk_on_timing_quality_review.md"
+)
+DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "risk_timing_quality_matrix.yaml"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -549,6 +573,16 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "dynamic_strategy_walk_forward_validation",
         "title": "Dynamic Strategy Walk-Forward Validation",
         "command": "aits research strategies dynamic-strategy-walk-forward-validation",
+    },
+    {
+        "report_id": "event_override_ex_ante_taxonomy_review",
+        "title": "Event Override Ex-Ante Taxonomy Review",
+        "command": "aits research strategies event-override-ex-ante-taxonomy-review",
+    },
+    {
+        "report_id": "risk_timing_quality_review",
+        "title": "Risk-Off Risk-On Timing Quality Review",
+        "command": "aits research strategies risk-timing-quality-review",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -2395,6 +2429,283 @@ def run_dynamic_strategy_walk_forward_validation(
         rolling_rows=rolling_rows,
         stability_rows=stability_rows,
         holdout_rows=holdout_rows,
+    )
+    payload["artifact_paths"] = artifact_paths
+    return payload
+
+
+def run_event_override_ex_ante_taxonomy_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    event_override_policy_path: Path = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
+    taxonomy_config_path: Path = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_CONFIG_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_EVENT_TAXONOMY_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_SNAPSHOT_PATH,
+    as_of_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("event_taxonomy"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="event_override_ex_ante_taxonomy_review",
+            title=REPORT_SPEC_BY_ID[
+                "event_override_ex_ante_taxonomy_review"
+            ]["title"],
+            status="EVENT_OVERRIDE_EX_ANTE_TAXONOMY_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_event_taxonomy_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            taxonomy_rows=[],
+            runtime_rows=[],
+        )
+        return payload
+
+    taxonomy_config = _load_yaml_mapping(taxonomy_config_path)
+    event_policy = _load_yaml_mapping(event_override_policy_path)
+    taxonomy_rows = _event_taxonomy_audit_rows(taxonomy_config)
+    runtime_rows = _event_override_runtime_taxonomy_rows(source_root)
+    config_failures = [
+        row
+        for row in taxonomy_rows
+        if row.get("ex_ante_guard_status") == "FAIL"
+    ]
+    runtime_gaps = [
+        row
+        for row in runtime_rows
+        if row.get("ex_ante_guard_status") in {"WARN", "FAIL"}
+    ]
+    if not taxonomy_config:
+        config_failures.append(
+            {
+                "event_type": "config",
+                "issue": f"missing_or_empty_config:{taxonomy_config_path}",
+            }
+        )
+    status = (
+        "EVENT_OVERRIDE_EX_ANTE_TAXONOMY_BLOCKED"
+        if config_failures
+        else "EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS"
+        if runtime_gaps
+        else "EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY"
+    )
+    payload = _payload(
+        report_type="event_override_ex_ante_taxonomy_review",
+        title=REPORT_SPEC_BY_ID["event_override_ex_ante_taxonomy_review"]["title"],
+        status=status,
+        summary={
+            "taxonomy_event_type_count": len(taxonomy_rows),
+            "runtime_strategy_count": len(runtime_rows),
+            "config_failure_count": len(config_failures),
+            "runtime_gap_count": len(runtime_gaps),
+            "data_quality_status": data_gate.get("status"),
+            "event_override_role": "watch_only",
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        taxonomy_policy_hash=_file_sha256(taxonomy_config_path),
+        event_override_policy_hash=_file_sha256(event_override_policy_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=_date_range_from_runtime_or_gate(source_root),
+        data_quality=data_gate,
+        event_override_policy_summary=_event_override_policy_summary(event_policy),
+        taxonomy_policy_summary=_event_taxonomy_policy_summary(taxonomy_config),
+        taxonomy_rows=taxonomy_rows,
+        runtime_guard_rows=runtime_rows,
+        preflight_blockers=_event_taxonomy_preflight_blockers(
+            config_failures=config_failures,
+            runtime_gaps=runtime_gaps,
+        ),
+        report_registry_entry=_report_registry_entry(
+            "event_override_ex_ante_taxonomy_review"
+        ),
+    )
+    artifact_paths = _write_event_taxonomy_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        taxonomy_rows=taxonomy_rows,
+        runtime_rows=runtime_rows,
+    )
+    payload["artifact_paths"] = artifact_paths
+    return payload
+
+
+def run_risk_timing_quality_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    timing_policy_path: Path = DEFAULT_RISK_TIMING_QUALITY_POLICY_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_TIMING_QUALITY_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("timing_quality"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="risk_timing_quality_review",
+            title=REPORT_SPEC_BY_ID["risk_timing_quality_review"]["title"],
+            status="RISK_TIMING_QUALITY_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_risk_timing_quality_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            risk_off_rows=[],
+            risk_on_rows=[],
+            re_risk_rows=[],
+            strategy_rows=[],
+        )
+        return payload
+
+    policy = _load_yaml_mapping(timing_policy_path)
+    missing = _missing_runtime_strategy_artifacts(
+        source_root,
+        list(ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES),
+    )
+    if not policy:
+        missing.append(f"missing_or_empty_timing_policy:{timing_policy_path}")
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    date_range = {
+        "start": prices.index.min().date().isoformat(),
+        "end": prices.index.max().date().isoformat(),
+        "market_regime": "ai_after_chatgpt",
+    }
+    if missing:
+        payload = _payload(
+            report_type="risk_timing_quality_review",
+            title=REPORT_SPEC_BY_ID["risk_timing_quality_review"]["title"],
+            status="RISK_TIMING_QUALITY_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            date_range=date_range,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry("risk_timing_quality_review"),
+        )
+        _write_risk_timing_quality_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            risk_off_rows=[],
+            risk_on_rows=[],
+            re_risk_rows=[],
+            strategy_rows=[],
+        )
+        return payload
+
+    risk_off_rows: list[dict[str, Any]] = []
+    risk_on_rows: list[dict[str, Any]] = []
+    re_risk_rows: list[dict[str, Any]] = []
+    strategy_rows: list[dict[str, Any]] = []
+    for strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES:
+        result = _risk_timing_quality_for_strategy(
+            strategy_id=strategy_id,
+            source_root=source_root,
+            prices=prices,
+            policy=policy,
+        )
+        risk_off_rows.extend(result["risk_off_rows"])
+        risk_on_rows.extend(result["risk_on_rows"])
+        re_risk_rows.extend(result["re_risk_rows"])
+        strategy_rows.append(result["strategy_row"])
+    verdict_counts = _count_by_key(strategy_rows, "timing_verdict")
+    payload = _payload(
+        report_type="risk_timing_quality_review",
+        title=REPORT_SPEC_BY_ID["risk_timing_quality_review"]["title"],
+        status="RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS",
+        summary={
+            "strategy_count": len(strategy_rows),
+            "risk_off_event_count": len(risk_off_rows),
+            "risk_on_event_count": len(risk_on_rows),
+            "verdict_counts": verdict_counts,
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        timing_policy_hash=_file_sha256(timing_policy_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        timing_policy=_risk_timing_policy_summary(policy),
+        strategy_timing_rows=strategy_rows,
+        target_path_diagnostic_notice=(
+            "Timing quality metrics are computed from actual position paths only; "
+            "target-path metrics remain diagnostic-only."
+        ),
+        report_registry_entry=_report_registry_entry("risk_timing_quality_review"),
+    )
+    artifact_paths = _write_risk_timing_quality_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        risk_off_rows=risk_off_rows,
+        risk_on_rows=risk_on_rows,
+        re_risk_rows=re_risk_rows,
+        strategy_rows=strategy_rows,
     )
     payload["artifact_paths"] = artifact_paths
     return payload
@@ -7931,6 +8242,930 @@ def _walk_forward_review_markdown(
             (
                 "Walk-forward validation 只重算 actual position path 的 realized metrics。"
                 "未通过 OOS / stability / baseline beat 要求前，不得进入 paper-shadow preflight。"
+            ),
+            "",
+        ]
+    )
+
+
+def _date_range_from_runtime_or_gate(source_root: Path) -> dict[str, Any]:
+    index_payload = _read_json_mapping(source_root / "index.json")
+    runtime_range = _mapping(index_payload.get("date_range"))
+    return {
+        "start": runtime_range.get("start") or DEFAULT_AI_REGIME_BACKTEST_START.isoformat(),
+        "end": runtime_range.get("end") or "unknown",
+        "market_regime": runtime_range.get("market_regime", "ai_after_chatgpt"),
+    }
+
+
+def _event_override_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    root = _mapping(policy.get("event_override_policy") or policy)
+    risk_off = _mapping(root.get("risk_off_override"))
+    risk_on = _mapping(root.get("risk_on_override"))
+    detection = _mapping(root.get("event_detection"))
+    return {
+        "schema_version": policy.get("schema_version"),
+        "mode": root.get("mode"),
+        "event_detection_source": detection.get("source"),
+        "risk_off_enabled": risk_off.get("enabled"),
+        "risk_off_min_event_risk_score": risk_off.get("min_event_risk_score"),
+        "risk_on_enabled": risk_on.get("enabled"),
+        "source_limitation": detection.get("source_limitation"),
+    }
+
+
+def _event_taxonomy_policy_summary(config: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": config.get("policy_id"),
+        "status": config.get("status"),
+        "owner": config.get("owner"),
+        "event_type_count": len(_records(config.get("event_taxonomy"))),
+        "guardrails": _mapping(config.get("event_override_guardrails")),
+    }
+
+
+def _event_taxonomy_audit_rows(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in _records(config.get("event_taxonomy")):
+        risk_score_rule = _mapping(item.get("risk_score_rule"))
+        missing = [
+            field
+            for field in (
+                "event_type",
+                "sources",
+                "known_at_policy",
+                "trigger_rule",
+                "risk_score_rule",
+            )
+            if not item.get(field)
+        ]
+        checks = {
+            "has_event_type": bool(item.get("event_type")),
+            "has_source": bool(item.get("sources")),
+            "has_known_at": bool(item.get("known_at_policy")),
+            "has_trigger_rule": bool(item.get("trigger_rule")),
+            "has_risk_score_rule": bool(risk_score_rule),
+            "price_independent_trigger": bool(item.get("price_independent_trigger")),
+            "future_return_independent": bool(item.get("future_return_independent")),
+        }
+        failed = [key for key, passed in checks.items() if not passed]
+        rows.append(
+            {
+                "row_type": "taxonomy_rule",
+                "event_type": item.get("event_type"),
+                "source": ";".join(str(source) for source in item.get("sources", [])),
+                "known_at_policy": item.get("known_at_policy"),
+                "trigger_rule": item.get("trigger_rule"),
+                "risk_score_rule": risk_score_rule.get("summary"),
+                "price_independent_trigger": item.get("price_independent_trigger"),
+                "future_return_independent": item.get("future_return_independent"),
+                "allowed_override_direction": item.get("allowed_override_direction"),
+                "risk_on_override_policy": item.get("risk_on_override_policy"),
+                "missing_required_fields": ";".join(missing),
+                "failed_guard_checks": ";".join(failed),
+                "ex_ante_guard_status": "PASS" if not failed else "FAIL",
+                "gate_impact": (
+                    "watch_only_taxonomy_rule"
+                    if not failed
+                    else "blocks_event_override_preflight"
+                ),
+            }
+        )
+    return rows
+
+
+def _event_override_runtime_taxonomy_rows(source_root: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for strategy_id in EVENT_OVERRIDE_WATCH_ONLY_VARIANTS:
+        trace_path = source_root / strategy_id / "event_override_trace.json"
+        trace = _read_json_mapping(trace_path)
+        decisions = _records(trace.get("decisions"))
+        failed_lookahead = [
+            item
+            for item in decisions
+            if not bool(_mapping(item.get("no_lookahead_evidence")).get("passed"))
+        ]
+        missing_event_type = [
+            item for item in decisions if not item.get("event_type")
+        ]
+        risk_on = [
+            item
+            for item in decisions
+            if str(item.get("override_direction") or "").upper() != "RISK_REDUCTION"
+        ]
+        status = "PASS"
+        if failed_lookahead or risk_on:
+            status = "FAIL"
+        elif missing_event_type:
+            status = "WARN"
+        rows.append(
+            {
+                "row_type": "runtime_trace",
+                "strategy_id": strategy_id,
+                "source_dataset": str(trace_path),
+                "event_review_count": len(decisions),
+                "override_trigger_count": sum(
+                    1 for item in decisions if item.get("override_triggered")
+                ),
+                "missing_event_type_count": len(missing_event_type),
+                "failed_no_lookahead_count": len(failed_lookahead),
+                "risk_on_override_count": len(risk_on),
+                "known_at_range": _range_label(
+                    [
+                        str(item.get("event_known_at"))
+                        for item in decisions
+                        if item.get("event_known_at")
+                    ]
+                ),
+                "decision_at_range": _range_label(
+                    [
+                        str(item.get("decision_at"))
+                        for item in decisions
+                        if item.get("decision_at")
+                    ]
+                ),
+                "effective_at_range": _range_label(
+                    [
+                        str(item.get("effective_at"))
+                        for item in decisions
+                        if item.get("effective_at")
+                    ]
+                ),
+                "price_independent_trigger": "not_proven_by_runtime_trace",
+                "future_return_independent": len(failed_lookahead) == 0,
+                "ex_ante_guard_status": status,
+                "gate_impact": (
+                    "blocks_event_override_preflight"
+                    if status != "PASS"
+                    else "watch_only_runtime_trace_pass"
+                ),
+            }
+        )
+    return rows
+
+
+def _event_taxonomy_preflight_blockers(
+    *,
+    config_failures: list[Mapping[str, Any]],
+    runtime_gaps: list[Mapping[str, Any]],
+) -> list[str]:
+    blockers = [
+        f"taxonomy_config_failure:{row.get('event_type', row.get('issue', 'unknown'))}"
+        for row in config_failures
+    ]
+    blockers.extend(
+        f"runtime_taxonomy_gap:{row.get('strategy_id', row.get('event_type', 'unknown'))}"
+        for row in runtime_gaps
+    )
+    return _dedupe_ordered(blockers)
+
+
+def _write_event_taxonomy_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    taxonomy_rows: list[dict[str, Any]],
+    runtime_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "event_override_taxonomy_audit": runtime_root
+        / "event_override_taxonomy_audit.csv",
+        "event_override_guard_summary": runtime_root
+        / "event_override_guard_summary.json",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    audit_rows = [*taxonomy_rows, *runtime_rows]
+    pd.DataFrame(audit_rows).to_csv(
+        paths["event_override_taxonomy_audit"],
+        index=False,
+    )
+    guard_summary = {
+        "status": payload.get("status"),
+        "summary": payload.get("summary", {}),
+        "preflight_blockers": payload.get("preflight_blockers", []),
+        "artifact_sha256": {
+            "event_override_taxonomy_audit": _file_sha256(
+                paths["event_override_taxonomy_audit"]
+            )
+        },
+        **SAFETY_BOUNDARY,
+    }
+    _write_json(paths["event_override_guard_summary"], guard_summary)
+    artifact_hashes = {
+        "event_override_taxonomy_audit": _file_sha256(
+            paths["event_override_taxonomy_audit"]
+        ),
+        "event_override_guard_summary": _file_sha256(
+            paths["event_override_guard_summary"]
+        ),
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _event_taxonomy_snapshot_payload(
+                payload=payload,
+                taxonomy_rows=taxonomy_rows,
+                runtime_rows=runtime_rows,
+                runtime_root=runtime_root,
+                artifact_hashes=artifact_hashes,
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _event_taxonomy_review_markdown(
+            payload,
+            taxonomy_rows=taxonomy_rows,
+            runtime_rows=runtime_rows,
+        ),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _event_taxonomy_snapshot_payload(
+    *,
+    payload: Mapping[str, Any],
+    taxonomy_rows: list[dict[str, Any]],
+    runtime_rows: list[dict[str, Any]],
+    runtime_root: Path,
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "event_override_ex_ante_taxonomy.v1",
+        "report_type": "event_override_ex_ante_taxonomy",
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "taxonomy_policy_hash": payload.get("taxonomy_policy_hash"),
+        "event_override_policy_hash": payload.get("event_override_policy_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "taxonomy_policy_summary": _mapping(payload.get("taxonomy_policy_summary")),
+        "event_override_policy_summary": _mapping(
+            payload.get("event_override_policy_summary")
+        ),
+        "preflight_blockers": payload.get("preflight_blockers", []),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "event_override_role": "watch_only",
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        "event_taxonomy_rows": taxonomy_rows,
+        "runtime_guard_rows": runtime_rows,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _event_taxonomy_review_markdown(
+    payload: Mapping[str, Any],
+    *,
+    taxonomy_rows: list[dict[str, Any]],
+    runtime_rows: list[dict[str, Any]],
+) -> str:
+    date_range = _mapping(payload.get("date_range"))
+    taxonomy_table = [
+        {
+            "event_type": row.get("event_type"),
+            "source": row.get("source"),
+            "price_independent": row.get("price_independent_trigger"),
+            "future_return_independent": row.get("future_return_independent"),
+            "status": row.get("ex_ante_guard_status"),
+            "gate_impact": row.get("gate_impact"),
+        }
+        for row in taxonomy_rows
+    ]
+    runtime_table = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "event_review_count": row.get("event_review_count"),
+            "missing_event_type_count": row.get("missing_event_type_count"),
+            "failed_no_lookahead_count": row.get("failed_no_lookahead_count"),
+            "status": row.get("ex_ante_guard_status"),
+            "gate_impact": row.get("gate_impact"),
+        }
+        for row in runtime_rows
+    ]
+    return "\n".join(
+        [
+            "# Event Override Ex-Ante Taxonomy Review",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+            (
+                "- data_quality_status：`"
+                f"{_mapping(payload.get('summary')).get('data_quality_status')}`"
+            ),
+            "- event_override_role：`watch_only`",
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Ex-Ante Taxonomy",
+            "",
+            _markdown_table(
+                taxonomy_table,
+                [
+                    "event_type",
+                    "source",
+                    "price_independent",
+                    "future_return_independent",
+                    "status",
+                    "gate_impact",
+                ],
+            ),
+            "",
+            "## Runtime Trace Guard",
+            "",
+            _markdown_table(
+                runtime_table,
+                [
+                    "strategy_id",
+                    "event_review_count",
+                    "missing_event_type_count",
+                    "failed_no_lookahead_count",
+                    "status",
+                    "gate_impact",
+                ],
+            ),
+            "",
+            "## Gate 结论",
+            "",
+            (
+                "Event severity 不得由未来价格下跌或未来收益反推；risk-off override "
+                "只能降低风险，risk-on override 默认禁用或慢确认。当前结论只允许 "
+                "watch-only owner review，不能解锁 paper-shadow。"
+            ),
+            "",
+        ]
+    )
+
+
+def _risk_timing_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "risk_exposure_policy": _mapping(policy.get("risk_exposure_policy")),
+        "post_event_windows": policy.get("post_event_windows_trading_days"),
+        "verdict_thresholds": _mapping(policy.get("verdict_thresholds")),
+    }
+
+
+def _risk_timing_quality_for_strategy(
+    *,
+    strategy_id: str,
+    source_root: Path,
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    path = source_root / strategy_id / "target_vs_actual_position_path.csv"
+    frame = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    position_path = _normalised_path_frame(frame)
+    if position_path.empty:
+        strategy_row = _empty_risk_timing_strategy_row(strategy_id)
+        return {
+            "risk_off_rows": [],
+            "risk_on_rows": [],
+            "re_risk_rows": [],
+            "strategy_row": strategy_row,
+        }
+    exposure = _actual_risk_exposure_series(position_path, policy)
+    delta = exposure.diff().fillna(0.0)
+    thresholds = _mapping(policy.get("verdict_thresholds"))
+    epsilon = _float(
+        _mapping(policy.get("risk_exposure_policy")).get("exposure_change_epsilon"),
+        0.02,
+    )
+    risk_off_rows = _risk_off_entry_quality_rows(
+        strategy_id=strategy_id,
+        position_path=position_path,
+        exposure=exposure,
+        delta=delta,
+        prices=prices,
+        policy=policy,
+        epsilon=epsilon,
+    )
+    risk_on_rows = _risk_on_exit_quality_rows(
+        strategy_id=strategy_id,
+        position_path=position_path,
+        exposure=exposure,
+        delta=delta,
+        prices=prices,
+        policy=policy,
+        epsilon=epsilon,
+        risk_off_rows=risk_off_rows,
+    )
+    re_risk_rows = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "risk_on_date": row.get("risk_on_date"),
+            "prior_risk_off_date": row.get("prior_risk_off_date"),
+            "risk_on_exit_delay_days": row.get("risk_on_exit_delay_days"),
+            "risk_on_recovery_missed_upside": row.get(
+                "risk_on_recovery_missed_upside"
+            ),
+            "risk_on_false_recovery_cost": row.get("risk_on_false_recovery_cost"),
+            "re_risk_delay_cost": row.get("risk_on_recovery_missed_upside"),
+        }
+        for row in risk_on_rows
+    ]
+    strategy_row = _risk_timing_strategy_row(
+        strategy_id=strategy_id,
+        risk_off_rows=risk_off_rows,
+        risk_on_rows=risk_on_rows,
+        thresholds=thresholds,
+    )
+    return {
+        "risk_off_rows": risk_off_rows,
+        "risk_on_rows": risk_on_rows,
+        "re_risk_rows": re_risk_rows,
+        "strategy_row": strategy_row,
+    }
+
+
+def _empty_risk_timing_strategy_row(strategy_id: str) -> dict[str, Any]:
+    return {
+        "strategy_id": strategy_id,
+        "risk_off_event_count": 0,
+        "risk_on_event_count": 0,
+        "risk_off_entry_avoided_loss": 0.0,
+        "risk_off_entry_false_positive_cost": 0.0,
+        "risk_on_recovery_missed_upside": 0.0,
+        "risk_on_false_recovery_cost": 0.0,
+        "timing_verdict": "TIMING_EDGE_NOT_ESTABLISHED",
+        "promotion_gate_status": "BLOCKED",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+
+
+def _actual_risk_exposure_series(
+    position_path: pd.DataFrame,
+    policy: Mapping[str, Any],
+) -> pd.Series:
+    exposure_policy = _mapping(policy.get("risk_exposure_policy"))
+    weights = _mapping(exposure_policy.get("risk_asset_exposure_weights"))
+    qqq_weight = _float(weights.get("QQQ"), 1.0)
+    tqqq_weight = _float(weights.get("TQQQ"), 3.0)
+    sgov_weight = _float(weights.get("SGOV"), 0.0)
+    return (
+        position_path["actual_weight_qqq"].astype(float) * qqq_weight
+        + position_path["actual_weight_tqqq"].astype(float) * tqqq_weight
+        + position_path["actual_weight_sgov"].astype(float) * sgov_weight
+    )
+
+
+def _risk_off_entry_quality_rows(
+    *,
+    strategy_id: str,
+    position_path: pd.DataFrame,
+    exposure: pd.Series,
+    delta: pd.Series,
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+    epsilon: float,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for index in [idx for idx, value in enumerate(delta) if value <= -epsilon]:
+        row = position_path.iloc[index]
+        event_date = pd.Timestamp(row["date"])
+        risk_reduction = abs(_float(delta.iloc[index]))
+        post_5d = _forward_return(prices, event_date, _post_event_window(policy, 5))
+        post_20d = _forward_return(prices, event_date, _post_event_window(policy, 20))
+        avoided_loss = round(max(0.0, -post_20d) * risk_reduction, 6)
+        missed_upside = round(max(0.0, post_20d) * risk_reduction, 6)
+        delay_days = _timing_delay_days(
+            row.get("event_override_decision_at") or row.get("advisory_generation_date"),
+            row.get("position_effective_date") or row.get("date"),
+            prices.index,
+        )
+        rows.append(
+            {
+                "strategy_id": strategy_id,
+                "risk_off_date": event_date.date().isoformat(),
+                "risk_off_entry_delay_days": delay_days,
+                "risk_exposure_before": round(
+                    _float(exposure.iloc[index - 1]) if index > 0 else _float(exposure.iloc[index]),
+                    6,
+                ),
+                "risk_exposure_after": round(_float(exposure.iloc[index]), 6),
+                "risk_exposure_delta": round(_float(delta.iloc[index]), 6),
+                "risk_off_entry_avoided_loss": avoided_loss,
+                "risk_off_entry_false_positive_cost": missed_upside,
+                "post_risk_off_5d_return": post_5d,
+                "post_risk_off_20d_return": post_20d,
+                "event_override_executed": _bool_value(row.get("event_override_executed")),
+                "trigger_reason": row.get("trigger_reason"),
+                "target_path_metrics_role": "diagnostic_only",
+            }
+        )
+    return rows
+
+
+def _risk_on_exit_quality_rows(
+    *,
+    strategy_id: str,
+    position_path: pd.DataFrame,
+    exposure: pd.Series,
+    delta: pd.Series,
+    prices: pd.DataFrame,
+    policy: Mapping[str, Any],
+    epsilon: float,
+    risk_off_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    risk_off_dates = [
+        pd.Timestamp(row["risk_off_date"]) for row in risk_off_rows if row.get("risk_off_date")
+    ]
+    for index in [idx for idx, value in enumerate(delta) if value >= epsilon]:
+        row = position_path.iloc[index]
+        event_date = pd.Timestamp(row["date"])
+        prior_risk_off = max(
+            (date_value for date_value in risk_off_dates if date_value < event_date),
+            default=None,
+        )
+        recovery_return = (
+            _period_return(prices, prior_risk_off, event_date)
+            if prior_risk_off is not None
+            else 0.0
+        )
+        risk_increase = _float(delta.iloc[index])
+        post_5d = _forward_return(prices, event_date, _post_event_window(policy, 5))
+        post_20d = _forward_return(prices, event_date, _post_event_window(policy, 20))
+        rows.append(
+            {
+                "strategy_id": strategy_id,
+                "risk_on_date": event_date.date().isoformat(),
+                "prior_risk_off_date": (
+                    prior_risk_off.date().isoformat()
+                    if prior_risk_off is not None
+                    else "missing"
+                ),
+                "risk_on_exit_delay_days": (
+                    _trading_day_distance(prices.index, prior_risk_off, event_date)
+                    if prior_risk_off is not None
+                    else 0
+                ),
+                "risk_exposure_before": round(
+                    _float(exposure.iloc[index - 1]) if index > 0 else _float(exposure.iloc[index]),
+                    6,
+                ),
+                "risk_exposure_after": round(_float(exposure.iloc[index]), 6),
+                "risk_exposure_delta": round(risk_increase, 6),
+                "risk_on_recovery_missed_upside": round(
+                    max(0.0, recovery_return) * risk_increase,
+                    6,
+                ),
+                "risk_on_false_recovery_cost": round(
+                    max(0.0, -post_20d) * risk_increase,
+                    6,
+                ),
+                "post_risk_on_5d_return": post_5d,
+                "post_risk_on_20d_return": post_20d,
+                "event_override_executed": _bool_value(row.get("event_override_executed")),
+                "trigger_reason": row.get("trigger_reason"),
+                "target_path_metrics_role": "diagnostic_only",
+            }
+        )
+    return rows
+
+
+def _post_event_window(policy: Mapping[str, Any], default: int) -> int:
+    values = [
+        _int(item)
+        for item in policy.get("post_event_windows_trading_days", [])
+        if _int(item) > 0
+    ]
+    if default in values:
+        return default
+    return values[0] if values else default
+
+
+def _forward_return(prices: pd.DataFrame, event_date: pd.Timestamp, horizon_days: int) -> float:
+    if prices.empty or "QQQ" not in prices:
+        return 0.0
+    start = _nearest_index_position(prices.index, event_date)
+    end = min(len(prices.index) - 1, start + max(0, horizon_days))
+    if start >= len(prices.index) or end >= len(prices.index):
+        return 0.0
+    start_price = _float(prices["QQQ"].iloc[start])
+    end_price = _float(prices["QQQ"].iloc[end])
+    if start_price <= 0:
+        return 0.0
+    return round(end_price / start_price - 1.0, 6)
+
+
+def _period_return(
+    prices: pd.DataFrame,
+    start_date: pd.Timestamp | None,
+    end_date: pd.Timestamp,
+) -> float:
+    if start_date is None or prices.empty or "QQQ" not in prices:
+        return 0.0
+    start = _nearest_index_position(prices.index, start_date)
+    end = _nearest_index_position(prices.index, end_date)
+    if start >= len(prices.index) or end >= len(prices.index) or end <= start:
+        return 0.0
+    start_price = _float(prices["QQQ"].iloc[start])
+    end_price = _float(prices["QQQ"].iloc[end])
+    if start_price <= 0:
+        return 0.0
+    return round(end_price / start_price - 1.0, 6)
+
+
+def _nearest_index_position(index: pd.Index, value: pd.Timestamp) -> int:
+    timestamp = pd.Timestamp(value)
+    position = int(index.searchsorted(timestamp, side="left"))
+    if position >= len(index):
+        return max(0, len(index) - 1)
+    return position
+
+
+def _timing_delay_days(
+    decision_date: object,
+    effective_date: object,
+    index: pd.Index,
+) -> int:
+    if not decision_date or not effective_date:
+        return 0
+    try:
+        start = pd.Timestamp(decision_date)
+        end = pd.Timestamp(effective_date)
+    except (TypeError, ValueError):
+        return 0
+    return _trading_day_distance(index, start, end)
+
+
+def _trading_day_distance(
+    index: pd.Index,
+    start_date: pd.Timestamp | None,
+    end_date: pd.Timestamp,
+) -> int:
+    if start_date is None:
+        return 0
+    start = _nearest_index_position(index, start_date)
+    end = _nearest_index_position(index, end_date)
+    return max(0, int(end - start))
+
+
+def _risk_timing_strategy_row(
+    *,
+    strategy_id: str,
+    risk_off_rows: list[dict[str, Any]],
+    risk_on_rows: list[dict[str, Any]],
+    thresholds: Mapping[str, Any],
+) -> dict[str, Any]:
+    avoided_loss = round(
+        sum(_float(row.get("risk_off_entry_avoided_loss")) for row in risk_off_rows),
+        6,
+    )
+    false_positive_cost = round(
+        sum(
+            _float(row.get("risk_off_entry_false_positive_cost"))
+            for row in risk_off_rows
+        ),
+        6,
+    )
+    recovery_missed = round(
+        sum(_float(row.get("risk_on_recovery_missed_upside")) for row in risk_on_rows),
+        6,
+    )
+    false_recovery = round(
+        sum(_float(row.get("risk_on_false_recovery_cost")) for row in risk_on_rows),
+        6,
+    )
+    entry_delay_days = round(
+        _mean([row.get("risk_off_entry_delay_days") for row in risk_off_rows]),
+        3,
+    )
+    exit_delay_days = round(
+        _mean([row.get("risk_on_exit_delay_days") for row in risk_on_rows]),
+        3,
+    )
+    verdict = _risk_timing_verdict(
+        risk_off_count=len(risk_off_rows),
+        risk_on_count=len(risk_on_rows),
+        avoided_loss=avoided_loss,
+        false_positive_cost=false_positive_cost,
+        recovery_missed=recovery_missed,
+        false_recovery=false_recovery,
+        entry_delay_days=entry_delay_days,
+        exit_delay_days=exit_delay_days,
+        thresholds=thresholds,
+    )
+    return {
+        "strategy_id": strategy_id,
+        "risk_off_event_count": len(risk_off_rows),
+        "risk_on_event_count": len(risk_on_rows),
+        "risk_off_entry_delay_days": entry_delay_days,
+        "risk_off_entry_avoided_loss": avoided_loss,
+        "risk_off_entry_false_positive_cost": false_positive_cost,
+        "risk_on_exit_delay_days": exit_delay_days,
+        "risk_on_recovery_missed_upside": recovery_missed,
+        "risk_on_false_recovery_cost": false_recovery,
+        "post_risk_off_5d_return": round(
+            _mean([row.get("post_risk_off_5d_return") for row in risk_off_rows]),
+            6,
+        ),
+        "post_risk_off_20d_return": round(
+            _mean([row.get("post_risk_off_20d_return") for row in risk_off_rows]),
+            6,
+        ),
+        "post_risk_on_5d_return": round(
+            _mean([row.get("post_risk_on_5d_return") for row in risk_on_rows]),
+            6,
+        ),
+        "post_risk_on_20d_return": round(
+            _mean([row.get("post_risk_on_20d_return") for row in risk_on_rows]),
+            6,
+        ),
+        "timing_verdict": verdict,
+        "promotion_gate_status": "BLOCKED",
+        "paper_shadow_preflight_allowed": False,
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+    }
+
+
+def _risk_timing_verdict(
+    *,
+    risk_off_count: int,
+    risk_on_count: int,
+    avoided_loss: float,
+    false_positive_cost: float,
+    recovery_missed: float,
+    false_recovery: float,
+    entry_delay_days: float,
+    exit_delay_days: float,
+    thresholds: Mapping[str, Any],
+) -> str:
+    if risk_off_count <= 0 and risk_on_count <= 0:
+        return "TIMING_EDGE_NOT_ESTABLISHED"
+    entry_delay_warn = _float(thresholds.get("risk_off_entry_delay_warn_days"), 1.0)
+    exit_delay_warn = _float(thresholds.get("risk_on_exit_delay_warn_days"), 20.0)
+    if false_positive_cost > avoided_loss:
+        return "RISK_OFF_TOO_NOISY"
+    if entry_delay_days > entry_delay_warn and avoided_loss <= false_positive_cost:
+        return "RISK_OFF_TOO_LATE"
+    if recovery_missed > avoided_loss:
+        return "RISK_ON_TOO_SLOW"
+    if false_recovery > recovery_missed and false_recovery > 0.0:
+        return "RISK_ON_TOO_FAST"
+    if exit_delay_days > exit_delay_warn and recovery_missed > 0.0:
+        return "RISK_ON_TOO_SLOW"
+    if avoided_loss > false_positive_cost:
+        return "RISK_OFF_TIMING_USEFUL"
+    return "TIMING_EDGE_NOT_ESTABLISHED"
+
+
+def _write_risk_timing_quality_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    risk_off_rows: list[dict[str, Any]],
+    risk_on_rows: list[dict[str, Any]],
+    re_risk_rows: list[dict[str, Any]],
+    strategy_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "risk_off_entry_quality": runtime_root / "risk_off_entry_quality.csv",
+        "risk_on_exit_quality": runtime_root / "risk_on_exit_quality.csv",
+        "re_risk_delay_cost": runtime_root / "re_risk_delay_cost.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(risk_off_rows).to_csv(paths["risk_off_entry_quality"], index=False)
+    pd.DataFrame(risk_on_rows).to_csv(paths["risk_on_exit_quality"], index=False)
+    pd.DataFrame(re_risk_rows).to_csv(paths["re_risk_delay_cost"], index=False)
+    artifact_hashes = {
+        key: _file_sha256(path)
+        for key, path in paths.items()
+        if key not in {"review_markdown", "review_yaml"}
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(
+            _risk_timing_quality_matrix_payload(
+                payload=payload,
+                strategy_rows=strategy_rows,
+                runtime_root=runtime_root,
+                artifact_hashes=artifact_hashes,
+            ),
+            sort_keys=False,
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _risk_timing_quality_markdown(payload, strategy_rows=strategy_rows),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _risk_timing_quality_matrix_payload(
+    *,
+    payload: Mapping[str, Any],
+    strategy_rows: list[dict[str, Any]],
+    runtime_root: Path,
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "risk_timing_quality_matrix.v1",
+        "report_type": "risk_timing_quality_matrix",
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash": payload.get("policy_hash"),
+        "timing_policy_hash": payload.get("timing_policy_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "timing_policy": _mapping(payload.get("timing_policy")),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        "strategy_timing_rows": strategy_rows,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _risk_timing_quality_markdown(
+    payload: Mapping[str, Any],
+    *,
+    strategy_rows: list[dict[str, Any]],
+) -> str:
+    date_range = _mapping(payload.get("date_range"))
+    table_rows = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "risk_off_count": row.get("risk_off_event_count"),
+            "risk_on_count": row.get("risk_on_event_count"),
+            "avoided_loss": row.get("risk_off_entry_avoided_loss"),
+            "false_cost": row.get("risk_off_entry_false_positive_cost"),
+            "missed_upside": row.get("risk_on_recovery_missed_upside"),
+            "verdict": row.get("timing_verdict"),
+        }
+        for row in strategy_rows
+    ]
+    return "\n".join(
+        [
+            "# Risk-Off Risk-On Timing Quality Review",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+            (
+                "- data_quality_status：`"
+                f"{_mapping(payload.get('summary')).get('data_quality_status')}`"
+            ),
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Timing Verdicts",
+            "",
+            _markdown_table(
+                table_rows,
+                [
+                    "strategy_id",
+                    "risk_off_count",
+                    "risk_on_count",
+                    "avoided_loss",
+                    "false_cost",
+                    "missed_upside",
+                    "verdict",
+                ],
+            ),
+            "",
+            "## Gate 结论",
+            "",
+            (
+                "Timing quality 只读取 actual-path position path。若 risk-off 太吵、"
+                "risk-on 太慢或证据不足，候选仍不得进入 paper-shadow preflight。"
             ),
             "",
         ]

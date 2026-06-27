@@ -1,0 +1,178 @@
+schema_version: event_override_ex_ante_taxonomy.v1
+report_type: event_override_ex_ante_taxonomy
+status: EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\event_taxonomy\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: de67a1278a6fbe906ef90f71559eb971963808de
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+taxonomy_policy_hash: 6e030a961a34b8e7efde750d2044095b2aa6a9fe84f7bbfda7f55d36a10a2644
+event_override_policy_hash: e58443b474605dbc183670739e823e21dc409b1875d521ea3ae7ba876631fa62
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+taxonomy_policy_summary:
+  policy_id: event_override_ex_ante_taxonomy_policy_v1
+  status: pilot_baseline
+  owner: research_governance
+  event_type_count: 5
+  guardrails:
+    forbid_future_price_drawdown_labeling: true
+    forbid_future_return_trigger_selection: true
+    risk_off_override_only: true
+    risk_on_override_default: disabled_or_slow_confirmed
+    event_override_role: watch_only_research
+event_override_policy_summary:
+  schema_version: event_override_policy_v1
+  mode: research_only
+  event_detection_source: target_path_risk_reduction_signal
+  risk_off_enabled: true
+  risk_off_min_event_risk_score: 80
+  risk_on_enabled: false
+  source_limitation: 'This pilot detector uses internal target-path risk-reduction
+    signals as a research proxy for event-response semantics; production use requires
+    reviewed external risk-event occurrence data.
+
+    '
+preflight_blockers:
+- runtime_taxonomy_gap:limited_adjustment_event_override_v1
+- runtime_taxonomy_gap:dynamic_v0_5_ai_trend_confirmed_event_override_v1
+dynamic_promotion:
+  final_status: BLOCKED
+event_override_role: watch_only
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  event_override_taxonomy_audit: 17a59ac465052c7f9d10b856926638cf12dbc4ba17f3592bce56c321f99c40c9
+  event_override_guard_summary: c96cc99b0d7897530dc8bdd7922f4ce7c4159081b1ffbd6aeb31c8177795379f
+event_taxonomy_rows:
+- row_type: taxonomy_rule
+  event_type: macro_policy_shock
+  source: FOMC statement or press conference;BLS CPI release;BEA PCE release;BLS payroll
+    release
+  known_at_policy: official_release_timestamp_or_same_day_owner_review_log
+  trigger_rule: 'Unexpected policy inflation or labor-market shock documented at release
+    time, before any post-event return filter is evaluated.
+
+    '
+  risk_score_rule: release-surprise severity and policy-rate implication only
+  price_independent_trigger: true
+  future_return_independent: true
+  allowed_override_direction: risk_reduction_only
+  risk_on_override_policy: disabled_until_slow_confirmation_review
+  missing_required_fields: ''
+  failed_guard_checks: ''
+  ex_ante_guard_status: PASS
+  gate_impact: watch_only_taxonomy_rule
+- row_type: taxonomy_rule
+  event_type: geopolitical_shock
+  source: official government sanction notice;exchange halt notice;major verified
+    wire-service headline
+  known_at_policy: timestamped_public_source_or_owner_review_log
+  trigger_rule: 'Escalation event with direct market-access or supply-chain impact
+    known before the next executable trading session.
+
+    '
+  risk_score_rule: source credibility, breadth of affected assets, and policy impact
+  price_independent_trigger: true
+  future_return_independent: true
+  allowed_override_direction: risk_reduction_only
+  risk_on_override_policy: disabled_until_slow_confirmation_review
+  missing_required_fields: ''
+  failed_guard_checks: ''
+  ex_ante_guard_status: PASS
+  gate_impact: watch_only_taxonomy_rule
+- row_type: taxonomy_rule
+  event_type: credit_liquidity_shock
+  source: FDIC bank failure notice;Federal Reserve emergency facility announcement;public
+    credit spread or funding stress monitor
+  known_at_policy: official_timestamp_or_same_day_market_close_review
+  trigger_rule: 'Public credit or funding stress event whose severity is based on
+    the occurrence and contemporaneous liquidity evidence, not later equity returns.
+
+    '
+  risk_score_rule: institution/systemic relevance and contemporaneous liquidity stress
+  price_independent_trigger: true
+  future_return_independent: true
+  allowed_override_direction: risk_reduction_only
+  risk_on_override_policy: disabled_until_slow_confirmation_review
+  missing_required_fields: ''
+  failed_guard_checks: ''
+  ex_ante_guard_status: PASS
+  gate_impact: watch_only_taxonomy_rule
+- row_type: taxonomy_rule
+  event_type: AI_semiconductor_supply_chain_shock
+  source: BIS export control notice;company guidance release;verified supplier disruption
+    disclosure
+  known_at_policy: public_release_timestamp_or_owner_review_log
+  trigger_rule: 'AI semiconductor supply-chain shock that is observable from official
+    or company source evidence before subsequent market performance is known.
+
+    '
+  risk_score_rule: affected AI compute exposure, duration, and revenue relevance
+  price_independent_trigger: true
+  future_return_independent: true
+  allowed_override_direction: risk_reduction_only
+  risk_on_override_policy: disabled_until_slow_confirmation_review
+  missing_required_fields: ''
+  failed_guard_checks: ''
+  ex_ante_guard_status: PASS
+  gate_impact: watch_only_taxonomy_rule
+- row_type: taxonomy_rule
+  event_type: earnings_shock
+  source: SEC 8-K;company earnings release;company guidance call transcript
+  known_at_policy: company_release_timestamp_or_after_close_next_session_review
+  trigger_rule: 'Mega-cap AI earnings or guidance miss identified from released company
+    materials before post-event returns are evaluated.
+
+    '
+  risk_score_rule: guidance magnitude, breadth, and AI revenue exposure
+  price_independent_trigger: true
+  future_return_independent: true
+  allowed_override_direction: risk_reduction_only
+  risk_on_override_policy: disabled_until_slow_confirmation_review
+  missing_required_fields: ''
+  failed_guard_checks: ''
+  ex_ante_guard_status: PASS
+  gate_impact: watch_only_taxonomy_rule
+runtime_guard_rows:
+- row_type: runtime_trace
+  strategy_id: limited_adjustment_event_override_v1
+  source_dataset: outputs\research_strategies\execution_semantics\limited_adjustment_event_override_v1\event_override_trace.json
+  event_review_count: 9
+  override_trigger_count: 9
+  missing_event_type_count: 9
+  failed_no_lookahead_count: 0
+  risk_on_override_count: 0
+  known_at_range: 2023-10-03..2026-02-26
+  decision_at_range: 2023-10-03..2026-02-26
+  effective_at_range: 2023-10-04..2026-02-27
+  price_independent_trigger: not_proven_by_runtime_trace
+  future_return_independent: true
+  ex_ante_guard_status: WARN
+  gate_impact: blocks_event_override_preflight
+- row_type: runtime_trace
+  strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  source_dataset: outputs\research_strategies\execution_semantics\dynamic_v0_5_ai_trend_confirmed_event_override_v1\event_override_trace.json
+  event_review_count: 27
+  override_trigger_count: 27
+  missing_event_type_count: 27
+  failed_no_lookahead_count: 0
+  risk_on_override_count: 0
+  known_at_range: 2022-12-29..2026-06-08
+  decision_at_range: 2022-12-29..2026-06-08
+  effective_at_range: 2022-12-30..2026-06-09
+  price_independent_trigger: not_proven_by_runtime_trace
+  future_return_independent: true
+  ex_ante_guard_status: WARN
+  gate_impact: blocks_event_override_preflight
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

@@ -1,0 +1,139 @@
+schema_version: 1
+policy_id: event_override_ex_ante_taxonomy_policy_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Event overrides must be defined by observable ex-ante event information, not
+    by hindsight labels attached after market losses are known.
+  intended_effect: >
+    Keep event override research watch-only unless each trigger has an external
+    source, known-at rule, price-independent trigger, future-return-independent
+    risk score rule, and risk-off-only execution boundary.
+  validation_evidence: >
+    TRADING-1401 to 1415 tests cover taxonomy schema fields, runtime trace guard
+    summaries, no-lookahead checks, blocked promotion status, and tracked
+    owner-readable snapshots.
+  review_condition: >
+    Review before adding event types, changing risk score rules, enabling
+    risk-on overrides, or using the taxonomy outside research-only owner review.
+event_override_guardrails:
+  forbid_future_price_drawdown_labeling: true
+  forbid_future_return_trigger_selection: true
+  risk_off_override_only: true
+  risk_on_override_default: disabled_or_slow_confirmed
+  event_override_role: watch_only_research
+event_taxonomy:
+  - event_type: macro_policy_shock
+    sources:
+      - FOMC statement or press conference
+      - BLS CPI release
+      - BEA PCE release
+      - BLS payroll release
+    known_at_policy: official_release_timestamp_or_same_day_owner_review_log
+    trigger_rule: >
+      Unexpected policy inflation or labor-market shock documented at release
+      time, before any post-event return filter is evaluated.
+    risk_score_rule:
+      summary: release-surprise severity and policy-rate implication only
+      min_watch_score: 60
+      min_override_score: 80
+    price_independent_trigger: true
+    future_return_independent: true
+    allowed_override_direction: risk_reduction_only
+    risk_on_override_policy: disabled_until_slow_confirmation_review
+  - event_type: geopolitical_shock
+    sources:
+      - official government sanction notice
+      - exchange halt notice
+      - major verified wire-service headline
+    known_at_policy: timestamped_public_source_or_owner_review_log
+    trigger_rule: >
+      Escalation event with direct market-access or supply-chain impact known
+      before the next executable trading session.
+    risk_score_rule:
+      summary: source credibility, breadth of affected assets, and policy impact
+      min_watch_score: 60
+      min_override_score: 80
+    price_independent_trigger: true
+    future_return_independent: true
+    allowed_override_direction: risk_reduction_only
+    risk_on_override_policy: disabled_until_slow_confirmation_review
+  - event_type: credit_liquidity_shock
+    sources:
+      - FDIC bank failure notice
+      - Federal Reserve emergency facility announcement
+      - public credit spread or funding stress monitor
+    known_at_policy: official_timestamp_or_same_day_market_close_review
+    trigger_rule: >
+      Public credit or funding stress event whose severity is based on the
+      occurrence and contemporaneous liquidity evidence, not later equity returns.
+    risk_score_rule:
+      summary: institution/systemic relevance and contemporaneous liquidity stress
+      min_watch_score: 60
+      min_override_score: 80
+    price_independent_trigger: true
+    future_return_independent: true
+    allowed_override_direction: risk_reduction_only
+    risk_on_override_policy: disabled_until_slow_confirmation_review
+  - event_type: AI_semiconductor_supply_chain_shock
+    sources:
+      - BIS export control notice
+      - company guidance release
+      - verified supplier disruption disclosure
+    known_at_policy: public_release_timestamp_or_owner_review_log
+    trigger_rule: >
+      AI semiconductor supply-chain shock that is observable from official or
+      company source evidence before subsequent market performance is known.
+    risk_score_rule:
+      summary: affected AI compute exposure, duration, and revenue relevance
+      min_watch_score: 60
+      min_override_score: 80
+    price_independent_trigger: true
+    future_return_independent: true
+    allowed_override_direction: risk_reduction_only
+    risk_on_override_policy: disabled_until_slow_confirmation_review
+  - event_type: earnings_shock
+    sources:
+      - SEC 8-K
+      - company earnings release
+      - company guidance call transcript
+    known_at_policy: company_release_timestamp_or_after_close_next_session_review
+    trigger_rule: >
+      Mega-cap AI earnings or guidance miss identified from released company
+      materials before post-event returns are evaluated.
+    risk_score_rule:
+      summary: guidance magnitude, breadth, and AI revenue exposure
+      min_watch_score: 60
+      min_override_score: 80
+    price_independent_trigger: true
+    future_return_independent: true
+    allowed_override_direction: risk_reduction_only
+    risk_on_override_policy: disabled_until_slow_confirmation_review
+runtime_trace_requirements:
+  required_fields:
+    - event_type
+    - source
+    - known_at
+    - trigger_rule
+    - risk_score_rule
+    - price_independent_trigger
+    - future_return_independent
+  no_lookahead_checks:
+    - event_known_before_review
+    - decision_before_effective
+    - no_future_return_used
+    - no_future_signal_persistence_used
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

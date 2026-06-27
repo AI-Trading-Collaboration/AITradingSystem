@@ -34,9 +34,9 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
 2. TRADING-1346～1360：Dynamic strategy objective 与 promotion gate v2。把 candidate role 明确
    拆成 full allocation strategy、defensive overlay 和 advisory diagnostic；新增 objective/gate
    配置、owner-readable review 与 matrix，且 gate 不得只看 annual return。
-3. TRADING-1361～1400：PIT / walk-forward / ex-ante event taxonomy / risk timing quality 审计。
-4. TRADING-1401～1430：Cost、cash yield、turnover、stress metrics 和 regime/baseline expansion。
-5. TRADING-1431～1485：Artifact governance、tracked snapshots、review closeout 与 owner handoff。
+3. TRADING-1361～1400：PIT data availability 与 walk-forward / overfitting 审计。
+4. TRADING-1401～1430：Event override ex-ante taxonomy 与 risk-off / risk-on timing quality。
+5. TRADING-1431～1485：Cost / cash yield、stress risk、regime / baseline expansion 与 artifact governance。
 
 ## Batch 1 设计决策
 
@@ -121,6 +121,44 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
 - `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
 - Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
 
+## Batch 3 设计决策
+
+- Batch 3 覆盖 TRADING-1401～1430：event override ex-ante taxonomy / overfit guard 与
+  risk-off / risk-on timing quality。
+- Event taxonomy 必须从事件类型、source、known_at、trigger_rule、risk_score_rule、
+  price_independent_trigger 和 future_return_independent 角度建立配置化审计面。第一版允许
+  使用 pilot baseline taxonomy，但必须明确禁止从未来价格下跌或未来收益反推 event severity。
+- Event override 输出仍为 watch-only research evidence；risk-off override 只能降低风险，
+  risk-on override 默认禁用或慢确认。任何 taxonomy 未满足 ex-ante 条件时，只能输出 blocker，
+  不能解锁 paper-shadow。
+- Timing quality 只读取 actual-path position path 和同源价格，不使用 target-path metrics。Risk-off
+  entry 与 risk-on exit 以实际 QQQ/TQQQ 风险敞口变化为锚点，输出 delay、avoided loss、
+  false positive cost、missed upside 与 post-event 5d/20d return。
+- Batch 3 继续继承 data quality gate、`ai_after_chatgpt` regime、actual requested date range、
+  dynamic promotion `BLOCKED`、target-path diagnostic-only 和 no broker / no production 边界。
+
+## Batch 3 验收标准
+
+- 新增 CLI：
+  - `aits research strategies event-override-ex-ante-taxonomy-review`
+  - `aits research strategies risk-timing-quality-review`
+- 新增 runtime artifacts：
+  - `outputs/research_strategies/event_taxonomy/<run_id>/event_override_taxonomy_audit.csv`
+  - `outputs/research_strategies/event_taxonomy/<run_id>/event_override_guard_summary.json`
+  - `outputs/research_strategies/timing_quality/<run_id>/risk_off_entry_quality.csv`
+  - `outputs/research_strategies/timing_quality/<run_id>/risk_on_exit_quality.csv`
+  - `outputs/research_strategies/timing_quality/<run_id>/re_risk_delay_cost.csv`
+- 新增 tracked artifacts：
+  - `config/research/event_override_ex_ante_taxonomy.yaml`
+  - `docs/research/event_override_ex_ante_taxonomy_review.md`
+  - `inputs/research_reviews/event_override_ex_ante_taxonomy.yaml`
+  - `docs/research/risk_off_risk_on_timing_quality_review.md`
+  - `inputs/research_reviews/risk_timing_quality_matrix.yaml`
+- Reports 必须声明 ex-ante / future-return-independent 检查、actual-path-only timing metrics、
+  event override watch-only、dynamic promotion `BLOCKED` 和 target-path diagnostic-only。
+- `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
+- Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
+
 ## 进展记录
 
 - 2026-06-27：新增总路线并进入 `IN_PROGRESS`；本轮先实现 TRADING-1326～1360 Batch 1，
@@ -155,3 +193,21 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
   两个 event override variants 为 `PARAMETER_SENSITIVE`。Dynamic promotion 继续 `BLOCKED`，
   paper-shadow / production / broker 均不允许。验证通过 focused parallel pytest、相关 69 用例
   parallel pytest、Ruff、compileall 和 `git diff --check`。
+- 2026-06-27：继续推进 TRADING-1401～1430 Batch 3，范围为 event override ex-ante taxonomy /
+  overfit guard 与 risk-off / risk-on timing quality。总任务从 Batch 2 `VALIDATING` 回到
+  `IN_PROGRESS`；dynamic promotion 继续 `BLOCKED`，event override 继续 watch-only，
+  不得进入 paper-shadow / production / broker。
+- 2026-06-27：TRADING-1401～1430 Batch 3 实现完成并转入 `VALIDATING`。新增
+  `event-override-ex-ante-taxonomy-review` 与 `risk-timing-quality-review` CLI，真实运行生成
+  `docs/research/event_override_ex_ante_taxonomy_review.md`、
+  `inputs/research_reviews/event_override_ex_ante_taxonomy.yaml`、
+  `docs/research/risk_off_risk_on_timing_quality_review.md` 和
+  `inputs/research_reviews/risk_timing_quality_matrix.yaml`。真实 date range 为
+  `2022-12-01`～`2026-06-26`，market_regime 为 `ai_after_chatgpt`，
+  data_quality_status 为 `PASS_WITH_WARNINGS`。Event taxonomy status 为
+  `EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，原因是 runtime trace 仍缺
+  event_type/source taxonomy provenance，因此 event override preflight 继续被阻断。Risk timing
+  status 为 `RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`，四个 dynamic variants 均为
+  `RISK_OFF_TOO_NOISY`。Dynamic promotion 继续 `BLOCKED`，target-path metrics 继续
+  `diagnostic_only`，paper-shadow / production / broker 均不允许。验证通过 focused parallel
+  pytest、文档/registry contract parallel pytest、Ruff、compileall 和 `git diff --check`。

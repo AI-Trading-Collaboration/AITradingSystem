@@ -1,0 +1,129 @@
+schema_version: risk_timing_quality_matrix.v1
+report_type: risk_timing_quality_matrix
+status: RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\timing_quality\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: de67a1278a6fbe906ef90f71559eb971963808de
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+timing_policy_hash: 323831f7b28c26d6c0a474247526ab399a899105e5ac982c0d7fc1ba550165fd
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+timing_policy:
+  policy_id: risk_timing_quality_policy_v1
+  status: pilot_baseline
+  risk_exposure_policy:
+    risk_asset_exposure_weights:
+      QQQ: 1.0
+      TQQQ: 3.0
+      SGOV: 0.0
+    exposure_change_epsilon: 0.02
+    rationale: 'QQQ counts as one unit of AI-cycle equity exposure, TQQQ as three
+      units due to leverage, and SGOV as defensive cash-like exposure. A two percentage
+      point exposure change filters tiny rounding movements from rebalance rows.
+
+      '
+  post_event_windows:
+  - 5
+  - 20
+  verdict_thresholds:
+    risk_off_entry_delay_warn_days: 1
+    risk_on_exit_delay_warn_days: 20
+    rationale: 'One trading day reflects the current T+1 event override semantics;
+      twenty trading days is a one-month pilot threshold for re-risk delay review.
+      These are research-only pilot baselines, not promotion gates.
+
+      '
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  risk_off_entry_quality: 462462315bc946b178eab9cb92b8db02571c90421c6220dd44741dcb35c19571
+  risk_on_exit_quality: 13857a5b5e0dc4a1559d4e78ad47c5610395d13de2f57c2e4b5f4fb3d605dfad
+  re_risk_delay_cost: 2d1b85efceb15db6d253c87e67a7571e802abe1862b047682b85f44c0d454519
+strategy_timing_rows:
+- strategy_id: limited_adjustment
+  risk_off_event_count: 6
+  risk_on_event_count: 6
+  risk_off_entry_delay_days: 0.0
+  risk_off_entry_avoided_loss: 0.015679
+  risk_off_entry_false_positive_cost: 0.043247
+  risk_on_exit_delay_days: 18.333
+  risk_on_recovery_missed_upside: 0.038507
+  risk_on_false_recovery_cost: 0.002134
+  post_risk_off_5d_return: 0.00414
+  post_risk_off_20d_return: 0.022974
+  post_risk_on_5d_return: 0.021246
+  post_risk_on_20d_return: 0.052157
+  timing_verdict: RISK_OFF_TOO_NOISY
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  risk_off_event_count: 18
+  risk_on_event_count: 17
+  risk_off_entry_delay_days: 0.0
+  risk_off_entry_avoided_loss: 0.071985
+  risk_off_entry_false_positive_cost: 0.159973
+  risk_on_exit_delay_days: 17.059
+  risk_on_recovery_missed_upside: 0.210883
+  risk_on_false_recovery_cost: 0.070913
+  post_risk_off_5d_return: 0.002788
+  post_risk_off_20d_return: 0.010863
+  post_risk_on_5d_return: 0.001436
+  post_risk_on_20d_return: 0.020316
+  timing_verdict: RISK_OFF_TOO_NOISY
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  risk_off_event_count: 9
+  risk_on_event_count: 15
+  risk_off_entry_delay_days: 1.0
+  risk_off_entry_avoided_loss: 0.066815
+  risk_off_entry_false_positive_cost: 0.086494
+  risk_on_exit_delay_days: 7.2
+  risk_on_recovery_missed_upside: 0.053353
+  risk_on_false_recovery_cost: 0.051004
+  post_risk_off_5d_return: -0.000445
+  post_risk_off_20d_return: 0.001442
+  post_risk_on_5d_return: 0.008276
+  post_risk_on_20d_return: 0.023682
+  timing_verdict: RISK_OFF_TOO_NOISY
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  risk_off_event_count: 27
+  risk_on_event_count: 42
+  risk_off_entry_delay_days: 1.0
+  risk_off_entry_avoided_loss: 0.126523
+  risk_off_entry_false_positive_cost: 0.311764
+  risk_on_exit_delay_days: 6.952
+  risk_on_recovery_missed_upside: 0.222262
+  risk_on_false_recovery_cost: 0.145617
+  post_risk_off_5d_return: 0.003789
+  post_risk_off_20d_return: 0.008049
+  post_risk_on_5d_return: 0.002852
+  post_risk_on_20d_return: 0.015598
+  timing_verdict: RISK_OFF_TOO_NOISY
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

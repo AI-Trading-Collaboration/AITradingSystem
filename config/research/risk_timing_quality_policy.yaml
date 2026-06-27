@@ -1,0 +1,57 @@
+schema_version: 1
+policy_id: risk_timing_quality_policy_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Risk-off and risk-on timing needs an explicit, reviewable pilot policy so
+    timing verdicts do not depend on hidden thresholds or target-path hindsight.
+  intended_effect: >
+    Measure whether actual-path risk reductions avoided losses, created false
+    defensive costs, or re-risked too slowly after defensive periods.
+  validation_evidence: >
+    TRADING-1416 to 1430 tests cover actual-path input use, event row outputs,
+    matrix generation, verdict enumeration, and blocked promotion status.
+  review_condition: >
+    Review before changing exposure weights, event windows, delay thresholds,
+    or using timing verdicts in paper-shadow preflight discussion.
+risk_exposure_policy:
+  risk_asset_exposure_weights:
+    QQQ: 1.0
+    TQQQ: 3.0
+    SGOV: 0.0
+  exposure_change_epsilon: 0.02
+  rationale: >
+    QQQ counts as one unit of AI-cycle equity exposure, TQQQ as three units due
+    to leverage, and SGOV as defensive cash-like exposure. A two percentage
+    point exposure change filters tiny rounding movements from rebalance rows.
+post_event_windows_trading_days:
+  - 5
+  - 20
+verdict_thresholds:
+  risk_off_entry_delay_warn_days: 1
+  risk_on_exit_delay_warn_days: 20
+  rationale: >
+    One trading day reflects the current T+1 event override semantics; twenty
+    trading days is a one-month pilot threshold for re-risk delay review. These
+    are research-only pilot baselines, not promotion gates.
+allowed_verdicts:
+  - RISK_OFF_TIMING_USEFUL
+  - RISK_OFF_TOO_LATE
+  - RISK_OFF_TOO_NOISY
+  - RISK_ON_TOO_SLOW
+  - RISK_ON_TOO_FAST
+  - TIMING_EDGE_NOT_ESTABLISHED
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

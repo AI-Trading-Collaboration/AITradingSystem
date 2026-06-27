@@ -18575,6 +18575,51 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: event_override_ex_ante_taxonomy_review
+    title: Event Override Ex-Ante Taxonomy Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies event-override-ex-ante-taxonomy-review
+    artifact_globs:
+      - config/research/event_override_ex_ante_taxonomy.yaml
+      - outputs/research_strategies/event_taxonomy/*/event_override_taxonomy_audit.csv
+      - outputs/research_strategies/event_taxonomy/*/event_override_guard_summary.json
+      - docs/research/event_override_ex_ante_taxonomy_review.md
+      - inputs/research_reviews/event_override_ex_ante_taxonomy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1401 to 1415 event override ex-ante taxonomy review must be regenerated after event policy, taxonomy policy, runtime trace, no-lookahead evidence, or cached data changes.
+    owner_action: review_event_override_ex_ante_taxonomy_before_any_event_override_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_timing_quality_review
+    title: Risk-Off Risk-On Timing Quality Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies risk-timing-quality-review
+    artifact_globs:
+      - config/research/risk_timing_quality_policy.yaml
+      - outputs/research_strategies/timing_quality/*/risk_off_entry_quality.csv
+      - outputs/research_strategies/timing_quality/*/risk_on_exit_quality.csv
+      - outputs/research_strategies/timing_quality/*/re_risk_delay_cost.csv
+      - docs/research/risk_off_risk_on_timing_quality_review.md
+      - inputs/research_reviews/risk_timing_quality_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1416 to 1430 risk timing quality review must be regenerated after actual-path runtime artifacts, timing policy, candidate set, cached data, or event override semantics change.
+    owner_action: review_risk_timing_quality_before_any_dynamic_preflight
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

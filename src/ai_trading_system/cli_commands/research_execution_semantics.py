@@ -26,9 +26,13 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_DYNAMIC_WALK_FORWARD_POLICY_PATH,
     DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_CONFIG_PATH,
+    DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_REVIEW_PATH,
+    DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_SNAPSHOT_PATH,
     DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH,
     DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
     DEFAULT_EVENT_OVERRIDE_SURVIVAL_MATRIX_YAML_PATH,
+    DEFAULT_EVENT_TAXONOMY_OUTPUT_ROOT,
     DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
     DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS,
     DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
@@ -41,11 +45,15 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_PRICES_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
     DEFAULT_RATES_PATH,
+    DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH,
+    DEFAULT_RISK_TIMING_QUALITY_POLICY_PATH,
+    DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH,
     DEFAULT_SIGNAL_VALIDITY_STALENESS_INPUT_SUMMARY_PATH,
     DEFAULT_SIGNAL_VALIDITY_STALENESS_REPAIR_REVIEW_PATH,
     DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
+    DEFAULT_TIMING_QUALITY_OUTPUT_ROOT,
     DEFAULT_WALK_FORWARD_OUTPUT_ROOT,
     EVENT_OVERRIDE_MODE_T_PLUS_1,
     run_actual_path_edge_attribution_review,
@@ -58,6 +66,7 @@ from ai_trading_system.execution_semantics import (
     run_dynamic_strategy_validity_period_audit,
     run_dynamic_strategy_walk_forward_validation,
     run_equal_risk_balanced_core_execution_policy_selection,
+    run_event_override_ex_ante_taxonomy_review,
     run_execution_aware_forward_aging_observation_contract,
     run_execution_policy_cost_turnover_normalization,
     run_execution_policy_impact_on_prior_conclusions,
@@ -73,6 +82,7 @@ from ai_trading_system.execution_semantics import (
     run_rebalance_assumption_owner_review_pack,
     run_rebalance_frequency_sensitivity_suite,
     run_rebalance_sensitive_candidate_recovery_review,
+    run_risk_timing_quality_review,
     run_roadmap_update_after_execution_semantics_review,
     run_signal_staleness_cost_review,
     run_strategy_execution_policy_registry_review,
@@ -104,6 +114,12 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-walk-forward-validation")(
         _dynamic_strategy_walk_forward_validation_command
+    )
+    strategies_app.command("event-override-ex-ante-taxonomy-review")(
+        _event_override_ex_ante_taxonomy_review_command
+    )
+    strategies_app.command("risk-timing-quality-review")(
+        _risk_timing_quality_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -555,6 +571,104 @@ def _dynamic_strategy_walk_forward_validation_command(
         end_date=_parse_optional_date(end_date),
     )
     _print_execution_semantics_payload("Dynamic strategy walk-forward validation", payload)
+
+
+def _event_override_ex_ante_taxonomy_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    event_override_policy_path: Annotated[
+        Path, typer.Option("--event-override-policy")
+    ] = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
+    taxonomy_config_path: Annotated[
+        Path, typer.Option("--taxonomy-config", "--taxonomy-policy")
+    ] = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_CONFIG_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_EVENT_TAXONOMY_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--snapshot-path")
+    ] = DEFAULT_EVENT_OVERRIDE_EX_ANTE_TAXONOMY_SNAPSHOT_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_event_override_ex_ante_taxonomy_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        event_override_policy_path=event_override_policy_path,
+        taxonomy_config_path=taxonomy_config_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload("Event override ex-ante taxonomy review", payload)
+
+
+def _risk_timing_quality_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    timing_policy_path: Annotated[
+        Path, typer.Option("--timing-policy")
+    ] = DEFAULT_RISK_TIMING_QUALITY_POLICY_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_TIMING_QUALITY_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_RISK_TIMING_QUALITY_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_RISK_TIMING_QUALITY_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_risk_timing_quality_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        timing_policy_path=timing_policy_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Risk-off risk-on timing quality review", payload)
 
 
 def _call_builder(
