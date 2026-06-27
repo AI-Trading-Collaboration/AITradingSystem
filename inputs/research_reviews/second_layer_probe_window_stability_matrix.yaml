@@ -1,0 +1,39 @@
+schema_version: second_layer_probe_window_stability_matrix.v1
+report_type: second_layer_probe_window_stability_matrix
+title: Second-Layer Probe Window Stability Matrix
+status: SECOND_LAYER_PROBE_MULTI_WINDOW_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  strategy_count: 5
+  window_count: 3
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+strategy_rows:
+- strategy_id: balanced_dynamic_probe
+  window_count: 3
+  annual_return_range: 0.048501
+  best_window: legacy_research_window_2022_12
+- strategy_id: defensive_overlay_probe
+  window_count: 3
+  annual_return_range: 0.048669
+  best_window: legacy_research_window_2022_12
+- strategy_id: drawdown_control_probe
+  window_count: 3
+  annual_return_range: 0.045198
+  best_window: exact_three_asset_primary_only_extension
+- strategy_id: limited_adjustment
+  window_count: 3
+  annual_return_range: 0.058187
+  best_window: legacy_research_window_2022_12
+- strategy_id: risk_on_diagnostic_probe
+  window_count: 3
+  annual_return_range: 0.053709
+  best_window: legacy_research_window_2022_12

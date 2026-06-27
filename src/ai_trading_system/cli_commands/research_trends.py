@@ -24,6 +24,13 @@ from ai_trading_system.first_layer_up_state_learning import (
     DEFAULT_THRESHOLD_POLICY_PATH,
     run_first_layer_up_state_learning_repair_pack,
 )
+from ai_trading_system.research_window_extension import (
+    DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
+    DEFAULT_WINDOWED_ACTUAL_PATH_ROOT,
+    DEFAULT_WINDOWED_STATIC_FRONTIER_ROOT,
+    run_research_window_extension_validation_pack,
+)
 
 console = Console()
 trends_app = typer.Typer(
@@ -116,6 +123,48 @@ def first_layer_up_state_repair_command(
         refresh_prerequisites=refresh_prerequisites,
     )
     _print_payload("First-layer up-state learning repair", payload)
+
+
+@trends_app.command("window-extension")
+def research_window_extension_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    walk_forward_policy_path: Annotated[
+        Path, typer.Option("--walk-forward-policy")
+    ] = DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_PROBE_REGISTRY_PATH,
+    score_policy_path: Annotated[Path, typer.Option("--score-policy")] = DEFAULT_SCORE_POLICY_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    static_output_root: Annotated[
+        Path, typer.Option("--static-output-root")
+    ] = DEFAULT_WINDOWED_STATIC_FRONTIER_ROOT,
+    actual_path_output_root: Annotated[
+        Path, typer.Option("--actual-path-output-root")
+    ] = DEFAULT_WINDOWED_ACTUAL_PATH_ROOT,
+) -> None:
+    payload = run_research_window_extension_validation_pack(
+        registry_path=registry_path,
+        walk_forward_policy_path=walk_forward_policy_path,
+        probe_registry_path=probe_registry_path,
+        score_policy_path=score_policy_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        static_output_root=static_output_root,
+        actual_path_output_root=actual_path_output_root,
+    )
+    _print_payload("Research window extension validation", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

@@ -1,0 +1,154 @@
+schema_version: research_window_registry.v1
+policy_id: research_window_registry_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Single-window QQQ/SGOV/TQQQ research since 2022-12-01 is too short for
+    first-layer and second-layer validation. Multi-window research separates
+    exact validated, primary-only sensitivity, legacy comparison and metadata
+    ranges so conclusions do not mix incompatible data-quality contracts.
+  intended_effect: >
+    Make every new research artifact carry a research_window_id, requested start,
+    actual portfolio start, window role and data-quality contract.
+  validation_evidence: >
+    TRADING-1646 to 1665 tests cover exact/proxy separation, SGOV inception start
+    adjustment, primary-only extension caveat and required window metadata.
+  review_condition: >
+    Review before making any non-legacy window the default for promotion-style
+    interpretation or before introducing proxy robustness results.
+windows:
+  exact_three_asset_validated:
+    start: 2021-02-22
+    end: latest
+    requested_start: 2021-02-22
+    actual_start: 2021-02-22
+    actual_portfolio_start: 2021-02-22
+    role: primary_validated
+    assets: [QQQ, SGOV, TQQQ]
+    exact_or_proxy: exact
+    data_quality_contract: secondary_cross_checked
+    primary_prices: available
+    secondary_price_cross_check: substantially_available
+    fred_rates: available
+    allowed_usage:
+      - main_actual_path_ranking
+      - dynamic_second_layer_probe_validation
+      - first_layer_trend_calibration
+      - owner_review_evidence
+    blocked_usage:
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - still_short_sample
+      - does_not_cover_2020_covid_crash
+  exact_three_asset_primary_only_extension:
+    start: 2020-05-28
+    end: latest
+    requested_start: 2020-05-28
+    actual_start: 2020-05-28
+    actual_portfolio_start: 2020-05-28
+    role: sensitivity
+    assets: [QQQ, SGOV, TQQQ]
+    exact_or_proxy: exact
+    data_quality_contract: primary_only_for_sgov_before_2021_02_22
+    primary_prices: available
+    secondary_price_cross_check:
+      QQQ: available
+      TQQQ: mostly_available
+      SGOV: unavailable_before_2021_02_22
+    fred_rates: available
+    allowed_usage:
+      - robustness_check
+      - sensitivity_analysis
+      - longer_exact_primary_three_asset_study
+    blocked_usage:
+      - primary_leaderboard_without_owner_accepting_caveat
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - sgov_secondary_gap_2020_05_28_to_2021_02_19
+      - primary_only_extension_not_primary_leaderboard
+  legacy_research_window_2022_12:
+    start: 2022-12-01
+    end: latest
+    requested_start: 2022-12-01
+    actual_start: 2022-12-01
+    actual_portfolio_start: 2022-12-01
+    role: legacy_comparison
+    assets: [QQQ, SGOV, TQQQ]
+    exact_or_proxy: exact
+    data_quality_contract: legacy_ai_after_chatgpt_window
+    primary_prices: available
+    secondary_price_cross_check: available_for_legacy_window
+    fred_rates: available
+    allowed_usage:
+      - legacy_comparison
+      - ai_after_chatgpt_comparison
+    blocked_usage:
+      - sole_basis_for_new_multi_window_conclusion
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - short_window
+      - may_overweight_2023_ai_tech_strength
+  requested_sgov_inception_range:
+    requested_start: 2020-05-26
+    start: 2020-05-26
+    end: latest
+    actual_start: 2020-05-26
+    actual_portfolio_start: 2020-05-28
+    role: metadata_only
+    assets: [QQQ, SGOV, TQQQ]
+    exact_or_proxy: metadata_only
+    data_quality_contract: requested_inception_metadata_only
+    allowed_usage:
+      - requested_range_metadata
+      - data_availability_explanation
+    blocked_usage:
+      - portfolio_return_before_2020_05_28
+      - exact_leaderboard
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - sgov_primary_missing_2020_05_26_and_2020_05_27
+  qqq_tqqq_sgov_proxy_robustness:
+    start: 2010-02-09
+    end: latest
+    requested_start: 2010-02-09
+    actual_start: 2010-02-09
+    actual_portfolio_start: 2010-02-09
+    role: proxy_robustness
+    assets: [QQQ, TQQQ, SGOV_PROXY]
+    exact_or_proxy: proxy
+    data_quality_contract: proxy_robustness_only
+    proxy_options:
+      - BIL
+      - T-bill cash return
+    allowed_usage:
+      - robustness_only
+      - first_layer_longer_sample_diagnostic
+    blocked_usage:
+      - exact_sgov_promotion_evidence
+      - exact_three_asset_leaderboard
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - proxy_not_exact_sgov
+      - not_mixed_with_exact_leaderboard
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  manual_review_required: true

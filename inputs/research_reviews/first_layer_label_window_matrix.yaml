@@ -1,0 +1,77 @@
+schema_version: first_layer_label_window_matrix.v1
+report_type: first_layer_label_window_matrix
+title: First-Layer Label Multi-Window Matrix
+status: FIRST_LAYER_LABEL_MULTI_WINDOW_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  window_count: 3
+  primary_upper_state_count: 855
+  legacy_upper_state_count: 618
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+window_rows:
+- research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  label_count: 5128
+  risk_off_count: 3248
+  defensive_count: 28
+  neutral_count: 997
+  constructive_count: 627
+  risk_on_count: 228
+  upper_state_count: 855
+  high_confidence_count: 4550
+  high_confidence_share: 0.887285
+  avg_disagreement_score: 0.182479
+  window_aware_split_policy: per_window_required
+- research_window_id: exact_three_asset_primary_only_extension
+  requested_start: '2020-05-28'
+  actual_start: '2020-05-28'
+  actual_portfolio_start: '2020-05-28'
+  end: latest
+  window_role: sensitivity
+  data_quality_contract: primary_only_for_sgov_before_2021_02_22
+  exact_or_proxy: exact
+  label_count: 5868
+  risk_off_count: 3664
+  defensive_count: 29
+  neutral_count: 1170
+  constructive_count: 738
+  risk_on_count: 267
+  upper_state_count: 1005
+  high_confidence_count: 5212
+  high_confidence_share: 0.888207
+  avg_disagreement_score: 0.186691
+  window_aware_split_policy: per_window_required
+- research_window_id: legacy_research_window_2022_12
+  requested_start: '2022-12-01'
+  actual_start: '2022-12-01'
+  actual_portfolio_start: '2022-12-01'
+  end: latest
+  window_role: legacy_comparison
+  data_quality_contract: legacy_ai_after_chatgpt_window
+  exact_or_proxy: exact
+  label_count: 3332
+  risk_off_count: 1979
+  defensive_count: 25
+  neutral_count: 710
+  constructive_count: 433
+  risk_on_count: 185
+  upper_state_count: 618
+  high_confidence_count: 2900
+  high_confidence_share: 0.870348
+  avg_disagreement_score: 0.199205
+  window_aware_split_policy: per_window_required

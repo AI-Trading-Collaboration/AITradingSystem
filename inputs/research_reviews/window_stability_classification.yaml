@@ -1,0 +1,42 @@
+schema_version: window_stability_classification.v1
+report_type: window_stability_classification
+title: Window Stability Classification
+status: WINDOW_STABILITY_CLASSIFICATION_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  strategy_count: 11
+  window_stable_count: 0
+  legacy_window_only_edge_count: 0
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+strategy_rows:
+- strategy_id: balanced_dynamic_probe
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: defensive_overlay_probe
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: drawdown_control_probe
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: limited_adjustment
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: risk_on_diagnostic_probe
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: static_QQQ0.0_SGOV0.0_TQQQ1.0
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: static_QQQ0.0_SGOV0.1_TQQQ0.9
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: static_QQQ0.1_SGOV0.0_TQQQ0.9
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: static_QQQ0.1_SGOV0.1_TQQQ0.8
+  classification: WINDOW_SENSITIVE_UNEXPLAINED
+- strategy_id: static_QQQ0.2_SGOV0.0_TQQQ0.8
+  classification: WINDOW_SENSITIVE_BUT_EXPLAINED
+- strategy_id: static_QQQ0.3_SGOV0.0_TQQQ0.7
+  classification: WINDOW_SENSITIVE_UNEXPLAINED

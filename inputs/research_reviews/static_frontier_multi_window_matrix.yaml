@@ -1,0 +1,34 @@
+schema_version: static_frontier_multi_window_matrix.v1
+report_type: static_frontier_multi_window_matrix
+title: Static Frontier Multi-Window Matrix
+status: STATIC_FRONTIER_MULTI_WINDOW_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  window_count: 3
+  grid_step: 0.1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+window_rows:
+- research_window_id: exact_three_asset_primary_only_extension
+  best_strategy_id: static_QQQ0.0_SGOV0.0_TQQQ1.0
+  best_annual_return: 0.403697
+  best_calmar: 0.495018
+  grid_size: 66
+- research_window_id: exact_three_asset_validated
+  best_strategy_id: static_QQQ0.1_SGOV0.0_TQQQ0.9
+  best_annual_return: 0.246358
+  best_calmar: 0.313148
+  grid_size: 66
+- research_window_id: legacy_research_window_2022_12
+  best_strategy_id: static_QQQ0.0_SGOV0.0_TQQQ1.0
+  best_annual_return: 0.698842
+  best_calmar: 1.203969
+  grid_size: 66

@@ -1,0 +1,26 @@
+schema_version: research_window_extension_final_matrix.v1
+report_type: research_window_extension_final_matrix
+title: Research Window Extension Final Matrix
+status: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  base_status: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT
+  primary_window_status: PASS
+  extension_window_status: PASS_WITH_EXPECTED_SGOV_SECONDARY_GAP_CAVEAT
+  primary_upper_state_count: 855
+  legacy_upper_state_count: 618
+  promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+stability_summary:
+  strategy_count: 11
+  window_stable_count: 0
+  legacy_window_only_edge_count: 0

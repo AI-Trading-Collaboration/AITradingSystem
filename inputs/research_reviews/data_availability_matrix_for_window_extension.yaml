@@ -1,0 +1,172 @@
+schema_version: data_availability_matrix_for_window_extension.v1
+report_type: data_availability_matrix_for_window_extension
+title: Data Availability Matrix for Window Extension
+status: DATA_AVAILABILITY_WINDOW_EXTENSION_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+summary:
+  row_count: 10
+  first_common_tradable_date: '2020-05-28'
+  primary_window_start: 2021-02-22
+  extension_window_start: 2020-05-28
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+rows:
+- asset_or_feature: QQQ
+  earliest_available_date: '2018-01-02'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: available
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: low_for_adjusted_close_cache
+  survivorship_risk: low_for_etf_ticker_history
+  allowed_usage:
+  - exact_three_asset_research
+  blocked_usage:
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: SGOV
+  earliest_available_date: '2020-05-28'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: unavailable_before_2021_02_22
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: low_for_adjusted_close_cache
+  survivorship_risk: low_for_etf_ticker_history
+  allowed_usage:
+  - exact_three_asset_research
+  blocked_usage:
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: TQQQ
+  earliest_available_date: '2018-01-02'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: available
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: low_for_adjusted_close_cache
+  survivorship_risk: low_for_etf_ticker_history
+  allowed_usage:
+  - exact_three_asset_research
+  blocked_usage:
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: FRED_DGS2
+  earliest_available_date: '2018-01-02'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: not_required_for_fred_rate
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: public_rate_series_revision_possible
+  survivorship_risk: not_applicable
+  allowed_usage:
+  - feature_context
+  - cash_yield_context
+  blocked_usage:
+  - sgov_exact_return_proxy
+- asset_or_feature: FRED_DGS10
+  earliest_available_date: '2018-01-02'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: not_required_for_fred_rate
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: public_rate_series_revision_possible
+  survivorship_risk: not_applicable
+  allowed_usage:
+  - feature_context
+  - cash_yield_context
+  blocked_usage:
+  - sgov_exact_return_proxy
+- asset_or_feature: FRED_DTWEXBGS
+  earliest_available_date: '2018-01-02'
+  first_common_tradable_date: '2020-05-28'
+  primary_source_status: available
+  secondary_source_status: not_required_for_fred_rate
+  exact_or_proxy: exact
+  PIT_status: PIT_APPROVED
+  revision_risk: public_rate_series_revision_possible
+  survivorship_risk: not_applicable
+  allowed_usage:
+  - feature_context
+  - cash_yield_context
+  blocked_usage:
+  - sgov_exact_return_proxy
+- asset_or_feature: BIL_proxy
+  earliest_available_date: ''
+  first_common_tradable_date: ''
+  primary_source_status: registered_metadata
+  secondary_source_status: not_validated_for_this_batch
+  exact_or_proxy: proxy
+  PIT_status: PIT_REVIEW_REQUIRED
+  revision_risk: review_required
+  survivorship_risk: review_required
+  allowed_usage:
+  - proxy_robustness_only
+  blocked_usage:
+  - exact_three_asset_leaderboard
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: VIX
+  earliest_available_date: ''
+  first_common_tradable_date: ''
+  primary_source_status: registered_metadata
+  secondary_source_status: not_validated_for_this_batch
+  exact_or_proxy: proxy
+  PIT_status: PIT_REVIEW_REQUIRED
+  revision_risk: review_required
+  survivorship_risk: review_required
+  allowed_usage:
+  - future_optional_feature_if_cache_validated
+  blocked_usage:
+  - exact_three_asset_leaderboard
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: major_price_trend_features
+  earliest_available_date: ''
+  first_common_tradable_date: ''
+  primary_source_status: registered_metadata
+  secondary_source_status: not_validated_for_this_batch
+  exact_or_proxy: exact
+  PIT_status: PIT_REVIEW_REQUIRED
+  revision_risk: review_required
+  survivorship_risk: review_required
+  allowed_usage:
+  - PIT_price_features
+  blocked_usage:
+  - exact_three_asset_leaderboard
+  - production
+  - paper_shadow
+  - broker_order
+- asset_or_feature: AI_or_semiconductor_features
+  earliest_available_date: ''
+  first_common_tradable_date: ''
+  primary_source_status: registered_metadata
+  secondary_source_status: not_validated_for_this_batch
+  exact_or_proxy: metadata_only
+  PIT_status: PIT_BLOCKED
+  revision_risk: review_required
+  survivorship_risk: review_required
+  allowed_usage:
+  - blocked_until_validated_cache_available
+  blocked_usage:
+  - exact_three_asset_leaderboard
+  - production
+  - paper_shadow
+  - broker_order

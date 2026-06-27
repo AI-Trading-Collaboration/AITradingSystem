@@ -1,0 +1,43 @@
+schema_version: window_aware_walk_forward_policy.v1
+policy_id: window_aware_walk_forward_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Walk-forward splits must be generated separately for each research window
+    so a 2021 primary window is not evaluated using legacy 2022 split boundaries.
+  intended_effect: >
+    Require window-specific split diagnostics for risk_off and upper_state label
+    coverage before interpreting first-layer model results.
+  validation_evidence: >
+    TRADING-1646 to 1665 research window contract tests check required window
+    metadata and no cross-window leaderboard mixing.
+  review_condition: >
+    Review before changing split sizes or allowing any windowed model output to
+    enter observe-only forward watch.
+split_policy:
+  train_window_days: 504
+  validation_window_days: 63
+  step_days: 21
+  min_train_samples: 300
+  label_horizon_days: 20
+required_split_diagnostics:
+  - risk_off_label_count
+  - upper_state_label_count
+  - validation_upper_state_label_count
+  - validation_risk_off_label_count
+  - split_window_id
+window_boundary_rule:
+  generate_splits_per_window: true
+  cross_window_split_reuse_allowed: false
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  manual_review_required: true

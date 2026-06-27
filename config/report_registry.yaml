@@ -19800,3 +19800,147 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: research_window_registry
+    title: Research Window Registry
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - config/research/research_window_registry.yaml
+      - config/research/window_aware_walk_forward_policy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Research window contracts are reviewed after data coverage, SGOV source caveats, or walk-forward split policy changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: research_window_data_availability
+    title: Research Window Data Availability and Quality
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - docs/research/data_availability_matrix_for_window_extension.md
+      - inputs/research_reviews/data_availability_matrix_for_window_extension.yaml
+      - inputs/research_reviews/data_quality_window_summary.yaml
+      - outputs/reports/data_quality_exact_three_asset_validated.md
+      - outputs/reports/data_quality_exact_three_asset_primary_only_extension.md
+      - outputs/reports/data_quality_legacy_research_window_2022_12.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Window data availability and quality are regenerated after price/rate cache coverage or source validation changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: static_frontier_multi_window_review
+    title: Static Frontier Multi-Window Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - outputs/research_strategies/windowed_static_frontier/static_simplex_grid_metrics_by_window.csv
+      - docs/research/static_frontier_multi_window_review.md
+      - inputs/research_reviews/static_frontier_multi_window_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Static frontier multi-window review is regenerated after research window registry, price cache, or static grid policy changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_multi_window_review
+    title: Second-Layer Probe Multi-Window Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - outputs/research_strategies/windowed_actual_path/second_layer_probe_metrics_by_window.csv
+      - docs/research/second_layer_probe_multi_window_review.md
+      - inputs/research_reviews/second_layer_probe_window_stability_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Second-layer probe multi-window review is regenerated after frozen probe registry, labels, window registry, or price cache changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_label_multi_window_review
+    title: First-Layer Label Multi-Window Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - docs/research/first_layer_label_multi_window_review.md
+      - inputs/research_reviews/first_layer_label_window_matrix.yaml
+      - docs/research/first_layer_up_state_window_dependency_update.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: First-layer label multi-window review is regenerated after window registry, action-value policy, frozen probes, or label confidence policy changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: actual_path_multi_window_review
+    title: Actual-Path Multi-Window Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - outputs/research_strategies/windowed_actual_path/actual_path_metrics_by_window.csv
+      - docs/research/actual_path_multi_window_rebacktest_review.md
+      - inputs/research_reviews/actual_path_multi_window_matrix.yaml
+      - inputs/research_reviews/window_stability_classification.yaml
+      - docs/research/window_stability_classification_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Actual-path multi-window review is regenerated after static/probe metrics, window registry, or price cache changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: research_window_extension_owner_pack
+    title: Research Window Extension Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends window-extension
+    artifact_globs:
+      - docs/research/research_window_extension_owner_review_pack.md
+      - docs/research/research_window_extension_closeout.md
+      - inputs/research_reviews/research_window_extension_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner pack and closeout are regenerated after data availability, static frontier, probe, label, actual-path, or stability evidence changes.
+    owner_action: review_research_window_extension_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
