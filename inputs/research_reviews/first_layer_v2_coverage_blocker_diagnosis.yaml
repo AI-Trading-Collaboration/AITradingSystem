@@ -1,0 +1,81 @@
+schema_version: first_layer_v2_coverage_blocker_diagnosis.v1
+report_type: first_layer_v2_coverage_blocker_diagnosis
+title: First-Layer V2 Coverage Blocker Diagnosis
+status: FIRST_LAYER_V2_COVERAGE_BLOCKER_DIAGNOSIS_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:17:58Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  label_start: '2021-02-22'
+  feature_start: '2021-02-22'
+  first_prediction_date: '2023-02-22'
+  first_portfolio_effective_date: '2023-02-22'
+  train_window_days: 504
+  min_train_samples: 300
+  max_feature_lookback_days: 126
+  max_label_horizon_days: 60
+  missing_feature_start_constraints: 0
+  action_value_start_constraints: 60
+  reason_prediction_starts_2023_02_22: 504 trading-row initial training window plus
+    walk-forward split policy
+  coverage_variant_count: 5
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
+reason_rows:
+- blocker: TRAIN_WINDOW_TOO_LONG
+  evidence: fixed train_window_days=504
+  impact: first prediction waits for full rolling training window
+  is_primary_reason: true
+- blocker: MIN_TRAIN_SAMPLES_TOO_HIGH
+  evidence: min_train_samples=300
+  impact: does not bind current 504d baseline but constrains shorter variants
+  is_primary_reason: false
+- blocker: FEATURE_LOOKBACK_TOO_LONG
+  evidence: max approved feature lookback ~=126 trading days
+  impact: features are filled from 2021-02-22 and do not explain 2023 start
+  is_primary_reason: false
+- blocker: LABEL_HORIZON_BLOCKS_EARLY_PERIOD
+  evidence: max action-value horizon=60, model label horizon=20
+  impact: labels begin at window start after future-outcome generation
+  is_primary_reason: false
+- blocker: WALK_FORWARD_POLICY_NOT_WINDOW_AWARE
+  evidence: prior policy reused 504 trading-row initial training window
+  impact: 2021/2022 stress window is excluded from validation predictions
+  is_primary_reason: true

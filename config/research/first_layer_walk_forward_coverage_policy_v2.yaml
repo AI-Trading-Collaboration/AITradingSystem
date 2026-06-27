@@ -1,0 +1,110 @@
+schema_version: first_layer_walk_forward_coverage_policy_v2.v1
+policy_id: first_layer_walk_forward_coverage_policy_v2
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    First-layer v2 showed 8/8 frozen-probe improvement only after 2023-02-22.
+    Coverage must be rebuilt before owner review so 2022 drawdown and recovery
+    periods are included in validation.
+  intended_effect: >
+    Compare fixed, shorter-initial, expanding, and diagnostic warm-start
+    walk-forward policies without changing second-layer probe definitions.
+  validation_evidence: >
+    TRADING-1766 to 1785 coverage simulation, model variant, actual-path and
+    2022 slice reports disclose effective prediction dates and coverage gates.
+  review_condition: >
+    Review before changing required prediction start, 2022 stress/recovery
+    windows, minimum train samples, or allowing diagnostic warm-start evidence
+    into owner review.
+primary_window_id: exact_three_asset_validated
+frozen_second_layer_registry: dynamic_second_layer_probe_registry_v2
+coverage_pass_rule:
+  required_prediction_effective_start_on_or_before: "2022-03-01"
+  required_2022_coverage: true
+  required_2022_risk_off_samples: true
+  required_2022_recovery_samples: true
+  required_label_feature_prediction_alignment: true
+  action_path_rule:
+    improvement_must_be_measured_on_coverage_pass_window: true
+    ignore_improvement_if_effective_start_after: "2023-01-01"
+  safety:
+    second_layer_must_remain_frozen: true
+    promotion_remains_blocked: true
+stress_recovery_windows:
+  risk_off_2022:
+    start: "2022-01-03"
+    end: "2022-10-14"
+  recovery_2022:
+    start: "2022-10-17"
+    end: "2022-12-30"
+variants:
+  wf_504d_baseline:
+    mode: rolling_fixed
+    train_window_days: 504
+    validation_window_days: 63
+    step_days: 21
+    min_train_samples: 300
+    expected_first_prediction: "2023-02"
+    purpose: reproduce_current_blocker
+    allowed_usage:
+      - baseline_reproduction
+    blocked_usage:
+      - owner_review
+      - promotion
+  wf_378d_initial:
+    mode: rolling_fixed
+    train_window_days: 378
+    validation_window_days: 63
+    step_days: 21
+    min_train_samples: 300
+    purpose: balance_sample_size_and_2022_coverage
+    allowed_usage:
+      - coverage_rebuild_candidate
+    blocked_usage:
+      - promotion
+  wf_252d_initial:
+    mode: rolling_fixed
+    train_window_days: 252
+    validation_window_days: 63
+    step_days: 21
+    min_train_samples: 200
+    purpose: move_first_prediction_into_2022
+    allowed_usage:
+      - coverage_rebuild_candidate
+    blocked_usage:
+      - promotion
+  wf_expanding_initial:
+    mode: expanding_initial
+    min_train_days: 252
+    expanding_until_days: 504
+    validation_window_days: 63
+    step_days: 21
+    min_train_samples: 200
+    purpose: allow_early_predictions_while_growing_training_sample
+    allowed_usage:
+      - coverage_rebuild_candidate
+    blocked_usage:
+      - promotion
+  wf_warm_start_diagnostic:
+    mode: warm_start_diagnostic
+    allow_static_rule_warm_start: true
+    model_training_required_before_prediction: false
+    validation_window_days: 63
+    step_days: 21
+    min_train_samples: 0
+    purpose: diagnostic_coverage_upper_bound_only
+    allowed_usage:
+      - diagnostic_only
+    blocked_usage:
+      - owner_review
+      - promotion
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

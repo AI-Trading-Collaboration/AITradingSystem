@@ -1,0 +1,239 @@
+schema_version: first_layer_v2_early_feature_coverage_audit.v1
+report_type: first_layer_v2_early_feature_coverage_audit
+title: First-Layer V2 Early Feature Coverage Audit
+status: EARLY_FEATURE_COVERAGE_PASS
+generated_at: '2026-06-27T17:17:58Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  feature_row_count: 1343
+  early_row_count_2021_2022: 470
+  approved_feature_count: 26
+  core_feature_count: 8
+  optional_feature_count: 18
+  blocking_core_feature_count: 0
+  optional_fill_method: neutral_point_in_time_fill_with_missing_indicator
+  future_data_fill_allowed: false
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 1343
+  pre_registered_selection_rule: true
+feature_rows:
+- feature_id: qqq_momentum_20d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_momentum_60d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_momentum_120d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_ma_slope_20_60
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_ma_slope_60_120
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_drawdown_126d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: realized_vol_20d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: realized_vol_decline_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: realized_vol_decline_60d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: downside_vol_20d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: downside_vol_decline_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_above_ma60_duration_60d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_drawdown_recovery_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_higher_high_proxy_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_higher_low_proxy_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_distance_from_60d_high
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: days_since_60d_low
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: recovery_from_60d_low
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_trend_consistency_60d
+  feature_role: core
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: false
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_pullback_contained_above_ma60
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_reclaim_recent_high_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_recovery_speed_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_vs_sgov_momentum_60d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: qqq_vs_tqqq_consistency_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: yield_curve_10y2y
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+- feature_id: usd_trend_20d
+  feature_role: optional
+  available_2021_2022: true
+  missing_rate_2021_2022: 0.0
+  optionalization_allowed: true
+  future_data_fill_allowed: false
+  pit_status: PIT_APPROVED
+blocking_core_features: []

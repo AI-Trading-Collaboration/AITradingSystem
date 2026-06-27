@@ -2186,6 +2186,13 @@ def _train_single_submodel(
     validation_window = _int(wf.get("validation_window_days"), default=63)
     step = _int(wf.get("step_days"), default=21)
     min_train = _int(wf.get("min_train_samples"), default=300)
+    mode = str(wf.get("mode", "rolling_fixed"))
+    initial_train_window = (
+        _int(wf.get("min_train_days"), default=train_window)
+        if mode == "expanding_initial"
+        else train_window
+    )
+    expanding_until = _int(wf.get("expanding_until_days"), default=train_window)
     label_column = str(spec.get("label_column"))
     feature_weights = _mapping(spec.get("feature_weights"))
     floor = _int(_mapping(threshold_policy.get("positive_sample_floor")).get(model_id), default=0)
@@ -2198,9 +2205,18 @@ def _train_single_submodel(
     thresholds = []
     split_id = 0
     for validation_start in range(
-        train_window, max(train_window, len(working) - validation_window), step
+        initial_train_window,
+        max(initial_train_window, len(working) - validation_window),
+        step,
     ):
-        train = working.iloc[validation_start - train_window : validation_start].copy()
+        if mode == "expanding_initial":
+            if validation_start <= expanding_until:
+                train_start = 0
+            else:
+                train_start = validation_start - expanding_until
+        else:
+            train_start = validation_start - train_window
+        train = working.iloc[train_start:validation_start].copy()
         train = train.loc[train["train_usable"].astype(bool)].copy()
         validation = working.iloc[validation_start : validation_start + validation_window].copy()
         if len(train) < min_train or validation.empty:

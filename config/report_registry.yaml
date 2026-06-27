@@ -20355,6 +20355,196 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_walk_forward_coverage_policy_v2
+    title: First-Layer Walk-Forward Coverage Policy V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - config/research/first_layer_walk_forward_coverage_policy_v2.yaml
+      - config/research/first_layer_feature_optionalization_policy.yaml
+      - config/research/first_layer_v2_coverage_aware_selection_rule.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage policy changes after walk-forward coverage, feature optionalization, or owner escalation rules change.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_coverage_blocker_diagnosis
+    title: First-Layer V2 Coverage Blocker Diagnosis
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_blocker_diagnosis.md
+      - inputs/research_reviews/first_layer_v2_coverage_blocker_diagnosis.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage blocker diagnosis changes after threshold policy, action-value horizon, PIT feature coverage, or walk-forward split policy changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_walk_forward_coverage_simulation
+    title: First-Layer Walk-Forward Coverage Simulation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_walk_forward_coverage_simulation.md
+      - inputs/research_reviews/first_layer_walk_forward_coverage_simulation_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage simulation changes after primary window, split window length, label horizon, or coverage pass rule changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_early_feature_coverage_audit
+    title: First-Layer V2 Early Feature Coverage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_early_feature_coverage_audit.md
+      - inputs/research_reviews/first_layer_v2_early_feature_coverage_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Early feature coverage changes after PIT feature inventory, optionalization policy, or validated price/rate cache changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_coverage_rebuild_model_review
+    title: First-Layer V2 Coverage Rebuild Model Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_rebuild_model_review.md
+      - inputs/research_reviews/first_layer_v2_coverage_rebuild_model_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage rebuild model diagnostics change after labels, feature matrix, model config, threshold policy, or coverage variants change.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_coverage_policy_actual_path_review
+    title: First-Layer V2 Coverage Policy Actual-Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_policy_actual_path_review.md
+      - inputs/research_reviews/first_layer_v2_coverage_policy_actual_path_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Coverage-policy actual-path review changes after coverage variants, frozen probe registry v2, price cache, or same-risk comparison availability changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_2022_stress_recovery_slice_review
+    title: First-Layer V2 2022 Stress Recovery Slice Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_2022_stress_recovery_slice_review.md
+      - inputs/research_reviews/first_layer_v2_2022_slice_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: 2022 stress/recovery slice review changes after coverage variants, frozen probes, labels, or validated price cache changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_coverage_rebuild_failure_attribution
+    title: First-Layer V2 Coverage Rebuild Failure Attribution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_rebuild_failure_attribution.md
+      - inputs/research_reviews/first_layer_v2_coverage_rebuild_failure_attribution.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Failure attribution changes after coverage simulation, early feature audit, actual-path review, or 2022 slice review changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_coverage_rebuild_owner_pack
+    title: First-Layer V2 Coverage Rebuild Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_coverage_rebuild_owner_pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner pack changes after any coverage rebuild evidence, actual-path matrix, 2022 slice, or failure attribution changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_v2_walk_forward_coverage_rebuild_closeout
+    title: First-Layer V2 Walk-Forward Coverage Rebuild Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-coverage-rebuild
+    artifact_globs:
+      - docs/research/first_layer_v2_walk_forward_coverage_rebuild_closeout.md
+      - inputs/research_reviews/first_layer_v2_walk_forward_coverage_rebuild_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout changes after any coverage policy, model review, actual-path, 2022 slice, failure attribution, or owner-pack evidence changes.
+    owner_action: review_first_layer_v2_coverage_rebuild_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

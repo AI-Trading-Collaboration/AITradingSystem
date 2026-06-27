@@ -160,6 +160,45 @@ def test_first_layer_v2_final_matrix_records_coverage_blocker() -> None:
     )
 
 
+def test_first_layer_coverage_rebuild_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/first_layer_v2_coverage_blocker_diagnosis.yaml"),
+        Path("inputs/research_reviews/first_layer_walk_forward_coverage_simulation_matrix.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_early_feature_coverage_audit.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_coverage_rebuild_model_matrix.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_coverage_policy_actual_path_matrix.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_2022_slice_matrix.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_coverage_rebuild_failure_attribution.yaml"),
+        Path("inputs/research_reviews/first_layer_v2_walk_forward_coverage_rebuild_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "first_layer"
+        assert metadata["frozen_second_layer_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert metadata["probe_registry_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+        assert artifact["broker_action"] == "none"
+
+
+def test_first_layer_coverage_rebuild_final_matrix_records_blocker() -> None:
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/first_layer_v2_walk_forward_coverage_rebuild_final_matrix.yaml")
+    )
+
+    assert artifact["status"] == "COVERAGE_REBUILD_SUCCESS_ACTION_PATH_NO_LONGER_IMPROVES"
+    assert artifact["summary"]["coverage_pass_variant_count"] == 2
+    assert artifact["summary"]["coverage_aware_selected_policy"] == ""
+    assert artifact["final_decision"]["next_action"] == (
+        "KEEP_FIRST_LAYER_V2_COVERAGE_REBUILD_BLOCKED"
+    )
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

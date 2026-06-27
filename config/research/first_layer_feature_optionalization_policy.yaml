@@ -1,0 +1,65 @@
+schema_version: first_layer_feature_optionalization_policy.v1
+policy_id: first_layer_feature_optionalization_policy
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Coverage rebuild must distinguish genuinely required PIT features from
+    optional context features so early-window rows are not dropped silently.
+  intended_effect: >
+    Keep core trend and drawdown features mandatory while allowing optional
+    macro or confirmation features to use neutral point-in-time fills plus
+    missing indicators when early cache coverage is incomplete.
+  validation_evidence: >
+    TRADING-1766 to 1785 early feature coverage audit reports per-feature
+    availability, optionalization decision and future-data guardrails.
+  review_condition: >
+    Review before moving any feature between core, optional and blocked roles
+    or before adding external features such as VIX, SOXX/SMH or news scores.
+core_features:
+  - qqq_momentum_20d
+  - qqq_momentum_60d
+  - qqq_ma_slope_20_60
+  - qqq_drawdown_126d
+  - realized_vol_20d
+  - downside_vol_20d
+  - qqq_above_ma60_duration_60d
+  - qqq_trend_consistency_60d
+optional_features:
+  fill_method: neutral_point_in_time_fill_with_missing_indicator
+  features:
+    - qqq_momentum_120d
+    - qqq_ma_slope_60_120
+    - realized_vol_decline_20d
+    - realized_vol_decline_60d
+    - downside_vol_decline_20d
+    - qqq_drawdown_recovery_20d
+    - qqq_higher_high_proxy_20d
+    - qqq_higher_low_proxy_20d
+    - qqq_distance_from_60d_high
+    - days_since_60d_low
+    - recovery_from_60d_low
+    - qqq_pullback_contained_above_ma60
+    - qqq_reclaim_recent_high_20d
+    - qqq_recovery_speed_20d
+    - qqq_vs_sgov_momentum_60d
+    - qqq_vs_tqqq_consistency_20d
+    - yield_curve_10y2y
+    - usd_trend_20d
+blocked_features:
+  - SMH_or_SOXX_relative_strength
+  - VIX_term_structure
+  - AI_news_or_event_score
+pit_rules:
+  neutral_fill_must_use_only_known_at_or_before_decision: true
+  future_data_fill_allowed: false
+  missing_indicator_required_for_optional_fill: true
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

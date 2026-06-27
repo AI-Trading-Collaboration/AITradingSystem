@@ -1,0 +1,50 @@
+schema_version: first_layer_v2_coverage_aware_selection_rule.v1
+policy_id: first_layer_v2_coverage_aware_selection_rule
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Prior 8/8 actual-path improvement cannot be owner-review evidence while
+    prediction coverage starts in 2023. Selection must require coverage before
+    interpreting actual-path gains.
+  intended_effect: >
+    Fail closed unless 2022 coverage, actual-path improvement, defensive probe
+    stability, net-of-cost, 2022 slice and same-risk reporting are all present.
+  validation_evidence: >
+    TRADING-1766 to 1785 coverage policy actual-path matrix and 2022 slice
+    review disclose each condition per coverage variant.
+  review_condition: >
+    Review before changing improvement count, defensive regression, 2022 slice
+    or same-risk reporting requirements.
+selection_conditions:
+  coverage_pass_rule_satisfied: true
+  actual_path_improved_probe_count_min: 2
+  no_major_regression_in_defensive_probe: true
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  target_path_metrics_can_pass: false
+failure_labels:
+  - TRAIN_WINDOW_TOO_LONG
+  - MIN_TRAIN_SAMPLES_TOO_HIGH
+  - FEATURE_LOOKBACK_TOO_LONG
+  - EARLY_FEATURE_MISSING
+  - LABEL_HORIZON_BLOCKS_EARLY_PERIOD
+  - ACTION_VALUE_UNAVAILABLE
+  - DEFENSIVE_PROBE_REGRESSION
+  - NET_OF_COST_FAILURE
+  - INSUFFICIENT_ACTUAL_PATH_IMPROVEMENT
+  - MISSING_2022_ACTUAL_PATH_COVERAGE
+  - ADVERSE_2022_STRESS_RECOVERY_SLICE
+  - SAME_RISK_COMPARISON_MISSING
+  - WALK_FORWARD_POLICY_NOT_WINDOW_AWARE
+  - INSUFFICIENT_2021_2022_DATA
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

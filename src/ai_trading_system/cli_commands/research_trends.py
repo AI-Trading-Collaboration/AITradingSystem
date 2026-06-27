@@ -24,6 +24,12 @@ from ai_trading_system.first_layer_up_state_learning import (
     DEFAULT_THRESHOLD_POLICY_PATH,
     run_first_layer_up_state_learning_repair_pack,
 )
+from ai_trading_system.first_layer_walk_forward_coverage import (
+    DEFAULT_COVERAGE_POLICY_PATH,
+    DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    DEFAULT_FEATURE_OPTIONALIZATION_POLICY_PATH,
+    run_first_layer_walk_forward_coverage_rebuild_pack,
+)
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
     DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
@@ -327,6 +333,66 @@ def first_layer_v2_label_feature_model_reset_command(
         output_root=output_root,
     )
     _print_payload("First-layer v2 label feature model reset", payload)
+
+
+@trends_app.command("first-layer-coverage-rebuild")
+def first_layer_walk_forward_coverage_rebuild_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    coverage_policy_path: Annotated[
+        Path, typer.Option("--coverage-policy")
+    ] = DEFAULT_COVERAGE_POLICY_PATH,
+    feature_optionalization_policy_path: Annotated[
+        Path, typer.Option("--feature-optionalization-policy")
+    ] = DEFAULT_FEATURE_OPTIONALIZATION_POLICY_PATH,
+    coverage_selection_rule_path: Annotated[
+        Path, typer.Option("--coverage-selection-rule")
+    ] = DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    upper_state_taxonomy_path: Annotated[
+        Path, typer.Option("--upper-state-taxonomy")
+    ] = DEFAULT_UPPER_STATE_TAXONOMY_V2_PATH,
+    action_value_policy_path: Annotated[
+        Path, typer.Option("--action-value-policy")
+    ] = DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
+    threshold_policy_path: Annotated[
+        Path, typer.Option("--threshold-policy")
+    ] = DEFAULT_FIRST_LAYER_THRESHOLD_POLICY_V2_PATH,
+    composer_config_path: Annotated[
+        Path, typer.Option("--composer-config")
+    ] = DEFAULT_FIRST_LAYER_COMPOSER_V2_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_FIRST_LAYER_V2_PROBE_REGISTRY_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_walk_forward_coverage_rebuild_pack(
+        registry_path=registry_path,
+        coverage_policy_path=coverage_policy_path,
+        feature_optionalization_policy_path=feature_optionalization_policy_path,
+        coverage_selection_rule_path=coverage_selection_rule_path,
+        upper_state_taxonomy_path=upper_state_taxonomy_path,
+        action_value_policy_path=action_value_policy_path,
+        threshold_policy_path=threshold_policy_path,
+        composer_config_path=composer_config_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer walk-forward coverage rebuild", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

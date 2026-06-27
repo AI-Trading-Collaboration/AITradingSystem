@@ -1,0 +1,122 @@
+schema_version: first_layer_v2_coverage_rebuild_failure_attribution.v1
+report_type: first_layer_v2_coverage_rebuild_failure_attribution
+title: First-Layer V2 Coverage Rebuild Failure Attribution
+status: FIRST_LAYER_V2_COVERAGE_REBUILD_FAILURE_ATTRIBUTION_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T17:18:23Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  coverage_pass_variant_count: 2
+  coverage_aware_selection_pass_count: 0
+  primary_reason: DEFENSIVE_PROBE_REGRESSION
+  reason_count: 1
+  coverage_blocker_status: FIRST_LAYER_V2_COVERAGE_BLOCKER_DIAGNOSIS_READY_PROMOTION_BLOCKED
+  early_feature_status: EARLY_FEATURE_COVERAGE_PASS
+  actual_path_status: FIRST_LAYER_V2_COVERAGE_POLICY_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+  slice_review_status: FIRST_LAYER_V2_2022_STRESS_RECOVERY_SLICE_READY_PROMOTION_BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: first_layer
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: first_layer_coverage_rebuild_v2
+  threshold_policy: first_layer_walk_forward_coverage_policy_v2
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: true
+failure_reasons:
+- DEFENSIVE_PROBE_REGRESSION
+policy_attribution_rows:
+- policy_id: wf_504d_baseline
+  does_coverage_pass_rule: false
+  coverage_aware_selection_pass: false
+  actual_path_improved_probe_count: 8
+  probe_count: 8
+  improvement_on_2022_included_window: false
+  no_major_regression_in_defensive_probe: true
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  failure_reasons:
+  - FIRST_PREDICTION_AFTER_REQUIRED_2022_03_01
+  - MISSING_2022_ACTUAL_PATH_COVERAGE
+- policy_id: wf_378d_initial
+  does_coverage_pass_rule: false
+  coverage_aware_selection_pass: false
+  actual_path_improved_probe_count: 8
+  probe_count: 8
+  improvement_on_2022_included_window: false
+  no_major_regression_in_defensive_probe: true
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  failure_reasons:
+  - FIRST_PREDICTION_AFTER_REQUIRED_2022_03_01
+  - MISSING_2022_ACTUAL_PATH_COVERAGE
+- policy_id: wf_252d_initial
+  does_coverage_pass_rule: true
+  coverage_aware_selection_pass: false
+  actual_path_improved_probe_count: 5
+  probe_count: 8
+  improvement_on_2022_included_window: true
+  no_major_regression_in_defensive_probe: false
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  failure_reasons:
+  - DEFENSIVE_PROBE_REGRESSION
+- policy_id: wf_expanding_initial
+  does_coverage_pass_rule: true
+  coverage_aware_selection_pass: false
+  actual_path_improved_probe_count: 6
+  probe_count: 8
+  improvement_on_2022_included_window: true
+  no_major_regression_in_defensive_probe: false
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  failure_reasons:
+  - DEFENSIVE_PROBE_REGRESSION
+- policy_id: wf_warm_start_diagnostic
+  does_coverage_pass_rule: false
+  coverage_aware_selection_pass: false
+  actual_path_improved_probe_count: 5
+  probe_count: 8
+  improvement_on_2022_included_window: false
+  no_major_regression_in_defensive_probe: false
+  net_of_cost_not_worse: true
+  2022_slice_not_worse_than_flat_reference: true
+  same_risk_comparison_reported: true
+  failure_reasons:
+  - DIAGNOSTIC_ONLY_WARM_START
+  - MISSING_2022_ACTUAL_PATH_COVERAGE
+  - DEFENSIVE_PROBE_REGRESSION
