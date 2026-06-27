@@ -31,6 +31,16 @@ from ai_trading_system.research_window_extension import (
     DEFAULT_WINDOWED_STATIC_FRONTIER_ROOT,
     run_research_window_extension_validation_pack,
 )
+from ai_trading_system.second_layer_probe_library_freeze import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
+)
+from ai_trading_system.second_layer_probe_library_freeze import (
+    DEFAULT_PREDICTIONS_PATH as DEFAULT_SECOND_LAYER_FROZEN_PREDICTIONS_PATH,
+)
+from ai_trading_system.second_layer_probe_library_freeze import (
+    DEFAULT_PROBE_REGISTRY_V2_PATH,
+    run_second_layer_probe_library_freeze_pack,
+)
 from ai_trading_system.upper_state_label_feature_reset import (
     DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
     DEFAULT_ALTERNATING_PROTOCOL_PATH,
@@ -173,6 +183,44 @@ def research_window_extension_command(
         actual_path_output_root=actual_path_output_root,
     )
     _print_payload("Research window extension validation", payload)
+
+
+@trends_app.command("second-layer-probe-freeze")
+def second_layer_probe_freeze_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_PROBE_REGISTRY_V2_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    predictions_path: Annotated[
+        Path, typer.Option("--predictions-path")
+    ] = DEFAULT_SECOND_LAYER_FROZEN_PREDICTIONS_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_second_layer_probe_library_freeze_pack(
+        registry_path=registry_path,
+        probe_registry_path=probe_registry_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        predictions_path=predictions_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Second-layer probe library freeze", payload)
 
 
 @trends_app.command("upper-state-reset")

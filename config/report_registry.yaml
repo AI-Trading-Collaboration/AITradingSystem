@@ -20023,6 +20023,143 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_second_layer_probe_registry_v2
+    title: Dynamic Second-Layer Probe Registry V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - config/research/dynamic_second_layer_probe_registry_v2.yaml
+      - docs/research/dynamic_second_layer_probe_registry_v2_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Probe registry v2 is refreshed before any post-adoption first-layer calibration can use frozen second-layer probes.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_exposure_review_v2
+    title: Second-Layer Probe Exposure Review V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - outputs/research_probes/second_layer_v2/qqq_equivalent_exposure_by_state.csv
+      - docs/research/second_layer_probe_exposure_review_v2.md
+      - inputs/research_reviews/second_layer_probe_exposure_matrix_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Exposure review changes when probe weights, trend-state ordering, or TQQQ caps change.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_actual_path_review_v2
+    title: Second-Layer Probe Actual-Path Review V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - outputs/research_probes/second_layer_v2/actual_path_rebacktest/probe_actual_path_metrics.csv
+      - docs/research/second_layer_probe_actual_path_review_v2.md
+      - inputs/research_reviews/second_layer_probe_actual_path_matrix_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Actual-path review changes after frozen first-layer predictions, validated prices, or probe registry v2 changes.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_same_risk_frontier_review_v2
+    title: Second-Layer Probe Same-Risk Frontier Review V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - docs/research/second_layer_probe_same_risk_frontier_review_v2.md
+      - inputs/research_reviews/second_layer_probe_same_risk_frontier_matrix_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Same-risk frontier comparison changes after probe actual-path metrics or static frontier representatives change.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_tqqq_stress_review_v2
+    title: Second-Layer Probe TQQQ Stress Review V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - docs/research/second_layer_probe_tqqq_stress_review_v2.md
+      - inputs/research_reviews/second_layer_probe_tqqq_stress_matrix_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TQQQ stress review changes after probe TQQQ weights, stress policy, or validated TQQQ price cache changes.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_action_value_probe_readiness_v2
+    title: Second-Layer Action-Value Probe Readiness V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - docs/research/second_layer_action_value_probe_readiness_review_v2.md
+      - inputs/research_reviews/second_layer_action_value_probe_readiness_v2.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Readiness matrix changes after registry constraints, actual-path metrics, same-risk comparison, or TQQQ stress review changes.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: second_layer_probe_library_freeze_closeout
+    title: Second-Layer Probe Library Freeze Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends second-layer-probe-freeze
+    artifact_globs:
+      - docs/research/first_layer_calibration_probe_dependency_update.md
+      - docs/research/second_layer_probe_library_freeze_owner_pack.md
+      - docs/research/second_layer_probe_library_freeze_closeout.md
+      - inputs/research_reviews/second_layer_probe_library_freeze_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout changes after any second-layer v2 registry, metrics, readiness, or owner-pack evidence changes.
+    owner_action: review_second_layer_probe_library_freeze_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

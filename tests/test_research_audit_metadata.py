@@ -87,6 +87,40 @@ def test_final_matrix_records_legacy_overfit_promotion_blocker() -> None:
     )
 
 
+def test_second_layer_probe_freeze_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/second_layer_probe_exposure_matrix_v2.yaml"),
+        Path("inputs/research_reviews/second_layer_probe_actual_path_matrix_v2.yaml"),
+        Path("inputs/research_reviews/second_layer_probe_same_risk_frontier_matrix_v2.yaml"),
+        Path("inputs/research_reviews/second_layer_probe_tqqq_stress_matrix_v2.yaml"),
+        Path("inputs/research_reviews/second_layer_action_value_probe_readiness_v2.yaml"),
+        Path("inputs/research_reviews/second_layer_probe_library_freeze_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "second_layer"
+        assert metadata["probe_registry_version"] == "dynamic_second_layer_probe_registry_v2"
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+
+
+def test_second_layer_probe_freeze_final_matrix_counts() -> None:
+    artifact = _load_yaml(
+        Path("inputs/research_reviews/second_layer_probe_library_freeze_final_matrix.yaml")
+    )
+
+    assert artifact["status"] == "SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY"
+    assert artifact["summary"]["probe_count"] == 8
+    assert artifact["summary"]["approved_action_value_probe_count"] == 7
+    assert artifact["summary"]["diagnostic_only_probe_count"] == 1
+    assert artifact["summary"]["tqqq_stress_blocked_count"] == 0
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

@@ -1,0 +1,67 @@
+schema_version: second_layer_probe_library_freeze_final_matrix.v1
+report_type: second_layer_probe_library_freeze_final_matrix
+title: Second-Layer Probe Library Freeze Final Matrix
+status: SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY
+generated_at: '2026-06-27T16:07:00Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  research_window_id: exact_three_asset_validated
+  research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+  requested_start: '2021-02-22'
+  actual_start: '2021-02-22'
+  actual_portfolio_start: '2021-02-22'
+  end: latest
+  window_role: primary_validated
+  data_quality_contract: secondary_cross_checked
+  exact_or_proxy: exact
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  probe_count: 8
+  state_exposure_rows: 40
+  approved_action_value_probe_count: 7
+  diagnostic_only_probe_count: 1
+  rejected_probe_count: 0
+  same_risk_frontier_summary:
+    DIAGNOSTIC_ONLY: 1
+    PROBE_BEATS_SAME_RISK_FRONTIER: 7
+  tqqq_probe_count: 5
+  tqqq_stress_blocked_count: 0
+  data_quality_status: PASS_WITH_WARNINGS
+  first_layer_dependency: freeze_dynamic_second_layer_probe_registry_v2
+readiness_summary:
+  probe_count: 8
+  approved_action_value_probe_count: 7
+  diagnostic_only_probe_count: 1
+  rejected_probe_count: 0
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: second_layer
+  frozen_first_layer_version: first_layer_composer_v2
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v1
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_labels_v2_reference_only
+  feature_set_version: pit_feature_matrix_v3_reference_only
+  model_version: first_layer_composer_v2
+  threshold_policy: first_layer_threshold_policy_v2_frozen
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 8
+  pre_registered_selection_rule: true
