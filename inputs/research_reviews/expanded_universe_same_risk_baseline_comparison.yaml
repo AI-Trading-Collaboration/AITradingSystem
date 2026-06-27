@@ -1,0 +1,206 @@
+schema_version: '1.0'
+report_type: expanded_universe_same_risk_baseline_comparison
+title: Expanded Universe Same Risk Baseline Comparison
+status: SAME_RISK_BASELINE_COMPARISON_READY
+generated_at: '2026-06-27T11:26:44Z'
+source_commit: 5dec39c3
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 11
+  promotion_status: BLOCKED
+research_only: true
+candidate_only: true
+actual_path_required: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 266619325a4cd9ebe5aeecba675733dc057809932878a50a770d6f128141757c
+rows:
+- strategy_id: expanded_state_highest_return_under_max_dd_cap
+  candidate_family: expanded_state_portfolio_candidate
+  actual_path_annual_return: 0.273317
+  actual_path_max_drawdown: -0.152434
+  actual_path_sharpe: 1.455696
+  actual_path_calmar: 1.793025
+  qqq_equivalent_exposure: 1.0599
+  comparable_static_strategy_id: simplex_qqq0900_sgov0050_tqqq0050
+  comparable_static_annual_return: 0.29912
+  comparable_static_max_drawdown: -0.237554
+  comparable_static_sharpe: 1.417946
+  comparable_static_calmar: 1.259167
+  annual_return_edge: -0.025803
+  drawdown_delta: 0.08512
+  sharpe_edge: 0.03775
+  calmar_edge: 0.533858
+- strategy_id: expanded_state_lowest_turnover
+  candidate_family: expanded_state_portfolio_candidate
+  actual_path_annual_return: 0.243321
+  actual_path_max_drawdown: -0.119775
+  actual_path_sharpe: 1.445702
+  actual_path_calmar: 2.031489
+  qqq_equivalent_exposure: 0.94273
+  comparable_static_strategy_id: simplex_qqq0950_sgov0050_tqqq0000
+  comparable_static_annual_return: 0.276667
+  comparable_static_max_drawdown: -0.217009
+  comparable_static_sharpe: 1.443142
+  comparable_static_calmar: 1.274912
+  annual_return_edge: -0.033346
+  drawdown_delta: 0.097234
+  sharpe_edge: 0.00256
+  calmar_edge: 0.756577
+- strategy_id: expanded_state_highest_calmar
+  candidate_family: expanded_state_portfolio_candidate
+  actual_path_annual_return: 0.216065
+  actual_path_max_drawdown: -0.099832
+  actual_path_sharpe: 1.427724
+  actual_path_calmar: 2.164279
+  qqq_equivalent_exposure: 0.847652
+  comparable_static_strategy_id: simplex_qqq0850_sgov0150_tqqq0000
+  comparable_static_annual_return: 0.252203
+  comparable_static_max_drawdown: -0.195371
+  comparable_static_sharpe: 1.472508
+  comparable_static_calmar: 1.290893
+  annual_return_edge: -0.036138
+  drawdown_delta: 0.095539
+  sharpe_edge: -0.044784
+  calmar_edge: 0.873386
+- strategy_id: expanded_state_highest_sharpe
+  candidate_family: expanded_state_portfolio_candidate
+  actual_path_annual_return: 0.215914
+  actual_path_max_drawdown: -0.099769
+  actual_path_sharpe: 1.427044
+  actual_path_calmar: 2.164132
+  qqq_equivalent_exposure: 0.847652
+  comparable_static_strategy_id: simplex_qqq0850_sgov0150_tqqq0000
+  comparable_static_annual_return: 0.252203
+  comparable_static_max_drawdown: -0.195371
+  comparable_static_sharpe: 1.472508
+  comparable_static_calmar: 1.290893
+  annual_return_edge: -0.036289
+  drawdown_delta: 0.095602
+  sharpe_edge: -0.045464
+  calmar_edge: 0.873239
+- strategy_id: expanded_state_lowest_drawdown
+  candidate_family: expanded_state_portfolio_candidate
+  actual_path_annual_return: 0.214041
+  actual_path_max_drawdown: -0.099718
+  actual_path_sharpe: 1.418225
+  actual_path_calmar: 2.146465
+  qqq_equivalent_exposure: 0.847651
+  comparable_static_strategy_id: simplex_qqq0850_sgov0150_tqqq0000
+  comparable_static_annual_return: 0.252203
+  comparable_static_max_drawdown: -0.195371
+  comparable_static_sharpe: 1.472508
+  comparable_static_calmar: 1.290893
+  annual_return_edge: -0.038162
+  drawdown_delta: 0.095653
+  sharpe_edge: -0.054283
+  calmar_edge: 0.855572
+- strategy_id: limited_adjustment
+  candidate_family: limited_adjustment_baseline
+  actual_path_annual_return: 0.186361
+  actual_path_max_drawdown: -0.11674
+  actual_path_sharpe: 1.626394
+  actual_path_calmar: 1.596379
+  qqq_equivalent_exposure: 0.604586
+  comparable_static_strategy_id: simplex_qqq0600_sgov0400_tqqq0000
+  comparable_static_annual_return: 0.191264
+  comparable_static_max_drawdown: -0.139481
+  comparable_static_sharpe: 1.587324
+  comparable_static_calmar: 1.371251
+  annual_return_edge: -0.004903
+  drawdown_delta: 0.022741
+  sharpe_edge: 0.03907
+  calmar_edge: 0.225128
+- strategy_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  candidate_family: static_frontier_candidate
+  actual_path_annual_return: 0.083173
+  actual_path_max_drawdown: -0.03251
+  actual_path_sharpe: 2.738531
+  actual_path_calmar: 2.558415
+  qqq_equivalent_exposure: 0.15
+  comparable_static_strategy_id: simplex_qqq0000_sgov0950_tqqq0050
+  comparable_static_annual_return: 0.081357
+  comparable_static_max_drawdown: -0.031415
+  comparable_static_sharpe: 2.784425
+  comparable_static_calmar: 2.589786
+  annual_return_edge: 0.001816
+  drawdown_delta: -0.001095
+  sharpe_edge: -0.045894
+  calmar_edge: -0.031371
+- strategy_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  candidate_family: static_frontier_candidate
+  actual_path_annual_return: 0.082033
+  actual_path_max_drawdown: -0.032772
+  actual_path_sharpe: 2.728452
+  actual_path_calmar: 2.503129
+  qqq_equivalent_exposure: 0.15
+  comparable_static_strategy_id: simplex_qqq0000_sgov0950_tqqq0050
+  comparable_static_annual_return: 0.081357
+  comparable_static_max_drawdown: -0.031415
+  comparable_static_sharpe: 2.784425
+  comparable_static_calmar: 2.589786
+  annual_return_edge: 0.000676
+  drawdown_delta: -0.001357
+  sharpe_edge: -0.055973
+  calmar_edge: -0.086657
+- strategy_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  candidate_family: static_frontier_candidate
+  actual_path_annual_return: 0.071167
+  actual_path_max_drawdown: -0.019947
+  actual_path_sharpe: 3.502283
+  actual_path_calmar: 3.567777
+  qqq_equivalent_exposure: 0.1
+  comparable_static_strategy_id: simplex_qqq0100_sgov0900_tqqq0000
+  comparable_static_annual_return: 0.07095
+  comparable_static_max_drawdown: -0.019722
+  comparable_static_sharpe: 3.530072
+  comparable_static_calmar: 3.597535
+  annual_return_edge: 0.000217
+  drawdown_delta: -0.000225
+  sharpe_edge: -0.027789
+  calmar_edge: -0.029758
+- strategy_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  candidate_family: static_frontier_candidate
+  actual_path_annual_return: 0.059185
+  actual_path_max_drawdown: -0.007259
+  actual_path_sharpe: 5.712763
+  actual_path_calmar: 8.15297
+  qqq_equivalent_exposure: 0.05
+  comparable_static_strategy_id: simplex_qqq0050_sgov0950_tqqq0000
+  comparable_static_annual_return: 0.059073
+  comparable_static_max_drawdown: -0.00714
+  comparable_static_sharpe: 5.764876
+  comparable_static_calmar: 8.273366
+  annual_return_edge: 0.000112
+  drawdown_delta: -0.000119
+  sharpe_edge: -0.052113
+  calmar_edge: -0.120396
+- strategy_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  candidate_family: static_frontier_candidate
+  actual_path_annual_return: 0.04723
+  actual_path_max_drawdown: -0.000231
+  actual_path_sharpe: 19.775242
+  actual_path_calmar: 204.624167
+  qqq_equivalent_exposure: 0.0
+  comparable_static_strategy_id: simplex_qqq0000_sgov1000_tqqq0000
+  comparable_static_annual_return: 0.04723
+  comparable_static_max_drawdown: -0.000231
+  comparable_static_sharpe: 19.775242
+  comparable_static_calmar: 204.624167
+  annual_return_edge: 0.0
+  drawdown_delta: 0.0
+  sharpe_edge: 0.0
+  calmar_edge: 0.0
+dynamic_promotion:
+  final_status: BLOCKED

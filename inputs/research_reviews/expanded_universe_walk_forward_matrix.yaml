@@ -1,0 +1,140 @@
+schema_version: '1.0'
+report_type: expanded_universe_walk_forward_matrix
+title: Expanded Universe Walk Forward Matrix
+status: WALK_FORWARD_REVIEW_READY_WITH_BLOCKERS
+generated_at: '2026-06-27T11:26:45Z'
+source_commit: 5dec39c3
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 11
+  promotion_status: BLOCKED
+research_only: true
+candidate_only: true
+actual_path_required: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 266619325a4cd9ebe5aeecba675733dc057809932878a50a770d6f128141757c
+rows:
+- strategy_id: expanded_state_highest_return_under_max_dd_cap
+  candidate_family_id: expanded_state_portfolio_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 10
+  in_sample_metric: 1.793025
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_lowest_turnover
+  candidate_family_id: expanded_state_portfolio_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 11
+  in_sample_metric: 2.031489
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_highest_calmar
+  candidate_family_id: expanded_state_portfolio_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 9
+  in_sample_metric: 2.164279
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_highest_sharpe
+  candidate_family_id: expanded_state_portfolio_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 7
+  in_sample_metric: 2.164132
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_lowest_drawdown
+  candidate_family_id: expanded_state_portfolio_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 8
+  in_sample_metric: 2.146465
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: limited_adjustment
+  candidate_family_id: limited_adjustment_baseline
+  number_of_searched_candidates: 11
+  selection_rank: 1
+  in_sample_metric: 1.596379
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  candidate_family_id: static_frontier_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 6
+  in_sample_metric: 2.558415
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  candidate_family_id: static_frontier_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 5
+  in_sample_metric: 2.503129
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  candidate_family_id: static_frontier_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 4
+  in_sample_metric: 3.567777
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  candidate_family_id: static_frontier_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 3
+  in_sample_metric: 8.15297
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  candidate_family_id: static_frontier_candidate
+  number_of_searched_candidates: 11
+  selection_rank: 2
+  in_sample_metric: 204.624167
+  validation_metric: null
+  holdout_metric: null
+  stability_score: 0.0
+  status: WALK_FORWARD_BLOCKED_PENDING_SPLIT_EVIDENCE
+  promotion_gate_status: BLOCKED
+dynamic_promotion:
+  final_status: BLOCKED

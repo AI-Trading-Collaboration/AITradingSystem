@@ -1,0 +1,173 @@
+schema_version: '1.0'
+report_type: tqqq_risk_attribution_matrix
+title: Tqqq Risk Attribution Matrix
+status: TQQQ_RISK_ATTRIBUTION_READY
+generated_at: '2026-06-27T11:26:44Z'
+source_commit: 5dec39c3
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 11
+  promotion_status: BLOCKED
+research_only: true
+candidate_only: true
+actual_path_required: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+target_path_metrics_role: diagnostic_only
+config_hash: 266619325a4cd9ebe5aeecba675733dc057809932878a50a770d6f128141757c
+rows:
+- strategy_id: limited_adjustment
+  tqqq_max_weight: 0.0
+  tqqq_avg_weight: 0.0
+  tqqq_days_positive: 0
+  qqq_equivalent_exposure_max: 0.65
+  qqq_equivalent_exposure_avg: 0.604586
+  worst_1d_return: -0.031095
+  worst_5d_return: -0.0546
+  worst_20d_return: -0.071544
+  max_drawdown_daily_equity: -0.11674
+  tqqq_contribution_to_drawdown: -0.0
+  tqqq_contribution_to_return: 0.0
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0000_sgov1000_tqqq0000
+  tqqq_max_weight: 0.0
+  tqqq_avg_weight: 0.0
+  tqqq_days_positive: 0
+  qqq_equivalent_exposure_max: 0.0
+  qqq_equivalent_exposure_avg: 0.0
+  worst_1d_return: -0.000231
+  worst_5d_return: 0.000345
+  worst_20d_return: 0.002613
+  max_drawdown_daily_equity: -0.000231
+  tqqq_contribution_to_drawdown: 0.0
+  tqqq_contribution_to_return: 0.0
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0050_sgov0950_tqqq0000
+  tqqq_max_weight: 0.0
+  tqqq_avg_weight: 0.0
+  tqqq_days_positive: 0
+  qqq_equivalent_exposure_max: 0.05
+  qqq_equivalent_exposure_avg: 0.05
+  worst_1d_return: -0.002808
+  worst_5d_return: -0.005594
+  worst_20d_return: -0.004132
+  max_drawdown_daily_equity: -0.007259
+  tqqq_contribution_to_drawdown: -0.0
+  tqqq_contribution_to_return: 0.0
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0100_sgov0900_tqqq0000
+  tqqq_max_weight: 0.0
+  tqqq_avg_weight: 0.0
+  tqqq_days_positive: 0
+  qqq_equivalent_exposure_max: 0.1
+  qqq_equivalent_exposure_avg: 0.1
+  worst_1d_return: -0.005928
+  worst_5d_return: -0.011792
+  worst_20d_return: -0.011481
+  max_drawdown_daily_equity: -0.019947
+  tqqq_contribution_to_drawdown: -0.0
+  tqqq_contribution_to_return: 0.0
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0000_sgov0950_tqqq0050
+  tqqq_max_weight: 0.05
+  tqqq_avg_weight: 0.05
+  tqqq_days_positive: 894
+  qqq_equivalent_exposure_max: 0.15
+  qqq_equivalent_exposure_avg: 0.15
+  worst_1d_return: -0.008852
+  worst_5d_return: -0.018045
+  worst_20d_return: -0.018716
+  max_drawdown_daily_equity: -0.032772
+  tqqq_contribution_to_drawdown: 1.1673
+  tqqq_contribution_to_return: 0.447099
+  promotion_gate_status: BLOCKED
+- strategy_id: static_simplex_qqq0150_sgov0850_tqqq0000
+  tqqq_max_weight: 0.0
+  tqqq_avg_weight: 0.0
+  tqqq_days_positive: 0
+  qqq_equivalent_exposure_max: 0.15
+  qqq_equivalent_exposure_avg: 0.15
+  worst_1d_return: -0.009049
+  worst_5d_return: -0.01797
+  worst_20d_return: -0.018804
+  max_drawdown_daily_equity: -0.03251
+  tqqq_contribution_to_drawdown: -0.0
+  tqqq_contribution_to_return: 0.0
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_highest_sharpe
+  tqqq_max_weight: 0.15
+  tqqq_avg_weight: 0.046421
+  tqqq_days_positive: 372
+  qqq_equivalent_exposure_max: 1.3
+  qqq_equivalent_exposure_avg: 0.847651
+  worst_1d_return: -0.047999
+  worst_5d_return: -0.068802
+  worst_20d_return: -0.096366
+  max_drawdown_daily_equity: -0.099769
+  tqqq_contribution_to_drawdown: 0.33304
+  tqqq_contribution_to_return: 0.141035
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_lowest_drawdown
+  tqqq_max_weight: 0.15
+  tqqq_avg_weight: 0.131935
+  tqqq_days_positive: 834
+  qqq_equivalent_exposure_max: 1.3
+  qqq_equivalent_exposure_avg: 0.847651
+  worst_1d_return: -0.047729
+  worst_5d_return: -0.068824
+  worst_20d_return: -0.096471
+  max_drawdown_daily_equity: -0.099718
+  tqqq_contribution_to_drawdown: 0.523624
+  tqqq_contribution_to_return: 0.40396
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_highest_calmar
+  tqqq_max_weight: 0.15
+  tqqq_avg_weight: 0.038423
+  tqqq_days_positive: 229
+  qqq_equivalent_exposure_max: 1.3
+  qqq_equivalent_exposure_avg: 0.847651
+  worst_1d_return: -0.047999
+  worst_5d_return: -0.068802
+  worst_20d_return: -0.096273
+  max_drawdown_daily_equity: -0.099832
+  tqqq_contribution_to_drawdown: 0.188765
+  tqqq_contribution_to_return: 0.104133
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_highest_return_under_max_dd_cap
+  tqqq_max_weight: 0.3
+  tqqq_avg_weight: 0.091667
+  tqqq_days_positive: 494
+  qqq_equivalent_exposure_max: 1.55
+  qqq_equivalent_exposure_avg: 1.059899
+  worst_1d_return: -0.055821
+  worst_5d_return: -0.075582
+  worst_20d_return: -0.129619
+  max_drawdown_daily_equity: -0.152434
+  tqqq_contribution_to_drawdown: 0.277131
+  tqqq_contribution_to_return: 0.194693
+  promotion_gate_status: BLOCKED
+- strategy_id: expanded_state_lowest_turnover
+  tqqq_max_weight: 0.15
+  tqqq_avg_weight: 0.038423
+  tqqq_days_positive: 229
+  qqq_equivalent_exposure_max: 1.3
+  qqq_equivalent_exposure_avg: 0.942729
+  worst_1d_return: -0.047999
+  worst_5d_return: -0.068802
+  worst_20d_return: -0.114237
+  max_drawdown_daily_equity: -0.119775
+  tqqq_contribution_to_drawdown: 0.151878
+  tqqq_contribution_to_return: 0.092962
+  promotion_gate_status: BLOCKED
+dynamic_promotion:
+  final_status: BLOCKED

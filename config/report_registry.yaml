@@ -19177,3 +19177,166 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: expanded_universe_scope_review
+    title: Expanded QQQ SGOV TQQQ Universe Scope Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe scope-review
+    artifact_globs:
+      - docs/research/expanded_qqq_sgov_tqqq_universe_scope.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_tqqq_data_quality_review
+    title: Expanded Universe TQQQ Data Quality Blocking Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe tqqq-data-quality-review
+    artifact_globs:
+      - docs/research/tqqq_data_quality_blocking_review.md
+      - inputs/research_reviews/tqqq_data_quality_blocking_review.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_static_simplex_grid
+    title: Expanded Universe Static Simplex Grid
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe static-simplex-grid
+    artifact_globs:
+      - outputs/research_strategies/expanded_universe/static_simplex_grid/static_simplex_grid_index.json
+      - outputs/research_strategies/expanded_universe/static_simplex_grid/static_simplex_grid_index.md
+      - outputs/research_strategies/expanded_universe/static_simplex_grid/static_simplex_grid_metrics.csv
+      - outputs/research_strategies/expanded_universe/static_simplex_grid/static_simplex_grid_pareto_frontier.csv
+      - outputs/research_strategies/expanded_universe/static_simplex_grid/static_simplex_grid_risk_bucket_summary.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_static_frontier_review
+    title: Expanded Universe Static Frontier Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe static-frontier-review
+    artifact_globs:
+      - docs/research/expanded_universe_static_frontier_review.md
+      - inputs/research_reviews/expanded_universe_static_frontier_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_risk_bucket_representatives
+    title: Expanded Universe Risk Bucket Representatives
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe risk-bucket-representatives
+    artifact_globs:
+      - outputs/research_strategies/expanded_universe/risk_bucket_representatives.csv
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_state_portfolio_candidates
+    title: Expanded Universe State Portfolio Candidates
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe state-portfolio-candidates
+    artifact_globs:
+      - outputs/research_strategies/expanded_universe/state_portfolio_candidates.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_actual_path_rebacktest
+    title: Expanded Universe Actual Path Rebacktest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe actual-path-rebacktest
+    artifact_globs:
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/leaderboard_actual_path.csv
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/leaderboard_target_path_diagnostic.csv
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/target_vs_actual_gap_summary.csv
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/tqqq_risk_summary.csv
+      - outputs/research_strategies/expanded_universe/actual_path_rebacktest/expanded_universe_promotion_readiness.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: expanded_universe_owner_review_pack
+    title: Expanded Universe Owner Review Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies expanded-universe owner-review-pack
+    artifact_globs:
+      - docs/research/expanded_qqq_sgov_tqqq_allocation_owner_review_pack.md
+      - docs/research/tqqq_risk_attribution_review.md
+      - docs/research/expanded_dynamic_candidate_survival_review.md
+      - docs/research/expanded_universe_walk_forward_review.md
+      - docs/research/expanded_universe_net_of_cost_review.md
+      - docs/research/expanded_universe_stress_risk_review.md
+      - inputs/research_reviews/tqqq_risk_attribution_matrix.yaml
+      - inputs/research_reviews/expanded_universe_same_risk_baseline_comparison.yaml
+      - inputs/research_reviews/expanded_dynamic_candidate_survival_matrix.yaml
+      - inputs/research_reviews/expanded_universe_walk_forward_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1506 to 1525 expanded universe research artifacts are regenerated after universe, data-quality, execution, or owner-review changes.
+    owner_action: review_expanded_universe_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
