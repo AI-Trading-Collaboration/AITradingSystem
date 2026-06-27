@@ -1,0 +1,34 @@
+schema_version: consensus_trend_label_summary.v1
+report_type: consensus_trend_label_summary
+title: Consensus Trend Label Summary
+status: CONSENSUS_TREND_LABELS_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:04:12Z'
+source_commit: a49234fb
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  single_probe_label_count: 13328
+  consensus_label_count: 3332
+  high_confidence_training_sample_count: 2966
+  label_distribution:
+    constructive: 338
+    defensive: 35
+    neutral: 746
+    risk_off: 2032
+    risk_on: 181
+  avg_disagreement_score: 0.188475
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+config_hash: d776cb4ba6b81b09931ab441bd6b3e7ba0e8e57c6a28e0eca8ebce0374e93590

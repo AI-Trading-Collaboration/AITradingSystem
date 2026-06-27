@@ -1,0 +1,234 @@
+schema_version: first_layer_trend_model_walk_forward_matrix.v1
+report_type: first_layer_trend_model_walk_forward_matrix
+title: First-Layer Trend Model Walk-Forward Matrix
+status: FIRST_LAYER_WALK_FORWARD_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:04:12Z'
+source_commit: a49234fb
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  accuracy: 0.361416
+  balanced_accuracy: 0.151597
+  risk_off_precision: 0.672055
+  risk_off_recall: 0.512324
+  false_risk_off_rate: 0.173382
+  late_risk_off_rate: 0.338217
+  false_risk_on_rate: 0.0
+  late_re_risk_rate: 0.021978
+  consensus_label_margin_capture: 0.879124
+  model_id: first_layer_ordinal_linear_v1
+  split_count: 13
+  prediction_count: 819
+  train_window_days: 504
+  validation_window_days: 63
+  step_days: 21
+  min_train_samples: 300
+  label_horizon_days: 20
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+config_hash: d776cb4ba6b81b09931ab441bd6b3e7ba0e8e57c6a28e0eca8ebce0374e93590
+coefficients:
+- split_id: 0
+  train_start: '2022-12-01'
+  train_end: '2024-12-03'
+  validation_start: '2024-12-04'
+  validation_end: '2025-03-07'
+  train_sample_count: 430
+  coefficients:
+    intercept: 0.76976744
+    qqq_momentum_20d: -0.04344973
+    qqq_momentum_60d: -0.46342972
+    qqq_ma_slope_20_60: 0.29185347
+    qqq_drawdown_126d: -0.18563522
+    realized_vol_20d: 0.00322588
+    yield_curve_10y2y: -0.04402673
+- split_id: 1
+  train_start: '2023-01-03'
+  train_end: '2025-01-03'
+  validation_start: '2025-01-06'
+  validation_end: '2025-04-07'
+  train_sample_count: 431
+  coefficients:
+    intercept: 0.72157773
+    qqq_momentum_20d: -0.11389944
+    qqq_momentum_60d: -0.49161474
+    qqq_ma_slope_20_60: 0.18579505
+    qqq_drawdown_126d: -0.05319817
+    realized_vol_20d: -0.08519746
+    yield_curve_10y2y: -0.16110804
+- split_id: 2
+  train_start: '2023-02-02'
+  train_end: '2025-02-05'
+  validation_start: '2025-02-06'
+  validation_end: '2025-05-07'
+  train_sample_count: 434
+  coefficients:
+    intercept: 0.65668203
+    qqq_momentum_20d: -0.0390676
+    qqq_momentum_60d: -0.51286106
+    qqq_ma_slope_20_60: 0.19537981
+    qqq_drawdown_126d: 0.00822224
+    realized_vol_20d: -0.09492128
+    yield_curve_10y2y: -0.13523529
+- split_id: 3
+  train_start: '2023-03-06'
+  train_end: '2025-03-07'
+  validation_start: '2025-03-10'
+  validation_end: '2025-06-06'
+  train_sample_count: 434
+  coefficients:
+    intercept: 0.63364055
+    qqq_momentum_20d: 0.1225767
+    qqq_momentum_60d: -0.68855778
+    qqq_ma_slope_20_60: 0.2620507
+    qqq_drawdown_126d: 0.05555498
+    realized_vol_20d: 0.07984075
+    yield_curve_10y2y: -0.27930879
+- split_id: 4
+  train_start: '2023-04-04'
+  train_end: '2025-04-07'
+  validation_start: '2025-04-08'
+  validation_end: '2025-07-09'
+  train_sample_count: 439
+  coefficients:
+    intercept: 0.60364465
+    qqq_momentum_20d: 0.24103869
+    qqq_momentum_60d: -0.69621149
+    qqq_ma_slope_20_60: 0.24286307
+    qqq_drawdown_126d: -0.01474172
+    realized_vol_20d: 0.0114955
+    yield_curve_10y2y: -0.25819054
+- split_id: 5
+  train_start: '2023-05-04'
+  train_end: '2025-05-07'
+  validation_start: '2025-05-08'
+  validation_end: '2025-08-07'
+  train_sample_count: 438
+  coefficients:
+    intercept: 0.67123288
+    qqq_momentum_20d: 0.32080995
+    qqq_momentum_60d: -0.79525051
+    qqq_ma_slope_20_60: 0.35803181
+    qqq_drawdown_126d: -0.00845065
+    realized_vol_20d: 0.40543671
+    yield_curve_10y2y: -0.28131653
+- split_id: 6
+  train_start: '2023-06-06'
+  train_end: '2025-06-06'
+  validation_start: '2025-06-09'
+  validation_end: '2025-09-08'
+  train_sample_count: 443
+  coefficients:
+    intercept: 0.62979684
+    qqq_momentum_20d: 0.27651063
+    qqq_momentum_60d: -0.65137538
+    qqq_ma_slope_20_60: 0.32594659
+    qqq_drawdown_126d: -0.13973524
+    realized_vol_20d: 0.31765088
+    yield_curve_10y2y: -0.21931597
+- split_id: 7
+  train_start: '2023-07-06'
+  train_end: '2025-07-09'
+  validation_start: '2025-07-10'
+  validation_end: '2025-10-07'
+  train_sample_count: 441
+  coefficients:
+    intercept: 0.65759637
+    qqq_momentum_20d: 0.24382935
+    qqq_momentum_60d: -0.5296099
+    qqq_ma_slope_20_60: 0.39559435
+    qqq_drawdown_126d: -0.20056904
+    realized_vol_20d: 0.25701517
+    yield_curve_10y2y: -0.01310983
+- split_id: 8
+  train_start: '2023-08-04'
+  train_end: '2025-08-07'
+  validation_start: '2025-08-08'
+  validation_end: '2025-11-05'
+  train_sample_count: 441
+  coefficients:
+    intercept: 0.67120181
+    qqq_momentum_20d: 0.27182954
+    qqq_momentum_60d: -0.406923
+    qqq_ma_slope_20_60: 0.36713844
+    qqq_drawdown_126d: -0.29522075
+    realized_vol_20d: 0.24225518
+    yield_curve_10y2y: -0.00783381
+- split_id: 9
+  train_start: '2023-09-05'
+  train_end: '2025-09-02'
+  validation_start: '2025-09-09'
+  validation_end: '2025-12-05'
+  train_sample_count: 433
+  coefficients:
+    intercept: 0.69976905
+    qqq_momentum_20d: 0.24119503
+    qqq_momentum_60d: -0.41143941
+    qqq_ma_slope_20_60: 0.35379946
+    qqq_drawdown_126d: -0.24327434
+    realized_vol_20d: 0.24695002
+    yield_curve_10y2y: 0.02867012
+- split_id: 10
+  train_start: '2023-10-04'
+  train_end: '2025-10-07'
+  validation_start: '2025-10-08'
+  validation_end: '2026-01-07'
+  train_sample_count: 429
+  coefficients:
+    intercept: 0.72494172
+    qqq_momentum_20d: 0.25630818
+    qqq_momentum_60d: -0.39778731
+    qqq_ma_slope_20_60: 0.28818634
+    qqq_drawdown_126d: -0.30301431
+    realized_vol_20d: 0.16880471
+    yield_curve_10y2y: -0.01423654
+- split_id: 11
+  train_start: '2023-11-02'
+  train_end: '2025-11-05'
+  validation_start: '2025-11-06'
+  validation_end: '2026-02-06'
+  train_sample_count: 431
+  coefficients:
+    intercept: 0.65661253
+    qqq_momentum_20d: 0.22066104
+    qqq_momentum_60d: -0.32381418
+    qqq_ma_slope_20_60: 0.24473626
+    qqq_drawdown_126d: -0.18060797
+    realized_vol_20d: 0.26647887
+    yield_curve_10y2y: -0.03811724
+- split_id: 12
+  train_start: '2023-12-04'
+  train_end: '2025-12-05'
+  validation_start: '2025-12-08'
+  validation_end: '2026-03-10'
+  train_sample_count: 441
+  coefficients:
+    intercept: 0.58956916
+    qqq_momentum_20d: 0.21370322
+    qqq_momentum_60d: -0.3078156
+    qqq_ma_slope_20_60: 0.30131325
+    qqq_drawdown_126d: -0.23772549
+    realized_vol_20d: 0.25742717
+    yield_curve_10y2y: -0.02439462

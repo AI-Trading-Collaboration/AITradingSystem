@@ -1,0 +1,94 @@
+schema_version: first_layer_policy_aware_calibration_final_matrix.v1
+report_type: first_layer_policy_aware_calibration_final_matrix
+title: First-Layer Policy-Aware Calibration Final Matrix
+status: FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT_PROMOTION_BLOCKED
+generated_at: '2026-06-27T13:04:12Z'
+source_commit: a49234fb
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  base_status: FIRST_LAYER_CALIBRATION_NO_MATERIAL_IMPROVEMENT
+  overlay_improved: false
+  walk_forward_balanced_accuracy: 0.151597
+  high_confidence_training_sample_count: 2966
+  next_action: REVIEW_LABEL_AND_FEATURE_DESIGN
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+config_hash: d776cb4ba6b81b09931ab441bd6b3e7ba0e8e57c6a28e0eca8ebce0374e93590
+probe_level_metrics:
+- probe_id: balanced_dynamic_probe
+  annual_return_delta: -0.089097
+  max_drawdown_delta: 0.021946
+  calmar_delta: -0.552095
+  sharpe_delta: -0.503442
+  new_model_better_calmar: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- probe_id: defensive_overlay_probe
+  annual_return_delta: -0.084672
+  max_drawdown_delta: 0.01269
+  calmar_delta: -0.633379
+  sharpe_delta: -0.634553
+  new_model_better_calmar: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- probe_id: drawdown_control_probe
+  annual_return_delta: -0.100427
+  max_drawdown_delta: 0.061312
+  calmar_delta: -0.182286
+  sharpe_delta: -0.239627
+  new_model_better_calmar: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED
+- probe_id: risk_on_diagnostic_probe
+  annual_return_delta: -0.093461
+  max_drawdown_delta: 0.026344
+  calmar_delta: -0.532699
+  sharpe_delta: -0.457796
+  new_model_better_calmar: false
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,48 @@
+schema_version: action_value_score_policy.v1
+policy_id: action_value_score_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Counterfactual action-value labels require a transparent first-pass scoring
+    rule that separates full-allocation return/risk value from defensive overlay
+    drawdown-control value.
+  intended_effect: >
+    Score each frozen probe action by future return, drawdown, short-window loss,
+    estimated turnover cost and TQQQ diagnostic risk without enabling promotion.
+  validation_evidence: >
+    TRADING-1547 to 1586 tests check that action-value labels are generated from
+    future outcomes while feature rows remain PIT.
+  review_condition: >
+    Review before changing score penalties or using action-value score as a
+    production or paper-shadow selection rule.
+full_allocation_score:
+  lambda_dd: 0.80
+  lambda_worst5: 0.50
+  lambda_cost: 1.00
+  lambda_tqqq: 0.25
+defensive_overlay_score:
+  lambda_missed_upside: 1.00
+  lambda_cost: 1.00
+  lambda_recovery_delay: 0.002
+tqqq_risk_penalty:
+  penalty_per_weight: 0.20
+cost_penalty:
+  transaction_cost_bps: 0.0
+stress_penalty:
+  worst_5d_penalty_floor: -0.05
+same_risk_static_adjustment:
+  enabled: true
+  neutral_state: neutral
+horizons:
+  - 5
+  - 10
+  - 20
+  - 60
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

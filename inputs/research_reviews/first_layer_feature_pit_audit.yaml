@@ -1,0 +1,70 @@
+schema_version: first_layer_feature_pit_audit.v1
+report_type: first_layer_feature_pit_audit
+title: First-Layer Feature PIT Audit
+status: PIT_WARNING
+generated_at: '2026-06-27T13:04:12Z'
+source_commit: a49234fb
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+summary:
+  market_regime: ai_after_chatgpt
+  default_backtest_start: '2022-12-01'
+  row_count: 894
+  approved_feature_count: 6
+  blocked_feature_count: 0
+  feature_cutoff_passed: true
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+config_hash: d776cb4ba6b81b09931ab441bd6b3e7ba0e8e57c6a28e0eca8ebce0374e93590
+feature_report:
+  status: PIT_WARNING
+  row_count: 894
+  approved_feature_count: 6
+  blocked_feature_count: 0
+  excluded_non_pit_or_unavailable_features:
+  - VIX level/change unavailable in required cache
+  - SMH/SOXX relative trend unavailable in required cache
+  - event risk score unavailable in this PIT feature contract
+  - market breadth proxy unavailable in this PIT feature contract
+  feature_cutoff_passed: true
+  features:
+  - feature_id: qqq_momentum_20d
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true
+  - feature_id: qqq_momentum_60d
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true
+  - feature_id: qqq_ma_slope_20_60
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true
+  - feature_id: qqq_drawdown_126d
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true
+  - feature_id: realized_vol_20d
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true
+  - feature_id: yield_curve_10y2y
+    pit_status: PIT_APPROVED
+    known_at_policy: same_day_close_or_rate_cache_at_or_before_decision
+    available_at_policy: same_as_known_at_for_cached_daily_research
+    training_allowed: true

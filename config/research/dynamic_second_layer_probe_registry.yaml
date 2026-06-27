@@ -1,0 +1,107 @@
+schema_version: dynamic_second_layer_probe_registry.v1
+policy_id: dynamic_second_layer_probe_registry_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    First-layer trend calibration needs frozen dynamic probes so trend-state
+    labels reflect state-dependent actions rather than static allocation drift.
+  intended_effect: >
+    Provide multiple trend-sensitive second-layer action maps for action-value
+    label generation and actual-path diagnostics.
+  validation_evidence: >
+    Guardrail tests verify each active probe is trend-sensitive, long-only,
+    sums to one by state, rejects static baselines as calibration probes and
+    keeps TQQQ probes research-only.
+  review_condition: >
+    Review before changing any weight map, adding new probes, or allowing TQQQ
+    rows outside diagnostic research usage.
+trend_states:
+  - risk_off
+  - defensive
+  - neutral
+  - constructive
+  - risk_on
+probes:
+  - probe_id: defensive_overlay_probe
+    role: defensive_overlay
+    trend_sensitive: true
+    frozen: true
+    tqqq_usage: none
+    research_only: true
+    promotion_enabled: false
+    broker_enabled: false
+    allowed_usage:
+      - action_value_labels
+      - defensive_overlay_diagnostic
+    weights_by_trend_state:
+      risk_off: {QQQ: 0.30, SGOV: 0.70, TQQQ: 0.00}
+      defensive: {QQQ: 0.45, SGOV: 0.55, TQQQ: 0.00}
+      neutral: {QQQ: 0.60, SGOV: 0.40, TQQQ: 0.00}
+      constructive: {QQQ: 0.65, SGOV: 0.35, TQQQ: 0.00}
+      risk_on: {QQQ: 0.65, SGOV: 0.35, TQQQ: 0.00}
+  - probe_id: balanced_dynamic_probe
+    role: balanced_dynamic
+    trend_sensitive: true
+    frozen: true
+    tqqq_usage: small_constructive_and_risk_on
+    research_only: true
+    promotion_enabled: false
+    broker_enabled: false
+    allowed_usage:
+      - action_value_labels
+      - balanced_dynamic_diagnostic
+    weights_by_trend_state:
+      risk_off: {QQQ: 0.25, SGOV: 0.75, TQQQ: 0.00}
+      defensive: {QQQ: 0.45, SGOV: 0.55, TQQQ: 0.00}
+      neutral: {QQQ: 0.60, SGOV: 0.40, TQQQ: 0.00}
+      constructive: {QQQ: 0.68, SGOV: 0.27, TQQQ: 0.05}
+      risk_on: {QQQ: 0.70, SGOV: 0.20, TQQQ: 0.10}
+  - probe_id: drawdown_control_probe
+    role: drawdown_control
+    trend_sensitive: true
+    frozen: true
+    tqqq_usage: capped_research_diagnostic
+    research_only: true
+    promotion_enabled: false
+    broker_enabled: false
+    allowed_usage:
+      - action_value_labels
+      - drawdown_control_diagnostic
+    weights_by_trend_state:
+      risk_off: {QQQ: 0.00, SGOV: 1.00, TQQQ: 0.00}
+      defensive: {QQQ: 0.40, SGOV: 0.60, TQQQ: 0.00}
+      neutral: {QQQ: 0.70, SGOV: 0.30, TQQQ: 0.00}
+      constructive: {QQQ: 1.00, SGOV: 0.00, TQQQ: 0.00}
+      risk_on: {QQQ: 0.85, SGOV: 0.00, TQQQ: 0.15}
+  - probe_id: risk_on_diagnostic_probe
+    role: risk_on_diagnostic
+    trend_sensitive: true
+    frozen: true
+    tqqq_usage: risk_on_research_only
+    research_only: true
+    promotion_enabled: false
+    broker_enabled: false
+    allowed_usage:
+      - action_value_labels
+      - risk_on_diagnostic
+    disallowed_usage:
+      - promotion_universe
+      - broker_universe
+      - full_allocation_survivor_basis
+    weights_by_trend_state:
+      risk_off: {QQQ: 0.30, SGOV: 0.70, TQQQ: 0.00}
+      defensive: {QQQ: 0.45, SGOV: 0.55, TQQQ: 0.00}
+      neutral: {QQQ: 0.60, SGOV: 0.40, TQQQ: 0.00}
+      constructive: {QQQ: 0.65, SGOV: 0.25, TQQQ: 0.10}
+      risk_on: {QQQ: 0.65, SGOV: 0.20, TQQQ: 0.15}
+forbidden_probe_roles:
+  - static_baseline
+  - static_frontier
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

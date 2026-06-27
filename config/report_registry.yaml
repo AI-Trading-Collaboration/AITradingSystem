@@ -19499,3 +19499,154 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_policy_aware_calibration_scope
+    title: First-Layer Policy-Aware Calibration Scope
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - docs/research/first_layer_policy_aware_calibration_scope.md
+      - config/research/first_layer_calibration_scope.yaml
+      - config/research/dynamic_second_layer_probe_registry.yaml
+      - config/research/action_value_score_policy.yaml
+      - config/research/first_layer_trend_scorecard_v1.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1547 to 1586 first-layer calibration scope and policy manifests are regenerated or reviewed after probe, label, feature, scorecard, or owner-review changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_action_value_matrix
+    title: First-Layer Action Value Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - outputs/research_trends/action_value_matrix/action_value_matrix.csv
+      - outputs/research_trends/action_value_matrix/action_value_summary.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Action-value matrix is regenerated after dynamic second-layer probe registry, score policy, price cache, or data-quality changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_consensus_trend_labels
+    title: First-Layer Consensus Trend Labels
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - outputs/research_trends/trend_labels/single_probe_trend_labels.csv
+      - outputs/research_trends/trend_labels/consensus_trend_labels.csv
+      - inputs/research_reviews/consensus_trend_label_summary.yaml
+      - docs/research/consensus_trend_label_quality_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Consensus labels are regenerated after action-value matrix, consensus policy, dynamic probes, or label-quality review changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_pit_feature_matrix
+    title: First-Layer PIT Feature Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - outputs/research_trends/pit_feature_matrix/pit_feature_matrix.csv
+      - outputs/research_trends/pit_feature_matrix/feature_availability_report.json
+      - docs/research/first_layer_feature_pit_audit.md
+      - inputs/research_reviews/first_layer_feature_pit_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT feature matrix and audit are regenerated after feature policy, data-quality, price/rates cache, or availability-rule changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_trend_model_walk_forward_review
+    title: First-Layer Trend Model Walk-Forward Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - outputs/research_trends/models/first_layer_trend_scorecard_v1_predictions.csv
+      - outputs/research_trends/models/first_layer_logistic_v1/model_coefficients.json
+      - outputs/research_trends/models/first_layer_logistic_v1/walk_forward_predictions.csv
+      - outputs/research_trends/walk_forward/first_layer_walk_forward_predictions.csv
+      - outputs/research_trends/walk_forward/first_layer_walk_forward_metrics.json
+      - docs/research/first_layer_trend_model_walk_forward_review.md
+      - inputs/research_reviews/first_layer_trend_model_walk_forward_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Walk-forward model review is regenerated after scorecard, model, feature, label, split, or data-quality changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: calibrated_first_layer_probe_backtest
+    title: Calibrated First-Layer Probe Backtest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - outputs/research_trends/probe_backtest/old_first_layer_vs_new_first_layer_actual_path.csv
+      - outputs/research_trends/probe_backtest/probe_level_metrics.csv
+      - outputs/research_trends/calibrated_first_layer_actual_path_rebacktest/probe_level_metrics.csv
+      - docs/research/calibrated_first_layer_defensive_overlay_review.md
+      - docs/research/calibrated_first_layer_risk_on_tqqq_diagnostic_review.md
+      - docs/research/single_probe_vs_consensus_trend_label_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Calibrated first-layer actual-path probe backtest is regenerated after frozen probes, calibrated predictions, price cache, or interpretation policy changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_policy_aware_calibration_owner_pack
+    title: First-Layer Policy-Aware Calibration Owner Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends full-pack
+    artifact_globs:
+      - docs/research/first_layer_policy_aware_calibration_owner_review_pack.md
+      - docs/research/calibrated_first_layer_forward_watch_plan.md
+      - inputs/research_reviews/first_layer_policy_aware_calibration_final_matrix.yaml
+      - docs/research/first_layer_policy_aware_calibration_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner pack and closeout are regenerated after label quality, PIT audit, walk-forward, probe backtest, or owner-review changes.
+    owner_action: review_first_layer_policy_aware_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

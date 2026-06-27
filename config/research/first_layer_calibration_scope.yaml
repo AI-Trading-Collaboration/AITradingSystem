@@ -1,0 +1,64 @@
+schema_version: first_layer_policy_aware_calibration_scope.v1
+policy_id: first_layer_policy_aware_calibration_scope_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Expanded allocation and defensive overlay research found no full-allocation
+    survivor. The next research question is whether first-layer PIT trend states
+    have value when tested through frozen dynamic second-layer probes.
+  intended_effect: >
+    Build a research-only calibration workflow that maps PIT features to trend
+    state, confidence, validity and decay, without directly outputting portfolio
+    weights or enabling promotion.
+  validation_evidence: >
+    TRADING-1547 to 1586 focused tests cover probe sensitivity, static baseline
+    exclusion, PIT feature boundaries, first-layer output schema and blocked
+    promotion safety fields.
+  review_condition: >
+    Review before adding high-complexity models, before using any calibrated
+    first-layer output in observe-only forward watch, and before changing frozen
+    probe weights.
+trend_state_taxonomy:
+  ordered_states:
+    - risk_off
+    - defensive
+    - neutral
+    - constructive
+    - risk_on
+  output_fields:
+    - trend_state
+    - confidence
+    - expected_horizon_days
+    - validity_days
+    - decay_profile
+allowed_first_layer_outputs:
+  direct_weight_output_allowed: false
+  trend_state_allowed: true
+  confidence_allowed: true
+  validity_allowed: true
+  decay_profile_allowed: true
+walk_forward:
+  train_window_days: 504
+  validation_window_days: 63
+  step_days: 21
+  min_train_samples: 300
+  label_horizon_days: 20
+label_usage:
+  high_confidence_floor: 0.55
+  max_disagreement_score: 0.50
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  manual_review_required: true

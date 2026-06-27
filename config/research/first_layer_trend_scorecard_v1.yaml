@@ -1,0 +1,54 @@
+schema_version: first_layer_trend_scorecard_v1.v1
+model_id: first_layer_trend_scorecard_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Provide a low-complexity, inspectable first-layer baseline before any
+    higher-complexity model is considered.
+  intended_effect: >
+    Map PIT price/rate features into trend_state, confidence, validity_days and
+    decay_profile without emitting weights.
+  validation_evidence: >
+    Guardrail tests verify first-layer predictions do not contain portfolio
+    weights and cannot enable promotion.
+  review_condition: >
+    Review before changing bands or using predictions outside research-only
+    calibration diagnostics.
+feature_weights:
+  qqq_momentum_20d: 0.40
+  qqq_momentum_60d: 0.25
+  qqq_ma_slope_20_60: 0.20
+  qqq_drawdown_126d: 0.25
+  realized_vol_20d: -0.20
+  yield_curve_10y2y: 0.05
+state_bands:
+  risk_off: -0.12
+  defensive: -0.03
+  neutral: 0.04
+  constructive: 0.12
+  risk_on: 999.0
+confidence:
+  min_confidence: 0.35
+  max_confidence: 0.90
+  scale: 0.18
+validity_days_by_state:
+  risk_off: 5
+  defensive: 10
+  neutral: 20
+  constructive: 20
+  risk_on: 10
+decay_profile_by_state:
+  risk_off: fast
+  defensive: medium
+  neutral: slow
+  constructive: medium
+  risk_on: fast
+safety_boundary:
+  research_only: true
+  direct_weight_output_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

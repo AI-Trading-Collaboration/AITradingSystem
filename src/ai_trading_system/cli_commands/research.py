@@ -14,6 +14,7 @@ from ai_trading_system.cli_commands.research_foundation import (
 from ai_trading_system.cli_commands.research_simple_baselines import (
     register_simple_baseline_strategy_commands,
 )
+from ai_trading_system.cli_commands.research_trends import trends_app
 from ai_trading_system.controlled_strategy_batch import (
     DEFAULT_AI_REGIME_ATTRIBUTION_REVIEW_PATH,
     DEFAULT_BENCHMARK_FALLBACK_DRAWDOWN_GUARD_PROTOTYPE_PATH,
@@ -408,6 +409,7 @@ research_app.add_typer(strategy_pilot_app, name="strategy-pilot")
 research_app.add_typer(controlled_pilot_app, name="controlled-pilot")
 research_app.add_typer(research_ops_app, name="ops")
 research_app.add_typer(paper_shadow_app, name="paper-shadow")
+research_app.add_typer(trends_app, name="trends")
 register_research_foundation_commands(research_app)
 register_simple_baseline_strategy_commands(strategies_app)
 
