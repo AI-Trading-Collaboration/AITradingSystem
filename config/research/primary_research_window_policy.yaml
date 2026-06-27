@@ -1,0 +1,110 @@
+schema_version: primary_research_window_policy.v1
+policy_id: primary_research_window_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-1646 to 1665 showed that the 2022-12 legacy window is too narrow
+    and may overstate recent AI/tech trend edge. Post-1665 research must adopt
+    the 2021-02-22 exact three-asset window as the primary validated window.
+  intended_effect: >
+    Make primary, legacy, sensitivity and requested-inception window roles
+    explicit before any new leaderboard, label, probe or owner-review artifact
+    is interpreted.
+  validation_evidence: >
+    Research window extension artifacts show primary window PASS, 2020
+    extension PASS with SGOV secondary-source caveat, requested 2020-05-26
+    metadata-only, and final status WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT.
+  review_condition: >
+    Review before changing the primary default window, allowing legacy results
+    as primary decision evidence, or treating the 2020 extension as uncaveated.
+primary_research_window_policy:
+  default_primary_window: exact_three_asset_validated
+  default_primary_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+  default_start: 2021-02-22
+  legacy_window: legacy_research_window_2022_12
+  legacy_window_alias: LEGACY_RESEARCH_WINDOW_2022_12
+  sensitivity_window: exact_three_asset_primary_only_extension
+  sensitivity_window_alias: EXACT_THREE_ASSET_PRIMARY_ONLY_EXTENSION
+  requested_inception_metadata_window: requested_sgov_inception_range
+  requested_inception_date: 2020-05-26
+  requested_inception_actual_portfolio_start: 2020-05-28
+  rules:
+    primary_leaderboard_must_use_primary_window: true
+    legacy_results_comparison_only: true
+    legacy_results_not_primary_owner_decision_evidence: true
+    legacy_results_not_promotion_evidence: true
+    sensitivity_results_must_carry_caveat: true
+    requested_inception_dates_metadata_only_if_not_common_tradable: true
+    window_metadata_required_for_owner_review: true
+    research_audit_metadata_required_post_1665: true
+    mixed_window_leaderboard_allowed: false
+windows:
+  exact_three_asset_validated:
+    role: primary_validated
+    start: 2021-02-22
+    evidence_role: PRIMARY_DECISION_EVIDENCE
+    allowed_usage:
+      - main_leaderboard
+      - first_layer_trend_calibration
+      - second_layer_probe_validation
+      - actual_path_rebacktest
+      - owner_review_evidence
+    blocked_usage:
+      - production
+      - paper_shadow
+      - broker_order
+  legacy_research_window_2022_12:
+    role: legacy_comparison
+    start: 2022-12-01
+    evidence_role: LEGACY_COMPARISON_EVIDENCE
+    allowed_usage:
+      - comparison_only
+      - legacy_overfit_diagnosis
+    blocked_usage:
+      - primary_leaderboard
+      - owner_decision_primary_evidence
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+  exact_three_asset_primary_only_extension:
+    role: sensitivity
+    start: 2020-05-28
+    evidence_role: SENSITIVITY_EVIDENCE_WITH_CAVEAT
+    required_caveats:
+      - sgov_secondary_gap_2020_05_28_to_2021_02_19
+    allowed_usage:
+      - sensitivity_check
+      - robustness_check
+    blocked_usage:
+      - uncaveated_primary_leaderboard
+      - promotion_evidence_without_owner_caveat_acceptance
+      - production
+      - paper_shadow
+      - broker_order
+  requested_sgov_inception_range:
+    role: metadata_only
+    requested_start: 2020-05-26
+    actual_portfolio_start: 2020-05-28
+    evidence_role: REQUESTED_INCEPTION_METADATA_ONLY
+    allowed_usage:
+      - data_availability_explanation
+    blocked_usage:
+      - portfolio_return_before_common_tradable_date
+      - primary_leaderboard
+      - promotion_evidence
+promotion_blockers:
+  window_extension_reveals_legacy_overfit:
+    status: BLOCKS_PROMOTION
+    final_status_source: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED
+    reason: Legacy-only conclusions cannot unlock promotion after primary-window instability.
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

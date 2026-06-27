@@ -1,0 +1,77 @@
+schema_version: legacy_window_evidence_reclassification.v1
+report_type: legacy_window_evidence_reclassification
+title: Legacy Window Evidence Reclassification
+status: LEGACY_WINDOW_EVIDENCE_RECLASSIFICATION_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+research_audit_metadata:
+  modified_layer: validation_only
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: frozen_or_not_applicable
+  research_window_id: exact_three_asset_validated
+  label_version: legacy_window_evidence_reclassification_v1
+  feature_set_version: frozen_or_not_applicable
+  model_version: frozen_or_not_applicable
+  threshold_policy: primary_research_window_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v1
+  candidate_count: 6
+  pre_registered_selection_rule: legacy_window_results_comparison_only_after_primary_adoption
+summary:
+  legacy_artifact_count: 6
+  legacy_comparison_evidence_count: 5
+  primary_window_evidence_count: 1
+  primary_window_retest_required_count: 4
+  legacy_overfit_blocker: true
+  promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+reclassification_rows:
+  - artifact_id: first_layer_policy_aware_calibration_final_matrix
+    artifact_path: inputs/research_reviews/first_layer_policy_aware_calibration_final_matrix.yaml
+    original_window: legacy_research_window_2022_12
+    new_evidence_role: LEGACY_COMPARISON_EVIDENCE
+    status: PRIMARY_WINDOW_RETEST_REQUIRED
+    reason: Built before primary-window adoption; cannot be primary owner-decision evidence.
+  - artifact_id: hierarchical_first_layer_actual_path_matrix
+    artifact_path: inputs/research_reviews/hierarchical_first_layer_actual_path_matrix.yaml
+    original_window: legacy_research_window_2022_12
+    new_evidence_role: LEGACY_COMPARISON_EVIDENCE
+    status: PRIMARY_WINDOW_RETEST_REQUIRED
+    reason: Prior flat/hierarchical references remain useful only as legacy comparison rows.
+  - artifact_id: first_layer_up_state_learning_final_matrix
+    artifact_path: inputs/research_reviews/first_layer_up_state_learning_final_matrix.yaml
+    original_window: legacy_research_window_2022_12
+    new_evidence_role: LEGACY_COMPARISON_EVIDENCE
+    status: PRIMARY_WINDOW_RETEST_REQUIRED
+    reason: Upper-state repair failure is preserved, but future labels/models must default to primary window.
+  - artifact_id: first_layer_label_window_matrix
+    artifact_path: inputs/research_reviews/first_layer_label_window_matrix.yaml
+    original_window: multi_window
+    new_evidence_role: WINDOW_STABILITY_EVIDENCE
+    status: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT
+    reason: Shows primary upper_state count 855 versus legacy 618 and supports adoption.
+  - artifact_id: second_layer_probe_window_stability_matrix
+    artifact_path: inputs/research_reviews/second_layer_probe_window_stability_matrix.yaml
+    original_window: multi_window
+    new_evidence_role: WINDOW_STABILITY_EVIDENCE
+    status: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT
+    reason: Second-layer probes must be reinterpreted by primary, legacy and sensitivity windows.
+  - artifact_id: upper_state_label_feature_reset_final_matrix
+    artifact_path: inputs/research_reviews/upper_state_label_feature_reset_final_matrix.yaml
+    original_window: exact_three_asset_validated
+    new_evidence_role: PRIMARY_WINDOW_EVIDENCE
+    status: PRIMARY_WINDOW_EVIDENCE_RESEARCH_ONLY
+    reason: Already uses primary window, but remains research-only and cannot unlock promotion.

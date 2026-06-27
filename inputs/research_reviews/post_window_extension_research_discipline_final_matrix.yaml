@@ -1,0 +1,52 @@
+schema_version: post_window_extension_research_discipline_final_matrix.v1
+report_type: post_window_extension_research_discipline_final_matrix
+title: Post-Window-Extension Research Discipline Final Matrix
+status: PRIMARY_WINDOW_ADOPTED_LEGACY_OVERFIT_BLOCKED
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+research_audit_metadata:
+  modified_layer: validation_only
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: frozen_or_not_applicable
+  research_window_id: exact_three_asset_validated
+  label_version: post_window_extension_research_discipline_v1
+  feature_set_version: frozen_or_not_applicable
+  model_version: frozen_or_not_applicable
+  threshold_policy: primary_research_window_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v1
+  candidate_count: 0
+  pre_registered_selection_rule: primary_window_adoption_and_audit_metadata_contract
+summary:
+  primary_window_adopted: true
+  default_primary_window: exact_three_asset_validated
+  default_primary_start: '2021-02-22'
+  legacy_window_role: LEGACY_COMPARISON_EVIDENCE
+  sensitivity_window_role: SENSITIVITY_EVIDENCE_WITH_CAVEAT
+  requested_inception_role: REQUESTED_INCEPTION_METADATA_ONLY
+  research_audit_metadata_contract_status: AUDIT_METADATA_READY
+  window_aware_selection_rule_status: RESEARCH_WINDOW_METADATA_READY
+  legacy_overfit_blocker: true
+  promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+final_decision:
+  primary_window: ADOPTED
+  legacy_window: COMPARISON_ONLY
+  sensitivity_window: CAVEATED_SENSITIVITY_ONLY
+  requested_inception: METADATA_ONLY
+  audit_metadata: REQUIRED_FOR_POST_1665_OWNER_REVIEW
+  dynamic_promotion: BLOCKED
+  next_phase: SECOND_LAYER_DYNAMIC_PROBE_LIBRARY_FREEZE_AND_RETURN_SEEKING_PROBE_GAP_REVIEW

@@ -19944,6 +19944,85 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: research_window_adoption_closeout
+    title: Research Window Adoption Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed artifact (no CLI)
+    artifact_globs:
+      - docs/research/research_window_extension_adoption_closeout.md
+      - inputs/research_reviews/research_window_extension_adoption_closeout.yaml
+      - docs/research/research_window_extension_owner_brief.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Research window adoption closeout is updated after window registry, data quality window summary, or research window extension final matrix changes.
+    owner_action: review_primary_window_adoption_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: legacy_window_evidence_reclassification
+    title: Legacy Window Evidence Reclassification
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed artifact (no CLI)
+    artifact_globs:
+      - docs/research/legacy_window_evidence_reclassification_review.md
+      - inputs/research_reviews/legacy_window_evidence_reclassification.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Legacy evidence reclassification is updated after primary-window adoption or old legacy-window research artifacts are reinterpreted.
+    owner_action: review_primary_window_adoption_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: primary_window_policy_and_audit_metadata
+    title: Primary Window Policy and Audit Metadata Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed artifact (no CLI)
+    artifact_globs:
+      - config/research/primary_research_window_policy.yaml
+      - config/research/research_audit_metadata_schema.yaml
+      - config/research/window_aware_selection_rule_templates.yaml
+      - docs/research/window_aware_selection_rule_guidelines.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Policy and audit metadata contracts are updated before post-window-extension research artifacts are interpreted in owner review.
+    owner_action: review_primary_window_adoption_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: post_window_extension_research_discipline_closeout
+    title: Post-Window-Extension Research Discipline Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed artifact (no CLI)
+    artifact_globs:
+      - docs/research/post_window_extension_research_discipline_closeout.md
+      - inputs/research_reviews/post_window_extension_research_discipline_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Discipline closeout is updated after primary window policy, audit metadata schema, selection rule templates, and owner brief changes.
+    owner_action: review_primary_window_adoption_research_only_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

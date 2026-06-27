@@ -1,0 +1,63 @@
+schema_version: research_window_extension_adoption_closeout.v1
+report_type: research_window_extension_adoption_closeout
+title: Research Window Extension Adoption Closeout
+status: RESEARCH_WINDOW_EXTENSION_ADOPTION_READY_PROMOTION_BLOCKED
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+research_audit_metadata:
+  modified_layer: validation_only
+  frozen_first_layer_version: frozen_or_not_applicable
+  frozen_second_layer_version: frozen_or_not_applicable
+  research_window_id: exact_three_asset_validated
+  label_version: research_window_extension_label_counts_v1
+  feature_set_version: frozen_or_not_applicable
+  model_version: frozen_or_not_applicable
+  threshold_policy: primary_research_window_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v1
+  candidate_count: 0
+  pre_registered_selection_rule: adopt_primary_window_after_window_extension_closeout
+summary:
+  primary_window_status: PASS
+  primary_window_start: '2021-02-22'
+  extension_window_status: PASS_WITH_EXPECTED_SGOV_SECONDARY_GAP_CAVEAT
+  extension_window_start: '2020-05-28'
+  requested_inception_start: '2020-05-26'
+  requested_inception_role: metadata_only
+  requested_inception_actual_portfolio_start: '2020-05-28'
+  static_rows: 198
+  probe_rows: 15
+  actual_path_rows: 30
+  primary_upper_state_count: 855
+  extension_upper_state_count: 1005
+  legacy_upper_state_count: 618
+  window_extension_final_status: WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED
+  adoption_status: PRIMARY_WINDOW_ADOPTED_LEGACY_OVERFIT_BLOCKED
+  promotion_status: BLOCKED
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+adoption_decisions:
+  primary_window: exact_three_asset_validated
+  primary_default_start: '2021-02-22'
+  legacy_window: legacy_research_window_2022_12
+  legacy_result_role: LEGACY_COMPARISON_EVIDENCE
+  sensitivity_window: exact_three_asset_primary_only_extension
+  sensitivity_caveat: sgov_secondary_gap_2020_05_28_to_2021_02_19
+  requested_inception_window: requested_sgov_inception_range
+  requested_inception_usage: REQUESTED_INCEPTION_METADATA_ONLY
+promotion_blockers:
+  - WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT
+  - LEGACY_RESULTS_NOT_PRIMARY_DECISION_EVIDENCE
+  - NO_PAPER_SHADOW_PRODUCTION_OR_BROKER_AUTHORIZATION

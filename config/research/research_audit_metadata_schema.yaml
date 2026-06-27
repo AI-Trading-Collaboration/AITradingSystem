@@ -1,0 +1,63 @@
+schema_version: research_audit_metadata_schema.v1
+policy_id: research_audit_metadata_schema_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Post-window-extension research needs enough metadata to reconstruct which
+    layer changed, which layer was frozen, which window was used and which
+    pre-registered selection rule governed the artifact.
+  intended_effect: >
+    Prevent unlabeled post-1665 artifacts from entering owner review or being
+    mixed into primary leaderboards.
+  validation_evidence: >
+    TRADING-1706 to 1715 tests validate required metadata, enum values, primary
+    window linkage, candidate counts and promotion blockers.
+  review_condition: >
+    Review before relaxing required fields or allowing artifacts without
+    research_audit_metadata into owner-review evidence.
+research_audit_metadata:
+  required_post_window_extension: true
+  required_fields:
+    - modified_layer
+    - frozen_first_layer_version
+    - frozen_second_layer_version
+    - research_window_id
+    - label_version
+    - feature_set_version
+    - model_version
+    - threshold_policy
+    - probe_registry_version
+    - candidate_count
+    - pre_registered_selection_rule
+  modified_layer_allowed_values:
+    - first_layer
+    - second_layer
+    - validation_only
+  allowed_empty_version_value: frozen_or_not_applicable
+  candidate_count:
+    minimum: 0
+    type: integer
+  owner_review_requires:
+    - research_window_id
+    - pre_registered_selection_rule
+    - modified_layer
+window_metadata_required_fields:
+  - research_window_id
+  - requested_start
+  - actual_portfolio_start
+  - window_role
+  - data_quality_contract
+blocked_without_metadata:
+  - owner_review_evidence
+  - primary_leaderboard
+  - promotion_evidence
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,14 +1,26 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.research_audit_metadata import (
+    legacy_window_results_are_comparison_only,
+    load_primary_research_window_policy,
+    primary_window_required_for_primary_leaderboard,
+    requested_inception_date_not_used_before_common_tradable_date,
+    sensitivity_window_requires_caveat,
+    validate_primary_research_window_policy,
+    window_extension_reveals_legacy_overfit_blocks_promotion,
+)
 from ai_trading_system.research_window_extension import (
     artifact_has_required_window_fields,
     load_research_window_registry,
     validate_research_window_contracts,
     window_metadata,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 
 def test_research_window_registry_contracts_pass() -> None:
@@ -82,3 +94,99 @@ def test_research_window_extension_cli_is_registered() -> None:
 
     assert result.exit_code == 0, result.output
     assert "window-extension" in result.output
+
+
+def test_primary_window_required_for_primary_leaderboard() -> None:
+    policy = load_primary_research_window_policy()
+
+    assert validate_primary_research_window_policy(policy)["status"] == "PASS"
+    assert primary_window_required_for_primary_leaderboard(
+        {
+            "research_window_id": "exact_three_asset_validated",
+            "leaderboard_role": "primary_leaderboard",
+        },
+        policy,
+    )
+    assert not primary_window_required_for_primary_leaderboard(
+        {
+            "research_window_id": "legacy_research_window_2022_12",
+            "leaderboard_role": "primary_leaderboard",
+        },
+        policy,
+    )
+
+
+def test_legacy_window_results_are_comparison_only() -> None:
+    policy = load_primary_research_window_policy()
+
+    assert legacy_window_results_are_comparison_only(
+        {
+            "research_window_id": "legacy_research_window_2022_12",
+            "evidence_role": "LEGACY_COMPARISON_EVIDENCE",
+            "promotion_allowed": False,
+            "production_allowed": False,
+        },
+        policy,
+    )
+    assert not legacy_window_results_are_comparison_only(
+        {
+            "research_window_id": "legacy_research_window_2022_12",
+            "evidence_role": "PRIMARY_DECISION_EVIDENCE",
+            "promotion_allowed": True,
+            "production_allowed": False,
+        },
+        policy,
+    )
+
+
+def test_sensitivity_window_requires_caveat() -> None:
+    policy = load_primary_research_window_policy()
+
+    assert sensitivity_window_requires_caveat(
+        {
+            "research_window_id": "exact_three_asset_primary_only_extension",
+            "window_role": "sensitivity",
+            "caveats": ["sgov_secondary_gap_2020_05_28_to_2021_02_19"],
+        },
+        policy,
+    )
+    assert not sensitivity_window_requires_caveat(
+        {
+            "research_window_id": "exact_three_asset_primary_only_extension",
+            "window_role": "sensitivity",
+            "caveats": [],
+        },
+        policy,
+    )
+
+
+def test_requested_inception_date_not_used_before_common_tradable_date() -> None:
+    policy = load_primary_research_window_policy()
+
+    assert requested_inception_date_not_used_before_common_tradable_date(
+        {
+            "research_window_id": "requested_sgov_inception_range",
+            "requested_start": "2020-05-26",
+            "actual_portfolio_start": "2020-05-28",
+            "window_role": "metadata_only",
+        },
+        policy,
+    )
+    assert not requested_inception_date_not_used_before_common_tradable_date(
+        {
+            "research_window_id": "requested_sgov_inception_range",
+            "requested_start": "2020-05-26",
+            "actual_portfolio_start": "2020-05-26",
+            "window_role": "primary_validated",
+        },
+        policy,
+    )
+
+
+def test_window_extension_reveals_legacy_overfit_blocks_promotion() -> None:
+    raw = safe_load_yaml_path(
+        Path("inputs/research_reviews/research_window_extension_final_matrix.yaml")
+    )
+    assert isinstance(raw, dict)
+
+    assert window_extension_reveals_legacy_overfit_blocks_promotion(raw)

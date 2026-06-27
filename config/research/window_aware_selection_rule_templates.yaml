@@ -1,0 +1,105 @@
+schema_version: window_aware_selection_rule_templates.v1
+policy_id: window_aware_selection_rule_templates_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Window extension revealed that post-hoc window choice can create legacy
+    overfit. Every research round must pre-register primary pass conditions,
+    legacy comparison usage and sensitivity blockers before execution.
+  intended_effect: >
+    Make selection criteria auditable and prevent after-the-fact metric or
+    window selection.
+  validation_evidence: >
+    TRADING-1706 to 1715 tests validate that templates declare primary pass
+    conditions, legacy usage, sensitivity blockers, failure labels and forbidden
+    post-hoc metrics.
+  review_condition: >
+    Review before adding a new research round type or allowing target-path,
+    legacy-only or uncaveated sensitivity metrics to pass a gate.
+templates:
+  first_layer_calibration:
+    modified_layer: first_layer
+    frozen_layer: second_layer
+    primary_window_id: exact_three_asset_validated
+    primary_pass_conditions:
+      - walk_forward_not_collapsed
+      - actual_path_improves_frozen_probe_reference
+      - submodel_precision_not_weak
+      - target_path_metrics_not_used
+    legacy_comparison_usage:
+      - comparison_only
+      - legacy_overfit_diagnosis
+    sensitivity_block_conditions:
+      - sensitivity_result_conflicts_with_primary_without_caveat
+      - sgov_secondary_gap_caveat_missing
+    failure_attribution_labels:
+      - LABEL_UNSTABLE
+      - FEATURE_INSUFFICIENT
+      - SUBMODEL_PRECISION_WEAK
+      - FROZEN_PROBE_ACTUAL_PATH_NO_MATERIAL_IMPROVEMENT
+      - WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT
+    forbidden_posthoc_metrics:
+      - target_path_return
+      - target_path_calmar
+      - legacy_window_only_return
+      - uncaveated_sensitivity_return
+  second_layer_mapping:
+    modified_layer: second_layer
+    frozen_layer: first_layer
+    primary_window_id: exact_three_asset_validated
+    primary_pass_conditions:
+      - same_risk_frontier_not_dominated
+      - net_of_cost_not_failed
+      - stress_risk_within_policy
+      - actual_path_improves_primary_baseline
+    legacy_comparison_usage:
+      - comparison_only
+      - overfit_warning
+    sensitivity_block_conditions:
+      - extension_drawdown_or_stress_breaks_candidate
+      - sgov_secondary_gap_caveat_missing
+    failure_attribution_labels:
+      - SAME_RISK_UNDERPERFORMANCE
+      - STATIC_FRONTIER_DOMINATED
+      - STRESS_RISK_TOO_HIGH
+      - NET_OF_COST_FAILED
+      - LEGACY_WINDOW_ONLY_EDGE
+    forbidden_posthoc_metrics:
+      - target_path_return
+      - target_path_sharpe
+      - legacy_best_case_rank
+      - tqqq_beta_only_outperformance
+  validation:
+    modified_layer: validation_only
+    frozen_layer: both
+    primary_window_id: exact_three_asset_validated
+    primary_pass_conditions:
+      - holdout_disjoint_from_tuning
+      - no_layer_mutation
+      - window_metadata_present
+      - research_audit_metadata_present
+    legacy_comparison_usage:
+      - comparison_only
+      - historical_context
+    sensitivity_block_conditions:
+      - primary_pass_not_replicated_under_caveated_extension
+      - mixed_window_leaderboard_detected
+    failure_attribution_labels:
+      - HOLDOUT_REUSE_DETECTED
+      - MIXED_WINDOW_LEADERBOARD
+      - AUDIT_METADATA_MISSING
+      - PRIMARY_WINDOW_RETEST_REQUIRED
+    forbidden_posthoc_metrics:
+      - any_metric_selected_after_holdout
+      - target_path_metric
+      - owner_decision_from_legacy_only
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED
