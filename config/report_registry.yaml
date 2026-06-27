@@ -18232,9 +18232,14 @@ reports:
       - outputs/research_strategies/execution_semantics/*/signal_staleness_report.md
       - outputs/research_strategies/execution_semantics/*/execution_policy_snapshot.yaml
       - outputs/research_strategies/execution_semantics/*/promotion_readiness.json
+      - outputs/research_strategies/execution_semantics/index.json
+      - outputs/research_strategies/execution_semantics/leaderboard_actual_path.csv
+      - outputs/research_strategies/execution_semantics/target_vs_actual_gap_summary.csv
+      - outputs/research_strategies/execution_semantics/promotion_readiness_summary.json
+      - outputs/research_strategies/execution_semantics/owner_review_pack.md
     artifact_selection_policy: latest_available
     freshness_sla_days: 30
-    freshness_rationale: TRADING-1187 to 1200 actual-path rebacktests must be regenerated after strategy binding, execution policy, metric convention or cached data changes.
+    freshness_rationale: TRADING-1201 to 1220 actual-path rebacktests and readiness summaries must be regenerated after strategy binding, execution policy, metric convention, materiality policy or cached data changes.
     owner_action: review_execution_semantics_actual_path_rebacktest
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false

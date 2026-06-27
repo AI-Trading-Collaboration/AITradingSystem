@@ -30,6 +30,18 @@ def test_strategy_execution_policy_registry_has_required_bindings(tmp_path: Path
     assert bindings["limited_adjustment"]["validation_policy"][
         "promotion_allowed_from_target_path"
     ] is False
+    materiality = yaml.safe_load(
+        DEFAULT_EXECUTION_POLICY_REGISTRY_PATH.read_text(encoding="utf-8")
+    )["materiality_thresholds"]
+    assert materiality["policy_id"] == "execution_semantics_materiality_thresholds_v1"
+    assert materiality["status"] == "pilot_baseline"
+    assert {
+        "execution_lag_return_cost_abs_pp",
+        "execution_lag_return_cost_relative_pct",
+        "execution_lag_max_drawdown_cost_pp",
+        "signal_staleness_material_event_count",
+        "actual_trade_delay_days_p95",
+    } <= set(materiality["thresholds"])
 
 
 def test_strategy_execution_policy_registry_fails_closed_without_bindings(

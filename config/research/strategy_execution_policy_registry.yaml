@@ -32,6 +32,29 @@ safety_boundary:
   manual_review_required: true
   research_only: true
   observe_only: true
+materiality_thresholds:
+  policy_id: execution_semantics_materiality_thresholds_v1
+  owner: research_governance
+  status: pilot_baseline
+  rationale: >
+    Conservative pilot thresholds for surfacing execution lag and signal
+    staleness as owner-review blockers in actual-path rebacktests. These
+    thresholds are not calibrated promotion boundaries.
+  intended_effect: >
+    Prevent material execution delay or stale-signal costs from being silently
+    waived before owner manual review.
+  validation_evidence: >
+    Covered by TRADING-1201 to 1220 promotion readiness and materiality tests;
+    future calibration is required before production-facing interpretation.
+  review_condition: >
+    Review after the first owner review pack, before enabling any waiver, and
+    before using these thresholds outside research-only actual-path evidence.
+  thresholds:
+    execution_lag_return_cost_abs_pp: 1.0
+    execution_lag_return_cost_relative_pct: 20.0
+    execution_lag_max_drawdown_cost_pp: 2.0
+    signal_staleness_material_event_count: 3
+    actual_trade_delay_days_p95: 10
 strategy_execution_policies:
   - strategy_id: 100_qqq
     strategy_type: static
