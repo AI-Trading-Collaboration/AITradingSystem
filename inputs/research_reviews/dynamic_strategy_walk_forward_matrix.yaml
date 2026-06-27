@@ -1,0 +1,129 @@
+schema_version: dynamic_strategy_walk_forward_matrix.v1
+report_type: dynamic_strategy_walk_forward_matrix
+status: WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS
+run_id: latest
+runtime_artifact_root: outputs\research_strategies\walk_forward\latest
+source_runtime_root: outputs\research_strategies\execution_semantics
+source_commit: f08afb3a3ec01a953a4472b9bba5941871419753
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+walk_forward_policy_hash: 9d76ecd45f40d0d75942551621abb32628a341761edbb8dd4b6602ddc1ab0649
+edge_matrix_hash: 9ddf4e68d3aac43fb0dfad558c681ed965cfb924b4288f56f69b7cca350619e4
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+walk_forward_policy:
+  policy_id: dynamic_walk_forward_validation_policy_v1
+  status: pilot_baseline
+  validation_splits:
+  - split_id: research_sample
+    start_date: 2022-12-01
+    end_date: 2023-12-29
+    purpose: hypothesis_generation_and_debug
+  - split_id: validation_sample
+    start_date: 2024-01-02
+    end_date: 2024-12-31
+    purpose: strategy_selection
+  - split_id: locked_holdout_sample
+    start_date: 2025-01-02
+    end_date: 2025-12-31
+    purpose: final_acceptance_only
+  - split_id: forward_paper_sample
+    start_date: 2026-01-02
+    end_date: null
+    purpose: live_observation
+  rolling_policy:
+    window_trading_days: 126
+    step_trading_days: 63
+    rationale: 'Half-year windows with quarterly step provide a pilot OOS stability
+      view without pretending to calibrate production-ready acceptance thresholds.
+
+      '
+  stability_thresholds:
+    min_completed_splits_for_stable: 3
+    top_half_rate_for_stable: 0.75
+    max_rank_std_for_stable: 1.25
+    min_positive_split_rate_for_stable: 0.75
+    min_baseline_beat_rate_for_full_allocation: 0.5
+    rationale: 'Pilot baseline thresholds require broad top-half ranking, positive
+      split behavior, and at least half of completed splits beating qqq_60_sgov_40
+      before labeling a candidate stable. These thresholds are not calibrated promotion
+      gates and must be reviewed before paper-shadow preflight.
+
+      '
+dynamic_promotion:
+  final_status: BLOCKED
+promotion_decision_source: actual_path_only
+target_path_metrics_role: diagnostic_only
+artifact_sha256:
+  walk_forward_leaderboard: 63ec6c4b9e21377860c59090ba38266136d7903a9db172f8c57357e33d5b2336
+  rolling_oos_metrics: 60341dacedd0aaa35fcf60cf7c8212207f55d4b5aa08870847fafcb1fae60403
+  parameter_stability_heatmap: e048df9c14ab943edfc9902dbe8e1c6925dfc3a5935d80cd655a24c2faf28e96
+  regime_holdout_results: 85224ce5b09822d24314fc434db920b54ce19dc7b2ea45415db44968cab0b065
+strategy_validation_rows:
+- strategy_id: limited_adjustment
+  completed_split_count: 4
+  top_half_rate: 0.75
+  positive_split_rate: 1.0
+  baseline_beat_rate_vs_qqq_60_sgov_40: 0.5
+  annual_return_rank_std: 0.866025
+  mean_actual_path_annual_return: 0.199225
+  best_split_annual_return: 0.247759
+  worst_split_annual_return: 0.155532
+  walk_forward_verdict: STABLE_ACROSS_WINDOWS
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  completed_split_count: 4
+  top_half_rate: 0.25
+  positive_split_rate: 1.0
+  baseline_beat_rate_vs_qqq_60_sgov_40: 0.25
+  annual_return_rank_std: 1.089725
+  mean_actual_path_annual_return: 0.185325
+  best_split_annual_return: 0.228244
+  worst_split_annual_return: 0.165015
+  walk_forward_verdict: REGIME_OVERFITTED
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: limited_adjustment_event_override_v1
+  completed_split_count: 4
+  top_half_rate: 0.75
+  positive_split_rate: 1.0
+  baseline_beat_rate_vs_qqq_60_sgov_40: 0.5
+  annual_return_rank_std: 1.414214
+  mean_actual_path_annual_return: 0.195951
+  best_split_annual_return: 0.2486
+  worst_split_annual_return: 0.156824
+  walk_forward_verdict: PARAMETER_SENSITIVE
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  completed_split_count: 4
+  top_half_rate: 0.5
+  positive_split_rate: 1.0
+  baseline_beat_rate_vs_qqq_60_sgov_40: 0.25
+  annual_return_rank_std: 1.920286
+  mean_actual_path_annual_return: 0.187242
+  best_split_annual_return: 0.21402
+  worst_split_annual_return: 0.173587
+  walk_forward_verdict: PARAMETER_SENSITIVE
+  promotion_gate_status: BLOCKED
+  paper_shadow_preflight_allowed: false
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

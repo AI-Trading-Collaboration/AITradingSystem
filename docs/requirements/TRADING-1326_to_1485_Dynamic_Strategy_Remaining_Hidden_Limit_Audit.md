@@ -79,6 +79,48 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
 - `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
 - Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
 
+## Batch 2 设计决策
+
+- Batch 2 覆盖 TRADING-1361～1400：PIT data availability / no-lookahead audit 和
+  dynamic strategy walk-forward / overfitting validation。
+- PIT audit 的第一版以当前 dynamic execution semantics 可审计输入为边界，固定枚举 price、
+  rate、strategy signal、event override、manual/owner review 和 external/manual evidence 等 signal
+  families；每条 signal 必须输出 `available_to_system_at`、`decision_at`、`effective_at`、
+  `revision_policy`、`pit_risk_level` 和 gate impact。
+- PIT audit 不伪造 vendor release calendar。若当前系统没有 release timestamp 或 PIT archive，
+  对应 signal 必须标记为 `PIT_UNKNOWN` / `PIT_BLOCKING` 或 `PIT_REVISED_DATA_RISK`，并阻断
+  promotion gate。
+- Walk-forward validation 只使用 actual-path metrics、edge attribution matrix 和 existing
+  execution semantics runtime artifacts；target-path metrics 仍只能 diagnostic。
+- Walk-forward 第一版使用已配置的 AI regime 时间窗口做 expanding / rolling / holdout slices，
+  并输出 ranking stability、strategy verdict、sample limitations 和 promotion blockers。任何
+  `INSUFFICIENT_OOS_EVIDENCE` / `PARAMETER_SENSITIVE` / `REGIME_OVERFITTED` 结论都不得进入
+  paper-shadow preflight。
+
+## Batch 2 验收标准
+
+- 新增 CLI：
+  - `aits research strategies pit-data-availability-audit`
+  - `aits research strategies dynamic-strategy-walk-forward-validation`
+- 新增 runtime artifacts：
+  - `outputs/research_strategies/pit_audit/<run_id>/signal_pit_audit.csv`
+  - `outputs/research_strategies/pit_audit/<run_id>/pit_risk_summary.json`
+  - `outputs/research_strategies/walk_forward/<run_id>/walk_forward_leaderboard.csv`
+  - `outputs/research_strategies/walk_forward/<run_id>/rolling_oos_metrics.csv`
+  - `outputs/research_strategies/walk_forward/<run_id>/parameter_stability_heatmap.csv`
+  - `outputs/research_strategies/walk_forward/<run_id>/regime_holdout_results.csv`
+- 新增 tracked artifacts：
+  - `inputs/research_reviews/pit_data_availability_inventory.yaml`
+  - `docs/research/pit_data_availability_audit.md`
+  - `docs/research/dynamic_strategy_walk_forward_validation.md`
+  - `inputs/research_reviews/dynamic_strategy_walk_forward_matrix.yaml`
+- PIT report 必须声明 `ai_after_chatgpt` regime、actual requested date range、PIT risk
+  blockers、promotion gate impact、dynamic promotion `BLOCKED` 和 target-path diagnostic-only。
+- Walk-forward report 必须声明 split policy、actual-path-only ranking、ranking stability、
+  sample limitations、dynamic promotion `BLOCKED` 和 remaining owner/gate blockers。
+- `config/report_registry.yaml`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步。
+- Focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过，或明确记录未通过原因。
+
 ## 进展记录
 
 - 2026-06-27：新增总路线并进入 `IN_PROGRESS`；本轮先实现 TRADING-1326～1360 Batch 1，
@@ -94,3 +136,22 @@ event override watch-only 研究。现有结论仍然是 dynamic promotion `BLOC
   target-path metrics 继续 `diagnostic_only`，paper-shadow / production / broker 均不允许。
   验证通过 focused parallel pytest、相关 66 用例 parallel pytest、Ruff、compileall 和
   `git diff --check`。
+- 2026-06-27：继续推进 TRADING-1361～1400 Batch 2，范围为 PIT data availability /
+  no-lookahead audit 与 dynamic strategy walk-forward / overfitting validation。总任务从
+  Batch 1 `VALIDATING` 回到 `IN_PROGRESS`；dynamic promotion 继续 `BLOCKED`，不得进入
+  paper-shadow / production / broker。
+- 2026-06-27：TRADING-1361～1400 Batch 2 实现完成并转入 `VALIDATING`。新增
+  `pit-data-availability-audit` 与 `dynamic-strategy-walk-forward-validation` CLI，真实运行生成
+  `docs/research/pit_data_availability_audit.md`、
+  `inputs/research_reviews/pit_data_availability_inventory.yaml`、
+  `docs/research/dynamic_strategy_walk_forward_validation.md` 和
+  `inputs/research_reviews/dynamic_strategy_walk_forward_matrix.yaml`。真实 date range 为
+  `2022-12-01`～`2026-06-26`，market regime 为 `ai_after_chatgpt`，
+  data_quality_status 为 `PASS_WITH_WARNINGS`。PIT status 为
+  `PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，所有 core dynamic signals 均为
+  date-level `PIT_APPROXIMATED` caveat，target-path metrics 仍 `diagnostic_only`。Walk-forward
+  status 为 `WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`：`limited_adjustment` 为
+  `STABLE_ACROSS_WINDOWS`，`dynamic_v0_5_ai_trend_confirmed_only` 为 `REGIME_OVERFITTED`，
+  两个 event override variants 为 `PARAMETER_SENSITIVE`。Dynamic promotion 继续 `BLOCKED`，
+  paper-shadow / production / broker 均不允许。验证通过 focused parallel pytest、相关 69 用例
+  parallel pytest、Ruff、compileall 和 `git diff --check`。

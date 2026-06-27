@@ -18530,6 +18530,51 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: pit_data_availability_audit
+    title: PIT Data Availability Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies pit-data-availability-audit
+    artifact_globs:
+      - outputs/research_strategies/pit_audit/*/signal_pit_audit.csv
+      - outputs/research_strategies/pit_audit/*/pit_risk_summary.json
+      - docs/research/pit_data_availability_audit.md
+      - inputs/research_reviews/pit_data_availability_inventory.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1361 to 1380 PIT data availability audit must be regenerated after execution semantics runtime artifacts, strategy signal policy, event override trace, cached data, or PIT inventory rules change.
+    owner_action: review_pit_data_availability_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_strategy_walk_forward_validation
+    title: Dynamic Strategy Walk-Forward Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-walk-forward-validation
+    artifact_globs:
+      - config/research/dynamic_walk_forward_policy.yaml
+      - outputs/research_strategies/walk_forward/*/walk_forward_leaderboard.csv
+      - outputs/research_strategies/walk_forward/*/rolling_oos_metrics.csv
+      - outputs/research_strategies/walk_forward/*/parameter_stability_heatmap.csv
+      - outputs/research_strategies/walk_forward/*/regime_holdout_results.csv
+      - docs/research/dynamic_strategy_walk_forward_validation.md
+      - inputs/research_reviews/dynamic_strategy_walk_forward_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-1381 to 1400 walk-forward validation must be regenerated after actual-path runtime artifacts, edge matrix, walk-forward policy, cached data, or strategy candidate set changes.
+    owner_action: review_dynamic_strategy_walk_forward_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research

@@ -1,0 +1,64 @@
+schema_version: 1
+policy_id: dynamic_walk_forward_validation_policy_v1
+status: pilot_baseline
+owner: research_governance
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+policy_metadata:
+  rationale: >
+    Dynamic strategy candidates must be reviewed outside the single full-sample
+    actual-path result before any paper-shadow preflight discussion.
+  intended_effect: >
+    Surface one-window, rank-instability, and static-baseline underperformance
+    risks while keeping dynamic promotion blocked.
+  validation_evidence: >
+    TRADING-1361 to 1400 tests cover split construction, actual-path-only
+    metrics, verdict generation, matrix output, and blocked promotion status.
+  review_condition: >
+    Review before changing split dates, stability thresholds, rolling-window
+    length, or using this policy outside research-only owner review.
+validation_splits:
+  - split_id: research_sample
+    start_date: 2022-12-01
+    end_date: 2023-12-29
+    purpose: hypothesis_generation_and_debug
+  - split_id: validation_sample
+    start_date: 2024-01-02
+    end_date: 2024-12-31
+    purpose: strategy_selection
+  - split_id: locked_holdout_sample
+    start_date: 2025-01-02
+    end_date: 2025-12-31
+    purpose: final_acceptance_only
+  - split_id: forward_paper_sample
+    start_date: 2026-01-02
+    end_date:
+    purpose: live_observation
+rolling_policy:
+  window_trading_days: 126
+  step_trading_days: 63
+  rationale: >
+    Half-year windows with quarterly step provide a pilot OOS stability view
+    without pretending to calibrate production-ready acceptance thresholds.
+stability_thresholds:
+  min_completed_splits_for_stable: 3
+  top_half_rate_for_stable: 0.75
+  max_rank_std_for_stable: 1.25
+  min_positive_split_rate_for_stable: 0.75
+  min_baseline_beat_rate_for_full_allocation: 0.5
+  rationale: >
+    Pilot baseline thresholds require broad top-half ranking, positive split
+    behavior, and at least half of completed splits beating qqq_60_sgov_40
+    before labeling a candidate stable. These thresholds are not calibrated
+    promotion gates and must be reviewed before paper-shadow preflight.
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  manual_review_required: true
+  research_only: true
+  observe_only: true

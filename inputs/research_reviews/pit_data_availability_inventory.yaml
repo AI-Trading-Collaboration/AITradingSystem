@@ -1,0 +1,203 @@
+schema_version: pit_data_availability_inventory.v1
+report_type: pit_data_availability_inventory
+status: PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS
+source_commit: f08afb3a3ec01a953a4472b9bba5941871419753
+config_hash: d9027d19a72289daf6c9a65a6c1d15d55e7dffd7e6b93c684fa311f79393259c
+policy_hash: bbd2a70905c247e6daac400632a0fc5a44393ac50f1a6b9de98cacc163921b22
+signal_validity_taxonomy_hash: bb81b9d74baf616e9f6f84f6dc026dd5bedbde36fb8516907d8f9c156c9481a7
+event_override_policy_hash: e58443b474605dbc183670739e823e21dc409b1875d521ea3ae7ba876631fa62
+data_snapshot_hash: 658e3138d663d84d
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+pit_risk_counts:
+  PIT_APPROXIMATED: 7
+  PIT_REVISED_DATA_RISK: 1
+  PIT_SAFE: 1
+promotion_gate_blockers: []
+promotion_gate:
+  pit_unknown_or_blocking_signals_block_promotion: true
+  pit_approximated_role: watch_only_with_caveat
+  dynamic_promotion_final_status: BLOCKED
+artifact_sha256:
+  signal_pit_audit: de92c5a22ae90b7b24f2418c445a30ab4c736411f4a8897cc7ba2a6227c7a54d
+  pit_risk_summary: 06a38d63020f25ab4f698eb6c540e4172084b383a64b7448f4430f9c200cb370
+signal_inventory:
+- signal_id: market_price_close_QQQ_TQQQ_SGOV
+  strategy_id: multiple
+  signal_family: market_price
+  source_dataset: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  observation_date: '2026-06-26'
+  release_date: '2026-06-26'
+  release_time: date_only_after_market_close
+  available_to_system_at: next_trading_day_or_later
+  used_for_decision_at: actual_path_signal_or_diagnostic_context
+  decision_at: strategy_path_dependent
+  effective_at: strategy_path_dependent
+  revision_policy: vendor_adjusted_daily_cache_manifest
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_caveat_exact_vendor_release_time_not_persisted
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+- signal_id: treasury_rate_series
+  strategy_id: multiple
+  signal_family: macro_rate
+  source_dataset: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  observation_date: '2026-06-26'
+  release_date: '2026-06-26'
+  release_time: date_only_no_release_timestamp
+  available_to_system_at: not_used_by_current_dynamic_signal_path
+  used_for_decision_at: actual_path_signal_or_diagnostic_context
+  decision_at: strategy_path_dependent
+  effective_at: strategy_path_dependent
+  revision_policy: public_macro_series_without_revision_snapshot
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_REVISED_DATA_RISK
+  promotion_gate_impact: blocks_if_promoted_as_direct_signal_without_lag_policy
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+- signal_id: target_path_metrics
+  strategy_id: multiple
+  signal_family: diagnostic_metric_namespace
+  source_dataset: outputs\research_strategies\execution_semantics
+  observation_date: '2026-06-26'
+  release_date: '2026-06-26'
+  release_time: not_applicable
+  available_to_system_at: diagnostic_only
+  used_for_decision_at: actual_path_signal_or_diagnostic_context
+  decision_at: strategy_path_dependent
+  effective_at: strategy_path_dependent
+  revision_policy: forbidden_for_promotion
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_SAFE
+  promotion_gate_impact: target_path_metrics_forbidden_for_promotion
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+- signal_id: limited_adjustment:close_based_dynamic_v3_target
+  strategy_id: limited_adjustment
+  signal_family: dynamic_strategy_signal
+  source_dataset: outputs\research_strategies\execution_semantics\limited_adjustment\target_vs_actual_position_path.csv
+  observation_date: 2022-12-01..2026-06-25
+  release_date: 2022-12-01..2026-06-25
+  release_time: after_market_close
+  available_to_system_at: signal_asof_date
+  used_for_decision_at: 2022-12-01..2026-06-25
+  decision_at: 2022-12-01..2026-06-25
+  effective_at: 2022-12-01..2026-06-26
+  revision_policy: date_only_close_based_signal_path
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_caveat_date_level_pit
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 894
+- signal_id: dynamic_v0_5_ai_trend_confirmed_only:close_based_ai_trend_confirmation
+  strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  signal_family: dynamic_strategy_signal
+  source_dataset: outputs\research_strategies\execution_semantics\dynamic_v0_5_ai_trend_confirmed_only\target_vs_actual_position_path.csv
+  observation_date: 2022-12-01..2026-06-25
+  release_date: 2022-12-01..2026-06-25
+  release_time: after_market_close
+  available_to_system_at: signal_asof_date
+  used_for_decision_at: 2022-12-01..2026-06-25
+  decision_at: 2022-12-01..2026-06-25
+  effective_at: 2022-12-01..2026-06-09
+  revision_policy: date_only_close_based_signal_path
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_caveat_date_level_pit
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 894
+- signal_id: limited_adjustment_event_override_v1:close_based_dynamic_v3_target
+  strategy_id: limited_adjustment_event_override_v1
+  signal_family: dynamic_strategy_signal
+  source_dataset: outputs\research_strategies\execution_semantics\limited_adjustment_event_override_v1\target_vs_actual_position_path.csv
+  observation_date: 2022-12-01..2026-06-25
+  release_date: 2022-12-01..2026-06-25
+  release_time: after_market_close
+  available_to_system_at: signal_asof_date
+  used_for_decision_at: 2022-12-01..2026-06-25
+  decision_at: 2022-12-01..2026-06-25
+  effective_at: 2022-12-01..2026-06-26
+  revision_policy: date_only_close_based_signal_path
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_caveat_date_level_pit
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 894
+- signal_id: limited_adjustment_event_override_v1:event_override_decision
+  strategy_id: limited_adjustment_event_override_v1
+  signal_family: event_override
+  source_dataset: outputs\research_strategies\execution_semantics\limited_adjustment_event_override_v1\event_override_trace.json
+  observation_date: 2023-10-03..2026-02-26
+  release_date: 2023-10-03..2026-02-26
+  release_time: date_only_event_known_at
+  available_to_system_at: event_known_at
+  used_for_decision_at: 2023-10-03..2026-02-26
+  decision_at: 2023-10-03..2026-02-26
+  effective_at: 2023-10-04..2026-02-27
+  revision_policy: event_override_trace_no_future_return_evidence
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_until_ex_ante_taxonomy_review
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 9
+- signal_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1:close_based_ai_trend_confirmation
+  strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  signal_family: dynamic_strategy_signal
+  source_dataset: outputs\research_strategies\execution_semantics\dynamic_v0_5_ai_trend_confirmed_event_override_v1\target_vs_actual_position_path.csv
+  observation_date: 2022-12-01..2026-06-25
+  release_date: 2022-12-01..2026-06-25
+  release_time: after_market_close
+  available_to_system_at: signal_asof_date
+  used_for_decision_at: 2022-12-01..2026-06-25
+  decision_at: 2022-12-01..2026-06-25
+  effective_at: 2022-12-01..2026-06-10
+  revision_policy: date_only_close_based_signal_path
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_caveat_date_level_pit
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 894
+- signal_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1:event_override_decision
+  strategy_id: dynamic_v0_5_ai_trend_confirmed_event_override_v1
+  signal_family: event_override
+  source_dataset: outputs\research_strategies\execution_semantics\dynamic_v0_5_ai_trend_confirmed_event_override_v1\event_override_trace.json
+  observation_date: 2022-12-29..2026-06-08
+  release_date: 2022-12-29..2026-06-08
+  release_time: date_only_event_known_at
+  available_to_system_at: event_known_at
+  used_for_decision_at: 2022-12-29..2026-06-08
+  decision_at: 2022-12-29..2026-06-08
+  effective_at: 2022-12-30..2026-06-09
+  revision_policy: event_override_trace_no_future_return_evidence
+  is_point_in_time_safe: true
+  pit_risk_level: PIT_APPROXIMATED
+  promotion_gate_impact: watch_only_until_ex_ante_taxonomy_review
+  promotion_gate_blocker: false
+  future_date_violation_count: 0
+  missing_required_field_count: 0
+  row_count: 27
+target_path_metrics_role: diagnostic_only
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

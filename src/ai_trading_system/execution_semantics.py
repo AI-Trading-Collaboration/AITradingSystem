@@ -119,6 +119,30 @@ DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH = (
     / "research_reviews"
     / "dynamic_strategy_objective_gate_matrix.yaml"
 )
+DEFAULT_PIT_AUDIT_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "pit_audit"
+)
+DEFAULT_PIT_DATA_AVAILABILITY_INVENTORY_PATH = (
+    PROJECT_ROOT / "inputs" / "research_reviews" / "pit_data_availability_inventory.yaml"
+)
+DEFAULT_PIT_DATA_AVAILABILITY_AUDIT_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "pit_data_availability_audit.md"
+)
+DEFAULT_WALK_FORWARD_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "walk_forward"
+)
+DEFAULT_DYNAMIC_WALK_FORWARD_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "dynamic_walk_forward_policy.yaml"
+)
+DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "dynamic_strategy_walk_forward_validation.md"
+)
+DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "dynamic_strategy_walk_forward_matrix.yaml"
+)
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
     if isinstance(AI_REGIME_START, date)
@@ -515,6 +539,16 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "dynamic_strategy_objective_gate_review",
         "title": "Dynamic Strategy Objective Gate Review",
         "command": "aits research strategies dynamic-strategy-objective-gate-review",
+    },
+    {
+        "report_id": "pit_data_availability_audit",
+        "title": "PIT Data Availability Audit",
+        "command": "aits research strategies pit-data-availability-audit",
+    },
+    {
+        "report_id": "dynamic_strategy_walk_forward_validation",
+        "title": "Dynamic Strategy Walk-Forward Validation",
+        "command": "aits research strategies dynamic-strategy-walk-forward-validation",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -2061,6 +2095,308 @@ def run_dynamic_strategy_objective_gate_review(
         ),
     )
     _write_objective_gate_artifacts(payload, docs_path=docs_path, yaml_path=yaml_path)
+    return payload
+
+
+def run_pit_data_availability_audit(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    signal_validity_taxonomy_path: Path = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
+    event_override_policy_path: Path = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_PIT_AUDIT_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_PIT_DATA_AVAILABILITY_AUDIT_REVIEW_PATH,
+    inventory_path: Path = DEFAULT_PIT_DATA_AVAILABILITY_INVENTORY_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("pit_audit"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="pit_data_availability_audit",
+            title=REPORT_SPEC_BY_ID["pit_data_availability_audit"]["title"],
+            status="PIT_DATA_AVAILABILITY_AUDIT_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_pit_audit_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            inventory_path=inventory_path,
+            signal_rows=[],
+        )
+        return payload
+
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    date_range = {
+        "start": prices.index.min().date().isoformat(),
+        "end": prices.index.max().date().isoformat(),
+        "market_regime": "ai_after_chatgpt",
+    }
+    registry = _load_policy_registry(policy_registry_path)
+    signal_rows = _pit_signal_inventory_rows(
+        source_root=source_root,
+        policy_registry=registry,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        date_range=date_range,
+    )
+    risk_counts = _count_by_key(signal_rows, "pit_risk_level")
+    blocker_rows = [
+        row for row in signal_rows if bool(row.get("promotion_gate_blocker"))
+    ]
+    status = (
+        "PIT_DATA_AVAILABILITY_REVIEW_BLOCKED"
+        if blocker_rows
+        else "PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS"
+    )
+    payload = _payload(
+        report_type="pit_data_availability_audit",
+        title=REPORT_SPEC_BY_ID["pit_data_availability_audit"]["title"],
+        status=status,
+        summary={
+            "signal_count": len(signal_rows),
+            "promotion_gate_blocker_count": len(blocker_rows),
+            "pit_unknown_count": risk_counts.get("PIT_UNKNOWN", 0),
+            "pit_blocking_count": risk_counts.get("PIT_BLOCKING", 0),
+            "pit_approximated_count": risk_counts.get("PIT_APPROXIMATED", 0),
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        signal_validity_taxonomy_hash=_file_sha256(signal_validity_taxonomy_path),
+        event_override_policy_hash=_file_sha256(event_override_policy_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        signal_inventory=signal_rows,
+        pit_risk_counts=risk_counts,
+        promotion_gate_blockers=[
+            str(row.get("signal_id")) for row in blocker_rows
+        ],
+        target_path_diagnostic_notice=(
+            "Target-path metrics remain diagnostic-only and are forbidden as "
+            "promotion gate inputs regardless of PIT status."
+        ),
+        report_registry_entry=_report_registry_entry("pit_data_availability_audit"),
+    )
+    artifact_paths = _write_pit_audit_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        inventory_path=inventory_path,
+        signal_rows=signal_rows,
+    )
+    payload["artifact_paths"] = artifact_paths
+    return payload
+
+
+def run_dynamic_strategy_walk_forward_validation(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    walk_forward_policy_path: Path = DEFAULT_DYNAMIC_WALK_FORWARD_POLICY_PATH,
+    edge_matrix_path: Path = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    source_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Path = DEFAULT_WALK_FORWARD_OUTPUT_ROOT,
+    run_id: str | None = None,
+    docs_path: Path = DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_REVIEW_PATH,
+    yaml_path: Path = DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    runtime_root = output_root / (run_id or _run_id("walk_forward"))
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="dynamic_strategy_walk_forward_validation",
+            title=REPORT_SPEC_BY_ID[
+                "dynamic_strategy_walk_forward_validation"
+            ]["title"],
+            status="WALK_FORWARD_VALIDATION_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_walk_forward_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            leaderboard_rows=[],
+            rolling_rows=[],
+            stability_rows=[],
+            holdout_rows=[],
+        )
+        return payload
+
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    date_range = {
+        "start": prices.index.min().date().isoformat(),
+        "end": prices.index.max().date().isoformat(),
+        "market_regime": "ai_after_chatgpt",
+    }
+    policy = _load_yaml_mapping(walk_forward_policy_path)
+    edge_matrix = _load_yaml_mapping(edge_matrix_path)
+    missing = _missing_runtime_strategy_artifacts(
+        source_root,
+        [*ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES, *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES],
+    )
+    if not policy:
+        missing.append(f"missing_or_empty_policy:{walk_forward_policy_path}")
+    if not edge_matrix:
+        missing.append(f"missing_or_empty_edge_matrix:{edge_matrix_path}")
+    if missing:
+        payload = _payload(
+            report_type="dynamic_strategy_walk_forward_validation",
+            title=REPORT_SPEC_BY_ID[
+                "dynamic_strategy_walk_forward_validation"
+            ]["title"],
+            status="WALK_FORWARD_VALIDATION_BLOCKED",
+            summary={
+                "missing_input_count": len(missing),
+                "data_quality_status": data_gate.get("status"),
+                "dynamic_promotion_blocked": True,
+                "target_path_metrics_role": "diagnostic_only",
+                **_safety_summary(),
+            },
+            blockers=missing,
+            date_range=date_range,
+            data_quality=data_gate,
+            report_registry_entry=_report_registry_entry(
+                "dynamic_strategy_walk_forward_validation"
+            ),
+        )
+        _write_walk_forward_artifacts(
+            payload=payload,
+            runtime_root=runtime_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            leaderboard_rows=[],
+            rolling_rows=[],
+            stability_rows=[],
+            holdout_rows=[],
+        )
+        return payload
+
+    registry = _load_policy_registry(policy_registry_path)
+    strategy_ids = [
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_BASELINES,
+        *ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    ]
+    leaderboard_rows = _walk_forward_leaderboard_rows(
+        prices=prices,
+        source_root=source_root,
+        policy_registry=registry,
+        policy=policy,
+        strategy_ids=strategy_ids,
+    )
+    rolling_rows = _walk_forward_rolling_rows(
+        prices=prices,
+        source_root=source_root,
+        policy_registry=registry,
+        policy=policy,
+        strategy_ids=strategy_ids,
+    )
+    stability_rows = _walk_forward_stability_rows(
+        leaderboard_rows=leaderboard_rows,
+        strategy_ids=ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+        policy=policy,
+    )
+    holdout_rows = _walk_forward_holdout_rows(
+        leaderboard_rows=leaderboard_rows,
+        strategy_ids=ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+    )
+    verdict_counts = _count_by_key(stability_rows, "walk_forward_verdict")
+    status = (
+        "WALK_FORWARD_VALIDATION_BLOCKED"
+        if verdict_counts.get("INSUFFICIENT_OOS_EVIDENCE", 0) == len(stability_rows)
+        else "WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS"
+    )
+    payload = _payload(
+        report_type="dynamic_strategy_walk_forward_validation",
+        title=REPORT_SPEC_BY_ID["dynamic_strategy_walk_forward_validation"]["title"],
+        status=status,
+        summary={
+            "strategy_count": len(stability_rows),
+            "split_row_count": len(leaderboard_rows),
+            "rolling_row_count": len(rolling_rows),
+            "verdict_counts": verdict_counts,
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        source_runtime_root=str(source_root),
+        runtime_artifact_root=str(runtime_root),
+        source_commit=_source_commit_hash(),
+        config_hash=_file_sha256(simple_config_path),
+        policy_hash=_file_sha256(policy_registry_path),
+        walk_forward_policy_hash=_file_sha256(walk_forward_policy_path),
+        edge_matrix_hash=_file_sha256(edge_matrix_path),
+        data_snapshot_hash=_data_snapshot_hash(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+        ),
+        date_range=date_range,
+        data_quality=data_gate,
+        walk_forward_policy=_walk_forward_policy_summary(policy),
+        strategy_validation_rows=stability_rows,
+        target_path_diagnostic_notice=(
+            "Walk-forward validation recomputes actual-path metrics from actual "
+            "position paths; target-path metrics are diagnostic-only."
+        ),
+        report_registry_entry=_report_registry_entry(
+            "dynamic_strategy_walk_forward_validation"
+        ),
+    )
+    artifact_paths = _write_walk_forward_artifacts(
+        payload=payload,
+        runtime_root=runtime_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        leaderboard_rows=leaderboard_rows,
+        rolling_rows=rolling_rows,
+        stability_rows=stability_rows,
+        holdout_rows=holdout_rows,
+    )
+    payload["artifact_paths"] = artifact_paths
     return payload
 
 
@@ -6706,6 +7042,898 @@ def _data_snapshot_hash(
             "prices_marketstack_daily": _file_sha256(marketstack_prices_path),
             "rates_daily": _file_sha256(rates_path),
         }
+    )
+
+
+def _count_by_key(rows: list[Mapping[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        value = str(row.get(key) or "missing")
+        counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
+def _pit_signal_inventory_rows(
+    *,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    prices_path: Path,
+    rates_path: Path,
+    date_range: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    bindings = _strategy_execution_binding_by_id(policy_registry)
+    rows = [
+        _pit_data_source_row(
+            signal_id="market_price_close_QQQ_TQQQ_SGOV",
+            source_dataset=str(prices_path),
+            signal_family="market_price",
+            date_range=date_range,
+            pit_risk_level="PIT_APPROXIMATED",
+            revision_policy="vendor_adjusted_daily_cache_manifest",
+            release_time="date_only_after_market_close",
+            available_to_system_at="next_trading_day_or_later",
+            promotion_gate_impact="watch_only_caveat_exact_vendor_release_time_not_persisted",
+            promotion_gate_blocker=False,
+        ),
+        _pit_data_source_row(
+            signal_id="treasury_rate_series",
+            source_dataset=str(rates_path),
+            signal_family="macro_rate",
+            date_range=date_range,
+            pit_risk_level="PIT_REVISED_DATA_RISK",
+            revision_policy="public_macro_series_without_revision_snapshot",
+            release_time="date_only_no_release_timestamp",
+            available_to_system_at="not_used_by_current_dynamic_signal_path",
+            promotion_gate_impact="blocks_if_promoted_as_direct_signal_without_lag_policy",
+            promotion_gate_blocker=False,
+        ),
+        _pit_data_source_row(
+            signal_id="target_path_metrics",
+            source_dataset=str(source_root),
+            signal_family="diagnostic_metric_namespace",
+            date_range=date_range,
+            pit_risk_level="PIT_SAFE",
+            revision_policy="forbidden_for_promotion",
+            release_time="not_applicable",
+            available_to_system_at="diagnostic_only",
+            promotion_gate_impact="target_path_metrics_forbidden_for_promotion",
+            promotion_gate_blocker=False,
+        ),
+    ]
+    for strategy_id in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES:
+        binding = _mapping(bindings.get(strategy_id))
+        path = source_root / strategy_id / "target_vs_actual_position_path.csv"
+        frame = pd.read_csv(path) if path.exists() else pd.DataFrame()
+        rows.append(
+            _pit_strategy_signal_row(
+                strategy_id=strategy_id,
+                binding=binding,
+                path=path,
+                frame=frame,
+            )
+        )
+        if strategy_id in EVENT_OVERRIDE_WATCH_ONLY_VARIANTS:
+            trace = _read_json_mapping(source_root / strategy_id / "event_override_trace.json")
+            rows.append(
+                _pit_event_override_row(
+                    strategy_id=strategy_id,
+                    trace=trace,
+                    path=source_root / strategy_id / "event_override_trace.json",
+                )
+            )
+    return rows
+
+
+def _pit_data_source_row(
+    *,
+    signal_id: str,
+    source_dataset: str,
+    signal_family: str,
+    date_range: Mapping[str, Any],
+    pit_risk_level: str,
+    revision_policy: str,
+    release_time: str,
+    available_to_system_at: str,
+    promotion_gate_impact: str,
+    promotion_gate_blocker: bool,
+) -> dict[str, Any]:
+    return {
+        "signal_id": signal_id,
+        "strategy_id": "multiple",
+        "signal_family": signal_family,
+        "source_dataset": source_dataset,
+        "observation_date": date_range.get("end"),
+        "release_date": date_range.get("end"),
+        "release_time": release_time,
+        "available_to_system_at": available_to_system_at,
+        "used_for_decision_at": "actual_path_signal_or_diagnostic_context",
+        "decision_at": "strategy_path_dependent",
+        "effective_at": "strategy_path_dependent",
+        "revision_policy": revision_policy,
+        "is_point_in_time_safe": pit_risk_level != "PIT_BLOCKING",
+        "pit_risk_level": pit_risk_level,
+        "promotion_gate_impact": promotion_gate_impact,
+        "promotion_gate_blocker": promotion_gate_blocker,
+        "future_date_violation_count": 0,
+        "missing_required_field_count": 0,
+    }
+
+
+def _pit_strategy_signal_row(
+    *,
+    strategy_id: str,
+    binding: Mapping[str, Any],
+    path: Path,
+    frame: pd.DataFrame,
+) -> dict[str, Any]:
+    required_columns = [
+        "signal_observation_date",
+        "signal_asof_date",
+        "advisory_generation_date",
+        "actual_execution_date",
+        "position_effective_date",
+    ]
+    missing = [column for column in required_columns if column not in frame.columns]
+    future_violations = 0
+    effective_violations = 0
+    if not frame.empty and not missing:
+        observation = _date_series(frame["signal_observation_date"])
+        asof = _date_series(frame["signal_asof_date"])
+        decision = _date_series(frame["advisory_generation_date"])
+        execution = _date_series(frame["actual_execution_date"])
+        position_effective = _date_series(frame["position_effective_date"])
+        executed = _bool_series(frame["rebalance_executed"]) | _bool_series(
+            frame["event_override_executed"]
+        )
+        future_violations = int(((observation > asof) | (observation > decision)).sum())
+        effective_violations = int(
+            (
+                executed
+                & ((execution < decision) | (position_effective < decision))
+            ).sum()
+        )
+    if missing or frame.empty:
+        risk = "PIT_UNKNOWN"
+    elif future_violations or effective_violations:
+        risk = "PIT_BLOCKING"
+    else:
+        risk = "PIT_APPROXIMATED"
+    blocker = risk in {"PIT_UNKNOWN", "PIT_BLOCKING"}
+    obs_min, obs_max = _date_minmax(frame, "signal_observation_date")
+    decision_min, decision_max = _date_minmax(frame, "advisory_generation_date")
+    effective_min, effective_max = _date_minmax(frame, "position_effective_date")
+    signal_policy = _mapping(binding.get("signal_policy"))
+    return {
+        "signal_id": f"{strategy_id}:{signal_policy.get('signal_source', 'unknown')}",
+        "strategy_id": strategy_id,
+        "signal_family": "dynamic_strategy_signal",
+        "source_dataset": str(path),
+        "observation_date": f"{obs_min}..{obs_max}",
+        "release_date": f"{obs_min}..{obs_max}",
+        "release_time": str(
+            signal_policy.get("signal_observation_time")
+            or "date_only_no_intraday_timestamp"
+        ),
+        "available_to_system_at": "signal_asof_date",
+        "used_for_decision_at": f"{decision_min}..{decision_max}",
+        "decision_at": f"{decision_min}..{decision_max}",
+        "effective_at": f"{effective_min}..{effective_max}",
+        "revision_policy": "date_only_close_based_signal_path",
+        "is_point_in_time_safe": not blocker,
+        "pit_risk_level": risk,
+        "promotion_gate_impact": (
+            "blocks_promotion" if blocker else "watch_only_caveat_date_level_pit"
+        ),
+        "promotion_gate_blocker": blocker,
+        "future_date_violation_count": future_violations + effective_violations,
+        "missing_required_field_count": len(missing),
+        "row_count": len(frame),
+    }
+
+
+def _pit_event_override_row(
+    *,
+    strategy_id: str,
+    trace: Mapping[str, Any],
+    path: Path,
+) -> dict[str, Any]:
+    decisions = _records(trace.get("decisions"))
+    failed = [
+        item
+        for item in decisions
+        if not bool(_mapping(item.get("no_lookahead_evidence")).get("passed", False))
+    ]
+    missing = not decisions
+    risk = "PIT_UNKNOWN" if missing else "PIT_BLOCKING" if failed else "PIT_APPROXIMATED"
+    known_dates = [
+        str(item.get("event_known_at"))
+        for item in decisions
+        if item.get("event_known_at")
+    ]
+    decision_dates = [
+        str(item.get("decision_at"))
+        for item in decisions
+        if item.get("decision_at")
+    ]
+    effective_dates = [
+        str(item.get("effective_at"))
+        for item in decisions
+        if item.get("effective_at")
+    ]
+    return {
+        "signal_id": f"{strategy_id}:event_override_decision",
+        "strategy_id": strategy_id,
+        "signal_family": "event_override",
+        "source_dataset": str(path),
+        "observation_date": _range_label(known_dates),
+        "release_date": _range_label(known_dates),
+        "release_time": "date_only_event_known_at",
+        "available_to_system_at": "event_known_at",
+        "used_for_decision_at": _range_label(decision_dates),
+        "decision_at": _range_label(decision_dates),
+        "effective_at": _range_label(effective_dates),
+        "revision_policy": "event_override_trace_no_future_return_evidence",
+        "is_point_in_time_safe": risk != "PIT_BLOCKING",
+        "pit_risk_level": risk,
+        "promotion_gate_impact": (
+            "blocks_promotion"
+            if risk in {"PIT_UNKNOWN", "PIT_BLOCKING"}
+            else "watch_only_until_ex_ante_taxonomy_review"
+        ),
+        "promotion_gate_blocker": risk in {"PIT_UNKNOWN", "PIT_BLOCKING"},
+        "future_date_violation_count": len(failed),
+        "missing_required_field_count": 1 if missing else 0,
+        "row_count": len(decisions),
+    }
+
+
+def _date_series(series: pd.Series) -> pd.Series:
+    return pd.to_datetime(series, errors="coerce")
+
+
+def _date_minmax(frame: pd.DataFrame, column: str) -> tuple[str, str]:
+    if frame.empty or column not in frame.columns:
+        return "missing", "missing"
+    values = _date_series(frame[column]).dropna()
+    if values.empty:
+        return "missing", "missing"
+    return values.min().date().isoformat(), values.max().date().isoformat()
+
+
+def _range_label(values: list[str]) -> str:
+    cleaned = sorted({value for value in values if value and value != "nan"})
+    if not cleaned:
+        return "missing"
+    return f"{cleaned[0]}..{cleaned[-1]}"
+
+
+def _write_pit_audit_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    inventory_path: Path,
+    signal_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "signal_pit_audit": runtime_root / "signal_pit_audit.csv",
+        "pit_risk_summary": runtime_root / "pit_risk_summary.json",
+        "review_markdown": docs_path,
+        "review_yaml": inventory_path,
+    }
+    pd.DataFrame(signal_rows).to_csv(paths["signal_pit_audit"], index=False)
+    summary_payload = {
+        "status": payload.get("status"),
+        "summary": payload.get("summary", {}),
+        "pit_risk_counts": payload.get("pit_risk_counts", {}),
+        "promotion_gate_blockers": payload.get("promotion_gate_blockers", []),
+        "artifact_sha256": {
+            "signal_pit_audit": _file_sha256(paths["signal_pit_audit"])
+        },
+        **SAFETY_BOUNDARY,
+    }
+    _write_json(paths["pit_risk_summary"], summary_payload)
+    inventory_payload = _pit_inventory_payload(
+        payload=payload,
+        signal_rows=signal_rows,
+        artifact_hashes={
+            "signal_pit_audit": _file_sha256(paths["signal_pit_audit"]),
+            "pit_risk_summary": _file_sha256(paths["pit_risk_summary"]),
+        },
+    )
+    inventory_path.parent.mkdir(parents=True, exist_ok=True)
+    inventory_path.write_text(
+        yaml.safe_dump(inventory_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _pit_audit_review_markdown(payload, signal_rows=signal_rows),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _pit_inventory_payload(
+    *,
+    payload: Mapping[str, Any],
+    signal_rows: list[dict[str, Any]],
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "pit_data_availability_inventory.v1",
+        "report_type": "pit_data_availability_inventory",
+        "status": payload.get("status"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash": payload.get("policy_hash"),
+        "signal_validity_taxonomy_hash": payload.get("signal_validity_taxonomy_hash"),
+        "event_override_policy_hash": payload.get("event_override_policy_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "pit_risk_counts": payload.get("pit_risk_counts", {}),
+        "promotion_gate_blockers": payload.get("promotion_gate_blockers", []),
+        "promotion_gate": {
+            "pit_unknown_or_blocking_signals_block_promotion": True,
+            "pit_approximated_role": "watch_only_with_caveat",
+            "dynamic_promotion_final_status": "BLOCKED",
+        },
+        "artifact_sha256": dict(artifact_hashes),
+        "signal_inventory": signal_rows,
+        "target_path_metrics_role": "diagnostic_only",
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _pit_audit_review_markdown(
+    payload: Mapping[str, Any],
+    *,
+    signal_rows: list[dict[str, Any]],
+) -> str:
+    date_range = _mapping(payload.get("date_range"))
+    table_rows = [
+        {
+            "signal_id": row.get("signal_id"),
+            "strategy_id": row.get("strategy_id"),
+            "pit_risk_level": row.get("pit_risk_level"),
+            "promotion_gate_blocker": row.get("promotion_gate_blocker"),
+            "promotion_gate_impact": row.get("promotion_gate_impact"),
+        }
+        for row in signal_rows
+    ]
+    return "\n".join(
+        [
+            "# PIT Data Availability Audit",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+            (
+                "- data_quality_status：`"
+                f"{_mapping(payload.get('summary')).get('data_quality_status')}`"
+            ),
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Signal PIT Inventory",
+            "",
+            _markdown_table(
+                table_rows,
+                [
+                    "signal_id",
+                    "strategy_id",
+                    "pit_risk_level",
+                    "promotion_gate_blocker",
+                    "promotion_gate_impact",
+                ],
+            ),
+            "",
+            "## Gate 结论",
+            "",
+            (
+                "任何 `PIT_UNKNOWN` 或 `PIT_BLOCKING` signal 都不得进入 promotion gate；"
+                "`PIT_APPROXIMATED` signal 只能作为 watch-only evidence，并必须带 caveat。"
+            ),
+            "Target-path metrics 继续保持 diagnostic-only，不能用于晋级。",
+            "",
+        ]
+    )
+
+
+def _walk_forward_leaderboard_rows(
+    *,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    strategy_ids: list[str],
+) -> list[dict[str, Any]]:
+    split_rows = _walk_forward_split_definitions(policy, prices)
+    rows: list[dict[str, Any]] = []
+    for split in split_rows:
+        split_prices = prices.loc[
+            pd.Timestamp(split["start_date"]) : pd.Timestamp(split["end_date"])
+        ]
+        if split_prices.empty:
+            continue
+        for strategy_id in strategy_ids:
+            metrics = _walk_forward_period_metrics(
+                strategy_id=strategy_id,
+                prices=split_prices,
+                source_root=source_root,
+                policy_registry=policy_registry,
+            )
+            rows.append(
+                {
+                    "split_id": split["split_id"],
+                    "split_purpose": split.get("purpose"),
+                    "split_start": split["start_date"],
+                    "split_end": split["end_date"],
+                    "trading_day_count": len(split_prices),
+                    "strategy_id": strategy_id,
+                    "is_dynamic_candidate": strategy_id
+                    in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+                    **metrics,
+                }
+            )
+    return _rank_walk_forward_rows(rows)
+
+
+def _walk_forward_rolling_rows(
+    *,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    strategy_ids: list[str],
+) -> list[dict[str, Any]]:
+    rolling = _mapping(policy.get("rolling_policy"))
+    window_days = max(1, _int(rolling.get("window_trading_days"), 126))
+    step_days = max(1, _int(rolling.get("step_trading_days"), 63))
+    if len(prices) < window_days:
+        return []
+    rows: list[dict[str, Any]] = []
+    window_number = 0
+    for start_index in range(0, len(prices) - window_days + 1, step_days):
+        window_number += 1
+        split_prices = prices.iloc[start_index : start_index + window_days]
+        split_id = f"rolling_{window_number:03d}"
+        for strategy_id in strategy_ids:
+            metrics = _walk_forward_period_metrics(
+                strategy_id=strategy_id,
+                prices=split_prices,
+                source_root=source_root,
+                policy_registry=policy_registry,
+            )
+            rows.append(
+                {
+                    "split_id": split_id,
+                    "split_purpose": "rolling_oos",
+                    "split_start": split_prices.index.min().date().isoformat(),
+                    "split_end": split_prices.index.max().date().isoformat(),
+                    "trading_day_count": len(split_prices),
+                    "strategy_id": strategy_id,
+                    "is_dynamic_candidate": strategy_id
+                    in ACTUAL_PATH_EDGE_ATTRIBUTION_STRATEGIES,
+                    **metrics,
+                }
+            )
+    return _rank_walk_forward_rows(rows)
+
+
+def _walk_forward_split_definitions(
+    policy: Mapping[str, Any],
+    prices: pd.DataFrame,
+) -> list[dict[str, str]]:
+    data_start = prices.index.min().date()
+    data_end = prices.index.max().date()
+    splits: list[dict[str, str]] = []
+    for split in _records(policy.get("validation_splits")):
+        raw_start = date.fromisoformat(str(split.get("start_date")))
+        raw_end = (
+            date.fromisoformat(str(split.get("end_date")))
+            if split.get("end_date")
+            else data_end
+        )
+        start = max(raw_start, data_start)
+        end = min(raw_end, data_end)
+        if start > end:
+            continue
+        splits.append(
+            {
+                "split_id": str(split.get("split_id")),
+                "purpose": str(split.get("purpose")),
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+            }
+        )
+    return splits
+
+
+def _walk_forward_period_metrics(
+    *,
+    strategy_id: str,
+    prices: pd.DataFrame,
+    source_root: Path,
+    policy_registry: Mapping[str, Any],
+) -> dict[str, Any]:
+    path = source_root / strategy_id / "target_vs_actual_position_path.csv"
+    frame = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    weights = _actual_weights_from_path(frame, prices.index)
+    cost_bps = _strategy_cost_bps(strategy_id, policy_registry)
+    metrics = _namespace_path_metrics(
+        _performance_metrics(prices, weights, cost_bps=cost_bps),
+        "actual_path",
+    )
+    return {
+        "actual_path_annual_return": metrics.get("actual_path_annual_return"),
+        "actual_path_max_drawdown_daily_equity": metrics.get(
+            "actual_path_max_drawdown_daily_equity"
+        ),
+        "actual_path_sharpe_daily_zero_rf": metrics.get(
+            "actual_path_sharpe_daily_zero_rf"
+        ),
+        "actual_path_calmar_daily_equity_dd": metrics.get(
+            "actual_path_calmar_daily_equity_dd"
+        ),
+        "actual_path_turnover": metrics.get("actual_path_turnover"),
+    }
+
+
+def _actual_weights_from_path(frame: pd.DataFrame, index: pd.Index) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(0.0, index=index, columns=["QQQ", "TQQQ", "SGOV"])
+    path = _normalised_path_frame(frame)
+    weights = path.set_index("date")[
+        ["actual_weight_qqq", "actual_weight_tqqq", "actual_weight_sgov"]
+    ].rename(
+        columns={
+            "actual_weight_qqq": "QQQ",
+            "actual_weight_tqqq": "TQQQ",
+            "actual_weight_sgov": "SGOV",
+        }
+    )
+    weights = weights.reindex(index).ffill().bfill().fillna(0.0)
+    return _ensure_weight_columns(weights)
+
+
+def _strategy_cost_bps(strategy_id: str, policy_registry: Mapping[str, Any]) -> float:
+    bindings = _strategy_execution_binding_by_id(policy_registry)
+    policies = _policies_by_id(policy_registry)
+    binding = _mapping(bindings.get(strategy_id))
+    policy = _mapping(policies.get(str(binding.get("execution_policy_id"))))
+    return _policy_cost_bps(policy)
+
+
+def _rank_walk_forward_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_split: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        by_split.setdefault(str(row.get("split_id")), []).append(row)
+    ranked: list[dict[str, Any]] = []
+    for split_rows in by_split.values():
+        ordered = sorted(
+            split_rows,
+            key=lambda item: _float(item.get("actual_path_annual_return")),
+            reverse=True,
+        )
+        for rank, row in enumerate(ordered, start=1):
+            row["annual_return_rank"] = rank
+            row["rank_denominator"] = len(ordered)
+            ranked.append(row)
+    return ranked
+
+
+def _walk_forward_stability_rows(
+    *,
+    leaderboard_rows: list[dict[str, Any]],
+    strategy_ids: tuple[str, ...],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    thresholds = _mapping(policy.get("stability_thresholds"))
+    min_splits = max(1, _int(thresholds.get("min_completed_splits_for_stable"), 3))
+    min_top_half = _float(thresholds.get("top_half_rate_for_stable"), 0.75)
+    max_rank_std = _float(thresholds.get("max_rank_std_for_stable"), 1.25)
+    min_positive = _float(thresholds.get("min_positive_split_rate_for_stable"), 0.75)
+    min_baseline_beat = _float(
+        thresholds.get("min_baseline_beat_rate_for_full_allocation"),
+        0.5,
+    )
+    baseline_by_split = {
+        str(row.get("split_id")): row
+        for row in leaderboard_rows
+        if row.get("strategy_id") == "qqq_60_sgov_40"
+    }
+    rows: list[dict[str, Any]] = []
+    for strategy_id in strategy_ids:
+        split_rows = [
+            row for row in leaderboard_rows if row.get("strategy_id") == strategy_id
+        ]
+        split_count = len(split_rows)
+        ranks = [_float(row.get("annual_return_rank")) for row in split_rows]
+        returns = [_float(row.get("actual_path_annual_return")) for row in split_rows]
+        top_half_count = sum(
+            1
+            for row in split_rows
+            if _float(row.get("annual_return_rank"))
+            <= max(1.0, _float(row.get("rank_denominator")) / 2.0)
+        )
+        baseline_beat_count = sum(
+            1
+            for row in split_rows
+            if _float(row.get("actual_path_annual_return"))
+            > _float(
+                _mapping(baseline_by_split.get(str(row.get("split_id")))).get(
+                    "actual_path_annual_return"
+                )
+            )
+        )
+        top_half_rate = _ratio(float(top_half_count), float(split_count))
+        positive_rate = _ratio(
+            float(sum(1 for value in returns if value > 0.0)),
+            float(split_count),
+        )
+        baseline_beat_rate = _ratio(float(baseline_beat_count), float(split_count))
+        rank_std = round(float(pd.Series(ranks).std(ddof=0)), 6) if ranks else 0.0
+        verdict = _walk_forward_verdict(
+            split_count=split_count,
+            min_splits=min_splits,
+            top_half_rate=top_half_rate,
+            min_top_half=min_top_half,
+            positive_rate=positive_rate,
+            min_positive=min_positive,
+            baseline_beat_rate=baseline_beat_rate,
+            min_baseline_beat=min_baseline_beat,
+            rank_std=rank_std,
+            max_rank_std=max_rank_std,
+        )
+        rows.append(
+            {
+                "strategy_id": strategy_id,
+                "completed_split_count": split_count,
+                "top_half_rate": round(top_half_rate, 6),
+                "positive_split_rate": round(positive_rate, 6),
+                "baseline_beat_rate_vs_qqq_60_sgov_40": round(
+                    baseline_beat_rate,
+                    6,
+                ),
+                "annual_return_rank_std": rank_std,
+                "mean_actual_path_annual_return": round(_mean(returns), 6),
+                "best_split_annual_return": round(max(returns), 6) if returns else 0.0,
+                "worst_split_annual_return": round(min(returns), 6) if returns else 0.0,
+                "walk_forward_verdict": verdict,
+                "promotion_gate_status": "BLOCKED",
+                "paper_shadow_preflight_allowed": False,
+                "promotion_decision_source": "actual_path_only",
+                "target_path_metrics_role": "diagnostic_only",
+            }
+        )
+    return rows
+
+
+def _walk_forward_verdict(
+    *,
+    split_count: int,
+    min_splits: int,
+    top_half_rate: float,
+    min_top_half: float,
+    positive_rate: float,
+    min_positive: float,
+    baseline_beat_rate: float,
+    min_baseline_beat: float,
+    rank_std: float,
+    max_rank_std: float,
+) -> str:
+    if split_count < min_splits:
+        return "INSUFFICIENT_OOS_EVIDENCE"
+    if positive_rate <= 1.0 / max(1, split_count):
+        return "WORKS_ONLY_IN_ONE_SAMPLE"
+    if rank_std > max_rank_std:
+        return "PARAMETER_SENSITIVE"
+    if (
+        top_half_rate >= min_top_half
+        and positive_rate >= min_positive
+        and baseline_beat_rate >= min_baseline_beat
+    ):
+        return "STABLE_ACROSS_WINDOWS"
+    if baseline_beat_rate < min_baseline_beat:
+        return "REGIME_OVERFITTED"
+    return "INSUFFICIENT_OOS_EVIDENCE"
+
+
+def _walk_forward_holdout_rows(
+    *,
+    leaderboard_rows: list[dict[str, Any]],
+    strategy_ids: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    baseline_by_split = {
+        str(row.get("split_id")): row
+        for row in leaderboard_rows
+        if row.get("strategy_id") == "qqq_60_sgov_40"
+    }
+    rows: list[dict[str, Any]] = []
+    for row in leaderboard_rows:
+        if row.get("strategy_id") not in strategy_ids:
+            continue
+        baseline = _mapping(baseline_by_split.get(str(row.get("split_id"))))
+        rows.append(
+            {
+                "split_id": row.get("split_id"),
+                "split_purpose": row.get("split_purpose"),
+                "strategy_id": row.get("strategy_id"),
+                "actual_path_annual_return": row.get("actual_path_annual_return"),
+                "baseline_strategy_id": "qqq_60_sgov_40",
+                "baseline_actual_path_annual_return": baseline.get(
+                    "actual_path_annual_return"
+                ),
+                "annual_return_delta_vs_baseline": round(
+                    _float(row.get("actual_path_annual_return"))
+                    - _float(baseline.get("actual_path_annual_return")),
+                    6,
+                ),
+                "annual_return_rank": row.get("annual_return_rank"),
+                "target_path_metrics_role": "diagnostic_only",
+            }
+        )
+    return rows
+
+
+def _walk_forward_policy_summary(policy: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "policy_id": policy.get("policy_id"),
+        "status": policy.get("status"),
+        "validation_splits": _records(policy.get("validation_splits")),
+        "rolling_policy": _mapping(policy.get("rolling_policy")),
+        "stability_thresholds": _mapping(policy.get("stability_thresholds")),
+    }
+
+
+def _write_walk_forward_artifacts(
+    *,
+    payload: dict[str, Any],
+    runtime_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    leaderboard_rows: list[dict[str, Any]],
+    rolling_rows: list[dict[str, Any]],
+    stability_rows: list[dict[str, Any]],
+    holdout_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "walk_forward_leaderboard": runtime_root / "walk_forward_leaderboard.csv",
+        "rolling_oos_metrics": runtime_root / "rolling_oos_metrics.csv",
+        "parameter_stability_heatmap": runtime_root
+        / "parameter_stability_heatmap.csv",
+        "regime_holdout_results": runtime_root / "regime_holdout_results.csv",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(leaderboard_rows).to_csv(paths["walk_forward_leaderboard"], index=False)
+    pd.DataFrame(rolling_rows).to_csv(paths["rolling_oos_metrics"], index=False)
+    pd.DataFrame(stability_rows).to_csv(
+        paths["parameter_stability_heatmap"],
+        index=False,
+    )
+    pd.DataFrame(holdout_rows).to_csv(paths["regime_holdout_results"], index=False)
+    artifact_hashes = {
+        key: _file_sha256(path)
+        for key, path in paths.items()
+        if key not in {"review_markdown", "review_yaml"}
+    }
+    matrix_payload = _walk_forward_matrix_payload(
+        payload=payload,
+        stability_rows=stability_rows,
+        runtime_root=runtime_root,
+        artifact_hashes=artifact_hashes,
+    )
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(matrix_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(
+        _walk_forward_review_markdown(payload, stability_rows=stability_rows),
+        encoding="utf-8",
+    )
+    return {key: str(path) for key, path in paths.items()}
+
+
+def _walk_forward_matrix_payload(
+    *,
+    payload: Mapping[str, Any],
+    stability_rows: list[dict[str, Any]],
+    runtime_root: Path,
+    artifact_hashes: Mapping[str, str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "dynamic_strategy_walk_forward_matrix.v1",
+        "report_type": "dynamic_strategy_walk_forward_matrix",
+        "status": payload.get("status"),
+        "run_id": runtime_root.name,
+        "runtime_artifact_root": str(runtime_root),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "source_commit": payload.get("source_commit", _source_commit_hash()),
+        "config_hash": payload.get("config_hash"),
+        "policy_hash": payload.get("policy_hash"),
+        "walk_forward_policy_hash": payload.get("walk_forward_policy_hash"),
+        "edge_matrix_hash": payload.get("edge_matrix_hash"),
+        "data_snapshot_hash": payload.get("data_snapshot_hash"),
+        "date_range": _mapping(payload.get("date_range")),
+        "walk_forward_policy": _mapping(payload.get("walk_forward_policy")),
+        "dynamic_promotion": {"final_status": "BLOCKED"},
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "artifact_sha256": dict(artifact_hashes),
+        "strategy_validation_rows": stability_rows,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _walk_forward_review_markdown(
+    payload: Mapping[str, Any],
+    *,
+    stability_rows: list[dict[str, Any]],
+) -> str:
+    date_range = _mapping(payload.get("date_range"))
+    table_rows = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "completed_split_count": row.get("completed_split_count"),
+            "top_half_rate": row.get("top_half_rate"),
+            "baseline_beat_rate": row.get(
+                "baseline_beat_rate_vs_qqq_60_sgov_40"
+            ),
+            "rank_std": row.get("annual_return_rank_std"),
+            "verdict": row.get("walk_forward_verdict"),
+        }
+        for row in stability_rows
+    ]
+    return "\n".join(
+        [
+            "# Dynamic Strategy Walk-Forward Validation",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            f"- market_regime：`{date_range.get('market_regime', 'ai_after_chatgpt')}`",
+            f"- date_range：`{date_range.get('start')}` to `{date_range.get('end')}`",
+            (
+                "- data_quality_status：`"
+                f"{_mapping(payload.get('summary')).get('data_quality_status')}`"
+            ),
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Strategy Stability",
+            "",
+            _markdown_table(
+                table_rows,
+                [
+                    "strategy_id",
+                    "completed_split_count",
+                    "top_half_rate",
+                    "baseline_beat_rate",
+                    "rank_std",
+                    "verdict",
+                ],
+            ),
+            "",
+            "## Gate 结论",
+            "",
+            (
+                "Walk-forward validation 只重算 actual position path 的 realized metrics。"
+                "未通过 OOS / stability / baseline beat 要求前，不得进入 paper-shadow preflight。"
+            ),
+            "",
+        ]
     )
 
 

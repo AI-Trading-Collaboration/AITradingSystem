@@ -21,6 +21,9 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_MATRIX_YAML_PATH,
     DEFAULT_DYNAMIC_STRATEGY_OBJECTIVE_GATE_REVIEW_PATH,
     DEFAULT_DYNAMIC_STRATEGY_OBJECTIVES_PATH,
+    DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH,
+    DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_REVIEW_PATH,
+    DEFAULT_DYNAMIC_WALK_FORWARD_POLICY_PATH,
     DEFAULT_EDGE_ATTRIBUTION_OUTPUT_ROOT,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EVENT_OVERRIDE_EXECUTION_SEMANTICS_REVIEW_PATH,
@@ -31,6 +34,9 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
     DEFAULT_LAYER1_SELECTOR_CONFIG_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
+    DEFAULT_PIT_AUDIT_OUTPUT_ROOT,
+    DEFAULT_PIT_DATA_AVAILABILITY_AUDIT_REVIEW_PATH,
+    DEFAULT_PIT_DATA_AVAILABILITY_INVENTORY_PATH,
     DEFAULT_POLICY_SENSITIVITY_OUTPUT_ROOT,
     DEFAULT_PRICES_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
@@ -40,6 +46,7 @@ from ai_trading_system.execution_semantics import (
     DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
     DEFAULT_STALENESS_REPAIR_MATRIX_YAML_PATH,
+    DEFAULT_WALK_FORWARD_OUTPUT_ROOT,
     EVENT_OVERRIDE_MODE_T_PLUS_1,
     run_actual_path_edge_attribution_review,
     run_dynamic_actual_path_owner_review_decision,
@@ -49,6 +56,7 @@ from ai_trading_system.execution_semantics import (
     run_dynamic_strategy_latency_execution_lag_review,
     run_dynamic_strategy_objective_gate_review,
     run_dynamic_strategy_validity_period_audit,
+    run_dynamic_strategy_walk_forward_validation,
     run_equal_risk_balanced_core_execution_policy_selection,
     run_execution_aware_forward_aging_observation_contract,
     run_execution_policy_cost_turnover_normalization,
@@ -60,6 +68,7 @@ from ai_trading_system.execution_semantics import (
     run_execution_semantics_rebacktest_gate,
     run_execution_semantics_reporting_update,
     run_implicit_monthly_rebalance_assumption_audit,
+    run_pit_data_availability_audit,
     run_reader_brief_execution_semantics_safe_preview,
     run_rebalance_assumption_owner_review_pack,
     run_rebalance_frequency_sensitivity_suite,
@@ -89,6 +98,12 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-objective-gate-review")(
         _dynamic_strategy_objective_gate_review_command
+    )
+    strategies_app.command("pit-data-availability-audit")(
+        _pit_data_availability_audit_command
+    )
+    strategies_app.command("dynamic-strategy-walk-forward-validation")(
+        _dynamic_strategy_walk_forward_validation_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -430,6 +445,116 @@ def _dynamic_strategy_objective_gate_review_command(
         yaml_path=yaml_path,
     )
     _print_execution_semantics_payload("Dynamic strategy objective gate review", payload)
+
+
+def _pit_data_availability_audit_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    signal_validity_taxonomy_path: Annotated[
+        Path, typer.Option("--signal-validity-taxonomy")
+    ] = DEFAULT_SIGNAL_VALIDITY_TAXONOMY_PATH,
+    event_override_policy_path: Annotated[
+        Path, typer.Option("--event-override-policy")
+    ] = DEFAULT_EVENT_OVERRIDE_POLICY_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_PIT_AUDIT_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_PIT_DATA_AVAILABILITY_AUDIT_REVIEW_PATH,
+    inventory_path: Annotated[
+        Path, typer.Option("--inventory-path", "--yaml-path")
+    ] = DEFAULT_PIT_DATA_AVAILABILITY_INVENTORY_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_pit_data_availability_audit(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        signal_validity_taxonomy_path=signal_validity_taxonomy_path,
+        event_override_policy_path=event_override_policy_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        inventory_path=inventory_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("PIT data availability audit", payload)
+
+
+def _dynamic_strategy_walk_forward_validation_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    walk_forward_policy_path: Annotated[
+        Path, typer.Option("--walk-forward-policy")
+    ] = DEFAULT_DYNAMIC_WALK_FORWARD_POLICY_PATH,
+    edge_matrix_path: Annotated[
+        Path, typer.Option("--edge-matrix", "--edge-matrix-path")
+    ] = DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
+    source_root: Annotated[
+        Path, typer.Option("--source-root", "--execution-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_WALK_FORWARD_OUTPUT_ROOT,
+    run_id: Annotated[str | None, typer.Option("--run-id")] = None,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path", "--review-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_REVIEW_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path", "--matrix-path")
+    ] = DEFAULT_DYNAMIC_STRATEGY_WALK_FORWARD_MATRIX_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_walk_forward_validation(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        walk_forward_policy_path=walk_forward_policy_path,
+        edge_matrix_path=edge_matrix_path,
+        source_root=source_root,
+        output_root=output_root,
+        run_id=run_id,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Dynamic strategy walk-forward validation", payload)
 
 
 def _call_builder(
