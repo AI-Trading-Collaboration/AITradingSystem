@@ -11,16 +11,23 @@ from rich.console import Console
 
 from ai_trading_system.execution_semantics import (
     DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
+    DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH,
+    DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH,
+    DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
+    DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH,
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
     DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
     DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS,
     DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
     DEFAULT_LAYER1_SELECTOR_CONFIG_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
+    DEFAULT_POLICY_SENSITIVITY_OUTPUT_ROOT,
     DEFAULT_PRICES_PATH,
     DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH,
     DEFAULT_RATES_PATH,
     DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    run_dynamic_actual_path_owner_review_decision,
+    run_dynamic_actual_path_policy_sensitivity_review,
     run_dynamic_backtest_engine_contract_update,
     run_dynamic_strategy_execution_semantics_contract,
     run_dynamic_strategy_latency_execution_lag_review,
@@ -53,6 +60,12 @@ console = Console()
 def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) -> None:
     strategies_app.command("execution-semantics-rebacktest")(
         _execution_semantics_rebacktest_command
+    )
+    strategies_app.command("dynamic-actual-path-owner-review-decision")(
+        _dynamic_actual_path_owner_review_decision_command
+    )
+    strategies_app.command("dynamic-actual-path-policy-sensitivity-review")(
+        _dynamic_actual_path_policy_sensitivity_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -167,6 +180,66 @@ def _execution_semantics_rebacktest_command(
     _print_execution_semantics_payload("Execution semantics rebacktest", payload)
 
 
+def _dynamic_actual_path_owner_review_decision_command(
+    output_root: Annotated[
+        Path, typer.Option("--source-root", "--output-root")
+    ] = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path")
+    ] = DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path")
+    ] = DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH,
+) -> None:
+    payload = run_dynamic_actual_path_owner_review_decision(
+        output_root=output_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+    )
+    _print_execution_semantics_payload("Dynamic actual-path owner review decision", payload)
+
+
+def _dynamic_actual_path_policy_sensitivity_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_POLICY_SENSITIVITY_OUTPUT_ROOT,
+    docs_path: Annotated[
+        Path, typer.Option("--docs-path")
+    ] = DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
+    yaml_path: Annotated[
+        Path, typer.Option("--yaml-path")
+    ] = DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_actual_path_policy_sensitivity_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        output_root=output_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        as_of_date=_parse_optional_date(as_of),
+        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
+        end_date=_parse_optional_date(end_date),
+    )
+    _print_execution_semantics_payload("Dynamic actual-path policy sensitivity", payload)
+
+
 def _call_builder(
     builder: Callable[..., dict[str, object]],
     kwargs: dict[str, object],
@@ -183,8 +256,18 @@ def _print_execution_semantics_payload(label: str, payload: dict[str, object]) -
     console.print(f"[{style}]{label}：{status}[/{style}]")
     paths = payload.get("artifact_paths")
     if isinstance(paths, dict):
-        console.print(f"JSON：{paths.get('json_path')}")
-        console.print(f"Markdown：{paths.get('markdown_path')}")
+        if paths.get("json_path"):
+            console.print(f"JSON：{paths.get('json_path')}")
+        if paths.get("index"):
+            console.print(f"Index：{paths.get('index')}")
+        if paths.get("markdown_path"):
+            console.print(f"Markdown：{paths.get('markdown_path')}")
+        if paths.get("review_markdown"):
+            console.print(f"Markdown：{paths.get('review_markdown')}")
+        if paths.get("yaml_path"):
+            console.print(f"YAML：{paths.get('yaml_path')}")
+        if paths.get("review_yaml"):
+            console.print(f"YAML：{paths.get('review_yaml')}")
     for field, expected in (
         ("paper_shadow_allowed", False),
         ("production_allowed", False),

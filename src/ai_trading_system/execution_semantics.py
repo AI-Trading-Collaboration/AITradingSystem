@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import (
@@ -48,8 +49,29 @@ DEFAULT_QQQ_PLUS_GROWTH_CONFIG_PATH = (
 DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT = (
     PROJECT_ROOT / "outputs" / "research_strategies" / "execution_semantics"
 )
+DEFAULT_POLICY_SENSITIVITY_OUTPUT_ROOT = (
+    PROJECT_ROOT / "outputs" / "research_strategies" / "policy_sensitivity"
+)
 DEFAULT_REBALANCE_OWNER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "rebalance_assumption_owner_review_pack.md"
+)
+DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "dynamic_actual_path_owner_review_decision.md"
+)
+DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "dynamic_actual_path_owner_review_decision.yaml"
+)
+DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH = (
+    PROJECT_ROOT / "docs" / "research" / "dynamic_actual_path_policy_sensitivity_review.md"
+)
+DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research_reviews"
+    / "dynamic_actual_path_policy_sensitivity_matrix.yaml"
 )
 DEFAULT_AI_REGIME_BACKTEST_START = (
     AI_REGIME_START
@@ -144,6 +166,50 @@ DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS: tuple[str, ...] = (
     "dynamic_v0_5_ai_trend_confirmed_only",
 )
 
+ACTUAL_PATH_OWNER_REVIEW_CANDIDATES: tuple[str, ...] = (
+    "limited_adjustment",
+    "dynamic_v0_5_ai_trend_confirmed_only",
+)
+
+ACTUAL_PATH_OWNER_REVIEW_BASELINES: tuple[str, ...] = (
+    "no_trade",
+    "100_qqq",
+    "qqq_60_sgov_40",
+    "qqq_50_sgov_50",
+)
+
+POLICY_SENSITIVITY_EXECUTION_LAG_DAYS: tuple[int, ...] = (0, 1, 2)
+POLICY_SENSITIVITY_REBALANCE_FREQUENCIES: tuple[str, ...] = (
+    "next_trading_day",
+    "weekly",
+    "monthly",
+)
+POLICY_SENSITIVITY_SIGNAL_VALIDITY_WINDOWS: tuple[int, ...] = (1, 3, 5, 10, 20)
+POLICY_SENSITIVITY_TURNOVER_CONSTRAINTS: tuple[str, ...] = (
+    "existing_default",
+    "relaxed",
+    "strict",
+)
+
+POLICY_SENSITIVITY_CLASSIFICATION_POLICY: dict[str, Any] = {
+    "policy_id": "dynamic_actual_path_policy_sensitivity_classification_v1",
+    "owner": "research_governance",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Classify execution-policy robustness using actual-path annual-return "
+        "advantage versus no_trade and lag/staleness materiality only; target-path "
+        "performance is excluded from ranking and decision support."
+    ),
+    "survival_rule": (
+        "A scenario survives when actual_path annual_return is above same-scenario "
+        "no_trade and lag/staleness materiality is not FAIL."
+    ),
+    "review_condition": (
+        "Review before using sensitivity classifications for paper-shadow preflight "
+        "admission or changing execution policy defaults."
+    ),
+}
+
 REBACKTEST_STRATEGY_ID_ALIASES: dict[str, str] = {
     "no_trade_baseline": "no_trade",
     "static_100_qqq": "100_qqq",
@@ -199,6 +265,16 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "report_id": "execution_semantics_rebacktest",
         "title": "Execution Semantics Aware Rebacktest",
         "command": "aits research strategies execution-semantics-rebacktest",
+    },
+    {
+        "report_id": "dynamic_actual_path_owner_review_decision",
+        "title": "Dynamic Actual-Path Owner Review Decision",
+        "command": "aits research strategies dynamic-actual-path-owner-review-decision",
+    },
+    {
+        "report_id": "dynamic_actual_path_policy_sensitivity_review",
+        "title": "Dynamic Actual-Path Policy Sensitivity Review",
+        "command": "aits research strategies dynamic-actual-path-policy-sensitivity-review",
     },
     {
         "report_id": "rebalance_frequency_sensitivity_suite",
@@ -930,6 +1006,328 @@ def run_execution_semantics_rebacktest(
         report_registry_entry=_report_registry_entry("execution_semantics_rebacktest"),
     )
     _write_pair(payload, output_root, payload["report_type"])
+    return payload
+
+
+def run_dynamic_actual_path_owner_review_decision(
+    *,
+    output_root: Path = DEFAULT_EXECUTION_SEMANTICS_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_DOC_PATH,
+    yaml_path: Path = DEFAULT_DYNAMIC_OWNER_REVIEW_DECISION_YAML_PATH,
+) -> dict[str, Any]:
+    index_payload = _read_json_mapping(output_root / "index.json")
+    date_range = _mapping(index_payload.get("date_range"))
+    strategy_metrics = {
+        strategy_id: _load_actual_path_strategy_evidence(output_root, strategy_id)
+        for strategy_id in (
+            *ACTUAL_PATH_OWNER_REVIEW_BASELINES,
+            *ACTUAL_PATH_OWNER_REVIEW_CANDIDATES,
+        )
+    }
+    missing = [
+        strategy_id
+        for strategy_id, evidence in strategy_metrics.items()
+        if not evidence.get("actual_path_metrics")
+    ]
+    if missing:
+        payload = _payload(
+            report_type="dynamic_actual_path_owner_review_decision",
+            title=REPORT_SPEC_BY_ID["dynamic_actual_path_owner_review_decision"]["title"],
+            status="OWNER_REVIEW_DECISION_BLOCKED",
+            summary={
+                "candidate_count": len(ACTUAL_PATH_OWNER_REVIEW_CANDIDATES),
+                "missing_strategy_artifact_count": len(missing),
+                "dynamic_promotion_blocked": True,
+                **_safety_summary(),
+            },
+            blockers=[f"missing_actual_path_artifacts:{strategy_id}" for strategy_id in missing],
+            source_runtime_root=str(output_root),
+            report_registry_entry=_report_registry_entry(
+                "dynamic_actual_path_owner_review_decision"
+            ),
+        )
+        _write_owner_review_decision_artifacts(payload, docs_path, yaml_path)
+        return payload
+
+    decisions = [
+        _owner_review_decision_for_candidate(
+            candidate_id=candidate_id,
+            strategy_metrics=strategy_metrics,
+        )
+        for candidate_id in ACTUAL_PATH_OWNER_REVIEW_CANDIDATES
+    ]
+    summary = {
+        "candidate_count": len(decisions),
+        "paper_shadow_candidate_recommendation_count": sum(
+            1
+            for item in decisions
+            if item.get("system_review_recommendation") == "PAPER_SHADOW_CANDIDATE"
+        ),
+        "watch_only_recommendation_count": sum(
+            1 for item in decisions if item.get("system_review_recommendation") == "WATCH_ONLY"
+        ),
+        "reject_recommendation_count": sum(
+            1 for item in decisions if item.get("system_review_recommendation") == "REJECT"
+        ),
+        "owner_manual_review_required": True,
+        "owner_decision_status": "pending",
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "dynamic_promotion_blocked": True,
+        "data_quality_status": index_payload.get("data_quality_status"),
+        **_safety_summary(),
+    }
+    payload = _payload(
+        report_type="dynamic_actual_path_owner_review_decision",
+        title=REPORT_SPEC_BY_ID["dynamic_actual_path_owner_review_decision"]["title"],
+        status="DYNAMIC_ACTUAL_PATH_OWNER_REVIEW_DECISION_READY",
+        summary=summary,
+        source_runtime_root=str(output_root),
+        date_range={
+            "start": date_range.get("start"),
+            "end": date_range.get("end"),
+            "market_regime": date_range.get("market_regime", "ai_after_chatgpt"),
+        },
+        tracked_evidence=[
+            "docs/research/execution_semantics_actual_path_rebacktest_review.md",
+            "docs/research/artifact_snapshots/execution_semantics_actual_path_rebacktest_snapshot.yaml",
+            "docs/research/execution_semantics_strategy_survival_review.md",
+            "inputs/research_reviews/execution_semantics_strategy_survival_matrix.yaml",
+        ],
+        baseline_strategy_ids=list(ACTUAL_PATH_OWNER_REVIEW_BASELINES),
+        candidate_strategy_ids=list(ACTUAL_PATH_OWNER_REVIEW_CANDIDATES),
+        owner_review_decisions=decisions,
+        target_path_diagnostic_notice=(
+            "Target-path metrics are diagnostic only and are not eligible for owner "
+            "decision, promotion readiness or ranking support."
+        ),
+        report_registry_entry=_report_registry_entry(
+            "dynamic_actual_path_owner_review_decision"
+        ),
+    )
+    _write_owner_review_decision_artifacts(payload, docs_path, yaml_path)
+    return payload
+
+
+def run_dynamic_actual_path_policy_sensitivity_review(
+    *,
+    prices_path: Path = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Path = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Path = DEFAULT_RATES_PATH,
+    simple_config_path: Path = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Path = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Path = DEFAULT_POLICY_SENSITIVITY_OUTPUT_ROOT,
+    docs_path: Path = DEFAULT_DYNAMIC_POLICY_SENSITIVITY_DOC_PATH,
+    yaml_path: Path = DEFAULT_DYNAMIC_POLICY_SENSITIVITY_YAML_PATH,
+    as_of_date: date | None = None,
+    start_date: date = DEFAULT_AI_REGIME_BACKTEST_START,
+    end_date: date | None = None,
+) -> dict[str, Any]:
+    config = _load_registry(simple_config_path)
+    data_gate = _data_quality_gate(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        config=config,
+        as_of_date=as_of_date,
+        expected_tickers=["QQQ", "TQQQ", "SGOV"],
+    )
+    if not data_gate.get("passed"):
+        payload = _blocked_payload(
+            report_type="dynamic_actual_path_policy_sensitivity_review",
+            title=REPORT_SPEC_BY_ID[
+                "dynamic_actual_path_policy_sensitivity_review"
+            ]["title"],
+            status="POLICY_SENSITIVITY_BLOCKED",
+            data_gate=data_gate,
+        )
+        _write_policy_sensitivity_artifacts(
+            payload=payload,
+            output_root=output_root,
+            docs_path=docs_path,
+            yaml_path=yaml_path,
+            matrix_rows=[],
+            leaderboard_rows=[],
+            gap_rows=[],
+            readiness_summary={},
+            summary_payload={},
+        )
+        return payload
+
+    prices = _load_execution_price_matrix(prices_path, config, start_date, end_date)
+    registry = _load_policy_registry(policy_registry_path)
+    policies = _policies_by_id(registry)
+    bindings = _strategy_execution_binding_by_id(registry)
+    materiality_thresholds = _execution_materiality_thresholds(registry)
+    scenario_rows: list[dict[str, Any]] = []
+    strategy_ids = [
+        *ACTUAL_PATH_OWNER_REVIEW_BASELINES,
+        *ACTUAL_PATH_OWNER_REVIEW_CANDIDATES,
+    ]
+    for strategy_id in strategy_ids:
+        target_weights = _signal_target_weight_frame(strategy_id, prices)
+        target_metrics = _performance_metrics(prices, target_weights, cost_bps=0.0)
+        binding = _mapping(bindings.get(strategy_id))
+        base_policy = policies.get(str(binding.get("execution_policy_id") or ""))
+        for scenario in _policy_sensitivity_scenarios(
+            base_policy=base_policy,
+            registry=registry,
+        ):
+            policy = _policy_sensitivity_policy(base_policy=base_policy, scenario=scenario)
+            actual_weights, path_rows = _actual_position_path(
+                strategy_id=strategy_id,
+                execution_policy_id=str(scenario["scenario_id"]),
+                target_weights=target_weights,
+                policy=policy,
+            )
+            _attach_path_return_columns(
+                prices=prices,
+                target_weights=target_weights,
+                actual_weights=actual_weights,
+                path_rows=path_rows,
+                cost_bps=_policy_cost_bps(policy),
+            )
+            actual_metrics = _performance_metrics(
+                prices,
+                actual_weights,
+                cost_bps=_policy_cost_bps(policy),
+            )
+            namespaced_actual = _namespace_path_metrics(actual_metrics, "actual_path")
+            namespaced_target = _namespace_path_metrics(target_metrics, "target_path")
+            lag_cost = _lag_cost_summary(
+                target_metrics,
+                actual_metrics,
+                path_rows,
+                thresholds=materiality_thresholds,
+            )
+            staleness = _signal_staleness_summary(
+                path_rows,
+                thresholds=materiality_thresholds,
+            )
+            gaps = _target_vs_actual_gap_metrics(
+                target_metrics=namespaced_target,
+                actual_metrics=namespaced_actual,
+                lag_cost=lag_cost,
+                staleness=staleness,
+            )
+            scenario_rows.append(
+                {
+                    "strategy_id": strategy_id,
+                    "strategy_role": (
+                        "candidate"
+                        if strategy_id in ACTUAL_PATH_OWNER_REVIEW_CANDIDATES
+                        else "baseline"
+                    ),
+                    "scenario_id": scenario["scenario_id"],
+                    "matrix_mode": "staged",
+                    "sensitivity_stage": scenario["sensitivity_stage"],
+                    "execution_lag_days": scenario["execution_lag_days"],
+                    "rebalance_frequency": scenario["rebalance_frequency"],
+                    "signal_validity_window_days": scenario[
+                        "signal_validity_window_days"
+                    ],
+                    "turnover_constraint": scenario["turnover_constraint"],
+                    "max_turnover_per_period": policy.get("max_turnover_per_period"),
+                    "promotion_decision_source": "actual_path_only",
+                    "target_path_metrics_role": "diagnostic_only",
+                    **namespaced_actual,
+                    **gaps,
+                    "execution_lag_materiality": _materiality_enum(
+                        lag_cost.get("review_status")
+                    ),
+                    "signal_staleness_materiality": _materiality_enum(
+                        staleness.get("review_status")
+                    ),
+                    "rebalance_count": sum(
+                        1 for row in path_rows if row.get("rebalance_executed") is True
+                    ),
+                    "average_signal_age_bdays": staleness.get("average_signal_age_bdays"),
+                    "policy_hash": _stable_hash(policy),
+                }
+            )
+
+    classifications = _policy_sensitivity_classifications(scenario_rows)
+    leaderboard_rows = _policy_sensitivity_leaderboard_rows(scenario_rows)
+    gap_rows = _policy_sensitivity_gap_rows(scenario_rows)
+    readiness_summary = _policy_sensitivity_readiness_summary(classifications)
+    summary_payload = {
+        "schema_version": "dynamic_actual_path_policy_sensitivity_summary.v1",
+        "report_type": "dynamic_actual_path_policy_sensitivity_summary",
+        "status": "POLICY_SENSITIVITY_REVIEW_READY",
+        "matrix_mode": "staged",
+        "stage_a_rule": "execution_lag_days x rebalance_frequency",
+        "stage_b_rule": (
+            "signal_validity_window_days x turnover_constraint on lag=1 weekly/monthly execution"
+        ),
+        "classification_policy": POLICY_SENSITIVITY_CLASSIFICATION_POLICY,
+        "strategy_classifications": classifications,
+        "best_surviving_candidate": _best_surviving_candidate(classifications),
+        "dynamic_promotion_blocked": True,
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        **SAFETY_BOUNDARY,
+    }
+    artifact_paths = _write_policy_sensitivity_artifacts(
+        payload={},
+        output_root=output_root,
+        docs_path=docs_path,
+        yaml_path=yaml_path,
+        matrix_rows=scenario_rows,
+        leaderboard_rows=leaderboard_rows,
+        gap_rows=gap_rows,
+        readiness_summary=readiness_summary,
+        summary_payload=summary_payload,
+    )
+    payload = _payload(
+        report_type="dynamic_actual_path_policy_sensitivity_review",
+        title=REPORT_SPEC_BY_ID["dynamic_actual_path_policy_sensitivity_review"]["title"],
+        status="POLICY_SENSITIVITY_REVIEW_READY",
+        summary={
+            "scenario_row_count": len(scenario_rows),
+            "matrix_mode": "staged",
+            "stage_a_rule": "execution_lag_days x rebalance_frequency",
+            "stage_b_rule": (
+                "signal_validity_window_days x turnover_constraint on lag=1 "
+                "weekly/monthly execution"
+            ),
+            "candidate_count": len(ACTUAL_PATH_OWNER_REVIEW_CANDIDATES),
+            "baseline_count": len(ACTUAL_PATH_OWNER_REVIEW_BASELINES),
+            "policy_stable_count": sum(
+                1
+                for item in classifications
+                if item.get("sensitivity_classification") == "POLICY_STABLE"
+            ),
+            "policy_fragile_count": sum(
+                1
+                for item in classifications
+                if item.get("sensitivity_classification") == "POLICY_FRAGILE"
+            ),
+            "best_surviving_candidate": summary_payload["best_surviving_candidate"],
+            "data_quality_status": data_gate.get("status"),
+            "dynamic_promotion_blocked": True,
+            "promotion_decision_source": "actual_path_only",
+            "target_path_metrics_role": "diagnostic_only",
+            **_safety_summary(),
+        },
+        date_range={
+            "start": prices.index.min().date().isoformat(),
+            "end": prices.index.max().date().isoformat(),
+            "market_regime": "ai_after_chatgpt",
+        },
+        data_quality=data_gate,
+        classification_policy=POLICY_SENSITIVITY_CLASSIFICATION_POLICY,
+        strategy_classifications=classifications,
+        artifact_paths=artifact_paths,
+        report_registry_entry=_report_registry_entry(
+            "dynamic_actual_path_policy_sensitivity_review"
+        ),
+    )
+    _write_json(
+        output_root / "index.json",
+        _policy_sensitivity_index_payload(payload, scenario_rows),
+    )
+    _write_json(output_root / "policy_sensitivity_summary.json", summary_payload)
+    _write_policy_sensitivity_review_docs(payload, docs_path, yaml_path, scenario_rows)
     return payload
 
 
@@ -1896,8 +2294,11 @@ def _actual_position_path(
     target = _ensure_weight_columns(target_weights)
     if target.empty:
         return target, []
-    actual = pd.DataFrame(index=target.index, columns=target.columns, data=0.0)
-    current = target.iloc[0].copy()
+    columns = ["QQQ", "TQQQ", "SGOV"]
+    target_values = target[columns].to_numpy(dtype=float)
+    dates = list(target.index)
+    current_values = target_values[0].copy()
+    actual_rows: list[dict[str, float]] = []
     last_execution_index = 0
     last_signal_index = 0
     rows: list[dict[str, Any]] = []
@@ -1905,36 +2306,50 @@ def _actual_position_path(
     cost_bps = _policy_cost_bps(policy)
     lag = max(0, _int(policy.get("signal_to_execution_lag"), 1))
     validity_days = max(1, _int(policy.get("validity_period_days"), 20))
-    for index, current_date in enumerate(target.index):
+    frequency = str(policy.get("execution_frequency") or execution_policy_id)
+    minimum_holding = max(0, _int(policy.get("minimum_holding_period"), 0))
+    drift_threshold = _float(policy.get("drift_threshold"), 0.0)
+    for index, current_date in enumerate(dates):
         signal_index = max(0, index - lag)
-        signal_date = target.index[signal_index]
-        signal_target = target.iloc[signal_index].copy()
-        should_execute, trigger = _should_execute(
-            policy=policy,
+        signal_date = dates[signal_index]
+        signal_target = target_values[signal_index].copy()
+        should_execute, trigger = _should_execute_fast(
             execution_policy_id=execution_policy_id,
-            target=target,
-            current_position=current,
+            frequency=frequency,
+            dates=dates,
+            target_values=target_values,
+            current_values=current_values,
             index=index,
             last_execution_index=last_execution_index,
+            minimum_holding=minimum_holding,
+            drift_threshold=drift_threshold,
+            validity_days=validity_days,
         )
         if index == 0:
             should_execute = True
             trigger = "initial_position"
         if should_execute:
-            raw_turnover = _weight_turnover(current, signal_target)
+            raw_turnover = _array_turnover(current_values, signal_target)
             if raw_turnover > max_turnover > 0:
                 scale = max_turnover / raw_turnover
-                next_position = current + (signal_target - current) * scale
+                next_position = current_values + (signal_target - current_values) * scale
             else:
                 next_position = signal_target
-            turnover = _weight_turnover(current, next_position)
-            current = _normalise_weight_series(next_position)
+            turnover = _array_turnover(current_values, next_position)
+            current_values = _normalise_weight_array(next_position)
             last_execution_index = index
             last_signal_index = signal_index
         else:
             turnover = 0.0
-        actual.iloc[index] = current
+        actual_rows.append(
+            {
+                "QQQ": float(current_values[0]),
+                "TQQQ": float(current_values[1]),
+                "SGOV": float(current_values[2]),
+            }
+        )
         signal_age = index - last_signal_index
+        target_current = target_values[index]
         rows.append(
             {
                 "date": current_date.date().isoformat(),
@@ -1942,12 +2357,12 @@ def _actual_position_path(
                 "execution_policy_id": execution_policy_id,
                 "signal_date": signal_date.date().isoformat(),
                 "signal_asof_date": signal_date.date().isoformat(),
-                "target_weight_qqq": round(_float(target.iloc[index].get("QQQ")), 6),
-                "target_weight_tqqq": round(_float(target.iloc[index].get("TQQQ")), 6),
-                "target_weight_sgov": round(_float(target.iloc[index].get("SGOV")), 6),
-                "actual_weight_qqq": round(_float(current.get("QQQ")), 6),
-                "actual_weight_tqqq": round(_float(current.get("TQQQ")), 6),
-                "actual_weight_sgov": round(_float(current.get("SGOV")), 6),
+                "target_weight_qqq": round(float(target_current[0]), 6),
+                "target_weight_tqqq": round(float(target_current[1]), 6),
+                "target_weight_sgov": round(float(target_current[2]), 6),
+                "actual_weight_qqq": round(float(current_values[0]), 6),
+                "actual_weight_tqqq": round(float(current_values[1]), 6),
+                "actual_weight_sgov": round(float(current_values[2]), 6),
                 "rebalance_allowed": should_execute,
                 "rebalance_executed": should_execute,
                 "execution_date": current_date.date().isoformat() if should_execute else None,
@@ -1960,7 +2375,63 @@ def _actual_position_path(
                 "signal_staleness_days": signal_age,
             }
         )
+    actual = pd.DataFrame(actual_rows, index=target.index, columns=target.columns)
     return actual.astype(float), rows
+
+
+def _should_execute_fast(
+    *,
+    execution_policy_id: str,
+    frequency: str,
+    dates: list[pd.Timestamp],
+    target_values: Any,
+    current_values: Any,
+    index: int,
+    last_execution_index: int,
+    minimum_holding: int,
+    drift_threshold: float,
+    validity_days: int,
+) -> tuple[bool, str]:
+    current_date = dates[index]
+    next_date = dates[index + 1] if index + 1 < len(dates) else None
+    previous_date = dates[index - 1] if index > 0 else None
+    holding_ok = index - last_execution_index >= minimum_holding
+    drift = _array_turnover(current_values, target_values[index])
+    is_month_end = next_date is None or current_date.month != next_date.month
+    is_month_begin = previous_date is None or current_date.month != previous_date.month
+    is_week_end = (
+        next_date is None
+        or current_date.isocalendar().week != next_date.isocalendar().week
+    )
+    if execution_policy_id == "no_rebalance":
+        return False, "no_rebalance_policy"
+    if "daily" in frequency:
+        return True, "daily_execution"
+    if "weekly" in frequency and is_week_end:
+        return True, "weekly_execution"
+    if frequency == "monthly" and is_month_end:
+        return True, "monthly_eom"
+    if execution_policy_id == "monthly_bom_v1" and is_month_begin:
+        return True, "monthly_bom"
+    if "threshold" in frequency and drift_threshold and drift >= drift_threshold and holding_ok:
+        return True, f"drift_threshold_{drift_threshold:.2f}"
+    if "monthly_plus_threshold" in frequency and is_month_end:
+        return True, "monthly_eom"
+    if "monthly_plus_override" in frequency:
+        if is_month_end:
+            return True, "monthly_eom"
+        qqq_drop = float(current_values[0]) - float(target_values[index][0])
+        if qqq_drop >= 0.05 and holding_ok:
+            return True, "risk_shock_override"
+    if frequency == "validity_period":
+        if index - last_execution_index >= validity_days:
+            return True, "validity_expiry"
+        return False, "no_execution"
+    if frequency == "threshold_with_min_holding" and holding_ok and drift >= drift_threshold:
+        return True, "min_holding_drift_threshold"
+    if frequency == "hysteresis_threshold" and drift_threshold and drift >= drift_threshold * 1.5:
+        return True, "hysteresis_band_crossed"
+    return False, "no_execution"
 
 
 def _should_execute(
@@ -2310,6 +2781,17 @@ def _normalise_weight_series(weights: pd.Series) -> pd.Series:
     if total > 0:
         series = series / total
     return series
+
+
+def _normalise_weight_array(values: Any) -> Any:
+    total = float(values.sum())
+    if total > 0:
+        return values / total
+    return values
+
+
+def _array_turnover(previous: Any, next_position: Any) -> float:
+    return float(abs(previous - next_position).sum() / 2.0)
 
 
 def _realized_vol(series: pd.Series, window: int, annualization: int) -> pd.Series:
@@ -3569,6 +4051,913 @@ def _owner_review_pack_markdown(
     return "\n".join(lines)
 
 
+def _read_json_mapping(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return dict(raw) if isinstance(raw, Mapping) else {}
+
+
+def _load_actual_path_strategy_evidence(
+    output_root: Path,
+    strategy_id: str,
+) -> dict[str, Any]:
+    strategy_root = output_root / strategy_id
+    actual_payload = _read_json_mapping(strategy_root / "metrics_actual_path.json")
+    target_payload = _read_json_mapping(strategy_root / "metrics_target_path.json")
+    summary = _read_json_mapping(strategy_root / "summary.json")
+    readiness = _read_json_mapping(strategy_root / "promotion_readiness.json")
+    return {
+        "strategy_id": strategy_id,
+        "summary": summary,
+        "actual_path_metrics": _mapping(actual_payload.get("metrics")),
+        "target_path_metrics": _mapping(target_payload.get("metrics")),
+        "target_vs_actual_gap_metrics": _mapping(
+            summary.get("target_vs_actual_gap_metrics")
+        ),
+        "promotion_readiness": readiness,
+    }
+
+
+def _owner_review_decision_for_candidate(
+    *,
+    candidate_id: str,
+    strategy_metrics: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    evidence = _mapping(strategy_metrics.get(candidate_id))
+    actual_metrics = _owner_metric_block(_mapping(evidence.get("actual_path_metrics")))
+    comparisons = {
+        f"vs_{baseline_id}": _owner_metric_delta_block(
+            actual_metrics,
+            _owner_metric_block(
+                _mapping(
+                    _mapping(strategy_metrics.get(baseline_id)).get("actual_path_metrics")
+                )
+            ),
+        )
+        for baseline_id in ACTUAL_PATH_OWNER_REVIEW_BASELINES
+    }
+    readiness = _mapping(evidence.get("promotion_readiness"))
+    checks = _mapping(readiness.get("checks"))
+    target_vs_actual = {
+        "return_gap": _maybe_float(
+            _mapping(evidence.get("target_vs_actual_gap_metrics")).get(
+                "target_vs_actual_annual_return_gap"
+            )
+        ),
+        "drawdown_gap": _maybe_float(
+            _mapping(evidence.get("target_vs_actual_gap_metrics")).get(
+                "target_vs_actual_max_drawdown_gap"
+            )
+        ),
+        "lag_cost_materiality": _materiality_enum(
+            _mapping(checks.get("lag_cost_review")).get("status")
+        ),
+        "staleness_cost_materiality": _materiality_enum(
+            _mapping(checks.get("signal_staleness_review")).get("status")
+        ),
+    }
+    recommendation, rationale = _owner_review_recommendation(
+        comparisons=comparisons,
+        target_vs_actual=target_vs_actual,
+    )
+    blocked_reasons = _dedupe_ordered(
+        [
+            *(str(item) for item in readiness.get("blocking_reason_codes", [])),
+            "owner_manual_review_pending",
+        ]
+    )
+    return {
+        "strategy_id": candidate_id,
+        "review_scope": "actual_path_only",
+        "candidate_type": "dynamic",
+        "legacy_result_status": "PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE",
+        "actual_path_metrics": actual_metrics,
+        "comparisons": comparisons,
+        "target_vs_actual": target_vs_actual,
+        "promotion_readiness": {
+            "final_status": _promotion_final_status_enum(readiness.get("final_status")),
+            "blocked_reasons": blocked_reasons,
+            "target_metrics_used_for_decision": False,
+        },
+        "system_review_recommendation": recommendation,
+        "system_review_rationale": rationale,
+        "owner_manual_review_required": True,
+        "owner_decision": {
+            "status": "pending",
+            "recommended_status": recommendation,
+            "allowed_values": [
+                "PAPER_SHADOW_CANDIDATE",
+                "WATCH_ONLY",
+                "REJECT",
+            ],
+            "rationale_required": True,
+        },
+    }
+
+
+def _owner_metric_block(metrics: Mapping[str, Any]) -> dict[str, float | None]:
+    return {
+        "annual_return": _maybe_float(metrics.get("actual_path_annual_return")),
+        "max_drawdown_daily_equity": _maybe_float(
+            metrics.get("actual_path_max_drawdown_daily_equity")
+        ),
+        "sharpe_daily_zero_rf": _maybe_float(metrics.get("actual_path_sharpe_daily_zero_rf")),
+        "calmar_daily_equity_dd": _maybe_float(metrics.get("actual_path_calmar_daily_equity_dd")),
+        "turnover": _maybe_float(metrics.get("actual_path_turnover")),
+    }
+
+
+def _owner_metric_delta_block(
+    candidate: Mapping[str, float | None],
+    baseline: Mapping[str, float | None],
+) -> dict[str, float | None]:
+    return {
+        "annual_return_delta": _metric_delta(candidate, baseline, "annual_return"),
+        "max_drawdown_delta": _metric_delta(
+            candidate,
+            baseline,
+            "max_drawdown_daily_equity",
+        ),
+        "sharpe_delta": _metric_delta(candidate, baseline, "sharpe_daily_zero_rf"),
+        "calmar_delta": _metric_delta(candidate, baseline, "calmar_daily_equity_dd"),
+    }
+
+
+def _owner_review_recommendation(
+    *,
+    comparisons: Mapping[str, Mapping[str, Any]],
+    target_vs_actual: Mapping[str, Any],
+) -> tuple[str, str]:
+    if target_vs_actual.get("lag_cost_materiality") == "FAIL":
+        return "REJECT", "execution lag materiality is FAIL under actual-path review"
+    if target_vs_actual.get("staleness_cost_materiality") == "FAIL":
+        return "REJECT", "signal staleness materiality is FAIL under actual-path review"
+    no_trade_delta = _maybe_float(
+        _mapping(comparisons.get("vs_no_trade")).get("annual_return_delta")
+    )
+    static_deltas = [
+        _maybe_float(_mapping(comparisons.get(f"vs_{baseline}")).get("annual_return_delta"))
+        for baseline in ("100_qqq", "qqq_60_sgov_40", "qqq_50_sgov_50")
+    ]
+    has_static_edge = any(delta is not None and delta > 0 for delta in static_deltas)
+    has_no_trade_edge = no_trade_delta is not None and no_trade_delta > 0
+    if not has_no_trade_edge and not has_static_edge:
+        return "REJECT", "actual-path annual return does not beat no_trade or static baselines"
+    qqq_delta = _maybe_float(
+        _mapping(comparisons.get("vs_100_qqq")).get("annual_return_delta")
+    )
+    if qqq_delta is None or qqq_delta <= 0:
+        return (
+            "WATCH_ONLY",
+            "actual-path edge exists, but annual return does not beat 100_qqq",
+        )
+    if (
+        has_no_trade_edge
+        and qqq_delta > 0
+        and target_vs_actual.get("lag_cost_materiality") == "PASS"
+        and target_vs_actual.get("staleness_cost_materiality") == "PASS"
+    ):
+        return (
+            "PAPER_SHADOW_CANDIDATE",
+            "actual-path edge survives no_trade and 100_qqq with PASS materiality",
+        )
+    return (
+        "WATCH_ONLY",
+        "actual-path edge is present but not stable enough for automatic preflight admission",
+    )
+
+
+def _promotion_final_status_enum(value: object) -> str:
+    normalized = str(value or "").lower()
+    if normalized == "reviewable":
+        return "REVIEWABLE"
+    if normalized == "blocked":
+        return "BLOCKED"
+    return "NOT_PROMOTION_ELIGIBLE"
+
+
+def _write_owner_review_decision_artifacts(
+    payload: dict[str, Any],
+    docs_path: Path,
+    yaml_path: Path,
+) -> None:
+    payload["artifact_paths"] = {
+        "markdown_path": str(docs_path),
+        "yaml_path": str(yaml_path),
+    }
+    yaml_payload = {
+        "schema_version": "dynamic_actual_path_owner_review_decision.v1",
+        "report_type": payload["report_type"],
+        "status": payload["status"],
+        "generated_at": payload["generated_at"],
+        "market_regime": payload["market_regime"],
+        "date_range": payload.get("date_range", {}),
+        "summary": payload.get("summary", {}),
+        "source_runtime_root": payload.get("source_runtime_root"),
+        "baseline_strategy_ids": payload.get("baseline_strategy_ids", []),
+        "candidate_strategy_ids": payload.get("candidate_strategy_ids", []),
+        "owner_review_decisions": payload.get("owner_review_decisions", []),
+        "target_path_metrics_used_for_decision": False,
+        "dynamic_promotion_blocked": True,
+        **SAFETY_BOUNDARY,
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(yaml_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(_owner_review_decision_markdown(payload), encoding="utf-8")
+
+
+def _owner_review_decision_markdown(payload: Mapping[str, Any]) -> str:
+    decisions = _records(payload.get("owner_review_decisions"))
+    rows = [
+        {
+            "strategy_id": item.get("strategy_id"),
+            "recommendation": item.get("system_review_recommendation"),
+            "owner_decision": _mapping(item.get("owner_decision")).get("status"),
+            "annual_return": _mapping(item.get("actual_path_metrics")).get("annual_return"),
+            "sharpe": _mapping(item.get("actual_path_metrics")).get(
+                "sharpe_daily_zero_rf"
+            ),
+            "lag": _mapping(item.get("target_vs_actual")).get("lag_cost_materiality"),
+            "staleness": _mapping(item.get("target_vs_actual")).get(
+                "staleness_cost_materiality"
+            ),
+        }
+        for item in decisions
+    ]
+    return "\n".join(
+        [
+            "# Dynamic Actual-Path Owner Review Decision",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            "- market_regime：`ai_after_chatgpt`",
+            "- promotion_decision_source：`actual_path_only`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- owner_manual_review_required：`true`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Candidate Decisions",
+            "",
+            _markdown_table(
+                rows,
+                [
+                    "strategy_id",
+                    "recommendation",
+                    "owner_decision",
+                    "annual_return",
+                    "sharpe",
+                    "lag",
+                    "staleness",
+                ],
+            ),
+            "",
+            "## Decision Notes",
+            "",
+            "本报告只记录 system review recommendation 与 pending owner decision 字段。"
+            "任何 `PAPER_SHADOW_CANDIDATE` 都不是 promotion，也不会自动进入 paper-shadow。",
+            "",
+            "Target-path metrics 仅用于 target-vs-actual gap、execution lag 和 signal "
+            "staleness diagnostic，不作为 owner decision 或 promotion readiness 的正向依据。",
+            "",
+        ]
+    )
+
+
+def _policy_sensitivity_scenarios(
+    *,
+    base_policy: Mapping[str, Any] | None,
+    registry: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    turnover_values = _policy_sensitivity_turnover_values(base_policy, registry)
+    scenarios: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for lag_days in POLICY_SENSITIVITY_EXECUTION_LAG_DAYS:
+        for frequency in POLICY_SENSITIVITY_REBALANCE_FREQUENCIES:
+            scenario = _policy_sensitivity_scenario(
+                stage="stage_a",
+                lag_days=lag_days,
+                frequency=frequency,
+                validity_days=20,
+                turnover_constraint="existing_default",
+                turnover_values=turnover_values,
+            )
+            scenarios.append(scenario)
+            seen.add(str(scenario["scenario_id"]))
+    for frequency in ("weekly", "monthly"):
+        for validity_days in POLICY_SENSITIVITY_SIGNAL_VALIDITY_WINDOWS:
+            for turnover_constraint in POLICY_SENSITIVITY_TURNOVER_CONSTRAINTS:
+                scenario = _policy_sensitivity_scenario(
+                    stage="stage_b",
+                    lag_days=1,
+                    frequency=frequency,
+                    validity_days=validity_days,
+                    turnover_constraint=turnover_constraint,
+                    turnover_values=turnover_values,
+                )
+                if str(scenario["scenario_id"]) in seen:
+                    continue
+                scenarios.append(scenario)
+                seen.add(str(scenario["scenario_id"]))
+    return scenarios
+
+
+def _policy_sensitivity_scenario(
+    *,
+    stage: str,
+    lag_days: int,
+    frequency: str,
+    validity_days: int,
+    turnover_constraint: str,
+    turnover_values: Mapping[str, float],
+) -> dict[str, Any]:
+    return {
+        "scenario_id": (
+            f"lag{lag_days}d_{frequency}_validity{validity_days}d_"
+            f"{turnover_constraint}"
+        ),
+        "sensitivity_stage": stage,
+        "execution_lag_days": lag_days,
+        "rebalance_frequency": frequency,
+        "signal_validity_window_days": validity_days,
+        "turnover_constraint": turnover_constraint,
+        "max_turnover_per_period": turnover_values[turnover_constraint],
+    }
+
+
+def _policy_sensitivity_turnover_values(
+    base_policy: Mapping[str, Any] | None,
+    registry: Mapping[str, Any],
+) -> dict[str, float]:
+    policies = _records(registry.get("policies"))
+    default_turnover = _float(
+        _mapping(registry.get("defaults")).get("max_turnover_per_period"),
+        1.0,
+    )
+    base_turnover = _float(
+        _mapping(base_policy).get("max_turnover_per_period"),
+        default_turnover,
+    )
+    positive_policy_values = [
+        _float(policy.get("max_turnover_per_period"))
+        for policy in policies
+        if _float(policy.get("max_turnover_per_period")) > 0
+    ]
+    strict_turnover = min(positive_policy_values) if positive_policy_values else base_turnover
+    return {
+        "existing_default": base_turnover,
+        "relaxed": max(base_turnover, default_turnover),
+        "strict": min(base_turnover, strict_turnover),
+    }
+
+
+def _policy_sensitivity_policy(
+    *,
+    base_policy: Mapping[str, Any] | None,
+    scenario: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = dict(base_policy or _synthetic_policy("monthly_plus_threshold_5pct_v1"))
+    frequency = str(scenario["rebalance_frequency"])
+    execution_frequency = {
+        "next_trading_day": "daily",
+        "weekly": "weekly",
+        "monthly": "monthly",
+    }[frequency]
+    policy.update(
+        {
+            "execution_policy_id": scenario["scenario_id"],
+            "execution_frequency": execution_frequency,
+            "rebalance_calendar": f"policy_sensitivity_{frequency}",
+            "signal_to_execution_lag": int(scenario["execution_lag_days"]),
+            "validity_period_days": int(scenario["signal_validity_window_days"]),
+            "max_turnover_per_period": float(scenario["max_turnover_per_period"]),
+            "minimum_holding_period": 0,
+        }
+    )
+    return policy
+
+
+def _policy_sensitivity_classifications(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    baseline_by_key = {
+        ("no_trade", _policy_sensitivity_scenario_key(row)): row
+        for row in rows
+        if row.get("strategy_id") == "no_trade"
+    }
+    qqq_by_key = {
+        _policy_sensitivity_scenario_key(row): row
+        for row in rows
+        if row.get("strategy_id") == "100_qqq"
+    }
+    static_rows = [
+        row for row in rows if row.get("strategy_id") in ACTUAL_PATH_OWNER_REVIEW_BASELINES
+    ]
+    best_static_return = max(
+        (_float(row.get("actual_path_annual_return")) for row in static_rows),
+        default=0.0,
+    )
+    classifications: list[dict[str, Any]] = []
+    for strategy_id in ACTUAL_PATH_OWNER_REVIEW_CANDIDATES:
+        candidate_rows = [row for row in rows if row.get("strategy_id") == strategy_id]
+        survival = {
+            row["scenario_id"]: _policy_scenario_survives(
+                row,
+                baseline_by_key.get(("no_trade", _policy_sensitivity_scenario_key(row))),
+            )
+            for row in candidate_rows
+        }
+        any_survives = any(survival.values())
+        flags = {
+            "survives_lag_0d": _any_survives(
+                candidate_rows,
+                survival,
+                execution_lag_days=0,
+            ),
+            "survives_lag_1d": _any_survives(
+                candidate_rows,
+                survival,
+                execution_lag_days=1,
+            ),
+            "survives_lag_2d": _any_survives(
+                candidate_rows,
+                survival,
+                execution_lag_days=2,
+            ),
+            "survives_weekly": _any_survives(
+                candidate_rows,
+                survival,
+                rebalance_frequency="weekly",
+            ),
+            "survives_monthly": _any_survives(
+                candidate_rows,
+                survival,
+                rebalance_frequency="monthly",
+            ),
+            "survives_short_validity_window": _any_survives(
+                candidate_rows,
+                survival,
+                signal_validity_window_days={1, 3},
+            ),
+            "survives_long_validity_window": _any_survives(
+                candidate_rows,
+                survival,
+                signal_validity_window_days={10, 20},
+            ),
+        }
+        primary_failure_modes = _policy_sensitivity_failure_modes(
+            strategy_rows=candidate_rows,
+            survival=survival,
+            flags=flags,
+            qqq_by_key=qqq_by_key,
+            best_static_return=best_static_return,
+        )
+        classification = _policy_sensitivity_classification(flags, any_survives)
+        if (
+            classification == "POLICY_STABLE"
+            and "STATIC_BASELINE_UNDERPERFORMANCE" in primary_failure_modes
+        ):
+            classification = "POLICY_SENSITIVE_BUT_WATCHABLE"
+        classifications.append(
+            {
+                "strategy_id": strategy_id,
+                "sensitivity_classification": classification,
+                "policy_stability": flags,
+                "surviving_scenario_count": sum(1 for value in survival.values() if value),
+                "tested_scenario_count": len(candidate_rows),
+                "primary_failure_modes": primary_failure_modes,
+                "recommended_next_action": _policy_sensitivity_next_action(
+                    classification,
+                    primary_failure_modes,
+                ),
+                "target_path_metrics_used_for_ranking": False,
+                "owner_manual_review_required": True,
+            }
+        )
+    return classifications
+
+
+def _policy_sensitivity_scenario_key(row: Mapping[str, Any]) -> tuple[Any, ...]:
+    return (
+        row.get("execution_lag_days"),
+        row.get("rebalance_frequency"),
+        row.get("signal_validity_window_days"),
+        row.get("turnover_constraint"),
+    )
+
+
+def _policy_scenario_survives(
+    row: Mapping[str, Any],
+    no_trade_row: Mapping[str, Any] | None,
+) -> bool:
+    if not no_trade_row:
+        return False
+    return (
+        _float(row.get("actual_path_annual_return"))
+        > _float(no_trade_row.get("actual_path_annual_return"))
+        and row.get("execution_lag_materiality") != "FAIL"
+        and row.get("signal_staleness_materiality") != "FAIL"
+    )
+
+
+def _any_survives(
+    rows: list[dict[str, Any]],
+    survival: Mapping[str, bool],
+    **filters: Any,
+) -> bool:
+    for row in rows:
+        matched = True
+        for key, expected in filters.items():
+            value = row.get(key)
+            if isinstance(expected, set):
+                matched = value in expected
+            else:
+                matched = value == expected
+            if not matched:
+                break
+        if matched and survival.get(str(row.get("scenario_id"))) is True:
+            return True
+    return False
+
+
+def _policy_sensitivity_failure_modes(
+    *,
+    strategy_rows: list[dict[str, Any]],
+    survival: Mapping[str, bool],
+    flags: Mapping[str, bool],
+    qqq_by_key: Mapping[tuple[Any, ...], Mapping[str, Any]],
+    best_static_return: float,
+) -> list[str]:
+    modes: list[str] = []
+    if flags.get("survives_lag_2d") is not True:
+        modes.append("EXECUTION_LAG_COST_MATERIAL")
+    if flags.get("survives_short_validity_window") is not True:
+        modes.append("SIGNAL_STALENESS_COST_MATERIAL")
+    if not _any_survives(strategy_rows, survival, turnover_constraint="strict"):
+        modes.append("TURNOVER_COST_MATERIAL")
+    drawdown_worse = any(
+        abs(_float(row.get("actual_path_max_drawdown_daily_equity")))
+        > abs(
+            _float(
+                _mapping(qqq_by_key.get(_policy_sensitivity_scenario_key(row))).get(
+                    "actual_path_max_drawdown_daily_equity"
+                )
+            )
+        )
+        for row in strategy_rows
+    )
+    if drawdown_worse:
+        modes.append("DRAWDOWN_WORSENING")
+    best_candidate_return = max(
+        (_float(row.get("actual_path_annual_return")) for row in strategy_rows),
+        default=0.0,
+    )
+    if best_candidate_return <= best_static_return:
+        modes.append("STATIC_BASELINE_UNDERPERFORMANCE")
+    return _dedupe_ordered(modes)
+
+
+def _policy_sensitivity_classification(
+    flags: Mapping[str, bool],
+    any_survives: bool,
+) -> str:
+    if not flags:
+        return "INSUFFICIENT_EVIDENCE"
+    if all(flags.values()):
+        return "POLICY_STABLE"
+    if any_survives and (
+        flags.get("survives_lag_1d") is True
+        or flags.get("survives_weekly") is True
+        or flags.get("survives_monthly") is True
+    ):
+        return "POLICY_SENSITIVE_BUT_WATCHABLE"
+    return "POLICY_FRAGILE"
+
+
+def _policy_sensitivity_next_action(
+    classification: str,
+    failure_modes: list[str],
+) -> str:
+    if classification == "POLICY_STABLE":
+        return "PAPER_SHADOW_PREFLIGHT"
+    if classification == "POLICY_SENSITIVE_BUT_WATCHABLE":
+        return "WATCH_ONLY"
+    if failure_modes:
+        return "STRATEGY_REDESIGN"
+    return "REJECT"
+
+
+def _policy_sensitivity_leaderboard_rows(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    leaderboard = [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "strategy_role": row.get("strategy_role"),
+            "scenario_id": row.get("scenario_id"),
+            "execution_lag_days": row.get("execution_lag_days"),
+            "rebalance_frequency": row.get("rebalance_frequency"),
+            "signal_validity_window_days": row.get("signal_validity_window_days"),
+            "turnover_constraint": row.get("turnover_constraint"),
+            "actual_path_annual_return": row.get("actual_path_annual_return"),
+            "actual_path_max_drawdown_daily_equity": row.get(
+                "actual_path_max_drawdown_daily_equity"
+            ),
+            "actual_path_sharpe_daily_zero_rf": row.get("actual_path_sharpe_daily_zero_rf"),
+            "actual_path_calmar_daily_equity_dd": row.get(
+                "actual_path_calmar_daily_equity_dd"
+            ),
+            "actual_path_turnover": row.get("actual_path_turnover"),
+            "execution_lag_materiality": row.get("execution_lag_materiality"),
+            "signal_staleness_materiality": row.get("signal_staleness_materiality"),
+        }
+        for row in rows
+    ]
+    return sorted(
+        leaderboard,
+        key=lambda row: (
+            _float(row.get("actual_path_sharpe_daily_zero_rf")),
+            _float(row.get("actual_path_annual_return")),
+            -abs(_float(row.get("actual_path_max_drawdown_daily_equity"))),
+        ),
+        reverse=True,
+    )
+
+
+def _policy_sensitivity_gap_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "strategy_id": row.get("strategy_id"),
+            "scenario_id": row.get("scenario_id"),
+            "execution_lag_days": row.get("execution_lag_days"),
+            "rebalance_frequency": row.get("rebalance_frequency"),
+            "signal_validity_window_days": row.get("signal_validity_window_days"),
+            "turnover_constraint": row.get("turnover_constraint"),
+            "target_vs_actual_annual_return_gap": row.get(
+                "target_vs_actual_annual_return_gap"
+            ),
+            "target_vs_actual_max_drawdown_gap": row.get(
+                "target_vs_actual_max_drawdown_gap"
+            ),
+            "target_vs_actual_sharpe_gap": row.get("target_vs_actual_sharpe_gap"),
+            "target_vs_actual_calmar_gap": row.get("target_vs_actual_calmar_gap"),
+            "execution_lag_return_cost": row.get("execution_lag_return_cost"),
+            "execution_lag_drawdown_cost": row.get("execution_lag_drawdown_cost"),
+            "signal_staleness_return_cost": row.get("signal_staleness_return_cost"),
+            "signal_staleness_drawdown_cost": row.get("signal_staleness_drawdown_cost"),
+        }
+        for row in rows
+    ]
+
+
+def _policy_sensitivity_readiness_summary(
+    classifications: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "dynamic_actual_path_policy_sensitivity_readiness.v1",
+        "report_type": "dynamic_actual_path_policy_sensitivity_readiness",
+        "status": "DYNAMIC_PROMOTION_BLOCKED",
+        "dynamic_promotion_blocked": True,
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "target_path_metrics_used_for_ranking": False,
+        "owner_manual_review_required": True,
+        "strategy_readiness": [
+            {
+                "strategy_id": item.get("strategy_id"),
+                "sensitivity_classification": item.get("sensitivity_classification"),
+                "recommended_next_action": item.get("recommended_next_action"),
+                "promotion_final_status": "blocked",
+                "blocking_reasons": [
+                    "owner_manual_review_pending",
+                    "dynamic_promotion_blocked",
+                ],
+                "primary_failure_modes": item.get("primary_failure_modes", []),
+            }
+            for item in classifications
+        ],
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _best_surviving_candidate(classifications: list[dict[str, Any]]) -> str | None:
+    ranked = sorted(
+        classifications,
+        key=lambda item: (
+            {
+                "POLICY_STABLE": 3,
+                "POLICY_SENSITIVE_BUT_WATCHABLE": 2,
+                "POLICY_FRAGILE": 1,
+            }.get(str(item.get("sensitivity_classification")), 0),
+            _int(item.get("surviving_scenario_count"), 0),
+        ),
+        reverse=True,
+    )
+    if not ranked or _int(ranked[0].get("surviving_scenario_count"), 0) <= 0:
+        return None
+    return str(ranked[0].get("strategy_id"))
+
+
+def _write_policy_sensitivity_artifacts(
+    *,
+    payload: dict[str, Any],
+    output_root: Path,
+    docs_path: Path,
+    yaml_path: Path,
+    matrix_rows: list[dict[str, Any]],
+    leaderboard_rows: list[dict[str, Any]],
+    gap_rows: list[dict[str, Any]],
+    readiness_summary: Mapping[str, Any],
+    summary_payload: Mapping[str, Any],
+) -> dict[str, str]:
+    output_root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "index": output_root / "index.json",
+        "leaderboard_actual_path": output_root / "leaderboard_actual_path.csv",
+        "target_vs_actual_gap_summary": output_root / "target_vs_actual_gap_summary.csv",
+        "promotion_readiness_summary": output_root / "promotion_readiness_summary.json",
+        "policy_sensitivity_matrix": output_root / "policy_sensitivity_matrix.csv",
+        "policy_sensitivity_summary": output_root / "policy_sensitivity_summary.json",
+        "review_markdown": docs_path,
+        "review_yaml": yaml_path,
+    }
+    pd.DataFrame(matrix_rows).to_csv(paths["policy_sensitivity_matrix"], index=False)
+    pd.DataFrame(leaderboard_rows).to_csv(paths["leaderboard_actual_path"], index=False)
+    pd.DataFrame(gap_rows).to_csv(paths["target_vs_actual_gap_summary"], index=False)
+    _write_json(paths["promotion_readiness_summary"], dict(readiness_summary))
+    _write_json(paths["policy_sensitivity_summary"], dict(summary_payload))
+    artifact_paths = {key: str(value) for key, value in paths.items()}
+    if payload:
+        payload["artifact_paths"] = artifact_paths
+        _write_json(paths["index"], _policy_sensitivity_index_payload(payload, matrix_rows))
+        _write_policy_sensitivity_review_docs(payload, docs_path, yaml_path, matrix_rows)
+    return artifact_paths
+
+
+def _policy_sensitivity_index_payload(
+    payload: Mapping[str, Any],
+    matrix_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "dynamic_actual_path_policy_sensitivity_index.v1",
+        "report_type": "dynamic_actual_path_policy_sensitivity_index",
+        "status": payload.get("status"),
+        "summary": payload.get("summary", {}),
+        "date_range": payload.get("date_range", {}),
+        "classification_policy": POLICY_SENSITIVITY_CLASSIFICATION_POLICY,
+        "candidate_strategy_ids": list(ACTUAL_PATH_OWNER_REVIEW_CANDIDATES),
+        "baseline_strategy_ids": list(ACTUAL_PATH_OWNER_REVIEW_BASELINES),
+        "scenario_count": len(
+            {str(row.get("scenario_id")) for row in matrix_rows if row.get("scenario_id")}
+        ),
+        "matrix_row_count": len(matrix_rows),
+        "artifact_paths": payload.get("artifact_paths", {}),
+        "promotion_decision_source": "actual_path_only",
+        "target_path_metrics_role": "diagnostic_only",
+        "dynamic_promotion_blocked": True,
+        **SAFETY_BOUNDARY,
+    }
+
+
+def _write_policy_sensitivity_review_docs(
+    payload: Mapping[str, Any],
+    docs_path: Path,
+    yaml_path: Path,
+    matrix_rows: list[dict[str, Any]],
+) -> None:
+    classifications = _records(payload.get("strategy_classifications"))
+    yaml_payload = {
+        "schema_version": "dynamic_actual_path_policy_sensitivity_matrix.v1",
+        "report_type": payload.get("report_type"),
+        "status": payload.get("status"),
+        "generated_at": payload.get("generated_at"),
+        "market_regime": payload.get("market_regime"),
+        "date_range": payload.get("date_range", {}),
+        "summary": payload.get("summary", {}),
+        "classification_policy": POLICY_SENSITIVITY_CLASSIFICATION_POLICY,
+        "strategy_classifications": classifications,
+        "candidate_matrix_rows": [
+            row
+            for row in matrix_rows
+            if row.get("strategy_id") in ACTUAL_PATH_OWNER_REVIEW_CANDIDATES
+        ],
+        "runtime_artifacts": payload.get("artifact_paths", {}),
+        "target_path_metrics_used_for_ranking": False,
+        "dynamic_promotion_blocked": True,
+        **SAFETY_BOUNDARY,
+    }
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(
+        yaml.safe_dump(yaml_payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(_policy_sensitivity_markdown(payload), encoding="utf-8")
+
+
+def _policy_sensitivity_markdown(payload: Mapping[str, Any]) -> str:
+    rows = [
+        {
+            "strategy_id": item.get("strategy_id"),
+            "classification": item.get("sensitivity_classification"),
+            "surviving": item.get("surviving_scenario_count"),
+            "tested": item.get("tested_scenario_count"),
+            "next_action": item.get("recommended_next_action"),
+            "failure_modes": ";".join(
+                str(mode) for mode in item.get("primary_failure_modes", [])
+            ),
+        }
+        for item in _records(payload.get("strategy_classifications"))
+    ]
+    return "\n".join(
+        [
+            "# Dynamic Actual-Path Policy Sensitivity Review",
+            "",
+            f"- 状态：`{payload.get('status')}`",
+            "- market_regime：`ai_after_chatgpt`",
+            "- matrix_mode：`staged`",
+            "- Stage A：`execution_lag_days x rebalance_frequency`",
+            (
+                "- Stage B：`signal_validity_window_days x turnover_constraint on "
+                "lag=1 weekly/monthly`"
+            ),
+            "- ranking_basis：`actual_path annual_return, max_drawdown, sharpe, calmar, turnover`",
+            "- target_path_metrics_role：`diagnostic_only`",
+            "- dynamic_promotion：`BLOCKED`",
+            "- owner_manual_review_required：`true`",
+            "- paper_shadow_allowed：`false`",
+            "- production_allowed：`false`",
+            "- broker_action：`none`",
+            "",
+            "## Classification",
+            "",
+            _markdown_table(
+                rows,
+                [
+                    "strategy_id",
+                    "classification",
+                    "surviving",
+                    "tested",
+                    "next_action",
+                    "failure_modes",
+                ],
+            ),
+            "",
+            "## Policy",
+            "",
+            POLICY_SENSITIVITY_CLASSIFICATION_POLICY["survival_rule"],
+            "",
+            "Target-path metrics 只用于解释 target-vs-actual gap、execution lag cost "
+            "和 signal staleness cost，不参与 policy sensitivity ranking 或 next action。",
+            "",
+        ]
+    )
+
+
+def _materiality_enum(value: object) -> str:
+    normalized = str(value or "").lower()
+    if normalized == "pass":
+        return "PASS"
+    if normalized == "warn":
+        return "WARN"
+    if normalized == "fail":
+        return "FAIL"
+    return "UNKNOWN"
+
+
+def _metric_delta(
+    candidate: Mapping[str, float | None],
+    baseline: Mapping[str, float | None],
+    key: str,
+) -> float | None:
+    left = candidate.get(key)
+    right = baseline.get(key)
+    if left is None or right is None:
+        return None
+    return round(float(left) - float(right), 6)
+
+
+def _maybe_float(value: object) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(number) or math.isinf(number):
+        return None
+    return round(number, 6)
+
+
 def _markdown_table(rows: list[Mapping[str, Any]], columns: list[str]) -> str:
     if not rows:
         return "_No rows._"
@@ -3787,6 +5176,64 @@ def _write_json_and_doc(payload: dict[str, Any], json_path: Path, docs_path: Pat
 
 def _report_registry_entry(report_id: str) -> dict[str, Any]:
     spec = REPORT_SPEC_BY_ID[report_id]
+    if report_id == "dynamic_actual_path_owner_review_decision":
+        return {
+            "report_id": report_id,
+            "title": spec["title"],
+            "group": "research",
+            "cadence": "ad_hoc",
+            "audience": "project_owner",
+            "owner": "research_governance",
+            "command": spec["command"],
+            "artifact_globs": [
+                "docs/research/dynamic_actual_path_owner_review_decision.md",
+                "inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml",
+            ],
+            "artifact_selection_policy": "latest_available",
+            "freshness_sla_days": 30,
+            "freshness_rationale": (
+                "Owner review decisions must be regenerated after actual-path rebacktest, "
+                "promotion readiness, strategy survival or owner-review policy changes."
+            ),
+            "owner_action": "review_dynamic_actual_path_owner_review_decision",
+            "include_in_reader_brief": False,
+            "include_in_daily_task_dashboard": False,
+            "required_for_daily_reading": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        }
+    if report_id == "dynamic_actual_path_policy_sensitivity_review":
+        return {
+            "report_id": report_id,
+            "title": spec["title"],
+            "group": "research",
+            "cadence": "ad_hoc",
+            "audience": "project_owner",
+            "owner": "research_governance",
+            "command": spec["command"],
+            "artifact_globs": [
+                "outputs/research_strategies/policy_sensitivity/index.json",
+                "outputs/research_strategies/policy_sensitivity/leaderboard_actual_path.csv",
+                "outputs/research_strategies/policy_sensitivity/target_vs_actual_gap_summary.csv",
+                "outputs/research_strategies/policy_sensitivity/promotion_readiness_summary.json",
+                "outputs/research_strategies/policy_sensitivity/policy_sensitivity_matrix.csv",
+                "outputs/research_strategies/policy_sensitivity/policy_sensitivity_summary.json",
+                "docs/research/dynamic_actual_path_policy_sensitivity_review.md",
+                "inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml",
+            ],
+            "artifact_selection_policy": "latest_available",
+            "freshness_sla_days": 30,
+            "freshness_rationale": (
+                "Policy sensitivity evidence must be regenerated after execution policy, "
+                "strategy target path, materiality policy or cached data changes."
+            ),
+            "owner_action": "review_dynamic_actual_path_policy_sensitivity",
+            "include_in_reader_brief": False,
+            "include_in_daily_task_dashboard": False,
+            "required_for_daily_reading": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        }
     return {
         "report_id": report_id,
         "title": spec["title"],

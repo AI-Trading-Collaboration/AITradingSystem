@@ -1,0 +1,35 @@
+schema_version: data_quality_watchlist_item.v1
+watchlist_id: TQQQ_ADJUSTMENT_RATIO_JUMP_2025_11_20
+created_at: 2026-06-27
+last_updated: 2026-06-27
+asset: TQQQ
+event_date: 2025-11-20
+warning_code: prices_adjustment_ratio_jump
+current_status: NON_BLOCKING_WARNING
+current_scope:
+  related_task: TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+  strategy_universe_membership: not_formal_strategy_universe
+  blocks_current_dynamic_review: false
+  current_impact_assessment: >
+    No evidence in the current execution semantics actual-path run shows that this
+    warning changes the ranking of limited_adjustment or
+    dynamic_v0_5_ai_trend_confirmed_only.
+possible_causes_to_investigate:
+  - real_split_dividend_or_adjustment_event
+  - data_source_adjustment_anomaly
+  - single_day_price_outlier
+  - adjustment_factor_jump
+upgrade_policy:
+  upgrade_to: BLOCKING_DATA_QUALITY_REVIEW
+  trigger: >
+    Upgrade if TQQQ enters the formal strategy universe, paper-shadow candidate
+    universe, or any production-facing report conclusion where the warning can
+    affect interpretation.
+required_validation_before_close:
+  - confirm_provider_event_or_corporate_action_record
+  - inspect raw close and adjusted close around 2025-11-20
+  - compare primary and secondary price sources where available
+  - document whether ranking or actual-path metrics change for affected strategies
+owner_next_action: investigate_when_TQQQ_becomes_strategy_universe_relevant
+production_effect: none
+broker_action: none

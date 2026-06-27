@@ -1,0 +1,154 @@
+schema_version: dynamic_actual_path_owner_review_decision.v1
+report_type: dynamic_actual_path_owner_review_decision
+status: DYNAMIC_ACTUAL_PATH_OWNER_REVIEW_DECISION_READY
+generated_at: '2026-06-27T04:32:08Z'
+market_regime: ai_after_chatgpt
+date_range:
+  start: '2022-12-01'
+  end: '2026-06-26'
+  market_regime: ai_after_chatgpt
+summary:
+  market_regime: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: '2022-11-30'
+  default_backtest_start: '2022-12-01'
+  candidate_count: 2
+  paper_shadow_candidate_recommendation_count: 0
+  watch_only_recommendation_count: 2
+  reject_recommendation_count: 0
+  owner_manual_review_required: true
+  owner_decision_status: pending
+  promotion_decision_source: actual_path_only
+  target_path_metrics_role: diagnostic_only
+  dynamic_promotion_blocked: true
+  data_quality_status: PASS_WITH_WARNINGS
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  manual_review_required: true
+source_runtime_root: D:\Work\AITradingSystem\outputs\research_strategies\execution_semantics
+baseline_strategy_ids:
+- no_trade
+- 100_qqq
+- qqq_60_sgov_40
+- qqq_50_sgov_50
+candidate_strategy_ids:
+- limited_adjustment
+- dynamic_v0_5_ai_trend_confirmed_only
+owner_review_decisions:
+- strategy_id: limited_adjustment
+  review_scope: actual_path_only
+  candidate_type: dynamic
+  legacy_result_status: PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE
+  actual_path_metrics:
+    annual_return: 0.192658
+    max_drawdown_daily_equity: -0.116204
+    sharpe_daily_zero_rf: 1.609148
+    calmar_daily_equity_dd: 1.65793
+    turnover: 2.4
+  comparisons:
+    vs_no_trade:
+      annual_return_delta: 0.145428
+      max_drawdown_delta: -0.115973
+      sharpe_delta: -18.166094
+      calmar_delta: -202.966237
+    vs_100_qqq:
+      annual_return_delta: -0.096255
+      max_drawdown_delta: 0.111473
+      sharpe_delta: 0.178605
+      calmar_delta: 0.388971
+    vs_qqq_60_sgov_40:
+      annual_return_delta: 0.000671
+      max_drawdown_delta: 0.023864
+      sharpe_delta: 0.024891
+      calmar_delta: 0.287264
+    vs_qqq_50_sgov_50:
+      annual_return_delta: 0.024928
+      max_drawdown_delta: 0.000804
+      sharpe_delta: -0.051668
+      calmar_delta: 0.224437
+  target_vs_actual:
+    return_gap: 0.002691
+    drawdown_gap: -0.00664
+    lag_cost_materiality: PASS
+    staleness_cost_materiality: PASS
+  promotion_readiness:
+    final_status: BLOCKED
+    blocked_reasons:
+    - owner_manual_review_pending
+    target_metrics_used_for_decision: false
+  system_review_recommendation: WATCH_ONLY
+  system_review_rationale: actual-path edge exists, but annual return does not beat
+    100_qqq
+  owner_manual_review_required: true
+  owner_decision:
+    status: pending
+    recommended_status: WATCH_ONLY
+    allowed_values:
+    - PAPER_SHADOW_CANDIDATE
+    - WATCH_ONLY
+    - REJECT
+    rationale_required: true
+- strategy_id: dynamic_v0_5_ai_trend_confirmed_only
+  review_scope: actual_path_only
+  candidate_type: dynamic
+  legacy_result_status: PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE
+  actual_path_metrics:
+    annual_return: 0.182386
+    max_drawdown_daily_equity: -0.091418
+    sharpe_daily_zero_rf: 1.634858
+    calmar_daily_equity_dd: 1.995078
+    turnover: 15.75
+  comparisons:
+    vs_no_trade:
+      annual_return_delta: 0.135156
+      max_drawdown_delta: -0.091187
+      sharpe_delta: -18.140384
+      calmar_delta: -202.629089
+    vs_100_qqq:
+      annual_return_delta: -0.106527
+      max_drawdown_delta: 0.136259
+      sharpe_delta: 0.204315
+      calmar_delta: 0.726119
+    vs_qqq_60_sgov_40:
+      annual_return_delta: -0.009601
+      max_drawdown_delta: 0.04865
+      sharpe_delta: 0.050601
+      calmar_delta: 0.624412
+    vs_qqq_50_sgov_50:
+      annual_return_delta: 0.014656
+      max_drawdown_delta: 0.02559
+      sharpe_delta: -0.025958
+      calmar_delta: 0.561585
+  target_vs_actual:
+    return_gap: -0.005669
+    drawdown_gap: 0.003882
+    lag_cost_materiality: PASS
+    staleness_cost_materiality: PASS
+  promotion_readiness:
+    final_status: BLOCKED
+    blocked_reasons:
+    - owner_manual_review_pending
+    target_metrics_used_for_decision: false
+  system_review_recommendation: WATCH_ONLY
+  system_review_rationale: actual-path edge exists, but annual return does not beat
+    100_qqq
+  owner_manual_review_required: true
+  owner_decision:
+    status: pending
+    recommended_status: WATCH_ONLY
+    allowed_values:
+    - PAPER_SHADOW_CANDIDATE
+    - WATCH_ONLY
+    - REJECT
+    rationale_required: true
+target_path_metrics_used_for_decision: false
+dynamic_promotion_blocked: true
+production_effect: none
+broker_action: none
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+manual_review_required: true
+research_only: true
+observe_only: true

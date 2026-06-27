@@ -18246,6 +18246,50 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_actual_path_owner_review_decision
+    title: Dynamic Actual-Path Owner Review Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-actual-path-owner-review-decision
+    artifact_globs:
+      - docs/research/dynamic_actual_path_owner_review_decision.md
+      - inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner review decisions must be regenerated after actual-path rebacktest, promotion readiness, strategy survival or owner-review policy changes.
+    owner_action: review_dynamic_actual_path_owner_review_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: dynamic_actual_path_policy_sensitivity_review
+    title: Dynamic Actual-Path Policy Sensitivity Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-actual-path-policy-sensitivity-review
+    artifact_globs:
+      - outputs/research_strategies/policy_sensitivity/index.json
+      - outputs/research_strategies/policy_sensitivity/leaderboard_actual_path.csv
+      - outputs/research_strategies/policy_sensitivity/target_vs_actual_gap_summary.csv
+      - outputs/research_strategies/policy_sensitivity/promotion_readiness_summary.json
+      - outputs/research_strategies/policy_sensitivity/policy_sensitivity_matrix.csv
+      - outputs/research_strategies/policy_sensitivity/policy_sensitivity_summary.json
+      - docs/research/dynamic_actual_path_policy_sensitivity_review.md
+      - inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Policy sensitivity evidence must be regenerated after execution policy, strategy target path, materiality policy or cached data changes.
+    owner_action: review_dynamic_actual_path_policy_sensitivity
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: rebalance_frequency_sensitivity_suite
     title: Rebalance Frequency Sensitivity Suite
     group: research
