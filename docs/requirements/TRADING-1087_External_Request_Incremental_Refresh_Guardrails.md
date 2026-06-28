@@ -96,6 +96,9 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   `FMP` / `Marketstack` / `Cboe VIX` 生成全历史滚动 cache key。
 - `Marketstack` 每日 live 消耗与新增缺口规模相关，而不是与 2018 至今全历史页数
   相关；quota 预估不足时 fail closed 并输出可读 blocker。
+- 当既有 cache 已覆盖请求结束日、`estimated_increment_usage=0` 且不会发起
+  live provider request 时，重复 daily-run 必须输出可审计 cache-only / no-live-request
+  状态并继续进入 `aits validate-data`；负 quota 只应阻断需要 live request 的路径。
 - `prices_daily.csv`、`prices_marketstack_daily.csv`、macro/rates 输出和
   manifest 仍通过 `aits validate-data` 同源质量门禁。
 - 下游 reports 明确披露 data-quality status、provider request budget status、
@@ -154,3 +157,13 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   `live_request_count=1`、`increment_usage_sum=25`；data quality 为
   `PASS_WITH_WARNINGS` / 0 errors / 1 warning。任务转入 `VALIDATING`，后续关注
   quota 恢复后移除或收紧临时 owner-approved overage。
+- 2026-06-28: 每日 PIT 自动化重复运行默认 `as_of=2026-06-26` 时再次
+  fail closed：`daily_ops_run:2026-06-26:20260627T223244Z` 只执行 1/36
+  steps，`download_data` 诊断为 Marketstack quota preflight
+  `estimated_increment_usage=0`、`quota_remaining=-713`、`quota_limit=10000`。
+  当前 cache 已覆盖同一 as-of，理论上无需 live Marketstack request；这暴露
+  zero-increment/cache-only rerun 仍被负 quota hard stop 阻断的验收缺口。
+  任务从 `VALIDATING` 退回 `IN_PROGRESS`。后续 best fix 是让
+  `download-data` 对 no-live-request 路径写出可审计 cache-only/request-budget
+  状态并继续到 `aits validate-data`；需要 live request 的路径仍按现有 quota
+  policy fail closed。不得用永久 `--without-marketstack` 或跳过第二源作为修复。
