@@ -1,0 +1,29 @@
+schema_version: free_pit_data_source_scope.v1
+report_type: free_pit_data_source_scope
+status: FREE_PIT_DATA_SOURCE_SCOPE_READY_RESEARCH_ONLY
+as_of: '2026-06-26'
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: '2022-11-30'
+  default_backtest_start: '2022-12-01'
+scope:
+  free_data_only: true
+  paid_data_sources_allowed: false
+  true_pit_breadth_built: false
+  research_only: true
+  promotion_status: BLOCKED
+non_goals:
+- no_paid_data_purchase
+- no_true_pit_breadth
+- no_current_constituent_history_backfill
+- no_first_layer_research_restart
+- no_second_layer_probe_change
+- no_promotion_or_broker
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

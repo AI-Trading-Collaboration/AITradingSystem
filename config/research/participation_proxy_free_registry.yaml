@@ -1,0 +1,49 @@
+schema_version: participation_proxy_free_registry.v1
+policy_metadata:
+  owner: system
+  status: registry_only
+  rationale: >
+    Record low-cost ETF ratio proxies without mislabeling them as true
+    point-in-time breadth or historical constituent participation.
+  intended_effect: >
+    Preserve future diagnostic options while blocking promotion evidence claims.
+  validation_evidence: >
+    Guardrail tests require NOT_TRUE_PIT_BREADTH, DIAGNOSTIC_ONLY, and
+    promotion disabled status for every proxy.
+  review_condition: >
+    Review only after a credible PIT breadth or survivorship-free constituent
+    source is provided.
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  true_pit_breadth: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+proxies:
+  - proxy_id: smh_to_qqq
+    numerator: SMH
+    denominator: QQQ
+    status: DIAGNOSTIC_ONLY
+    caveats: [NOT_TRUE_PIT_BREADTH, ETF_PRICE_ONLY, SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY]
+  - proxy_id: soxx_to_qqq
+    numerator: SOXX
+    denominator: QQQ
+    status: DIAGNOSTIC_ONLY
+    caveats: [NOT_TRUE_PIT_BREADTH, ETF_PRICE_ONLY, SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY]
+  - proxy_id: rsp_to_spy
+    numerator: RSP
+    denominator: SPY
+    status: REGISTRY_ONLY
+    caveats: [NOT_TRUE_PIT_BREADTH, PRICE_CACHE_COVERAGE_REQUIRED, DIAGNOSTIC_ONLY]
+  - proxy_id: qqqe_to_qqq
+    numerator: QQQE
+    denominator: QQQ
+    status: REGISTRY_ONLY
+    caveats: [NOT_TRUE_PIT_BREADTH, PRICE_CACHE_COVERAGE_REQUIRED, DIAGNOSTIC_ONLY]
+  - proxy_id: sector_etf_relative_strength
+    numerator: sector_etf_basket
+    denominator: QQQ
+    status: REGISTRY_ONLY
+    caveats: [NOT_TRUE_PIT_BREADTH, PRICE_CACHE_COVERAGE_REQUIRED, DIAGNOSTIC_ONLY]

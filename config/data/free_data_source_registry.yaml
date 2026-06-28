@@ -1,0 +1,290 @@
+schema_version: free_data_source_registry.v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Establish reviewable contracts for free PIT-controllable data sources before
+    reopening first-layer channel research.
+  intended_effect: >
+    Separate model-ready free market series from diagnostic-only calendar or
+    participation proxies, and keep promotion disabled until later evidence.
+  validation_evidence: >
+    Guardrail tests validate required contract fields, vintage requirements for
+    revision-sensitive macro series, VIX cross-check availability, and
+    participation proxy caveats.
+  review_condition: >
+    Review when a new free source is added, a paid source is proposed, or a
+    feature family is promoted beyond diagnostic research.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+sources:
+  - source_id: fred_market_series
+    provider: Federal Reserve Economic Data
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
+    request_parameters:
+      series: [DGS2, DGS10, DGS3MO, FEDFUNDS, SOFR, DTWEXBGS, VIXCLS]
+    cache_paths:
+      - data/raw/rates_daily.csv
+      - data/processed/free_sources/fred_market_series.parquet
+    earliest_available_date: series_dependent
+    update_frequency: daily_or_series_native
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_APPROVED
+    revision_risk: low
+    vintage_support: false
+    allowed_usage:
+      - rates_liquidity_free_v1
+      - volatility_compression_free_v1_for_VIXCLS
+      - macro_shock_proxy_market_series
+    blocked_usage:
+      - revision_sensitive_macro_model_ready_without_vintage
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - Daily market series can be used as observed market data.
+      - Revision-sensitive macro levels require ALFRED vintage access before model-ready use.
+  - source_id: alfred_vintage_series
+    provider: ALFRED / Federal Reserve Economic Data
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: true
+    api_key_required: true
+    endpoint: https://api.stlouisfed.org/fred/series/observations
+    request_parameters:
+      vintage_dates: as_of_date
+      series: [CPIAUCSL, PCEPI, PAYEMS, UNRATE]
+    cache_paths:
+      - data/raw/alfred/
+    earliest_available_date: series_dependent
+    update_frequency: release_native
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_APPROVED_WITH_VINTAGE
+    revision_risk: high
+    vintage_support: true
+    allowed_usage:
+      - vintage_aware_macro_diagnostic
+      - vintage_aware_macro_shock_proxy
+    blocked_usage:
+      - no_vintage_model_ready_macro_feature
+      - promotion_evidence_without_vintage_audit
+      - paper_shadow
+      - production
+    caveats:
+      - Without vintage dates and as-of reads, CPI/PCE/PAYEMS/UNRATE are diagnostic only.
+  - source_id: cboe_vix_historical
+    provider: Cboe Global Markets
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://www.cboe.com/tradable_products/vix/vix_historical_data/
+    request_parameters:
+      index: VIX
+    cache_paths:
+      - data/raw/prices_daily.csv
+      - data/processed/free_sources/vix_history.parquet
+    earliest_available_date: source_dependent
+    update_frequency: daily
+    timestamp_timezone: America/Chicago
+    PIT_status: PIT_APPROVED
+    revision_risk: none
+    vintage_support: false
+    allowed_usage:
+      - volatility_compression_free_v1
+      - event_risk_free_v1_overlay
+      - risk_on_veto_diagnostic
+    blocked_usage:
+      - vix_futures_term_structure
+      - option_surface
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - This batch only uses VIX index level, not VIX futures, skew, VVIX, or option surface data.
+  - source_id: federal_reserve_fomc_calendar
+    provider: Federal Reserve Board
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    request_parameters:
+      event_types: [fomc_decision, fomc_statement, fomc_minutes, press_conference]
+    cache_paths:
+      - data/raw/free_sources/federal_reserve/
+      - data/processed/free_sources/macro_event_calendar.parquet
+    earliest_available_date: source_dependent
+    update_frequency: event_driven
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: low
+    vintage_support: false
+    allowed_usage:
+      - macro_event_calendar_free_v1
+      - event_risk_free_v1_diagnostic
+    blocked_usage:
+      - model_ready_without_known_at_or_warning
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - If source_published_at cannot be verified, rows must be diagnostic-only.
+  - source_id: federal_reserve_board_calendar
+    provider: Federal Reserve Board
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://www.federalreserve.gov/newsevents/calendar.htm
+    request_parameters:
+      event_types: [fed_calendar]
+    cache_paths:
+      - data/raw/free_sources/federal_reserve/
+    earliest_available_date: source_dependent
+    update_frequency: event_driven
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: low
+    vintage_support: false
+    allowed_usage:
+      - macro_event_calendar_free_v1_diagnostic
+    blocked_usage:
+      - model_ready_without_known_at_or_warning
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - Calendar rows require known_at or explicit PIT_WARNING.
+  - source_id: bls_release_calendar
+    provider: Bureau of Labor Statistics
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://www.bls.gov/schedule/news_release/
+    request_parameters:
+      event_types: [cpi, employment_situation, jobless_claims, jolts]
+    cache_paths:
+      - data/raw/free_sources/bls/
+      - data/processed/free_sources/macro_event_calendar.parquet
+    earliest_available_date: source_dependent
+    update_frequency: scheduled_release
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: low
+    vintage_support: false
+    allowed_usage:
+      - macro_event_calendar_free_v1
+      - event_risk_free_v1_diagnostic
+    blocked_usage:
+      - release_value_model_ready_without_vintage
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - Schedule is calendar risk only; release values remain subject to revision contracts.
+  - source_id: bea_release_metadata
+    provider: Bureau of Economic Analysis
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: true
+    api_key_required: false
+    endpoint: https://apps.bea.gov/api/data
+    request_parameters:
+      datasets: [release_schedule, GDP, NIPA]
+      event_types: [gdp, pce]
+    cache_paths:
+      - data/raw/free_sources/bea/
+      - data/processed/free_sources/macro_event_calendar.parquet
+    earliest_available_date: source_dependent
+    update_frequency: scheduled_release
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: medium
+    vintage_support: partial
+    allowed_usage:
+      - macro_event_calendar_free_v1
+      - event_risk_free_v1_diagnostic
+    blocked_usage:
+      - model_ready_release_values_without_vintage
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - Release schedule can be calendar risk; revised macro values need a separate vintage audit.
+  - source_id: fred_release_calendar
+    provider: Federal Reserve Economic Data
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: true
+    api_key_required: true
+    endpoint: https://api.stlouisfed.org/fred/releases/dates
+    request_parameters:
+      include_release_dates_with_no_data: false
+    cache_paths:
+      - data/raw/free_sources/fred_release_calendar/
+    earliest_available_date: source_dependent
+    update_frequency: daily
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: medium
+    vintage_support: false
+    allowed_usage:
+      - release_schedule_reference
+      - macro_event_calendar_free_v1_diagnostic
+    blocked_usage:
+      - model_ready_release_values_without_vintage
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - FRED release dates are reference calendar metadata, not vintage values.
+  - source_id: nyfed_economic_calendar
+    provider: Federal Reserve Bank of New York
+    free_or_paid: free
+    source_tier: Tier A
+    official_source: true
+    api_required: false
+    api_key_required: false
+    endpoint: https://www.newyorkfed.org/research/calendars
+    request_parameters:
+      event_types: [economic_indicators]
+    cache_paths:
+      - data/raw/free_sources/nyfed/
+    earliest_available_date: source_dependent
+    update_frequency: scheduled_release
+    timestamp_timezone: America/New_York
+    PIT_status: PIT_WARNING
+    revision_risk: low
+    vintage_support: false
+    allowed_usage:
+      - macro_event_calendar_free_v1_diagnostic
+    blocked_usage:
+      - model_ready_without_known_at_or_warning
+      - promotion_evidence
+      - paper_shadow
+      - production
+    caveats:
+      - Calendar rows require known_at or explicit PIT_WARNING.

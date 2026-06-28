@@ -1,0 +1,65 @@
+schema_version: free_data_feature_coverage_matrix.v1
+report_type: free_data_feature_coverage_matrix
+status: FREE_DATA_FEATURE_COVERAGE_MATRIX_READY_WITH_WARNINGS
+rows:
+- feature_family: rates_liquidity_free_v1
+  earliest_available_date: '2018-01-02'
+  latest_available_date: '2026-06-25'
+  primary_window_coverage: covered
+  legacy_window_coverage: covered
+  sensitivity_window_coverage: covered
+  missing_rate: 0.5714285714285714
+  calendar_coverage: not_applicable
+  revision_risk: low
+  allowed_usage: risk_on_veto_research
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: volatility_compression_free_v1
+  earliest_available_date: '2018-01-02'
+  latest_available_date: '2026-06-26'
+  primary_window_coverage: covered
+  legacy_window_coverage: covered
+  sensitivity_window_coverage: covered
+  missing_rate: 0.0
+  calendar_coverage: not_applicable
+  revision_risk: none
+  allowed_usage: risk_on_veto_research
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: macro_event_calendar_free_v1
+  earliest_available_date: missing
+  latest_available_date: missing
+  primary_window_coverage: missing
+  legacy_window_coverage: missing
+  sensitivity_window_coverage: missing
+  missing_rate: 1.0
+  calendar_coverage: not_applicable
+  revision_risk: low
+  allowed_usage: diagnostic_only
+  blocked_usage: model_ready_without_known_at,promotion,paper_shadow,production,broker
+- feature_family: event_risk_free_v1
+  earliest_available_date: missing
+  latest_available_date: missing
+  primary_window_coverage: covered
+  legacy_window_coverage: covered
+  sensitivity_window_coverage: covered
+  missing_rate: 1.0
+  calendar_coverage: not_applicable
+  revision_risk: mixed
+  allowed_usage: diagnostic_only
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: participation_proxy_free_v1
+  earliest_available_date: source_dependent
+  primary_window_coverage: registry_only
+  legacy_window_coverage: registry_only
+  sensitivity_window_coverage: registry_only
+  missing_rate: null
+  calendar_coverage: not_applicable
+  revision_risk: none_for_etf_price_only
+  allowed_usage: diagnostic_only
+  blocked_usage: true_pit_breadth,promotion,paper_shadow,production,broker
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

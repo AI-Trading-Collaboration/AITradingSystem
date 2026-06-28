@@ -1,0 +1,22 @@
+schema_version: calendar_event_pit_contract.v1
+report_type: calendar_event_pit_contract
+status: CALENDAR_EVENT_PIT_CONTRACT_READY
+required_fields:
+- event_date
+- scheduled_release_time
+- source_published_at
+- known_at
+- available_at
+- timezone
+- revision_policy
+missing_source_published_at_policy:
+  PIT_status: PIT_WARNING
+  allowed_usage: diagnostic_only
+  model_ready: false
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

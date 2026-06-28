@@ -1,0 +1,51 @@
+schema_version: fmp_etf_holdings_trial_gate.v1
+report_type: fmp_etf_holdings_trial_gate
+title: FMP ETF Holdings Trial Gate
+status: FMP_HOLDINGS_NOT_AVAILABLE
+generated_at: '2026-06-28T06:52:01+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: exact
+summary:
+  allow_network_trials: false
+  historical_holdings_confirmed: false
+  holding_date_confirmed: false
+  reported_date_confirmed: false
+  known_at_confirmed: false
+  coverage_2021_02_22_confirmed: false
+  diagnostic_only: true
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: participation_proxy_validation
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: fmp_etf_holdings_trial_gate_v1
+  threshold_policy: participation_proxy_validation_scope_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: participation_proxy_validation_scope_v1
+  selection_rule_version: participation_proxy_validation_scope_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

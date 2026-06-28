@@ -115,6 +115,27 @@ from ai_trading_system.data_source_subscription_audit import (
     DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
     run_current_subscription_data_coverage_audit,
 )
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH,
+    DEFAULT_FREE_FEATURE_OUTPUT_ROOT,
+    DEFAULT_FREE_FEATURE_POLICY_PATH,
+    DEFAULT_FREE_SOURCE_OUTPUT_ROOT,
+    DEFAULT_MANIFEST_PATH,
+    DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH,
+    DEFAULT_RESEARCH_DOCS_ROOT,
+    DEFAULT_RESEARCH_INPUTS_ROOT,
+    run_free_data_source_ingestion,
+    run_free_data_source_validation,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_PRICES_PATH as DEFAULT_FREE_PRICES_PATH,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
+)
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
 )
@@ -154,6 +175,7 @@ asset_master_app = typer.Typer(help="Asset master and tradability calendar。")
 universe_app = typer.Typer(help="Research universe as-of view and audit。")
 foundation_acceptance_app = typer.Typer(help="TRADING-734 data foundation acceptance。")
 source_qualification_app = typer.Typer(help="Data source qualification remediation。")
+free_sources_app = typer.Typer(help="Free PIT data source ingestion and validation。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
 data_app.add_typer(fallback_policy_app, name="fallback-policy")
 data_app.add_typer(cache_catalog_app, name="cache-catalog")
@@ -162,6 +184,74 @@ data_app.add_typer(asset_master_app, name="asset-master")
 data_app.add_typer(universe_app, name="universe")
 data_app.add_typer(foundation_acceptance_app, name="foundation-acceptance")
 data_app.add_typer(source_qualification_app, name="source-qualification")
+data_app.add_typer(free_sources_app, name="free-sources")
+
+
+@free_sources_app.command("ingest")
+def free_sources_ingest_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry", help="Free data source registry YAML。")
+    ] = DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH,
+    feature_policy_path: Annotated[
+        Path, typer.Option("--feature-policy", help="Free feature policy YAML。")
+    ] = DEFAULT_FREE_FEATURE_POLICY_PATH,
+    participation_proxy_registry_path: Annotated[
+        Path,
+        typer.Option("--participation-registry", help="Participation proxy registry YAML。"),
+    ] = DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    manifest_path: Annotated[Path, typer.Option("--manifest-path")] = DEFAULT_MANIFEST_PATH,
+    output_root: Annotated[Path, typer.Option("--output-root")] = DEFAULT_FREE_SOURCE_OUTPUT_ROOT,
+    feature_output_root: Annotated[
+        Path, typer.Option("--feature-output-root")
+    ] = DEFAULT_FREE_FEATURE_OUTPUT_ROOT,
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = DEFAULT_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[Path, typer.Option("--inputs-root")] = DEFAULT_RESEARCH_INPUTS_ROOT,
+    calendar_input_path: Annotated[
+        Path | None,
+        typer.Option("--calendar-input", help="Optional CSV/YAML official macro calendar rows。"),
+    ] = None,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_free_data_source_ingestion(
+        registry_path=registry_path,
+        feature_policy_path=feature_policy_path,
+        participation_proxy_registry_path=participation_proxy_registry_path,
+        rates_path=rates_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        feature_output_root=feature_output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+        calendar_input_path=calendar_input_path,
+        as_of_date=_parse_date(as_of) if as_of else None,
+    )
+    _print_free_source_payload(payload)
+
+
+@free_sources_app.command("validate")
+def free_sources_validate_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry", help="Free data source registry YAML。")
+    ] = DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH,
+    participation_proxy_registry_path: Annotated[
+        Path,
+        typer.Option("--participation-registry", help="Participation proxy registry YAML。"),
+    ] = DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH,
+) -> None:
+    payload = run_free_data_source_validation(
+        registry_path=registry_path,
+        participation_proxy_registry_path=participation_proxy_registry_path,
+    )
+    _print_free_source_payload(payload)
+    if payload.get("status") == "FAIL":
+        raise typer.Exit(code=1)
 
 
 @foundation_acceptance_app.command("run")
@@ -1913,3 +2003,20 @@ def _print_foundation_payload(payload: dict[str, object]) -> None:
         for label, path in artifact_paths.items():
             console.print(f"{label}={path}")
     console.print("production_effect=none；broker_action=none；validation_only=true")
+
+
+def _print_free_source_payload(payload: dict[str, object]) -> None:
+    status = str(payload.get("status", "UNKNOWN"))
+    style = "green" if status == "PASS" or "READY" in status else "yellow"
+    if status == "FAIL":
+        style = "red"
+    console.print(f"[{style}]Free PIT data sources：{status}[/{style}]")
+    summary = payload.get("summary")
+    if isinstance(summary, dict):
+        for key in sorted(summary):
+            console.print(f"{key}={summary[key]}")
+    artifact_paths = payload.get("artifact_paths")
+    if isinstance(artifact_paths, dict):
+        for label, path in artifact_paths.items():
+            console.print(f"{label}={path}")
+    console.print("promotion_allowed=false；paper_shadow_allowed=false；production_allowed=false；broker_action=none")

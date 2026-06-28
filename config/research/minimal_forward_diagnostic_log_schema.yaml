@@ -1,0 +1,42 @@
+schema_version: minimal_forward_diagnostic_log_schema.v1
+policy_id: minimal_forward_diagnostic_log_schema_v1
+status: disabled_schema_ready
+owner: research_governance
+required_fields:
+  - date
+  - signal_name
+  - channel
+  - diagnostic_flag
+  - confidence
+  - feature_snapshot_hash
+  - future_1d_return
+  - future_5d_return
+  - future_10d_return
+  - future_20d_return
+  - owner_note
+forbidden_fields:
+  - target_weights
+  - trade_action
+  - recommended_allocation
+  - broker_action
+  - paper_shadow_position
+field_types:
+  date: iso_date
+  signal_name: string
+  channel: string
+  diagnostic_flag: boolean
+  confidence: decimal_0_to_1
+  feature_snapshot_hash: sha256_or_empty
+  future_1d_return: decimal_or_null
+  future_5d_return: decimal_or_null
+  future_10d_return: decimal_or_null
+  future_20d_return: decimal_or_null
+  owner_note: string
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

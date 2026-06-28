@@ -1,0 +1,57 @@
+schema_version: participation_proxy_channel_ablation.v1
+report_type: participation_proxy_channel_ablation
+title: Participation Proxy Channel Ablation
+status: PARTICIPATION_PROXY_CHANNEL_ABLATION_DIAGNOSTIC_ONLY
+generated_at: '2026-06-28T06:52:01+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: proxy
+summary:
+  data_quality_status: PASS_WITH_WARNINGS
+  row_count: 2163
+  usable_proxy_row_count: 2143
+  false_risk_off_reduction: 0.0
+  missed_upside_reduction: 0.0
+  false_add_risk_reduction: 0.0
+  net_veto_benefit: 0.0
+  same_risk_frontier_gap: 0.0
+  2022_slice: DIAGNOSTIC_ONLY
+  2023_plus_dependency: false
+  beta_dependency: false
+  positive_proxy_rate: 0.554323
+  incremental_value_observed: true
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: participation_proxy_validation
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: participation_proxy_channel_ablation_v1
+  threshold_policy: participation_proxy_validation_scope_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: participation_proxy_validation_scope_v1
+  selection_rule_version: participation_proxy_validation_scope_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

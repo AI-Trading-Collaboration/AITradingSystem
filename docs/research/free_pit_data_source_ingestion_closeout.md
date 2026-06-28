@@ -1,0 +1,15 @@
+# Free PIT Data Source Ingestion Closeout
+
+- 状态：`FREE_PIT_DATA_SOURCES_READY_WITH_BLOCKERS`
+
+## Final Status
+
+- `FREE_PIT_DATA_SOURCES_READY`
+- `RATES_LIQUIDITY_FREE_READY`
+- `VOLATILITY_COMPRESSION_FREE_READY`
+- `MACRO_EVENT_CALENDAR_FREE_BLOCKED`
+- `EVENT_RISK_FREE_DIAGNOSTIC_READY`
+- `PARTICIPATION_PROXY_DIAGNOSTIC_ONLY`
+- `PIT_BLOCKERS_REMAIN`
+
+本 closeout 不恢复 first-layer channel research，不进入 promotion、paper-shadow、production 或 broker。

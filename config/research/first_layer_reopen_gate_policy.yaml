@@ -1,0 +1,53 @@
+schema_version: first_layer_reopen_gate_policy.v1
+policy_id: first_layer_reopen_gate_policy_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Define the post-2085 decision gate between diagnostic free/proxy evidence
+    and any possible first-layer channel reopen.
+  intended_effect: >
+    Prevent historical rerun improvements, target-path-only metrics,
+    2023-plus-only results, beta/TQQQ dependence, or PIT warnings from
+    reopening strategy research.
+  validation_evidence: >
+    Guardrail tests cover target-path-only, 2023-plus-only, beta/TQQQ
+    dependence, PIT warning as model-ready, owner approval, and promotion
+    blocking.
+  review_condition: >
+    Review before changing required gates or allowing any channel-specific v4
+    work to begin.
+required_conditions:
+  selection_rule_preregistered: true
+  primary_window_coverage_required: true
+  stress_2022_slice_not_worse_required: true
+  not_2023_plus_only_required: true
+  not_beta_dependency_required: true
+  not_tqqq_dependency_required: true
+  actual_path_evidence_required: true
+  target_path_only_blocked: true
+  net_of_cost_non_negative_required: true
+  no_weights_output_required: true
+  owner_approval_required: true
+blocked_reopen_evidence:
+  - legacy_window_only_improvement
+  - target_path_only_improvement
+  - qqq_or_tqqq_exposure_increase_only
+  - single_historical_rerun_improvement
+  - pit_warning_used_as_model_ready
+  - diagnostic_signal_used_as_allocation
+allowed_decision_status:
+  - FIRST_LAYER_REOPEN_DENIED
+  - FREE_FEATURES_DIAGNOSTIC_ONLY
+  - PARTICIPATION_PROXY_PROMISING_BUT_NOT_MODEL_READY
+  - PAID_DATA_DUE_DILIGENCE_RECOMMENDED
+  - REOPEN_ALLOWED_FOR_NARROW_CHANNEL_V4
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  owner_review_required: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,35 @@
+schema_version: free_pit_data_source_ingestion_final_matrix.v1
+report_type: free_pit_data_source_ingestion_final_matrix
+status: FREE_PIT_DATA_SOURCES_READY_WITH_BLOCKERS
+final_status:
+- FREE_PIT_DATA_SOURCES_READY
+- RATES_LIQUIDITY_FREE_READY
+- VOLATILITY_COMPRESSION_FREE_READY
+- MACRO_EVENT_CALENDAR_FREE_BLOCKED
+- EVENT_RISK_FREE_DIAGNOSTIC_READY
+- PARTICIPATION_PROXY_DIAGNOSTIC_ONLY
+- PIT_BLOCKERS_REMAIN
+readiness_rows:
+- feature_family: rates_liquidity_free_v1
+  readiness_status: READY_FOR_RATES_LIQUIDITY_RESEARCH
+  reason: DGS2/DGS10/DTWEXBGS local PIT market series coverage evaluated.
+- feature_family: volatility_compression_free_v1
+  readiness_status: READY_FOR_VOLATILITY_COMPRESSION_RESEARCH
+  reason: VIX index level and QQQ realized volatility baseline evaluated.
+- feature_family: macro_event_calendar_free_v1
+  readiness_status: BLOCKED
+  reason: Official calendar rows require captured known_at/source_published_at evidence.
+- feature_family: event_risk_free_v1
+  readiness_status: DIAGNOSTIC_ONLY
+  reason: Overlay score can be produced, but calendar event risk remains incomplete
+    without official rows.
+- feature_family: participation_proxy_free_v1
+  readiness_status: DIAGNOSTIC_ONLY
+  reason: ETF ratios are not true PIT breadth and cannot enter promotion evidence.
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

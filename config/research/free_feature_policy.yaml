@@ -1,0 +1,57 @@
+schema_version: free_feature_policy.v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Centralize subjective windows, score weights, and shock cutoffs used by
+    free feature-family baseline builders so investment-facing heuristics are
+    reviewable.
+  intended_effect: >
+    Produce comparable research-only feature families without silently embedding
+    tunable thresholds in code.
+  validation_evidence: >
+    Guardrail tests load this policy, verify safety fields, and ensure generated
+    readiness outputs expose the policy version.
+  review_condition: >
+    Review before using these features in first-layer re-ablation, changing
+    score bands, or treating diagnostic features as model-ready.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+rates_liquidity_free_v1:
+  change_windows_trading_days: [5, 20, 60]
+  short_rate_shock_abs_20d_bps: 25
+  dollar_strength_shock_abs_20d_pct: 2.5
+  rate_stress_components:
+    dgs2_change_20d_weight: 0.4
+    dgs10_change_20d_weight: 0.3
+    dollar_change_20d_weight: 0.3
+volatility_compression_free_v1:
+  realized_vol_windows_trading_days: [10, 20, 60]
+  vix_change_windows_trading_days: [5, 20]
+  vix_percentile_lookback_days: 252
+  compression_percentile_max: 0.25
+  stress_percentile_min: 0.75
+event_risk_free_v1:
+  lookahead_days: 5
+  lookback_days: 5
+  event_weights:
+    fomc: 1.0
+    inflation: 0.85
+    labor: 0.75
+    growth: 0.65
+    rates_liquidity: 0.4
+  overlay_weights:
+    vix_stress: 0.25
+    rate_stress: 0.25
+  score_cap: 3.0
+participation_proxy_free_v1:
+  allowed_usage: diagnostic_only
+  true_breadth_allowed: false

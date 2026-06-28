@@ -1,0 +1,53 @@
+schema_version: minimal_forward_diagnostic_policy.v1
+policy_id: minimal_forward_diagnostic_policy_v1
+status: disabled_until_owner_approval
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Define a future-ready but disabled minimal forward diagnostic log for
+    observable signals that are not strategy candidates.
+  intended_effect: >
+    Permit only diagnostic flags and realized outcomes after owner approval,
+    while blocking weights, trade advice, paper-shadow, production and broker
+    outputs.
+  validation_evidence: >
+    TRADING-2216 to 2245 tests verify enabled=false, owner approval required,
+    blocked fields, and no allocation columns.
+  review_condition: >
+    Review after the reopen gate or v4 diagnostics show observable signal value
+    that is still below candidate gate.
+enabled: false
+requires_owner_approval: true
+emit_weights: false
+emit_trade_advice: false
+paper_shadow_enabled: false
+promotion_enabled: false
+production_enabled: false
+broker_enabled: false
+allowed_fields:
+  - date
+  - signal_name
+  - channel
+  - diagnostic_flag
+  - confidence
+  - feature_snapshot_hash
+  - future_1d_return
+  - future_5d_return
+  - future_10d_return
+  - future_20d_return
+  - owner_note
+blocked_fields:
+  - target_weights
+  - trade_action
+  - recommended_allocation
+  - broker_action
+  - paper_shadow_position
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

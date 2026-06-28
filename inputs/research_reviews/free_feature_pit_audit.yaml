@@ -1,0 +1,52 @@
+schema_version: free_feature_pit_audit.v1
+report_type: free_feature_pit_audit
+status: FREE_FEATURE_PIT_AUDIT_READY_WITH_WARNINGS
+rows:
+- feature_family: rates_liquidity_free_v1
+  PIT_status: PIT_APPROVED
+  rationale: model_research_if_required_series_present
+  allowed_usage: research_only
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: volatility_compression_free_v1
+  PIT_status: PIT_APPROVED
+  rationale: model_research_if_vix_and_qqq_present
+  allowed_usage: research_only
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: macro_event_calendar_free_v1
+  PIT_status: PIT_WARNING_DIAGNOSTIC_ONLY
+  rationale: known_at_or_warning_required
+  allowed_usage: diagnostic_only
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: event_risk_free_v1
+  PIT_status: PIT_WARNING_DIAGNOSTIC_ONLY
+  rationale: calendar_based_not_news_event_risk
+  allowed_usage: diagnostic_only
+  blocked_usage: promotion,paper_shadow,production,broker
+- feature_family: participation_proxy_free_v1
+  PIT_status: PIT_WARNING_DIAGNOSTIC_ONLY
+  rationale: not_true_pit_breadth
+  allowed_usage: diagnostic_only
+  blocked_usage: promotion,paper_shadow,production,broker
+participation_proxy_caveats:
+- NOT_TRUE_PIT_BREADTH
+- ETF_PRICE_ONLY
+- SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY
+- NOT_TRUE_PIT_BREADTH
+- ETF_PRICE_ONLY
+- SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY
+- NOT_TRUE_PIT_BREADTH
+- PRICE_CACHE_COVERAGE_REQUIRED
+- DIAGNOSTIC_ONLY
+- NOT_TRUE_PIT_BREADTH
+- PRICE_CACHE_COVERAGE_REQUIRED
+- DIAGNOSTIC_ONLY
+- NOT_TRUE_PIT_BREADTH
+- PRICE_CACHE_COVERAGE_REQUIRED
+- DIAGNOSTIC_ONLY
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

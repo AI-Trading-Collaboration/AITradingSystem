@@ -1,0 +1,48 @@
+schema_version: first_layer_reopen_gate_scope.v1
+report_type: first_layer_reopen_gate_scope
+title: First-Layer Reopen Gate Scope
+status: FIRST_LAYER_REOPEN_GATE_SCOPE_READY
+generated_at: '2026-06-28T06:52:11+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: exact
+summary:
+  decision_gate_only: true
+  model_optimization_allowed: false
+  owner_approval_required: true
+  weights_output_allowed: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_reopen_gate
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: first_layer_reopen_gate_scope_v1
+  threshold_policy: first_layer_reopen_gate_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: first_layer_reopen_gate_policy_v1
+  selection_rule_version: first_layer_reopen_gate_policy_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

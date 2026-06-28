@@ -21814,3 +21814,265 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: free_data_source_registry
+    title: Free Data Source Registry Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - config/data/free_data_source_registry.yaml
+      - docs/research/free_data_source_registry_review.md
+      - docs/research/free_pit_data_source_scope.md
+      - inputs/research_reviews/free_pit_data_source_scope.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Free source contracts must be refreshed when source coverage, PIT status, or allowed/blocked usage changes.
+    owner_action: review_before_reopening_first_layer_free_feature_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: fred_series_ingestion_review
+    title: FRED Series Ingestion Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - data/processed/free_sources/fred_market_series.parquet
+      - inputs/research_reviews/fred_series_ingestion_summary.yaml
+      - docs/research/fred_series_ingestion_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: FRED free-source coverage should be refreshed with the cached rates data used by feature readiness.
+    owner_action: review_missing_series_and_vintage_blockers
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: vix_free_source_crosscheck_review
+    title: VIX Free Source Crosscheck Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - data/processed/free_sources/vix_history.parquet
+      - docs/research/vix_free_source_crosscheck_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: VIX free-source coverage should match the cached price source used by volatility feature readiness.
+    owner_action: review_vixcls_or_cboe_crosscheck_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: official_macro_calendar_ingestion_review
+    title: Official Macro Calendar Ingestion Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - data/processed/free_sources/macro_event_calendar.parquet
+      - docs/research/official_macro_calendar_ingestion_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Calendar risk rows require current source-published metadata or explicit PIT warning before feature readiness is interpreted.
+    owner_action: review_calendar_known_at_and_diagnostic_only_status
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: calendar_event_pit_contract
+    title: Calendar Event PIT Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - inputs/research_reviews/calendar_event_pit_contract.yaml
+      - docs/research/calendar_event_pit_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Calendar PIT schema changes only when event timestamp policy or diagnostic-only boundary changes.
+    owner_action: review_before_calendar_features_enter_model_ready_research
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: free_feature_pit_audit
+    title: Free Feature PIT Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data free-sources ingest --as-of YYYY-MM-DD
+    artifact_globs:
+      - inputs/research_reviews/free_feature_pit_audit.yaml
+      - docs/research/free_feature_pit_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Free feature PIT status must be refreshed when source coverage or feature-family readiness changes.
+    owner_action: review_pit_approved_warning_and_blocked_families
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: free_feature_family_reopen_readiness
+    title: Free Feature Family Reopen Readiness
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends free-feature-readiness --as-of YYYY-MM-DD
+    artifact_globs:
+      - inputs/research_reviews/free_feature_family_reopen_readiness.yaml
+      - docs/research/free_feature_family_reopen_readiness.md
+      - inputs/research_reviews/free_pit_data_source_ingestion_final_matrix.yaml
+      - docs/research/free_pit_data_source_ingestion_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Reopen readiness should be regenerated after free-source ingestion, PIT audit, or coverage matrix changes.
+    owner_action: review_reopen_readiness_before_any_first_layer_research_restart
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: free_feature_family_reablation
+    title: Free Feature Family Re-Ablation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends free-feature-reablation --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/research_trends/free_feature_reablation/ablation_dataset.parquet
+      - outputs/research_trends/free_feature_reablation/ablation_dataset_summary.json
+      - inputs/research_reviews/free_feature_reablation_scope.yaml
+      - inputs/research_reviews/free_feature_risk_on_veto_reablation.yaml
+      - inputs/research_reviews/free_feature_stay_constructive_reablation.yaml
+      - inputs/research_reviews/free_feature_add_risk_diagnostic_reablation.yaml
+      - inputs/research_reviews/participation_proxy_incremental_value_check.yaml
+      - inputs/research_reviews/free_feature_reablation_multi_window_stability.yaml
+      - inputs/research_reviews/free_feature_dependency_diagnostics.yaml
+      - inputs/research_reviews/free_feature_reopen_recommendation.yaml
+      - inputs/research_reviews/free_feature_family_reablation_final_matrix.yaml
+      - docs/research/free_feature_family_reablation_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Re-ablation must be refreshed after free feature parquet, PIT audit, coverage matrix, or channel closeout changes.
+    owner_action: review_free_feature_reablation_before_reopen_gate
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: participation_proxy_validation
+    title: Participation Proxy Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends participation-proxy-validation --as-of YYYY-MM-DD
+    artifact_globs:
+      - data/features/participation_proxy_etf_ratios_v1.parquet
+      - data/features/participation_proxy_free_v2.parquet
+      - data/processed/free_sources/alpha_vantage_listing_status_snapshots.parquet
+      - inputs/research_reviews/participation_proxy_validation_scope.yaml
+      - inputs/research_reviews/fmp_etf_holdings_trial_gate.yaml
+      - inputs/research_reviews/participation_proxy_pit_contract.yaml
+      - inputs/research_reviews/participation_proxy_channel_ablation.yaml
+      - inputs/research_reviews/norgate_value_of_information_estimate.yaml
+      - inputs/research_reviews/participation_proxy_validation_final_matrix.yaml
+      - docs/research/participation_proxy_validation_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Proxy validation should be refreshed after ETF price coverage, Alpha Vantage listing snapshots, or PIT contract status changes.
+    owner_action: review_proxy_increment_before_paid_breadth_due_diligence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_reopen_gate
+    title: First-Layer Reopen Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-reopen-gate
+    artifact_globs:
+      - outputs/research_trends/first_layer_reopen_gate/evidence_aggregation.json
+      - inputs/research_reviews/first_layer_reopen_gate_scope.yaml
+      - inputs/research_reviews/first_layer_reopen_gate_decision.yaml
+      - inputs/research_reviews/first_layer_reopen_gate_final_matrix.yaml
+      - docs/research/first_layer_reopen_gate_decision.md
+      - docs/research/first_layer_reopen_owner_approval_packet.md
+      - docs/research/first_layer_reopen_gate_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Gate decision must be regenerated after re-ablation, proxy validation, PIT audit, dependency diagnostics, or owner approval state changes.
+    owner_action: review_gate_denial_or_manual_reopen_packet
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_first_layer_v4
+    title: Channel-Specific First-Layer v4 Conditional Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v4
+    artifact_globs:
+      - config/research/channel_specific_first_layer_v4_freeze_contract.yaml
+      - docs/research/channel_specific_first_layer_v4_scope.md
+      - inputs/research_reviews/channel_specific_first_layer_v4_final_matrix.yaml
+      - docs/research/channel_specific_first_layer_v4_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: v4 remains fail-closed until the reopen gate and owner approval both pass.
+    owner_action: review_only_if_reopen_allowed_and_owner_approved
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: minimal_forward_diagnostic
+    title: Minimal Forward Diagnostic Disabled Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends minimal-forward-diagnostic
+    artifact_globs:
+      - config/research/minimal_forward_diagnostic_policy.yaml
+      - config/research/minimal_forward_diagnostic_log_schema.yaml
+      - docs/research/minimal_forward_diagnostic_scope.md
+      - inputs/research_reviews/minimal_forward_diagnostic_final_matrix.yaml
+      - inputs/research_reviews/minimal_forward_diagnostic_outcome_backfill.yaml
+      - docs/research/minimal_forward_diagnostic_closeout.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Minimal forward diagnostics are disabled governance artifacts until owner approval and observable non-candidate signal evidence exist.
+    owner_action: review_before_enabling_any_forward_diagnostic_log
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

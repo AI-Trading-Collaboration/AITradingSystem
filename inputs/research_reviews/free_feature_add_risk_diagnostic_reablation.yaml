@@ -1,0 +1,53 @@
+schema_version: free_feature_add_risk_diagnostic_reablation.v1
+report_type: free_feature_add_risk_diagnostic_reablation
+title: Free Feature Add-Risk Diagnostic Re-Ablation
+status: FREE_FEATURE_ADD_RISK_REABLATION_DIAGNOSTIC_ONLY
+generated_at: '2026-06-28T06:51:51+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: exact
+summary:
+  data_quality_status: PASS_WITH_WARNINGS
+  false_add_risk_cost: 0.0
+  same_risk_frontier_gap: 0.0
+  beta_dependency: false
+  TQQQ_dependency: false
+  2023_plus_dependency: false
+  drawdown_regression: false
+  diagnostic_only: true
+  allocation_allowed: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: free_feature_family_reablation
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: free_feature_add_risk_diagnostic_reablation_v1
+  threshold_policy: free_feature_reablation_scope_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: free_feature_reablation_scope_v1
+  selection_rule_version: free_feature_reablation_scope_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

@@ -1,0 +1,59 @@
+schema_version: channel_specific_first_layer_v4_final_matrix.v1
+report_type: channel_specific_first_layer_v4_final_matrix
+title: Channel-Specific First-Layer v4 Closeout
+status: CHANNEL_V4_REOPEN_EVIDENCE_INSUFFICIENT
+generated_at: '2026-06-28T06:52:22+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: exact
+summary:
+  final_status: CHANNEL_V4_REOPEN_EVIDENCE_INSUFFICIENT
+  start_allowed: false
+  blockers:
+  - reopen_gate_not_allowed
+  - owner_approval_missing
+  candidate_count: 0
+  promotion: blocked
+  paper_shadow: false
+  production: false
+  broker: none
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: channel_specific_first_layer_v4
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: channel_specific_first_layer_v4_final_matrix_v1
+  threshold_policy: channel_specific_first_layer_v4_freeze_contract_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: channel_specific_first_layer_v4_freeze_contract_v1
+  selection_rule_version: channel_specific_first_layer_v4_freeze_contract_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+artifact_paths:
+  scope_doc: D:\Work\AITradingSystem\docs\research\channel_specific_first_layer_v4_scope.md
+  final_matrix_yaml: D:\Work\AITradingSystem\inputs\research_reviews\channel_specific_first_layer_v4_final_matrix.yaml
+  closeout_doc: D:\Work\AITradingSystem\docs\research\channel_specific_first_layer_v4_closeout.md
+  freeze_contract: D:\Work\AITradingSystem\config\research\channel_specific_first_layer_v4_freeze_contract.yaml

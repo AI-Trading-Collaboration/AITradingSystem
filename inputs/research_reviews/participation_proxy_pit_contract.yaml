@@ -1,0 +1,69 @@
+schema_version: participation_proxy_pit_contract.v1
+report_type: participation_proxy_pit_contract
+title: Participation Proxy PIT Contract
+status: PARTICIPATION_PROXY_PIT_CONTRACT_READY_WITH_WARNINGS
+generated_at: '2026-06-28T06:52:01+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: proxy
+summary:
+  etf_ratio_price_proxy_available: true
+  true_pit_breadth_available: false
+  model_ready_breadth_allowed: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: participation_proxy_validation
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: participation_proxy_pit_contract_v1
+  threshold_policy: participation_proxy_validation_scope_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: participation_proxy_validation_scope_v1
+  selection_rule_version: participation_proxy_validation_scope_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+rows:
+- source: ETF ratio price-only proxy
+  PIT_contract_status: PIT_APPROVED_AS_PRICE_PROXY
+  true_pit_breadth: false
+  blocked_usage:
+  - model_ready_breadth
+  - promotion
+  - paper_shadow
+  - production
+- source: Alpha Vantage listing status
+  PIT_contract_status: PIT_WARNING_OR_APPROVED_DEPENDING_ON_DATE_FIELD
+  status_detail: ALPHA_VANTAGE_LISTING_STATUS_NOT_FETCHED_NETWORK_DISABLED
+  true_index_membership: false
+  blocked_usage:
+  - nasdaq_100_membership_claim
+  - promotion
+- source: FMP ETF holdings
+  PIT_contract_status: PIT_WARNING_UNTIL_KNOWN_AT_CONFIRMED
+  status_detail: FMP_HOLDINGS_NOT_AVAILABLE
+  blocked_usage:
+  - model_ready_breadth
+  - promotion

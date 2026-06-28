@@ -1,0 +1,63 @@
+schema_version: free_feature_family_registry_v2.v1
+policy_id: free_feature_family_registry_v2
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Register the post-2085 free feature families used for family-level
+    re-ablation after free PIT source ingestion.
+  intended_effect: >
+    Keep each family source, usage, PIT boundary, and blocked usage explicit
+    before any first-layer reopen gate review.
+  validation_evidence: >
+    TRADING-2086 to 2115 tests require these families to remain
+    research-only/diagnostic and block promotion, paper-shadow, production and
+    broker usage.
+  review_condition: >
+    Review before adding a family to a channel-specific first-layer model or
+    interpreting diagnostic-only evidence as model-ready.
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+families:
+  rates_liquidity_free_v1:
+    source: FRED / ALFRED
+    usage: risk_on_veto / macro context
+    PIT_status: PIT_APPROVED_MARKET_SERIES
+    allowed_usage: [family_level_reablation, risk_on_veto_diagnostic]
+    blocked_usage: [promotion, paper_shadow, production, broker, allocation]
+  volatility_compression_free_v1:
+    source: VIX / price realized vol
+    usage: risk_on_veto / stress detection
+    PIT_status: PIT_APPROVED_PRICE_PROXY
+    allowed_usage: [family_level_reablation, stress_detection_diagnostic]
+    blocked_usage: [promotion, paper_shadow, production, broker, allocation]
+  macro_event_calendar_free_v1:
+    source: FOMC / BLS / BEA / FRED release calendar
+    usage: event proximity / release risk
+    PIT_status: PIT_WARNING_UNTIL_SOURCE_PUBLISHED_AT_CONFIRMED
+    allowed_usage: [diagnostic_only]
+    blocked_usage: [model_ready, promotion, paper_shadow, production, broker, allocation]
+  event_risk_free_v1:
+    source: macro calendar + rate / VIX overlay
+    usage: risk-on blocker diagnostic
+    PIT_status: PIT_WARNING_DIAGNOSTIC_ONLY
+    allowed_usage: [family_level_reablation, risk_on_blocker_diagnostic]
+    blocked_usage: [promotion, paper_shadow, production, broker, allocation]
+  participation_proxy_free_v1:
+    source: ETF ratios / Alpha Vantage listing proxy if available
+    usage: participation diagnostic only
+    PIT_status: NOT_TRUE_PIT_BREADTH
+    allowed_usage: [diagnostic_only, participation_proxy_validation_input]
+    blocked_usage: [model_ready_breadth, promotion, paper_shadow, production, broker, allocation]
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  candidate_count: 0
+  owner_review_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

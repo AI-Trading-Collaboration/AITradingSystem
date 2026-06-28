@@ -1,0 +1,49 @@
+schema_version: participation_proxy_incremental_value_check.v1
+report_type: participation_proxy_incremental_value_check
+title: Participation Proxy Incremental Value Check
+status: PARTICIPATION_PROXY_INCREMENTAL_VALUE_NOT_ESTABLISHED
+generated_at: '2026-06-28T06:51:51+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: proxy
+summary:
+  data_quality_status: PASS_WITH_WARNINGS
+  participation_proxy_free_v1_rows: 0
+  incremental_value_observed: false
+  true_pit_breadth: false
+  worth_entering_2116_2145_validation: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: free_feature_family_reablation
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: participation_proxy_incremental_value_check_v1
+  threshold_policy: free_feature_reablation_scope_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: free_feature_reablation_scope_v1
+  selection_rule_version: free_feature_reablation_scope_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

@@ -1,0 +1,39 @@
+schema_version: channel_specific_first_layer_v4_freeze_contract.v1
+policy_id: channel_specific_first_layer_v4_freeze_contract_v1
+status: frozen_until_reopen_gate_and_owner_approval
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Preserve a narrow v4 research contract without allowing v4 training before
+    the reopen gate and owner approval both pass.
+  intended_effect: >
+    Keep second-layer probes frozen, block universal first-layer training, and
+    prohibit production weights or TQQQ allocation.
+  validation_evidence: >
+    TRADING-2176 to 2215 guardrail tests require fail-closed status when the
+    reopen gate is denied or owner approval is absent.
+  review_condition: >
+    Review only after `REOPEN_ALLOWED_FOR_NARROW_CHANNEL_V4` and owner manual
+    approval are both recorded.
+allowed_models_if_unlocked:
+  - monotonic_scorecard
+  - logistic_baseline
+  - threshold_rule
+blocked_models:
+  - black_box_ensemble
+  - automated_large_scale_parameter_search
+  - universal_first_layer
+blocked_outputs:
+  - target_weights
+  - production_weights
+  - recommended_allocation
+  - trade_action
+  - broker_action
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

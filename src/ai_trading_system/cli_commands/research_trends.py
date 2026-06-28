@@ -25,6 +25,15 @@ from ai_trading_system.channel_specific_first_layer_v3 import (
 from ai_trading_system.channel_specific_first_layer_v3 import (
     DEFAULT_PIT_FEATURE_MATRIX_PATH as DEFAULT_CHANNEL_V3_PIT_FEATURE_MATRIX_PATH,
 )
+from ai_trading_system.channel_specific_first_layer_v4 import (
+    DEFAULT_FREEZE_CONTRACT_PATH as DEFAULT_CHANNEL_V4_FREEZE_CONTRACT_PATH,
+)
+from ai_trading_system.channel_specific_first_layer_v4 import (
+    DEFAULT_GATE_DECISION_PATH as DEFAULT_CHANNEL_V4_GATE_DECISION_PATH,
+)
+from ai_trading_system.channel_specific_first_layer_v4 import (
+    run_channel_specific_first_layer_v4_pack,
+)
 from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_DEFENSIVE_ACTION_VALUE_POLICY_PATH,
     DEFAULT_DEFENSIVE_LABEL_TAXONOMY_PATH,
@@ -56,6 +65,28 @@ from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_SCORECARD_CONFIG_PATH,
     run_first_layer_policy_aware_calibration_pack,
 )
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_CHANNEL_CLOSEOUT_PATH as DEFAULT_REOPEN_GATE_CHANNEL_CLOSEOUT_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_COVERAGE_MATRIX_PATH as DEFAULT_REOPEN_GATE_COVERAGE_MATRIX_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_DEPENDENCY_DIAGNOSTICS_PATH as DEFAULT_REOPEN_GATE_DEPENDENCY_DIAGNOSTICS_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_FREE_FEATURE_FINAL_PATH as DEFAULT_REOPEN_GATE_FREE_FEATURE_FINAL_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_FREE_FEATURE_PIT_AUDIT_PATH as DEFAULT_REOPEN_GATE_PIT_AUDIT_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_PARTICIPATION_FINAL_PATH as DEFAULT_REOPEN_GATE_PARTICIPATION_FINAL_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import (
+    DEFAULT_POLICY_PATH as DEFAULT_REOPEN_GATE_POLICY_PATH,
+)
+from ai_trading_system.first_layer_reopen_gate import run_first_layer_reopen_gate_pack
 from ai_trading_system.first_layer_up_state_learning import (
     DEFAULT_HIERARCHICAL_CONFIG_PATH,
     DEFAULT_THRESHOLD_POLICY_PATH,
@@ -74,6 +105,47 @@ from ai_trading_system.first_layer_walk_forward_coverage import (
     DEFAULT_MODEL_MATRIX_YAML_PATH,
     run_first_layer_walk_forward_coverage_rebuild_pack,
 )
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_CHANNEL_CLOSEOUT_PATH as DEFAULT_FREE_REABLATION_CHANNEL_CLOSEOUT_PATH,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_COVERAGE_MATRIX_PATH as DEFAULT_FREE_REABLATION_COVERAGE_MATRIX_PATH,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_FEATURE_ROOT as DEFAULT_FREE_REABLATION_FEATURE_ROOT,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_FREE_FEATURE_PIT_AUDIT_PATH as DEFAULT_FREE_REABLATION_PIT_AUDIT_PATH,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_FREE_REABLATION_OUTPUT_ROOT,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    DEFAULT_REGISTRY_V2_PATH as DEFAULT_FREE_REABLATION_REGISTRY_PATH,
+)
+from ai_trading_system.free_feature_family_reablation import (
+    run_free_feature_family_reablation_pack,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH,
+    DEFAULT_FREE_FEATURE_OUTPUT_ROOT,
+    DEFAULT_FREE_FEATURE_POLICY_PATH,
+    DEFAULT_FREE_SOURCE_OUTPUT_ROOT,
+    DEFAULT_MANIFEST_PATH,
+    DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH,
+    DEFAULT_RESEARCH_DOCS_ROOT,
+    DEFAULT_RESEARCH_INPUTS_ROOT,
+    run_free_feature_readiness,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_PRICES_PATH as DEFAULT_FREE_PRICES_PATH,
+)
+from ai_trading_system.free_pit_data_sources import (
+    DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
+)
 from ai_trading_system.indicator_family_ablation import (
     DEFAULT_ACTION_VALUE_MATRIX_PATH,
     DEFAULT_ACTION_VALUE_SUMMARY_PATH,
@@ -85,6 +157,28 @@ from ai_trading_system.indicator_family_ablation import (
     DEFAULT_LABELS_PATH,
     DEFAULT_PIT_FEATURE_MATRIX_PATH,
     run_indicator_family_ablation,
+)
+from ai_trading_system.minimal_forward_diagnostic import (
+    DEFAULT_POLICY_PATH as DEFAULT_MINIMAL_FORWARD_POLICY_PATH,
+)
+from ai_trading_system.minimal_forward_diagnostic import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_MINIMAL_FORWARD_SCHEMA_PATH,
+)
+from ai_trading_system.minimal_forward_diagnostic import (
+    run_minimal_forward_diagnostic_outcome_backfill,
+    run_minimal_forward_diagnostic_pack,
+)
+from ai_trading_system.participation_proxy_validation import (
+    DEFAULT_FEATURE_ROOT as DEFAULT_PARTICIPATION_FEATURE_ROOT,
+)
+from ai_trading_system.participation_proxy_validation import (
+    DEFAULT_PROCESSED_ROOT as DEFAULT_PARTICIPATION_PROCESSED_ROOT,
+)
+from ai_trading_system.participation_proxy_validation import (
+    DEFAULT_REGISTRY_PATH as DEFAULT_PARTICIPATION_REGISTRY_PATH,
+)
+from ai_trading_system.participation_proxy_validation import (
+    run_participation_proxy_validation_pack,
 )
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
@@ -149,6 +243,11 @@ console = Console()
 trends_app = typer.Typer(
     help="Policy-aware first-layer trend calibration research.",
     no_args_is_help=True,
+)
+minimal_forward_diagnostic_app = typer.Typer(
+    help="Disabled minimal forward diagnostic log governance.",
+    invoke_without_command=True,
+    no_args_is_help=False,
 )
 
 
@@ -802,6 +901,218 @@ def first_layer_channel_closeout_command(
         forward_minimal_plan_path=forward_minimal_plan_path,
     )
     _print_payload("First-layer channel closeout", payload)
+
+
+@trends_app.command("free-feature-readiness")
+def free_feature_readiness_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry", help="Free data source registry YAML。")
+    ] = DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH,
+    feature_policy_path: Annotated[
+        Path, typer.Option("--feature-policy", help="Free feature policy YAML。")
+    ] = DEFAULT_FREE_FEATURE_POLICY_PATH,
+    participation_proxy_registry_path: Annotated[
+        Path,
+        typer.Option("--participation-registry", help="Participation proxy registry YAML。"),
+    ] = DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    manifest_path: Annotated[Path, typer.Option("--manifest-path")] = DEFAULT_MANIFEST_PATH,
+    output_root: Annotated[Path, typer.Option("--output-root")] = DEFAULT_FREE_SOURCE_OUTPUT_ROOT,
+    feature_output_root: Annotated[
+        Path, typer.Option("--feature-output-root")
+    ] = DEFAULT_FREE_FEATURE_OUTPUT_ROOT,
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = DEFAULT_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[Path, typer.Option("--inputs-root")] = DEFAULT_RESEARCH_INPUTS_ROOT,
+    calendar_input_path: Annotated[
+        Path | None,
+        typer.Option("--calendar-input", help="Optional CSV/YAML official macro calendar rows。"),
+    ] = None,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_free_feature_readiness(
+        registry_path=registry_path,
+        feature_policy_path=feature_policy_path,
+        participation_proxy_registry_path=participation_proxy_registry_path,
+        rates_path=rates_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        manifest_path=manifest_path,
+        output_root=output_root,
+        feature_output_root=feature_output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+        calendar_input_path=calendar_input_path,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Free feature family reopen readiness", payload)
+
+
+@trends_app.command("free-feature-reablation")
+def free_feature_reablation_command(
+    feature_root: Annotated[
+        Path, typer.Option("--feature-root")
+    ] = DEFAULT_FREE_REABLATION_FEATURE_ROOT,
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_FREE_REABLATION_REGISTRY_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_FREE_REABLATION_OUTPUT_ROOT,
+    free_feature_pit_audit_path: Annotated[
+        Path, typer.Option("--free-feature-pit-audit")
+    ] = DEFAULT_FREE_REABLATION_PIT_AUDIT_PATH,
+    coverage_matrix_path: Annotated[
+        Path, typer.Option("--coverage-matrix")
+    ] = DEFAULT_FREE_REABLATION_COVERAGE_MATRIX_PATH,
+    channel_closeout_path: Annotated[
+        Path, typer.Option("--channel-closeout")
+    ] = DEFAULT_FREE_REABLATION_CHANNEL_CLOSEOUT_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_free_feature_family_reablation_pack(
+        feature_root=feature_root,
+        registry_path=registry_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        free_feature_pit_audit_path=free_feature_pit_audit_path,
+        coverage_matrix_path=coverage_matrix_path,
+        channel_closeout_path=channel_closeout_path,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Free feature family re-ablation", payload)
+
+
+@trends_app.command("participation-proxy-validation")
+def participation_proxy_validation_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_PARTICIPATION_REGISTRY_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    feature_root: Annotated[
+        Path, typer.Option("--feature-root")
+    ] = DEFAULT_PARTICIPATION_FEATURE_ROOT,
+    processed_root: Annotated[
+        Path, typer.Option("--processed-root")
+    ] = DEFAULT_PARTICIPATION_PROCESSED_ROOT,
+    alpha_vantage_input_path: Annotated[
+        Path | None, typer.Option("--alpha-vantage-input")
+    ] = None,
+    allow_network_trials: Annotated[
+        bool, typer.Option("--allow-network-trials/--no-allow-network-trials")
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_participation_proxy_validation_pack(
+        registry_path=registry_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        feature_root=feature_root,
+        processed_root=processed_root,
+        alpha_vantage_input_path=alpha_vantage_input_path,
+        allow_network_trials=allow_network_trials,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Participation proxy validation", payload)
+
+
+@trends_app.command("first-layer-reopen-gate")
+def first_layer_reopen_gate_command(
+    policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_REOPEN_GATE_POLICY_PATH,
+    free_feature_final_path: Annotated[
+        Path, typer.Option("--free-feature-final")
+    ] = DEFAULT_REOPEN_GATE_FREE_FEATURE_FINAL_PATH,
+    participation_final_path: Annotated[
+        Path, typer.Option("--participation-final")
+    ] = DEFAULT_REOPEN_GATE_PARTICIPATION_FINAL_PATH,
+    channel_closeout_path: Annotated[
+        Path, typer.Option("--channel-closeout")
+    ] = DEFAULT_REOPEN_GATE_CHANNEL_CLOSEOUT_PATH,
+    free_feature_pit_audit_path: Annotated[
+        Path, typer.Option("--free-feature-pit-audit")
+    ] = DEFAULT_REOPEN_GATE_PIT_AUDIT_PATH,
+    coverage_matrix_path: Annotated[
+        Path, typer.Option("--coverage-matrix")
+    ] = DEFAULT_REOPEN_GATE_COVERAGE_MATRIX_PATH,
+    dependency_diagnostics_path: Annotated[
+        Path, typer.Option("--dependency-diagnostics")
+    ] = DEFAULT_REOPEN_GATE_DEPENDENCY_DIAGNOSTICS_PATH,
+    owner_approval: Annotated[bool, typer.Option("--owner-approval/--no-owner-approval")] = False,
+) -> None:
+    payload = run_first_layer_reopen_gate_pack(
+        policy_path=policy_path,
+        free_feature_final_path=free_feature_final_path,
+        participation_final_path=participation_final_path,
+        channel_closeout_path=channel_closeout_path,
+        free_feature_pit_audit_path=free_feature_pit_audit_path,
+        coverage_matrix_path=coverage_matrix_path,
+        dependency_diagnostics_path=dependency_diagnostics_path,
+        owner_approval=owner_approval,
+    )
+    _print_payload("First-layer reopen gate", payload)
+
+
+@trends_app.command("channel-specific-v4")
+def channel_specific_first_layer_v4_command(
+    freeze_contract_path: Annotated[
+        Path, typer.Option("--freeze-contract")
+    ] = DEFAULT_CHANNEL_V4_FREEZE_CONTRACT_PATH,
+    gate_decision_path: Annotated[
+        Path, typer.Option("--gate-decision")
+    ] = DEFAULT_CHANNEL_V4_GATE_DECISION_PATH,
+    owner_approval: Annotated[bool, typer.Option("--owner-approval/--no-owner-approval")] = False,
+) -> None:
+    payload = run_channel_specific_first_layer_v4_pack(
+        freeze_contract_path=freeze_contract_path,
+        gate_decision_path=gate_decision_path,
+        owner_approval=owner_approval,
+    )
+    _print_payload("Channel-specific first-layer v4", payload)
+
+
+@minimal_forward_diagnostic_app.callback()
+def minimal_forward_diagnostic_command(
+    ctx: typer.Context,
+    policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_MINIMAL_FORWARD_POLICY_PATH,
+    schema_path: Annotated[Path, typer.Option("--schema")] = DEFAULT_MINIMAL_FORWARD_SCHEMA_PATH,
+) -> None:
+    if ctx.invoked_subcommand is not None:
+        return
+    payload = run_minimal_forward_diagnostic_pack(
+        policy_path=policy_path,
+        schema_path=schema_path,
+    )
+    _print_payload("Minimal forward diagnostic", payload)
+
+
+@minimal_forward_diagnostic_app.command("outcome-backfill")
+def minimal_forward_diagnostic_outcome_backfill_command(
+    policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_MINIMAL_FORWARD_POLICY_PATH,
+    schema_path: Annotated[Path, typer.Option("--schema")] = DEFAULT_MINIMAL_FORWARD_SCHEMA_PATH,
+) -> None:
+    payload = run_minimal_forward_diagnostic_outcome_backfill(
+        policy_path=policy_path,
+        schema_path=schema_path,
+    )
+    _print_payload("Minimal forward diagnostic outcome backfill", payload)
+
+
+trends_app.add_typer(minimal_forward_diagnostic_app, name="minimal-forward-diagnostic")
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

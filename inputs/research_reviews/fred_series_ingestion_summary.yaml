@@ -1,0 +1,21 @@
+schema_version: fred_series_ingestion_summary.v1
+report_type: fred_series_ingestion_summary
+status: FRED_SERIES_INGESTED_WITH_COVERAGE_WARNINGS
+summary:
+  row_count: 6352
+  available_series:
+  - DGS10
+  - DGS2
+  - DTWEXBGS
+  missing_series:
+  - DGS3MO
+  - FEDFUNDS
+  - SOFR
+  - VIXCLS
+research_only: true
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

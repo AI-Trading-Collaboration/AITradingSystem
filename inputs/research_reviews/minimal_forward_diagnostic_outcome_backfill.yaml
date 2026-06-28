@@ -1,0 +1,50 @@
+schema_version: minimal_forward_diagnostic_outcome_backfill.v1
+report_type: minimal_forward_diagnostic_outcome_backfill
+title: Minimal Forward Diagnostic Outcome Backfill
+status: MINIMAL_FORWARD_DIAGNOSTIC_REQUIRES_OWNER_APPROVAL
+generated_at: '2026-06-28T06:52:42+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: cached_data_validation_required
+exact_or_proxy: exact
+summary:
+  enabled: false
+  policy_status: PASS
+  outcome_backfill_performed: false
+  reason: policy disabled or owner approval missing
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: minimal_forward_diagnostic
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: post_2085_family_level_diagnostic_v1
+  feature_set_version: post_2085_free_feature_and_proxy_registry_v1
+  model_version: minimal_forward_diagnostic_outcome_backfill_v1
+  threshold_policy: minimal_forward_diagnostic_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: minimal_forward_diagnostic_policy_v1
+  selection_rule_version: minimal_forward_diagnostic_policy_v1
+  boundary_contract_version: post_2085_research_only_boundary_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+artifact_paths:
+  outcome_backfill_yaml: D:\Work\AITradingSystem\inputs\research_reviews\minimal_forward_diagnostic_outcome_backfill.yaml
