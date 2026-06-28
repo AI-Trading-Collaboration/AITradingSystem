@@ -1,6 +1,6 @@
 # Norgate Breadth Prototype 2Y Review
 
-- status: `NORGATE_BREADTH_PROTOTYPE_BLOCKED`
+- status: `NORGATE_BREADTH_PROTOTYPE_2Y_ONLY`
 - trial_price_history_limited_to_2y: `True`
 - not_model_ready_for_2021_primary_window: `True`
 - not_promotion_evidence: `True`

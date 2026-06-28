@@ -1,7 +1,7 @@
 schema_version: norgate_breadth_prototype_2y.v1
 report_type: norgate_breadth_prototype_2y
-status: NORGATE_BREADTH_PROTOTYPE_BLOCKED
-generated_at: '2026-06-28T09:52:09+00:00'
+status: NORGATE_BREADTH_PROTOTYPE_2Y_ONLY
+generated_at: '2026-06-28T10:11:57+00:00'
 trial_price_history_limited_to_2y: true
 primary_window_full_validation_requires_paid_platinum: true
 not_model_ready_for_2021_primary_window: true
@@ -24,8 +24,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 - date: '2024-11-06'
   index_id: $NDX
   20d_positive_return_ratio: ''
@@ -42,8 +41,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 - date: '2025-04-07'
   index_id: $NDX
   20d_positive_return_ratio: ''
@@ -60,8 +58,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 - date: '2025-08-01'
   index_id: $NDX
   20d_positive_return_ratio: ''
@@ -78,8 +75,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 - date: '2026-01-02'
   index_id: $NDX
   20d_positive_return_ratio: ''
@@ -96,8 +92,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 - date: '2026-06-26'
   index_id: $NDX
   20d_positive_return_ratio: ''
@@ -114,8 +109,7 @@ rows:
   qqq_60d_return: ''
   equal_weight_minus_qqq_20d: ''
   equal_weight_minus_qqq_60d: ''
-  warning: breadth prototype blocked until Norgate package/local database and membership/price
-    probes pass
+  warning: prototype schema ready; numeric calculation requires live Norgate prices
 research_only: true
 candidate_count: 0
 first_layer_reopen_allowed: false

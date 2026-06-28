@@ -2,7 +2,7 @@
 
 ## Trial 验证了什么？
 
-当前 package/access status 为 `NORGATE_ENV_MISSING_PACKAGE`，membership query status 为 `NORGATE_MEMBERSHIP_QUERY_NOT_VALIDATED`。
+当前 package/access status 为 `NORGATE_ENV_READY`，membership query status 为 `NORGATE_HISTORICAL_MEMBERSHIP_QUERY_VALIDATED`。
 
 ## Trial 没法验证什么？
 
@@ -10,7 +10,7 @@ Trial daily price history limited to 2 years，因此不能完成 2021-02-22 pri
 
 ## 是否值得正式订阅？
 
-当前 paid Platinum decision 为 `NORGATE_TRIAL_INCONCLUSIVE`。任何正式订阅仍需要 owner manual approval。
+当前 paid Platinum decision 为 `NORGATE_PAID_PLATINUM_RECOMMENDED`。任何正式订阅仍需要 owner manual approval。
 
 ## 为什么仍不能恢复 first-layer / v4 / promotion？
 

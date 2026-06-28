@@ -3,52 +3,52 @@
   "candidate_count": 0,
   "coverage_by_symbol": [
     {
-      "earliest_available_price_date": "",
-      "latest_available_price_date": "",
-      "query_success": false,
-      "row_count": 0,
+      "earliest_available_price_date": "2024-06-28",
+      "latest_available_price_date": "2026-06-26",
+      "query_success": true,
+      "row_count": 500,
       "symbol": "QQQ",
-      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+      "warning": ""
     },
     {
-      "earliest_available_price_date": "",
-      "latest_available_price_date": "",
-      "query_success": false,
-      "row_count": 0,
+      "earliest_available_price_date": "2024-06-28",
+      "latest_available_price_date": "2026-06-26",
+      "query_success": true,
+      "row_count": 500,
       "symbol": "AAPL",
-      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+      "warning": ""
     },
     {
-      "earliest_available_price_date": "",
-      "latest_available_price_date": "",
-      "query_success": false,
-      "row_count": 0,
+      "earliest_available_price_date": "2024-06-28",
+      "latest_available_price_date": "2026-06-26",
+      "query_success": true,
+      "row_count": 500,
       "symbol": "MSFT",
-      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+      "warning": ""
     },
     {
-      "earliest_available_price_date": "",
-      "latest_available_price_date": "",
-      "query_success": false,
-      "row_count": 0,
+      "earliest_available_price_date": "2024-06-28",
+      "latest_available_price_date": "2026-06-26",
+      "query_success": true,
+      "row_count": 500,
       "symbol": "NVDA",
-      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+      "warning": ""
     },
     {
-      "earliest_available_price_date": "",
-      "latest_available_price_date": "",
-      "query_success": false,
-      "row_count": 0,
+      "earliest_available_price_date": "2024-06-28",
+      "latest_available_price_date": "2026-06-26",
+      "query_success": true,
+      "row_count": 500,
       "symbol": "TSLA",
-      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+      "warning": ""
     }
   ],
   "dynamic_promotion_status": "BLOCKED",
-  "earliest_available_price_date": "",
-  "environment_status": "NORGATE_ENV_MISSING_PACKAGE",
+  "earliest_available_price_date": "2024-06-28",
+  "environment_status": "NORGATE_ENV_READY",
   "first_layer_reopen_allowed": false,
-  "generated_at": "2026-06-28T09:52:09+00:00",
-  "latest_available_price_date": "",
+  "generated_at": "2026-06-28T10:11:57+00:00",
+  "latest_available_price_date": "2026-06-26",
   "paper_shadow_allowed": false,
   "primary_window_full_validation_requires_paid_platinum": true,
   "primary_window_price_coverage": false,
@@ -58,7 +58,7 @@
   "report_type": "norgate_trial_price_coverage_summary",
   "research_only": true,
   "schema_version": "norgate_trial_price_coverage_summary.v1",
-  "status": "NORGATE_PRICE_COVERAGE_BLOCKED",
+  "status": "NORGATE_PRICE_COVERAGE_READY_2Y_LIMITED",
   "symbols_checked": [
     "QQQ",
     "AAPL",

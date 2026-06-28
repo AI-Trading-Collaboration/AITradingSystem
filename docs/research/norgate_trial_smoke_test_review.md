@@ -1,8 +1,8 @@
 # Norgate Trial Smoke Test Review
 
-- status: `NORGATE_ENV_MISSING_PACKAGE`
-- package_present: `False`
-- local_database_available: `False`
+- status: `NORGATE_ENV_READY`
+- package_present: `True`
+- local_database_available: `True`
 - credentials_values_recorded: `False`
 - raw_vendor_data_committed: `False`
 

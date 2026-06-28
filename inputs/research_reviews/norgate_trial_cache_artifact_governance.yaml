@@ -1,7 +1,7 @@
 schema_version: norgate_trial_cache_artifact_governance.v1
 report_type: norgate_trial_cache_artifact_governance
 status: NORGATE_TRIAL_CACHE_GOVERNANCE_PASS
-generated_at: '2026-06-28T09:52:09+00:00'
+generated_at: '2026-06-28T10:11:57+00:00'
 raw_vendor_data_outside_repo: true
 derived_summaries_allowed: true
 member_symbol_list_committed: false

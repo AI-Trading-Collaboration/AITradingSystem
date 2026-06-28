@@ -7,19 +7,17 @@
     "NORGATE_USERNAME": false
   },
   "credentials_values_recorded": false,
-  "database_count": 0,
-  "database_names_hash": "",
+  "database_count": 8,
+  "database_names_hash": "74c50b15188e730375f5685e2a4f0d16bc65c804788227339d395f9c5563a3c5",
   "dynamic_promotion_status": "BLOCKED",
   "environment_contract": "D:\\Work\\AITradingSystem\\config\\data\\norgate_trial_environment_contract.yaml",
-  "errors": [
-    "ModuleNotFoundError"
-  ],
+  "errors": [],
   "first_layer_reopen_allowed": false,
-  "generated_at": "2026-06-28T09:52:09+00:00",
-  "local_database_available": false,
+  "generated_at": "2026-06-28T10:07:31+00:00",
+  "local_database_available": true,
   "norgate_local_database_outside_repo": true,
-  "package_present": false,
-  "package_version": "",
+  "package_present": true,
+  "package_version": "1.0.74",
   "paper_shadow_allowed": false,
   "production_allowed": false,
   "production_effect": "none",
@@ -28,9 +26,7 @@
   "report_type": "norgate_trial_smoke_test_summary",
   "research_only": true,
   "schema_version": "norgate_trial_smoke_test_summary.v1",
-  "status": "NORGATE_ENV_MISSING_PACKAGE",
-  "warnings": [
-    "norgatedata package is not installed in this Python environment"
-  ],
+  "status": "NORGATE_ENV_READY",
+  "warnings": [],
   "windows_access_method": true
 }

@@ -1,10 +1,10 @@
 schema_version: norgate_trial_pit_leakage_audit.v1
 report_type: norgate_trial_pit_leakage_audit
 status: NORGATE_TRIAL_PIT_AUDIT_READY
-generated_at: '2026-06-28T09:52:09+00:00'
+generated_at: '2026-06-28T10:11:57+00:00'
 uses_current_constituents_backfill: false
-membership_query_date_aware: false
-price_data_as_of_join_possible: false
+membership_query_date_aware: true
+price_data_as_of_join_possible: true
 future_delisted_info_used_for_past_decision: false
 raw_vendor_data_committed: false
 trial_limit_blocks_primary_window_model_ready: true

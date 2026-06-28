@@ -1,16 +1,16 @@
 schema_version: norgate_paid_platinum_decision_gate.v1
 report_type: norgate_paid_platinum_decision_gate
-status: NORGATE_TRIAL_INCONCLUSIVE
-generated_at: '2026-06-28T09:52:09+00:00'
+status: NORGATE_PAID_PLATINUM_RECOMMENDED
+generated_at: '2026-06-28T10:11:57+00:00'
 owner_manual_approval_required_before_purchase: true
 purchase_allowed_without_owner_approval: false
-recommendation_reason: Trial access or required capability checks are not fully validated
+recommendation_reason: Trial capabilities passed all required checks
 required_before_recommend_paid:
-  python_access_confirmed: false
-  membership_query_confirmed: false
-  delisted_visibility_confirmed: false
-  snapshot_prototype_ready: false
-  two_year_breadth_prototype_generated: false
+  python_access_confirmed: true
+  membership_query_confirmed: true
+  delisted_visibility_confirmed: true
+  snapshot_prototype_ready: true
+  two_year_breadth_prototype_generated: true
   cache_license_governance_passed: true
 research_only: true
 candidate_count: 0

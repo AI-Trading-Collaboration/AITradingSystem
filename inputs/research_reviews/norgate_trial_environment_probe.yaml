@@ -1,14 +1,14 @@
 schema_version: norgate_trial_smoke_test_summary.v1
 report_type: norgate_trial_smoke_test_summary
-status: NORGATE_ENV_MISSING_PACKAGE
-generated_at: '2026-06-28T09:52:09+00:00'
+status: NORGATE_ENV_READY
+generated_at: '2026-06-28T10:07:31+00:00'
 environment_contract: D:\Work\AITradingSystem\config\data\norgate_trial_environment_contract.yaml
 contract_status: active
-package_present: false
-package_version: ''
-local_database_available: false
-database_count: 0
-database_names_hash: ''
+package_present: true
+package_version: 1.0.74
+local_database_available: true
+database_count: 8
+database_names_hash: 74c50b15188e730375f5685e2a4f0d16bc65c804788227339d395f9c5563a3c5
 windows_access_method: true
 credentials_env_presence:
   NORGATE_USERNAME: false
@@ -16,10 +16,8 @@ credentials_env_presence:
 credentials_values_recorded: false
 norgate_local_database_outside_repo: true
 raw_vendor_data_committed: false
-warnings:
-- norgatedata package is not installed in this Python environment
-errors:
-- ModuleNotFoundError
+warnings: []
+errors: []
 research_only: true
 candidate_count: 0
 first_layer_reopen_allowed: false

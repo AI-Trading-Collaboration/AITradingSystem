@@ -1,79 +1,77 @@
 schema_version: norgate_membership_query_probe.v1
 report_type: norgate_membership_query_probe
-status: NORGATE_MEMBERSHIP_QUERY_NOT_VALIDATED
-generated_at: '2026-06-28T09:52:09+00:00'
-environment_status: NORGATE_ENV_MISSING_PACKAGE
+status: NORGATE_HISTORICAL_MEMBERSHIP_QUERY_VALIDATED
+generated_at: '2026-06-28T10:11:56+00:00'
+environment_status: NORGATE_ENV_READY
 index_id: $NDX
 requested_date_count: 6
-query_success_count: 0
-membership_query_available: false
+query_success_count: 6
+membership_query_available: true
 membership_query_available_but_price_join_limited: false
 raw_member_symbols_committed: false
 rows:
 - requested_date: '2024-08-05'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2024-08-05'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 99
+  symbol_count: 99
+  member_symbols_hash: d66a63b45e22ff8ef99f59087c6b7886534b91c13b72da2d7a8d3a3b5821a4cd
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  warning: ''
 - requested_date: '2024-11-06'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2024-11-06'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 99
+  symbol_count: 99
+  member_symbols_hash: d66a63b45e22ff8ef99f59087c6b7886534b91c13b72da2d7a8d3a3b5821a4cd
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  warning: ''
 - requested_date: '2025-04-07'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2025-04-07'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 99
+  symbol_count: 99
+  member_symbols_hash: ab8fb2e3b8391f2b3e12ebc95c2bba2214090853d8815b252f1cbebda06123a8
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  warning: ''
 - requested_date: '2025-08-01'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2025-08-01'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 100
+  symbol_count: 100
+  member_symbols_hash: 8f5d34125d1df6b5293919868215e0e5be4dcc041fd48533933500fb5fcf5415
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  warning: ''
 - requested_date: '2026-01-02'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2026-01-02'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 100
+  symbol_count: 100
+  member_symbols_hash: 7c8aafc060f914613d5e8776efc401010664d5d47ad2edcb40c39df3430d100d
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  warning: ''
 - requested_date: '2026-06-26'
-  resolved_trading_date: ''
-  resolution_rule: not_resolved
+  resolved_trading_date: '2026-06-26'
+  resolution_rule: requested_date_used
   index_id: $NDX
-  member_count: 0
-  symbol_count: 0
-  member_symbols_hash: ''
-  query_success: false
+  member_count: 101
+  symbol_count: 101
+  member_symbols_hash: 4d2a9a97cc4fa7c937e0ce8e40ea5308c9472c8f239f0586025cb4cf65eb54be
+  query_success: true
   membership_query_method: norgatedata.index_constituent_timeseries
-  warning: NORGATE_ENV_MISSING_PACKAGE
-warnings:
-- norgatedata package is not installed in this Python environment
-errors:
-- ModuleNotFoundError
+  warning: ''
+warnings: []
+errors: []
 research_only: true
 candidate_count: 0
 first_layer_reopen_allowed: false

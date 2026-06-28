@@ -1,12 +1,12 @@
 schema_version: norgate_trial_price_coverage_summary.v1
 report_type: norgate_trial_price_coverage_summary
-status: NORGATE_PRICE_COVERAGE_BLOCKED
-generated_at: '2026-06-28T09:52:09+00:00'
-environment_status: NORGATE_ENV_MISSING_PACKAGE
+status: NORGATE_PRICE_COVERAGE_READY_2Y_LIMITED
+generated_at: '2026-06-28T10:11:57+00:00'
+environment_status: NORGATE_ENV_READY
 trial_price_history_limited_to_2y: true
 trial_price_history_limit_years: 2
-earliest_available_price_date: ''
-latest_available_price_date: ''
+earliest_available_price_date: '2024-06-28'
+latest_available_price_date: '2026-06-26'
 symbols_checked:
 - QQQ
 - AAPL
@@ -15,35 +15,35 @@ symbols_checked:
 - TSLA
 coverage_by_symbol:
 - symbol: QQQ
-  query_success: false
-  earliest_available_price_date: ''
-  latest_available_price_date: ''
-  row_count: 0
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  query_success: true
+  earliest_available_price_date: '2024-06-28'
+  latest_available_price_date: '2026-06-26'
+  row_count: 500
+  warning: ''
 - symbol: AAPL
-  query_success: false
-  earliest_available_price_date: ''
-  latest_available_price_date: ''
-  row_count: 0
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  query_success: true
+  earliest_available_price_date: '2024-06-28'
+  latest_available_price_date: '2026-06-26'
+  row_count: 500
+  warning: ''
 - symbol: MSFT
-  query_success: false
-  earliest_available_price_date: ''
-  latest_available_price_date: ''
-  row_count: 0
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  query_success: true
+  earliest_available_price_date: '2024-06-28'
+  latest_available_price_date: '2026-06-26'
+  row_count: 500
+  warning: ''
 - symbol: NVDA
-  query_success: false
-  earliest_available_price_date: ''
-  latest_available_price_date: ''
-  row_count: 0
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  query_success: true
+  earliest_available_price_date: '2024-06-28'
+  latest_available_price_date: '2026-06-26'
+  row_count: 500
+  warning: ''
 - symbol: TSLA
-  query_success: false
-  earliest_available_price_date: ''
-  latest_available_price_date: ''
-  row_count: 0
-  warning: NORGATE_ENV_MISSING_PACKAGE
+  query_success: true
+  earliest_available_price_date: '2024-06-28'
+  latest_available_price_date: '2026-06-26'
+  row_count: 500
+  warning: ''
 primary_window_price_coverage: false
 primary_window_full_validation_requires_paid_platinum: true
 research_only: true
