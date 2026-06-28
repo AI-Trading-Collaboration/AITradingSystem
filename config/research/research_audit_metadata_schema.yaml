@@ -55,6 +55,7 @@ research_audit_metadata:
     - first_layer_reopen_gate
     - channel_specific_first_layer_v4
     - minimal_forward_diagnostic
+    - paid_data_due_diligence
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0

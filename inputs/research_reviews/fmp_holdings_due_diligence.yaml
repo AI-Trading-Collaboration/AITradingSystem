@@ -1,0 +1,23 @@
+schema_version: fmp_holdings_due_diligence.v1
+report_type: fmp_holdings_due_diligence
+status: FMP_NOT_SUITABLE
+generated_at: "2026-06-28T07:30:00+00:00"
+vendor_id: fmp_etf_holdings
+capability_check:
+  checked_at: "2026-06-28T07:18:00+00:00"
+  key_presence: FMP_API_KEY_PRESENT
+  endpoint_family: stable/etf/holdings
+  symbol: QQQ
+  sanitized_result: HTTP_402_PAYMENT_REQUIRED
+  raw_response_stored: false
+pit_assessment:
+  holding_date_verified: false
+  reported_date_verified: false
+  known_at_verified: false
+  delisted_membership_verified: false
+  historical_holdings_verified: false
+  current_plan_access_sufficient: false
+allowed_use: diagnostic_only_if_owner_later_approves_trial_or_upgrade
+model_ready_breadth_allowed: false
+promotion_allowed: false
+owner_manual_approval_required_before_upgrade: true

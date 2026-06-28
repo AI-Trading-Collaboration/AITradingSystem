@@ -1,0 +1,23 @@
+schema_version: paid_data_trial_decision_gate.v1
+report_type: paid_data_trial_decision_gate
+status: NORGATE_TRIAL_RECOMMENDED
+generated_at: "2026-06-28T07:30:00+00:00"
+policy_ref: config/research/paid_data_trial_gate_policy.yaml
+selected_vendor: norgate_us_stocks_platinum
+decision:
+  trial_decision: NORGATE_TRIAL_RECOMMENDED
+  reason: Norgate is the strongest true breadth candidate, but only owner can approve trial cost/license.
+  owner_manual_approval_required_before_trial: true
+  owner_manual_approval_required_before_purchase: true
+  trial_allowed_without_owner_approval: false
+  purchase_allowed: false
+  auto_purchase_allowed: false
+  no_provider_upgrade_without_owner_approval: true
+blocked_from_strategy_use:
+  first_layer_reopen_allowed: false
+  v4_allowed: false
+  minimal_forward_diagnostic_enabled: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

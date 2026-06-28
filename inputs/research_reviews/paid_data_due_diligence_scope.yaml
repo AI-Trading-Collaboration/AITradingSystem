@@ -1,0 +1,23 @@
+schema_version: paid_data_due_diligence_scope.v1
+report_type: paid_data_due_diligence_scope
+status: PAID_DATA_DUE_DILIGENCE_SCOPE_READY
+generated_at: "2026-06-28T07:30:00+00:00"
+market_regime: ai_after_chatgpt
+primary_window_start: "2021-02-22"
+scope:
+  due_diligence_only: true
+  purchase_allowed: false
+  provider_upgrade_allowed: false
+  first_layer_reopen_allowed: false
+  model_training_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+review_questions:
+  - can_vendor_provide_historical_constituents
+  - can_vendor_include_delisted_securities
+  - can_vendor_build_daily_membership_snapshot
+  - can_vendor_support_python_or_local_database_access
+  - can_vendor_cover_primary_window_from_2021_02_22
+  - can_vendor_materially_improve_beyond_participation_proxy

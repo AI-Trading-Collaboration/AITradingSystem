@@ -1,0 +1,20 @@
+schema_version: true_breadth_value_of_information_estimate.v1
+report_type: true_breadth_value_of_information_estimate
+status: TRUE_BREADTH_VALUE_OF_INFORMATION_READY
+generated_at: "2026-06-28T07:30:00+00:00"
+proxy_findings:
+  participation_proxy_has_diagnostic_value: true
+  participation_proxy_is_model_ready_breadth: false
+  model_ready_breadth_allowed: false
+expected_increment:
+  can_address_historical_membership_gap: true
+  can_address_survivorship_bias_gap: true
+  can_address_constituent_contribution_gap: true
+  can_address_sector_participation_gap_if_metadata_available: true
+decision_logic:
+  if_true_breadth_trial_fails: keep_first_layer_paused_long_term
+  cost_value_fit: norgate_trial_worth_owner_review_before_purchase
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none

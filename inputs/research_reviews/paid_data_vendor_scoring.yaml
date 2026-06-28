@@ -1,0 +1,28 @@
+schema_version: paid_data_vendor_scoring.v1
+report_type: paid_data_vendor_scoring
+status: PAID_DATA_VENDOR_SCORING_READY
+generated_at: "2026-06-28T07:30:00+00:00"
+scoring_policy_ref: config/research/paid_data_trial_gate_policy.yaml
+matrix_path: outputs/research_trends/paid_data_due_diligence/vendor_scoring_matrix.csv
+score_scale:
+  category_score_range: 0_to_20
+  total_score_range: 0_to_100
+rows:
+  - vendor: Norgate US Stocks Platinum
+    total_score: 84
+    recommendation: TRIAL_RECOMMENDED
+  - vendor: FMP ETF holdings / historical holdings
+    total_score: 47
+    recommendation: DIAGNOSTIC_ONLY_OR_DEFERRED
+  - vendor: EODHD historical constituents / delisted data
+    total_score: 67
+    recommendation: CONDITIONAL_TRIAL_IF_COST_ACCEPTABLE
+  - vendor: QuantConnect / AlgoSeek US equities
+    total_score: 53
+    recommendation: DIAGNOSTIC_ONLY_OR_DEFERRED
+  - vendor: Tiingo / Marketstack / Yahoo / FMP price / EODHD price
+    total_score: 45
+    recommendation: DIAGNOSTIC_ONLY_OR_DEFERRED
+top_decision: NORGATE_TRIAL_RECOMMENDED_OWNER_APPROVAL_REQUIRED
+promotion_allowed: false
+purchase_allowed: false

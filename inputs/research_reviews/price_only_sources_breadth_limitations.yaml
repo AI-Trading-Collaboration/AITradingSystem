@@ -1,0 +1,23 @@
+schema_version: price_only_sources_breadth_limitations.v1
+report_type: price_only_sources_breadth_limitations
+status: PRICE_ONLY_NOT_TRUE_BREADTH
+generated_at: "2026-06-28T07:30:00+00:00"
+sources:
+  - Tiingo
+  - Marketstack
+  - Yahoo
+  - FMP price
+  - EODHD price
+conclusion:
+  can_solve_historical_constituents: false
+  can_build_daily_membership_snapshot: false
+  can_include_delisted_membership: false
+  allowed_roles:
+    - ETF_proxy_prices
+    - constituent_price_cross_check_after_membership_source_exists
+    - data_quality_validation
+  prohibited_roles:
+    - true_breadth_source
+    - model_ready_breadth
+    - promotion_evidence
+promotion_allowed: false

@@ -22076,3 +22076,269 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: paid_data_due_diligence_scope
+    title: Paid Data Due Diligence Scope
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/paid_data_due_diligence_scope.md
+      - inputs/research_reviews/paid_data_due_diligence_scope.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Paid data due diligence scope changes only when trial, purchase, promotion, or first-layer reopen boundaries change.
+    owner_action: review_scope_before_any_paid_breadth_trial
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: true_breadth_data_contract
+    title: True Breadth Data Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - config/research/true_breadth_data_contract.yaml
+      - docs/research/true_breadth_data_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: True breadth hard requirements must be reviewed before any paid vendor sample becomes model-ready.
+    owner_action: review_contract_before_accepting_any_true_breadth_source
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: paid_breadth_data_vendor_registry
+    title: Paid Breadth Data Vendor Registry
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - config/data/paid_breadth_data_vendor_registry.yaml
+      - docs/research/paid_breadth_data_vendor_registry_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Vendor capabilities, license terms and costs may change and should be refreshed before owner trial decisions.
+    owner_action: review_vendor_registry_before_trial_or_subscription
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_due_diligence_checklist
+    title: Norgate Due Diligence Checklist
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/norgate_due_diligence_checklist.md
+      - inputs/research_reviews/norgate_due_diligence_checklist.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Norgate trial checklist must be current before owner approval of a trial or purchase.
+    owner_action: review_norgate_trial_checklist_before_owner_approval
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: fmp_holdings_due_diligence
+    title: FMP Holdings Due Diligence
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/fmp_holdings_due_diligence.md
+      - inputs/research_reviews/fmp_holdings_due_diligence.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: FMP entitlement and PIT semantics can change and must be refreshed before any holdings trial or upgrade.
+    owner_action: review_fmp_holdings_blockers_before_upgrade
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: eodhd_breadth_due_diligence
+    title: EODHD Breadth Due Diligence
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/eodhd_breadth_due_diligence.md
+      - inputs/research_reviews/eodhd_breadth_due_diligence.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: EODHD membership, delisted and known-at semantics must be refreshed before it is considered as a trial alternative.
+    owner_action: review_eodhd_conditionals_before_trial
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: quantconnect_algoseek_due_diligence
+    title: QuantConnect AlgoSeek Due Diligence
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/quantconnect_algoseek_due_diligence.md
+      - inputs/research_reviews/quantconnect_algoseek_due_diligence.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Ecosystem feasibility should be reviewed before any LEAN or AlgoSeek integration spike.
+    owner_action: defer_or_review_quantconnect_ecosystem_spike
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: price_only_sources_breadth_limitations
+    title: Price-Only Sources Breadth Limitations
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/price_only_sources_breadth_limitations.md
+      - inputs/research_reviews/price_only_sources_breadth_limitations.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Price-only source boundaries change only if a source adds auditable historical membership support.
+    owner_action: review_before_using_price_sources_as_any_breadth_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: paid_data_vendor_scoring_review
+    title: Paid Data Vendor Scoring Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - outputs/research_trends/paid_data_due_diligence/vendor_scoring_matrix.csv
+      - docs/research/paid_data_vendor_scoring_review.md
+      - inputs/research_reviews/paid_data_vendor_scoring.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Vendor scores should be refreshed before trial approval because cost, license and API coverage may change.
+    owner_action: review_vendor_scoring_before_trial_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: true_breadth_value_of_information_estimate
+    title: True Breadth Value of Information Estimate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/true_breadth_value_of_information_estimate.md
+      - inputs/research_reviews/true_breadth_value_of_information_estimate.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Value-of-information should be reviewed when proxy evidence, vendor pricing, or first-layer blockers change.
+    owner_action: review_value_of_information_before_paid_trial
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: true_breadth_prototype_design_without_purchase
+    title: True Breadth Prototype Design Without Purchase
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/true_breadth_prototype_design_without_purchase.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Prototype design changes when the true breadth contract or selected vendor integration path changes.
+    owner_action: review_design_only_after_trial_approval
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: paid_data_trial_decision_gate
+    title: Paid Data Trial Decision Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - config/research/paid_data_trial_gate_policy.yaml
+      - docs/research/paid_data_trial_decision_gate.md
+      - inputs/research_reviews/paid_data_trial_decision_gate.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Trial gate must be current before any owner approves trial, purchase, upgrade, or sample download.
+    owner_action: owner_manual_approval_required_before_trial_or_purchase
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: paid_data_due_diligence_owner_packet
+    title: Paid Data Due Diligence Owner Packet
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/paid_data_due_diligence_owner_packet.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner packet should be refreshed before deciding whether to approve a paid data trial.
+    owner_action: review_owner_packet_before_trial_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: paid_data_due_diligence_closeout
+    title: Paid Data Due Diligence Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual paid data due diligence packet
+    artifact_globs:
+      - docs/research/paid_data_due_diligence_closeout.md
+      - inputs/research_reviews/paid_data_due_diligence_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout and final matrix summarize the current trial decision and disabled promotion boundary.
+    owner_action: review_closeout_before_any_paid_data_trial
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

@@ -1,0 +1,21 @@
+schema_version: norgate_due_diligence_checklist.v1
+report_type: norgate_due_diligence_checklist
+status: NORGATE_TRIAL_RECOMMENDED_OWNER_APPROVAL_REQUIRED
+generated_at: "2026-06-28T07:30:00+00:00"
+vendor_id: norgate_us_stocks_platinum
+checks:
+  nasdaq100_historical_constituents: trial_verification_required
+  delisted_securities: trial_verification_required
+  daily_membership_query: python_api_probe_required
+  python_access: python_api_probe_required
+  local_cache: license_review_required
+  daily_snapshot_export_feasibility: trial_spike_required
+  coverage_start: verify_covers_2021_02_22
+  license: owner_review_required
+  cost: owner_approval_required
+  trial_availability: owner_approval_required
+decision:
+  recommendation: NORGATE_TRIAL_RECOMMENDED
+  purchase_allowed: false
+  owner_manual_approval_required: true
+  model_ready_breadth_allowed_before_trial: false

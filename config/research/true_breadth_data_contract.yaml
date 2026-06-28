@@ -1,0 +1,109 @@
+schema_version: true_breadth_data_contract.v1
+policy_id: true_breadth_data_contract_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Post-2085 participation proxy evidence is diagnostic-only. Any future
+    model-ready breadth family needs a stricter contract for historical
+    constituent membership, delisted securities, daily membership and PIT
+    semantics before first-layer research can reopen.
+  intended_effect: >
+    Prevent current-constituent backfill, price-only proxy data, or holdings
+    records with unknown reporting timestamps from being treated as true
+    breadth or promotion evidence.
+  validation_evidence: >
+    Guardrail tests validate required historical membership, delisted coverage,
+    daily membership, PIT-warning downgrade, current-constituent backfill ban
+    and disabled promotion boundary.
+  review_condition: >
+    Review before accepting any paid vendor trial output into a model-ready
+    breadth feature family.
+market_regime:
+  id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: "2022-11-30"
+  default_backtest_start: "2022-12-01"
+primary_window_coverage:
+  start: "2021-02-22"
+  required: true
+requirements:
+  historical_constituents:
+    required: true
+    minimum_status_for_model_ready: PASS
+  daily_membership_query:
+    required: true
+    minimum_status_for_model_ready: PASS
+  delisted_securities:
+    required: true
+    minimum_status_for_model_ready: PASS
+  survivorship_bias_free:
+    required: true
+    minimum_status_for_model_ready: PASS
+  python_or_cli_access:
+    required: true
+    minimum_status_for_model_ready: PASS
+  local_cache_allowed:
+    required: true
+    minimum_status_for_model_ready: PASS
+  constituent_level_price_history:
+    required_for_feature_build: true
+    may_use_existing_validated_price_cache: true
+  sector_or_industry_metadata:
+    required_for_semiconductor_participation: true
+    not_required_for_basic_nasdaq100_breadth: true
+holdings_based_sources:
+  known_at_semantics:
+    required_for_holdings_based_sources: true
+    required_fields:
+      - holding_date
+      - reported_date
+      - known_at
+    accepted_known_at_substitutes:
+      - source_published_at
+      - accepted_at
+      - filing_accepted_at
+    missing_or_ambiguous_status: PIT_WARNING_DIAGNOSTIC_ONLY
+forbidden_methods:
+  current_constituents_backfill:
+    allowed: false
+    reason: current membership cannot reconstruct historical index breadth.
+  vendor_marketing_statement_as_pit_evidence:
+    allowed: false
+  price_only_as_true_breadth:
+    allowed: false
+downgrade_rules:
+  - condition: missing_historical_constituents
+    status: NOT_MODEL_READY_BREADTH
+    allowed_use: diagnostic_only
+  - condition: missing_delisted_securities
+    status: NOT_MODEL_READY_BREADTH
+    allowed_use: diagnostic_only
+  - condition: missing_daily_membership
+    status: NOT_MODEL_READY_BREADTH
+    allowed_use: diagnostic_only
+  - condition: known_at_or_reported_date_ambiguous
+    status: PIT_WARNING_DIAGNOSTIC_ONLY
+    allowed_use: diagnostic_only
+  - condition: price_only_source
+    status: NOT_TRUE_BREADTH
+    allowed_use: price_cross_check_only
+allowed_model_ready_statuses:
+  - TRUE_BREADTH_CONTRACT_PASS
+blocked_statuses:
+  - DIAGNOSTIC_ONLY
+  - NOT_MODEL_READY_BREADTH
+  - NOT_PROMOTION_EVIDENCE
+  - PIT_WARNING_DIAGNOSTIC_ONLY
+  - NOT_TRUE_BREADTH
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  owner_review_required: true
+  owner_manual_approval_required_before_trial_or_purchase: true
+  auto_purchase_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

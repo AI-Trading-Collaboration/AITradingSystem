@@ -1,0 +1,73 @@
+schema_version: paid_data_trial_gate_policy.v1
+policy_id: paid_data_trial_gate_policy_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Paid data can be useful only if it materially improves true PIT breadth
+    evidence beyond diagnostic participation proxies. Trial and purchase
+    decisions must remain owner-controlled because they involve cost, license
+    and data-rights risk.
+  intended_effect: >
+    Convert vendor due diligence scores into a conservative trial decision
+    without allowing automatic purchase, promotion, paper-shadow, production
+    or broker activation.
+  validation_evidence: >
+    Guardrail tests assert owner approval is required, recommendation does not
+    auto-purchase, price-only sources remain not true breadth, and promotion
+    stays disabled.
+  review_condition: >
+    Review before changing score bands or before any paid trial begins.
+score_bands:
+  trial_recommended:
+    min_total_score: 80
+    result: TRIAL_RECOMMENDED
+  conditional_trial_if_cost_acceptable:
+    min_total_score: 60
+    max_total_score: 79
+    result: CONDITIONAL_TRIAL_IF_COST_ACCEPTABLE
+  diagnostic_only_or_deferred:
+    min_total_score: 40
+    max_total_score: 59
+    result: DIAGNOSTIC_ONLY_OR_DEFERRED
+  not_recommended:
+    max_total_score: 39
+    result: NOT_RECOMMENDED
+allowed_trial_decisions:
+  - NO_PAID_DATA_NEEDED
+  - NORGATE_TRIAL_RECOMMENDED
+  - FMP_TRIAL_RECOMMENDED
+  - EODHD_TRIAL_RECOMMENDED
+  - QUANTCONNECT_DEFERRED
+  - PAID_DATA_DEFERRED
+required_preconditions:
+  owner_manual_approval_before_trial: true
+  owner_manual_approval_before_purchase: true
+  license_scope_review_before_local_cache: true
+  no_auto_upgrade: true
+  no_auto_purchase: true
+  no_strategy_reopen_from_due_diligence_only: true
+  no_promotion_from_due_diligence_only: true
+decision_policy:
+  current_decision: NORGATE_TRIAL_RECOMMENDED
+  decision_reason: >
+    Norgate is the only current Tier A candidate with plausible historical
+    constituents, delisted coverage and daily membership support. Trial is
+    still blocked until owner approves cost and license review.
+  fallback_decisions:
+    fmp: PAID_DATA_DEFERRED
+    eodhd: CONDITIONAL_TRIAL_IF_NORGATE_REJECTED_AND_COST_ACCEPTABLE
+    quantconnect_algoseek: QUANTCONNECT_DEFERRED
+    price_only_sources: NO_PAID_DATA_NEEDED_FOR_TRUE_BREADTH
+safety_boundary:
+  research_only: true
+  owner_review_required: true
+  owner_manual_approval_required: true
+  auto_purchase_allowed: false
+  trial_allowed_without_owner_approval: false
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

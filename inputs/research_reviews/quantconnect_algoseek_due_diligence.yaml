@@ -1,0 +1,15 @@
+schema_version: quantconnect_algoseek_due_diligence.v1
+report_type: quantconnect_algoseek_due_diligence
+status: QUANTCONNECT_DEFERRED
+generated_at: "2026-06-28T07:30:00+00:00"
+vendor_id: quantconnect_algoseek_us_equities
+assessment:
+  survivorship_free_equities: likely_available_needs_export_review
+  security_master: likely_available_needs_scope_review
+  delisted_handling: likely_available_needs_probe
+  local_download_feasibility: not_verified
+  nasdaq100_membership_availability: not_confirmed
+  repo_integration_cost: high_or_unknown
+allowed_use_before_trial: ecosystem_feasibility_review_only
+model_ready_breadth_allowed_before_trial: false
+owner_manual_approval_required: true

@@ -1,0 +1,6 @@
+vendor,coverage_score,pit_safety_score,engineering_score,cost_score,research_value_score,total_score,recommendation,key_blockers
+Norgate US Stocks Platinum,20,18,17,10,19,84,TRIAL_RECOMMENDED,"license/local-cache rights unverified; Python membership query needs trial; owner cost approval required"
+FMP ETF holdings / historical holdings,8,5,11,15,8,47,DIAGNOSTIC_ONLY_OR_DEFERRED,"current FMP_API_KEY holdings probe returned HTTP 402; holding_date/reported_date/known_at not verified; delisted membership not confirmed"
+EODHD historical constituents / delisted data,14,12,14,13,14,67,CONDITIONAL_TRIAL_IF_COST_ACCEPTABLE,"Nasdaq-100 daily membership semantics unverified; known_at/revision policy unverified; plan entitlement and cost need owner review"
+QuantConnect / AlgoSeek US equities,12,13,8,10,10,53,DIAGNOSTIC_ONLY_OR_DEFERRED,"membership availability not confirmed; local export and repo integration cost unclear; may require LEAN ecosystem"
+Tiingo / Marketstack / Yahoo / FMP price / EODHD price,5,4,16,15,5,45,DIAGNOSTIC_ONLY_OR_DEFERRED,"price-only sources cannot solve historical constituents; cannot build daily index membership; not true breadth"

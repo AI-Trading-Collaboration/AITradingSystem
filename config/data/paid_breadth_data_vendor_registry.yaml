@@ -1,0 +1,161 @@
+schema_version: paid_breadth_data_vendor_registry.v1
+registry_id: paid_breadth_data_vendor_registry_v1
+status: due_diligence_ready_owner_review_required
+owner: research_governance
+generated_at: "2026-06-28T07:30:00+00:00"
+source_policy:
+  vendor_marketing_statement_is_pit_evidence: false
+  trial_or_purchase_requires_owner_manual_approval: true
+  no_provider_upgrade_without_owner_approval: true
+  local_cache_license_must_be_verified: true
+  redistribution_allowed_without_license_review: false
+true_breadth_contract_ref: config/research/true_breadth_data_contract.yaml
+vendors:
+  - vendor_id: norgate_us_stocks_platinum
+    name: Norgate US Stocks Platinum
+    tier: A
+    role: primary_true_breadth_candidate
+    price_only_source: false
+    true_breadth_candidate: true
+    current_due_diligence_status: NORGATE_TRIAL_RECOMMENDED_OWNER_APPROVAL_REQUIRED
+    public_reference_urls:
+      - https://norgatedata.com/
+      - https://norgatedata.com/stockmarketpackages.php
+    contract_fit:
+      nasdaq100_historical_constituents: likely_supported_public_claim_needs_trial_verification
+      delisted_securities: likely_supported_public_claim_needs_trial_verification
+      daily_membership_query: likely_supported_needs_python_api_probe
+      survivorship_bias_free: likely_supported_needs_license_and_sample_check
+      primary_window_coverage_start: likely_before_2021_02_22_needs_trial_verification
+      python_access: likely_supported_needs_local_probe
+      local_cache_allowed: license_review_required
+      known_at_semantics: index_membership_effective_date_required
+    allowed_use_before_trial: due_diligence_only
+    model_ready_breadth_allowed_before_trial: false
+    auto_purchase_allowed: false
+    owner_manual_approval_required: true
+    key_blockers:
+      - license_scope_and_local_cache_rights_unverified
+      - python_membership_query_needs_trial_probe
+      - cost_must_be_approved_by_owner
+  - vendor_id: fmp_etf_holdings
+    name: FMP ETF holdings / historical holdings
+    tier: B
+    role: low_cost_holdings_candidate
+    price_only_source: false
+    true_breadth_candidate: false
+    current_due_diligence_status: FMP_NOT_SUITABLE
+    public_reference_urls:
+      - https://site.financialmodelingprep.com/developer/docs/etf-holdings-api/
+    capability_check:
+      checked_at: "2026-06-28T07:18:00+00:00"
+      environment_key_presence: FMP_API_KEY_PRESENT
+      endpoint_family: stable/etf/holdings
+      symbol: QQQ
+      sanitized_result: HTTP_402_PAYMENT_REQUIRED
+      raw_response_stored: false
+    contract_fit:
+      qqq_historical_holdings: not_confirmed_current_plan_blocked
+      holding_date: not_verified
+      reported_date: not_verified
+      known_at: not_verified
+      delisted_securities: not_confirmed
+      survivorship_bias_free: not_confirmed
+      primary_window_coverage_start: not_confirmed
+      python_access: api_access_blocked_by_current_entitlement
+      local_cache_allowed: license_review_required
+    allowed_use_before_trial: diagnostic_only_if_access_is_later_granted
+    model_ready_breadth_allowed_before_trial: false
+    auto_purchase_allowed: false
+    owner_manual_approval_required: true
+    key_blockers:
+      - current_key_returns_402_payment_required_for_holdings_endpoint
+      - holding_date_reported_date_known_at_semantics_unverified
+      - delisted_and_exit_membership_unverified
+  - vendor_id: eodhd_historical_constituents_delisted
+    name: EODHD historical constituents / delisted data
+    tier: B
+    role: conditional_low_cost_alternative
+    price_only_source: false
+    true_breadth_candidate: true
+    current_due_diligence_status: CONDITIONAL_TRIAL_IF_COST_ACCEPTABLE
+    public_reference_urls:
+      - https://eodhd.com/
+    contract_fit:
+      historical_constituents: public_claim_needs_endpoint_and_sample_verification
+      delisted_securities: public_claim_needs_endpoint_and_sample_verification
+      daily_membership_query: not_confirmed
+      survivorship_bias_free: not_confirmed
+      primary_window_coverage_start: not_confirmed
+      python_access: likely_api_access_needs_probe
+      local_cache_allowed: license_review_required
+      known_at_semantics: required_for_holdings_or_constituent_snapshots
+    allowed_use_before_trial: due_diligence_only
+    model_ready_breadth_allowed_before_trial: false
+    auto_purchase_allowed: false
+    owner_manual_approval_required: true
+    key_blockers:
+      - nasdaq100_daily_membership_semantics_unverified
+      - known_at_revision_policy_unverified
+      - cost_and_plan_entitlement_unverified
+  - vendor_id: quantconnect_algoseek_us_equities
+    name: QuantConnect / AlgoSeek US equities
+    tier: C
+    role: ecosystem_or_trial_spike_candidate
+    price_only_source: false
+    true_breadth_candidate: false
+    current_due_diligence_status: QUANTCONNECT_DEFERRED
+    public_reference_urls:
+      - https://www.quantconnect.com/docs/
+    contract_fit:
+      survivorship_bias_free_equities: likely_available_in_ecosystem_needs_export_review
+      delisted_securities: likely_available_needs_local_download_review
+      nasdaq100_historical_membership: not_confirmed
+      local_export: integration_cost_high_or_unknown
+      daily_membership_query: not_confirmed
+      python_access: ecosystem_dependent
+      local_cache_allowed: license_review_required
+    allowed_use_before_trial: ecosystem_feasibility_review_only
+    model_ready_breadth_allowed_before_trial: false
+    auto_purchase_allowed: false
+    owner_manual_approval_required: true
+    key_blockers:
+      - membership_availability_not_confirmed
+      - local_export_and_repo_integration_cost_unclear
+      - may_require_LEAN_environment_instead_of_current_pipeline
+  - vendor_id: price_only_cross_check_sources
+    name: Tiingo / Marketstack / Yahoo / FMP price / EODHD price
+    tier: D
+    role: price_and_data_quality_cross_check_only
+    price_only_source: true
+    true_breadth_candidate: false
+    current_due_diligence_status: PRICE_ONLY_NOT_TRUE_BREADTH
+    public_reference_urls:
+      - https://www.tiingo.com/documentation/end-of-day
+      - https://marketstack.com/documentation
+      - https://site.financialmodelingprep.com/developer/docs/
+      - https://eodhd.com/financial-apis/
+    contract_fit:
+      historical_constituents: not_supported
+      daily_membership_query: not_supported
+      delisted_securities_for_membership: not_supported
+      survivorship_bias_free_membership: not_supported
+      primary_window_coverage_start: price_history_may_cover_but_membership_missing
+      python_access: available_for_prices_only
+      local_cache_allowed: provider_specific_license_review_required
+    allowed_use_before_trial: price_cross_check_only
+    model_ready_breadth_allowed_before_trial: false
+    auto_purchase_allowed: false
+    owner_manual_approval_required: true
+    key_blockers:
+      - price_only_source_cannot_solve_historical_constituents
+      - cannot_build_daily_index_membership
+      - cannot_be_used_as_true_breadth_or_promotion_evidence
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,15 @@
+schema_version: eodhd_breadth_due_diligence.v1
+report_type: eodhd_breadth_due_diligence
+status: EODHD_CONDITIONAL_TRIAL_CANDIDATE
+generated_at: "2026-06-28T07:30:00+00:00"
+vendor_id: eodhd_historical_constituents_delisted
+assessment:
+  historical_constituents_coverage: public_claim_needs_sample_verification
+  nasdaq100_membership: not_verified
+  delisted_data: public_claim_needs_sample_verification
+  pit_semantics: not_verified
+  api_access: likely_available_needs_probe
+  cost: owner_review_required
+allowed_use_before_trial: due_diligence_only
+model_ready_breadth_allowed_before_trial: false
+owner_manual_approval_required: true
