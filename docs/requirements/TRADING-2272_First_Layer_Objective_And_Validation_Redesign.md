@@ -45,6 +45,11 @@ performance interpretation。
   `NO_SIGNAL_COVERAGE`，因此不能宣称 stress validation。
 - Reports 披露 `market_regime=ai_after_chatgpt`、requested range、actual signal range、
   data quality status、proxy replacement status 和固定安全边界。
+- Gate audit 必须生成 `gate_acceptance_audit_report.md`、
+  `gate_ablation_matrix.json`、`threshold_sensitivity_report.json`、
+  `rejected_candidate_counterfactual_report.json` 和 `recommended_gate_policy.yaml`，
+  且每个 gate 至少披露 `gate_marginal_utility`、`gate_failure_mode_reduced`、
+  `opportunity_cost`、`recommended_action`。
 
 ## 进展
 
@@ -62,3 +67,22 @@ performance interpretation。
   governance focused parallel pytest（45 passed）、`python -m ai_trading_system.cli docs validate-freshness`、
   `git diff --check` 和 `python scripts/run_validation_tier.py contract-validation --write-runtime-artifact`
   （193 passed）；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。
+- 2026-06-28：追加 first-layer performance gate actual-path audit 进入 `IN_PROGRESS`；
+  新增 `aits research trends first-layer-performance-gate-audit` 和
+  `config/research/first_layer_performance_gate_audit_policy.yaml`，对每个 current
+  performance gate 执行 `no_gate` / `relaxed_gate` / `current_gate` / `strict_gate`
+  单变量反事实，并对 accepted / rejected candidates 汇总 frozen second-layer
+  actual-path utility proxy。当前真实 run 期望 current gate accept count=`0`，
+  `coverage_pass_rule` 为 negative marginal utility，`no_major_regression_in_defensive_probe`
+  为 positive marginal utility，其余 gates neutral/audit-only；本批仍不修改 active
+  selection rule、不训练模型、不恢复 promotion/paper-shadow/production/broker。
+- 2026-06-28：gate audit 实现完成并保持 `VALIDATING`；真实 run 生成
+  `gate_acceptance_audit_report.md`、`gate_ablation_matrix.json`、
+  `threshold_sensitivity_report.json`、`rejected_candidate_counterfactual_report.json`
+  和 `recommended_gate_policy.yaml`。结论：current_gate_accept_count=0；
+  `coverage_pass_rule` marginal utility=`negative`、opportunity_cost=`0.070283`，
+  recommended_action=`convert_to_owner_review_evidence_gate`；
+  `no_major_regression_in_defensive_probe` marginal utility=`positive`，
+  recommended_action=`keep_current_gate`；其余 gates neutral/audit-only。验证通过
+  Ruff、compileall、focused parallel pytest（50 passed）、
+  `python -m ai_trading_system.cli docs validate-freshness` 和 `git diff --check`。

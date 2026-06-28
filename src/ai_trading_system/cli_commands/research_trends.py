@@ -63,6 +63,7 @@ from ai_trading_system.first_layer_current_state import (
     run_first_layer_current_state_pack,
 )
 from ai_trading_system.first_layer_defensive_regression_diagnosis import (
+    DEFAULT_REGRESSION_INVENTORY_YAML_PATH,
     run_first_layer_defensive_regression_diagnosis_pack,
 )
 from ai_trading_system.first_layer_objective_validation_redesign import (
@@ -85,6 +86,15 @@ from ai_trading_system.first_layer_objective_validation_redesign import (
 )
 from ai_trading_system.first_layer_objective_validation_redesign import (
     run_first_layer_objective_validation_redesign_pack,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_POLICY_PATH as DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_POLICY_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    run_first_layer_performance_gate_audit_pack,
 )
 from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
@@ -1265,6 +1275,46 @@ def first_layer_objective_validation_redesign_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("First-layer objective validation redesign", payload)
+
+
+@trends_app.command("first-layer-performance-gate-audit")
+def first_layer_performance_gate_audit_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_POLICY_PATH,
+    actual_path_path: Annotated[
+        Path, typer.Option("--actual-path")
+    ] = DEFAULT_ACTUAL_PATH_YAML_PATH,
+    coverage_simulation_path: Annotated[
+        Path, typer.Option("--coverage-simulation")
+    ] = DEFAULT_COVERAGE_SIMULATION_YAML_PATH,
+    slice_matrix_path: Annotated[
+        Path, typer.Option("--slice-matrix")
+    ] = DEFAULT_2022_SLICE_YAML_PATH,
+    defensive_inventory_path: Annotated[
+        Path, typer.Option("--defensive-inventory")
+    ] = DEFAULT_REGRESSION_INVENTORY_YAML_PATH,
+    selection_rule_path: Annotated[
+        Path, typer.Option("--selection-rule")
+    ] = DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    coverage_final_path: Annotated[
+        Path, typer.Option("--coverage-final")
+    ] = DEFAULT_FINAL_MATRIX_YAML_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_performance_gate_audit_pack(
+        policy_path=policy_path,
+        actual_path_path=actual_path_path,
+        coverage_simulation_path=coverage_simulation_path,
+        slice_matrix_path=slice_matrix_path,
+        defensive_inventory_path=defensive_inventory_path,
+        selection_rule_path=selection_rule_path,
+        coverage_final_path=coverage_final_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer performance gate audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

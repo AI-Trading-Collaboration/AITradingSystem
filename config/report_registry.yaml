@@ -22843,6 +22843,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_performance_gate_audit
+    title: First-Layer Performance Gate Acceptance Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-performance-gate-audit
+    artifact_globs:
+      - config/research/first_layer_performance_gate_audit_policy.yaml
+      - docs/research/gate_acceptance_audit_report.md
+      - outputs/research_trends/first_layer_performance_gate_audit/gate_ablation_matrix.json
+      - outputs/research_trends/first_layer_performance_gate_audit/threshold_sensitivity_report.json
+      - outputs/research_trends/first_layer_performance_gate_audit/rejected_candidate_counterfactual_report.json
+      - outputs/research_trends/first_layer_performance_gate_audit/recommended_gate_policy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Performance gate audit should be regenerated after coverage actual-path, coverage simulation, 2022 slice, defensive regression inventory, or gate audit policy changes.
+    owner_action: review_gate_marginal_utility_before_active_selection_rule_changes
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
