@@ -1,0 +1,370 @@
+{
+  "actual_path_required": true,
+  "anchor_date": "2022-11-30",
+  "anchor_event": "ChatGPT public launch",
+  "as_of": "2026-06-26",
+  "broker_action": "none",
+  "candidate_count": 0,
+  "data_quality": {
+    "as_of": "2026-06-26",
+    "checked_at": "2026-06-28T12:20:22.202636+00:00",
+    "error_count": 0,
+    "expected_price_tickers": [
+      "QQQ",
+      "SPY",
+      "SMH",
+      "SOXX"
+    ],
+    "expected_rate_series": [],
+    "passed": true,
+    "price_checksum": "5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d",
+    "price_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+    "price_row_count": 56184,
+    "rate_checksum": "279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a",
+    "rate_row_count": 6352,
+    "rates_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+    "secondary_prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "default_backtest_start": "2022-12-01",
+  "dynamic_promotion_status": "BLOCKED",
+  "generated_at": "2026-06-28T12:20:22+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "policy_id": "first_layer_proxy_coverage_audit_policy_v1",
+  "primary_window_start": "2021-02-22",
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "reopen_gate_allowed": false,
+  "report_type": "first_layer_proxy_coverage_audit",
+  "requested_end": "latest",
+  "requested_start": "2022-12-01",
+  "research_audit_metadata": {
+    "boundary_contract_version": "first_layer_proxy_coverage_audit_research_only_v1",
+    "candidate_count": 0,
+    "model_version": "first_layer_proxy_coverage_audit_v1",
+    "modified_channel": "first_layer_proxy_coverage_audit",
+    "modified_layer": "validation_only",
+    "threshold_policy": "first_layer_proxy_coverage_audit_policy_v1"
+  },
+  "research_only": true,
+  "rows": [
+    {
+      "PIT_safe_or_not": "PIT_APPROVED_MARKET_SERIES",
+      "allowed_usage": [
+        "family_level_reablation",
+        "risk_on_veto_diagnostic"
+      ],
+      "blocked_usage": [
+        "promotion",
+        "paper_shadow",
+        "production",
+        "broker",
+        "allocation"
+      ],
+      "data_available": true,
+      "expected_signal_role": "risk_on_veto_macro_context",
+      "history_start_date": "2018-01-02",
+      "primary_window_coverage": "covered",
+      "proxy_group": "free_feature_family",
+      "proxy_id": "rates_liquidity_free_v1",
+      "replacement_blocker": "market_or_price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "source": "FRED / ALFRED",
+      "survivorship_risk": "low_for_market_series_not_constituent_breadth"
+    },
+    {
+      "PIT_safe_or_not": "PIT_APPROVED_PRICE_PROXY",
+      "allowed_usage": [
+        "family_level_reablation",
+        "stress_detection_diagnostic"
+      ],
+      "blocked_usage": [
+        "promotion",
+        "paper_shadow",
+        "production",
+        "broker",
+        "allocation"
+      ],
+      "data_available": true,
+      "expected_signal_role": "risk_on_veto_stress_detection",
+      "history_start_date": "2018-01-02",
+      "primary_window_coverage": "covered",
+      "proxy_group": "free_feature_family",
+      "proxy_id": "volatility_compression_free_v1",
+      "replacement_blocker": "market_or_price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "source": "VIX / price realized vol",
+      "survivorship_risk": "low_for_market_series_not_constituent_breadth"
+    },
+    {
+      "PIT_safe_or_not": "PIT_WARNING_UNTIL_SOURCE_PUBLISHED_AT_CONFIRMED",
+      "allowed_usage": [
+        "diagnostic_only"
+      ],
+      "blocked_usage": [
+        "model_ready",
+        "promotion",
+        "paper_shadow",
+        "production",
+        "broker",
+        "allocation"
+      ],
+      "data_available": false,
+      "expected_signal_role": "event_proximity_diagnostic_only",
+      "history_start_date": "",
+      "primary_window_coverage": "missing",
+      "proxy_group": "free_feature_family",
+      "proxy_id": "macro_event_calendar_free_v1",
+      "replacement_blocker": "pit_warning_or_known_at_unconfirmed",
+      "replacement_for_true_breadth": false,
+      "source": "FOMC / BLS / BEA / FRED release calendar",
+      "survivorship_risk": "pit_warning_or_timestamp_risk"
+    },
+    {
+      "PIT_safe_or_not": "PIT_WARNING_DIAGNOSTIC_ONLY",
+      "allowed_usage": [
+        "family_level_reablation",
+        "risk_on_blocker_diagnostic"
+      ],
+      "blocked_usage": [
+        "promotion",
+        "paper_shadow",
+        "production",
+        "broker",
+        "allocation"
+      ],
+      "data_available": true,
+      "expected_signal_role": "risk_on_blocker_diagnostic_only",
+      "history_start_date": "2018-01-02",
+      "primary_window_coverage": "covered",
+      "proxy_group": "free_feature_family",
+      "proxy_id": "event_risk_free_v1",
+      "replacement_blocker": "pit_warning_or_known_at_unconfirmed",
+      "replacement_for_true_breadth": false,
+      "source": "macro calendar + rate / VIX overlay",
+      "survivorship_risk": "pit_warning_or_timestamp_risk"
+    },
+    {
+      "PIT_safe_or_not": "NOT_TRUE_PIT_BREADTH",
+      "allowed_usage": [
+        "diagnostic_only",
+        "participation_proxy_validation_input"
+      ],
+      "blocked_usage": [
+        "model_ready_breadth",
+        "promotion",
+        "paper_shadow",
+        "production",
+        "broker",
+        "allocation"
+      ],
+      "data_available": true,
+      "expected_signal_role": "participation_diagnostic_only",
+      "history_start_date": "2018-01-02",
+      "primary_window_coverage": "registry_only",
+      "proxy_group": "free_feature_family",
+      "proxy_id": "participation_proxy_free_v1",
+      "replacement_blocker": "not_true_pit_breadth",
+      "replacement_for_true_breadth": false,
+      "source": "ETF ratios / Alpha Vantage listing proxy if available",
+      "survivorship_risk": "not_constituent_breadth_price_proxy_only"
+    },
+    {
+      "PIT_safe_or_not": "PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH",
+      "available_tickers": [
+        "SMH",
+        "QQQ"
+      ],
+      "caveats": [
+        "NOT_TRUE_PIT_BREADTH",
+        "ETF_PRICE_ONLY",
+        "SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY"
+      ],
+      "data_available": true,
+      "expected_signal_role": "semiconductor_relative_strength_diagnostic",
+      "history_start_date": "2018-01-02",
+      "missing_tickers": [],
+      "primary_window_coverage": "covered",
+      "proxy_group": "etf_ratio_price_proxy",
+      "proxy_id": "smh_to_qqq",
+      "registry_status": "DIAGNOSTIC_ONLY",
+      "replacement_blocker": "price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "required_tickers": [
+        "SMH",
+        "QQQ"
+      ],
+      "survivorship_risk": "low_for_etf_price_series_but_not_constituent_breadth"
+    },
+    {
+      "PIT_safe_or_not": "PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH",
+      "available_tickers": [
+        "SOXX",
+        "QQQ"
+      ],
+      "caveats": [
+        "NOT_TRUE_PIT_BREADTH",
+        "ETF_PRICE_ONLY",
+        "SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY"
+      ],
+      "data_available": true,
+      "expected_signal_role": "semiconductor_relative_strength_diagnostic",
+      "history_start_date": "2018-01-02",
+      "missing_tickers": [],
+      "primary_window_coverage": "covered",
+      "proxy_group": "etf_ratio_price_proxy",
+      "proxy_id": "soxx_to_qqq",
+      "registry_status": "DIAGNOSTIC_ONLY",
+      "replacement_blocker": "price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "required_tickers": [
+        "SOXX",
+        "QQQ"
+      ],
+      "survivorship_risk": "low_for_etf_price_series_but_not_constituent_breadth"
+    },
+    {
+      "PIT_safe_or_not": "PIT_BLOCKED_BY_PRICE_COVERAGE",
+      "available_tickers": [
+        "SPY"
+      ],
+      "caveats": [
+        "NOT_TRUE_PIT_BREADTH",
+        "PRICE_CACHE_COVERAGE_REQUIRED",
+        "DIAGNOSTIC_ONLY"
+      ],
+      "data_available": false,
+      "expected_signal_role": "equal_weight_vs_cap_weight_diagnostic",
+      "history_start_date": "",
+      "missing_tickers": [
+        "RSP"
+      ],
+      "primary_window_coverage": "missing_components:RSP",
+      "proxy_group": "etf_ratio_price_proxy",
+      "proxy_id": "rsp_to_spy",
+      "registry_status": "REGISTRY_ONLY",
+      "replacement_blocker": "price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "required_tickers": [
+        "RSP",
+        "SPY"
+      ],
+      "survivorship_risk": "not_true_breadth_or_missing_price_component"
+    },
+    {
+      "PIT_safe_or_not": "PIT_BLOCKED_BY_PRICE_COVERAGE",
+      "available_tickers": [
+        "QQQ"
+      ],
+      "caveats": [
+        "NOT_TRUE_PIT_BREADTH",
+        "PRICE_CACHE_COVERAGE_REQUIRED",
+        "DIAGNOSTIC_ONLY"
+      ],
+      "data_available": false,
+      "expected_signal_role": "nasdaq_equal_weight_vs_cap_weight_diagnostic",
+      "history_start_date": "",
+      "missing_tickers": [
+        "QQQE"
+      ],
+      "primary_window_coverage": "missing_components:QQQE",
+      "proxy_group": "etf_ratio_price_proxy",
+      "proxy_id": "qqqe_to_qqq",
+      "registry_status": "REGISTRY_ONLY",
+      "replacement_blocker": "price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "required_tickers": [
+        "QQQE",
+        "QQQ"
+      ],
+      "survivorship_risk": "not_true_breadth_or_missing_price_component"
+    },
+    {
+      "PIT_safe_or_not": "PIT_BLOCKED_BY_PRICE_COVERAGE",
+      "available_tickers": [
+        "SMH",
+        "SOXX",
+        "QQQ"
+      ],
+      "caveats": [
+        "NOT_TRUE_PIT_BREADTH",
+        "PRICE_CACHE_COVERAGE_REQUIRED",
+        "DIAGNOSTIC_ONLY"
+      ],
+      "data_available": false,
+      "expected_signal_role": "sector_confirmation_diagnostic",
+      "history_start_date": "",
+      "missing_tickers": [
+        "XLK"
+      ],
+      "primary_window_coverage": "missing_components:XLK",
+      "proxy_group": "etf_ratio_price_proxy",
+      "proxy_id": "sector_etf_relative_strength",
+      "registry_status": "REGISTRY_ONLY",
+      "replacement_blocker": "price_proxy_not_constituent_membership",
+      "replacement_for_true_breadth": false,
+      "required_tickers": [
+        "SMH",
+        "SOXX",
+        "XLK",
+        "QQQ"
+      ],
+      "survivorship_risk": "not_true_breadth_or_missing_price_component"
+    },
+    {
+      "PIT_safe_or_not": "PIT_WARNING_CURRENT_SNAPSHOT_NOT_INDEX_MEMBERSHIP",
+      "data_available": false,
+      "expected_signal_role": "current_listing_status_diagnostic_only",
+      "history_start_date": "",
+      "primary_window_coverage": "missing_or_unverified",
+      "proxy_group": "external_low_cost_proxy_gate",
+      "proxy_id": "alpha_vantage_listing_status",
+      "replacement_blocker": "historical_membership_and_known_at_not_confirmed",
+      "replacement_for_true_breadth": false,
+      "status_detail": "ALPHA_VANTAGE_LISTING_STATUS_NOT_FETCHED_NETWORK_DISABLED",
+      "survivorship_risk": "high_current_listing_snapshot_not_historical_membership"
+    },
+    {
+      "PIT_safe_or_not": "PIT_WARNING_UNTIL_HOLDING_DATE_REPORTED_DATE_KNOWN_AT_CONFIRMED",
+      "data_available": false,
+      "expected_signal_role": "holdings_known_at_candidate_if_owner_approved_upgrade",
+      "history_start_date": "",
+      "primary_window_coverage": "missing_or_unverified",
+      "proxy_group": "external_low_cost_proxy_gate",
+      "proxy_id": "fmp_etf_holdings_low_cost_gate",
+      "replacement_blocker": "historical_membership_and_known_at_not_confirmed",
+      "replacement_for_true_breadth": false,
+      "status_detail": "FMP_HOLDINGS_NOT_AVAILABLE",
+      "survivorship_risk": "unknown_until_historical_holdings_and_known_at_confirmed"
+    }
+  ],
+  "schema_version": "first_layer_proxy_coverage_audit.v1",
+  "status": "FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED",
+  "summary": {
+    "as_of": "2026-06-26",
+    "data_available_count": 6,
+    "data_quality_status": "PASS_WITH_WARNINGS",
+    "final_status": "FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_TRUE_BREADTH_NOT_REPLACED",
+    "market_regime": "ai_after_chatgpt",
+    "next_required_tasks": [
+      "TRADING-2272",
+      "TRADING-2273"
+    ],
+    "primary_window_covered_count": 5,
+    "primary_window_start": "2021-02-22",
+    "proxy_count": 12,
+    "replacement_for_true_breadth_count": 0,
+    "requested_end": "latest",
+    "requested_start": "2022-12-01",
+    "true_breadth_replaced": false
+  },
+  "target_path_metrics_role": "diagnostic_only",
+  "title": "First-Layer Free / Low-Cost Proxy Coverage Audit",
+  "validation_ready": false
+}

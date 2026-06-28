@@ -1,0 +1,314 @@
+schema_version: first_layer_proxy_coverage_audit.v1
+report_type: first_layer_proxy_coverage_audit
+title: First-Layer Free / Low-Cost Proxy Coverage Audit
+status: FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T12:20:22+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+requested_start: '2022-12-01'
+requested_end: latest
+primary_window_start: '2021-02-22'
+as_of: '2026-06-26'
+data_quality_status: PASS_WITH_WARNINGS
+data_quality:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  checked_at: '2026-06-28T12:20:22.202636+00:00'
+  as_of: '2026-06-26'
+  price_path: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  rates_path: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  secondary_prices_path: D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv
+  expected_price_tickers:
+  - QQQ
+  - SPY
+  - SMH
+  - SOXX
+  expected_rate_series: []
+  price_row_count: 56184
+  rate_row_count: 6352
+  price_checksum: 5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d
+  rate_checksum: 279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a
+  warning_count: 1
+  error_count: 0
+policy_id: first_layer_proxy_coverage_audit_policy_v1
+summary:
+  final_status: FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_TRUE_BREADTH_NOT_REPLACED
+  market_regime: ai_after_chatgpt
+  requested_start: '2022-12-01'
+  requested_end: latest
+  primary_window_start: '2021-02-22'
+  as_of: '2026-06-26'
+  data_quality_status: PASS_WITH_WARNINGS
+  proxy_count: 12
+  data_available_count: 6
+  primary_window_covered_count: 5
+  replacement_for_true_breadth_count: 0
+  true_breadth_replaced: false
+  next_required_tasks:
+  - TRADING-2272
+  - TRADING-2273
+rows:
+- proxy_id: rates_liquidity_free_v1
+  proxy_group: free_feature_family
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: covered
+  PIT_safe_or_not: PIT_APPROVED_MARKET_SERIES
+  survivorship_risk: low_for_market_series_not_constituent_breadth
+  expected_signal_role: risk_on_veto_macro_context
+  replacement_for_true_breadth: false
+  replacement_blocker: market_or_price_proxy_not_constituent_membership
+  source: FRED / ALFRED
+  allowed_usage:
+  - family_level_reablation
+  - risk_on_veto_diagnostic
+  blocked_usage:
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+  - allocation
+- proxy_id: volatility_compression_free_v1
+  proxy_group: free_feature_family
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: covered
+  PIT_safe_or_not: PIT_APPROVED_PRICE_PROXY
+  survivorship_risk: low_for_market_series_not_constituent_breadth
+  expected_signal_role: risk_on_veto_stress_detection
+  replacement_for_true_breadth: false
+  replacement_blocker: market_or_price_proxy_not_constituent_membership
+  source: VIX / price realized vol
+  allowed_usage:
+  - family_level_reablation
+  - stress_detection_diagnostic
+  blocked_usage:
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+  - allocation
+- proxy_id: macro_event_calendar_free_v1
+  proxy_group: free_feature_family
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing
+  PIT_safe_or_not: PIT_WARNING_UNTIL_SOURCE_PUBLISHED_AT_CONFIRMED
+  survivorship_risk: pit_warning_or_timestamp_risk
+  expected_signal_role: event_proximity_diagnostic_only
+  replacement_for_true_breadth: false
+  replacement_blocker: pit_warning_or_known_at_unconfirmed
+  source: FOMC / BLS / BEA / FRED release calendar
+  allowed_usage:
+  - diagnostic_only
+  blocked_usage:
+  - model_ready
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+  - allocation
+- proxy_id: event_risk_free_v1
+  proxy_group: free_feature_family
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: covered
+  PIT_safe_or_not: PIT_WARNING_DIAGNOSTIC_ONLY
+  survivorship_risk: pit_warning_or_timestamp_risk
+  expected_signal_role: risk_on_blocker_diagnostic_only
+  replacement_for_true_breadth: false
+  replacement_blocker: pit_warning_or_known_at_unconfirmed
+  source: macro calendar + rate / VIX overlay
+  allowed_usage:
+  - family_level_reablation
+  - risk_on_blocker_diagnostic
+  blocked_usage:
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+  - allocation
+- proxy_id: participation_proxy_free_v1
+  proxy_group: free_feature_family
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: registry_only
+  PIT_safe_or_not: NOT_TRUE_PIT_BREADTH
+  survivorship_risk: not_constituent_breadth_price_proxy_only
+  expected_signal_role: participation_diagnostic_only
+  replacement_for_true_breadth: false
+  replacement_blocker: not_true_pit_breadth
+  source: ETF ratios / Alpha Vantage listing proxy if available
+  allowed_usage:
+  - diagnostic_only
+  - participation_proxy_validation_input
+  blocked_usage:
+  - model_ready_breadth
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+  - allocation
+- proxy_id: smh_to_qqq
+  proxy_group: etf_ratio_price_proxy
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: covered
+  PIT_safe_or_not: PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH
+  survivorship_risk: low_for_etf_price_series_but_not_constituent_breadth
+  expected_signal_role: semiconductor_relative_strength_diagnostic
+  replacement_for_true_breadth: false
+  replacement_blocker: price_proxy_not_constituent_membership
+  required_tickers:
+  - SMH
+  - QQQ
+  available_tickers:
+  - SMH
+  - QQQ
+  missing_tickers: []
+  registry_status: DIAGNOSTIC_ONLY
+  caveats:
+  - NOT_TRUE_PIT_BREADTH
+  - ETF_PRICE_ONLY
+  - SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY
+- proxy_id: soxx_to_qqq
+  proxy_group: etf_ratio_price_proxy
+  data_available: true
+  history_start_date: '2018-01-02'
+  primary_window_coverage: covered
+  PIT_safe_or_not: PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH
+  survivorship_risk: low_for_etf_price_series_but_not_constituent_breadth
+  expected_signal_role: semiconductor_relative_strength_diagnostic
+  replacement_for_true_breadth: false
+  replacement_blocker: price_proxy_not_constituent_membership
+  required_tickers:
+  - SOXX
+  - QQQ
+  available_tickers:
+  - SOXX
+  - QQQ
+  missing_tickers: []
+  registry_status: DIAGNOSTIC_ONLY
+  caveats:
+  - NOT_TRUE_PIT_BREADTH
+  - ETF_PRICE_ONLY
+  - SURVIVORSHIP_SAFE_IF_ETF_PRICE_ONLY
+- proxy_id: rsp_to_spy
+  proxy_group: etf_ratio_price_proxy
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing_components:RSP
+  PIT_safe_or_not: PIT_BLOCKED_BY_PRICE_COVERAGE
+  survivorship_risk: not_true_breadth_or_missing_price_component
+  expected_signal_role: equal_weight_vs_cap_weight_diagnostic
+  replacement_for_true_breadth: false
+  replacement_blocker: price_proxy_not_constituent_membership
+  required_tickers:
+  - RSP
+  - SPY
+  available_tickers:
+  - SPY
+  missing_tickers:
+  - RSP
+  registry_status: REGISTRY_ONLY
+  caveats:
+  - NOT_TRUE_PIT_BREADTH
+  - PRICE_CACHE_COVERAGE_REQUIRED
+  - DIAGNOSTIC_ONLY
+- proxy_id: qqqe_to_qqq
+  proxy_group: etf_ratio_price_proxy
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing_components:QQQE
+  PIT_safe_or_not: PIT_BLOCKED_BY_PRICE_COVERAGE
+  survivorship_risk: not_true_breadth_or_missing_price_component
+  expected_signal_role: nasdaq_equal_weight_vs_cap_weight_diagnostic
+  replacement_for_true_breadth: false
+  replacement_blocker: price_proxy_not_constituent_membership
+  required_tickers:
+  - QQQE
+  - QQQ
+  available_tickers:
+  - QQQ
+  missing_tickers:
+  - QQQE
+  registry_status: REGISTRY_ONLY
+  caveats:
+  - NOT_TRUE_PIT_BREADTH
+  - PRICE_CACHE_COVERAGE_REQUIRED
+  - DIAGNOSTIC_ONLY
+- proxy_id: sector_etf_relative_strength
+  proxy_group: etf_ratio_price_proxy
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing_components:XLK
+  PIT_safe_or_not: PIT_BLOCKED_BY_PRICE_COVERAGE
+  survivorship_risk: not_true_breadth_or_missing_price_component
+  expected_signal_role: sector_confirmation_diagnostic
+  replacement_for_true_breadth: false
+  replacement_blocker: price_proxy_not_constituent_membership
+  required_tickers:
+  - SMH
+  - SOXX
+  - XLK
+  - QQQ
+  available_tickers:
+  - SMH
+  - SOXX
+  - QQQ
+  missing_tickers:
+  - XLK
+  registry_status: REGISTRY_ONLY
+  caveats:
+  - NOT_TRUE_PIT_BREADTH
+  - PRICE_CACHE_COVERAGE_REQUIRED
+  - DIAGNOSTIC_ONLY
+- proxy_id: alpha_vantage_listing_status
+  proxy_group: external_low_cost_proxy_gate
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing_or_unverified
+  PIT_safe_or_not: PIT_WARNING_CURRENT_SNAPSHOT_NOT_INDEX_MEMBERSHIP
+  survivorship_risk: high_current_listing_snapshot_not_historical_membership
+  expected_signal_role: current_listing_status_diagnostic_only
+  replacement_for_true_breadth: false
+  replacement_blocker: historical_membership_and_known_at_not_confirmed
+  status_detail: ALPHA_VANTAGE_LISTING_STATUS_NOT_FETCHED_NETWORK_DISABLED
+- proxy_id: fmp_etf_holdings_low_cost_gate
+  proxy_group: external_low_cost_proxy_gate
+  data_available: false
+  history_start_date: ''
+  primary_window_coverage: missing_or_unverified
+  PIT_safe_or_not: PIT_WARNING_UNTIL_HOLDING_DATE_REPORTED_DATE_KNOWN_AT_CONFIRMED
+  survivorship_risk: unknown_until_historical_holdings_and_known_at_confirmed
+  expected_signal_role: holdings_known_at_candidate_if_owner_approved_upgrade
+  replacement_for_true_breadth: false
+  replacement_blocker: historical_membership_and_known_at_not_confirmed
+  status_detail: FMP_HOLDINGS_NOT_AVAILABLE
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_proxy_coverage_audit
+  model_version: first_layer_proxy_coverage_audit_v1
+  threshold_policy: first_layer_proxy_coverage_audit_policy_v1
+  candidate_count: 0
+  boundary_contract_version: first_layer_proxy_coverage_audit_research_only_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+primary_window_validated: false
+reopen_gate_allowed: false
+validation_ready: false
+candidate_count: 0
+artifact_paths:
+  proxy_coverage_matrix: D:\Work\AITradingSystem\outputs\research_trends\first_layer_proxy_coverage_audit\proxy_coverage_matrix.json
+  first_layer_proxy_coverage_audit_yaml: D:\Work\AITradingSystem\inputs\research_reviews\first_layer_proxy_coverage_audit.yaml
+  first_layer_proxy_coverage_audit_doc: D:\Work\AITradingSystem\docs\research\first_layer_proxy_coverage_audit.md

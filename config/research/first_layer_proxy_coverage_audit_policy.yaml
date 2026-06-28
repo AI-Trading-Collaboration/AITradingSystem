@@ -1,0 +1,71 @@
+schema_version: first_layer_proxy_coverage_audit_policy.v1
+policy_id: first_layer_proxy_coverage_audit_policy_v1
+owner: research_governance
+status: active
+rationale: >
+  Audit free and low-cost first-layer proxy coverage before objective redesign
+  or challenger experiments. This prevents price-only proxies, listing snapshots
+  or unverified holdings gates from being interpreted as true PIT breadth.
+intended_effect: >
+  Produce one auditable row per proxy with data availability, history, primary
+  window coverage, PIT status, survivorship risk, expected signal role and an
+  explicit replacement-for-true-breadth decision.
+validation_evidence: >
+  Focused tests cover available ETF price proxies, missing price components,
+  fixed replacement_for_true_breadth=false and safety fields.
+review_condition: >
+  Review before TRADING-2272 objective redesign or before allowing any proxy
+  into TRADING-2273 challenger experiments.
+market_regime: ai_after_chatgpt
+primary_window_start: "2021-02-22"
+requested_window:
+  start: "2022-12-01"
+  end: latest
+data_quality_expected_price_tickers:
+  - QQQ
+  - SPY
+  - SMH
+  - SOXX
+feature_family_expected_roles:
+  rates_liquidity_free_v1: risk_on_veto_macro_context
+  volatility_compression_free_v1: risk_on_veto_stress_detection
+  macro_event_calendar_free_v1: event_proximity_diagnostic_only
+  event_risk_free_v1: risk_on_blocker_diagnostic_only
+  participation_proxy_free_v1: participation_diagnostic_only
+etf_ratio_proxies:
+  smh_to_qqq:
+    required_tickers: [SMH, QQQ]
+    expected_signal_role: semiconductor_relative_strength_diagnostic
+  soxx_to_qqq:
+    required_tickers: [SOXX, QQQ]
+    expected_signal_role: semiconductor_relative_strength_diagnostic
+  rsp_to_spy:
+    required_tickers: [RSP, SPY]
+    expected_signal_role: equal_weight_vs_cap_weight_diagnostic
+  qqqe_to_qqq:
+    required_tickers: [QQQE, QQQ]
+    expected_signal_role: nasdaq_equal_weight_vs_cap_weight_diagnostic
+  sector_etf_relative_strength:
+    required_tickers: [SMH, SOXX, XLK, QQQ]
+    expected_signal_role: sector_confirmation_diagnostic
+external_proxy_rows:
+  - proxy_id: alpha_vantage_listing_status
+    expected_signal_role: current_listing_status_diagnostic_only
+    PIT_safe_or_not: PIT_WARNING_CURRENT_SNAPSHOT_NOT_INDEX_MEMBERSHIP
+    survivorship_risk: high_current_listing_snapshot_not_historical_membership
+  - proxy_id: fmp_etf_holdings_low_cost_gate
+    expected_signal_role: holdings_known_at_candidate_if_owner_approved_upgrade
+    PIT_safe_or_not: PIT_WARNING_UNTIL_HOLDING_DATE_REPORTED_DATE_KNOWN_AT_CONFIRMED
+    survivorship_risk: unknown_until_historical_holdings_and_known_at_confirmed
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  replacement_for_true_breadth_allowed: false
+  primary_window_validated: false
+  reopen_gate_allowed: false
+  validation_ready: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none

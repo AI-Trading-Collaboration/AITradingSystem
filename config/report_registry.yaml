@@ -22801,3 +22801,24 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_proxy_coverage_audit
+    title: First-Layer Free And Low-Cost Proxy Coverage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-proxy-coverage-audit
+    artifact_globs:
+      - config/research/first_layer_proxy_coverage_audit_policy.yaml
+      - outputs/research_trends/first_layer_proxy_coverage_audit/proxy_coverage_matrix.json
+      - inputs/research_reviews/first_layer_proxy_coverage_audit.yaml
+      - docs/research/first_layer_proxy_coverage_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Proxy coverage audit should be regenerated after free feature cache, price coverage, proxy registry, PIT contract, or FMP holdings gate changes.
+    owner_action: review_proxy_rows_before_objective_redesign_or_challenger_experiments
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

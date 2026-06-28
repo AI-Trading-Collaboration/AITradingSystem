@@ -77,6 +77,33 @@ from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_SCORECARD_CONFIG_PATH,
     run_first_layer_policy_aware_calibration_pack,
 )
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_COVERAGE_MATRIX_PATH as DEFAULT_PROXY_COVERAGE_MATRIX_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_FEATURE_ROOT as DEFAULT_PROXY_COVERAGE_FEATURE_ROOT,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_FMP_GATE_PATH as DEFAULT_PROXY_COVERAGE_FMP_GATE_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_FREE_FEATURE_REGISTRY_PATH as DEFAULT_PROXY_COVERAGE_FREE_REGISTRY_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_PROXY_COVERAGE_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH as DEFAULT_PROXY_COVERAGE_PARTICIPATION_REGISTRY_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_PIT_CONTRACT_PATH as DEFAULT_PROXY_COVERAGE_PIT_CONTRACT_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    DEFAULT_POLICY_PATH as DEFAULT_PROXY_COVERAGE_POLICY_PATH,
+)
+from ai_trading_system.first_layer_proxy_coverage_audit import (
+    run_first_layer_proxy_coverage_audit_pack,
+)
 from ai_trading_system.first_layer_reopen_gate import (
     DEFAULT_CHANNEL_CLOSEOUT_PATH as DEFAULT_REOPEN_GATE_CHANNEL_CLOSEOUT_PATH,
 )
@@ -1107,6 +1134,56 @@ def first_layer_current_state_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("First-layer current state", payload)
+
+
+@trends_app.command("first-layer-proxy-coverage-audit")
+def first_layer_proxy_coverage_audit_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_PROXY_COVERAGE_POLICY_PATH,
+    free_feature_registry_path: Annotated[
+        Path, typer.Option("--free-feature-registry")
+    ] = DEFAULT_PROXY_COVERAGE_FREE_REGISTRY_PATH,
+    participation_proxy_registry_path: Annotated[
+        Path, typer.Option("--participation-proxy-registry")
+    ] = DEFAULT_PROXY_COVERAGE_PARTICIPATION_REGISTRY_PATH,
+    coverage_matrix_path: Annotated[
+        Path, typer.Option("--coverage-matrix")
+    ] = DEFAULT_PROXY_COVERAGE_MATRIX_PATH,
+    pit_contract_path: Annotated[
+        Path, typer.Option("--pit-contract")
+    ] = DEFAULT_PROXY_COVERAGE_PIT_CONTRACT_PATH,
+    fmp_gate_path: Annotated[
+        Path, typer.Option("--fmp-gate")
+    ] = DEFAULT_PROXY_COVERAGE_FMP_GATE_PATH,
+    feature_root: Annotated[
+        Path, typer.Option("--feature-root")
+    ] = DEFAULT_PROXY_COVERAGE_FEATURE_ROOT,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_PROXY_COVERAGE_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_first_layer_proxy_coverage_audit_pack(
+        policy_path=policy_path,
+        free_feature_registry_path=free_feature_registry_path,
+        participation_proxy_registry_path=participation_proxy_registry_path,
+        coverage_matrix_path=coverage_matrix_path,
+        pit_contract_path=pit_contract_path,
+        fmp_gate_path=fmp_gate_path,
+        feature_root=feature_root,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("First-layer proxy coverage audit", payload)
 
 
 @trends_app.command("channel-specific-v4")
