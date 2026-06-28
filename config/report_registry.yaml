@@ -22778,3 +22778,26 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_current_state
+    title: First-Layer Current State And Failure Taxonomy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-current-state
+    artifact_globs:
+      - config/research/first_layer_current_state_policy.yaml
+      - outputs/research_trends/first_layer_current_state/first_layer_failure_taxonomy.json
+      - outputs/research_trends/first_layer_current_state/benchmark_consistency_report.json
+      - inputs/research_reviews/first_layer_current_state_summary.yaml
+      - docs/research/first_layer_current_state_report.md
+      - docs/research/regime_slice_summary.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Current-state failure taxonomy should be regenerated after first-layer baseline predictions, benchmark price cache, or taxonomy policy changes.
+    owner_action: review_failure_taxonomy_before_proxy_audit_objective_redesign_or_challenger_experiments
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

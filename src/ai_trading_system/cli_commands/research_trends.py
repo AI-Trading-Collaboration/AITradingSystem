@@ -50,6 +50,18 @@ from ai_trading_system.first_layer_channel_closeout import (
 from ai_trading_system.first_layer_channel_closeout import (
     run_first_layer_channel_closeout_pack,
 )
+from ai_trading_system.first_layer_current_state import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_FIRST_LAYER_CURRENT_STATE_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_current_state import (
+    DEFAULT_POLICY_PATH as DEFAULT_FIRST_LAYER_CURRENT_STATE_POLICY_PATH,
+)
+from ai_trading_system.first_layer_current_state import (
+    DEFAULT_PREDICTIONS_PATH as DEFAULT_FIRST_LAYER_CURRENT_STATE_PREDICTIONS_PATH,
+)
+from ai_trading_system.first_layer_current_state import (
+    run_first_layer_current_state_pack,
+)
 from ai_trading_system.first_layer_defensive_regression_diagnosis import (
     run_first_layer_defensive_regression_diagnosis_pack,
 )
@@ -1065,6 +1077,36 @@ def first_layer_reopen_gate_command(
         owner_approval=owner_approval,
     )
     _print_payload("First-layer reopen gate", payload)
+
+
+@trends_app.command("first-layer-current-state")
+def first_layer_current_state_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_FIRST_LAYER_CURRENT_STATE_POLICY_PATH,
+    predictions_path: Annotated[
+        Path, typer.Option("--predictions")
+    ] = DEFAULT_FIRST_LAYER_CURRENT_STATE_PREDICTIONS_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_FIRST_LAYER_CURRENT_STATE_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_first_layer_current_state_pack(
+        policy_path=policy_path,
+        predictions_path=predictions_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("First-layer current state", payload)
 
 
 @trends_app.command("channel-specific-v4")

@@ -1,0 +1,191 @@
+{
+  "actual_path_required": true,
+  "actual_signal_end": "2026-03-27",
+  "actual_signal_start": "2023-02-22",
+  "analysis_scope": {
+    "optional_missing_not_imputed": true,
+    "score_uses_core_benchmarks_only": true
+  },
+  "anchor_date": "2022-11-30",
+  "anchor_event": "ChatGPT public launch",
+  "as_of": "2026-06-26",
+  "benchmarks": [
+    {
+      "data_available": true,
+      "history_end_date": "2026-06-26",
+      "history_start_date": "2018-01-02",
+      "required": true,
+      "row_count": 2132,
+      "ticker": "QQQ"
+    },
+    {
+      "data_available": true,
+      "history_end_date": "2026-06-26",
+      "history_start_date": "2018-01-02",
+      "required": true,
+      "row_count": 2132,
+      "ticker": "SPY"
+    },
+    {
+      "data_available": true,
+      "history_end_date": "2026-06-26",
+      "history_start_date": "2018-01-02",
+      "required": true,
+      "row_count": 2132,
+      "ticker": "SMH"
+    },
+    {
+      "data_available": false,
+      "history_end_date": "",
+      "history_start_date": "",
+      "required": false,
+      "row_count": 0,
+      "ticker": "IWM"
+    },
+    {
+      "data_available": false,
+      "history_end_date": "",
+      "history_start_date": "",
+      "required": false,
+      "row_count": 0,
+      "ticker": "RSP"
+    }
+  ],
+  "broker_action": "none",
+  "candidate_count": 0,
+  "consistency_by_failure_type": [
+    {
+      "consistency_score": 0.44,
+      "core_benchmark_count": 3,
+      "core_benchmark_event_counts": {
+        "QQQ": 54,
+        "SMH": 100,
+        "SPY": 44
+      },
+      "failure_type": "false_risk_on",
+      "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+    },
+    {
+      "consistency_score": 0.661692,
+      "core_benchmark_count": 3,
+      "core_benchmark_event_counts": {
+        "QQQ": 165,
+        "SMH": 201,
+        "SPY": 133
+      },
+      "failure_type": "false_risk_off",
+      "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+    },
+    {
+      "consistency_score": 0.114754,
+      "core_benchmark_count": 3,
+      "core_benchmark_event_counts": {
+        "QQQ": 18,
+        "SMH": 61,
+        "SPY": 7
+      },
+      "failure_type": "late_risk_off",
+      "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+    },
+    {
+      "consistency_score": 0.354037,
+      "core_benchmark_count": 3,
+      "core_benchmark_event_counts": {
+        "QQQ": 88,
+        "SMH": 161,
+        "SPY": 57
+      },
+      "failure_type": "late_risk_on",
+      "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+    }
+  ],
+  "data_quality": {
+    "as_of": "2026-06-26",
+    "checked_at": "2026-06-28T12:02:21.423182+00:00",
+    "error_count": 0,
+    "expected_price_tickers": [
+      "QQQ",
+      "SPY",
+      "SMH"
+    ],
+    "expected_rate_series": [],
+    "passed": true,
+    "price_checksum": "5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d",
+    "price_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+    "price_row_count": 56184,
+    "rate_checksum": "279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a",
+    "rate_row_count": 6352,
+    "rates_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+    "secondary_prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "default_backtest_start": "2022-12-01",
+  "dynamic_promotion_status": "BLOCKED",
+  "generated_at": "2026-06-28T12:02:21+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "policy_hash": "e0f2fa5897f2beb3178c529275d802374576ae89ec39ee7042a10292b6607086",
+  "policy_id": "first_layer_current_state_policy_v1",
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "reopen_gate_allowed": false,
+  "report_type": "benchmark_consistency_report",
+  "requested_end": "latest",
+  "requested_start": "2022-12-01",
+  "research_audit_metadata": {
+    "boundary_contract_version": "first_layer_current_state_research_only_v1",
+    "candidate_count": 0,
+    "model_version": "first_layer_composer_v2_current_state",
+    "modified_channel": "first_layer_current_state",
+    "modified_layer": "validation_only",
+    "threshold_policy": "first_layer_current_state_policy_v1"
+  },
+  "research_only": true,
+  "schema_version": "benchmark_consistency_report.v1",
+  "status": "BENCHMARK_CONSISTENCY_REPORT_READY_PROMOTION_BLOCKED",
+  "summary": {
+    "2022_stress_slice_signal_coverage": "missing",
+    "actual_signal_end": "2026-03-27",
+    "actual_signal_start": "2023-02-22",
+    "as_of": "2026-06-26",
+    "benchmark_availability": {
+      "IWM": false,
+      "QQQ": true,
+      "RSP": false,
+      "SMH": true,
+      "SPY": true
+    },
+    "benchmark_consistency_score": 0.392621,
+    "benchmark_consistency_status": "CORE_BENCHMARKS_AVAILABLE",
+    "core_benchmarks_available": [
+      "QQQ",
+      "SPY",
+      "SMH"
+    ],
+    "current_state_conclusion": "REDESIGN_REQUIRED_DIAGNOSTIC_ONLY",
+    "data_quality_passed": true,
+    "data_quality_status": "PASS_WITH_WARNINGS",
+    "failure_event_count": 1089,
+    "market_regime": "ai_after_chatgpt",
+    "next_required_tasks": [
+      "TRADING-2271",
+      "TRADING-2272",
+      "TRADING-2273"
+    ],
+    "optional_benchmarks_missing": [
+      "IWM",
+      "RSP"
+    ],
+    "requested_end": "latest",
+    "requested_start": "2022-12-01",
+    "signal_coverage_gap_from_requested_start": true
+  },
+  "target_path_metrics_role": "diagnostic_only",
+  "title": "Benchmark Consistency Report",
+  "validation_ready": false
+}

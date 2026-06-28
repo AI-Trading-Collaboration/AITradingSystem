@@ -1,0 +1,394 @@
+{
+  "actual_path_required": true,
+  "actual_signal_end": "2026-03-27",
+  "actual_signal_start": "2023-02-22",
+  "anchor_date": "2022-11-30",
+  "anchor_event": "ChatGPT public launch",
+  "as_of": "2026-06-26",
+  "broker_action": "none",
+  "candidate_count": 0,
+  "data_quality": {
+    "as_of": "2026-06-26",
+    "checked_at": "2026-06-28T12:02:21.423182+00:00",
+    "error_count": 0,
+    "expected_price_tickers": [
+      "QQQ",
+      "SPY",
+      "SMH"
+    ],
+    "expected_rate_series": [],
+    "passed": true,
+    "price_checksum": "5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d",
+    "price_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+    "price_row_count": 56184,
+    "rate_checksum": "279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a",
+    "rate_row_count": 6352,
+    "rates_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+    "secondary_prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "default_backtest_start": "2022-12-01",
+  "dynamic_promotion_status": "BLOCKED",
+  "failure_taxonomy": [
+    {
+      "benchmark_event_counts": {
+        "QQQ": 54,
+        "SMH": 100,
+        "SPY": 44
+      },
+      "definition": "Signal is risk_on/constructive but the benchmark has weak forward return <= -0.02 or max drawdown <= -0.05 over the horizon.",
+      "event_count": 198,
+      "failure_type": "false_risk_on",
+      "promotion_interpretation": "diagnostic_only_not_gate_evidence",
+      "representative_examples": [
+        {
+          "date": "2023-07-13",
+          "forward_return": -0.027855,
+          "future_max_drawdown": -0.029652,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-14",
+          "forward_return": -0.033846,
+          "future_max_drawdown": -0.033846,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-17",
+          "forward_return": -0.032044,
+          "future_max_drawdown": -0.042787,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-18",
+          "forward_return": -0.050063,
+          "future_max_drawdown": -0.050538,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-19",
+          "forward_return": -0.059941,
+          "future_max_drawdown": -0.059941,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        }
+      ]
+    },
+    {
+      "benchmark_event_counts": {
+        "QQQ": 165,
+        "SMH": 201,
+        "SPY": 133
+      },
+      "definition": "Signal is risk_off/defensive but the benchmark forward return is >= 0.03.",
+      "event_count": 499,
+      "failure_type": "false_risk_off",
+      "promotion_interpretation": "diagnostic_only_not_gate_evidence",
+      "representative_examples": [
+        {
+          "date": "2023-02-24",
+          "forward_return": 0.066923,
+          "future_max_drawdown": -0.011294,
+          "ticker": "QQQ",
+          "trend_state": "defensive"
+        },
+        {
+          "date": "2023-03-01",
+          "forward_return": 0.075589,
+          "future_max_drawdown": -0.009076,
+          "ticker": "QQQ",
+          "trend_state": "defensive"
+        },
+        {
+          "date": "2023-03-02",
+          "forward_return": 0.076843,
+          "future_max_drawdown": -0.017238,
+          "ticker": "QQQ",
+          "trend_state": "defensive"
+        },
+        {
+          "date": "2023-03-09",
+          "forward_return": 0.088424,
+          "future_max_drawdown": -0.014052,
+          "ticker": "QQQ",
+          "trend_state": "defensive"
+        },
+        {
+          "date": "2023-03-10",
+          "forward_return": 0.103335,
+          "future_max_drawdown": 0.0,
+          "ticker": "QQQ",
+          "trend_state": "defensive"
+        }
+      ]
+    },
+    {
+      "benchmark_event_counts": {
+        "QQQ": 18,
+        "SMH": 61,
+        "SPY": 7
+      },
+      "definition": "Benchmark drawdown breaches the pilot threshold and no risk_off signal appeared in the prior 5 signal days.",
+      "event_count": 86,
+      "failure_type": "late_risk_off",
+      "promotion_interpretation": "diagnostic_only_not_gate_evidence",
+      "representative_examples": [
+        {
+          "date": "2023-07-18",
+          "forward_return": -0.050063,
+          "future_max_drawdown": -0.050538,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-19",
+          "forward_return": -0.059941,
+          "future_max_drawdown": -0.059941,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-25",
+          "forward_return": -0.040641,
+          "future_max_drawdown": -0.054502,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-26",
+          "forward_return": -0.022288,
+          "future_max_drawdown": -0.051368,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        },
+        {
+          "date": "2023-07-28",
+          "forward_return": -0.05073,
+          "future_max_drawdown": -0.066092,
+          "ticker": "QQQ",
+          "trend_state": "risk_on"
+        }
+      ]
+    },
+    {
+      "benchmark_event_counts": {
+        "QQQ": 88,
+        "SMH": 161,
+        "SPY": 57
+      },
+      "definition": "Benchmark recovery exceeds the pilot threshold and no risk_on signal appears within 5 signal days.",
+      "event_count": 306,
+      "failure_type": "late_risk_on",
+      "promotion_interpretation": "diagnostic_only_not_gate_evidence",
+      "representative_examples": [
+        {
+          "date": "2023-10-18",
+          "forward_return": 0.061231,
+          "future_max_drawdown": -0.054241,
+          "ticker": "QQQ",
+          "trend_state": "risk_off"
+        },
+        {
+          "date": "2023-10-19",
+          "forward_return": 0.072168,
+          "future_max_drawdown": -0.045299,
+          "ticker": "QQQ",
+          "trend_state": "risk_off"
+        },
+        {
+          "date": "2023-10-20",
+          "forward_return": 0.088646,
+          "future_max_drawdown": -0.030857,
+          "ticker": "QQQ",
+          "trend_state": "risk_off"
+        },
+        {
+          "date": "2023-10-23",
+          "forward_return": 0.098606,
+          "future_max_drawdown": -0.033764,
+          "ticker": "QQQ",
+          "trend_state": "risk_off"
+        },
+        {
+          "date": "2023-10-24",
+          "forward_return": 0.081702,
+          "future_max_drawdown": -0.043058,
+          "ticker": "QQQ",
+          "trend_state": "risk_off"
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-06-28T12:02:21+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "policy_hash": "e0f2fa5897f2beb3178c529275d802374576ae89ec39ee7042a10292b6607086",
+  "policy_id": "first_layer_current_state_policy_v1",
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "regime_slices": [
+    {
+      "coverage_status": "NO_SIGNAL_COVERAGE",
+      "end": "2022-12-30",
+      "failure_event_counts": {
+        "false_risk_off": 0,
+        "false_risk_on": 0,
+        "late_risk_off": 0,
+        "late_risk_on": 0
+      },
+      "label": "2022 bear / rate shock",
+      "primary_ai_conclusion_window": false,
+      "role": "stress_comparison_not_primary_ai_conclusion",
+      "signal_distribution": {},
+      "signal_observation_count": 0,
+      "slice_id": "2022_bear_rate_shock",
+      "start": "2022-01-03"
+    },
+    {
+      "coverage_status": "SIGNAL_COVERED",
+      "end": "2023-12-29",
+      "failure_event_counts": {
+        "false_risk_off": 75,
+        "false_risk_on": 89,
+        "late_risk_off": 44,
+        "late_risk_on": 39
+      },
+      "label": "2023 recovery",
+      "primary_ai_conclusion_window": true,
+      "role": "ai_after_chatgpt_recovery",
+      "signal_distribution": {
+        "constructive": 16,
+        "defensive": 15,
+        "neutral": 13,
+        "risk_off": 48,
+        "risk_on": 124
+      },
+      "signal_observation_count": 216,
+      "slice_id": "2023_recovery",
+      "start": "2023-01-03"
+    },
+    {
+      "coverage_status": "SIGNAL_COVERED",
+      "end": "2024-12-31",
+      "failure_event_counts": {
+        "false_risk_off": 169,
+        "false_risk_on": 102,
+        "late_risk_off": 38,
+        "late_risk_on": 71
+      },
+      "label": "2024 AI concentration",
+      "primary_ai_conclusion_window": true,
+      "role": "ai_after_chatgpt_concentration",
+      "signal_distribution": {
+        "constructive": 42,
+        "defensive": 12,
+        "neutral": 8,
+        "risk_off": 117,
+        "risk_on": 73
+      },
+      "signal_observation_count": 252,
+      "slice_id": "2024_ai_concentration",
+      "start": "2024-01-02"
+    },
+    {
+      "coverage_status": "SIGNAL_COVERED",
+      "end": "2026-06-26",
+      "failure_event_counts": {
+        "false_risk_off": 255,
+        "false_risk_on": 7,
+        "late_risk_off": 4,
+        "late_risk_on": 196
+      },
+      "label": "2025-2026 trial-like window",
+      "primary_ai_conclusion_window": true,
+      "role": "ai_after_chatgpt_recent_trial_like",
+      "signal_distribution": {
+        "constructive": 57,
+        "defensive": 6,
+        "neutral": 23,
+        "risk_off": 223
+      },
+      "signal_observation_count": 309,
+      "slice_id": "2025_2026_trial_like_window",
+      "start": "2025-01-02"
+    }
+  ],
+  "reopen_gate_allowed": false,
+  "report_type": "first_layer_failure_taxonomy",
+  "requested_end": "latest",
+  "requested_start": "2022-12-01",
+  "research_audit_metadata": {
+    "boundary_contract_version": "first_layer_current_state_research_only_v1",
+    "candidate_count": 0,
+    "model_version": "first_layer_composer_v2_current_state",
+    "modified_channel": "first_layer_current_state",
+    "modified_layer": "validation_only",
+    "threshold_policy": "first_layer_current_state_policy_v1"
+  },
+  "research_only": true,
+  "schema_version": "first_layer_failure_taxonomy.v1",
+  "signal_summary": {
+    "duplicate_signal_rows_removed": 1428,
+    "observation_count": 777,
+    "raw_filtered_signal_rows": 2205,
+    "regime_flip_count": 76,
+    "regime_flip_rate_per_20_observations": 1.956242,
+    "signal_class_distribution": {
+      "neutral": 44,
+      "risk_off": 421,
+      "risk_on": 312
+    },
+    "trend_state_distribution": {
+      "constructive": 115,
+      "defensive": 33,
+      "neutral": 44,
+      "risk_off": 388,
+      "risk_on": 197
+    }
+  },
+  "source_artifacts": {
+    "policy_path": "D:\\Work\\AITradingSystem\\config\\research\\first_layer_current_state_policy.yaml",
+    "predictions_path": "D:\\Work\\AITradingSystem\\outputs\\research_trends\\models\\first_layer_composer_v2_predictions.csv",
+    "prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv"
+  },
+  "status": "FIRST_LAYER_FAILURE_TAXONOMY_READY_PROMOTION_BLOCKED",
+  "summary": {
+    "2022_stress_slice_signal_coverage": "missing",
+    "actual_signal_end": "2026-03-27",
+    "actual_signal_start": "2023-02-22",
+    "as_of": "2026-06-26",
+    "benchmark_availability": {
+      "IWM": false,
+      "QQQ": true,
+      "RSP": false,
+      "SMH": true,
+      "SPY": true
+    },
+    "benchmark_consistency_score": 0.392621,
+    "current_state_conclusion": "REDESIGN_REQUIRED_DIAGNOSTIC_ONLY",
+    "data_quality_passed": true,
+    "data_quality_status": "PASS_WITH_WARNINGS",
+    "failure_event_count": 1089,
+    "market_regime": "ai_after_chatgpt",
+    "next_required_tasks": [
+      "TRADING-2271",
+      "TRADING-2272",
+      "TRADING-2273"
+    ],
+    "requested_end": "latest",
+    "requested_start": "2022-12-01",
+    "signal_coverage_gap_from_requested_start": true
+  },
+  "target_path_metrics_role": "diagnostic_only",
+  "title": "First-Layer Failure Taxonomy",
+  "validation_ready": false
+}

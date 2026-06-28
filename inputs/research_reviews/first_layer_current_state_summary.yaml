@@ -1,0 +1,377 @@
+schema_version: first_layer_current_state_summary.v1
+report_type: first_layer_current_state_summary
+title: First-Layer Current State Summary
+status: FIRST_LAYER_CURRENT_STATE_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T12:02:21+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+requested_start: '2022-12-01'
+requested_end: latest
+as_of: '2026-06-26'
+actual_signal_start: '2023-02-22'
+actual_signal_end: '2026-03-27'
+data_quality_status: PASS_WITH_WARNINGS
+data_quality:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  checked_at: '2026-06-28T12:02:21.423182+00:00'
+  as_of: '2026-06-26'
+  price_path: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  rates_path: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  secondary_prices_path: D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv
+  expected_price_tickers:
+  - QQQ
+  - SPY
+  - SMH
+  expected_rate_series: []
+  price_row_count: 56184
+  rate_row_count: 6352
+  price_checksum: 5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d
+  rate_checksum: 279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a
+  warning_count: 1
+  error_count: 0
+policy_id: first_layer_current_state_policy_v1
+policy_hash: e0f2fa5897f2beb3178c529275d802374576ae89ec39ee7042a10292b6607086
+summary:
+  current_state_conclusion: REDESIGN_REQUIRED_DIAGNOSTIC_ONLY
+  market_regime: ai_after_chatgpt
+  requested_start: '2022-12-01'
+  requested_end: latest
+  as_of: '2026-06-26'
+  actual_signal_start: '2023-02-22'
+  actual_signal_end: '2026-03-27'
+  signal_coverage_gap_from_requested_start: true
+  2022_stress_slice_signal_coverage: missing
+  data_quality_status: PASS_WITH_WARNINGS
+  data_quality_passed: true
+  failure_event_count: 1089
+  benchmark_consistency_score: 0.392621
+  benchmark_availability:
+    QQQ: true
+    SPY: true
+    SMH: true
+    IWM: false
+    RSP: false
+  next_required_tasks:
+  - TRADING-2271
+  - TRADING-2272
+  - TRADING-2273
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_current_state
+  model_version: first_layer_composer_v2_current_state
+  threshold_policy: first_layer_current_state_policy_v1
+  candidate_count: 0
+  boundary_contract_version: first_layer_current_state_research_only_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+primary_window_validated: false
+reopen_gate_allowed: false
+validation_ready: false
+candidate_count: 0
+failure_taxonomy:
+- failure_type: false_risk_on
+  definition: Signal is risk_on/constructive but the benchmark has weak forward return
+    <= -0.02 or max drawdown <= -0.05 over the horizon.
+  event_count: 198
+  benchmark_event_counts:
+    QQQ: 54
+    SMH: 100
+    SPY: 44
+  representative_examples:
+  - date: '2023-07-13'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.027855
+    future_max_drawdown: -0.029652
+  - date: '2023-07-14'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.033846
+    future_max_drawdown: -0.033846
+  - date: '2023-07-17'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.032044
+    future_max_drawdown: -0.042787
+  - date: '2023-07-18'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.050063
+    future_max_drawdown: -0.050538
+  - date: '2023-07-19'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.059941
+    future_max_drawdown: -0.059941
+  promotion_interpretation: diagnostic_only_not_gate_evidence
+- failure_type: false_risk_off
+  definition: Signal is risk_off/defensive but the benchmark forward return is >=
+    0.03.
+  event_count: 499
+  benchmark_event_counts:
+    QQQ: 165
+    SMH: 201
+    SPY: 133
+  representative_examples:
+  - date: '2023-02-24'
+    ticker: QQQ
+    trend_state: defensive
+    forward_return: 0.066923
+    future_max_drawdown: -0.011294
+  - date: '2023-03-01'
+    ticker: QQQ
+    trend_state: defensive
+    forward_return: 0.075589
+    future_max_drawdown: -0.009076
+  - date: '2023-03-02'
+    ticker: QQQ
+    trend_state: defensive
+    forward_return: 0.076843
+    future_max_drawdown: -0.017238
+  - date: '2023-03-09'
+    ticker: QQQ
+    trend_state: defensive
+    forward_return: 0.088424
+    future_max_drawdown: -0.014052
+  - date: '2023-03-10'
+    ticker: QQQ
+    trend_state: defensive
+    forward_return: 0.103335
+    future_max_drawdown: 0.0
+  promotion_interpretation: diagnostic_only_not_gate_evidence
+- failure_type: late_risk_off
+  definition: Benchmark drawdown breaches the pilot threshold and no risk_off signal
+    appeared in the prior 5 signal days.
+  event_count: 86
+  benchmark_event_counts:
+    QQQ: 18
+    SMH: 61
+    SPY: 7
+  representative_examples:
+  - date: '2023-07-18'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.050063
+    future_max_drawdown: -0.050538
+  - date: '2023-07-19'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.059941
+    future_max_drawdown: -0.059941
+  - date: '2023-07-25'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.040641
+    future_max_drawdown: -0.054502
+  - date: '2023-07-26'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.022288
+    future_max_drawdown: -0.051368
+  - date: '2023-07-28'
+    ticker: QQQ
+    trend_state: risk_on
+    forward_return: -0.05073
+    future_max_drawdown: -0.066092
+  promotion_interpretation: diagnostic_only_not_gate_evidence
+- failure_type: late_risk_on
+  definition: Benchmark recovery exceeds the pilot threshold and no risk_on signal
+    appears within 5 signal days.
+  event_count: 306
+  benchmark_event_counts:
+    QQQ: 88
+    SMH: 161
+    SPY: 57
+  representative_examples:
+  - date: '2023-10-18'
+    ticker: QQQ
+    trend_state: risk_off
+    forward_return: 0.061231
+    future_max_drawdown: -0.054241
+  - date: '2023-10-19'
+    ticker: QQQ
+    trend_state: risk_off
+    forward_return: 0.072168
+    future_max_drawdown: -0.045299
+  - date: '2023-10-20'
+    ticker: QQQ
+    trend_state: risk_off
+    forward_return: 0.088646
+    future_max_drawdown: -0.030857
+  - date: '2023-10-23'
+    ticker: QQQ
+    trend_state: risk_off
+    forward_return: 0.098606
+    future_max_drawdown: -0.033764
+  - date: '2023-10-24'
+    ticker: QQQ
+    trend_state: risk_off
+    forward_return: 0.081702
+    future_max_drawdown: -0.043058
+  promotion_interpretation: diagnostic_only_not_gate_evidence
+benchmarks:
+- ticker: QQQ
+  required: true
+  data_available: true
+  history_start_date: '2018-01-02'
+  history_end_date: '2026-06-26'
+  row_count: 2132
+- ticker: SPY
+  required: true
+  data_available: true
+  history_start_date: '2018-01-02'
+  history_end_date: '2026-06-26'
+  row_count: 2132
+- ticker: SMH
+  required: true
+  data_available: true
+  history_start_date: '2018-01-02'
+  history_end_date: '2026-06-26'
+  row_count: 2132
+- ticker: IWM
+  required: false
+  data_available: false
+  history_start_date: ''
+  history_end_date: ''
+  row_count: 0
+- ticker: RSP
+  required: false
+  data_available: false
+  history_start_date: ''
+  history_end_date: ''
+  row_count: 0
+regime_slices:
+- slice_id: 2022_bear_rate_shock
+  label: 2022 bear / rate shock
+  role: stress_comparison_not_primary_ai_conclusion
+  start: '2022-01-03'
+  end: '2022-12-30'
+  signal_observation_count: 0
+  coverage_status: NO_SIGNAL_COVERAGE
+  signal_distribution: {}
+  failure_event_counts:
+    false_risk_on: 0
+    false_risk_off: 0
+    late_risk_off: 0
+    late_risk_on: 0
+  primary_ai_conclusion_window: false
+- slice_id: 2023_recovery
+  label: 2023 recovery
+  role: ai_after_chatgpt_recovery
+  start: '2023-01-03'
+  end: '2023-12-29'
+  signal_observation_count: 216
+  coverage_status: SIGNAL_COVERED
+  signal_distribution:
+    neutral: 13
+    defensive: 15
+    risk_on: 124
+    risk_off: 48
+    constructive: 16
+  failure_event_counts:
+    false_risk_on: 89
+    false_risk_off: 75
+    late_risk_off: 44
+    late_risk_on: 39
+  primary_ai_conclusion_window: true
+- slice_id: 2024_ai_concentration
+  label: 2024 AI concentration
+  role: ai_after_chatgpt_concentration
+  start: '2024-01-02'
+  end: '2024-12-31'
+  signal_observation_count: 252
+  coverage_status: SIGNAL_COVERED
+  signal_distribution:
+    constructive: 42
+    risk_on: 73
+    defensive: 12
+    risk_off: 117
+    neutral: 8
+  failure_event_counts:
+    false_risk_on: 102
+    false_risk_off: 169
+    late_risk_off: 38
+    late_risk_on: 71
+  primary_ai_conclusion_window: true
+- slice_id: 2025_2026_trial_like_window
+  label: 2025-2026 trial-like window
+  role: ai_after_chatgpt_recent_trial_like
+  start: '2025-01-02'
+  end: '2026-06-26'
+  signal_observation_count: 309
+  coverage_status: SIGNAL_COVERED
+  signal_distribution:
+    risk_off: 223
+    defensive: 6
+    constructive: 57
+    neutral: 23
+  failure_event_counts:
+    false_risk_on: 7
+    false_risk_off: 255
+    late_risk_off: 4
+    late_risk_on: 196
+  primary_ai_conclusion_window: true
+benchmark_consistency:
+  summary:
+    benchmark_consistency_status: CORE_BENCHMARKS_AVAILABLE
+    benchmark_consistency_score: 0.392621
+    core_benchmarks_available:
+    - QQQ
+    - SPY
+    - SMH
+    optional_benchmarks_missing:
+    - IWM
+    - RSP
+  by_failure_type:
+  - failure_type: false_risk_on
+    core_benchmark_event_counts:
+      QQQ: 54
+      SPY: 44
+      SMH: 100
+    core_benchmark_count: 3
+    consistency_score: 0.44
+    interpretation: higher_is_more_consistent_across_core_benchmarks
+  - failure_type: false_risk_off
+    core_benchmark_event_counts:
+      QQQ: 165
+      SPY: 133
+      SMH: 201
+    core_benchmark_count: 3
+    consistency_score: 0.661692
+    interpretation: higher_is_more_consistent_across_core_benchmarks
+  - failure_type: late_risk_off
+    core_benchmark_event_counts:
+      QQQ: 18
+      SPY: 7
+      SMH: 61
+    core_benchmark_count: 3
+    consistency_score: 0.114754
+    interpretation: higher_is_more_consistent_across_core_benchmarks
+  - failure_type: late_risk_on
+    core_benchmark_event_counts:
+      QQQ: 88
+      SPY: 57
+      SMH: 161
+    core_benchmark_count: 3
+    consistency_score: 0.354037
+    interpretation: higher_is_more_consistent_across_core_benchmarks
+  analysis_scope:
+    score_uses_core_benchmarks_only: true
+    optional_missing_not_imputed: true
+artifact_paths:
+  first_layer_failure_taxonomy: D:\Work\AITradingSystem\outputs\research_trends\first_layer_current_state\first_layer_failure_taxonomy.json
+  benchmark_consistency_report: D:\Work\AITradingSystem\outputs\research_trends\first_layer_current_state\benchmark_consistency_report.json
+  first_layer_current_state_summary: D:\Work\AITradingSystem\inputs\research_reviews\first_layer_current_state_summary.yaml
+  first_layer_current_state_report: D:\Work\AITradingSystem\docs\research\first_layer_current_state_report.md
+  regime_slice_summary: D:\Work\AITradingSystem\docs\research\regime_slice_summary.md

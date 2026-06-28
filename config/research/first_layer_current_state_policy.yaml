@@ -1,0 +1,88 @@
+schema_version: first_layer_current_state_policy.v1
+policy_id: first_layer_current_state_policy_v1
+owner: research_governance
+status: pilot_baseline
+rationale: >
+  TRADING-2270 needs an auditable first-layer current-state and failure taxonomy
+  before redesigning the first-layer objective. These thresholds are only a
+  diagnostic pilot baseline for counting failure modes, not a promotion gate.
+intended_effect: >
+  Classify false risk-on, false risk-off, late risk-off, late risk-on, regime
+  flip and benchmark-consistency behavior from the frozen first-layer composer
+  v2 signal path across the AI-after-ChatGPT research regime and documented
+  stress slices.
+validation_evidence: >
+  Focused unit tests cover artifact generation, optional benchmark handling and
+  fixed safety fields. TRADING-2272 must replace this pilot taxonomy with a
+  reviewed objective and validation design before any promotion interpretation.
+review_condition: >
+  Review after TRADING-2272 objective redesign or before using these counts as
+  anything other than diagnostic failure taxonomy evidence.
+market_regime: ai_after_chatgpt
+requested_window:
+  start: "2022-12-01"
+  end: latest
+signal_source:
+  model_id: first_layer_composer_v2
+  predictions_path: outputs/research_trends/models/first_layer_composer_v2_predictions.csv
+  risk_on_states:
+    - risk_on
+    - constructive
+  risk_off_states:
+    - risk_off
+    - defensive
+  neutral_states:
+    - neutral
+benchmarks:
+  required:
+    - QQQ
+    - SPY
+    - SMH
+  optional:
+    - IWM
+    - RSP
+failure_thresholds:
+  forward_horizon_days: 20
+  false_risk_on_forward_return_threshold: -0.02
+  false_risk_on_max_drawdown_threshold: -0.05
+  false_risk_off_forward_return_threshold: 0.03
+  late_risk_off_drawdown_threshold: -0.05
+  late_risk_off_required_lead_days: 5
+  late_risk_on_recovery_return_threshold: 0.05
+  late_risk_on_max_delay_days: 5
+  regime_flip_normalized_window_days: 20
+  minimum_slice_observations: 60
+benchmark_consistency:
+  core_only_for_score: true
+  score_method: one_minus_failure_count_range_over_max
+  minimum_core_benchmark_count: 3
+regime_slices:
+  - id: 2022_bear_rate_shock
+    label: 2022 bear / rate shock
+    start: "2022-01-03"
+    end: "2022-12-30"
+    role: stress_comparison_not_primary_ai_conclusion
+  - id: 2023_recovery
+    label: 2023 recovery
+    start: "2023-01-03"
+    end: "2023-12-29"
+    role: ai_after_chatgpt_recovery
+  - id: 2024_ai_concentration
+    label: 2024 AI concentration
+    start: "2024-01-02"
+    end: "2024-12-31"
+    role: ai_after_chatgpt_concentration
+  - id: 2025_2026_trial_like_window
+    label: 2025-2026 trial-like window
+    start: "2025-01-02"
+    end: latest
+    role: ai_after_chatgpt_recent_trial_like
+safety_boundary:
+  primary_window_validated: false
+  reopen_gate_allowed: false
+  validation_ready: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
