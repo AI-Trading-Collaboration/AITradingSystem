@@ -1,0 +1,87 @@
+schema_version: first_layer_channel_policy.v1
+policy_id: first_layer_channel_policy_v1
+status: CHANNEL_POLICY_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Separate defensive preservation, return-seeking diagnostics and risk veto
+    responsibilities after the first-layer v2 defensive regression diagnosis.
+  intended_effect: >
+    Keep defensive overlay protected from add-risk signals and make veto
+    precedence explicit before any second-layer policy compilation.
+  validation_evidence: >
+    Boundary guardrail tests assert defensive add-risk blocking, diagnostic-only
+    return-seeking behavior and veto priority over growth overlays.
+  review_condition: >
+    Review before any channel emits new signal types or changes downstream
+    allowed usage.
+channels:
+  defensive_channel:
+    channel_id: defensive_channel
+    channel: defensive
+    status: POLICY_READY
+    cannot_emit:
+      - add_risk
+      - high_confidence_risk_on
+      - risk_on_diagnostic
+      - tqqq_signal
+    allowed_outputs:
+      - risk_off
+      - defensive_hold
+      - do_not_de_risk
+      - re_risk_allowed
+    can_emit_weights: false
+    can_drive_defensive_overlay: true
+    can_drive_growth_overlay: false
+    can_increase_TQQQ: false
+  return_seeking_diagnostic_channel:
+    channel_id: return_seeking_diagnostic_channel
+    channel: return_seeking_diagnostic
+    status: DIAGNOSTIC_ONLY
+    diagnostic_only: true
+    allowed_outputs:
+      - stay_constructive
+      - add_risk
+      - risk_on_diagnostic
+    allowed_usage:
+      - forward_diagnostic_log
+      - action_value_research
+      - indicator_family_review
+    blocked_usage:
+      - defensive_overlay
+      - allocation
+      - owner_review_candidate
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    can_emit_weights: false
+    can_enable_promotion: false
+  risk_veto_channel:
+    channel_id: risk_veto_channel
+    channel: risk_veto
+    status: POLICY_READY
+    priority: highest
+    veto_reasons:
+      - risk_off_veto
+      - volatility_veto
+      - event_risk_veto
+      - trend_break_veto
+      - tqqq_veto
+    veto_effect:
+      growth_overlay: blocked
+      TQQQ_delta: 0
+      add_risk: blocked
+    can_emit_weights: false
+rules:
+  defensive_channel_cannot_emit_add_risk: true
+  return_seeking_channel_diagnostic_only: true
+  risk_veto_has_priority_over_growth_overlay: true
+  second_layer_must_not_read_raw_indicators: true
+safety_boundary:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

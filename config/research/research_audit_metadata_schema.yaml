@@ -30,10 +30,24 @@ research_audit_metadata:
     - probe_registry_version
     - candidate_count
     - pre_registered_selection_rule
+  optional_fields:
+    - modified_channel
+    - frozen_channels
+    - signal_usage_matrix_version
+    - boundary_contract_version
+    - selection_rule_version
   modified_layer_allowed_values:
     - first_layer
     - second_layer
     - validation_only
+  modified_channel_allowed_values:
+    - defensive
+    - return_seeking_diagnostic
+    - risk_veto
+    - second_layer_policy
+    - signal_usage_boundary
+    - indicator_family_ablation
+    - boundary_aware_two_layer_framework
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0

@@ -47,6 +47,13 @@ from ai_trading_system.first_layer_walk_forward_coverage import (
     DEFAULT_MODEL_MATRIX_YAML_PATH,
     run_first_layer_walk_forward_coverage_rebuild_pack,
 )
+from ai_trading_system.indicator_family_ablation import (
+    DEFAULT_INDICATOR_FAMILY_ABLATION_MATRIX_PATH,
+    DEFAULT_INDICATOR_FAMILY_ABLATION_OUTPUT_ROOT,
+    DEFAULT_INDICATOR_FAMILY_ABLATION_REVIEW_PATH,
+    DEFAULT_INDICATOR_FAMILY_REGISTRY_PATH,
+    run_indicator_family_ablation,
+)
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
     DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
@@ -551,6 +558,30 @@ def return_seeking_diagnostic_lane_command(
         rates_path=rates_path,
     )
     _print_payload("Return-seeking diagnostic lane", payload)
+
+
+@trends_app.command("indicator-family-ablation")
+def indicator_family_ablation_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = DEFAULT_INDICATOR_FAMILY_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_INDICATOR_FAMILY_ABLATION_OUTPUT_ROOT,
+    matrix_path: Annotated[
+        Path, typer.Option("--matrix-path")
+    ] = DEFAULT_INDICATOR_FAMILY_ABLATION_MATRIX_PATH,
+    review_path: Annotated[
+        Path, typer.Option("--review-path")
+    ] = DEFAULT_INDICATOR_FAMILY_ABLATION_REVIEW_PATH,
+) -> None:
+    payload = run_indicator_family_ablation(
+        registry_path=registry_path,
+        output_root=output_root,
+        matrix_path=matrix_path,
+        review_path=review_path,
+    )
+    _print_payload("Indicator family ablation", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

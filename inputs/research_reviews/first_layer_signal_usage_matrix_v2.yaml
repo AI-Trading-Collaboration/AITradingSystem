@@ -1,0 +1,223 @@
+schema_version: first_layer_signal_usage_matrix.v2
+report_type: first_layer_signal_usage_matrix_v2
+title: First-Layer Signal Usage Matrix V2
+status: SIGNAL_USAGE_MATRIX_V2_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T00:00:00Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+summary:
+  signal_count: 9
+  every_signal_has_contract: true
+  defensive_channel_can_emit_add_risk: false
+  return_seeking_allocation_allowed: false
+  risk_veto_blocks_growth_overlay: true
+  promotion_status: blocked
+signals:
+  - signal_name: risk_off
+    channel: defensive
+    allowed_usage:
+      - defensive_overlay
+      - drawdown_control_probe
+      - risk_veto_input
+    blocked_usage:
+      - growth_overlay
+      - add_risk_allocation
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto: []
+    diagnostic_only: false
+    can_emit_weights: false
+  - signal_name: defensive_hold
+    channel: defensive
+    allowed_usage:
+      - defensive_overlay
+      - drawdown_control_probe
+    blocked_usage:
+      - growth_overlay
+      - add_risk_allocation
+      - TQQQ_increase
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto: []
+    diagnostic_only: false
+    can_emit_weights: false
+  - signal_name: do_not_de_risk
+    channel: defensive
+    allowed_usage:
+      - false_risk_off_reduction
+      - defensive_overlay_neutralization
+      - diagnostic_review
+    blocked_usage:
+      - add_risk_allocation
+      - growth_overlay
+      - TQQQ_increase
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto:
+      - missed_risk_off_guard
+    diagnostic_only: false
+    can_emit_weights: false
+  - signal_name: re_risk_allowed
+    channel: defensive
+    allowed_usage:
+      - defensive_overlay_neutralization
+      - late_re_risk_diagnostic
+    blocked_usage:
+      - add_risk_allocation
+      - growth_overlay
+      - high_confidence_risk_on
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto:
+      - risk_off_veto_clear
+    diagnostic_only: false
+    can_emit_weights: false
+  - signal_name: stay_constructive
+    channel: return_seeking_diagnostic
+    allowed_usage:
+      - forward_diagnostic_log
+      - indicator_family_review
+      - return_seeking_action_value_research
+    blocked_usage:
+      - defensive_overlay
+      - allocation
+      - owner_review_candidate
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto:
+      - risk_off_veto_clear
+      - volatility_veto_clear
+      - event_risk_veto_clear
+    diagnostic_only: true
+    can_emit_weights: false
+  - signal_name: add_risk
+    channel: return_seeking_diagnostic
+    allowed_usage:
+      - forward_diagnostic_log
+      - false_add_risk_attribution
+      - indicator_family_review
+    blocked_usage:
+      - defensive_overlay
+      - allocation
+      - growth_overlay
+      - owner_review_candidate
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto:
+      - risk_off_veto_clear
+      - volatility_veto_clear
+      - event_risk_veto_clear
+      - trend_break_veto_clear
+      - tqqq_veto_clear
+    diagnostic_only: true
+    can_emit_weights: false
+  - signal_name: risk_on_diagnostic
+    channel: return_seeking_diagnostic
+    allowed_usage:
+      - forward_diagnostic_log
+      - beta_dependency_review
+      - indicator_family_review
+    blocked_usage:
+      - defensive_overlay
+      - allocation
+      - growth_overlay
+      - TQQQ_increase
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto:
+      - risk_off_veto_clear
+      - tqqq_veto_clear
+    diagnostic_only: true
+    can_emit_weights: false
+  - signal_name: growth_allowed
+    channel: risk_veto
+    allowed_usage:
+      - risk_veto
+      - growth_overlay_blocker
+      - false_add_risk_reduction
+    blocked_usage:
+      - standalone_allocation
+      - return_boost
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto: []
+    diagnostic_only: false
+    can_emit_weights: false
+  - signal_name: tqqq_allowed
+    channel: risk_veto
+    allowed_usage:
+      - TQQQ_blocker
+      - beta_dependency_review
+      - risk_veto
+    blocked_usage:
+      - standalone_TQQQ_allocation
+      - return_boost
+      - promotion
+      - paper_shadow
+      - production
+      - broker
+    required_veto: []
+    diagnostic_only: false
+    can_emit_weights: false
+matrix_rules:
+  every_signal_requires_allowed_usage: true
+  every_signal_requires_blocked_usage: true
+  every_signal_requires_required_veto: true
+  every_signal_requires_channel: true
+  first_layer_cannot_emit_weights: true
+  add_risk_blocked_from_defensive_overlay: true
+  diagnostic_signal_cannot_enable_promotion: true
+  risk_veto_blocks_growth_overlay: true
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: signal_usage_boundary
+  frozen_channels:
+    - defensive
+    - return_seeking_diagnostic
+    - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: pit_feature_matrix_v3
+  model_version: boundary_aware_channel_contract_v1
+  threshold_policy: first_layer_channel_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: no_candidate_selection_policy_only
+  candidate_count: 0
+  pre_registered_selection_rule: boundary_aware_signal_usage_policy_only_no_candidate_selection

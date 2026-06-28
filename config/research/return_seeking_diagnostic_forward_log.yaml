@@ -1,0 +1,39 @@
+schema_version: return_seeking_diagnostic_forward_log.v1
+policy_id: return_seeking_diagnostic_forward_log_v1
+status: RETURN_SEEKING_DIAGNOSTIC_LOG_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Return-seeking first-layer signals may have diagnostic value, but prior
+    evidence does not support allocation or promotion.
+  intended_effect: >
+    Log signal, confidence and future realized outcome for forward research
+    without emitting weights or trading actions.
+  validation_evidence: >
+    Boundary tests verify diagnostic signals cannot enable promotion or emit
+    weights.
+  review_condition: >
+    Review before adding fields that resemble target weights, trade advice,
+    paper-shadow action or broker action.
+allowed_fields:
+  - decision_date
+  - signal
+  - confidence
+  - diagnostic_flag
+  - channel
+  - future_realized_outcomes
+  - realized_outcome_window
+blocked_fields:
+  - target_weights
+  - trade_advice
+  - paper_shadow_action
+  - broker_action
+  - production_action
+diagnostic_only: true
+can_emit_weights: false
+safety_boundary:
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

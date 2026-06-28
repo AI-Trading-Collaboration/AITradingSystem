@@ -300,6 +300,35 @@ def test_two_lane_optimization_master_closeout_has_audit_metadata() -> None:
     assert artifact["broker_action"] == "none"
 
 
+def test_boundary_aware_two_layer_artifacts_have_channel_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/first_layer_signal_usage_matrix_v2.yaml"),
+        Path("inputs/research_reviews/indicator_family_ablation_matrix.yaml"),
+        Path("inputs/research_reviews/boundary_aware_two_layer_optimization_framework_final_matrix.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "validation_only"
+        assert metadata["modified_channel"]
+        assert metadata["frozen_channels"] == [
+            "defensive",
+            "return_seeking_diagnostic",
+            "risk_veto",
+        ]
+        assert metadata["signal_usage_matrix_version"] == "first_layer_signal_usage_matrix_v2"
+        assert metadata["boundary_contract_version"] == "two_layer_strategy_boundary_contract_v1"
+        assert metadata["candidate_count"] == 0
+        assert artifact["promotion_allowed"] is False
+        assert artifact["paper_shadow_allowed"] is False
+        assert artifact["production_allowed"] is False
+        assert artifact["broker_action"] == "none"
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",

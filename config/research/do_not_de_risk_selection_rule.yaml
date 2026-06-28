@@ -1,0 +1,50 @@
+schema_version: do_not_de_risk_selection_rule.v1
+policy_id: do_not_de_risk_selection_rule_v1
+status: DO_NOT_DERISK_TRACK_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Do-not-de-risk research should first reduce false risk-off errors without
+    creating add-risk behavior or defensive probe regression.
+  intended_effect: >
+    Pre-register pass conditions before any diagnostic result is interpreted as
+    a candidate.
+  validation_evidence: >
+    Selection-rule guardrail tests verify this track has a pre-registered rule
+    and remains blocked from promotion.
+  review_condition: >
+    Review after primary-window and 2022-slice evidence exists; do not relax
+    conditions post hoc.
+track_id: do_not_de_risk_optimization_track
+target_error_types:
+  - false_risk_off
+  - late_re_risk
+selection_rule:
+  pre_registered: true
+  result_can_be_candidate_without_rule: false
+  pass_conditions:
+    false_risk_off_cost_reduction: required
+    missed_upside_reduction: required
+    defensive_probe_regression_count: 0
+    actual_path_improved_probe_count_min: 2
+    slice_2022_not_worse: true
+  blocked_if:
+    - defensive_probe_regression_count_positive
+    - missed_risk_off_cost_worse
+    - diagnostic_only_signal_used_for_allocation
+allowed_usage:
+  - diagnostic_review
+  - defensive_overlay_neutralization_research
+blocked_usage:
+  - add_risk_allocation
+  - owner_review_candidate_without_owner_scope
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+safety_boundary:
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

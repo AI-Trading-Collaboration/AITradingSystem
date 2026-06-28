@@ -1,0 +1,128 @@
+schema_version: indicator_family_registry.v1
+policy_id: indicator_family_registry_v1
+status: INDICATOR_FAMILY_REGISTRY_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Audit indicator family action value before fitting combined first-layer
+    models, so weak or beta-only families do not enter an opaque composite.
+  intended_effect: >
+    Make family-level PIT, label and blocked-usage boundaries reviewable.
+  validation_evidence: >
+    Indicator family ablation runner and contract tests verify required family
+    coverage, PIT requirement and diagnostic-only output.
+  review_condition: >
+    Review before adding a family to a combined model or using ablation output
+    as candidate evidence.
+families:
+  - family_name: trend_persistence
+    features:
+      - qqq_trend_persistence_20d
+      - qqq_trend_persistence_60d
+    PIT_required: true
+    allowed_labels:
+      - do_not_de_risk
+      - stay_constructive
+    blocked_usage:
+      - direct_weight
+      - promotion
+      - production
+      - broker
+  - family_name: relative_strength
+    features:
+      - qqq_vs_sgov_relative_strength
+      - semiconductor_relative_strength_placeholder
+    PIT_required: true
+    allowed_labels:
+      - stay_constructive
+      - add_risk
+    blocked_usage:
+      - defensive_overlay_without_contract
+      - direct_weight
+      - promotion
+      - production
+      - broker
+  - family_name: volatility_compression
+    features:
+      - realized_vol_20d
+      - realized_vol_percentile_60d
+    PIT_required: true
+    allowed_labels:
+      - do_not_de_risk
+      - add_risk
+    blocked_usage:
+      - TQQQ_increase_without_veto
+      - direct_weight
+      - promotion
+      - production
+      - broker
+  - family_name: drawdown_recovery
+    features:
+      - drawdown_depth
+      - recovery_slope_10d
+    PIT_required: true
+    allowed_labels:
+      - do_not_de_risk
+      - re_risk_allowed
+      - stay_constructive
+    blocked_usage:
+      - active_add_risk_without_veto
+      - promotion
+      - production
+      - broker
+  - family_name: breadth_participation
+    features:
+      - breadth_participation_placeholder
+      - equal_weight_confirmation_placeholder
+    PIT_required: true
+    allowed_labels:
+      - stay_constructive
+      - add_risk
+    blocked_usage:
+      - direct_weight
+      - production
+      - broker
+  - family_name: rates_liquidity
+    features:
+      - rate_change_20d
+      - cash_yield_proxy
+    PIT_required: true
+    allowed_labels:
+      - risk_off
+      - do_not_de_risk
+    blocked_usage:
+      - return_boost_without_same_risk_check
+      - direct_weight
+      - production
+      - broker
+  - family_name: event_risk
+    features:
+      - event_risk_flag
+      - known_macro_event_window
+    PIT_required: true
+    allowed_labels:
+      - risk_off
+      - growth_allowed
+      - tqqq_allowed
+    blocked_usage:
+      - add_risk_allocation
+      - direct_weight
+      - promotion
+      - production
+      - broker
+ablation_questions:
+  - do_not_de_risk_help
+  - stay_constructive_help
+  - add_risk_help
+  - false_add_risk_reduction
+  - only_2023_plus_effective
+  - primary_window_and_2022_slice_pass
+  - actual_path_improved
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

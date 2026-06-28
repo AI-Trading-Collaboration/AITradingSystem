@@ -1,0 +1,185 @@
+schema_version: indicator_family_ablation_matrix.v1
+report_type: indicator_family_ablation_matrix
+status: INDICATOR_FAMILY_ABLATION_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: NOT_REQUIRED_REGISTRY_ONLY
+summary:
+  family_count: 7
+  diagnostic_only: true
+  combined_model_training_allowed: false
+  allocation_candidate_count: 0
+family_rows:
+- family_name: trend_persistence
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - do_not_de_risk
+  - stay_constructive
+  blocked_usage:
+  - direct_weight
+  - promotion
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: relative_strength
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - stay_constructive
+  - add_risk
+  blocked_usage:
+  - defensive_overlay_without_contract
+  - direct_weight
+  - promotion
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: volatility_compression
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - do_not_de_risk
+  - add_risk
+  blocked_usage:
+  - TQQQ_increase_without_veto
+  - direct_weight
+  - promotion
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: drawdown_recovery
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - do_not_de_risk
+  - re_risk_allowed
+  - stay_constructive
+  blocked_usage:
+  - active_add_risk_without_veto
+  - promotion
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: breadth_participation
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - stay_constructive
+  - add_risk
+  blocked_usage:
+  - direct_weight
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: rates_liquidity
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - risk_off
+  - do_not_de_risk
+  blocked_usage:
+  - return_boost_without_same_risk_check
+  - direct_weight
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+- family_name: event_risk
+  feature_count: 2
+  PIT_required: true
+  allowed_labels:
+  - risk_off
+  - growth_allowed
+  - tqqq_allowed
+  blocked_usage:
+  - add_risk_allocation
+  - direct_weight
+  - promotion
+  - production
+  - broker
+  do_not_de_risk_help: PENDING_REAL_ABLATION
+  stay_constructive_help: PENDING_REAL_ABLATION
+  add_risk_help: PENDING_REAL_ABLATION
+  false_add_risk_reduction: PENDING_REAL_ABLATION
+  only_2023_plus_effective: PENDING_REAL_ABLATION
+  primary_window_and_2022_slice_pass: PENDING_REAL_ABLATION
+  actual_path_improved: PENDING_REAL_ABLATION
+  diagnostic_only: true
+  candidate_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: indicator_family_registry_v1
+  model_version: indicator_family_ablation_registry_only_v1
+  threshold_policy: do_not_de_risk_selection_rule_v1+risk_on_veto_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: family_ablation_diagnostic_only_no_candidate_selection
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_diagnostic_only_no_candidate_selection

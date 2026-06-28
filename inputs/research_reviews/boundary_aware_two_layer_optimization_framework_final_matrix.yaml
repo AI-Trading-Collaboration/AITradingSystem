@@ -1,0 +1,95 @@
+schema_version: boundary_aware_two_layer_optimization_framework_final_matrix.v1
+report_type: boundary_aware_two_layer_optimization_framework_final_matrix
+status: BASE_OVERLAY_VETO_FRAMEWORK_READY
+generated_at: '2026-06-28T00:00:00Z'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+summary:
+  boundary_contract_status: BOUNDARY_CONTRACT_READY
+  signal_usage_matrix_status: SIGNAL_USAGE_MATRIX_V2_READY_PROMOTION_BLOCKED
+  channel_policy_status: CHANNEL_POLICY_READY
+  base_overlay_veto_framework_status: BASE_OVERLAY_VETO_FRAMEWORK_READY
+  indicator_family_ablation_status: INDICATOR_FAMILY_ABLATION_READY
+  do_not_derisk_track_status: DO_NOT_DERISK_TRACK_READY
+  risk_on_veto_track_status: RISK_ON_VETO_TRACK_READY
+  return_seeking_diagnostic_log_status: RETURN_SEEKING_DIAGNOSTIC_LOG_READY
+  allocation_candidate_count: 0
+  dynamic_promotion_status: BLOCKED
+status_flags:
+  - BOUNDARY_CONTRACT_READY
+  - CHANNEL_POLICY_READY
+  - BASE_OVERLAY_VETO_FRAMEWORK_READY
+  - INDICATOR_FAMILY_ABLATION_READY
+  - DO_NOT_DERISK_TRACK_READY
+  - RISK_ON_VETO_TRACK_READY
+  - RETURN_SEEKING_DIAGNOSTIC_LOG_READY
+validation_summary:
+  ruff: PASS
+  compileall: PASS
+  focused_parallel_pytest: PASS
+  governance_parallel_pytest: PASS
+  commands:
+    - python -m ruff check src tests
+    - python -m compileall -q src tests
+    - python -m pytest -n 16 --dist loadfile tests/test_two_layer_boundary_contract.py tests/test_two_layer_policy_compiler.py tests/test_two_layer_error_attribution.py tests/test_channel_aware_actual_path_evaluator.py tests/test_boundary_aware_selection_rules.py tests/test_research_audit_metadata.py
+    - python -m pytest -n 16 --dist loadfile tests/test_research_window_contracts.py tests/test_research_artifact_governance.py tests/test_task_register_consistency.py tests/test_report_index.py tests/test_documentation_contract.py
+artifacts:
+  boundary_contract:
+    - config/research/two_layer_strategy_boundary_contract.yaml
+    - docs/research/two_layer_strategy_boundary_contract.md
+  signal_usage_matrix_v2:
+    - inputs/research_reviews/first_layer_signal_usage_matrix_v2.yaml
+    - docs/research/first_layer_signal_usage_matrix_v2.md
+  channel_policy:
+    - config/research/first_layer_channel_policy.yaml
+  base_overlay_veto:
+    - config/research/base_overlay_veto_policy_schema.yaml
+    - docs/research/base_overlay_veto_policy_design.md
+  indicator_family_ablation:
+    - config/research/indicator_family_registry.yaml
+    - docs/research/indicator_family_registry_review.md
+    - docs/research/indicator_family_ablation_review.md
+    - inputs/research_reviews/indicator_family_ablation_matrix.yaml
+  tracks:
+    - config/research/do_not_de_risk_selection_rule.yaml
+    - docs/research/do_not_de_risk_optimization_track.md
+    - config/research/risk_on_veto_policy.yaml
+    - docs/research/risk_on_veto_optimization_track.md
+  diagnostic_log:
+    - config/research/return_seeking_diagnostic_forward_log.yaml
+    - docs/research/return_seeking_diagnostic_forward_log_spec.md
+  closeout:
+    - docs/research/boundary_aware_two_layer_optimization_framework_closeout.md
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: boundary_aware_two_layer_framework
+  frozen_channels:
+    - defensive
+    - return_seeking_diagnostic
+    - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: indicator_family_registry_v1
+  model_version: boundary_aware_two_layer_framework_v1
+  threshold_policy: base_overlay_veto_policy_schema_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: do_not_de_risk_selection_rule_v1+risk_on_veto_policy_v1
+  candidate_count: 0
+  pre_registered_selection_rule: boundary_aware_two_layer_framework_no_candidate_selection

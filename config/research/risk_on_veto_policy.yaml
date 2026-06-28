@@ -1,0 +1,51 @@
+schema_version: risk_on_veto_policy.v1
+policy_id: risk_on_veto_policy_v1
+status: RISK_ON_VETO_TRACK_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Return-seeking diagnostics showed drawdown regression and beta/TQQQ
+    dependence. Risk-on veto research should first reduce false add-risk.
+  intended_effect: >
+    Block growth overlay, TQQQ delta and add-risk when risk-off, volatility,
+    event, trend-break or TQQQ vetoes are active.
+  validation_evidence: >
+    Boundary tests and compiler tests verify veto precedence over growth
+    overlay and TQQQ deltas.
+  review_condition: >
+    Review before any risk-on signal is allowed outside diagnostic logging.
+track_id: risk_on_veto_optimization_track
+veto_types:
+  - risk_off_veto
+  - volatility_veto
+  - event_risk_veto
+  - trend_break_veto
+  - tqqq_veto
+selection_rule:
+  pre_registered: true
+  result_can_be_candidate_without_rule: false
+  pass_conditions:
+    false_add_risk_cost_reduction: required
+    defensive_probe_regression_reduction: required
+    TQQQ_stress_risk_not_worse: true
+    captured_upside_not_fully_eliminated: true
+  blocked_if:
+    - defensive_probe_regression_worse
+    - TQQQ_stress_risk_worse
+    - upside_eliminated_by_veto
+veto_effect:
+  growth_overlay: 0
+  TQQQ_delta: 0
+  add_risk: blocked
+blocked_usage:
+  - standalone_return_boost
+  - promotion
+  - paper_shadow
+  - production
+  - broker
+safety_boundary:
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

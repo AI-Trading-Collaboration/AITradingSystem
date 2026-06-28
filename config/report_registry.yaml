@@ -21081,6 +21081,180 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: two_layer_strategy_boundary_contract
+    title: Two-Layer Strategy Boundary Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed boundary contract
+    artifact_globs:
+      - config/research/two_layer_strategy_boundary_contract.yaml
+      - docs/research/two_layer_strategy_boundary_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Boundary contract changes after first-layer channel, second-layer boundary, error type, or diagnostic/allocation boundary changes.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_signal_usage_matrix_v2
+    title: First-Layer Signal Usage Matrix V2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked signal usage matrix v2
+    artifact_globs:
+      - inputs/research_reviews/first_layer_signal_usage_matrix_v2.yaml
+      - docs/research/first_layer_signal_usage_matrix_v2.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Signal usage matrix v2 changes after channel, allowed usage, blocked usage, required veto, diagnostic-only, or can-emit-weights contracts change.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_channel_policy
+    title: First-Layer Channel Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed channel policy
+    artifact_globs:
+      - config/research/first_layer_channel_policy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Channel policy changes after defensive, return-seeking diagnostic, or risk-veto channel duties change.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: base_overlay_veto_policy_schema
+    title: Base Overlay Veto Policy Schema
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed base overlay veto schema
+    artifact_globs:
+      - config/research/base_overlay_veto_policy_schema.yaml
+      - docs/research/base_overlay_veto_policy_design.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Base/overlay/veto schema changes after base weights, overlay deltas, veto rules, caps, or output contract changes.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_ablation
+    title: Indicator Family Ablation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - config/research/indicator_family_registry.yaml
+      - docs/research/indicator_family_registry_review.md
+      - docs/research/indicator_family_ablation_review.md
+      - inputs/research_reviews/indicator_family_ablation_matrix.yaml
+      - outputs/research_trends/indicator_family_ablation/indicator_family_ablation_summary.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Indicator family ablation changes after family registry, allowed labels, blocked usage, or ablation questions change.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: do_not_de_risk_optimization_track
+    title: Do-Not-De-Risk Optimization Track
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed do-not-de-risk selection rule
+    artifact_globs:
+      - config/research/do_not_de_risk_selection_rule.yaml
+      - docs/research/do_not_de_risk_optimization_track.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Do-not-de-risk track changes after target error types, pass conditions, blockers, or allowed/blocked usage changes.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_optimization_track
+    title: Risk-On Veto Optimization Track
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed risk-on veto policy
+    artifact_globs:
+      - config/research/risk_on_veto_policy.yaml
+      - docs/research/risk_on_veto_optimization_track.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-on veto track changes after veto types, veto effect, pass conditions, or blocked usage changes.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: return_seeking_diagnostic_forward_log
+    title: Return-Seeking Diagnostic Forward Log
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed return-seeking diagnostic forward log
+    artifact_globs:
+      - config/research/return_seeking_diagnostic_forward_log.yaml
+      - docs/research/return_seeking_diagnostic_forward_log_spec.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Forward log spec changes after allowed fields, blocked fields, diagnostic-only boundary, or outcome fields change.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: boundary_aware_two_layer_framework_closeout
+    title: Boundary-Aware Two-Layer Framework Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual tracked closeout review for TRADING-1906_to_1945
+    artifact_globs:
+      - docs/research/boundary_aware_two_layer_owner_review_template.md
+      - docs/research/boundary_aware_two_layer_optimization_framework_closeout.md
+      - inputs/research_reviews/boundary_aware_two_layer_optimization_framework_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Boundary-aware closeout changes after boundary contract, policy compiler, error attribution, ablation, selection rule, owner template, or final matrix changes.
+    owner_action: review_boundary_aware_two_layer_framework_artifact
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: upper_state_label_feature_reset_protocol
     title: Upper-State Label Feature Reset Protocol
     group: research

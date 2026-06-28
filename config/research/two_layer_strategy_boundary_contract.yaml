@@ -1,0 +1,178 @@
+schema_version: two_layer_strategy_boundary_contract.v1
+policy_id: two_layer_strategy_boundary_contract_v1
+status: BOUNDARY_CONTRACT_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-1806 to 1885 rejected a universal first-layer trend state and
+    blocked gated integration. This contract separates first-layer signal
+    channels from second-layer portfolio mapping before any future research
+    evaluates action value.
+  intended_effect: >
+    Prevent add-risk diagnostics from contaminating defensive overlays, require
+    risk veto priority over growth overlays, and keep all current outputs
+    research-only.
+  validation_evidence: >
+    Boundary guardrail tests validate signal usage, no raw indicator access in
+    the second layer, diagnostic-only return-seeking behavior, veto precedence
+    and promotion blockers.
+  review_condition: >
+    Review before changing channel allowed usage, enabling an allocation signal,
+    changing second-layer overlay deltas, or allowing any owner-review candidate.
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+first_layer_contract:
+  can_emit_weights: false
+  channels:
+    defensive_channel:
+      channel: defensive
+      allowed_outputs:
+        - risk_off
+        - defensive_hold
+        - do_not_de_risk
+        - re_risk_allowed
+      blocked_outputs:
+        - add_risk
+        - high_confidence_risk_on
+        - risk_on_diagnostic
+        - tqqq_signal
+      allowed_usage:
+        - defensive_overlay
+        - drawdown_control_probe
+        - limited_adjustment_defensive_baseline
+      blocked_usage:
+        - growth_overlay
+        - add_risk_allocation
+        - TQQQ_increase
+        - owner_review_candidate
+        - promotion
+        - paper_shadow
+        - production
+        - broker
+      required_veto: []
+      diagnostic_only: false
+      can_emit_weights: false
+    return_seeking_diagnostic_channel:
+      channel: return_seeking_diagnostic
+      allowed_outputs:
+        - stay_constructive
+        - add_risk
+        - risk_on_diagnostic
+      blocked_outputs:
+        - defensive_overlay_signal
+        - target_weights
+      allowed_usage:
+        - forward_diagnostic_log
+        - return_seeking_action_value_research
+        - indicator_family_review
+      blocked_usage:
+        - defensive_overlay
+        - allocation
+        - owner_review_candidate
+        - paper_shadow
+        - promotion
+        - broker
+        - production
+      required_veto:
+        - risk_off_veto_clear
+        - volatility_veto_clear
+        - event_risk_veto_clear
+        - trend_break_veto_clear
+      diagnostic_only: true
+      can_emit_weights: false
+    risk_veto_channel:
+      channel: risk_veto
+      allowed_outputs:
+        - growth_allowed
+        - tqqq_allowed
+        - add_risk_allowed
+        - veto_reasons
+      blocked_outputs:
+        - target_weights
+        - direct_allocation_delta
+      allowed_usage:
+        - risk_veto
+        - growth_overlay_blocker
+        - TQQQ_blocker
+      blocked_usage:
+        - standalone_allocation
+        - return_boost
+        - promotion
+        - paper_shadow
+        - production
+        - broker
+      required_veto: []
+      diagnostic_only: false
+      can_emit_weights: false
+second_layer_contract:
+  allowed_inputs:
+    - first_layer_channel_outputs
+    - signal_usage_matrix_v2
+    - channel_policy_v1
+    - base_overlay_veto_policy_schema_v1
+  blocked_raw_indicator_inputs:
+    - QQQ_momentum
+    - VIX
+    - SMH_relative_strength
+    - rates
+    - AI_trend_score
+    - breadth
+  raw_indicators_allowed: false
+  components:
+    - base_portfolio
+    - defensive_overlay
+    - growth_overlay
+    - risk_veto
+  base_portfolio:
+    QQQ: 0.60
+    SGOV: 0.40
+    TQQQ: 0.00
+  overlay_rules:
+    defensive_overlay_uses_only_defensive_channel: true
+    growth_overlay_requires_risk_veto_clear: true
+    growth_overlay_current_status: schema_ready_not_enabled_as_candidate
+    risk_veto_priority: highest
+  output_contract:
+    long_only: true
+    sum_to_one: true
+    emit_audit_trace: true
+    target_weights_are_research_only: true
+evaluation_contract:
+  target_error_types:
+    - false_risk_off
+    - missed_risk_off
+    - false_add_risk
+    - late_re_risk
+    - beta_only_improvement
+  primary_window_first: true
+  legacy_window_role: comparison_only
+  target_path_metrics_role: diagnostic_only
+probe_vs_candidate_boundary:
+  probes_are_diagnostic: true
+  candidate_requires_pre_registered_selection_rule: true
+  owner_review_candidate_allowed: false
+diagnostic_vs_allocation_boundary:
+  diagnostic_signal_can_emit_weights: false
+  allocation_candidate_requires:
+    - non_diagnostic_signal_contract
+    - pre_registered_selection_rule
+    - risk_veto_clear
+    - owner_scope_review
+  current_allocation_candidate_count: 0
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  manual_review_required: true
+  dynamic_promotion_status: BLOCKED

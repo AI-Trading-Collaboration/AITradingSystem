@@ -1,0 +1,76 @@
+schema_version: base_overlay_veto_policy_schema.v1
+policy_id: base_overlay_veto_policy_schema_v1
+status: BASE_OVERLAY_VETO_FRAMEWORK_READY
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Define a second-layer base + overlay + veto structure without allowing raw
+    indicator reinterpretation or current promotion candidates.
+  intended_effect: >
+    Make target-weight compilation deterministic, long-only, sum-to-one and
+    auditable while risk veto blocks growth overlays.
+  validation_evidence: >
+    Policy compiler tests validate long-only sum-to-one output, veto blocking,
+    diagnostic signal blocking, TQQQ and QQQ-equivalent caps, and audit trace.
+  review_condition: >
+    Review before changing base weights, overlay deltas, caps or allowing a
+    diagnostic signal to become allocation-capable.
+asset_universe:
+  - QQQ
+  - SGOV
+  - TQQQ
+base_portfolio:
+  weights:
+    QQQ: 0.60
+    SGOV: 0.40
+    TQQQ: 0.00
+defensive_overlay_delta:
+  risk_off:
+    QQQ: -0.30
+    SGOV: 0.30
+    TQQQ: 0.00
+  defensive_hold:
+    QQQ: -0.15
+    SGOV: 0.15
+    TQQQ: 0.00
+growth_overlay_delta:
+  stay_constructive:
+    QQQ: 0.05
+    SGOV: -0.05
+    TQQQ: 0.00
+  add_risk:
+    QQQ: 0.10
+    SGOV: -0.10
+    TQQQ: 0.00
+  risk_on_diagnostic:
+    QQQ: 0.05
+    SGOV: -0.10
+    TQQQ: 0.05
+veto_rules:
+  risk_off_veto_blocks_growth: true
+  volatility_veto_blocks_tqqq: true
+  event_risk_veto_blocks_growth: true
+  trend_break_veto_blocks_growth: true
+  tqqq_veto_blocks_tqqq: true
+  active_veto_sets_growth_overlay_to_zero: true
+caps:
+  TQQQ_max_weight: 0.05
+  QQQ_equivalent_exposure_max: 0.75
+  turnover_max: 0.25
+second_layer_input_contract:
+  raw_indicators_allowed: false
+  allowed_inputs:
+    - signal_contract
+    - signal_state
+    - veto_state
+output_contract:
+  long_only: true
+  sum_to_one: true
+  emit_audit_trace: true
+  research_only: true
+safety_boundary:
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED
