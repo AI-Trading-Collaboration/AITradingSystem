@@ -1,5 +1,7 @@
 # TRADING-1786 to 1805 First-Layer V2 Defensive Probe Regression Diagnosis
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS`

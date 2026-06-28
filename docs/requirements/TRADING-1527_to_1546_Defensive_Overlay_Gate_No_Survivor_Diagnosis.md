@@ -1,5 +1,7 @@
 # TRADING-1527 to 1546 Defensive Overlay Gate and No-Survivor Diagnosis
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS`

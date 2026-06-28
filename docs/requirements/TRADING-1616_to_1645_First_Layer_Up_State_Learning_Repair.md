@@ -1,5 +1,7 @@
 # TRADING-1616 to 1645 First-Layer Up-State Learning Repair
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR`

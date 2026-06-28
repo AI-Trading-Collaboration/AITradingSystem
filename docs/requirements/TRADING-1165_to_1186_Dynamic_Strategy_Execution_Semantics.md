@@ -1,5 +1,7 @@
 # TRADING-1165 to 1186 Dynamic Strategy Execution Semantics
 
+最后更新：2026-06-28
+
 ## 背景
 
 近期策略复核发现，多个动态策略可能在回测和报告链路中被隐含压缩为

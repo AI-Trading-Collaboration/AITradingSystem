@@ -1,5 +1,7 @@
 # TRADING-1187 to 1200 Codex Execution Semantics Repair and Dynamic Rebacktest
 
+最后更新：2026-06-28
+
 ## 背景
 
 TRADING-1165～1186 已经建立 execution semantics 审计层，并明确当前 master status 为

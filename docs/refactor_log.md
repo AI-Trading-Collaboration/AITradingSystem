@@ -1,5 +1,58 @@
 # Refactor Log
 
+## 2026-06-28 Daily Incremental Refactor
+
+- 检查时间：2026-06-28 11:41 Asia/Tokyo。
+- 起始 HEAD：`592dc68e050daeb5be9c75a5bca46f993ccd6654` (`docs: record TRADING-1087 cache-only rerun blocker`)。本轮启动时发现既有 TRADING-1087 文档改动；owner 授权自动化处理后，已判定为有意义治理记录并先行提交，再继续本轮重构巡检。
+- 最近一次合格重构基线提交：`a502a432d8c3206d5be0326a7f245e1398652a76` (`refactor: record AITradingSystem growth tilt CLI refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `69d0f598cf2bafea3ebc1c7ec7d6784dd909f141`。
+- 评估范围：`a502a432d8c3206d5be0326a7f245e1398652a76..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 execution semantics、external validation、dynamic strategy actual-path rebacktest、PIT / walk-forward / event taxonomy / cost / stress / regime audit、first-layer v2 / two-lane diagnostic research、report registry、artifact catalog、system flow 和 research-only CLI adapters。主要维护风险是 `src/ai_trading_system/cli_commands/research_execution_semantics.py` 新增后已约 1000 行，并在多个 command wrapper 中重复 date range parsing 与 AI regime start default 组装。
+- 本轮变更文件：
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-1886_Daily_Incremental_Refactor_Execution_Semantics_CLI_Boundary.md`
+  - `docs/requirements/TRADING-1887_Docs_Freshness_Metadata_Restoration.md`
+  - `docs/requirements/TRADING-1087_External_Request_Incremental_Refresh_Guardrails.md`
+  - `docs/requirements/TRADING-1119_to_1128_Balanced_Core_Forward_Aging_Launch.md`
+  - `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`
+  - `docs/requirements/TRADING-1141_to_1154_External_Validation_Gate_Balanced_Core_Forward_Aging_Launch.md`
+  - `docs/requirements/TRADING-1155_to_1164_Manual_External_Platform_Evidence_and_Signoff.md`
+  - `docs/requirements/TRADING-1165_to_1186_Dynamic_Strategy_Execution_Semantics.md`
+  - `docs/requirements/TRADING-1187_to_1200_Codex_Execution_Semantics_Repair_and_Dynamic_Rebacktest.md`
+  - `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`
+  - `docs/requirements/TRADING-1221_to_1235_Execution_Semantics_Actual_Path_Rebacktest_Evidence_Snapshot.md`
+  - `docs/requirements/TRADING-1527_to_1546_Defensive_Overlay_Gate_No_Survivor_Diagnosis.md`
+  - `docs/requirements/TRADING-1547_to_1586_Policy_Aware_First_Layer_Trend_Calibration.md`
+  - `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`
+  - `docs/requirements/TRADING-1646_to_1665_Research_Window_Extension_Validation.md`
+  - `docs/requirements/TRADING-1666_to_1705_Upper_State_Label_Feature_Reset.md`
+  - `docs/requirements/TRADING-1706_to_1715_Research_Window_Adoption_Closeout.md`
+  - `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`
+  - `docs/requirements/TRADING-1736_to_1765_First_Layer_V2_Label_Feature_Model_Reset.md`
+  - `docs/requirements/TRADING-1766_to_1785_First_Layer_Walk_Forward_Coverage_Rebuild.md`
+  - `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`
+  - `docs/requirements/TRADING-1806_to_1820_First_Layer_V2_Closeout_And_Lane_Separation_Policy.md`
+  - `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/cli_commands/research_execution_semantics.py`
+- 重构理由：execution semantics CLI adapter 同时承载 generic builder commands、rebacktest、actual-path owner review、policy sensitivity、PIT audit、walk-forward、event taxonomy、risk timing、cost/cash、stress、regime 和 artifact governance review wrappers。重复在每个 wrapper 内解析 `as_of`、`start_date`、`end_date` 并硬编码 `date(2022, 12, 1)` 会提高 AI regime 默认窗口维护成本。集中到 `_date_range_kwargs` / `_as_of_kwargs` 并复用底层 `DEFAULT_AI_REGIME_BACKTEST_START`，可以让 CLI adapter 与 execution semantics policy 常量保持一致。
+- 行为影响：预期无外部行为变化；`aits research strategies ...` 下 execution semantics 相关命令名、参数、默认路径、artifact path、report schema、status/safety fields、date 参数格式错误处理和 FAIL/PASS 语义保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent real report，因此未额外运行 `aits validate-data` 或生成新的 data quality sidecar。既有 execution semantics data-dependent commands 仍由底层 builder 执行同源数据质量检查并披露 AI regime / date range。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理现有 CLI adapter 内部 helper，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src/ai_trading_system/cli_commands/research_execution_semantics.py`：PASS。
+  - `python -m compileall src/ai_trading_system/cli_commands/research_execution_semantics.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests/test_execution_semantics.py tests/test_execution_semantics_rebacktest_gate.py tests/test_event_override_execution_semantics.py tests/test_no_lookahead_execution_semantics.py tests/test_target_actual_position_path.py tests/test_strategy_execution_policy_registry.py tests/test_documentation_contract.py tests/test_task_register_consistency.py`：PASS，42 passed。
+  - `python -m ai_trading_system.cli research strategies execution-semantics-rebacktest --help`：PASS，manual date-range command 仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research strategies dynamic-strategy-execution-semantics-contract --help`：PASS，generic builder command 仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research strategies event-override-ex-ante-taxonomy-review --help`：PASS，as-of-only command 仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research strategies research-artifact-governance-review --help`：PASS，as-of-only governance command 仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：初次 FAIL，发现 21 个近期 requirements 文档缺少 `最后更新` 元数据；已登记 TRADING-1887、补齐元数据并复验 PASS，438 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py tests/test_task_register_consistency.py`：PASS，10 passed。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs/task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。
+- 遇到的 blocker：无。启动时的 dirty worktree 经 owner 明确授权处理；其中 TRADING-1087 文档变更被判定为有意义治理记录并已单独提交，未混入本轮重构实现。Docs freshness 初次失败属于本轮增量文档有效性缺口，已按 task register discipline 登记 TRADING-1887 并修复；未降低 docs freshness 规则，未创建 waiver。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/execution_semantics.py` 超大模块中的 report writer / policy loader / matrix builder 边界，以及 `research_execution_semantics.py` 是否需要在外部 command surface 不变的前提下拆分 manual review、actual-path audit 和 governance review adapters；不得在同一低风险切片中改变投资解释或报告契约。
+- 本轮重构实现提交 SHA：待本轮本地提交后回填。
+
 ## 2026-06-26 Daily Incremental Refactor
 
 - 检查时间：2026-06-26 08:10 Asia/Tokyo。

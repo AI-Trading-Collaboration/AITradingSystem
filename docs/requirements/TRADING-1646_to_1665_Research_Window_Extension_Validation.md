@@ -1,5 +1,7 @@
 # TRADING-1646 to 1665 Research Window Extension and Multi-Window Validation
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1646_to_1665_RESEARCH_WINDOW_EXTENSION_VALIDATION`

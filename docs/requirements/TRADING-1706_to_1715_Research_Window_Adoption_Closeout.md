@@ -1,5 +1,7 @@
 # TRADING-1706 to 1715 Research Window Adoption Closeout
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT`

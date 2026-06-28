@@ -1,5 +1,7 @@
 # TRADING-1221 to 1235 Execution Semantics Actual-Path Rebacktest Evidence Snapshot
 
+最后更新：2026-06-28
+
 ## 背景
 
 TRADING-1187～1200 已经生成 execution-semantics-aware actual-path rebacktest

@@ -1,5 +1,7 @@
 # TRADING-1821 to 1885 Two-Lane Optimization Follow-up Roadmap
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Parent scope: `TRADING-1821_to_1885_TWO_LANE_OPTIMIZATION_FOLLOWUP_ROADMAP`

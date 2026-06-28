@@ -1,5 +1,7 @@
 # TRADING-1155 to 1164 Manual External Platform Evidence and Signoff
 
+最后更新：2026-06-28
+
 ## Background
 
 TRADING-1129 to 1140 established the external validation and reconciliation chain, and

@@ -1,5 +1,7 @@
 # TRADING-1736 to 1765 First-Layer V2 Label Feature Model Reset
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET`

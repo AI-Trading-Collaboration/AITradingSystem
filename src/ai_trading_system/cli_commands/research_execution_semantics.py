@@ -12,6 +12,7 @@ from rich.console import Console
 from ai_trading_system.execution_semantics import (
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
+    DEFAULT_AI_REGIME_BACKTEST_START,
     DEFAULT_ARTIFACT_GOVERNANCE_OUTPUT_ROOT,
     DEFAULT_CASH_YIELD_MODEL_PATH,
     DEFAULT_CONTROLLED_GROWTH_COMPONENT_CONFIG_PATH,
@@ -210,9 +211,7 @@ def _make_execution_semantics_command(
             "output_root": output_root,
             "strategy_id": strategy_id,
             "execution_policy_id": execution_policy_id,
-            "as_of_date": _parse_optional_date(as_of),
-            "start_date": _parse_optional_date(start_date) or date(2022, 12, 1),
-            "end_date": _parse_optional_date(end_date),
+            **_date_range_kwargs(as_of, start_date, end_date),
         }
         if docs_path is not None:
             kwargs["docs_path"] = docs_path
@@ -333,9 +332,7 @@ def _execution_semantics_rebacktest_command(
         output_root=output_root,
         strategy_ids=strategy or list(DEFAULT_EXECUTION_REBACKTEST_STRATEGY_IDS),
         execution_policy_id=execution_policy_id,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
         enable_staleness_filter=enable_staleness_filter,
         stale_action=stale_action,
         include_repaired_watch_only=include_repaired_watch_only,
@@ -408,9 +405,7 @@ def _dynamic_actual_path_policy_sensitivity_review_command(
         output_root=output_root,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Dynamic actual-path policy sensitivity", payload)
 
@@ -461,9 +456,7 @@ def _actual_path_edge_attribution_command(
         objective_config_path=objective_config_path,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Actual-path edge attribution", payload)
 
@@ -543,9 +536,7 @@ def _pit_data_availability_audit_command(
         run_id=run_id,
         docs_path=docs_path,
         inventory_path=inventory_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("PIT data availability audit", payload)
 
@@ -598,9 +589,7 @@ def _dynamic_strategy_walk_forward_validation_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Dynamic strategy walk-forward validation", payload)
 
@@ -647,7 +636,7 @@ def _event_override_ex_ante_taxonomy_review_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
+        **_as_of_kwargs(as_of),
     )
     _print_execution_semantics_payload("Event override ex-ante taxonomy review", payload)
 
@@ -696,9 +685,7 @@ def _risk_timing_quality_review_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Risk-off risk-on timing quality review", payload)
 
@@ -751,9 +738,7 @@ def _transaction_cost_cash_yield_audit_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Transaction cost cash yield audit", payload)
 
@@ -802,9 +787,7 @@ def _stress_risk_metrics_review_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload("Stress risk metrics review", payload)
 
@@ -853,9 +836,7 @@ def _regime_segmentation_baseline_expansion_review_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
-        start_date=_parse_optional_date(start_date) or date(2022, 12, 1),
-        end_date=_parse_optional_date(end_date),
+        **_date_range_kwargs(as_of, start_date, end_date),
     )
     _print_execution_semantics_payload(
         "Regime segmentation baseline expansion review",
@@ -897,7 +878,7 @@ def _research_artifact_governance_review_command(
         run_id=run_id,
         docs_path=docs_path,
         yaml_path=yaml_path,
-        as_of_date=_parse_optional_date(as_of),
+        **_as_of_kwargs(as_of),
     )
     _print_execution_semantics_payload("Research artifact governance review", payload)
 
@@ -908,6 +889,23 @@ def _call_builder(
 ) -> dict[str, object]:
     accepted = set(inspect.signature(builder).parameters)
     return builder(**{key: value for key, value in kwargs.items() if key in accepted})
+
+
+def _date_range_kwargs(
+    as_of: str | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> dict[str, date | None]:
+    return {
+        "as_of_date": _parse_optional_date(as_of),
+        "start_date": _parse_optional_date(start_date)
+        or DEFAULT_AI_REGIME_BACKTEST_START,
+        "end_date": _parse_optional_date(end_date),
+    }
+
+
+def _as_of_kwargs(as_of: str | None) -> dict[str, date | None]:
+    return {"as_of_date": _parse_optional_date(as_of)}
 
 
 def _print_execution_semantics_payload(label: str, payload: dict[str, object]) -> None:

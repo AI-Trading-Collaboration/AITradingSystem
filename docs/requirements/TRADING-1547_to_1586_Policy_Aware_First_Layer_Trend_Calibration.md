@@ -1,5 +1,7 @@
 # TRADING-1547 to 1586 Policy-Aware First-Layer Trend Calibration
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION`

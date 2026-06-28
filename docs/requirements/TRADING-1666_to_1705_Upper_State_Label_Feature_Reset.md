@@ -1,5 +1,7 @@
 # TRADING-1666 to 1705 Upper-State Label / Feature Reset
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET`

@@ -1,5 +1,7 @@
 # TRADING-1087: External Request Incremental Refresh Guardrails
 
+最后更新：2026-06-28
+
 ## 背景
 
 2026-06-26 外部请求审查确认，`Marketstack` 免费月度额度被每日价格

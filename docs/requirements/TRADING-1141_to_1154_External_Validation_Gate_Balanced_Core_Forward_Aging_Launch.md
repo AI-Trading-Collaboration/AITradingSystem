@@ -1,5 +1,7 @@
 # TRADING-1141 to 1154 External Validation Gate And Balanced Core Forward-Aging Launch
 
+最后更新：2026-06-28
+
 ## Background
 
 TRADING-1129 to 1140 established the external backtest validation and

@@ -1,5 +1,7 @@
 # TRADING-1806 to 1820 First-Layer V2 Closeout and Lane Separation Policy
 
+最后更新：2026-06-28
+
 ## 状态
 
 - Task id: `TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY`

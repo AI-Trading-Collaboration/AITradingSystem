@@ -1,5 +1,7 @@
 # TRADING-1129 to 1140 External Backtest Validation Reconciliation
 
+最后更新：2026-06-28
+
 ## Background
 
 The system now has two research-only forward-aging observation strategies:
