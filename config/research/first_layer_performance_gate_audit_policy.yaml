@@ -1,22 +1,26 @@
-schema_version: first_layer_performance_gate_audit_policy.v1
-policy_id: first_layer_performance_gate_audit_policy_v1
+schema_version: first_layer_performance_gate_acceptance_audit_policy.v2
+policy_id: first_layer_performance_gate_acceptance_audit_policy_v2
 status: pilot_baseline
+task_id: TRADING-2274_FIRST_LAYER_PERFORMANCE_GATE_ACCEPTANCE_AUDIT
 owner: research_governance
 policy_metadata:
   rationale: >
     Audit whether current first-layer performance gates add marginal utility to
-    full two-layer actual-path outcomes instead of only filtering candidates by
-    local first-layer diagnostics.
+    complete two-layer actual-path outcomes after TRADING-2270 current-state,
+    TRADING-2272 objective validation redesign and TRADING-2273 challenger
+    matrix work.
   intended_effect: >
     Compare no_gate, relaxed_gate, current_gate and strict_gate counterfactual
-    acceptance decisions for each current performance gate using existing
-    actual-path rows from frozen second-layer probes.
+    acceptance decisions for each mandatory performance gate, using existing
+    frozen second-layer actual-path rows where candidate-level evidence exists
+    and explicitly marking challenger, probability and dependency evidence gaps.
   validation_evidence: >
-    Focused tests cover gate acceptance, utility classification, rejected
-    candidate counterfactuals, artifact writing and CLI registration.
+    Focused tests cover mandatory gate presence, utility classification, action
+    enum enforcement, challenger actual-path limitations, artifact writing and
+    CLI registration.
   review_condition: >
-    Review before changing active first-layer coverage-aware selection rules or
-    moving any gate from hard stop to owner review.
+    Owner review is required before any recommended gate action can change the
+    active first-layer selection rule, promotion gate or production boundary.
 actual_path_utility_proxy:
   status: pilot_diagnostic_only
   formula: >
@@ -29,25 +33,52 @@ actual_path_utility_proxy:
   rationale: >
     Only actual-path annual return, daily-equity drawdown and turnover are
     available for every first-layer policy x frozen second-layer probe row.
-    The score is a diagnostic comparison proxy, not a validated utility
+    The score is a diagnostic comparison proxy, not a validated promotion
     boundary.
 marginal_utility_thresholds:
   positive_delta_min: 0.005
   neutral_abs_delta_max: 0.005
   material_opportunity_cost_min: 0.01
+recommended_action_policy:
+  allowed_actions:
+    - keep_as_hard_gate
+    - keep_as_performance_gate
+    - relax_threshold
+    - tighten_threshold
+    - convert_to_owner_review
+    - convert_to_score_penalty
+    - remove_gate
+  action_scope: owner_review_recommendation_only_not_active_policy
 gate_modes:
-  coverage_pass_rule:
-    failure_mode_reduced: late_window_only_or_2023_plus_overfit
   actual_path_improved_probe_count_min:
     failure_mode_reduced: weak_or_non_general_actual_path_improvement
   no_major_regression_in_defensive_probe:
     failure_mode_reduced: defensive_or_drawdown_control_regression
+  2022_slice_not_worse_than_flat_reference:
+    failure_mode_reduced: 2022_stress_recovery_slice_regression
   net_of_cost_not_worse:
     failure_mode_reduced: turnover_or_cost_drag_hidden_by_gross_return
-  2022_slice_not_worse_than_flat_reference:
-    failure_mode_reduced: stress_recovery_slice_regression
-  same_risk_comparison_reported:
-    failure_mode_reduced: same_risk_frontier_blind_spot
+  not_2023_plus_only:
+    failure_mode_reduced: late_window_only_or_2023_plus_overfit
+  not_beta_dependency:
+    failure_mode_reduced: qqq_beta_dependency_blind_spot
+  not_tqqq_dependency:
+    failure_mode_reduced: tqqq_leverage_dependency_blind_spot
+  probability_threshold_0_55:
+    failure_mode_reduced: low_confidence_probability_acceptance
+  probability_threshold_0_60:
+    failure_mode_reduced: high_confidence_probability_threshold_instability
+  all_slices_not_worse:
+    failure_mode_reduced: hidden_regime_slice_regression
+  no_slice_regression:
+    failure_mode_reduced: available_slice_regression
+hard_boundary_gates_excluded_from_performance_waiver:
+  - pit_safety
+  - no_lookahead
+  - data_quality
+  - actual_path_required
+  - owner_approval
+  - production_boundary
 safety_boundary:
   research_only: true
   actual_path_required: true

@@ -41,6 +41,16 @@ from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
     run_defensive_preservation_lane_pack,
 )
+from ai_trading_system.equal_weight_proxy_data_fix import (
+    DEFAULT_DOWNLOAD_MANIFEST_PATH as DEFAULT_EQUAL_WEIGHT_PROXY_DOWNLOAD_MANIFEST_PATH,
+)
+from ai_trading_system.equal_weight_proxy_data_fix import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EQUAL_WEIGHT_PROXY_OUTPUT_ROOT,
+)
+from ai_trading_system.equal_weight_proxy_data_fix import (
+    DEFAULT_REPAIR_START as DEFAULT_EQUAL_WEIGHT_PROXY_REPAIR_START,
+)
+from ai_trading_system.equal_weight_proxy_data_fix import run_equal_weight_proxy_data_fix_pack
 from ai_trading_system.first_layer_channel_closeout import (
     DEFAULT_ARCHIVE_POLICY_PATH as DEFAULT_FIRST_LAYER_CHANNEL_ARCHIVE_POLICY_PATH,
 )
@@ -88,10 +98,28 @@ from ai_trading_system.first_layer_objective_validation_redesign import (
     run_first_layer_objective_validation_redesign_pack,
 )
 from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_CHALLENGER_MATRIX_PATH as DEFAULT_PERF_GATE_AUDIT_CHALLENGER_MATRIX_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_CURRENT_STATE_SUMMARY_PATH as DEFAULT_PERF_GATE_AUDIT_CURRENT_STATE_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_FAILURE_TAXONOMY_PATH as DEFAULT_PERF_GATE_AUDIT_FAILURE_TAXONOMY_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_OBJECTIVE_VALIDATION_PATH as DEFAULT_PERF_GATE_AUDIT_OBJECTIVE_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_OUTPUT_ROOT,
 )
 from ai_trading_system.first_layer_performance_gate_audit import (
     DEFAULT_POLICY_PATH as DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_POLICY_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_RETURN_SEEKING_2022_CONTRAST_PATH as DEFAULT_PERF_GATE_AUDIT_2022_CONTRAST_PATH,
+)
+from ai_trading_system.first_layer_performance_gate_audit import (
+    DEFAULT_RETURN_SEEKING_BETA_TQQQ_ATTRIBUTION_PATH as DEFAULT_PERF_GATE_AUDIT_ATTRIBUTION_PATH,
 )
 from ai_trading_system.first_layer_performance_gate_audit import (
     run_first_layer_performance_gate_audit_pack,
@@ -674,9 +702,7 @@ def first_layer_defensive_regression_diagnosis_command(
     actual_path_path: Annotated[
         Path, typer.Option("--actual-path")
     ] = DEFAULT_ACTUAL_PATH_YAML_PATH,
-    prior_slice_path: Annotated[
-        Path, typer.Option("--prior-slice")
-    ] = DEFAULT_2022_SLICE_YAML_PATH,
+    prior_slice_path: Annotated[Path, typer.Option("--prior-slice")] = DEFAULT_2022_SLICE_YAML_PATH,
     coverage_final_path: Annotated[
         Path, typer.Option("--coverage-final")
     ] = DEFAULT_FINAL_MATRIX_YAML_PATH,
@@ -849,9 +875,7 @@ def indicator_family_ablation_command(
 
 @trends_app.command("channel-specific-v3")
 def channel_specific_first_layer_v3_command(
-    feature_set_path: Annotated[
-        Path, typer.Option("--feature-set")
-    ] = DEFAULT_FEATURE_SET_PATH,
+    feature_set_path: Annotated[Path, typer.Option("--feature-set")] = DEFAULT_FEATURE_SET_PATH,
     feature_set_locked_path: Annotated[
         Path, typer.Option("--feature-set-locked")
     ] = DEFAULT_FEATURE_SET_LOCKED_PATH,
@@ -867,9 +891,7 @@ def channel_specific_first_layer_v3_command(
     pit_feature_matrix_path: Annotated[
         Path, typer.Option("--pit-feature-matrix")
     ] = DEFAULT_CHANNEL_V3_PIT_FEATURE_MATRIX_PATH,
-    labels_path: Annotated[
-        Path, typer.Option("--labels-path")
-    ] = DEFAULT_CHANNEL_V3_LABELS_PATH,
+    labels_path: Annotated[Path, typer.Option("--labels-path")] = DEFAULT_CHANNEL_V3_LABELS_PATH,
     action_value_matrix_path: Annotated[
         Path, typer.Option("--action-value-matrix")
     ] = DEFAULT_CHANNEL_V3_ACTION_VALUE_MATRIX_PATH,
@@ -893,9 +915,7 @@ def channel_specific_first_layer_v3_command(
         Path, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_MARKETSTACK_PRICES_PATH,
     rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
-    output_root: Annotated[
-        Path, typer.Option("--output-root")
-    ] = DEFAULT_CHANNEL_V3_OUTPUT_ROOT,
+    output_root: Annotated[Path, typer.Option("--output-root")] = DEFAULT_CHANNEL_V3_OUTPUT_ROOT,
     as_of: Annotated[str | None, typer.Option("--as-of")] = None,
 ) -> None:
     payload = run_channel_specific_first_layer_v3_pack(
@@ -1097,9 +1117,7 @@ def participation_proxy_validation_command(
     processed_root: Annotated[
         Path, typer.Option("--processed-root")
     ] = DEFAULT_PARTICIPATION_PROCESSED_ROOT,
-    alpha_vantage_input_path: Annotated[
-        Path | None, typer.Option("--alpha-vantage-input")
-    ] = None,
+    alpha_vantage_input_path: Annotated[Path | None, typer.Option("--alpha-vantage-input")] = None,
     allow_network_trials: Annotated[
         bool, typer.Option("--allow-network-trials/--no-allow-network-trials")
     ] = False,
@@ -1187,9 +1205,7 @@ def first_layer_current_state_command(
 
 @trends_app.command("first-layer-proxy-coverage-audit")
 def first_layer_proxy_coverage_audit_command(
-    policy_path: Annotated[
-        Path, typer.Option("--policy")
-    ] = DEFAULT_PROXY_COVERAGE_POLICY_PATH,
+    policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_PROXY_COVERAGE_POLICY_PATH,
     free_feature_registry_path: Annotated[
         Path, typer.Option("--free-feature-registry")
     ] = DEFAULT_PROXY_COVERAGE_FREE_REGISTRY_PATH,
@@ -1233,6 +1249,40 @@ def first_layer_proxy_coverage_audit_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("First-layer proxy coverage audit", payload)
+
+
+@trends_app.command("equal-weight-proxy-data-fix")
+def equal_weight_proxy_data_fix_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    download_manifest_path: Annotated[
+        Path, typer.Option("--download-manifest")
+    ] = DEFAULT_EQUAL_WEIGHT_PROXY_DOWNLOAD_MANIFEST_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_EQUAL_WEIGHT_PROXY_OUTPUT_ROOT,
+    repair_start: Annotated[
+        str, typer.Option("--repair-start")
+    ] = DEFAULT_EQUAL_WEIGHT_PROXY_REPAIR_START.isoformat(),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    write_price_cache: Annotated[
+        bool, typer.Option("--write-price-cache/--no-write-price-cache")
+    ] = True,
+) -> None:
+    payload = run_equal_weight_proxy_data_fix_pack(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        download_manifest_path=download_manifest_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+        repair_start=date.fromisoformat(repair_start),
+        write_price_cache=write_price_cache,
+    )
+    _print_payload("Equal-weight proxy data fix", payload)
 
 
 @trends_app.command("first-layer-objective-validation-redesign")
@@ -1282,6 +1332,18 @@ def first_layer_performance_gate_audit_command(
     policy_path: Annotated[
         Path, typer.Option("--policy")
     ] = DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_POLICY_PATH,
+    current_state_summary_path: Annotated[
+        Path, typer.Option("--current-state-summary")
+    ] = DEFAULT_PERF_GATE_AUDIT_CURRENT_STATE_PATH,
+    failure_taxonomy_path: Annotated[
+        Path, typer.Option("--failure-taxonomy")
+    ] = DEFAULT_PERF_GATE_AUDIT_FAILURE_TAXONOMY_PATH,
+    objective_validation_path: Annotated[
+        Path, typer.Option("--objective-validation")
+    ] = DEFAULT_PERF_GATE_AUDIT_OBJECTIVE_PATH,
+    challenger_matrix_path: Annotated[
+        Path, typer.Option("--challenger-matrix")
+    ] = DEFAULT_PERF_GATE_AUDIT_CHALLENGER_MATRIX_PATH,
     actual_path_path: Annotated[
         Path, typer.Option("--actual-path")
     ] = DEFAULT_ACTUAL_PATH_YAML_PATH,
@@ -1300,18 +1362,30 @@ def first_layer_performance_gate_audit_command(
     coverage_final_path: Annotated[
         Path, typer.Option("--coverage-final")
     ] = DEFAULT_FINAL_MATRIX_YAML_PATH,
+    return_seeking_2022_contrast_path: Annotated[
+        Path, typer.Option("--return-seeking-2022-contrast")
+    ] = DEFAULT_PERF_GATE_AUDIT_2022_CONTRAST_PATH,
+    return_seeking_beta_tqqq_attribution_path: Annotated[
+        Path, typer.Option("--return-seeking-beta-tqqq-attribution")
+    ] = DEFAULT_PERF_GATE_AUDIT_ATTRIBUTION_PATH,
     output_root: Annotated[
         Path, typer.Option("--output-root")
     ] = DEFAULT_FIRST_LAYER_PERFORMANCE_GATE_AUDIT_OUTPUT_ROOT,
 ) -> None:
     payload = run_first_layer_performance_gate_audit_pack(
         policy_path=policy_path,
+        current_state_summary_path=current_state_summary_path,
+        failure_taxonomy_path=failure_taxonomy_path,
+        objective_validation_path=objective_validation_path,
+        challenger_matrix_path=challenger_matrix_path,
         actual_path_path=actual_path_path,
         coverage_simulation_path=coverage_simulation_path,
         slice_matrix_path=slice_matrix_path,
         defensive_inventory_path=defensive_inventory_path,
         selection_rule_path=selection_rule_path,
         coverage_final_path=coverage_final_path,
+        return_seeking_2022_contrast_path=return_seeking_2022_contrast_path,
+        return_seeking_beta_tqqq_attribution_path=return_seeking_beta_tqqq_attribution_path,
         output_root=output_root,
     )
     _print_payload("First-layer performance gate audit", payload)
@@ -1319,9 +1393,7 @@ def first_layer_performance_gate_audit_command(
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
 def first_layer_proxy_challenger_experiments_command(
-    policy_path: Annotated[
-        Path, typer.Option("--policy")
-    ] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
+    policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
     current_state_summary_path: Annotated[
         Path, typer.Option("--current-state-summary")
     ] = DEFAULT_PROXY_CHALLENGER_CURRENT_STATE_SUMMARY_PATH,
