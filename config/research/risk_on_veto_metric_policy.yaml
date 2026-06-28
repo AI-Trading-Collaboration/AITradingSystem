@@ -1,0 +1,84 @@
+schema_version: risk_on_veto_metric_policy.v1
+policy_id: risk_on_veto_metric_policy_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Veto-active rows may naturally have higher raw false-add-risk cost because
+    the veto is designed to fire in more dangerous environments. Reports must
+    separate raw active/inactive cost from the cost actually avoided by a
+    blocked add-risk reference.
+  intended_effect: >
+    Prevent raw active cost from being misread as veto failure and require
+    captured-upside tradeoff plus net benefit disclosure.
+  validation_evidence: >
+    TRADING-2006 to 2025 diagnostic summary and guardrail tests check that raw
+    cost, avoided cost, lost upside and net veto benefit remain separate fields.
+  review_condition: >
+    Review after enough forward diagnostic observations exist to calibrate
+    opportunity-cost and false-positive thresholds from out-of-sample evidence.
+risk_on_veto_metric_policy:
+  metric_role: observe_only_diagnostic
+  raw_false_add_risk_cost_when_veto_active:
+    source_field: false_add_risk_cost_proxy
+    filter: risk_on_veto_active == true
+    interpretation: >
+      Environment severity when the veto is active; not the same as benefit
+      caused by the veto.
+  raw_false_add_risk_cost_when_veto_inactive:
+    source_field: false_add_risk_cost_proxy
+    filter: risk_on_veto_active == false
+    interpretation: >
+      Baseline inactive environment cost used for comparison, not a direct
+      counterfactual for an individual veto event.
+  avoided_false_add_risk_cost_due_to_veto:
+    source_field: false_add_risk_cost_proxy
+    filter: risk_on_veto_active == true and would_have_add_risk_reference == true
+    aggregation:
+      - total
+      - mean_per_blocked_add_risk
+    interpretation: >
+      Cost avoided only when a reference first-layer path would have added risk
+      and the veto blocks that action.
+  captured_upside_lost_due_to_veto:
+    source_field: captured_upside_proxy
+    filter: risk_on_veto_active == true and would_have_add_risk_reference == true
+    aggregation:
+      - total
+      - mean_per_blocked_add_risk
+    interpretation: >
+      Upside not captured because the veto blocked the add-risk reference. This
+      policy treats the available captured-upside proxy as the opportunity-cost
+      component until a richer opportunity-cost model is reviewed.
+  net_veto_benefit:
+    formula: avoided_false_add_risk_cost_due_to_veto - captured_upside_lost_due_to_veto
+    aggregation:
+      - total
+      - mean_per_blocked_add_risk
+    interpretation: >
+      Positive values indicate the blocked reference avoided more false
+      add-risk cost than the captured-upside proxy lost. It is diagnostic only.
+  veto_hit_rate:
+    formula: blocked_add_risk_rows_with_positive_avoided_cost / blocked_add_risk_rows
+  veto_false_positive_rate:
+    formula: blocked_add_risk_rows_with_no_avoided_cost_and_positive_lost_upside / blocked_add_risk_rows
+  veto_false_negative_rate:
+    formula: unblocked_add_risk_reference_rows_with_positive_false_add_risk_cost / unblocked_add_risk_reference_rows
+  thresholds:
+    status: pilot_baseline
+    owner: research_governance
+    rationale: >
+      Pure sign tests are used only to classify diagnostic rates in the initial
+      observe-only log; they do not authorize selection, promotion, or weights.
+    false_add_risk_cost_positive_min: 0.0
+    captured_upside_positive_min: 0.0
+    net_veto_benefit_positive_min: 0.0
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  can_emit_weights: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

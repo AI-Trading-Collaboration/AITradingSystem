@@ -21521,6 +21521,95 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: risk_on_veto_diagnostic_contract
+    title: Risk-On Veto Diagnostic Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed risk-on veto diagnostic contract
+    artifact_globs:
+      - config/research/risk_on_veto_diagnostic_contract.yaml
+      - docs/research/risk_on_veto_diagnostic_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-on veto diagnostic contract changes after allowed/blocked usage, observe-only status, or no-allocation safety boundary changes.
+    owner_action: review_risk_on_veto_observe_only_diagnostic_contract
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_metric_policy
+    title: Risk-On Veto Metric Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed risk-on veto metric policy
+    artifact_globs:
+      - config/research/risk_on_veto_metric_policy.yaml
+      - docs/research/risk_on_veto_metric_definitions.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Metric policy changes after raw active cost, avoided cost, captured-upside lost, net benefit, hit-rate, or false-positive/negative definitions change.
+    owner_action: review_risk_on_veto_metric_policy
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_forward_log_spec
+    title: Risk-On Veto Forward Log Spec
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: manual governed risk-on veto forward log spec
+    artifact_globs:
+      - config/research/risk_on_veto_forward_log.yaml
+      - docs/research/risk_on_veto_forward_log_spec.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Forward log spec changes after allowed diagnostic fields, blocked allocation fields, append-only requirements, or outcome maturity rules change.
+    owner_action: review_risk_on_veto_forward_log_spec
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_observe_only_diagnostic
+    title: Risk-On Veto Observe-Only Diagnostic
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends risk-on-veto-diagnostic
+    artifact_globs:
+      - outputs/research_trends/risk_on_veto_diagnostic/risk_on_veto_episodes.csv
+      - outputs/research_trends/risk_on_veto_diagnostic/summary.json
+      - inputs/research_reviews/channel_specific_v3_closeout_reclassification.yaml
+      - docs/research/channel_specific_v3_closeout_reclassification.md
+      - inputs/research_reviews/do_not_de_risk_v3_archive.yaml
+      - docs/research/do_not_de_risk_v3_archive_review.md
+      - inputs/research_reviews/risk_on_veto_observe_only_diagnostic.yaml
+      - docs/research/risk_on_veto_observe_only_diagnostic_review.md
+      - inputs/research_reviews/risk_on_veto_2022_2023_behavior.yaml
+      - docs/research/risk_on_veto_2022_2023_behavior_review.md
+      - inputs/research_reviews/risk_on_veto_tradeoff_matrix.yaml
+      - docs/research/risk_on_veto_tradeoff_review.md
+      - inputs/research_reviews/risk_on_veto_return_seeking_diagnostic_compatibility.yaml
+      - docs/research/risk_on_veto_return_seeking_diagnostic_compatibility.md
+      - docs/research/risk_on_veto_observe_only_owner_brief.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Observe-only diagnostic changes after channel v3 predictions, baseline add-risk reference, metric policy, cached data quality, 2022/2023+ behavior, tradeoff, or archive status changes.
+    owner_action: review_risk_on_veto_observe_only_diagnostic
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: do_not_de_risk_optimization_track
     title: Do-Not-De-Risk Optimization Track
     group: research

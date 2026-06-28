@@ -88,6 +88,28 @@ from ai_trading_system.return_seeking_diagnostic_lane import (
     DEFAULT_RETURN_SEEKING_POLICY_PATH,
     run_return_seeking_diagnostic_lane_pack,
 )
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_CHANNEL_PIT_MATRIX_PATH as DEFAULT_RISK_ON_VETO_CHANNEL_PIT_MATRIX_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_CHANNEL_V3_COMPOSER_PATH as DEFAULT_RISK_ON_VETO_CHANNEL_V3_COMPOSER_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_DIAGNOSTIC_CONTRACT_PATH as DEFAULT_RISK_ON_VETO_DIAGNOSTIC_CONTRACT_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_FORWARD_LOG_SPEC_PATH as DEFAULT_RISK_ON_VETO_FORWARD_LOG_SPEC_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_METRIC_POLICY_PATH as DEFAULT_RISK_ON_VETO_METRIC_POLICY_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_RISK_ON_VETO_DIAGNOSTIC_OUTPUT_ROOT,
+)
+from ai_trading_system.risk_on_veto_diagnostic import (
+    DEFAULT_RISK_VETO_LABELS_PATH as DEFAULT_RISK_ON_VETO_LABELS_PATH,
+)
+from ai_trading_system.risk_on_veto_diagnostic import run_risk_on_veto_diagnostic_pack
 from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
 )
@@ -701,6 +723,60 @@ def channel_specific_first_layer_v3_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("Channel-specific first-layer v3", payload)
+
+
+@trends_app.command("risk-on-veto-diagnostic")
+def risk_on_veto_diagnostic_command(
+    diagnostic_contract_path: Annotated[
+        Path, typer.Option("--diagnostic-contract")
+    ] = DEFAULT_RISK_ON_VETO_DIAGNOSTIC_CONTRACT_PATH,
+    metric_policy_path: Annotated[
+        Path, typer.Option("--metric-policy")
+    ] = DEFAULT_RISK_ON_VETO_METRIC_POLICY_PATH,
+    forward_log_spec_path: Annotated[
+        Path, typer.Option("--forward-log-spec")
+    ] = DEFAULT_RISK_ON_VETO_FORWARD_LOG_SPEC_PATH,
+    risk_veto_labels_path: Annotated[
+        Path, typer.Option("--risk-veto-labels")
+    ] = DEFAULT_RISK_ON_VETO_LABELS_PATH,
+    channel_v3_composer_path: Annotated[
+        Path, typer.Option("--channel-v3-composer")
+    ] = DEFAULT_RISK_ON_VETO_CHANNEL_V3_COMPOSER_PATH,
+    channel_pit_matrix_path: Annotated[
+        Path, typer.Option("--channel-pit-matrix")
+    ] = DEFAULT_RISK_ON_VETO_CHANNEL_PIT_MATRIX_PATH,
+    baseline_composer_path: Annotated[
+        Path, typer.Option("--baseline-composer")
+    ] = DEFAULT_SECOND_LAYER_FROZEN_PREDICTIONS_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_RISK_ON_VETO_DIAGNOSTIC_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_risk_on_veto_diagnostic_pack(
+        diagnostic_contract_path=diagnostic_contract_path,
+        metric_policy_path=metric_policy_path,
+        forward_log_spec_path=forward_log_spec_path,
+        risk_veto_labels_path=risk_veto_labels_path,
+        channel_v3_composer_path=channel_v3_composer_path,
+        channel_pit_matrix_path=channel_pit_matrix_path,
+        baseline_composer_path=baseline_composer_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Risk-on veto observe-only diagnostic", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

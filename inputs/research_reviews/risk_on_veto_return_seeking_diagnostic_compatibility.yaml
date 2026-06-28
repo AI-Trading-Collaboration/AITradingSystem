@@ -1,0 +1,57 @@
+schema_version: risk_on_veto_return_seeking_diagnostic_compatibility.v1
+report_type: risk_on_veto_return_seeking_diagnostic_compatibility
+title: Risk-On Veto Return-Seeking Diagnostic Compatibility
+status: VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC
+generated_at: '2026-06-28T05:19:09+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  compatibility_status: VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC
+  can_block_return_seeking_diagnostic: false
+  can_emit_allocation: false
+  can_emit_weights: false
+  owner_review_allowed: false
+  promotion_allowed: false
+  blocked_add_risk_count: 347
+  net_veto_benefit_total: -2.343111
+  reason: 即使 compatible，也只能作为 return-seeking diagnostic blocker，不能输出 allocation。
+research_audit_metadata:
+  modified_layer: first_layer
+  modified_channel: risk_veto
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: risk_on_veto_v3_observe_only_diagnostic
+  threshold_policy: risk_on_veto_metric_policy_v1+risk_on_veto_diagnostic_contract_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: risk_on_veto_observe_only_diagnostic_v1
+  candidate_count: 0
+  pre_registered_selection_rule: risk_on_veto_v3_selection_rule_v1+risk_on_veto_metric_policy_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

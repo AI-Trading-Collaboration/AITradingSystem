@@ -1,0 +1,64 @@
+schema_version: risk_on_veto_diagnostic_contract.v1
+policy_id: risk_on_veto_diagnostic_contract_v1
+status: observe_only
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-1976 to 2005 left risk_on_veto as the only passing channel, but the
+    pass is a veto/blocker diagnostic rather than allocation evidence.
+  intended_effect: >
+    Preserve forward diagnostic value for false add-risk review while blocking
+    owner-review candidate status, portfolio weights, TQQQ allocation, paper
+    shadow, production and broker paths.
+  validation_evidence: >
+    TRADING-2006 to 2025 guardrail tests verify that the diagnostic cannot emit
+    weights, trade advice, promotion flags or allocation fields.
+  review_condition: >
+    Review before any future research tries to use risk_on_veto as an
+    allocation-capable signal or owner-review promotion evidence.
+risk_on_veto_diagnostic_contract:
+  status: observe_only
+  signal_type: veto
+  semantic_role: blocks_unwarranted_add_risk_or_growth_overlay
+  allowed_usage:
+    - return_seeking_diagnostic_review
+    - future_gated_overlay_blocker_research
+    - false_add_risk_analysis
+    - forward_diagnostic_logging
+  blocked_usage:
+    - allocation_signal
+    - add_risk_signal
+    - buy_signal
+    - target_weight_output
+    - trade_advice
+    - owner_review_candidate
+    - promotion_evidence
+    - paper_shadow_action
+    - production_action
+    - broker_action
+  allowed_families:
+    - volatility_compression
+    - rates_liquidity
+  archived_or_reference_only_families:
+    do_not_de_risk:
+      - drawdown_recovery
+  can_emit_weights: false
+  can_emit_trade_advice: false
+  can_enable_growth_overlay: false
+  can_enable_tqqq: false
+  owner_review_allowed: false
+  promotion_enabled: false
+  paper_shadow_enabled: false
+  production_enabled: false
+  broker_enabled: false
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  candidate_count: 0
+  owner_review_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

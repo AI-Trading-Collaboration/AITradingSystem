@@ -1,0 +1,61 @@
+schema_version: do_not_de_risk_v3_archive.v1
+report_type: do_not_de_risk_v3_archive
+title: Do-Not-De-Risk v3 Archive Review
+status: DO_NOT_DERISK_V3_ARCHIVED_NO_MATERIAL_IMPROVEMENT
+generated_at: '2026-06-28T05:19:09+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  archive_status: DO_NOT_DERISK_V3_ARCHIVED_NO_MATERIAL_IMPROVEMENT
+  do_not_de_risk_selection_status: DO_NOT_DERISK_FAIL
+  false_risk_off_reduction: false
+  missed_upside_reduction: false
+  2022_slice_not_worse: false
+  defensive_probe_regression_count: 8
+  next_model_allowed: false
+  allocation_allowed: false
+  owner_review_allowed: false
+  allowed_future_use:
+  - archived_research_evidence
+  - failure_attribution_reference
+  - future_reopen_only_with_new_feature_family_or_forward_evidence
+research_audit_metadata:
+  modified_layer: first_layer
+  modified_channel: risk_veto
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: risk_on_veto_v3_observe_only_diagnostic
+  threshold_policy: risk_on_veto_metric_policy_v1+risk_on_veto_diagnostic_contract_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: risk_on_veto_observe_only_diagnostic_v1
+  candidate_count: 0
+  pre_registered_selection_rule: risk_on_veto_v3_selection_rule_v1+risk_on_veto_metric_policy_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

@@ -1,0 +1,58 @@
+schema_version: risk_on_veto_forward_log.v1
+policy_id: risk_on_veto_forward_log_v1
+status: observe_only_log_spec_ready
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Risk-on veto can be monitored forward only as a diagnostic observation log.
+    The log must not become a paper-shadow action ledger or broker instruction.
+  intended_effect: >
+    Make future realized outcomes reviewable while preserving the no-allocation
+    and no-trade boundary.
+  validation_evidence: >
+    TRADING-2006 to 2025 guardrail tests verify allowed and blocked fields.
+  review_condition: >
+    Review before adding new fields, connecting the log to scheduler output, or
+    using forward observations as owner-review evidence.
+risk_on_veto_forward_log:
+  allowed_fields:
+    - date
+    - risk_on_veto_active
+    - veto_reasons
+    - confidence
+    - diagnostic_note
+    - future_1d_return
+    - future_5d_return
+    - future_10d_return
+    - future_20d_return
+    - future_max_drawdown
+    - avoided_false_add_risk_cost
+    - captured_upside_lost
+    - net_veto_benefit
+    - owner_note
+  blocked_fields:
+    - target_weights
+    - portfolio_weights
+    - trade_action
+    - paper_shadow_action
+    - broker_action
+    - recommended_allocation
+    - target_allocation
+    - qqq_weight
+    - sgov_weight
+    - tqqq_weight
+    - QQQ
+    - SGOV
+    - TQQQ
+  append_only_required: true
+  forward_realized_outcomes_can_be_blank_until_matured: true
+  owner_note_allowed: true
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  can_emit_weights: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED
