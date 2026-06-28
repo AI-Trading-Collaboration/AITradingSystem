@@ -51,7 +51,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。启动时的 dirty worktree 经 owner 明确授权处理；其中 TRADING-1087 文档变更被判定为有意义治理记录并已单独提交，未混入本轮重构实现。Docs freshness 初次失败属于本轮增量文档有效性缺口，已按 task register discipline 登记 TRADING-1887 并修复；未降低 docs freshness 规则，未创建 waiver。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/execution_semantics.py` 超大模块中的 report writer / policy loader / matrix builder 边界，以及 `research_execution_semantics.py` 是否需要在外部 command surface 不变的前提下拆分 manual review、actual-path audit 和 governance review adapters；不得在同一低风险切片中改变投资解释或报告契约。
-- 本轮重构实现提交 SHA：待本轮本地提交后回填。
+- 本轮重构实现提交 SHA：`acff890f01ef488a6d20bcbb3f58c75ea76d217a`。
 
 ## 2026-06-26 Daily Incremental Refactor
 
