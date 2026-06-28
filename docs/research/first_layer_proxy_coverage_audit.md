@@ -22,8 +22,8 @@
 |`participation_proxy_free_v1`|free_feature_family|True|registry_only|`NOT_TRUE_PIT_BREADTH`|False|
 |`smh_to_qqq`|etf_ratio_price_proxy|True|covered|`PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH`|False|
 |`soxx_to_qqq`|etf_ratio_price_proxy|True|covered|`PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH`|False|
-|`rsp_to_spy`|etf_ratio_price_proxy|False|missing_components:RSP|`PIT_BLOCKED_BY_PRICE_COVERAGE`|False|
-|`qqqe_to_qqq`|etf_ratio_price_proxy|False|missing_components:QQQE|`PIT_BLOCKED_BY_PRICE_COVERAGE`|False|
+|`rsp_to_spy`|etf_ratio_price_proxy|True|covered|`PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH`|False|
+|`qqqe_to_qqq`|etf_ratio_price_proxy|True|covered|`PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH`|False|
 |`sector_etf_relative_strength`|etf_ratio_price_proxy|False|missing_components:XLK|`PIT_BLOCKED_BY_PRICE_COVERAGE`|False|
 |`alpha_vantage_listing_status`|external_low_cost_proxy_gate|False|missing_or_unverified|`PIT_WARNING_CURRENT_SNAPSHOT_NOT_INDEX_MEMBERSHIP`|False|
 |`fmp_etf_holdings_low_cost_gate`|external_low_cost_proxy_gate|False|missing_or_unverified|`PIT_WARNING_UNTIL_HOLDING_DATE_REPORTED_DATE_KNOWN_AT_CONFIRMED`|False|
@@ -31,6 +31,6 @@
 ## Audit notes
 
 - proxy_count: `12`
-- data_available_count: `6`
-- primary_window_covered_count: `5`
+- data_available_count: `8`
+- primary_window_covered_count: `7`
 - `replacement_for_true_breadth=false` 是本报告的核心结论；任何后续 challenger experiment 都必须继续把 proxy 与 true breadth 区分开。

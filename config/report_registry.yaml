@@ -22822,6 +22822,27 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: equal_weight_proxy_data_fix
+    title: Equal-Weight Proxy Data Availability Fix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends equal-weight-proxy-data-fix
+    artifact_globs:
+      - docs/research/equal_weight_proxy_data_fix_report.md
+      - outputs/research_trends/equal_weight_proxy_data_fix/updated_proxy_coverage_matrix.json
+      - outputs/research_trends/equal_weight_proxy_data_fix/blocked_proxy_resolution_status.json
+      - outputs/research_trends/first_layer_proxy_coverage_audit/proxy_coverage_matrix.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Equal/cap proxy data repair should be regenerated after RSP, QQQE, ETF ratio policy, price cache, or free provider availability changes.
+    owner_action: review_equal_cap_price_proxy_availability_without_treating_it_as_true_breadth
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_objective_validation_redesign
     title: First-Layer Objective And Validation Redesign
     group: research

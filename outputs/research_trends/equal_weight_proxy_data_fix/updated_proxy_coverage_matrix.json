@@ -2,6 +2,11 @@
   "actual_path_required": true,
   "anchor_date": "2022-11-30",
   "anchor_event": "ChatGPT public launch",
+  "artifact_paths": {
+    "first_layer_proxy_coverage_audit_doc": "D:\\Work\\AITradingSystem\\docs\\research\\first_layer_proxy_coverage_audit.md",
+    "first_layer_proxy_coverage_audit_yaml": "D:\\Work\\AITradingSystem\\inputs\\research_reviews\\first_layer_proxy_coverage_audit.yaml",
+    "proxy_coverage_matrix": "D:\\Work\\AITradingSystem\\outputs\\research_trends\\first_layer_proxy_coverage_audit\\proxy_coverage_matrix.json"
+  },
   "as_of": "2026-06-26",
   "broker_action": "none",
   "candidate_count": 0,

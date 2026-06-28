@@ -1,0 +1,40 @@
+{
+  "actual_path_required": true,
+  "as_of": "2026-06-26",
+  "behavioral_impact": "RSP/SPY and QQQE/QQQ can be used only as equal/cap price diagnostic inputs; they do not provide historical constituent membership breadth.",
+  "blocked_reason": "price_proxy_not_constituent_membership",
+  "broker_action": "none",
+  "candidate_count": 0,
+  "dynamic_promotion_status": "BLOCKED",
+  "exit_condition": "Provide owner-approved true PIT breadth source with historical constituents, daily membership query, delisted securities, and known-at semantics.",
+  "generated_at": "2026-06-28T13:44:29+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "reopen_gate_allowed": false,
+  "replacement_for_true_breadth": false,
+  "report_type": "blocked_proxy_resolution_status",
+  "research_only": true,
+  "resolved_proxy_ids": [
+    "rsp_to_spy",
+    "qqqe_to_qqq"
+  ],
+  "risk": "ETF price ratios can hide constituent churn, survivorship, and concentration effects.",
+  "schema_version": "blocked_proxy_resolution_status.v1",
+  "status": "EQUAL_CAP_PRICE_PROXIES_RESOLVED_TRUE_BREADTH_STILL_BLOCKED",
+  "still_blocked_proxy_ids": [
+    "alpha_vantage_listing_status",
+    "fmp_etf_holdings_low_cost_gate",
+    "macro_event_calendar_free_v1",
+    "sector_etf_relative_strength"
+  ],
+  "target_path_metrics_role": "diagnostic_only",
+  "true_breadth_replaced": false,
+  "unresolved_target_symbols": [],
+  "validation_coverage": "cached data quality gate plus proxy coverage matrix rerun",
+  "validation_ready": false
+}

@@ -1481,6 +1481,12 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 |---|---|---|---|---|---|---|
 |`config/research/first_layer_proxy_coverage_audit_policy.yaml`<br/>`outputs/research_trends/first_layer_proxy_coverage_audit/proxy_coverage_matrix.json`<br/>`inputs/research_reviews/first_layer_proxy_coverage_audit.yaml`<br/>`docs/research/first_layer_proxy_coverage_audit.md`|`aits research trends first-layer-proxy-coverage-audit`|Free feature family registry、participation proxy registry、free data coverage matrix、participation PIT contract、FMP holdings gate、feature parquet cache、validated QQQ/SPY/SMH/SOXX price cache|Schema contract：status=`FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED`；每行包含 `data_available`、`history_start_date`、`primary_window_coverage`、`PIT_safe_or_not`、`survivorship_risk`、`expected_signal_role`、`replacement_for_true_breadth=false` 和 blocker；safety fields disabled|在 objective redesign / proxy challenger 前，审计哪些免费或低成本 proxy 有数据覆盖、哪些只是 diagnostic，以及为什么没有 proxy 可替代 true breadth|否，`production_effect=none`、`broker_action=none`|`PIT_SAFE_PRICE_PROXY_NOT_TRUE_BREADTH` 只表示 ETF price ratio 可作 price proxy；不是 historical constituents、不是 model-ready breadth，也不允许 reopen/promotion。|
 
+## TRADING-2274A Equal-Weight Proxy Data Availability Fix
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`docs/research/equal_weight_proxy_data_fix_report.md`<br/>`outputs/research_trends/equal_weight_proxy_data_fix/updated_proxy_coverage_matrix.json`<br/>`outputs/research_trends/equal_weight_proxy_data_fix/blocked_proxy_resolution_status.json`|`aits research trends equal-weight-proxy-data-fix --as-of 2026-06-26 --repair-start 2018-01-01`|validated cached QQQ/SPY/SMH/SOXX prices、Yahoo Finance via yfinance RSP/QQQE price probe、`data/raw/prices_daily.csv`、download manifest、TRADING-2271 proxy coverage audit inputs|Schema contract：status=`EQUAL_WEIGHT_PROXY_DATA_FIX_READY_PROMOTION_BLOCKED`；RSP/QQQE provider attempt、cache before/after、root cause、row count、checksum/manifest、updated coverage matrix 和 blocked status 均披露；`replacement_for_true_breadth=false`、safety fields disabled|修复 RSP/SPY 和 QQQE/QQQ equal/cap price proxy 的缓存覆盖，并生成 owner-review 诊断报告|否，`production_effect=none`、`broker_action=none`|RSP/SPY 或 QQQE/QQQ 覆盖 primary window 只代表 ETF price ratio diagnostic 可用；仍不是 historical constituent breadth，不能恢复 validation、promotion、paper-shadow、production 或 broker。|
+
 ## TRADING-2272 First-Layer Objective And Validation Redesign
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
