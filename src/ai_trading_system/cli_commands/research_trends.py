@@ -98,6 +98,24 @@ from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_SCORECARD_CONFIG_PATH,
     run_first_layer_policy_aware_calibration_pack,
 )
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    DEFAULT_CURRENT_STATE_SUMMARY_PATH as DEFAULT_PROXY_CHALLENGER_CURRENT_STATE_SUMMARY_PATH,
+)
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    DEFAULT_OBJECTIVE_VALIDATION_PATH as DEFAULT_PROXY_CHALLENGER_OBJECTIVE_VALIDATION_PATH,
+)
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_PROXY_CHALLENGER_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    DEFAULT_POLICY_PATH as DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
+)
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    DEFAULT_PROXY_COVERAGE_AUDIT_PATH as DEFAULT_PROXY_CHALLENGER_PROXY_COVERAGE_AUDIT_PATH,
+)
+from ai_trading_system.first_layer_proxy_challenger_experiments import (
+    run_first_layer_proxy_challenger_experiments_pack,
+)
 from ai_trading_system.first_layer_proxy_coverage_audit import (
     DEFAULT_COVERAGE_MATRIX_PATH as DEFAULT_PROXY_COVERAGE_MATRIX_PATH,
 )
@@ -1247,6 +1265,44 @@ def first_layer_objective_validation_redesign_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("First-layer objective validation redesign", payload)
+
+
+@trends_app.command("first-layer-proxy-challenger-experiments")
+def first_layer_proxy_challenger_experiments_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
+    current_state_summary_path: Annotated[
+        Path, typer.Option("--current-state-summary")
+    ] = DEFAULT_PROXY_CHALLENGER_CURRENT_STATE_SUMMARY_PATH,
+    objective_validation_path: Annotated[
+        Path, typer.Option("--objective-validation")
+    ] = DEFAULT_PROXY_CHALLENGER_OBJECTIVE_VALIDATION_PATH,
+    proxy_coverage_audit_path: Annotated[
+        Path, typer.Option("--proxy-coverage-audit")
+    ] = DEFAULT_PROXY_CHALLENGER_PROXY_COVERAGE_AUDIT_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_PROXY_CHALLENGER_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_first_layer_proxy_challenger_experiments_pack(
+        policy_path=policy_path,
+        current_state_summary_path=current_state_summary_path,
+        objective_validation_path=objective_validation_path,
+        proxy_coverage_audit_path=proxy_coverage_audit_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("First-layer proxy challenger experiments", payload)
 
 
 @trends_app.command("channel-specific-v4")

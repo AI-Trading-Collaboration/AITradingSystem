@@ -1,0 +1,356 @@
+{
+  "actual_path_required": true,
+  "actual_signal_end": "2026-03-27",
+  "actual_signal_start": "2023-02-22",
+  "anchor_date": "2022-11-30",
+  "anchor_event": "ChatGPT public launch",
+  "artifact_paths": {
+    "first_layer_proxy_challenger_experiments_doc": "D:\\Work\\AITradingSystem\\docs\\research\\first_layer_proxy_challenger_experiments.md",
+    "first_layer_proxy_challenger_experiments_json": "D:\\Work\\AITradingSystem\\outputs\\research_trends\\first_layer_proxy_challengers\\first_layer_proxy_challenger_experiments.json",
+    "first_layer_proxy_challenger_experiments_yaml": "D:\\Work\\AITradingSystem\\inputs\\research_reviews\\first_layer_proxy_challenger_experiments.yaml"
+  },
+  "as_of": "2026-06-26",
+  "broker_action": "none",
+  "candidate_count": 0,
+  "data_quality": {
+    "as_of": "2026-06-26",
+    "checked_at": "2026-06-28T12:59:25.079104+00:00",
+    "error_count": 0,
+    "expected_price_tickers": [
+      "QQQ",
+      "SPY",
+      "SMH",
+      "SOXX"
+    ],
+    "expected_rate_series": [],
+    "passed": true,
+    "price_checksum": "5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d",
+    "price_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+    "price_row_count": 56184,
+    "rate_checksum": "279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a",
+    "rate_row_count": 6352,
+    "rates_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+    "secondary_prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "default_backtest_start": "2022-12-01",
+  "dynamic_promotion_status": "BLOCKED",
+  "experiments": [
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": true,
+      "expected_signal_role": "frozen_baseline_control",
+      "experiment_id": "baseline",
+      "label": "Baseline frozen first-layer composer v2",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE"
+      ],
+      "proxy_not_true_breadth_ids": [],
+      "required_proxy_ids": [],
+      "target_objective_terms": [
+        "false_risk_on_cost",
+        "false_risk_off_cost",
+        "regime_flip_penalty",
+        "benchmark_consistency_score"
+      ],
+      "validation_readiness_reason": "offline_validation_ready_not_promotion_ready",
+      "validation_ready": true,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    },
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": true,
+      "expected_signal_role": "trend_persistence_and_flip_stability_diagnostic",
+      "experiment_id": "baseline_plus_trend_structure",
+      "label": "Baseline plus trend-structure diagnostics",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE"
+      ],
+      "proxy_not_true_breadth_ids": [],
+      "required_proxy_ids": [],
+      "target_objective_terms": [
+        "regime_flip_penalty",
+        "drawdown_warning_lead_time",
+        "recovery_delay_days"
+      ],
+      "validation_readiness_reason": "offline_validation_ready_not_promotion_ready",
+      "validation_ready": true,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    },
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": true,
+      "expected_signal_role": "stress_detection_and_risk_on_veto_diagnostic",
+      "experiment_id": "volatility_regime",
+      "label": "Volatility regime challenger",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE",
+        "PROXIES_ARE_NOT_TRUE_PIT_BREADTH"
+      ],
+      "proxy_not_true_breadth_ids": [
+        "volatility_compression_free_v1"
+      ],
+      "required_proxy_ids": [
+        "volatility_compression_free_v1"
+      ],
+      "target_objective_terms": [
+        "false_risk_on_cost",
+        "drawdown_warning_lead_time"
+      ],
+      "validation_readiness_reason": "offline_validation_ready_not_promotion_ready",
+      "validation_ready": true,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    },
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": true,
+      "expected_signal_role": "recovery_and_risk_appetite_diagnostic",
+      "experiment_id": "risk_appetite",
+      "label": "Risk appetite challenger",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE",
+        "PROXIES_ARE_NOT_TRUE_PIT_BREADTH"
+      ],
+      "proxy_not_true_breadth_ids": [
+        "rates_liquidity_free_v1",
+        "smh_to_qqq",
+        "soxx_to_qqq"
+      ],
+      "required_proxy_ids": [
+        "rates_liquidity_free_v1",
+        "smh_to_qqq",
+        "soxx_to_qqq"
+      ],
+      "target_objective_terms": [
+        "false_risk_off_cost",
+        "recovery_delay_days",
+        "benchmark_consistency_score"
+      ],
+      "validation_readiness_reason": "offline_validation_ready_not_promotion_ready",
+      "validation_ready": true,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    },
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": false,
+      "expected_signal_role": "breadth_like_divergence_diagnostic_not_true_breadth",
+      "experiment_id": "equal_cap_weight_divergence",
+      "label": "Equal / cap-weight divergence challenger",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE",
+        "PROXIES_ARE_NOT_TRUE_PIT_BREADTH"
+      ],
+      "proxy_not_true_breadth_ids": [
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "required_proxy_ids": [
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "target_objective_terms": [
+        "benchmark_consistency_score",
+        "false_risk_on_cost",
+        "false_risk_off_cost"
+      ],
+      "validation_readiness_reason": "blocked_by_missing_proxy_inputs",
+      "validation_ready": false,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    },
+    {
+      "baseline_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "failure_event_count": 1089,
+        "false_risk_off_cost": 499,
+        "false_risk_on_cost": 198,
+        "regime_flip_penalty": 1.956242,
+        "stress_slice_coverage": "3/4 slices covered"
+      },
+      "broker_action": "none",
+      "data_available": false,
+      "expected_signal_role": "combined_offline_proxy_diagnostic",
+      "experiment_id": "combined_proxy",
+      "label": "Combined proxy challenger",
+      "missing_objective_terms": [],
+      "missing_proxy_ids": [
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "paper_shadow_allowed": false,
+      "production_allowed": false,
+      "promotion_allowed": false,
+      "promotion_blockers": [
+        "ROW_VALIDATION_READY_IS_OFFLINE_EXPERIMENT_ONLY",
+        "PROMOTION_REQUIRES_OWNER_REVIEW_AND_SEPARATE_GATE",
+        "STRESS_VALIDATION_BLOCKED_BY_2022_SIGNAL_COVERAGE",
+        "PROXIES_ARE_NOT_TRUE_PIT_BREADTH"
+      ],
+      "proxy_not_true_breadth_ids": [
+        "volatility_compression_free_v1",
+        "rates_liquidity_free_v1",
+        "smh_to_qqq",
+        "soxx_to_qqq",
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "required_proxy_ids": [
+        "volatility_compression_free_v1",
+        "rates_liquidity_free_v1",
+        "smh_to_qqq",
+        "soxx_to_qqq",
+        "rsp_to_spy",
+        "qqqe_to_qqq"
+      ],
+      "target_objective_terms": [
+        "false_risk_on_cost",
+        "false_risk_off_cost",
+        "drawdown_warning_lead_time",
+        "recovery_delay_days",
+        "regime_flip_penalty",
+        "benchmark_consistency_score",
+        "stress_slice_minimum_requirements"
+      ],
+      "validation_readiness_reason": "blocked_by_missing_proxy_inputs",
+      "validation_ready": false,
+      "validation_ready_scope": "offline_challenger_experiment_only_not_promotion"
+    }
+  ],
+  "generated_at": "2026-06-28T12:59:25+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "objective_validation_status": "FIRST_LAYER_OBJECTIVE_VALIDATION_REDESIGN_READY_PROMOTION_BLOCKED",
+  "paper_shadow_allowed": false,
+  "policy_id": "first_layer_proxy_challenger_experiments_policy_v1",
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "proxy_coverage_status": "FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED",
+  "reopen_gate_allowed": false,
+  "report_type": "first_layer_proxy_challenger_experiments",
+  "requested_end": "latest",
+  "requested_start": "2022-12-01",
+  "research_audit_metadata": {
+    "boundary_contract_version": "first_layer_proxy_challenger_research_only_v1",
+    "candidate_count": 0,
+    "model_version": "first_layer_proxy_challenger_experiments_v1",
+    "modified_channel": "first_layer_proxy_challenger_experiments",
+    "modified_layer": "validation_only",
+    "threshold_policy": "first_layer_proxy_challenger_experiments_policy_v1"
+  },
+  "research_only": true,
+  "schema_version": "first_layer_proxy_challenger_experiments.v1",
+  "status": "FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS_READY_PROMOTION_BLOCKED",
+  "summary": {
+    "actual_signal_end": "2026-03-27",
+    "actual_signal_start": "2023-02-22",
+    "as_of": "2026-06-26",
+    "broker_action": "none",
+    "data_quality_status": "PASS_WITH_WARNINGS",
+    "experiment_count": 6,
+    "final_status": "FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS_READY_PROMOTION_BLOCKED",
+    "market_regime": "ai_after_chatgpt",
+    "missing_input_experiments": [
+      "equal_cap_weight_divergence",
+      "combined_proxy"
+    ],
+    "next_required_tasks": [
+      "owner_review_or_future_true_breadth_data"
+    ],
+    "objective_contract_status": "FIRST_LAYER_OBJECTIVE_VALIDATION_REDESIGN_READY_PROMOTION_BLOCKED",
+    "paper_shadow_allowed": false,
+    "production_allowed": false,
+    "promotion_allowed": false,
+    "promotion_allowed_count": 0,
+    "requested_end": "latest",
+    "requested_start": "2022-12-01",
+    "required_experiment_count": 6,
+    "stress_validation_allowed": false,
+    "true_breadth_replaced": false,
+    "validation_ready_count": 4,
+    "validation_ready_does_not_imply_promotion_allowed": true
+  },
+  "target_path_metrics_role": "diagnostic_only",
+  "title": "First-Layer Proxy Challenger Experiments",
+  "validation_ready": false
+}

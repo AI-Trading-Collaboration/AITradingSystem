@@ -1,0 +1,109 @@
+schema_version: first_layer_proxy_challenger_experiments_policy.v1
+policy_id: first_layer_proxy_challenger_experiments_policy_v1
+owner: research_governance
+status: pilot_experiment_matrix
+rationale: >
+  Convert the current-state failure taxonomy, proxy coverage audit and objective
+  validation contract into a reviewable first-layer challenger experiment matrix.
+intended_effect: >
+  Identify which challenger slices have enough local inputs for offline
+  experiment design while preserving the boundary that validation readiness is
+  not promotion, paper-shadow, production or broker readiness.
+validation_evidence: >
+  Focused tests cover the six required experiment rows, missing equal/cap-weight
+  proxy blockers, row-level validation readiness scope and fixed promotion gates.
+review_condition: >
+  Review before any challenger is trained, before adding paid true-breadth data,
+  or before changing first-layer active gates.
+market_regime: ai_after_chatgpt
+requested_window:
+  start: "2022-12-01"
+  end: latest
+data_quality_expected_price_tickers:
+  - QQQ
+  - SPY
+  - SMH
+  - SOXX
+validation_ready_scope: offline_challenger_experiment_only_not_promotion
+promotion_boundary:
+  validation_ready_does_not_imply_promotion_allowed: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+experiment_definitions:
+  - experiment_id: baseline
+    label: Baseline frozen first-layer composer v2
+    required_proxy_ids: []
+    target_objective_terms:
+      - false_risk_on_cost
+      - false_risk_off_cost
+      - regime_flip_penalty
+      - benchmark_consistency_score
+    expected_signal_role: frozen_baseline_control
+  - experiment_id: baseline_plus_trend_structure
+    label: Baseline plus trend-structure diagnostics
+    required_proxy_ids: []
+    target_objective_terms:
+      - regime_flip_penalty
+      - drawdown_warning_lead_time
+      - recovery_delay_days
+    expected_signal_role: trend_persistence_and_flip_stability_diagnostic
+  - experiment_id: volatility_regime
+    label: Volatility regime challenger
+    required_proxy_ids:
+      - volatility_compression_free_v1
+    target_objective_terms:
+      - false_risk_on_cost
+      - drawdown_warning_lead_time
+    expected_signal_role: stress_detection_and_risk_on_veto_diagnostic
+  - experiment_id: risk_appetite
+    label: Risk appetite challenger
+    required_proxy_ids:
+      - rates_liquidity_free_v1
+      - smh_to_qqq
+      - soxx_to_qqq
+    target_objective_terms:
+      - false_risk_off_cost
+      - recovery_delay_days
+      - benchmark_consistency_score
+    expected_signal_role: recovery_and_risk_appetite_diagnostic
+  - experiment_id: equal_cap_weight_divergence
+    label: Equal / cap-weight divergence challenger
+    required_proxy_ids:
+      - rsp_to_spy
+      - qqqe_to_qqq
+    target_objective_terms:
+      - benchmark_consistency_score
+      - false_risk_on_cost
+      - false_risk_off_cost
+    expected_signal_role: breadth_like_divergence_diagnostic_not_true_breadth
+  - experiment_id: combined_proxy
+    label: Combined proxy challenger
+    required_proxy_ids:
+      - volatility_compression_free_v1
+      - rates_liquidity_free_v1
+      - smh_to_qqq
+      - soxx_to_qqq
+      - rsp_to_spy
+      - qqqe_to_qqq
+    target_objective_terms:
+      - false_risk_on_cost
+      - false_risk_off_cost
+      - drawdown_warning_lead_time
+      - recovery_delay_days
+      - regime_flip_penalty
+      - benchmark_consistency_score
+      - stress_slice_minimum_requirements
+    expected_signal_role: combined_offline_proxy_diagnostic
+safety_boundary:
+  research_only: true
+  actual_path_required: true
+  target_path_metrics_role: diagnostic_only
+  primary_window_validated: false
+  reopen_gate_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
