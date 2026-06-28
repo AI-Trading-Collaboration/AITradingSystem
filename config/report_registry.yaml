@@ -22999,6 +22999,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_candidate_actual_path_validation
+    title: First-Layer Candidate-Level Actual-Path Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-candidate-actual-path-validation
+    artifact_globs:
+      - docs/research/candidate_actual_path_validation_report.md
+      - outputs/research_trends/first_layer_candidate_actual_path_validation/candidate_actual_path_matrix.json
+      - outputs/research_trends/first_layer_candidate_actual_path_validation/candidate_risk_attribution_matrix.json
+      - docs/research/candidate_state_reclassification_report.md
+      - outputs/research_trends/first_layer_candidate_actual_path_validation/updated_research_candidate_queue.json
+      - outputs/research_trends/first_layer_candidate_actual_path_validation/updated_owner_review_queue.json
+      - outputs/research_trends/first_layer_candidate_actual_path_validation/updated_offline_validation_queue.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Candidate-level actual-path validation should be regenerated after challenger matrix v2, boundary owner review, gate policy v2, active selection policy v2, or candidate signal artifacts change.
+    owner_action: review_reclassified_candidate_states_before_wf_neighborhood_search_or_offline_signal_generation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

@@ -69,6 +69,12 @@ from ai_trading_system.first_layer_boundary_candidate_owner_review import (
 from ai_trading_system.first_layer_boundary_candidate_owner_review import (
     run_first_layer_boundary_candidate_owner_review_pack,
 )
+from ai_trading_system.first_layer_candidate_actual_path_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_ACTUAL_PATH_VALIDATION_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_candidate_actual_path_validation import (
+    run_first_layer_candidate_actual_path_validation_pack,
+)
 from ai_trading_system.first_layer_challenger_matrix_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CHALLENGER_MATRIX_V2_OUTPUT_ROOT,
 )
@@ -1524,6 +1530,22 @@ def first_layer_boundary_owner_review_command(
         output_root=output_root,
     )
     _print_payload("First-layer boundary candidate owner review", payload)
+
+
+@trends_app.command("first-layer-candidate-actual-path-validation")
+def first_layer_candidate_actual_path_validation_command(
+    challenger_matrix_path: Annotated[
+        Path, typer.Option("--challenger-matrix")
+    ] = DEFAULT_PERF_GATE_AUDIT_CHALLENGER_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_CANDIDATE_ACTUAL_PATH_VALIDATION_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_candidate_actual_path_validation_pack(
+        challenger_matrix_path=challenger_matrix_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer candidate actual-path validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
