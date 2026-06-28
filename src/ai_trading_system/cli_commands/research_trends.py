@@ -32,6 +32,15 @@ from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
     run_defensive_preservation_lane_pack,
 )
+from ai_trading_system.first_layer_channel_closeout import (
+    DEFAULT_ARCHIVE_POLICY_PATH as DEFAULT_FIRST_LAYER_CHANNEL_ARCHIVE_POLICY_PATH,
+)
+from ai_trading_system.first_layer_channel_closeout import (
+    DEFAULT_FORWARD_MINIMAL_PLAN_PATH as DEFAULT_FIRST_LAYER_FORWARD_MINIMAL_PLAN_PATH,
+)
+from ai_trading_system.first_layer_channel_closeout import (
+    run_first_layer_channel_closeout_pack,
+)
 from ai_trading_system.first_layer_defensive_regression_diagnosis import (
     run_first_layer_defensive_regression_diagnosis_pack,
 )
@@ -777,6 +786,22 @@ def risk_on_veto_diagnostic_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("Risk-on veto observe-only diagnostic", payload)
+
+
+@trends_app.command("first-layer-channel-closeout")
+def first_layer_channel_closeout_command(
+    archive_policy_path: Annotated[
+        Path, typer.Option("--archive-policy")
+    ] = DEFAULT_FIRST_LAYER_CHANNEL_ARCHIVE_POLICY_PATH,
+    forward_minimal_plan_path: Annotated[
+        Path, typer.Option("--forward-minimal-plan")
+    ] = DEFAULT_FIRST_LAYER_FORWARD_MINIMAL_PLAN_PATH,
+) -> None:
+    payload = run_first_layer_channel_closeout_pack(
+        archive_policy_path=archive_policy_path,
+        forward_minimal_plan_path=forward_minimal_plan_path,
+    )
+    _print_payload("First-layer channel closeout", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

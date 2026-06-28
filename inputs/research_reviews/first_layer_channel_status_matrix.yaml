@@ -1,0 +1,262 @@
+schema_version: first_layer_channel_status_matrix.v1
+report_type: first_layer_channel_status_matrix
+title: First-Layer Channel Status Matrix
+status: FIRST_LAYER_CHANNEL_STATUS_MATRIX_READY_ARCHIVED
+generated_at: '2026-06-28T05:49:49+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: inherited_from_tracked_research_artifacts
+exact_or_proxy: exact
+summary:
+  channel_row_count: 8
+  candidate_count: 0
+  owner_review_allowed: false
+  forward_watch_allowed: false
+  promotion_allowed: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_channel_closeout
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: first_layer_channel_closeout_reopen_criteria_v1
+  threshold_policy: first_layer_channel_archive_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: first_layer_channel_reopen_criteria_v1
+  candidate_count: 0
+  pre_registered_selection_rule: first_layer_channel_reopen_criteria_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+rows:
+- channel_name: do_not_de_risk_v3
+  status: ARCHIVED
+  verdict: NO_MATERIAL_IMPROVEMENT
+  allowed_usage:
+  - historical_research_evidence
+  - failure_attribution_reference
+  blocked_usage:
+  - first_layer_candidate
+  - defensive_overlay_input
+  - owner_review
+  - forward_watch
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - false_risk_off_reduction_failed
+  - missed_upside_reduction_failed
+  - defensive_probe_regression
+  - 2022_slice_not_worse_failed
+  reopen_conditions:
+  - new_defensive_feature_family
+  - forward_evidence
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\do_not_de_risk_v3_archive.yaml
+  false_risk_off_reduction: false
+  defensive_probe_regression_count: 8
+  candidate_allowed: false
+- channel_name: risk_on_veto_v3
+  status: HISTORICAL_DIAGNOSTIC_ARCHIVE
+  verdict: NET_VETO_BENEFIT_NEGATIVE
+  allowed_usage:
+  - historical_diagnostic_evidence
+  - veto_metric_reference
+  - future_reopen_if_new_veto_family_or_forward_evidence
+  blocked_usage:
+  - allocation_signal
+  - growth_overlay_gate
+  - forward_watch_candidate
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - net_veto_benefit_total_negative
+  - veto_too_strict_for_return_seeking_diagnostic
+  - no_allocation_candidate
+  reopen_conditions:
+  - new_veto_family
+  - positive_forward_net_veto_benefit
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\risk_on_veto_observe_only_diagnostic.yaml
+  - D:\Work\AITradingSystem\inputs\research_reviews\risk_on_veto_tradeoff_matrix.yaml
+  - D:\Work\AITradingSystem\inputs\research_reviews\risk_on_veto_return_seeking_diagnostic_compatibility.yaml
+  net_veto_benefit_total: -2.343111
+  compatibility_status: VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC
+  forward_watch_candidate: false
+  can_emit_weights: false
+- channel_name: add_risk
+  status: NOT_SUPPORTED
+  verdict: NO_SELECTED_INDICATOR_FAMILY
+  allowed_usage: []
+  blocked_usage:
+  - allocation
+  - growth_overlay
+  - TQQQ_allocation
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - add_risk_selected_family_none
+  - false_add_risk_risk
+  - defensive_regression_risk
+  - tqqq_beta_dependency_risk
+  reopen_conditions:
+  - new_add_risk_family
+  - same_risk_actual_path_pass
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\indicator_family_selection_matrix.yaml
+  selected_families: []
+  selected_family_count: 0
+  candidate_allowed: false
+- channel_name: return_seeking_diagnostic
+  status: HISTORICAL_DIAGNOSTIC_ONLY
+  verdict: RETURN_SEEKING_EVIDENCE_WITH_BLOCKERS
+  allowed_usage:
+  - historical_diagnostic_evidence
+  - future_forward_log_if_owner_approves
+  blocked_usage:
+  - allocation_signal
+  - defensive_overlay_input
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - drawdown_regression
+  - beta_dependency
+  - tqqq_dependency
+  - 2023_plus_dependency
+  reopen_conditions:
+  - owner_approved_forward_log
+  - no_beta_only_forward_evidence
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\return_seeking_diagnostic_lane_final_matrix.yaml
+  diagnostic_value_probe_count: 0
+  drawdown_regression_probe_count: 7
+  depends_on_2023_plus: true
+- channel_name: defensive_channel
+  status: CLOSED_NO_MATERIAL_IMPROVEMENT
+  verdict: DEFENSIVE_USAGE_BLOCKED
+  allowed_usage:
+  - historical_research_evidence
+  blocked_usage:
+  - defensive_overlay_input
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - defensive_lane_no_material_improvement
+  - do_not_de_risk_v3_failed
+  reopen_conditions:
+  - new_defensive_pit_feature
+  - owner_reopen_approval
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\defensive_preservation_lane_final_matrix.yaml
+  - D:\Work\AITradingSystem\inputs\research_reviews\do_not_de_risk_v3_archive.yaml
+  defensive_lane_status: DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+  false_risk_off_cost_declined: false
+  candidate_allowed: false
+- channel_name: risk_veto_channel
+  status: HISTORICAL_DIAGNOSTIC_ARCHIVE
+  verdict: RISK_VETO_TOO_STRICT_CURRENT_EVIDENCE
+  allowed_usage:
+  - historical_diagnostic_evidence
+  - veto_metric_reference
+  blocked_usage:
+  - growth_overlay_gate
+  - forward_watch_candidate
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - risk_on_veto_v3_net_benefit_negative
+  - return_seeking_compatibility_failed
+  reopen_conditions:
+  - new_veto_family
+  - positive_forward_veto_evidence
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\risk_on_veto_tradeoff_matrix.yaml
+  net_veto_benefit_total: -2.343111
+  candidate_allowed: false
+- channel_name: breadth_participation
+  status: PIT_BLOCKED
+  verdict: CANNOT_ENTER_MODEL_WITHOUT_PIT_APPROVED_SOURCE
+  allowed_usage:
+  - data_gap_roadmap
+  blocked_usage:
+  - first_layer_model
+  - channel_feature_set
+  - allocation
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - missing_pit_approved_source
+  - coverage_audit_not_passed
+  reopen_conditions:
+  - pit_approved_source
+  - primary_window_coverage
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\indicator_family_selection_matrix.yaml
+  candidate_allowed: false
+  model_entry_allowed: false
+- channel_name: event_risk
+  status: PIT_BLOCKED
+  verdict: CANNOT_ENTER_MODEL_WITHOUT_PIT_APPROVED_SOURCE
+  allowed_usage:
+  - data_gap_roadmap
+  blocked_usage:
+  - first_layer_model
+  - channel_feature_set
+  - allocation
+  - owner_review
+  - paper_shadow
+  - promotion
+  - production
+  - broker
+  blockers:
+  - missing_pit_approved_source
+  - coverage_audit_not_passed
+  reopen_conditions:
+  - pit_approved_source
+  - primary_window_coverage
+  evidence_artifacts:
+  - D:\Work\AITradingSystem\inputs\research_reviews\indicator_family_selection_matrix.yaml
+  candidate_allowed: false
+  model_entry_allowed: false

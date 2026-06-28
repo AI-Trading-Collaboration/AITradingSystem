@@ -1,0 +1,111 @@
+schema_version: first_layer_channel_archive_policy.v1
+policy_id: first_layer_channel_archive_policy_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    TRADING-2006 to 2025 showed no first-layer channel can become a strategy
+    candidate: do_not_de_risk v3 failed, risk_on_veto v3 has negative net veto
+    benefit, add-risk has no selected family, and return-seeking diagnostic
+    remains blocked by drawdown/beta/TQQQ/2023+ dependence.
+  intended_effect: >
+    Close out current first-layer channel research and prevent historical
+    reruns or diagnostic-only signals from being reinterpreted as owner-review,
+    paper-shadow, promotion, production or broker evidence.
+  validation_evidence: >
+    TRADING-2026 to 2045 guardrail tests validate archived channel status,
+    forward-watch blocking, owner approval requirements, PIT-blocked family
+    exclusion and no allocation output.
+  review_condition: >
+    Review only when new PIT-approved feature families or forward diagnostic
+    evidence satisfy the reopen criteria and owner manually approves reopen.
+first_layer_channel_archive_policy:
+  status: active
+  archived_channels:
+    do_not_de_risk_v3:
+      status: ARCHIVED
+      verdict: NO_MATERIAL_IMPROVEMENT
+      allowed_usage:
+        - historical_research_evidence
+        - failure_attribution_reference
+      blocked_usage:
+        - first_layer_candidate
+        - defensive_overlay_input
+        - owner_review
+        - forward_watch
+        - paper_shadow
+        - promotion
+        - production
+        - broker
+    risk_on_veto_v3:
+      status: HISTORICAL_DIAGNOSTIC_ARCHIVE
+      verdict: NET_VETO_BENEFIT_NEGATIVE
+      allowed_usage:
+        - historical_diagnostic_evidence
+        - veto_metric_reference
+        - future_reopen_if_new_veto_family_or_forward_evidence
+      blocked_usage:
+        - allocation_signal
+        - growth_overlay_gate
+        - forward_watch_candidate
+        - owner_review
+        - paper_shadow
+        - promotion
+        - production
+        - broker
+    add_risk:
+      status: NOT_SUPPORTED
+      verdict: NO_SELECTED_INDICATOR_FAMILY
+      allowed_usage: []
+      blocked_usage:
+        - allocation
+        - growth_overlay
+        - TQQQ_allocation
+        - owner_review
+        - paper_shadow
+        - promotion
+        - production
+        - broker
+    return_seeking_diagnostic:
+      status: HISTORICAL_DIAGNOSTIC_ONLY
+      verdict: RETURN_SEEKING_EVIDENCE_WITH_BLOCKERS
+      allowed_usage:
+        - historical_diagnostic_evidence
+        - future_forward_log_if_owner_approves
+      blocked_usage:
+        - allocation_signal
+        - defensive_overlay_input
+        - owner_review
+        - paper_shadow
+        - promotion
+        - production
+        - broker
+  pit_blocked_families:
+    breadth_participation:
+      status: PIT_BLOCKED
+      reopen_priority: high
+      reason: may help distinguish broad trend from mega-cap/beta-only move
+    event_risk:
+      status: PIT_BLOCKED
+      reopen_priority: high
+      reason: may help risk-off veto / false add-risk filtering
+  reopen:
+    owner_approval_required: true
+    historical_rerun_alone_insufficient: true
+    new_pit_feature_or_forward_evidence_required: true
+    selection_rule_preregistration_required: true
+    primary_window_required: true
+    same_risk_static_frontier_required: true
+    beta_or_tqqq_only_blocked: true
+    2023_plus_only_blocked: true
+    target_path_only_blocked: true
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  candidate_count: 0
+  owner_review_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

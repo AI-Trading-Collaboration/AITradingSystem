@@ -49,6 +49,7 @@ research_audit_metadata:
     - indicator_family_ablation
     - boundary_aware_two_layer_framework
     - channel_specific_first_layer_v3
+    - first_layer_channel_closeout
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0

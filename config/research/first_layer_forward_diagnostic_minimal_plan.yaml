@@ -1,0 +1,52 @@
+schema_version: first_layer_forward_diagnostic_minimal_plan.v1
+policy_id: first_layer_forward_diagnostic_minimal_plan_v1
+status: disabled_until_owner_reopen
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Current first-layer channel evidence is insufficient for formal forward
+    watch. A minimal future-ready plan can exist only as disabled governance
+    scaffolding.
+  intended_effect: >
+    Preserve a controlled future logging shape while blocking weights, trade
+    advice, target allocation, paper-shadow, production and broker outputs.
+  validation_evidence: >
+    TRADING-2026 to 2045 archive guardrails verify enabled=false, owner approval
+    required and blocked outputs include allocation/trade/broker fields.
+  review_condition: >
+    Review after owner approves reopen based on new PIT-approved data or forward
+    diagnostic evidence that satisfies first-layer channel reopen criteria.
+first_layer_forward_diagnostic_minimal_plan:
+  enabled: false
+  requires_owner_approval: true
+  activation_status: BLOCKED_CURRENT_FIRST_LAYER_CHANNEL_CLOSEOUT
+  allowed_outputs:
+    - signal_name
+    - diagnostic_flag
+    - confidence
+    - future_realized_outcome
+  blocked_outputs:
+    - weights
+    - portfolio_weights
+    - trade_advice
+    - target_allocation
+    - recommended_allocation
+    - paper_shadow_action
+    - broker_action
+  activation_requires:
+    - owner_manual_reopen_approval
+    - new_pit_feature_or_forward_diagnostic_evidence
+    - pre_registered_selection_rule
+    - primary_window_evidence
+    - no_beta_or_tqqq_only_result
+    - no_2023_plus_only_result
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  candidate_count: 0
+  owner_review_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

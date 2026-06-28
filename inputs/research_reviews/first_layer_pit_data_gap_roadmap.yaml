@@ -1,0 +1,124 @@
+schema_version: first_layer_pit_data_gap_roadmap.v1
+report_type: first_layer_pit_data_gap_roadmap
+title: First-Layer PIT Data Gap Roadmap
+status: FIRST_LAYER_PIT_DATA_GAP_ROADMAP_READY
+generated_at: '2026-06-28T05:49:49+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: inherited_from_tracked_research_artifacts
+exact_or_proxy: exact
+summary:
+  gap_count: 5
+  high_priority_families:
+  - breadth_participation
+  - event_risk
+  all_current_status: PIT_BLOCKED
+  model_entry_allowed_before_pit_approval: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_channel_closeout
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: first_layer_channel_closeout_reopen_criteria_v1
+  threshold_policy: first_layer_channel_archive_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: first_layer_channel_reopen_criteria_v1
+  candidate_count: 0
+  pre_registered_selection_rule: first_layer_channel_reopen_criteria_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+rows:
+- family_name: breadth_participation
+  why_it_matters: distinguish broad trend from mega-cap or beta-only move
+  current_status: PIT_BLOCKED
+  needed_source: point-in-time constituent breadth / participation history
+  minimum_required_fields:
+  - date
+  - universe_id
+  - advance_decline_or_participation_measure
+  - known_at
+  - source_timestamp
+  expected_usage:
+  - risk_on_veto
+  - stay_constructive
+  - add_risk_diagnostic
+  blocked_until: PIT-approved local source and coverage audit pass
+- family_name: event_risk
+  why_it_matters: filter false add-risk and risk-off veto around known shocks
+  current_status: PIT_BLOCKED
+  needed_source: timestamped event risk / macro shock feed
+  minimum_required_fields:
+  - event_id
+  - event_type
+  - known_at
+  - affected_assets
+  - severity
+  expected_usage:
+  - risk_on_veto
+  - risk_off
+  blocked_until: event timestamp availability and PIT audit pass
+- family_name: sector_participation
+  why_it_matters: separate AI/tech breadth from narrow QQQ concentration
+  current_status: PIT_BLOCKED
+  needed_source: point-in-time sector participation and relative breadth source
+  minimum_required_fields:
+  - date
+  - sector_id
+  - participation_score
+  - known_at
+  expected_usage:
+  - stay_constructive
+  - add_risk_diagnostic
+  blocked_until: PIT source qualification and primary-window coverage pass
+- family_name: macro_shock
+  why_it_matters: improve risk-off veto and false add-risk filtering
+  current_status: PIT_BLOCKED
+  needed_source: timestamped macro shock calendar / surprise series
+  minimum_required_fields:
+  - date
+  - release_time
+  - series_id
+  - surprise
+  - known_at
+  expected_usage:
+  - risk_on_veto
+  - risk_off
+  blocked_until: PIT release timestamp and schema validation pass
+- family_name: earnings_revision
+  why_it_matters: future available revisions may help separate durable AI trend
+  current_status: PIT_BLOCKED
+  needed_source: point-in-time analyst revision or earnings estimate history
+  minimum_required_fields:
+  - date
+  - ticker
+  - revision_metric
+  - known_at
+  expected_usage:
+  - stay_constructive
+  - add_risk_diagnostic
+  blocked_until: PIT history and issuer coverage audit pass

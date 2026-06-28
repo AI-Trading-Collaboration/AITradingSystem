@@ -21610,6 +21610,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_channel_closeout_reopen_criteria
+    title: First-Layer Channel Closeout and Reopen Criteria
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-channel-closeout
+    artifact_globs:
+      - config/research/first_layer_channel_archive_policy.yaml
+      - config/research/first_layer_forward_diagnostic_minimal_plan.yaml
+      - inputs/research_reviews/first_layer_channel_master_closeout.yaml
+      - docs/research/first_layer_channel_master_closeout.md
+      - inputs/research_reviews/first_layer_channel_status_matrix.yaml
+      - inputs/research_reviews/first_layer_diagnostic_evidence_labeling.yaml
+      - docs/research/first_layer_diagnostic_evidence_labeling_review.md
+      - inputs/research_reviews/first_layer_channel_reopen_criteria.yaml
+      - docs/research/first_layer_channel_reopen_criteria.md
+      - inputs/research_reviews/first_layer_pit_data_gap_roadmap.yaml
+      - docs/research/first_layer_pit_data_gap_roadmap.md
+      - docs/research/first_layer_forward_diagnostic_minimal_plan.md
+      - docs/research/first_layer_channel_closeout_owner_brief.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: First-layer channel closeout changes after archive status, reopen triggers, PIT data gaps, diagnostic labels, forward diagnostic boundaries, or owner approval gates change.
+    owner_action: review_first_layer_channel_closeout_reopen_criteria
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: do_not_de_risk_optimization_track
     title: Do-Not-De-Risk Optimization Track
     group: research
