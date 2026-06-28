@@ -1,0 +1,1203 @@
+schema_version: channel_specific_v3_actual_path_matrix.v1
+report_type: channel_specific_v3_actual_path_matrix
+title: Channel-Specific v3 Actual-Path Matrix
+status: CHANNEL_SPECIFIC_V3_ACTUAL_PATH_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T04:46:35+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  data_quality_status: PASS_WITH_WARNINGS
+  data_quality_passed: true
+  actual_path_row_count: 40
+  defensive_probe_regression_count: 8
+  do_not_de_risk_improved_defensive_probe_count: 0
+  risk_on_veto_defensive_regression_reduction: 2
+  combined_improved_defensive_probe_count: 0
+  same_risk_static_delta_reported: true
+  limited_adjustment_reference_reported: true
+research_audit_metadata:
+  modified_layer: first_layer
+  modified_channel: channel_specific_first_layer_v3
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: channel_specific_first_layer_v3
+  threshold_policy: do_not_de_risk_v3_selection_rule_v1+risk_on_veto_v3_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: channel_specific_v3_selection_rules_v1
+  candidate_count: 0
+  pre_registered_selection_rule: do_not_de_risk_v3_selection_rule_v1+risk_on_veto_v3_selection_rule_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+data_quality_gate:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  checked_at: '2026-06-28T04:46:23.772259+00:00'
+  as_of: '2026-06-26'
+  price_path: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  rates_path: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  secondary_prices_path: D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv
+  expected_price_tickers:
+  - QQQ
+  - SGOV
+  - TQQQ
+  expected_rate_series:
+  - DGS2
+  - DGS10
+  - DTWEXBGS
+  price_row_count: 56184
+  rate_row_count: 6352
+  price_checksum: 5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d
+  rate_checksum: 279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a
+  warning_count: 1
+  error_count: 0
+  issues:
+  - severity: INFO
+    code: prices_index_volume_not_applicable
+    message: 价格数据缺少成交量，但该 ticker 已配置为指数/非成交标的，volume 不适用于质量阻断。
+    rows: 2163
+    sample: '{''date'': ''2018-01-02'', ''ticker'': ''^VIX'', ''volume'': nan}; {''date'':
+      ''2018-01-03'', ''ticker'': ''^VIX'', ''volume'': nan}; {''date'': ''2018-01-04'',
+      ''ticker'': ''^VIX'', ''volume'': nan}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_suspicious_adj_close_move
+    message: 价格数据包含较大调整收盘价单日波动；未达到极端错误阈值，作为可审计市场波动信息记录。
+    rows: 20
+    sample: '{''date'': ''2025-04-09'', ''ticker'': ''AMD'', ''adj_close'': 96.84,
+      ''_return'': 0.23820483314154206, ''_suspicious_return_threshold'': 0.2}; {''date'':
+      ''2025-10-06'', ''ticker'': ''AMD'', ''adj_close'': 203.71, ''_return'': 0.23708022104815707,
+      ''_suspicious_return_threshold'': 0.2}; {''date'': ''2024-12-13'', ''ticker'':
+      ''AVGO'', ''adj_close'': 221.38, ''_return'': 0.2443370243381484, ''_suspicious_return_threshold'':
+      0.2}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_known_split_adjustment_ratio_jump
+    message: 复权比例跳变匹配已配置 corporate action 拆股事件。
+    rows: 6
+    sample: '{''date'': ''2024-07-15'', ''ticker'': ''AVGO'', ''_adjustment_ratio'':
+      0.9815657449539144, ''_adjustment_ratio_change'': 8.999693677028406}; {''date'':
+      ''2024-10-03'', ''ticker'': ''LRCX'', ''_adjustment_ratio'': 0.9860683023055111,
+      ''_adjustment_ratio_change'': 9.00072511407645}; {''date'': ''2025-12-18'',
+      ''ticker'': ''NOW'', ''_adjustment_ratio'': 1.0, ''_adjustment_ratio_change'':
+      4.0}'
+    source: 价格主源
+  - severity: WARNING
+    code: prices_adjustment_ratio_jump
+    message: 价格数据的复权比例出现明显跳变
+    rows: 1
+    sample: '{''date'': ''2025-11-20'', ''ticker'': ''TQQQ'', ''_adjustment_ratio'':
+      0.9946178686759957, ''_adjustment_ratio_change'': 1.0000294200104527}'
+    source: 价格主源
+  - severity: INFO
+    code: prices_non_positive_close
+    message: 价格数据的 close 包含非正数
+    rows: 14
+    sample: '{''date'': ''2026-04-07'', ''ticker'': ''META'', ''close'': 0.0}; {''date'':
+      ''2026-04-08'', ''ticker'': ''META'', ''close'': 0.0}; {''date'': ''2026-06-04'',
+      ''ticker'': ''META'', ''close'': 0.0}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_non_positive_adj_close
+    message: 价格数据的 adj_close 包含非正数
+    rows: 14
+    sample: '{''date'': ''2026-04-07'', ''ticker'': ''META'', ''adj_close'': 0.0};
+      {''date'': ''2026-04-08'', ''ticker'': ''META'', ''adj_close'': 0.0}; {''date'':
+      ''2026-06-04'', ''ticker'': ''META'', ''adj_close'': 0.0}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_invalid_ohlc
+    message: 价格数据违反 OHLC 逻辑约束
+    rows: 28
+    sample: '{''date'': ''2026-01-13'', ''ticker'': ''AMAT'', ''open'': 301.81, ''high'':
+      310.6413, ''low'': 302.59, ''close'': 304.87}; {''date'': ''2025-12-17'', ''ticker'':
+      ''CRM'', ''open'': 256.33, ''high'': 261.97, ''low'': 256.37, ''close'': 258.14};
+      {''date'': ''2025-12-29'', ''ticker'': ''CRM'', ''open'': 264.71, ''high'':
+      269.11, ''low'': 265.0, ''close'': 266.23}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_extreme_adj_close_move
+    message: 价格数据包含极端的调整收盘价单日波动
+    rows: 5
+    sample: '{''date'': ''2024-07-12'', ''ticker'': ''AVGO'', ''adj_close'': 170.087,
+      ''_return'': -0.9002977812948797, ''_extreme_return_threshold'': 0.5}; {''date'':
+      ''2024-10-02'', ''ticker'': ''LRCX'', ''adj_close'': 81.409, ''_return'': -0.8979043868669894,
+      ''_extreme_return_threshold'': 0.5}; {''date'': ''2025-12-17'', ''ticker'':
+      ''NOW'', ''adj_close'': 156.478, ''_return'': -0.7996748258910282, ''_extreme_return_threshold'':
+      0.5}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_suspicious_adj_close_move
+    message: 价格数据包含较大调整收盘价单日波动；未达到极端错误阈值，作为可审计市场波动信息记录。
+    rows: 21
+    sample: '{''date'': ''2025-04-09'', ''ticker'': ''AMD'', ''adj_close'': 96.84,
+      ''_return'': 0.23820483314154206, ''_suspicious_return_threshold'': 0.2}; {''date'':
+      ''2025-10-06'', ''ticker'': ''AMD'', ''adj_close'': 203.71, ''_return'': 0.23708022104815707,
+      ''_suspicious_return_threshold'': 0.2}; {''date'': ''2024-12-13'', ''ticker'':
+      ''AVGO'', ''adj_close'': 224.8, ''_return'': 0.24432635890623278, ''_suspicious_return_threshold'':
+      0.2}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: prices_known_split_adjustment_ratio_jump
+    message: 复权比例跳变匹配已配置 corporate action 拆股事件。
+    rows: 7
+    sample: '{''date'': ''2024-07-12'', ''ticker'': ''AVGO'', ''_adjustment_ratio'':
+      0.1, ''_adjustment_ratio_change'': -0.9}; {''date'': ''2024-07-15'', ''ticker'':
+      ''AVGO'', ''_adjustment_ratio'': 1.0, ''_adjustment_ratio_change'': 9.0}; {''date'':
+      ''2024-10-02'', ''ticker'': ''LRCX'', ''_adjustment_ratio'': 0.1, ''_adjustment_ratio_change'':
+      -0.9}'
+    source: 第二行情源 Marketstack
+  - severity: INFO
+    code: secondary_prices_adjustment_basis_warning
+    message: Marketstack 调整收盘价与主缓存差异超过错误阈值，但未调整收盘价通过核验；这通常表示供应商 adjusted close 分红调整口径不同，需在报告中保留限制说明。
+    rows: 1328
+    sample: '{''date'': ''2022-12-01'', ''ticker'': ''SGOV'', ''_primary_close'':
+      100.13, ''_secondary_close'': 100.13, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.45, ''_secondary_adj_close'': 100.13, ''_adj_close_diff_pct'': 0.17179637214745455};
+      {''date'': ''2022-12-02'', ''ticker'': ''SGOV'', ''_primary_close'': 100.14,
+      ''_secondary_close'': 100.14, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.46, ''_secondary_adj_close'': 100.14, ''_adj_close_diff_pct'': 0.17177626959981288};
+      {''date'': ''2022-12-05'', ''ticker'': ''SGOV'', ''_primary_close'': 100.17,
+      ''_secondary_close'': 100.17, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      85.48, ''_secondary_adj_close'': 100.17, ''_adj_close_diff_pct'': 0.1718530650444548}'
+    source: 跨源核验：主价格源 vs Marketstack
+  - severity: INFO
+    code: secondary_prices_adjustment_basis_info
+    message: Marketstack 调整收盘价与主缓存超过警告阈值，但未调整收盘价通过核验；按分红复权口径差异记录。
+    rows: 681
+    sample: '{''date'': ''2022-12-01'', ''ticker'': ''QQQ'', ''_primary_close'': 293.72,
+      ''_secondary_close'': 293.72, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      287.14, ''_secondary_adj_close'': 293.72, ''_adj_close_diff_pct'': 0.02291565090199917};
+      {''date'': ''2022-12-02'', ''ticker'': ''QQQ'', ''_primary_close'': 292.55,
+      ''_secondary_close'': 292.55, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      286.0, ''_secondary_adj_close'': 292.55, ''_adj_close_diff_pct'': 0.02290209790209794};
+      {''date'': ''2022-12-05'', ''ticker'': ''QQQ'', ''_primary_close'': 287.64,
+      ''_secondary_close'': 287.64, ''_close_diff_pct'': 0.0, ''_primary_adj_close'':
+      281.2, ''_secondary_adj_close'': 287.64, ''_adj_close_diff_pct'': 0.022901849217638683}'
+    source: 跨源核验：主价格源 vs Marketstack
+actual_path_rows:
+- variant_id: baseline_first_layer_v2
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  return_seeking_probe: false
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.144202
+  max_drawdown: -0.075336
+  worst_5d_loss: -0.075336
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.914106
+  turnover: 41.356123
+  net_of_cost: 0.144202
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: balanced_dynamic_probe
+  probe_role: balanced_dynamic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.166786
+  max_drawdown: -0.075096
+  worst_5d_loss: -0.075096
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.220957
+  turnover: 64.828915
+  net_of_cost: 0.166786
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.168064
+  max_drawdown: -0.092919
+  worst_5d_loss: -0.092919
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.808719
+  turnover: 121.929658
+  net_of_cost: 0.168064
+  tqqq_max_weight: 0.15
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: no_tqqq_return_seeking_probe
+  probe_role: no_tqqq_return_seeking
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.165372
+  max_drawdown: -0.081131
+  worst_5d_loss: -0.081131
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.038323
+  turnover: 71.142539
+  net_of_cost: 0.165372
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: low_tqqq_balanced_growth_probe
+  probe_role: low_tqqq_balanced_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.18032
+  max_drawdown: -0.086445
+  worst_5d_loss: -0.086445
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.085946
+  turnover: 71.382841
+  net_of_cost: 0.18032
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: qqq_heavy_growth_probe
+  probe_role: qqq_heavy_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.182131
+  max_drawdown: -0.10493
+  worst_5d_loss: -0.10493
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.735737
+  turnover: 64.845282
+  net_of_cost: 0.182131
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: capped_risk_on_diagnostic_probe
+  probe_role: capped_risk_on_diagnostic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.19512
+  max_drawdown: -0.099095
+  worst_5d_loss: -0.099095
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.969016
+  turnover: 71.753599
+  net_of_cost: 0.19512
+  tqqq_max_weight: 0.2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: baseline_first_layer_v2
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  probe_role: asymmetric_risk_on_slow_confirm
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.18032
+  max_drawdown: -0.086445
+  worst_5d_loss: -0.086445
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.085946
+  turnover: 71.382841
+  net_of_cost: 0.18032
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.0
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: 0.0
+  net_of_cost_delta_vs_baseline: 0.0
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  return_seeking_probe: false
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.153771
+  max_drawdown: -0.076801
+  worst_5d_loss: -0.076801
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.002199
+  turnover: 47.195796
+  net_of_cost: 0.153771
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.009569
+  max_drawdown_delta_vs_baseline: -0.001465
+  calmar_delta_vs_baseline: 0.088093
+  net_of_cost_delta_vs_baseline: 0.009569
+  defensive_probe_regression: true
+- variant_id: do_not_de_risk_enabled
+  probe_id: balanced_dynamic_probe
+  probe_role: balanced_dynamic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.177549
+  max_drawdown: -0.086511
+  worst_5d_loss: -0.086511
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.052334
+  turnover: 71.503187
+  net_of_cost: 0.177549
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010763
+  max_drawdown_delta_vs_baseline: -0.011415
+  calmar_delta_vs_baseline: -0.168623
+  net_of_cost_delta_vs_baseline: 0.010763
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.1899
+  max_drawdown: -0.115214
+  worst_5d_loss: -0.115214
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.648237
+  turnover: 135.678816
+  net_of_cost: 0.1899
+  tqqq_max_weight: 0.15
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.021836
+  max_drawdown_delta_vs_baseline: -0.022295
+  calmar_delta_vs_baseline: -0.160482
+  net_of_cost_delta_vs_baseline: 0.021836
+  defensive_probe_regression: true
+- variant_id: do_not_de_risk_enabled
+  probe_id: no_tqqq_return_seeking_probe
+  probe_role: no_tqqq_return_seeking
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.176054
+  max_drawdown: -0.084859
+  worst_5d_loss: -0.084859
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.074665
+  turnover: 77.775366
+  net_of_cost: 0.176054
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010682
+  max_drawdown_delta_vs_baseline: -0.003728
+  calmar_delta_vs_baseline: 0.036342
+  net_of_cost_delta_vs_baseline: 0.010682
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: low_tqqq_balanced_growth_probe
+  probe_role: low_tqqq_balanced_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.191139
+  max_drawdown: -0.097428
+  worst_5d_loss: -0.097428
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.961841
+  turnover: 78.015667
+  net_of_cost: 0.191139
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010819
+  max_drawdown_delta_vs_baseline: -0.010983
+  calmar_delta_vs_baseline: -0.124105
+  net_of_cost_delta_vs_baseline: 0.010819
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: qqq_heavy_growth_probe
+  probe_role: qqq_heavy_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.19283
+  max_drawdown: -0.106632
+  worst_5d_loss: -0.106632
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.808369
+  turnover: 71.408555
+  net_of_cost: 0.19283
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010699
+  max_drawdown_delta_vs_baseline: -0.001702
+  calmar_delta_vs_baseline: 0.072632
+  net_of_cost_delta_vs_baseline: 0.010699
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: capped_risk_on_diagnostic_probe
+  probe_role: capped_risk_on_diagnostic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.206074
+  max_drawdown: -0.109926
+  worst_5d_loss: -0.109926
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.874663
+  turnover: 78.386425
+  net_of_cost: 0.206074
+  tqqq_max_weight: 0.2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010954
+  max_drawdown_delta_vs_baseline: -0.010831
+  calmar_delta_vs_baseline: -0.094353
+  net_of_cost_delta_vs_baseline: 0.010954
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_enabled
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  probe_role: asymmetric_risk_on_slow_confirm
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.191139
+  max_drawdown: -0.097428
+  worst_5d_loss: -0.097428
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.961841
+  turnover: 78.015667
+  net_of_cost: 0.191139
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.010819
+  max_drawdown_delta_vs_baseline: -0.010983
+  calmar_delta_vs_baseline: -0.124105
+  net_of_cost_delta_vs_baseline: 0.010819
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  return_seeking_probe: false
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.142365
+  max_drawdown: -0.075336
+  worst_5d_loss: -0.075336
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.889717
+  turnover: 41.664325
+  net_of_cost: 0.142365
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.001837
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: -0.024389
+  net_of_cost_delta_vs_baseline: -0.001837
+  defensive_probe_regression: true
+- variant_id: risk_on_veto_enabled
+  probe_id: balanced_dynamic_probe
+  probe_role: balanced_dynamic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.151708
+  max_drawdown: -0.073761
+  worst_5d_loss: -0.073761
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 2.056748
+  turnover: 65.597042
+  net_of_cost: 0.151708
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.015078
+  max_drawdown_delta_vs_baseline: 0.001335
+  calmar_delta_vs_baseline: -0.164209
+  net_of_cost_delta_vs_baseline: -0.015078
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.145638
+  max_drawdown: -0.090138
+  worst_5d_loss: -0.090138
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.615725
+  turnover: 121.542853
+  net_of_cost: 0.145638
+  tqqq_max_weight: 0.15
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.022426
+  max_drawdown_delta_vs_baseline: 0.002781
+  calmar_delta_vs_baseline: -0.192994
+  net_of_cost_delta_vs_baseline: -0.022426
+  defensive_probe_regression: true
+- variant_id: risk_on_veto_enabled
+  probe_id: no_tqqq_return_seeking_probe
+  probe_role: no_tqqq_return_seeking
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.155883
+  max_drawdown: -0.081131
+  worst_5d_loss: -0.081131
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.92136
+  turnover: 72.03546
+  net_of_cost: 0.155883
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.009489
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: -0.116963
+  net_of_cost_delta_vs_baseline: -0.009489
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: low_tqqq_balanced_growth_probe
+  probe_role: low_tqqq_balanced_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.163225
+  max_drawdown: -0.086707
+  worst_5d_loss: -0.086707
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.882478
+  turnover: 72.180251
+  net_of_cost: 0.163225
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.017095
+  max_drawdown_delta_vs_baseline: -0.000262
+  calmar_delta_vs_baseline: -0.203468
+  net_of_cost_delta_vs_baseline: -0.017095
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: qqq_heavy_growth_probe
+  probe_role: qqq_heavy_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.174545
+  max_drawdown: -0.10493
+  worst_5d_loss: -0.10493
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.663441
+  turnover: 65.942067
+  net_of_cost: 0.174545
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.007586
+  max_drawdown_delta_vs_baseline: 0.0
+  calmar_delta_vs_baseline: -0.072296
+  net_of_cost_delta_vs_baseline: -0.007586
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: capped_risk_on_diagnostic_probe
+  probe_role: capped_risk_on_diagnostic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.170378
+  max_drawdown: -0.099471
+  worst_5d_loss: -0.099471
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.712852
+  turnover: 72.406641
+  net_of_cost: 0.170378
+  tqqq_max_weight: 0.2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.024742
+  max_drawdown_delta_vs_baseline: -0.000376
+  calmar_delta_vs_baseline: -0.256164
+  net_of_cost_delta_vs_baseline: -0.024742
+  defensive_probe_regression: false
+- variant_id: risk_on_veto_enabled
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  probe_role: asymmetric_risk_on_slow_confirm
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.163225
+  max_drawdown: -0.086707
+  worst_5d_loss: -0.086707
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.882478
+  turnover: 72.180251
+  net_of_cost: 0.163225
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.017095
+  max_drawdown_delta_vs_baseline: -0.000262
+  calmar_delta_vs_baseline: -0.203468
+  net_of_cost_delta_vs_baseline: -0.017095
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  return_seeking_probe: false
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.151918
+  max_drawdown: -0.076801
+  worst_5d_loss: -0.076801
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.978075
+  turnover: 47.540068
+  net_of_cost: 0.151918
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.007716
+  max_drawdown_delta_vs_baseline: -0.001465
+  calmar_delta_vs_baseline: 0.063969
+  net_of_cost_delta_vs_baseline: 0.007716
+  defensive_probe_regression: true
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: balanced_dynamic_probe
+  probe_role: balanced_dynamic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.162331
+  max_drawdown: -0.086744
+  worst_5d_loss: -0.086744
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.871381
+  turnover: 72.307384
+  net_of_cost: 0.162331
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.004455
+  max_drawdown_delta_vs_baseline: -0.011648
+  calmar_delta_vs_baseline: -0.349576
+  net_of_cost_delta_vs_baseline: -0.004455
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.167055
+  max_drawdown: -0.115553
+  worst_5d_loss: -0.115553
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.445699
+  turnover: 135.323512
+  net_of_cost: 0.167055
+  tqqq_max_weight: 0.15
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.001009
+  max_drawdown_delta_vs_baseline: -0.022634
+  calmar_delta_vs_baseline: -0.36302
+  net_of_cost_delta_vs_baseline: -0.001009
+  defensive_probe_regression: true
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: no_tqqq_return_seeking_probe
+  probe_role: no_tqqq_return_seeking
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.166477
+  max_drawdown: -0.085003
+  worst_5d_loss: -0.085003
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.958498
+  turnover: 78.702446
+  net_of_cost: 0.166477
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.001105
+  max_drawdown_delta_vs_baseline: -0.003872
+  calmar_delta_vs_baseline: -0.079825
+  net_of_cost_delta_vs_baseline: 0.001105
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: low_tqqq_balanced_growth_probe
+  probe_role: low_tqqq_balanced_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.173887
+  max_drawdown: -0.097687
+  worst_5d_loss: -0.097687
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.780036
+  turnover: 78.847236
+  net_of_cost: 0.173887
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.006433
+  max_drawdown_delta_vs_baseline: -0.011242
+  calmar_delta_vs_baseline: -0.30591
+  net_of_cost_delta_vs_baseline: -0.006433
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: qqq_heavy_growth_probe
+  probe_role: qqq_heavy_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.185175
+  max_drawdown: -0.106632
+  worst_5d_loss: -0.106632
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.736583
+  turnover: 72.533438
+  net_of_cost: 0.185175
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.003044
+  max_drawdown_delta_vs_baseline: -0.001702
+  calmar_delta_vs_baseline: 0.000846
+  net_of_cost_delta_vs_baseline: 0.003044
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: capped_risk_on_diagnostic_probe
+  probe_role: capped_risk_on_diagnostic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.181106
+  max_drawdown: -0.110297
+  worst_5d_loss: -0.110297
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.641985
+  turnover: 79.073626
+  net_of_cost: 0.181106
+  tqqq_max_weight: 0.2
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.014014
+  max_drawdown_delta_vs_baseline: -0.011202
+  calmar_delta_vs_baseline: -0.327031
+  net_of_cost_delta_vs_baseline: -0.014014
+  defensive_probe_regression: false
+- variant_id: do_not_de_risk_plus_risk_on_veto
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  probe_role: asymmetric_risk_on_slow_confirm
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.173887
+  max_drawdown: -0.097687
+  worst_5d_loss: -0.097687
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.780036
+  turnover: 78.847236
+  net_of_cost: 0.173887
+  tqqq_max_weight: 0.1
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.006433
+  max_drawdown_delta_vs_baseline: -0.011242
+  calmar_delta_vs_baseline: -0.30591
+  net_of_cost_delta_vs_baseline: -0.006433
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: defensive_overlay_probe
+  probe_role: defensive_overlay
+  return_seeking_probe: false
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.165657
+  max_drawdown: -0.140068
+  worst_5d_loss: -0.140068
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.182685
+  turnover: 4.24757
+  net_of_cost: 0.165657
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.021455
+  max_drawdown_delta_vs_baseline: -0.064732
+  calmar_delta_vs_baseline: -0.731421
+  net_of_cost_delta_vs_baseline: 0.021455
+  defensive_probe_regression: true
+- variant_id: flat_reference
+  probe_id: balanced_dynamic_probe
+  probe_role: balanced_dynamic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.165657
+  max_drawdown: -0.140068
+  worst_5d_loss: -0.140068
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.182685
+  turnover: 4.24757
+  net_of_cost: 0.165657
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.001129
+  max_drawdown_delta_vs_baseline: -0.064972
+  calmar_delta_vs_baseline: -1.038272
+  net_of_cost_delta_vs_baseline: -0.001129
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: drawdown_control_probe
+  probe_role: drawdown_control
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.184872
+  max_drawdown: -0.162659
+  worst_5d_loss: -0.162659
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.136563
+  turnover: 3.841492
+  net_of_cost: 0.184872
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.016808
+  max_drawdown_delta_vs_baseline: -0.06974
+  calmar_delta_vs_baseline: -0.672156
+  net_of_cost_delta_vs_baseline: 0.016808
+  defensive_probe_regression: true
+- variant_id: flat_reference
+  probe_id: no_tqqq_return_seeking_probe
+  probe_role: no_tqqq_return_seeking
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.175281
+  max_drawdown: -0.151422
+  worst_5d_loss: -0.151422
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.157566
+  turnover: 4.07835
+  net_of_cost: 0.175281
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.009909
+  max_drawdown_delta_vs_baseline: -0.070291
+  calmar_delta_vs_baseline: -0.880757
+  net_of_cost_delta_vs_baseline: 0.009909
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: low_tqqq_balanced_growth_probe
+  probe_role: low_tqqq_balanced_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.175281
+  max_drawdown: -0.151422
+  worst_5d_loss: -0.151422
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.157566
+  turnover: 4.07835
+  net_of_cost: 0.175281
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.005039
+  max_drawdown_delta_vs_baseline: -0.064977
+  calmar_delta_vs_baseline: -0.92838
+  net_of_cost_delta_vs_baseline: -0.005039
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: qqq_heavy_growth_probe
+  probe_role: qqq_heavy_growth
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.194429
+  max_drawdown: -0.17378
+  worst_5d_loss: -0.17378
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.118818
+  turnover: 3.536999
+  net_of_cost: 0.194429
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: 0.012298
+  max_drawdown_delta_vs_baseline: -0.06885
+  calmar_delta_vs_baseline: -0.616919
+  net_of_cost_delta_vs_baseline: 0.012298
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: capped_risk_on_diagnostic_probe
+  probe_role: capped_risk_on_diagnostic
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.175281
+  max_drawdown: -0.151422
+  worst_5d_loss: -0.151422
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.157566
+  turnover: 4.07835
+  net_of_cost: 0.175281
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.019839
+  max_drawdown_delta_vs_baseline: -0.052327
+  calmar_delta_vs_baseline: -0.81145
+  net_of_cost_delta_vs_baseline: -0.019839
+  defensive_probe_regression: false
+- variant_id: flat_reference
+  probe_id: asymmetric_risk_on_slow_confirm_probe
+  probe_role: asymmetric_risk_on_slow_confirm
+  return_seeking_probe: true
+  comparison_group: channel_v3_actual_path
+  annual_return: 0.175281
+  max_drawdown: -0.151422
+  worst_5d_loss: -0.151422
+  worst_5d_loss_method: max_drawdown_proxy_pending_daily_return_export
+  calmar: 1.157566
+  turnover: 4.07835
+  net_of_cost: 0.175281
+  tqqq_max_weight: 0.0
+  date_start: '2023-02-22'
+  date_end: '2026-03-27'
+  research_only: true
+  promotion_allowed: false
+  broker_action: none
+  annual_return_delta_vs_baseline: -0.005039
+  max_drawdown_delta_vs_baseline: -0.064977
+  calmar_delta_vs_baseline: -0.92838
+  net_of_cost_delta_vs_baseline: -0.005039
+  defensive_probe_regression: false
+reference_rows:
+  same_risk_frontier_rows:
+  - probe_id: defensive_overlay_probe
+    same_risk_static_strategy_id: static_QQQ0.5_SGOV0.5_TQQQ0.0
+    same_risk_static_annual_return: 0.103421
+    same_risk_static_max_drawdown: -0.183625
+    same_risk_static_calmar: 0.563219
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: balanced_dynamic_probe
+    same_risk_static_strategy_id: static_QQQ0.5_SGOV0.5_TQQQ0.0
+    same_risk_static_annual_return: 0.103421
+    same_risk_static_max_drawdown: -0.183625
+    same_risk_static_calmar: 0.563219
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: drawdown_control_probe
+    same_risk_static_strategy_id: static_QQQ0.5_SGOV0.5_TQQQ0.0
+    same_risk_static_annual_return: 0.103421
+    same_risk_static_max_drawdown: -0.183625
+    same_risk_static_calmar: 0.563219
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: no_tqqq_return_seeking_probe
+    same_risk_static_strategy_id: static_QQQ0.6_SGOV0.4_TQQQ0.0
+    same_risk_static_annual_return: 0.116526
+    same_risk_static_max_drawdown: -0.218983
+    same_risk_static_calmar: 0.532124
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: low_tqqq_balanced_growth_probe
+    same_risk_static_strategy_id: static_QQQ0.6_SGOV0.4_TQQQ0.0
+    same_risk_static_annual_return: 0.116526
+    same_risk_static_max_drawdown: -0.218983
+    same_risk_static_calmar: 0.532124
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: qqq_heavy_growth_probe
+    same_risk_static_strategy_id: static_QQQ0.6_SGOV0.4_TQQQ0.0
+    same_risk_static_annual_return: 0.116526
+    same_risk_static_max_drawdown: -0.218983
+    same_risk_static_calmar: 0.532124
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  - probe_id: capped_risk_on_diagnostic_probe
+    same_risk_static_strategy_id: static_QQQ0.7_SGOV0.3_TQQQ0.0
+    same_risk_static_annual_return: 0.129314
+    same_risk_static_max_drawdown: -0.253355
+    same_risk_static_calmar: 0.510408
+    same_risk_verdict: DIAGNOSTIC_ONLY
+  - probe_id: asymmetric_risk_on_slow_confirm_probe
+    same_risk_static_strategy_id: static_QQQ0.6_SGOV0.4_TQQQ0.0
+    same_risk_static_annual_return: 0.116526
+    same_risk_static_max_drawdown: -0.218983
+    same_risk_static_calmar: 0.532124
+    same_risk_verdict: PROBE_BEATS_SAME_RISK_FRONTIER
+  limited_adjustment_rows:
+  - research_window_id: exact_three_asset_validated
+    requested_start: '2021-02-22'
+    actual_start: '2021-02-22'
+    actual_portfolio_start: '2021-02-22'
+    end: latest
+    window_role: primary_validated
+    data_quality_contract: secondary_cross_checked
+    exact_or_proxy: exact
+    strategy_id: limited_adjustment
+    strategy_family: limited_adjustment_baseline
+    annual_return: 0.138784
+    max_drawdown: -0.164451
+    sharpe: 1.17814
+    calmar: 0.843923
+    turnover: 48.484636
+    tqqq_exposure: 0.0
+    comparison_group: second_layer_probe_diagnostic
+    legacy_annual_return: 0.196971
+    legacy_calmar: 1.821499
+    primary_annual_return: 0.138784
+    primary_calmar: 0.843923
+    extension_annual_return: 0.170381
+    extension_calmar: 1.036056
+    delta_2021_vs_2022: -0.058187
+    delta_2020_vs_2021: 0.031597
+    stability_status: WINDOW_SENSITIVE_BUT_EXPLAINED
+  reference_note: same-risk static frontier and limited_adjustment are prior external
+    diagnostic references, not channel-v3 candidates.

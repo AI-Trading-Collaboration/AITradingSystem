@@ -1,0 +1,72 @@
+schema_version: channel_specific_first_layer_v3_scope.v1
+report_type: channel_specific_first_layer_v3_scope
+title: Channel-Specific First-Layer v3 Scope
+status: CHANNEL_SPECIFIC_FIRST_LAYER_V3_SCOPE_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T04:46:22+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+research_window_id: exact_three_asset_validated
+research_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
+requested_start: '2021-02-22'
+actual_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+end: latest
+window_role: primary_validated
+data_quality_contract: secondary_cross_checked
+exact_or_proxy: exact
+summary:
+  allowed_channels:
+  - do_not_de_risk
+  - risk_on_veto
+  blocked_channels:
+  - add_risk
+  - growth_overlay
+  - TQQQ_allocation
+  - universal_first_layer
+  - paper_shadow
+  - production
+  - broker
+  selected_families:
+    do_not_de_risk:
+    - drawdown_recovery
+    risk_on_veto:
+    - volatility_compression
+    - rates_liquidity
+  diagnostic_only_families:
+  - trend_persistence
+  - relative_strength
+  blocked_families:
+  - breadth_participation
+  - event_risk
+  candidate_count: 0
+research_audit_metadata:
+  modified_layer: first_layer
+  modified_channel: channel_specific_first_layer_v3
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: channel_specific_labels_v3
+  feature_set_version: channel_specific_feature_set_v1_locked
+  model_version: channel_specific_first_layer_v3
+  threshold_policy: do_not_de_risk_v3_selection_rule_v1+risk_on_veto_v3_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: channel_specific_v3_selection_rules_v1
+  candidate_count: 0
+  pre_registered_selection_rule: do_not_de_risk_v3_selection_rule_v1+risk_on_veto_v3_selection_rule_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED

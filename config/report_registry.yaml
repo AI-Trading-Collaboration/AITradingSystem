@@ -21296,6 +21296,231 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: channel_specific_first_layer_v3_scope
+    title: Channel-Specific First-Layer v3 Scope
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - docs/research/channel_specific_first_layer_v3_scope.md
+      - inputs/research_reviews/channel_specific_first_layer_v3_scope.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Channel-specific v3 scope changes after allowed channels, blocked usage, selected families or safety boundaries change.
+    owner_action: review_channel_specific_first_layer_v3_scope
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_feature_set_v1_lock
+    title: Channel-Specific Feature Set v1 Lock
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - config/research/channel_specific_feature_set_v1_locked.yaml
+      - docs/research/channel_specific_feature_set_v1_lock_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Feature-set lock changes after selected family whitelist, diagnostic-only families, blocked families or no-weight boundary changes.
+    owner_action: review_channel_specific_feature_set_v1_lock
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: do_not_de_risk_label_v3_review
+    title: Do-Not-De-Risk Label v3 Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - outputs/research_trends/channel_specific_v3/do_not_de_risk_labels_v3.csv
+      - inputs/research_reviews/do_not_de_risk_label_v3_summary.yaml
+      - docs/research/do_not_de_risk_label_v3_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Do-not-de-risk labels change after drawdown-recovery feature scores, thresholds, action-value labels or PIT feature matrix changes.
+    owner_action: review_do_not_de_risk_label_v3_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_label_v3_review
+    title: Risk-On Veto Label v3 Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - outputs/research_trends/channel_specific_v3/risk_on_veto_labels_v3.csv
+      - inputs/research_reviews/risk_on_veto_label_v3_summary.yaml
+      - docs/research/risk_on_veto_label_v3_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-on veto labels change after volatility/rates feature scores, thresholds, action-value matrix or PIT feature matrix changes.
+    owner_action: review_risk_on_veto_label_v3_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_pit_feature_matrix_v3_audit
+    title: Channel PIT Feature Matrix v3 Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - outputs/research_trends/channel_specific_v3/channel_pit_feature_matrix_v3.csv
+      - inputs/research_reviews/channel_pit_feature_matrix_v3_summary.yaml
+      - docs/research/channel_pit_feature_matrix_v3_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Channel PIT audit changes after selected feature columns, PIT approval status, family whitelist or excluded family list changes.
+    owner_action: review_channel_pit_feature_matrix_v3_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: do_not_de_risk_model_v3_review
+    title: Do-Not-De-Risk Model v3 Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - outputs/research_trends/channel_specific_v3/models/do_not_de_risk_model_v3/*.json
+      - inputs/research_reviews/do_not_de_risk_model_v3_matrix.yaml
+      - docs/research/do_not_de_risk_model_v3_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Do-not-de-risk model review changes after scorecard thresholds, label summary, false risk-off or missed-upside diagnostics change.
+    owner_action: review_do_not_de_risk_model_v3_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: risk_on_veto_model_v3_review
+    title: Risk-On Veto Model v3 Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - outputs/research_trends/channel_specific_v3/models/risk_on_veto_model_v3/*.json
+      - inputs/research_reviews/risk_on_veto_model_v3_matrix.yaml
+      - docs/research/risk_on_veto_model_v3_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-on veto model review changes after scorecard thresholds, label summary, false add-risk or captured-upside diagnostics change.
+    owner_action: review_risk_on_veto_model_v3_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_v3_policy_compiler_dry_run
+    title: Channel-Specific v3 Policy Compiler Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - config/research/channel_specific_first_layer_v3.yaml
+      - outputs/research_trends/channel_specific_v3/channel_composer_v3_predictions.csv
+      - outputs/research_trends/channel_specific_v3/policy_compiler_dry_run.csv
+      - docs/research/channel_specific_v3_policy_compiler_dry_run_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Dry-run review changes after composer predictions, base overlay veto policy, signal usage matrix or veto-blocking behavior changes.
+    owner_action: review_channel_specific_v3_policy_compiler_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_v3_actual_path_review
+    title: Channel-Specific v3 Actual-Path Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - inputs/research_reviews/channel_specific_v3_actual_path_matrix.yaml
+      - docs/research/channel_specific_v3_actual_path_review.md
+      - inputs/research_reviews/channel_specific_v3_2022_slice_matrix.yaml
+      - docs/research/channel_specific_v3_2022_slice_review.md
+      - inputs/research_reviews/channel_specific_v3_2023_plus_dependence.yaml
+      - docs/research/channel_specific_v3_2023_plus_dependence_review.md
+      - inputs/research_reviews/channel_specific_v3_false_add_risk_reduction.yaml
+      - docs/research/channel_specific_v3_false_add_risk_reduction_review.md
+      - inputs/research_reviews/channel_specific_v3_false_risk_off_reduction.yaml
+      - docs/research/channel_specific_v3_false_risk_off_reduction_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Actual-path review changes after cached data, composer variants, frozen probe registry, 2022 slice, 2023+ dependence or false-risk diagnostics change.
+    owner_action: review_channel_specific_v3_actual_path_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_v3_selection_rule_review
+    title: Channel-Specific v3 Selection Rule Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - inputs/research_reviews/channel_specific_v3_selection_rule_result.yaml
+      - docs/research/channel_specific_v3_selection_rule_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Selection review changes after pre-registered pass/fail rules, actual-path diagnostics, dry-run result or 2023+ dependence conclusion changes.
+    owner_action: review_channel_specific_v3_selection_rule_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_first_layer_v3_closeout
+    title: Channel-Specific First-Layer v3 Closeout
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends channel-specific-v3
+    artifact_globs:
+      - docs/research/channel_specific_first_layer_v3_owner_pack.md
+      - docs/research/channel_specific_first_layer_v3_closeout.md
+      - inputs/research_reviews/channel_specific_first_layer_v3_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Closeout changes after model pass/fail status, data-quality status, owner evidence pack or final channel status changes.
+    owner_action: review_channel_specific_first_layer_v3_closeout
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: do_not_de_risk_optimization_track
     title: Do-Not-De-Risk Optimization Track
     group: research

@@ -1,0 +1,60 @@
+schema_version: do_not_de_risk_v3_selection_rule.v1
+policy_id: do_not_de_risk_v3_selection_rule_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Channel-specific v3 may only use drawdown_recovery to reduce false risk-off
+    and missed upside. It must not become an add-risk, growth overlay, TQQQ or
+    weight-emitting signal.
+  intended_effect: >
+    Keep do-not-de-risk evidence focused on defensive exit / neutral recovery
+    while preserving promotion and broker blockers.
+  validation_evidence: >
+    TRADING-1976 to 2005 diagnostics and guardrail tests verify selected-family
+    usage, blocked outputs, primary-window metadata and disabled promotion.
+  review_condition: >
+    Review before forwarding do-not-de-risk v3 into observe-only diagnostic
+    logging or any future owner-reviewed model.
+do_not_de_risk_v3_selection_rule:
+  required:
+    research_window_id: EXACT_THREE_ASSET_VALIDATED_WINDOW
+    allowed_family:
+      - drawdown_recovery
+    pit_approved: true
+    target_path_diagnostic_only: true
+    can_emit_weights: false
+  pass_if:
+    false_risk_off_cost_reduction: true
+    missed_upside_reduction: true
+    defensive_probe_regression_count_max: 0
+    actual_path_improved_defensive_probe_count_min: 1
+    net_of_cost_not_worse: true
+    2022_slice_not_worse: true
+  fail_if:
+    - defensive_probe_regression
+    - 2022_slice_regression
+    - improvement_only_in_2023_plus
+    - uses_add_risk_signal
+    - emits_weights
+  model_thresholds:
+    status: pilot_baseline
+    owner: research_governance
+    rationale: >
+      Drawdown-recovery v3 is a defensive neutralization diagnostic. The active
+      probability threshold requires a modest majority signal before overriding
+      defensive posture, while keeping the channel from becoming add-risk.
+    review_condition: >
+      Recalibrate only after observe-only forward diagnostic evidence is
+      available across at least one additional drawdown/recovery episode.
+    do_not_de_risk_active_probability_min: 0.55
+    high_confidence_min: 0.60
+    validity_days: 20
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -1,0 +1,61 @@
+schema_version: risk_on_veto_v3_selection_rule.v1
+policy_id: risk_on_veto_v3_selection_rule_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Risk-on veto v3 is a blocker for false add-risk / growth overlay, not a
+    positive risk-on model. It can only use volatility_compression and
+    rates_liquidity, and cannot authorize TQQQ or portfolio weights.
+  intended_effect: >
+    Reduce false add-risk and defensive regression without expanding beta/TQQQ
+    dependency or destroying captured-upside evidence silently.
+  validation_evidence: >
+    TRADING-1976 to 2005 diagnostics and guardrail tests verify selected-family
+    usage, growth-overlay blocking in dry-run, no weight output and disabled
+    promotion.
+  review_condition: >
+    Review before forwarding risk-on veto v3 into observe-only diagnostic
+    logging or any future owner-reviewed model.
+risk_on_veto_v3_selection_rule:
+  required:
+    research_window_id: EXACT_THREE_ASSET_VALIDATED_WINDOW
+    allowed_family:
+      - volatility_compression
+      - rates_liquidity
+    pit_approved: true
+    target_path_diagnostic_only: true
+    can_emit_weights: false
+  pass_if:
+    false_add_risk_cost_reduction: true
+    defensive_probe_regression_reduction: true
+    tqqq_stress_not_worse: true
+    captured_upside_tradeoff_reported: true
+    same_risk_static_delta_reported: true
+  fail_if:
+    - growth_overlay_enabled
+    - tqqq_allocation_enabled
+    - 2023_plus_only_improvement
+    - beta_only_improvement
+    - emits_weights
+  model_thresholds:
+    status: pilot_baseline
+    owner: research_governance
+    rationale: >
+      Risk-on veto v3 is a blocker, not a positive risk-on signal. The veto
+      probability threshold requires a modest majority of volatility/rates
+      evidence before growth overlay is blocked, and never authorizes TQQQ.
+    review_condition: >
+      Recalibrate only after observe-only forward diagnostic evidence shows
+      stable false-add-risk reduction without destroying captured upside.
+    veto_active_probability_min: 0.55
+    high_confidence_min: 0.60
+    validity_days: 20
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

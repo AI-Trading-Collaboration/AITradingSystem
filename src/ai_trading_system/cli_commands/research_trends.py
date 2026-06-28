@@ -7,6 +7,24 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.channel_specific_first_layer_v3 import (
+    DEFAULT_ACTION_VALUE_MATRIX_PATH as DEFAULT_CHANNEL_V3_ACTION_VALUE_MATRIX_PATH,
+)
+from ai_trading_system.channel_specific_first_layer_v3 import (
+    DEFAULT_CHANNEL_V3_CONFIG_PATH,
+    DEFAULT_CHANNEL_V3_OUTPUT_ROOT,
+    DEFAULT_DO_NOT_DERISK_SELECTION_RULE_PATH,
+    DEFAULT_FEATURE_SET_LOCKED_PATH,
+    DEFAULT_FEATURE_SET_PATH,
+    DEFAULT_RISK_ON_VETO_SELECTION_RULE_PATH,
+    run_channel_specific_first_layer_v3_pack,
+)
+from ai_trading_system.channel_specific_first_layer_v3 import (
+    DEFAULT_LABELS_PATH as DEFAULT_CHANNEL_V3_LABELS_PATH,
+)
+from ai_trading_system.channel_specific_first_layer_v3 import (
+    DEFAULT_PIT_FEATURE_MATRIX_PATH as DEFAULT_CHANNEL_V3_PIT_FEATURE_MATRIX_PATH,
+)
 from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_DEFENSIVE_ACTION_VALUE_POLICY_PATH,
     DEFAULT_DEFENSIVE_LABEL_TAXONOMY_PATH,
@@ -79,6 +97,10 @@ from ai_trading_system.second_layer_probe_library_freeze import (
 from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_PROBE_REGISTRY_V2_PATH,
     run_second_layer_probe_library_freeze_pack,
+)
+from ai_trading_system.two_layer_policy_compiler import (
+    DEFAULT_POLICY_SCHEMA_PATH,
+    DEFAULT_SIGNAL_USAGE_MATRIX_V2_PATH,
 )
 from ai_trading_system.upper_state_label_feature_reset import (
     DEFAULT_ACTION_VALUE_SCORE_POLICY_V2_PATH,
@@ -605,6 +627,80 @@ def indicator_family_ablation_command(
         review_path=review_path,
     )
     _print_payload("Indicator family ablation", payload)
+
+
+@trends_app.command("channel-specific-v3")
+def channel_specific_first_layer_v3_command(
+    feature_set_path: Annotated[
+        Path, typer.Option("--feature-set")
+    ] = DEFAULT_FEATURE_SET_PATH,
+    feature_set_locked_path: Annotated[
+        Path, typer.Option("--feature-set-locked")
+    ] = DEFAULT_FEATURE_SET_LOCKED_PATH,
+    do_not_selection_rule_path: Annotated[
+        Path, typer.Option("--do-not-selection-rule")
+    ] = DEFAULT_DO_NOT_DERISK_SELECTION_RULE_PATH,
+    risk_veto_selection_rule_path: Annotated[
+        Path, typer.Option("--risk-veto-selection-rule")
+    ] = DEFAULT_RISK_ON_VETO_SELECTION_RULE_PATH,
+    channel_config_path: Annotated[
+        Path, typer.Option("--channel-config")
+    ] = DEFAULT_CHANNEL_V3_CONFIG_PATH,
+    pit_feature_matrix_path: Annotated[
+        Path, typer.Option("--pit-feature-matrix")
+    ] = DEFAULT_CHANNEL_V3_PIT_FEATURE_MATRIX_PATH,
+    labels_path: Annotated[
+        Path, typer.Option("--labels-path")
+    ] = DEFAULT_CHANNEL_V3_LABELS_PATH,
+    action_value_matrix_path: Annotated[
+        Path, typer.Option("--action-value-matrix")
+    ] = DEFAULT_CHANNEL_V3_ACTION_VALUE_MATRIX_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = DEFAULT_PROBE_REGISTRY_V2_PATH,
+    composer_predictions_path: Annotated[
+        Path, typer.Option("--composer-predictions")
+    ] = DEFAULT_SECOND_LAYER_FROZEN_PREDICTIONS_PATH,
+    policy_schema_path: Annotated[
+        Path, typer.Option("--policy-schema")
+    ] = DEFAULT_POLICY_SCHEMA_PATH,
+    signal_usage_matrix_path: Annotated[
+        Path, typer.Option("--signal-usage-matrix")
+    ] = DEFAULT_SIGNAL_USAGE_MATRIX_V2_PATH,
+    expanded_config_path: Annotated[
+        Path, typer.Option("--expanded-config")
+    ] = DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_CHANNEL_V3_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_channel_specific_first_layer_v3_pack(
+        feature_set_path=feature_set_path,
+        feature_set_locked_path=feature_set_locked_path,
+        do_not_selection_rule_path=do_not_selection_rule_path,
+        risk_veto_selection_rule_path=risk_veto_selection_rule_path,
+        channel_config_path=channel_config_path,
+        pit_feature_matrix_path=pit_feature_matrix_path,
+        labels_path=labels_path,
+        action_value_matrix_path=action_value_matrix_path,
+        probe_registry_path=probe_registry_path,
+        composer_predictions_path=composer_predictions_path,
+        policy_schema_path=policy_schema_path,
+        signal_usage_matrix_path=signal_usage_matrix_path,
+        expanded_config_path=expanded_config_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("Channel-specific first-layer v3", payload)
 
 
 def _print_payload(label: str, payload: dict[str, object]) -> None:

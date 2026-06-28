@@ -48,6 +48,7 @@ research_audit_metadata:
     - signal_usage_boundary
     - indicator_family_ablation
     - boundary_aware_two_layer_framework
+    - channel_specific_first_layer_v3
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0
