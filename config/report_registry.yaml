@@ -22953,6 +22953,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_challenger_matrix_v2
+    title: First-Layer Challenger Matrix v2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-challenger-matrix-v2
+    artifact_globs:
+      - outputs/research_trends/first_layer_challenger_matrix_v2/first_layer_challenger_matrix_v2.json
+      - docs/research/first_layer_challenger_report_v2.md
+      - outputs/research_trends/first_layer_challenger_matrix_v2/research_candidate_queue_v2.json
+      - outputs/research_trends/first_layer_challenger_matrix_v2/owner_review_queue_v2.json
+      - outputs/research_trends/first_layer_challenger_matrix_v2/blocked_candidate_queue_v2.json
+      - docs/research/promotion_boundary_check_v2.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Challenger matrix v2 should be regenerated after gate policy v2, active selection policy v2, challenger experiment matrix, or promotion boundary changes.
+    owner_action: review_v2_research_owner_review_blocked_queues_before_any_future_promotion_gate_work
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
