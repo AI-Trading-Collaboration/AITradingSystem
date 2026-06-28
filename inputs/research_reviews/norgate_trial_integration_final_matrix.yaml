@@ -1,0 +1,57 @@
+schema_version: norgate_trial_integration_final_matrix.v1
+report_type: norgate_trial_integration_final_matrix
+title: Norgate Trial Integration Spike Final Matrix
+status: NORGATE_TRIAL_INCONCLUSIVE
+generated_at: '2026-06-28T09:52:09+00:00'
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: norgate_trial_summary_only_no_raw_vendor_data_committed
+summary:
+  norgate_package_access_status: NORGATE_ENV_MISSING_PACKAGE
+  membership_query_status: NORGATE_MEMBERSHIP_QUERY_NOT_VALIDATED
+  delisted_visibility_status: DELISTED_VISIBILITY_NOT_CONFIRMED
+  price_coverage_status: NORGATE_PRICE_COVERAGE_BLOCKED
+  daily_membership_snapshot_status: NORGATE_DAILY_MEMBERSHIP_SNAPSHOT_BLOCKED
+  breadth_prototype_status: NORGATE_BREADTH_PROTOTYPE_BLOCKED
+  pit_leakage_audit_status: NORGATE_TRIAL_PIT_AUDIT_READY
+  raw_data_governance_status: NORGATE_TRIAL_CACHE_GOVERNANCE_PASS
+  paid_platinum_decision: NORGATE_TRIAL_INCONCLUSIVE
+  trial_price_history_limited_to_2y: true
+  primary_window_full_validation_requires_paid_platinum: true
+  model_ready_for_2021_primary_window: false
+  research_only: true
+  candidate_count: 0
+  first_layer_reopen_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: norgate_trial_integration
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: norgate_trial_no_labels_v1
+  feature_set_version: norgate_trial_breadth_prototype_2y_v1
+  model_version: norgate_trial_integration_final_matrix_v1
+  threshold_policy: norgate_paid_platinum_decision_gate_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: norgate_paid_platinum_decision_gate_v1
+  selection_rule_version: norgate_paid_platinum_decision_gate_v1
+  boundary_contract_version: norgate_source_contract_v1
+research_only: true
+candidate_count: 0
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

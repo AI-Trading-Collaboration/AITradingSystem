@@ -1,0 +1,55 @@
+schema_version: norgate_trial_environment_contract.v1
+policy_id: norgate_trial_environment_contract_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Norgate trial integration requires local Windows Python access and a local
+    Norgate database, but this repo must not store credentials or vendor raw
+    data.
+  intended_effect: >
+    Allow safe smoke tests and fail-closed diagnostics without making Norgate
+    installation a hard dependency for the normal test suite.
+  validation_evidence: >
+    Guardrail tests cover fail-closed behavior without the package, raw data
+    gitignore patterns, price-limit blocker and disabled promotion boundary.
+  review_condition: >
+    Review before any owner-approved paid Platinum subscription or local raw
+    Norgate cache is used for primary-window validation.
+access_method: Python Windows
+required_checks:
+  python_package_import: norgatedata
+  norgate_updater_or_local_database_installed: true
+  local_database_path_outside_repo: true
+  credentials_not_committed: true
+  raw_vendor_data_not_committed: true
+allowed_statuses:
+  - NORGATE_ENV_READY
+  - NORGATE_ENV_MISSING_PACKAGE
+  - NORGATE_ENV_MISSING_LOCAL_DB
+  - NORGATE_ENV_AUTH_REQUIRED
+  - NORGATE_ENV_BLOCKED
+credential_policy:
+  allowed_env_vars:
+    - NORGATE_USERNAME
+    - NORGATE_PASSWORD
+  credential_values_recorded_in_logs: false
+  credential_values_recorded_in_reports: false
+raw_data_policy:
+  raw_data_commit_allowed: false
+  derived_artifact_commit_allowed: true
+  member_symbol_list_commit_allowed_without_license_review: false
+  allowed_derived_fields:
+    - counts
+    - hashes
+    - coverage_ratio
+    - status
+    - warning
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

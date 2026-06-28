@@ -22342,3 +22342,258 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: norgate_trial_integration_scope
+    title: Norgate Trial Integration Scope
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_trial_integration_scope.md
+      - inputs/research_reviews/norgate_trial_integration_scope.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Trial scope must be refreshed when trial limits, access method, or safety boundaries change.
+    owner_action: review_scope_before_any_norgate_trial_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_environment_contract
+    title: Norgate Trial Environment Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-smoke-test
+    artifact_globs:
+      - config/data/norgate_trial_environment_contract.yaml
+      - docs/research/norgate_trial_environment_contract.md
+      - inputs/research_reviews/norgate_trial_environment_probe.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Local package/database availability and credential handling must be current during the trial.
+    owner_action: run_trial_smoke_test_before_membership_or_price_probe
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_smoke_test_review
+    title: Norgate Trial Smoke Test Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-smoke-test
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/smoke_test_summary.json
+      - docs/research/norgate_trial_smoke_test_review.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Trial environment can change as the user installs the Windows package or local database.
+    owner_action: review_smoke_test_before_any_live_norgate_probe
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_source_contract
+    title: Norgate Source Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - config/data/norgate_source_contract.yaml
+      - docs/research/norgate_source_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Source contract changes when trial package, price limit, license, or alias mapping changes.
+    owner_action: review_source_contract_before_accepting_norgate_trial_outputs
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_membership_query_probe_review
+    title: Norgate Membership Query Probe Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate membership-probe --index nasdaq100
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/membership_probe.csv
+      - outputs/research_trends/norgate_trial/membership_probe_summary.json
+      - docs/research/norgate_membership_query_probe_review.md
+      - inputs/research_reviews/norgate_membership_query_probe.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Membership query capability should be refreshed after package installation, DB updates, or alias changes.
+    owner_action: review_membership_probe_before_snapshot_or_breadth_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_delisted_visibility_probe_review
+    title: Norgate Delisted Visibility Probe Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_delisted_visibility_probe_review.md
+      - inputs/research_reviews/norgate_delisted_visibility_probe.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Delisted visibility must be rechecked after package/database access changes.
+    owner_action: review_delisted_visibility_before_true_breadth_contract_pass
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_price_coverage_review
+    title: Norgate Trial Price Coverage Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/price_coverage_summary.json
+      - docs/research/norgate_trial_price_coverage_review.md
+      - inputs/research_reviews/norgate_trial_price_coverage.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Trial price coverage and the 2Y limitation must be current before interpreting any prototype.
+    owner_action: review_price_coverage_before_breadth_prototype_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_breadth_prototype_2y_review
+    title: Norgate Breadth Prototype 2Y Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/daily_membership_snapshot_summary.csv
+      - outputs/research_trends/norgate_trial/nasdaq100_breadth_prototype_2y.csv
+      - docs/research/norgate_breadth_prototype_2y_review.md
+      - inputs/research_reviews/norgate_breadth_prototype_2y.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: 2Y prototype should be regenerated after membership or trial price coverage changes.
+    owner_action: review_2y_prototype_as_engineering_evidence_only
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_pit_leakage_audit
+    title: Norgate Trial PIT Leakage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_trial_pit_leakage_audit.md
+      - inputs/research_reviews/norgate_trial_pit_leakage_audit.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT and leakage audit must be reviewed before any trial output is treated as true breadth evidence.
+    owner_action: review_pit_audit_before_any_primary_window_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_cache_artifact_governance
+    title: Norgate Trial Cache Artifact Governance
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_trial_cache_artifact_governance.md
+      - inputs/research_reviews/norgate_trial_cache_artifact_governance.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Raw data and local cache governance must be refreshed before paid vendor data is touched.
+    owner_action: review_raw_data_governance_before_any_norgate_cache_use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_value_of_information_review
+    title: Norgate Trial Value Of Information Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_trial_value_of_information_review.md
+      - inputs/research_reviews/norgate_trial_value_of_information.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Trial value-of-information changes after access, membership, delisted, price, prototype or cost evidence changes.
+    owner_action: review_value_of_information_before_paid_platinum_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_paid_platinum_decision_gate
+    title: Norgate Paid Platinum Decision Gate
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - config/research/norgate_paid_platinum_decision_gate.yaml
+      - docs/research/norgate_paid_platinum_decision_gate.md
+      - inputs/research_reviews/norgate_paid_platinum_decision_gate.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Paid Platinum purchase gate must be reviewed before any owner approval or subscription.
+    owner_action: owner_manual_approval_required_before_paid_platinum_purchase
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_owner_brief
+    title: Norgate Trial Owner Brief
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate trial-pack
+    artifact_globs:
+      - docs/research/norgate_trial_owner_brief.md
+      - docs/research/norgate_trial_integration_closeout.md
+      - inputs/research_reviews/norgate_trial_integration_final_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Owner brief and closeout summarize the trial status, 2Y limitation and paid Platinum decision.
+    owner_action: review_owner_brief_before_paid_platinum_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

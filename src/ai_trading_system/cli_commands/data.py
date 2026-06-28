@@ -164,6 +164,18 @@ from ai_trading_system.trading_engine.price_cache_reconcile import (
     refresh_backtest_manifest,
     run_price_cache_reconcile,
 )
+from ai_trading_system.vendor_adapters.norgate_connector import (
+    DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    run_norgate_membership_probe,
+    run_norgate_trial_pack,
+    run_norgate_trial_smoke_test,
+)
+from ai_trading_system.vendor_adapters.norgate_connector import (
+    DEFAULT_RESEARCH_DOCS_ROOT as DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+)
+from ai_trading_system.vendor_adapters.norgate_connector import (
+    DEFAULT_RESEARCH_INPUTS_ROOT as DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+)
 
 console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
@@ -176,6 +188,7 @@ universe_app = typer.Typer(help="Research universe as-of view and audit。")
 foundation_acceptance_app = typer.Typer(help="TRADING-734 data foundation acceptance。")
 source_qualification_app = typer.Typer(help="Data source qualification remediation。")
 free_sources_app = typer.Typer(help="Free PIT data source ingestion and validation。")
+norgate_app = typer.Typer(help="Norgate trial access and summary-only probes。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
 data_app.add_typer(fallback_policy_app, name="fallback-policy")
 data_app.add_typer(cache_catalog_app, name="cache-catalog")
@@ -185,6 +198,108 @@ data_app.add_typer(universe_app, name="universe")
 data_app.add_typer(foundation_acceptance_app, name="foundation-acceptance")
 data_app.add_typer(source_qualification_app, name="source-qualification")
 data_app.add_typer(free_sources_app, name="free-sources")
+data_app.add_typer(norgate_app, name="norgate")
+
+
+@norgate_app.command("trial-smoke-test")
+def norgate_trial_smoke_test_command(
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Norgate trial derived output root。")
+    ] = DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root", help="Research docs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[
+        Path, typer.Option("--inputs-root", help="Research review inputs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+) -> None:
+    payload = run_norgate_trial_smoke_test(
+        output_root=output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+    )
+    console.print(
+        "Norgate trial smoke test："
+        f"{payload.get('status')}；raw_vendor_data_committed="
+        f"{payload.get('raw_vendor_data_committed', False)}"
+    )
+
+
+@norgate_app.command("membership-probe")
+def norgate_membership_probe_command(
+    index_id: Annotated[str, typer.Option("--index", help="Index alias, e.g. nasdaq100 or $NDX。")]
+    = "nasdaq100",
+    dates: Annotated[
+        str | None,
+        typer.Option("--dates", help="Comma-separated YYYY-MM-DD anchor dates。"),
+    ] = None,
+    max_symbols: Annotated[
+        int,
+        typer.Option(
+            "--max-symbols",
+            help="0 means all symbols when live Norgate package/database are available。",
+        ),
+    ] = 0,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Norgate trial derived output root。")
+    ] = DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root", help="Research docs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[
+        Path, typer.Option("--inputs-root", help="Research review inputs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+) -> None:
+    requested_dates = _parse_norgate_dates(dates)
+    payload = run_norgate_membership_probe(
+        index_id=index_id,
+        requested_dates=requested_dates,
+        output_root=output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+        max_symbols=max_symbols,
+    )
+    console.print(
+        "Norgate membership probe："
+        f"{payload.get('status')}；query_success_count="
+        f"{payload.get('query_success_count', 0)}"
+    )
+
+
+@norgate_app.command("trial-pack")
+def norgate_trial_pack_command(
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Norgate trial derived output root。")
+    ] = DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root", help="Research docs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[
+        Path, typer.Option("--inputs-root", help="Research review inputs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+) -> None:
+    payload = run_norgate_trial_pack(
+        output_root=output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+    )
+    console.print(
+        "Norgate trial pack："
+        f"{payload.get('status')}；promotion_allowed={payload.get('promotion_allowed')}"
+    )
+
+
+def _parse_norgate_dates(value: str | None) -> list[date]:
+    if not value:
+        return [
+            date(2024, 8, 5),
+            date(2024, 11, 6),
+            date(2025, 4, 7),
+            date(2025, 8, 1),
+            date(2026, 1, 2),
+            date(2026, 6, 26),
+        ]
+    return [_parse_date(item.strip()) for item in value.split(",") if item.strip()]
 
 
 @free_sources_app.command("ingest")

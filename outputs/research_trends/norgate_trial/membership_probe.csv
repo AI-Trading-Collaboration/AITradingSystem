@@ -1,0 +1,7 @@
+index_id,member_count,member_symbols_hash,membership_query_method,query_success,requested_date,resolution_rule,resolved_trading_date,symbol_count,warning
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2024-08-05,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2024-11-06,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2025-04-07,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2025-08-01,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2026-01-02,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE
+$NDX,0,,norgatedata.index_constituent_timeseries,False,2026-06-26,not_resolved,,0,NORGATE_ENV_MISSING_PACKAGE

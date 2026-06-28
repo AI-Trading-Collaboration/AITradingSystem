@@ -29,6 +29,11 @@ data/features/*
 data/external/*
 !data/external/.gitkeep
 data/cache/
+data/raw/norgate/
+data/vendor/norgate/
+data/cache/norgate/
+outputs/vendor/norgate_raw/
+*.norgate.raw.*
 data/trading_engine/*
 data/etf_portfolio/
 data/simulation/

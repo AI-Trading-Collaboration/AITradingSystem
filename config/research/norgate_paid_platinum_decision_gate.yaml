@@ -1,0 +1,41 @@
+schema_version: norgate_paid_platinum_decision_gate_policy.v1
+policy_id: norgate_paid_platinum_decision_gate_v1
+status: active
+owner: research_governance
+policy_metadata:
+  rationale: >
+    A 3-week Norgate trial can validate engineering capability, but a paid
+    Platinum subscription decision must require explicit owner approval because
+    it creates cost and license obligations.
+  intended_effect: >
+    Prevent access validation or a 2Y prototype from being interpreted as
+    purchase approval, first-layer reopen evidence or promotion evidence.
+  validation_evidence: >
+    Guardrail tests verify owner approval is required and all strategy surfaces
+    remain disabled.
+  review_condition: >
+    Review after the trial pack has live Norgate access, membership, delisted,
+    price coverage, snapshot, breadth prototype and cache governance evidence.
+allowed_statuses:
+  - NORGATE_PAID_PLATINUM_RECOMMENDED
+  - NORGATE_PAID_PLATINUM_DEFERRED
+  - NORGATE_NOT_SUITABLE
+  - NORGATE_TRIAL_INCONCLUSIVE
+recommend_paid_requires:
+  python_access_confirmed: true
+  membership_query_confirmed: true
+  delisted_visibility_confirmed_or_sufficiently_documented: true
+  snapshot_prototype_ready: true
+  two_year_breadth_prototype_generated: true
+  cache_license_governance_passed: true
+  expected_research_value_greater_than_cost: true
+owner_manual_approval_before_purchase: true
+purchase_allowed_without_owner_approval: false
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

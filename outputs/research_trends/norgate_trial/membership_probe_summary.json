@@ -1,0 +1,102 @@
+{
+  "broker_action": "none",
+  "candidate_count": 0,
+  "dynamic_promotion_status": "BLOCKED",
+  "environment_status": "NORGATE_ENV_MISSING_PACKAGE",
+  "errors": [
+    "ModuleNotFoundError"
+  ],
+  "first_layer_reopen_allowed": false,
+  "generated_at": "2026-06-28T09:52:09+00:00",
+  "index_id": "$NDX",
+  "membership_query_available": false,
+  "membership_query_available_but_price_join_limited": false,
+  "paper_shadow_allowed": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "query_success_count": 0,
+  "raw_member_symbols_committed": false,
+  "report_type": "norgate_membership_query_probe",
+  "requested_date_count": 6,
+  "research_only": true,
+  "rows": [
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2024-08-05",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    },
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2024-11-06",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    },
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2025-04-07",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    },
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2025-08-01",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    },
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2026-01-02",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    },
+    {
+      "index_id": "$NDX",
+      "member_count": 0,
+      "member_symbols_hash": "",
+      "membership_query_method": "norgatedata.index_constituent_timeseries",
+      "query_success": false,
+      "requested_date": "2026-06-26",
+      "resolution_rule": "not_resolved",
+      "resolved_trading_date": "",
+      "symbol_count": 0,
+      "warning": "NORGATE_ENV_MISSING_PACKAGE"
+    }
+  ],
+  "schema_version": "norgate_membership_query_probe.v1",
+  "status": "NORGATE_MEMBERSHIP_QUERY_NOT_VALIDATED",
+  "warnings": [
+    "norgatedata package is not installed in this Python environment"
+  ]
+}

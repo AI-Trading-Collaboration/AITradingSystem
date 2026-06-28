@@ -1,0 +1,31 @@
+schema_version: norgate_source_contract.v1
+source_id: norgate_us_stocks_platinum_trial
+provider: Norgate Data
+package: US Stocks Platinum Trial
+trial_length: 3 weeks
+price_history_limit: 2 years
+access_method: Python Windows
+historical_constituents_expected: true
+delisted_securities_expected: true
+local_database_expected: true
+python_package: norgatedata
+index_aliases:
+  nasdaq100: $NDX
+  ndx: $NDX
+raw_data_commit_allowed: false
+local_cache_commit_allowed: false
+derived_artifact_commit_allowed: true
+primary_window_full_validation_requires_paid_platinum: true
+primary_window_price_coverage_under_trial: false
+known_limitations:
+  - Daily price history limited to 2 years during trial.
+  - Trial can validate access and prototype behavior but not full 2021 primary-window price join.
+  - Historical membership query availability must be verified from local database.
+safety_boundary:
+  research_only: true
+  candidate_count: 0
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

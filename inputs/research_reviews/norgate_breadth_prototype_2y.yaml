@@ -1,0 +1,127 @@
+schema_version: norgate_breadth_prototype_2y.v1
+report_type: norgate_breadth_prototype_2y
+status: NORGATE_BREADTH_PROTOTYPE_BLOCKED
+generated_at: '2026-06-28T09:52:09+00:00'
+trial_price_history_limited_to_2y: true
+primary_window_full_validation_requires_paid_platinum: true
+not_model_ready_for_2021_primary_window: true
+not_promotion_evidence: true
+concentration_status: concentration_proxy_unavailable_or_diagnostic_only
+rows:
+- date: '2024-08-05'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+- date: '2024-11-06'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+- date: '2025-04-07'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+- date: '2025-08-01'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+- date: '2026-01-02'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+- date: '2026-06-26'
+  index_id: $NDX
+  20d_positive_return_ratio: ''
+  60d_positive_return_ratio: ''
+  above_50d_ma_ratio: ''
+  above_200d_ma_ratio: ''
+  outperform_qqq_20d_ratio: ''
+  outperform_qqq_60d_ratio: ''
+  median_member_20d_return: ''
+  median_member_60d_return: ''
+  equal_weight_member_20d_return: ''
+  equal_weight_member_60d_return: ''
+  qqq_20d_return: ''
+  qqq_60d_return: ''
+  equal_weight_minus_qqq_20d: ''
+  equal_weight_minus_qqq_60d: ''
+  warning: breadth prototype blocked until Norgate package/local database and membership/price
+    probes pass
+research_only: true
+candidate_count: 0
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

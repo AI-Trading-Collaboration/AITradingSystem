@@ -1,0 +1,85 @@
+schema_version: norgate_membership_query_probe.v1
+report_type: norgate_membership_query_probe
+status: NORGATE_MEMBERSHIP_QUERY_NOT_VALIDATED
+generated_at: '2026-06-28T09:52:09+00:00'
+environment_status: NORGATE_ENV_MISSING_PACKAGE
+index_id: $NDX
+requested_date_count: 6
+query_success_count: 0
+membership_query_available: false
+membership_query_available_but_price_join_limited: false
+raw_member_symbols_committed: false
+rows:
+- requested_date: '2024-08-05'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+- requested_date: '2024-11-06'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+- requested_date: '2025-04-07'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+- requested_date: '2025-08-01'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+- requested_date: '2026-01-02'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+- requested_date: '2026-06-26'
+  resolved_trading_date: ''
+  resolution_rule: not_resolved
+  index_id: $NDX
+  member_count: 0
+  symbol_count: 0
+  member_symbols_hash: ''
+  query_success: false
+  membership_query_method: norgatedata.index_constituent_timeseries
+  warning: NORGATE_ENV_MISSING_PACKAGE
+warnings:
+- norgatedata package is not installed in this Python environment
+errors:
+- ModuleNotFoundError
+research_only: true
+candidate_count: 0
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

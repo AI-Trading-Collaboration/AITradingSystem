@@ -1,0 +1,23 @@
+schema_version: norgate_paid_platinum_decision_gate.v1
+report_type: norgate_paid_platinum_decision_gate
+status: NORGATE_TRIAL_INCONCLUSIVE
+generated_at: '2026-06-28T09:52:09+00:00'
+owner_manual_approval_required_before_purchase: true
+purchase_allowed_without_owner_approval: false
+recommendation_reason: Trial access or required capability checks are not fully validated
+required_before_recommend_paid:
+  python_access_confirmed: false
+  membership_query_confirmed: false
+  delisted_visibility_confirmed: false
+  snapshot_prototype_ready: false
+  two_year_breadth_prototype_generated: false
+  cache_license_governance_passed: true
+research_only: true
+candidate_count: 0
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+dynamic_promotion_status: BLOCKED

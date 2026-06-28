@@ -1,0 +1,27 @@
+schema_version: norgate_trial_integration_scope.v1
+report_type: norgate_trial_integration_scope
+status: NORGATE_TRIAL_INTEGRATION_SCOPE_READY
+generated_at: "2026-06-28T10:00:00+00:00"
+trial_purpose: engineering_data_capability_validation
+trial_length: 3 weeks
+access_method: Python Windows
+price_history_limit: 2 years
+primary_window_full_validation_requires_paid_platinum: true
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+allowed_work:
+  - access_validation
+  - membership_query_validation
+  - delisted_visibility_probe
+  - two_year_prototype_feature_validation
+  - pit_and_cache_audit
+blocked_work:
+  - formal_subscription_purchase
+  - provider_upgrade
+  - raw_vendor_data_commit
+  - first_layer_research_reopen
+  - target_weights
+  - trade_advice
