@@ -22887,6 +22887,27 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_gate_policy_v2_reconciliation
+    title: First-Layer Gate Policy v2 Reconciliation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-gate-policy-v2-reconciliation
+    artifact_globs:
+      - outputs/research_trends/first_layer_gate_policy_v2/recommended_gate_policy_v2.yaml
+      - docs/research/gate_policy_v2_reconciliation_report.md
+      - docs/research/owner_review_gate_semantics.md
+      - docs/research/active_selection_rule_audit_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Gate policy v2 reconciliation should be regenerated after TRADING-2274 recommended gate policy, gate ablation matrix, threshold sensitivity report, or active selection rule changes.
+    owner_action: review_layered_gate_policy_and_run_active_selection_rule_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

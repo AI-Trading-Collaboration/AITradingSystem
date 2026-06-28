@@ -76,6 +76,21 @@ from ai_trading_system.first_layer_defensive_regression_diagnosis import (
     DEFAULT_REGRESSION_INVENTORY_YAML_PATH,
     run_first_layer_defensive_regression_diagnosis_pack,
 )
+from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
+    DEFAULT_GATE_ABLATION_MATRIX_PATH as DEFAULT_GATE_POLICY_V2_ABLATION_PATH,
+)
+from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_GATE_POLICY_V2_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
+    DEFAULT_RECOMMENDED_GATE_POLICY_PATH as DEFAULT_GATE_POLICY_V2_RECOMMENDED_PATH,
+)
+from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
+    DEFAULT_THRESHOLD_SENSITIVITY_PATH as DEFAULT_GATE_POLICY_V2_THRESHOLD_PATH,
+)
+from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
+    run_first_layer_gate_policy_v2_reconciliation_pack,
+)
 from ai_trading_system.first_layer_objective_validation_redesign import (
     DEFAULT_BENCHMARK_CONSISTENCY_PATH as DEFAULT_OBJECTIVE_VALIDATION_BENCHMARK_CONSISTENCY_PATH,
 )
@@ -1389,6 +1404,34 @@ def first_layer_performance_gate_audit_command(
         output_root=output_root,
     )
     _print_payload("First-layer performance gate audit", payload)
+
+
+@trends_app.command("first-layer-gate-policy-v2-reconciliation")
+def first_layer_gate_policy_v2_reconciliation_command(
+    recommended_gate_policy_path: Annotated[
+        Path, typer.Option("--recommended-gate-policy")
+    ] = DEFAULT_GATE_POLICY_V2_RECOMMENDED_PATH,
+    gate_ablation_matrix_path: Annotated[
+        Path, typer.Option("--gate-ablation-matrix")
+    ] = DEFAULT_GATE_POLICY_V2_ABLATION_PATH,
+    threshold_sensitivity_path: Annotated[
+        Path, typer.Option("--threshold-sensitivity")
+    ] = DEFAULT_GATE_POLICY_V2_THRESHOLD_PATH,
+    active_selection_rule_path: Annotated[
+        Path, typer.Option("--active-selection-rule")
+    ] = DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_GATE_POLICY_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_gate_policy_v2_reconciliation_pack(
+        recommended_gate_policy_path=recommended_gate_policy_path,
+        gate_ablation_matrix_path=gate_ablation_matrix_path,
+        threshold_sensitivity_path=threshold_sensitivity_path,
+        active_selection_rule_path=active_selection_rule_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer gate policy v2 reconciliation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
