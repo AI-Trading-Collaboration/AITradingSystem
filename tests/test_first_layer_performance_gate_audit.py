@@ -53,7 +53,11 @@ def test_first_layer_performance_gate_audit_outputs_required_artifacts(
     assert payload["summary"]["offline_validation_ready_challenger_count"] == 4
     assert payload["summary"]["challenger_actual_path_available_count"] == 0
     assert gate_rows["not_2023_plus_only"]["gate_marginal_utility"] == "negative"
-    assert gate_rows["not_2023_plus_only"]["recommended_action"] in allowed_actions
+    assert gate_rows["not_2023_plus_only"]["recommended_action"] == "remove_gate"
+    assert (
+        gate_rows["not_2023_plus_only"]["owner_decision_override"]["owner_instruction"]
+        == "do_not_continue_gate"
+    )
     assert (
         gate_rows["no_major_regression_in_defensive_probe"]["gate_marginal_utility"] == "positive"
     )

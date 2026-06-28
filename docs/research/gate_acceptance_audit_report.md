@@ -16,7 +16,7 @@
 |`no_major_regression_in_defensive_probe`|`3`|`1`|`positive`|`0.000404`|`sensitive_to_threshold`|`keep_as_hard_gate`|
 |`2022_slice_not_worse_than_flat_reference`|`1`|`1`|`neutral`|`0.0`|`sensitive_to_threshold`|`keep_as_performance_gate`|
 |`net_of_cost_not_worse`|`1`|`1`|`neutral`|`0.0`|`stable`|`convert_to_score_penalty`|
-|`not_2023_plus_only`|`2`|`1`|`negative`|`0.070283`|`unstable_material_opportunity_cost`|`convert_to_owner_review`|
+|`not_2023_plus_only`|`2`|`1`|`negative`|`0.070283`|`unstable_material_opportunity_cost`|`remove_gate`|
 |`not_beta_dependency`|`1`|`1`|`inconclusive`|`0.0`|`insufficient_candidate_level_evidence`|`convert_to_owner_review`|
 |`not_tqqq_dependency`|`1`|`1`|`inconclusive`|`0.0`|`insufficient_candidate_level_evidence`|`convert_to_owner_review`|
 |`probability_threshold_0_55`|`1`|`1`|`inconclusive`|`0.0`|`insufficient_candidate_level_evidence`|`convert_to_score_penalty`|

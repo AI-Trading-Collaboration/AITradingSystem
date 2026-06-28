@@ -49,6 +49,17 @@ recommended_action_policy:
     - convert_to_score_penalty
     - remove_gate
   action_scope: owner_review_recommendation_only_not_active_policy
+owner_decision_overrides:
+  not_2023_plus_only:
+    decision_date: '2026-06-28'
+    owner_instruction: do_not_continue_gate
+    recommended_action: remove_gate
+    rationale: >
+      The project owner judged that a 2023-plus-only diagnostic should not
+      remain as a retained gate. The audit should preserve the 2023+ dependency
+      evidence as a risk note, but it must not automatically reject otherwise
+      strong complete actual-path candidates.
+    evidence_retention: diagnostic_note_only_not_gate
 gate_modes:
   actual_path_improved_probe_count_min:
     failure_mode_reduced: weak_or_non_general_actual_path_improvement

@@ -77,3 +77,6 @@ actual-path utility，而不是只过滤局部 first-layer diagnostic 指标。
   不足或 all-slice actual-path 不完整为 `inconclusive`。Offline challenger
   validation-ready rows=`4`，complete two-layer challenger actual-path rows=`0`；
   promotion/paper-shadow/production/broker 保持 false/none/BLOCKED。
+- 2026-06-28：owner 明确 `not_2023_plus_only` 不建议继续保留为 gate；审计
+  recommendation 更新为 `remove_gate`。2023+ 依赖风险仍保留为 diagnostic note / evidence，
+  但不再作为自动拒绝 complete actual-path candidate 的 performance gate。

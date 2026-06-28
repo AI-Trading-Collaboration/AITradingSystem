@@ -534,6 +534,7 @@ def _gate_rows(
     modes = {(str(row["gate_id"]), str(row["mode"])): row for row in ablation_rows}
     candidates = {str(row["policy_id"]): row for row in candidate_rows}
     gate_policy = mapping(policy.get("gate_modes"))
+    owner_overrides = mapping(policy.get("owner_decision_overrides"))
     rows = []
     for gate_id in gate_ids:
         no_gate_ids = set(strings(modes[(gate_id, "no_gate")].get("accepted_policy_ids")))
@@ -594,6 +595,7 @@ def _gate_rows(
             utility=utility,
             material_cost=material_cost,
         )
+        owner_override = mapping(owner_overrides.get(gate_id))
         rows.append(
             {
                 "gate_id": gate_id,
@@ -627,7 +629,9 @@ def _gate_rows(
                     material_cost=material_cost,
                     threshold_stability=threshold_stability,
                     current_accept_count=len(current_accept_ids),
+                    owner_override=owner_override,
                 ),
+                "owner_decision_override": owner_override,
                 **metric_deltas,
             }
         )
@@ -940,6 +944,7 @@ def _recommended_policy(
                 "threshold_stability": row["threshold_stability"],
                 "recommended_action": row["recommended_action"],
                 "evidence_status": row["evidence_status"],
+                "owner_decision_override": mapping(row.get("owner_decision_override")),
             }
             for row in gate_rows
         ],
@@ -1360,7 +1365,11 @@ def _recommended_action(
     material_cost: bool,
     threshold_stability: str,
     current_accept_count: int,
+    owner_override: Mapping[str, Any],
 ) -> str:
+    override_action = str(owner_override.get("recommended_action", ""))
+    if override_action in RECOMMENDED_ACTIONS:
+        return override_action
     if gate_id == "no_major_regression_in_defensive_probe" and utility == "positive":
         return "keep_as_hard_gate"
     if gate_id == "not_2023_plus_only" and utility == "negative":
