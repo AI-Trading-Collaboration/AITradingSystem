@@ -1,0 +1,46 @@
+schema_version: norgate_trial_partial_effectiveness_conclusion_matrix.v1
+report_type: norgate_trial_partial_effectiveness_conclusion_matrix
+status: NORGATE_2Y_PARTIAL_EFFECTIVENESS_READY
+generated_at: '2026-06-28T10:31:44+00:00'
+feature_policy: norgate_trial_partial_effectiveness_policy_v1
+source_engineering_useful: true
+source_feature_useful_2y: weak
+purchase_platinum_evidence_strength: moderate
+engineering_validated: true
+feature_numeric_validated: true
+local_signal_evidence: none
+trial_price_history_limited_to_2y: true
+earliest_price_date: '2024-06-28'
+latest_price_date: '2026-06-26'
+member_day_coverage_ratio: 1.0
+missing_price_ratio: 0.0
+failed_join_count: 0
+primary_window_start: '2021-02-22'
+primary_window_validated: false
+model_ready_for_2021_primary_window: false
+reopen_gate_allowed: false
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+candidate_count: 0
+research_only: true
+interpretation: 2Y trial can inform paid Platinum purchase value, but it does not
+  replace 2021 primary-window validation.
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: norgate_trial_partial_effectiveness
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: norgate_trial_2y_partial
+  label_version: norgate_trial_no_labels_v1
+  feature_set_version: norgate_trial_breadth_features_2y_v1
+  model_version: norgate_trial_partial_effectiveness_v1
+  threshold_policy: norgate_trial_partial_effectiveness_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: norgate_trial_partial_effectiveness_policy_v1
+  selection_rule_version: norgate_trial_partial_effectiveness_policy_v1
+  boundary_contract_version: norgate_source_contract_v1

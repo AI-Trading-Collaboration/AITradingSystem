@@ -22597,3 +22597,106 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: norgate_trial_partial_effectiveness_policy
+    title: Norgate Trial Partial Effectiveness Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-effectiveness
+    artifact_globs:
+      - config/research/norgate_trial_partial_effectiveness_policy.yaml
+      - docs/research/norgate_trial_partial_effectiveness_policy.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Policy defines diagnostic 2Y bucket, deterioration, baseline proxy, and false-signal rules.
+    owner_action: review_policy_before_interpreting_2y_partial_effectiveness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_partial_effectiveness_coverage_report
+    title: Norgate Trial Partial Effectiveness Coverage Report
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-effectiveness
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_trial_partial_effectiveness_coverage_report.json
+      - outputs/research_trends/norgate_trial/norgate_trial_partial_effectiveness_coverage_by_date.csv
+      - docs/research/norgate_trial_partial_effectiveness_coverage_report.md
+      - inputs/research_reviews/norgate_trial_partial_effectiveness_coverage_report.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Coverage changes when local Norgate DB or trial price availability changes.
+    owner_action: review_coverage_before_interpreting_2y_breadth_features
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_breadth_feature_report_2y
+    title: Norgate Trial Breadth Feature Report 2Y
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-effectiveness
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_trial_breadth_feature_report_2y.json
+      - outputs/research_trends/norgate_trial/norgate_trial_breadth_feature_report_2y.csv
+      - docs/research/norgate_trial_breadth_feature_report_2y.md
+      - inputs/research_reviews/norgate_trial_breadth_feature_report_2y.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Numeric breadth features must be regenerated after membership, price, or policy changes.
+    owner_action: review_feature_numeric_validation_before_purchase_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_local_signal_report_2y
+    title: Norgate Trial Local Signal Report 2Y
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-effectiveness
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_trial_local_signal_report_2y.json
+      - outputs/research_trends/norgate_trial/norgate_trial_local_signal_bucket_report_2y.csv
+      - outputs/research_trends/norgate_trial/norgate_trial_local_signal_deterioration_report_2y.csv
+      - docs/research/norgate_trial_local_signal_report_2y.md
+      - inputs/research_reviews/norgate_trial_local_signal_report_2y.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Local signal evidence is trial-window dependent and cannot be reused across DB refreshes.
+    owner_action: review_local_signal_as_purchase_evidence_not_promotion_evidence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_trial_partial_effectiveness_conclusion_matrix
+    title: Norgate Trial Partial Effectiveness Conclusion Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-effectiveness
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_trial_partial_effectiveness_conclusion_matrix.json
+      - docs/research/norgate_trial_partial_effectiveness_conclusion_matrix.md
+      - inputs/research_reviews/norgate_trial_partial_effectiveness_conclusion_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Conclusion matrix summarizes whether 2Y trial evidence supports paid history purchase only.
+    owner_action: review_conclusion_before_paid_platinum_purchase_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

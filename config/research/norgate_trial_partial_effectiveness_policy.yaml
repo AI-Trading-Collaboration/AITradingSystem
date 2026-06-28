@@ -1,0 +1,52 @@
+schema_version: norgate_trial_partial_effectiveness_policy.v1
+policy_id: norgate_trial_partial_effectiveness_policy_v1
+status: active
+owner: research_governance
+version: 1
+rationale: >
+  Norgate trial 2Y partial effectiveness validation is allowed to evaluate
+  local feature usefulness and paid Platinum purchase evidence, but it must not
+  be interpreted as primary-window validation or promotion evidence.
+intended_effect: >
+  Keep breadth bucket, deterioration, baseline proxy, and false signal
+  diagnostics auditable while preserving disabled first-layer, paper-shadow,
+  production, and broker boundaries.
+review_condition: >
+  Review before changing any bucket count, coverage floor, deterioration
+  definition, baseline proxy rule, false-signal event definition, or conclusion
+  strength mapping.
+trial_window_policy:
+  expected_price_history_limit_years: 2
+  primary_window_start: "2021-02-22"
+  primary_window_validated: false
+coverage_policy:
+  min_member_day_coverage_ratio_for_feature_numeric_validated: 0.9
+  min_feature_days_for_local_signal_review: 100
+bucket_policy:
+  breadth_bucket_feature: pct_above_ma50
+  breadth_bucket_method: within_sample_tertile
+  bucket_labels:
+    - low
+    - mid
+    - high
+deterioration_policy:
+  feature: breadth_momentum
+  method: bottom_tertile
+baseline_proxy_policy:
+  qqq_ma_window: 50
+  risk_off_rule: qqq_close_below_ma50
+  baseline_plus_breadth_rule: baseline_risk_off_or_low_breadth_or_deterioration
+false_signal_policy:
+  false_risk_off_rule: risk_off_and_next_20d_qqq_return_positive
+  false_risk_on_event: future_20d_drawdown_bottom_quartile
+conclusion_strength_policy:
+  moderate_requires_feature_numeric_validated: true
+  strong_requires_local_signal_evidence: strong
+safety_boundary:
+  primary_window_validated: false
+  model_ready_for_2021_primary_window: false
+  reopen_gate_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

@@ -1,0 +1,89 @@
+{
+  "baseline_comparison": {
+    "baseline_definition": "qqq_close_below_ma50_proxy",
+    "baseline_first_layer_proxy": {
+      "avg_next_20d_return_when_risk_off": 0.02632,
+      "avg_next_20d_return_when_risk_on": 0.016507,
+      "false_risk_off_rate": 0.5625,
+      "false_risk_on_rate": 0.1875,
+      "future_drawdown_event_capture_ratio": 0.420168,
+      "risk_off_day_count": 112,
+      "risk_on_day_count": 368,
+      "sample_count": 480
+    },
+    "baseline_plus_breadth": {
+      "avg_next_20d_return_when_risk_off": 0.02844,
+      "avg_next_20d_return_when_risk_on": 0.011547,
+      "false_risk_off_rate": 0.728155,
+      "false_risk_on_rate": 0.248175,
+      "future_drawdown_event_capture_ratio": 0.428571,
+      "risk_off_day_count": 206,
+      "risk_on_day_count": 274,
+      "sample_count": 480
+    },
+    "baseline_plus_breadth_definition": "baseline_risk_off_or_low_breadth_or_breadth_deterioration",
+    "false_risk_off_delta": 0.165655,
+    "false_risk_on_delta": 0.060675,
+    "future_drawdown_event_threshold": -0.048066
+  },
+  "breadth_bucket_vs_forward_return": [
+    {
+      "avg_future_20d_drawdown": -0.032054,
+      "avg_next_10d_qqq_return": 0.015345,
+      "avg_next_20d_qqq_return": 0.0379,
+      "avg_next_5d_qqq_return": 0.00804,
+      "breadth_bucket": "low",
+      "sample_count": 151
+    },
+    {
+      "avg_future_20d_drawdown": -0.030615,
+      "avg_next_10d_qqq_return": 0.003493,
+      "avg_next_20d_qqq_return": 0.002177,
+      "avg_next_5d_qqq_return": 0.000225,
+      "breadth_bucket": "mid",
+      "sample_count": 150
+    },
+    {
+      "avg_future_20d_drawdown": -0.019524,
+      "avg_next_10d_qqq_return": 0.012891,
+      "avg_next_20d_qqq_return": 0.022466,
+      "avg_next_5d_qqq_return": 0.007588,
+      "breadth_bucket": "high",
+      "sample_count": 150
+    }
+  ],
+  "breadth_deterioration_vs_future_drawdown": [
+    {
+      "avg_future_20d_drawdown": -0.029196,
+      "avg_next_10d_qqq_return": 0.007991,
+      "avg_next_20d_qqq_return": 0.013598,
+      "avg_next_5d_qqq_return": 0.004173,
+      "breadth_deterioration": false,
+      "sample_count": 356
+    },
+    {
+      "avg_future_20d_drawdown": -0.034018,
+      "avg_next_10d_qqq_return": 0.011137,
+      "avg_next_20d_qqq_return": 0.031682,
+      "avg_next_5d_qqq_return": 0.005102,
+      "breadth_deterioration": true,
+      "sample_count": 144
+    }
+  ],
+  "broker_action": "none",
+  "candidate_count": 0,
+  "feature_policy": "norgate_trial_partial_effectiveness_policy_v1",
+  "generated_at": "2026-06-28T10:31:44+00:00",
+  "local_signal_evidence": "none",
+  "model_ready_for_2021_primary_window": false,
+  "paper_shadow_allowed": false,
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "promotion_allowed": false,
+  "reopen_gate_allowed": false,
+  "report_type": "norgate_trial_local_signal_report_2y",
+  "research_only": true,
+  "sample_day_count": 500,
+  "schema_version": "norgate_trial_local_signal_report_2y.v1",
+  "status": "NORGATE_2Y_LOCAL_SIGNAL_REPORT_READY"
+}

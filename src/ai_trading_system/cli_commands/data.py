@@ -176,6 +176,10 @@ from ai_trading_system.vendor_adapters.norgate_connector import (
 from ai_trading_system.vendor_adapters.norgate_connector import (
     DEFAULT_RESEARCH_INPUTS_ROOT as DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
 )
+from ai_trading_system.vendor_adapters.norgate_partial_effectiveness import (
+    DEFAULT_PARTIAL_EFFECTIVENESS_POLICY_PATH,
+    run_norgate_trial_partial_effectiveness,
+)
 
 console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
@@ -286,6 +290,47 @@ def norgate_trial_pack_command(
     console.print(
         "Norgate trial pack："
         f"{payload.get('status')}；promotion_allowed={payload.get('promotion_allowed')}"
+    )
+
+
+@norgate_app.command("partial-effectiveness")
+def norgate_partial_effectiveness_command(
+    index_id: Annotated[str, typer.Option("--index", help="Index alias, e.g. nasdaq100 or $NDX。")]
+    = "nasdaq100",
+    max_symbols: Annotated[
+        int,
+        typer.Option(
+            "--max-symbols",
+            help="Debug limit for membership scan; 0 means all US equity symbols。",
+        ),
+    ] = 0,
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Norgate trial derived output root。")
+    ] = DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root", help="Research docs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[
+        Path, typer.Option("--inputs-root", help="Research review inputs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy", help="Norgate partial effectiveness diagnostic policy。"),
+    ] = DEFAULT_PARTIAL_EFFECTIVENESS_POLICY_PATH,
+) -> None:
+    payload = run_norgate_trial_partial_effectiveness(
+        index_id=index_id,
+        output_root=output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+        policy_path=policy_path,
+        max_symbols=max_symbols,
+    )
+    console.print(
+        "Norgate partial effectiveness："
+        f"{payload.get('status')}；"
+        f"source_feature_useful_2y={payload.get('source_feature_useful_2y')}；"
+        f"promotion_allowed={payload.get('promotion_allowed')}"
     )
 
 

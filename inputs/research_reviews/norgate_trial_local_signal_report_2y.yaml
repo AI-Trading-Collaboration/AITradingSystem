@@ -1,0 +1,72 @@
+schema_version: norgate_trial_local_signal_report_2y.v1
+report_type: norgate_trial_local_signal_report_2y
+status: NORGATE_2Y_LOCAL_SIGNAL_REPORT_READY
+generated_at: '2026-06-28T10:31:44+00:00'
+feature_policy: norgate_trial_partial_effectiveness_policy_v1
+sample_day_count: 500
+breadth_bucket_vs_forward_return:
+- breadth_bucket: low
+  sample_count: 151
+  avg_next_5d_qqq_return: 0.00804
+  avg_next_10d_qqq_return: 0.015345
+  avg_next_20d_qqq_return: 0.0379
+  avg_future_20d_drawdown: -0.032054
+- breadth_bucket: mid
+  sample_count: 150
+  avg_next_5d_qqq_return: 0.000225
+  avg_next_10d_qqq_return: 0.003493
+  avg_next_20d_qqq_return: 0.002177
+  avg_future_20d_drawdown: -0.030615
+- breadth_bucket: high
+  sample_count: 150
+  avg_next_5d_qqq_return: 0.007588
+  avg_next_10d_qqq_return: 0.012891
+  avg_next_20d_qqq_return: 0.022466
+  avg_future_20d_drawdown: -0.019524
+breadth_deterioration_vs_future_drawdown:
+- breadth_deterioration: false
+  sample_count: 356
+  avg_next_5d_qqq_return: 0.004173
+  avg_next_10d_qqq_return: 0.007991
+  avg_next_20d_qqq_return: 0.013598
+  avg_future_20d_drawdown: -0.029196
+- breadth_deterioration: true
+  sample_count: 144
+  avg_next_5d_qqq_return: 0.005102
+  avg_next_10d_qqq_return: 0.011137
+  avg_next_20d_qqq_return: 0.031682
+  avg_future_20d_drawdown: -0.034018
+baseline_comparison:
+  baseline_definition: qqq_close_below_ma50_proxy
+  baseline_plus_breadth_definition: baseline_risk_off_or_low_breadth_or_breadth_deterioration
+  future_drawdown_event_threshold: -0.048066
+  baseline_first_layer_proxy:
+    sample_count: 480
+    risk_off_day_count: 112
+    risk_on_day_count: 368
+    avg_next_20d_return_when_risk_off: 0.02632
+    avg_next_20d_return_when_risk_on: 0.016507
+    future_drawdown_event_capture_ratio: 0.420168
+    false_risk_off_rate: 0.5625
+    false_risk_on_rate: 0.1875
+  baseline_plus_breadth:
+    sample_count: 480
+    risk_off_day_count: 206
+    risk_on_day_count: 274
+    avg_next_20d_return_when_risk_off: 0.02844
+    avg_next_20d_return_when_risk_on: 0.011547
+    future_drawdown_event_capture_ratio: 0.428571
+    false_risk_off_rate: 0.728155
+    false_risk_on_rate: 0.248175
+  false_risk_off_delta: 0.165655
+  false_risk_on_delta: 0.060675
+local_signal_evidence: none
+primary_window_validated: false
+model_ready_for_2021_primary_window: false
+reopen_gate_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+research_only: true
+candidate_count: 0

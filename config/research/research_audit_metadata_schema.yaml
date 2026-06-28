@@ -57,6 +57,7 @@ research_audit_metadata:
     - minimal_forward_diagnostic
     - paid_data_due_diligence
     - norgate_trial_integration
+    - norgate_trial_partial_effectiveness
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0
