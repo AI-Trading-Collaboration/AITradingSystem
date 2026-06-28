@@ -1,5 +1,7 @@
 # TRADING-2006 to 2025 Risk-On Veto Observe-Only Diagnostic
 
+最后更新：2026-06-28
+
 ## 背景
 
 TRADING-1976～2005 已收口为 `CHANNEL_V3_RISK_ON_VETO_ONLY`：

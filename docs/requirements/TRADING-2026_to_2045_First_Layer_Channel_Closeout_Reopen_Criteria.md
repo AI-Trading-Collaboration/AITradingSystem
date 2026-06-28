@@ -1,5 +1,7 @@
 # TRADING-2026 to 2045 First-Layer Channel Closeout and Reopen Criteria
 
+最后更新：2026-06-28
+
 ## 背景
 
 TRADING-2006～2025 已确认：
