@@ -22700,3 +22700,81 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: norgate_2y_partial_evidence_review_policy
+    title: Norgate 2Y Partial Evidence Review Policy
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-evidence-review
+    artifact_globs:
+      - config/research/norgate_2y_partial_evidence_review_policy.yaml
+      - docs/research/norgate_2y_partial_evidence_review_policy.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 90
+    freshness_rationale: Policy defines local-signal-none review thresholds and owner purchase memo interpretation.
+    owner_action: review_policy_before_interpreting_norgate_2y_evidence_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_2y_partial_evidence_review
+    title: Norgate 2Y Partial Evidence Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-evidence-review
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_2y_partial_evidence_review.json
+      - outputs/research_trends/norgate_trial/norgate_2y_benchmark_consistency.csv
+      - docs/research/norgate_2y_partial_evidence_review.md
+      - inputs/research_reviews/norgate_2y_partial_evidence_review.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Evidence review changes when 2267 artifacts, benchmark prices, or review policy changes.
+    owner_action: review_local_signal_none_attribution_before_platinum_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_platinum_decision_memo
+    title: Norgate Platinum Decision Memo
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-evidence-review
+    artifact_globs:
+      - docs/research/norgate_platinum_decision_memo.md
+      - inputs/research_reviews/norgate_platinum_decision_memo.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Owner decision memo summarizes whether full-history Platinum purchase is justified.
+    owner_action: owner_manual_decision_required_before_purchase
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: norgate_2y_partial_evidence_conclusion_matrix
+    title: Norgate 2Y Partial Evidence Conclusion Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits data norgate partial-evidence-review
+    artifact_globs:
+      - outputs/research_trends/norgate_trial/norgate_2y_partial_evidence_conclusion_matrix.json
+      - inputs/research_reviews/norgate_2y_partial_evidence_conclusion_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 7
+    freshness_rationale: Conclusion matrix records local-signal-none reason, feature value, and purchase recommendation.
+    owner_action: review_conclusion_before_owner_approved_full_history_purchase
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

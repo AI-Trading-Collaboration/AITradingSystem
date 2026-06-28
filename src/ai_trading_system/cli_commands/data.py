@@ -180,6 +180,10 @@ from ai_trading_system.vendor_adapters.norgate_partial_effectiveness import (
     DEFAULT_PARTIAL_EFFECTIVENESS_POLICY_PATH,
     run_norgate_trial_partial_effectiveness,
 )
+from ai_trading_system.vendor_adapters.norgate_partial_evidence_review import (
+    DEFAULT_PARTIAL_EVIDENCE_REVIEW_POLICY_PATH,
+    run_norgate_2y_partial_evidence_review,
+)
 
 console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
@@ -330,6 +334,38 @@ def norgate_partial_effectiveness_command(
         "Norgate partial effectiveness："
         f"{payload.get('status')}；"
         f"source_feature_useful_2y={payload.get('source_feature_useful_2y')}；"
+        f"promotion_allowed={payload.get('promotion_allowed')}"
+    )
+
+
+@norgate_app.command("partial-evidence-review")
+def norgate_partial_evidence_review_command(
+    output_root: Annotated[
+        Path, typer.Option("--output-root", help="Norgate trial derived output root。")
+    ] = DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root", help="Research docs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_DOCS_ROOT,
+    inputs_root: Annotated[
+        Path, typer.Option("--inputs-root", help="Research review inputs root。")
+    ] = DEFAULT_NORGATE_RESEARCH_INPUTS_ROOT,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy", help="Norgate 2Y partial evidence review policy。"),
+    ] = DEFAULT_PARTIAL_EVIDENCE_REVIEW_POLICY_PATH,
+) -> None:
+    payload = run_norgate_2y_partial_evidence_review(
+        output_root=output_root,
+        docs_root=docs_root,
+        inputs_root=inputs_root,
+        policy_path=policy_path,
+    )
+    console.print(
+        "Norgate partial evidence review："
+        f"{payload.get('status')}；"
+        f"local_signal_evidence_reason={payload.get('local_signal_evidence_reason')}；"
+        f"purchase_platinum_recommendation="
+        f"{payload.get('purchase_platinum_recommendation')}；"
         f"promotion_allowed={payload.get('promotion_allowed')}"
     )
 

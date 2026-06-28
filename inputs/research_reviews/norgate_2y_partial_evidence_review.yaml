@@ -1,0 +1,344 @@
+schema_version: norgate_2y_partial_evidence_review.v1
+report_type: norgate_2y_partial_evidence_review
+status: NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_READY
+generated_at: '2026-06-28T10:58:53+00:00'
+review_policy: norgate_2y_partial_evidence_review_policy_v1
+benchmark_environment_status: NORGATE_ENV_READY
+coverage_summary:
+  earliest_price_date: '2024-06-28'
+  latest_price_date: '2026-06-26'
+  member_day_coverage_ratio: 1.0
+  missing_price_ratio: 0.0
+  failed_join_count: 0
+prior_2267_conclusion:
+  local_signal_evidence: none
+  source_feature_useful_2y: weak
+  purchase_platinum_evidence_strength: moderate
+feature_variation_review:
+  status: FEATURE_VARIATION_SUFFICIENT
+  variation_sufficient: true
+  nonflat_feature_count: 4
+  required_nonflat_feature_count: 2
+  pct_above_ma50_nonflat: true
+  feature_rows:
+  - feature: pct_above_ma20
+    non_null_day_count: 481
+    min: 0.0
+    max: 0.930693
+    range: 0.930693
+    std: 0.175752
+    nonflat: true
+  - feature: pct_above_ma50
+    non_null_day_count: 451
+    min: 0.039604
+    max: 0.851485
+    range: 0.811881
+    std: 0.152806
+    nonflat: true
+  - feature: pct_above_ma200
+    non_null_day_count: 301
+    min: 0.277228
+    max: 0.76
+    range: 0.482772
+    std: 0.082416
+    nonflat: true
+  - feature: breadth_momentum
+    non_null_day_count: 431
+    min: -0.415842
+    max: 0.653465
+    range: 1.069307
+    std: 0.199655
+    nonflat: true
+bucket_balance_review:
+  status: BUCKET_SAMPLE_BALANCED
+  bucket_sample_sufficient: true
+  bucket_counts:
+    low: 151
+    mid: 150
+    high: 150
+  min_bucket_sample_count: 150
+  max_bucket_sample_count: 151
+  bucket_imbalance_ratio: 1.006667
+  policy_min_bucket_sample_count: 50
+  policy_max_bucket_imbalance_ratio: 1.25
+outcome_dominance_review:
+  status: OUTCOME_NOT_DOMINATED_BY_FEW_DAYS
+  outcome_dominated_by_few_days: false
+  reviewed_benchmark_horizon_count: 9
+  dominated_benchmark_horizon_count: 0
+  max_top_decile_abs_contribution_share: 0.312444
+  max_single_day_abs_contribution_share: 0.016166
+event_count_review:
+  status: EVENT_COUNTS_SUFFICIENT
+  event_count_sufficient: true
+  deterioration_event_count: 144
+  non_deterioration_event_count: 356
+  recovery_event_count: 147
+  policy_min_deterioration_event_count: 50
+  policy_min_recovery_event_count: 50
+baseline_increment_review:
+  status: NO_STABLE_INCREMENT
+  baseline_increment_direction: worse_false_signal_rates
+  incremental_value_positive: false
+  incremental_value_near_zero: false
+  false_risk_off_delta: 0.165655
+  false_risk_on_delta: 0.060675
+  future_drawdown_capture_delta: 0.008403
+  baseline_risk_off_day_count: 112
+  baseline_plus_breadth_risk_off_day_count: 206
+benchmark_consistency_review:
+  status: BENCHMARK_SIGNAL_INCONSISTENT
+  benchmark_signal_consistent: false
+  supporting_benchmark_count: 0
+  required_supporting_benchmark_count: 2
+  benchmark_rows:
+    QQQ:
+      ready_horizon_count: 3
+      supporting_horizon_count: 0
+      supports_signal: false
+    SPY:
+      ready_horizon_count: 3
+      supporting_horizon_count: 0
+      supports_signal: false
+    SMH:
+      ready_horizon_count: 3
+      supporting_horizon_count: 0
+      supports_signal: false
+benchmark_consistency_rows:
+- benchmark: QQQ
+  horizon_days: 5
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 446
+  low_bucket_count: 151
+  mid_bucket_count: 145
+  high_bucket_count: 150
+  low_bucket_avg_return: 0.00804
+  mid_bucket_avg_return: 0.000225
+  high_bucket_avg_return: 0.007588
+  high_minus_low_return: -0.000452
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.287309
+  max_single_day_abs_contribution_share: 0.012332
+  outlier_dominated: false
+- benchmark: QQQ
+  horizon_days: 10
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 441
+  low_bucket_count: 150
+  mid_bucket_count: 142
+  high_bucket_count: 149
+  low_bucket_avg_return: 0.015345
+  mid_bucket_avg_return: 0.003493
+  high_bucket_avg_return: 0.012891
+  high_minus_low_return: -0.002454
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.302732
+  max_single_day_abs_contribution_share: 0.012174
+  outlier_dominated: false
+- benchmark: QQQ
+  horizon_days: 20
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 431
+  low_bucket_count: 148
+  mid_bucket_count: 136
+  high_bucket_count: 147
+  low_bucket_avg_return: 0.0379
+  mid_bucket_avg_return: 0.002177
+  high_bucket_avg_return: 0.022466
+  high_minus_low_return: -0.015434
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.312444
+  max_single_day_abs_contribution_share: 0.010844
+  outlier_dominated: false
+- benchmark: SPY
+  horizon_days: 5
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 446
+  low_bucket_count: 151
+  mid_bucket_count: 145
+  high_bucket_count: 150
+  low_bucket_avg_return: 0.00615
+  mid_bucket_avg_return: 8.3e-05
+  high_bucket_avg_return: 0.004609
+  high_minus_low_return: -0.001541
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.305293
+  max_single_day_abs_contribution_share: 0.016166
+  outlier_dominated: false
+- benchmark: SPY
+  horizon_days: 10
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 441
+  low_bucket_count: 150
+  mid_bucket_count: 142
+  high_bucket_count: 149
+  low_bucket_avg_return: 0.011549
+  mid_bucket_avg_return: 0.002104
+  high_bucket_avg_return: 0.007907
+  high_minus_low_return: -0.003642
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.309415
+  max_single_day_abs_contribution_share: 0.014484
+  outlier_dominated: false
+- benchmark: SPY
+  horizon_days: 20
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 431
+  low_bucket_count: 148
+  mid_bucket_count: 136
+  high_bucket_count: 147
+  low_bucket_avg_return: 0.026614
+  mid_bucket_avg_return: 0.001267
+  high_bucket_avg_return: 0.014679
+  high_minus_low_return: -0.011935
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.29287
+  max_single_day_abs_contribution_share: 0.011071
+  outlier_dominated: false
+- benchmark: SMH
+  horizon_days: 5
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 446
+  low_bucket_count: 151
+  mid_bucket_count: 145
+  high_bucket_count: 150
+  low_bucket_avg_return: 0.019053
+  mid_bucket_avg_return: 0.004145
+  high_bucket_avg_return: 0.014327
+  high_minus_low_return: -0.004726
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.271896
+  max_single_day_abs_contribution_share: 0.008897
+  outlier_dominated: false
+- benchmark: SMH
+  horizon_days: 10
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 441
+  low_bucket_count: 150
+  mid_bucket_count: 142
+  high_bucket_count: 149
+  low_bucket_avg_return: 0.033666
+  mid_bucket_avg_return: 0.019194
+  high_bucket_avg_return: 0.022078
+  high_minus_low_return: -0.011588
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.292601
+  max_single_day_abs_contribution_share: 0.010688
+  outlier_dominated: false
+- benchmark: SMH
+  horizon_days: 20
+  status: BENCHMARK_FORWARD_RETURN_READY
+  sample_count: 431
+  low_bucket_count: 148
+  mid_bucket_count: 136
+  high_bucket_count: 147
+  low_bucket_avg_return: 0.073347
+  mid_bucket_avg_return: 0.033198
+  high_bucket_avg_return: 0.041648
+  high_minus_low_return: -0.031699
+  supporting_breadth_signal: false
+  top_decile_abs_contribution_share: 0.302258
+  max_single_day_abs_contribution_share: 0.010145
+  outlier_dominated: false
+stress_window_review:
+  status: TRIAL_WINDOW_MISSING_2022_STRESS
+  earliest_price_date: '2024-06-28'
+  latest_price_date: '2026-06-26'
+  primary_window_start: '2021-02-22'
+  stress_window_start: '2022-01-03'
+  stress_window_end: '2022-12-30'
+  primary_window_covered: false
+  stress_2022_sample_available: false
+  trial_2y_missing_2022_stress_sample: true
+  full_history_needed_for_final_answer: true
+conclusion_matrix:
+  schema_version: norgate_2y_partial_evidence_conclusion_matrix.v1
+  report_type: norgate_2y_partial_evidence_conclusion_matrix
+  status: NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_READY
+  generated_at: '2026-06-28T10:58:53+00:00'
+  review_policy: norgate_2y_partial_evidence_review_policy_v1
+  benchmark_environment_status: NORGATE_ENV_READY
+  source_engineering_useful: true
+  source_feature_useful_2y: weak
+  purchase_platinum_evidence_strength: moderate
+  engineering_validated: true
+  feature_numeric_validated: true
+  local_signal_evidence: none
+  local_signal_evidence_reason: no_incremental_value
+  trial_2y_feature_value: weak
+  full_history_needed_for_final_answer: true
+  purchase_platinum_recommendation: 'yes'
+  purchase_rationale: stress_window_required
+  purchase_decision_owner_approval_required: true
+  earliest_price_date: '2024-06-28'
+  latest_price_date: '2026-06-26'
+  member_day_coverage_ratio: 1.0
+  missing_price_ratio: 0.0
+  failed_join_count: 0
+  feature_variation_sufficient: true
+  bucket_sample_sufficient: true
+  outcome_dominated_by_few_days: false
+  event_count_sufficient: true
+  baseline_increment_direction: worse_false_signal_rates
+  benchmark_signal_consistent: false
+  stress_2022_sample_available: false
+  trial_price_history_limited_to_2y: true
+  primary_window_start: '2021-02-22'
+  research_window_id: norgate_trial_2y_partial
+  research_only: true
+  primary_window_validated: false
+  model_ready_for_2021_primary_window: false
+  reopen_gate_allowed: false
+  first_layer_reopen_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  candidate_count: 0
+  dynamic_promotion_status: BLOCKED
+  purchase_allowed_without_owner_approval: false
+  research_audit_metadata:
+    modified_layer: validation_only
+    modified_channel: norgate_2y_partial_evidence_review
+    frozen_first_layer_version: first_layer_channel_archive_policy_v1
+    frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+    research_window_id: norgate_trial_2y_partial
+    label_version: norgate_trial_no_labels_v1
+    feature_set_version: norgate_trial_breadth_features_2y_v1
+    model_version: norgate_2y_partial_evidence_review_v1
+    threshold_policy: norgate_2y_partial_evidence_review_policy_v1
+    probe_registry_version: dynamic_second_layer_probe_registry_v2
+    candidate_count: 0
+    pre_registered_selection_rule: norgate_2y_partial_evidence_review_policy_v1
+    selection_rule_version: norgate_2y_partial_evidence_review_policy_v1
+    boundary_contract_version: norgate_source_contract_v1
+research_window_id: norgate_trial_2y_partial
+research_only: true
+primary_window_validated: false
+model_ready_for_2021_primary_window: false
+reopen_gate_allowed: false
+first_layer_reopen_allowed: false
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+candidate_count: 0
+dynamic_promotion_status: BLOCKED
+purchase_allowed_without_owner_approval: false
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: norgate_2y_partial_evidence_review
+  frozen_first_layer_version: first_layer_channel_archive_policy_v1
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: norgate_trial_2y_partial
+  label_version: norgate_trial_no_labels_v1
+  feature_set_version: norgate_trial_breadth_features_2y_v1
+  model_version: norgate_2y_partial_evidence_review_v1
+  threshold_policy: norgate_2y_partial_evidence_review_policy_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  candidate_count: 0
+  pre_registered_selection_rule: norgate_2y_partial_evidence_review_policy_v1
+  selection_rule_version: norgate_2y_partial_evidence_review_policy_v1
+  boundary_contract_version: norgate_source_contract_v1

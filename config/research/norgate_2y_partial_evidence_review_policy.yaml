@@ -1,0 +1,69 @@
+schema_version: norgate_2y_partial_evidence_review_policy.v1
+policy_id: norgate_2y_partial_evidence_review_policy_v1
+status: active
+owner: research_governance
+version: 1
+rationale: >
+  Norgate trial 2Y partial effectiveness validation produced
+  local_signal_evidence=none. This policy fixes the review thresholds used to
+  explain that result and to decide whether full-history Platinum data is worth
+  owner-approved purchase.
+intended_effect: >
+  Keep the partial evidence review auditable while preventing 2Y trial
+  diagnostics from becoming a production threshold, promotion gate, or
+  primary-window acceptance rule.
+review_condition: >
+  Review before changing feature variation floors, bucket balance limits,
+  outlier dominance checks, event-count floors, baseline delta interpretation,
+  benchmark consistency requirements, or purchase recommendation mapping.
+trial_window_policy:
+  expected_price_history_limit_years: 2
+  primary_window_start: "2021-02-22"
+  primary_window_validated: false
+stress_window_policy:
+  stress_window_start: "2022-01-03"
+  stress_window_end: "2022-12-30"
+  stress_window_role: breadth_value_scenario_validation
+feature_variation_policy:
+  reviewed_features:
+    - pct_above_ma20
+    - pct_above_ma50
+    - pct_above_ma200
+    - breadth_momentum
+  min_non_null_days: 100
+  min_range_for_nonflat_breadth_fraction: 0.15
+  min_std_for_nonflat_breadth_fraction: 0.05
+  min_nonflat_feature_count: 2
+bucket_policy:
+  min_bucket_sample_count: 50
+  max_bucket_imbalance_ratio: 1.25
+outcome_dominance_policy:
+  top_abs_contribution_fraction: 0.1
+  max_top_decile_abs_contribution_share: 0.5
+  max_single_day_abs_contribution_share: 0.25
+event_policy:
+  min_deterioration_event_count: 50
+  min_recovery_event_count: 50
+baseline_incremental_policy:
+  max_abs_false_signal_delta_for_near_zero: 0.02
+  max_abs_capture_delta_for_near_zero: 0.02
+benchmark_consistency_policy:
+  benchmark_symbols:
+    - QQQ
+    - SPY
+    - SMH
+  horizons:
+    - 5
+    - 10
+    - 20
+  min_supporting_horizons_per_benchmark: 2
+  min_supporting_benchmark_count_for_consistent_signal: 2
+safety_boundary:
+  primary_window_validated: false
+  model_ready_for_2021_primary_window: false
+  reopen_gate_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  purchase_allowed_without_owner_approval: false

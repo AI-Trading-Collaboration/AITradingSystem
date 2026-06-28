@@ -58,6 +58,7 @@ research_audit_metadata:
     - paid_data_due_diligence
     - norgate_trial_integration
     - norgate_trial_partial_effectiveness
+    - norgate_2y_partial_evidence_review
   allowed_empty_version_value: frozen_or_not_applicable
   candidate_count:
     minimum: 0
