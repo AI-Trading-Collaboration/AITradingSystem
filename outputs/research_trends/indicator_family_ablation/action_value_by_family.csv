@@ -1,0 +1,85 @@
+family_name,date,research_window_id,label_type,channel,feature_snapshot,future_return,future_drawdown,same_risk_delta,false_risk_off_cost,false_add_risk_cost,missed_upside,captured_upside,veto_effect,period_start,period_end,signal_band_observation_count,evidence_status
+trend_persistence,2025-12-05,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,"{""qqq_above_ma60_duration_60d"": 1.0, ""qqq_ma_slope_20_60"": 0.069993, ""qqq_ma_slope_60_120"": 0.064114, ""qqq_momentum_120d"": 0.411942, ""qqq_momentum_20d"": 0.099942, ""qqq_momentum_60d"": 0.187599, ""qqq_pullback_contained_above_ma60"": 1.0, ""qqq_trend_consistency_60d"": 0.55}",0.01133883,-0.03358772,0.00171892,0.00171892,0.0,0.00171892,0.01133883,0.0,2021-08-05,2025-12-05,320,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,2025-12-05,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,"{""qqq_above_ma60_duration_60d"": 1.0, ""qqq_ma_slope_20_60"": 0.069993, ""qqq_ma_slope_60_120"": 0.064114, ""qqq_momentum_120d"": 0.411942, ""qqq_momentum_20d"": 0.099942, ""qqq_momentum_60d"": 0.187599, ""qqq_pullback_contained_above_ma60"": 1.0, ""qqq_trend_consistency_60d"": 0.55}",0.01133883,-0.03358772,0.00171892,0.00171892,0.0,0.00171892,0.01133883,0.0,2021-08-05,2025-12-05,320,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,2025-12-05,exact_three_asset_validated,add_risk,return_seeking_diagnostic,"{""qqq_above_ma60_duration_60d"": 1.0, ""qqq_ma_slope_20_60"": 0.069993, ""qqq_ma_slope_60_120"": 0.064114, ""qqq_momentum_120d"": 0.411942, ""qqq_momentum_20d"": 0.099942, ""qqq_momentum_60d"": 0.187599, ""qqq_pullback_contained_above_ma60"": 1.0, ""qqq_trend_consistency_60d"": 0.55}",0.01256617,-0.04002985,0.00294626,0.0,0.01496323,0.0,0.00294626,0.0,2021-08-05,2025-12-05,320,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,2026-03-30,exact_three_asset_validated,risk_on_veto,risk_veto,"{""qqq_above_ma60_duration_60d"": 0.716667, ""qqq_ma_slope_20_60"": -0.004162, ""qqq_ma_slope_60_120"": 0.047379, ""qqq_momentum_120d"": 0.127036, ""qqq_momentum_20d"": -0.051257, ""qqq_momentum_60d"": -0.039787, ""qqq_pullback_contained_above_ma60"": 0.0, ""qqq_trend_consistency_60d"": 0.483333}",0.02037047,-0.06951243,0.00620381,0.0,0.0,0.0,0.00620381,0.02360771,2021-02-22,2026-03-30,320,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+trend_persistence,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,2025-11-03,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,"{""qqq_vs_sgov_momentum_60d"": 0.285426, ""qqq_vs_tqqq_consistency_20d"": 1.0}",0.00874001,-0.03505207,0.00114403,0.00114403,0.0,0.00114403,0.00874001,0.0,2021-05-28,2025-11-03,320,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,2025-11-03,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,"{""qqq_vs_sgov_momentum_60d"": 0.285426, ""qqq_vs_tqqq_consistency_20d"": 1.0}",0.00874001,-0.03505207,0.00114403,0.00114403,0.0,0.00114403,0.00874001,0.0,2021-05-28,2025-11-03,320,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,2025-11-03,exact_three_asset_validated,add_risk,return_seeking_diagnostic,"{""qqq_vs_sgov_momentum_60d"": 0.285426, ""qqq_vs_tqqq_consistency_20d"": 1.0}",0.00955342,-0.04172269,0.00195745,0.0,0.01550621,0.0,0.00195745,0.0,2021-05-28,2025-11-03,320,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,2026-03-30,exact_three_asset_validated,risk_on_veto,risk_veto,"{""qqq_vs_sgov_momentum_60d"": 0.018497, ""qqq_vs_tqqq_consistency_20d"": 0.95}",0.02008182,-0.06851471,0.00597882,0.0,0.0,0.0,0.00597882,0.02326452,2021-02-22,2026-03-30,320,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+relative_strength,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,2025-09-26,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,"{""downside_vol_20d"": 0.063559, ""downside_vol_decline_20d"": 0.248968, ""realized_vol_20d"": 0.182086, ""realized_vol_decline_20d"": 0.412978, ""realized_vol_decline_60d"": -0.200685}",0.01597745,-0.04422181,0.00316827,0.00316827,0.0,0.00316827,0.01597745,0.0,2021-02-26,2025-09-26,320,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,2025-09-26,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,"{""downside_vol_20d"": 0.063559, ""downside_vol_decline_20d"": 0.248968, ""realized_vol_20d"": 0.182086, ""realized_vol_decline_20d"": 0.412978, ""realized_vol_decline_60d"": -0.200685}",0.01597745,-0.04422181,0.00316827,0.00316827,0.0,0.00316827,0.01597745,0.0,2021-02-26,2025-09-26,320,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,2025-09-26,exact_three_asset_validated,add_risk,return_seeking_diagnostic,"{""downside_vol_20d"": 0.063559, ""downside_vol_decline_20d"": 0.248968, ""realized_vol_20d"": 0.182086, ""realized_vol_decline_20d"": 0.412978, ""realized_vol_decline_60d"": -0.200685}",0.01828742,-0.05243173,0.00547823,0.0,0.01913677,0.0,0.00547823,0.0,2021-02-26,2025-09-26,320,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,2026-02-27,exact_three_asset_validated,risk_on_veto,risk_veto,"{""downside_vol_20d"": 0.08983, ""downside_vol_decline_20d"": -0.007653, ""realized_vol_20d"": 0.151462, ""realized_vol_decline_20d"": -0.006804, ""realized_vol_decline_60d"": 0.015155}",0.01527952,-0.0470125,0.00418925,0.0,0.0,0.0,0.00418925,0.01621896,2021-02-22,2026-02-27,320,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+volatility_compression,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,2026-01-28,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,"{""days_since_60d_low"": 0.983333, ""qqq_drawdown_126d"": 0.0, ""qqq_drawdown_recovery_20d"": 0.018467, ""qqq_reclaim_recent_high_20d"": 1.0, ""qqq_recovery_speed_20d"": 0.003054, ""recovery_from_60d_low"": 0.338362}",0.0128228,-0.03369193,0.00225283,0.00225283,0.0,0.00225283,0.0128228,0.0,2021-04-01,2026-01-28,320,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,2026-01-28,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,"{""days_since_60d_low"": 0.983333, ""qqq_drawdown_126d"": 0.0, ""qqq_drawdown_recovery_20d"": 0.018467, ""qqq_reclaim_recent_high_20d"": 1.0, ""qqq_recovery_speed_20d"": 0.003054, ""recovery_from_60d_low"": 0.338362}",0.0128228,-0.03369193,0.00225283,0.00225283,0.0,0.00225283,0.0128228,0.0,2021-04-01,2026-01-28,320,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,2026-01-28,exact_three_asset_validated,add_risk,return_seeking_diagnostic,"{""days_since_60d_low"": 0.983333, ""qqq_drawdown_126d"": 0.0, ""qqq_drawdown_recovery_20d"": 0.018467, ""qqq_reclaim_recent_high_20d"": 1.0, ""qqq_recovery_speed_20d"": 0.003054, ""recovery_from_60d_low"": 0.338362}",0.01449158,-0.04004808,0.0039216,0.0,0.01480058,0.0,0.0039216,0.0,2021-04-01,2026-01-28,320,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,2026-03-30,exact_three_asset_validated,risk_on_veto,risk_veto,"{""days_since_60d_low"": 0.383333, ""qqq_drawdown_126d"": -0.070927, ""qqq_drawdown_recovery_20d"": -0.027828, ""qqq_reclaim_recent_high_20d"": 0.0, ""qqq_recovery_speed_20d"": 0.0, ""recovery_from_60d_low"": 0.000682}",0.02453046,-0.0648153,0.00763911,0.0,0.0,0.0,0.00763911,0.02159156,2021-02-22,2026-03-30,320,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+drawdown_recovery,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+breadth_participation,,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_validated,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_validated,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+breadth_participation,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED
+rates_liquidity,2026-03-27,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,"{""usd_trend_20d"": 0.012487, ""yield_curve_10y2y"": 1.59}",0.00936261,-0.03903416,0.00203087,0.00203087,0.0,0.00203087,0.00936261,0.0,2021-02-22,2026-03-27,320,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,2026-03-27,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,"{""usd_trend_20d"": 0.012487, ""yield_curve_10y2y"": 1.59}",0.00936261,-0.03903416,0.00203087,0.00203087,0.0,0.00203087,0.00936261,0.0,2021-02-22,2026-03-27,320,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,2026-03-27,exact_three_asset_validated,add_risk,return_seeking_diagnostic,"{""usd_trend_20d"": 0.012487, ""yield_curve_10y2y"": 1.59}",0.01083778,-0.04625327,0.00350605,0.0,0.01679631,0.0,0.00350605,0.0,2021-02-22,2026-03-27,320,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,2024-06-27,exact_three_asset_validated,risk_on_veto,risk_veto,"{""usd_trend_20d"": -0.000248, ""yield_curve_10y2y"": -0.39}",0.02930611,-0.04193471,0.00900716,0.0,0.0,0.0,0.00900716,0.01345666,2022-08-05,2024-06-27,320,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+rates_liquidity,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,FAMILY_ACTION_VALUE_REVIEW_READY
+event_risk,,exact_three_asset_validated,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_validated,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_validated,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_validated,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,legacy_research_window_2022_12,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,legacy_research_window_2022_12,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,legacy_research_window_2022_12,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,legacy_research_window_2022_12,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_primary_only_extension,do_not_de_risk,do_not_de_risk,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_primary_only_extension,stay_constructive,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_primary_only_extension,add_risk,return_seeking_diagnostic,,,,,,,,,,,,0,PIT_BLOCKED
+event_risk,,exact_three_asset_primary_only_extension,risk_on_veto,risk_veto,,,,,,,,,,,,0,PIT_BLOCKED

@@ -107,8 +107,9 @@ def test_indicator_family_ablation_cli_writes_diagnostic_matrix(tmp_path: Path) 
 
     assert result.exit_code == 0, result.output
     payload = _load_yaml(matrix_path)
-    assert payload["status"] == "INDICATOR_FAMILY_ABLATION_READY"
+    assert payload["status"] == "INDICATOR_FAMILY_ABLATION_EVIDENCE_READY"
     assert payload["summary"]["diagnostic_only"] is True
+    assert payload["summary"]["allocation_candidate_count"] == 0
     assert payload["promotion_allowed"] is False
     assert review_path.exists()
 

@@ -48,10 +48,15 @@ from ai_trading_system.first_layer_walk_forward_coverage import (
     run_first_layer_walk_forward_coverage_rebuild_pack,
 )
 from ai_trading_system.indicator_family_ablation import (
+    DEFAULT_ACTION_VALUE_MATRIX_PATH,
+    DEFAULT_ACTION_VALUE_SUMMARY_PATH,
     DEFAULT_INDICATOR_FAMILY_ABLATION_MATRIX_PATH,
     DEFAULT_INDICATOR_FAMILY_ABLATION_OUTPUT_ROOT,
     DEFAULT_INDICATOR_FAMILY_ABLATION_REVIEW_PATH,
     DEFAULT_INDICATOR_FAMILY_REGISTRY_PATH,
+    DEFAULT_INDICATOR_FAMILY_SELECTION_RULE_PATH,
+    DEFAULT_LABELS_PATH,
+    DEFAULT_PIT_FEATURE_MATRIX_PATH,
     run_indicator_family_ablation,
 )
 from ai_trading_system.research_window_extension import (
@@ -565,6 +570,19 @@ def indicator_family_ablation_command(
     registry_path: Annotated[
         Path, typer.Option("--registry")
     ] = DEFAULT_INDICATOR_FAMILY_REGISTRY_PATH,
+    selection_rule_path: Annotated[
+        Path, typer.Option("--selection-rule")
+    ] = DEFAULT_INDICATOR_FAMILY_SELECTION_RULE_PATH,
+    pit_feature_matrix_path: Annotated[
+        Path, typer.Option("--pit-feature-matrix")
+    ] = DEFAULT_PIT_FEATURE_MATRIX_PATH,
+    labels_path: Annotated[Path, typer.Option("--labels-path")] = DEFAULT_LABELS_PATH,
+    action_value_matrix_path: Annotated[
+        Path, typer.Option("--action-value-matrix")
+    ] = DEFAULT_ACTION_VALUE_MATRIX_PATH,
+    action_value_summary_path: Annotated[
+        Path, typer.Option("--action-value-summary")
+    ] = DEFAULT_ACTION_VALUE_SUMMARY_PATH,
     output_root: Annotated[
         Path, typer.Option("--output-root")
     ] = DEFAULT_INDICATOR_FAMILY_ABLATION_OUTPUT_ROOT,
@@ -577,6 +595,11 @@ def indicator_family_ablation_command(
 ) -> None:
     payload = run_indicator_family_ablation(
         registry_path=registry_path,
+        selection_rule_path=selection_rule_path,
+        pit_feature_matrix_path=pit_feature_matrix_path,
+        labels_path=labels_path,
+        action_value_matrix_path=action_value_matrix_path,
+        action_value_summary_path=action_value_summary_path,
         output_root=output_root,
         matrix_path=matrix_path,
         review_path=review_path,

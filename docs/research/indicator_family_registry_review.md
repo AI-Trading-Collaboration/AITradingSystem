@@ -9,8 +9,12 @@
 - `features`
 - `PIT_required=true`
 - `allowed_labels`
+- `allowed_channels`
+- `blocked_channels`
 - `blocked_usage`
+- `earliest_available_date`
+- `window_coverage`
 
-Ablation 需要回答它是否帮助 `do_not_de_risk`、`stay_constructive`、`add_risk`，是否降低 `false_add_risk`，是否只在 2023+ 有效，是否通过 primary window / 2022 slice，是否改善 actual-path。
+Ablation 需要回答它是否帮助 `do_not_de_risk`、`stay_constructive`、`add_risk`，是否降低 `false_add_risk` / `false_risk_off`，是否可作为 `risk_on_veto`，是否只在 2023+ 有效，是否依赖 beta / TQQQ，是否通过 primary window / 2022 slice，是否改善 actual-path。
 
-当前 registry 只允许 diagnostic-only review，不允许直接生成 weights、promotion evidence、production config 或 broker action。
+TRADING-1946～1975 后，registry 的可用 family 已改为真实 PIT feature matrix 列；`breadth_participation` 和 `event_risk` 仍因缺少 PIT-approved local source 保持 blocked。Registry 只能驱动 family-level evidence 和下一轮 research-only channel feature whitelist，不允许直接生成 weights、promotion evidence、production config 或 broker action。

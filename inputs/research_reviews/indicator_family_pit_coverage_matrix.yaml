@@ -1,0 +1,243 @@
+schema_version: indicator_family_pit_coverage_matrix.v1
+report_type: indicator_family_pit_coverage_matrix
+status: INDICATOR_FAMILY_PIT_COVERAGE_AUDIT_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+summary:
+  family_count: 7
+  pit_coverage_pass_count: 5
+  pit_blocked_count: 2
+family_rows:
+- family_name: trend_persistence
+  feature_count: 8
+  feature_columns:
+  - qqq_momentum_20d
+  - qqq_momentum_60d
+  - qqq_momentum_120d
+  - qqq_ma_slope_20_60
+  - qqq_ma_slope_60_120
+  - qqq_above_ma60_duration_60d
+  - qqq_trend_consistency_60d
+  - qqq_pullback_contained_above_ma60
+  pit_approved_feature_count: 8
+  pit_blocked_feature_count: 0
+  present_feature_columns:
+  - qqq_momentum_20d
+  - qqq_momentum_60d
+  - qqq_momentum_120d
+  - qqq_ma_slope_20_60
+  - qqq_ma_slope_60_120
+  - qqq_above_ma60_duration_60d
+  - qqq_trend_consistency_60d
+  - qqq_pullback_contained_above_ma60
+  missing_feature_columns: []
+  primary_window_coverage: 1.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: '2021-02-22'
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  coverage_status: PIT_COVERAGE_PASS
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: relative_strength
+  feature_count: 2
+  feature_columns:
+  - qqq_vs_sgov_momentum_60d
+  - qqq_vs_tqqq_consistency_20d
+  pit_approved_feature_count: 2
+  pit_blocked_feature_count: 0
+  present_feature_columns:
+  - qqq_vs_sgov_momentum_60d
+  - qqq_vs_tqqq_consistency_20d
+  missing_feature_columns: []
+  primary_window_coverage: 1.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: '2021-02-22'
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  coverage_status: PIT_COVERAGE_PASS
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: volatility_compression
+  feature_count: 5
+  feature_columns:
+  - realized_vol_20d
+  - realized_vol_decline_20d
+  - realized_vol_decline_60d
+  - downside_vol_20d
+  - downside_vol_decline_20d
+  pit_approved_feature_count: 5
+  pit_blocked_feature_count: 0
+  present_feature_columns:
+  - realized_vol_20d
+  - realized_vol_decline_20d
+  - realized_vol_decline_60d
+  - downside_vol_20d
+  - downside_vol_decline_20d
+  missing_feature_columns: []
+  primary_window_coverage: 1.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: '2021-02-22'
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  coverage_status: PIT_COVERAGE_PASS
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: drawdown_recovery
+  feature_count: 6
+  feature_columns:
+  - qqq_drawdown_126d
+  - qqq_drawdown_recovery_20d
+  - days_since_60d_low
+  - recovery_from_60d_low
+  - qqq_reclaim_recent_high_20d
+  - qqq_recovery_speed_20d
+  pit_approved_feature_count: 6
+  pit_blocked_feature_count: 0
+  present_feature_columns:
+  - qqq_drawdown_126d
+  - qqq_drawdown_recovery_20d
+  - days_since_60d_low
+  - recovery_from_60d_low
+  - qqq_reclaim_recent_high_20d
+  - qqq_recovery_speed_20d
+  missing_feature_columns: []
+  primary_window_coverage: 1.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: '2021-02-22'
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  coverage_status: PIT_COVERAGE_PASS
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: breadth_participation
+  feature_count: 3
+  feature_columns:
+  - breadth_participation_proxy
+  - equal_weight_confirmation_proxy
+  - semiconductor_participation_proxy
+  pit_approved_feature_count: 0
+  pit_blocked_feature_count: 3
+  present_feature_columns: []
+  missing_feature_columns:
+  - breadth_participation_proxy
+  - equal_weight_confirmation_proxy
+  - semiconductor_participation_proxy
+  primary_window_coverage: 0.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: null
+  observation_count_2022: 0
+  has_2022_slice_coverage: false
+  coverage_status: PIT_BLOCKED
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: rates_liquidity
+  feature_count: 2
+  feature_columns:
+  - yield_curve_10y2y
+  - usd_trend_20d
+  pit_approved_feature_count: 2
+  pit_blocked_feature_count: 0
+  present_feature_columns:
+  - yield_curve_10y2y
+  - usd_trend_20d
+  missing_feature_columns: []
+  primary_window_coverage: 1.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: '2021-02-22'
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  coverage_status: PIT_COVERAGE_PASS
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true
+- family_name: event_risk
+  feature_count: 3
+  feature_columns:
+  - event_risk_flag
+  - known_macro_event_window
+  - earnings_shock_flag
+  pit_approved_feature_count: 0
+  pit_blocked_feature_count: 3
+  present_feature_columns: []
+  missing_feature_columns:
+  - event_risk_flag
+  - known_macro_event_window
+  - earnings_shock_flag
+  primary_window_coverage: 0.0
+  legacy_window_coverage: 0.0
+  sensitivity_window_coverage: 0.0
+  earliest_usable_date: null
+  observation_count_2022: 0
+  has_2022_slice_coverage: false
+  coverage_status: PIT_BLOCKED
+  allowed_statuses:
+  - PIT_COVERAGE_PASS
+  - PIT_COVERAGE_WARNING
+  - PIT_BLOCKED
+  - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+  PIT_required: true

@@ -1,0 +1,38 @@
+{
+  "broker_action": "none",
+  "can_emit_weights": false,
+  "family_name": "rates_liquidity",
+  "metrics": {
+    "add_risk": {
+      "positive_count": 88,
+      "precision": 0.056162,
+      "recall": 0.409091,
+      "sample_count": 1282,
+      "selected_positive_rate": 0.5,
+      "threshold": 0.09556261
+    },
+    "do_not_de_risk": {
+      "positive_count": 307,
+      "precision": 0.234009,
+      "recall": 0.488599,
+      "sample_count": 1282,
+      "selected_positive_rate": 0.5,
+      "threshold": 0.09556261
+    },
+    "stay_constructive": {
+      "positive_count": 407,
+      "precision": 0.290172,
+      "recall": 0.457002,
+      "sample_count": 1282,
+      "selected_positive_rate": 0.5,
+      "threshold": 0.09556261
+    }
+  },
+  "model_type": "monotonic_threshold_rule",
+  "paper_shadow_allowed": false,
+  "production_allowed": false,
+  "promotion_allowed": false,
+  "research_only": true,
+  "schema_version": "indicator_family_only_model_metrics.v1",
+  "status": "FAMILY_ONLY_MODEL_READY"
+}

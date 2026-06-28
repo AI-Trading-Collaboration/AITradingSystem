@@ -1,0 +1,91 @@
+schema_version: indicator_family_ablation_final_matrix.v1
+report_type: indicator_family_ablation_final_matrix
+status: INDICATOR_FAMILY_ABLATION_EVIDENCE_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+summary:
+  family_count: 7
+  diagnostic_only: true
+  combined_model_training_allowed: false
+  allocation_candidate_count: 0
+  selected_family_count: 5
+  pit_coverage_pass_count: 5
+  pit_blocked_count: 2
+  do_not_de_risk_selected_families:
+  - drawdown_recovery
+  risk_on_veto_selected_families:
+  - rates_liquidity
+  - volatility_compression
+  add_risk_selected_families: []
+  return_seeking_diagnostic_families:
+  - relative_strength
+  - trend_persistence
+  family_2023_plus_dependent_count: 2
+  beta_tqqq_dependent_family_count: 1
+status_flags:
+- INDICATOR_FAMILY_ABLATION_EVIDENCE_READY
+- DO_NOT_DERISK_FAMILY_FOUND
+- RISK_ON_VETO_FAMILY_FOUND
+- ADD_RISK_FAMILY_DIAGNOSTIC_ONLY
+- PIT_BLOCKERS_REMAIN
+selected_families_by_channel:
+  return_seeking_diagnostic:
+  - relative_strength
+  - trend_persistence
+  risk_on_veto:
+  - rates_liquidity
+  - volatility_compression
+  do_not_de_risk:
+  - drawdown_recovery
+rejected_families:
+- family_name: breadth_participation
+  reason: No PIT-approved breadth or constituent-history source is available locally.
+  verdicts:
+  - FAMILY_PIT_BLOCKED
+- family_name: event_risk
+  reason: Event timestamps and availability source are not PIT-approved.
+  verdicts:
+  - FAMILY_PIT_BLOCKED
+promotion_status: BLOCKED
+phase_decision:
+  next_action: OWNER_REVIEW_BEFORE_CHANNEL_SPECIFIC_FIRST_LAYER_MODEL_V3
+  dynamic_promotion_allowed_now: false
+  paper_shadow_allowed_now: false
+  production_allowed_now: false
+  broker_allowed_now: false
+  candidate_count: 0

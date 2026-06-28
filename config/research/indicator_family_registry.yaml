@@ -5,37 +5,75 @@ owner: research_governance
 policy_metadata:
   rationale: >
     Audit indicator family action value before fitting combined first-layer
-    models, so weak or beta-only families do not enter an opaque composite.
+    models, so weak, PIT-blocked or beta-only families do not enter an opaque
+    composite.
   intended_effect: >
-    Make family-level PIT, label and blocked-usage boundaries reviewable.
+    Make family-level PIT, label, channel and blocked-usage boundaries
+    reviewable.
   validation_evidence: >
-    Indicator family ablation runner and contract tests verify required family
-    coverage, PIT requirement and diagnostic-only output.
+    Indicator family ablation evidence runner and guardrail tests verify
+    required family coverage, PIT gates, channel selection boundaries and
+    diagnostic-only output.
   review_condition: >
     Review before adding a family to a combined model or using ablation output
     as candidate evidence.
 families:
   - family_name: trend_persistence
+    description: QQQ trend persistence and moving-average continuation proxies.
     features:
-      - qqq_trend_persistence_20d
-      - qqq_trend_persistence_60d
+      - qqq_momentum_20d
+      - qqq_momentum_60d
+      - qqq_momentum_120d
+      - qqq_ma_slope_20_60
+      - qqq_ma_slope_60_120
+      - qqq_above_ma60_duration_60d
+      - qqq_trend_consistency_60d
+      - qqq_pullback_contained_above_ma60
     PIT_required: true
+    earliest_available_date: "2021-02-22"
+    window_coverage:
+      primary_window: exact_three_asset_validated
+      legacy_window: legacy_research_window_2022_12
+      sensitivity_window: exact_three_asset_primary_only_extension
     allowed_labels:
       - do_not_de_risk
       - stay_constructive
+      - return_seeking_diagnostic
+    allowed_channels:
+      - return_seeking_diagnostic
+    blocked_channels:
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - direct_weight
       - promotion
       - production
       - broker
   - family_name: relative_strength
+    description: QQQ relative confirmation against cash and leverage consistency.
     features:
-      - qqq_vs_sgov_relative_strength
-      - semiconductor_relative_strength_placeholder
+      - qqq_vs_sgov_momentum_60d
+      - qqq_vs_tqqq_consistency_20d
     PIT_required: true
+    earliest_available_date: "2021-02-22"
+    window_coverage:
+      primary_window: exact_three_asset_validated
+      legacy_window: legacy_research_window_2022_12
+      sensitivity_window: exact_three_asset_primary_only_extension
     allowed_labels:
       - stay_constructive
       - add_risk
+      - return_seeking_diagnostic
+    allowed_channels:
+      - return_seeking_diagnostic
+    blocked_channels:
+      - defensive_channel
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - defensive_overlay_without_contract
       - direct_weight
@@ -43,13 +81,31 @@ families:
       - production
       - broker
   - family_name: volatility_compression
+    description: Realized and downside volatility contraction proxies.
     features:
       - realized_vol_20d
-      - realized_vol_percentile_60d
+      - realized_vol_decline_20d
+      - realized_vol_decline_60d
+      - downside_vol_20d
+      - downside_vol_decline_20d
     PIT_required: true
+    earliest_available_date: "2021-02-22"
+    window_coverage:
+      primary_window: exact_three_asset_validated
+      legacy_window: legacy_research_window_2022_12
+      sensitivity_window: exact_three_asset_primary_only_extension
     allowed_labels:
       - do_not_de_risk
       - add_risk
+      - risk_on_veto
+    allowed_channels:
+      - risk_on_veto
+      - defensive_channel
+    blocked_channels:
+      - add_risk_allocation
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - TQQQ_increase_without_veto
       - direct_weight
@@ -57,53 +113,117 @@ families:
       - production
       - broker
   - family_name: drawdown_recovery
+    description: Drawdown depth, recovery speed and recent-high reclaim proxies.
     features:
-      - drawdown_depth
-      - recovery_slope_10d
+      - qqq_drawdown_126d
+      - qqq_drawdown_recovery_20d
+      - days_since_60d_low
+      - recovery_from_60d_low
+      - qqq_reclaim_recent_high_20d
+      - qqq_recovery_speed_20d
     PIT_required: true
+    earliest_available_date: "2021-02-22"
+    window_coverage:
+      primary_window: exact_three_asset_validated
+      legacy_window: legacy_research_window_2022_12
+      sensitivity_window: exact_three_asset_primary_only_extension
     allowed_labels:
       - do_not_de_risk
       - re_risk_allowed
       - stay_constructive
+    allowed_channels:
+      - do_not_de_risk
+      - defensive_channel
+    blocked_channels:
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - active_add_risk_without_veto
       - promotion
       - production
       - broker
   - family_name: breadth_participation
+    description: Breadth and participation proxies; no PIT-approved local columns yet.
     features:
-      - breadth_participation_placeholder
-      - equal_weight_confirmation_placeholder
+      - breadth_participation_proxy
+      - equal_weight_confirmation_proxy
+      - semiconductor_participation_proxy
     PIT_required: true
+    earliest_available_date: null
+    window_coverage:
+      primary_window: PIT_BLOCKED
+      legacy_window: PIT_BLOCKED
+      sensitivity_window: PIT_BLOCKED
+      blocker: historical constituents and breadth source not approved
     allowed_labels:
       - stay_constructive
       - add_risk
+    allowed_channels:
+      - return_seeking_diagnostic
+    blocked_channels:
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - direct_weight
       - production
       - broker
   - family_name: rates_liquidity
+    description: Yield curve and broad USD liquidity/rates context.
     features:
-      - rate_change_20d
-      - cash_yield_proxy
+      - yield_curve_10y2y
+      - usd_trend_20d
     PIT_required: true
+    earliest_available_date: "2021-02-22"
+    window_coverage:
+      primary_window: exact_three_asset_validated
+      legacy_window: legacy_research_window_2022_12
+      sensitivity_window: exact_three_asset_primary_only_extension
     allowed_labels:
       - risk_off
       - do_not_de_risk
+      - risk_on_veto
+    allowed_channels:
+      - risk_on_veto
+      - defensive_channel
+    blocked_channels:
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - return_boost_without_same_risk_check
       - direct_weight
       - production
       - broker
   - family_name: event_risk
+    description: Macro, policy and earnings event-risk markers; no PIT-approved local columns yet.
     features:
       - event_risk_flag
       - known_macro_event_window
+      - earnings_shock_flag
     PIT_required: true
+    earliest_available_date: null
+    window_coverage:
+      primary_window: PIT_BLOCKED
+      legacy_window: PIT_BLOCKED
+      sensitivity_window: PIT_BLOCKED
+      blocker: event timestamp and availability source not approved
     allowed_labels:
       - risk_off
       - growth_allowed
       - tqqq_allowed
+      - risk_on_veto
+    allowed_channels:
+      - risk_on_veto
+    blocked_channels:
+      - add_risk
+      - allocation
+      - production
+      - broker
     blocked_usage:
       - add_risk_allocation
       - direct_weight
@@ -111,13 +231,19 @@ families:
       - production
       - broker
 ablation_questions:
-  - do_not_de_risk_help
-  - stay_constructive_help
-  - add_risk_help
+  - pit_approved
+  - primary_window_coverage
+  - has_2022_slice_coverage
+  - do_not_de_risk_action_value
+  - stay_constructive_action_value
+  - add_risk_action_value
   - false_add_risk_reduction
+  - false_risk_off_reduction
+  - risk_on_veto_action_value
   - only_2023_plus_effective
-  - primary_window_and_2022_slice_pass
-  - actual_path_improved
+  - tqqq_beta_dependency
+  - actual_path_vs_classification
+  - next_channel_model_eligibility
 safety_boundary:
   research_only: true
   diagnostic_only: true

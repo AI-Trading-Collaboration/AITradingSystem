@@ -21157,7 +21157,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_ablation
-    title: Indicator Family Ablation
+    title: Indicator Family Ablation Evidence Pack
     group: research
     cadence: ad_hoc
     audience: project_owner
@@ -21165,14 +21165,132 @@ reports:
     command: aits research trends indicator-family-ablation
     artifact_globs:
       - config/research/indicator_family_registry.yaml
+      - config/research/indicator_family_ablation_selection_rule.yaml
       - docs/research/indicator_family_registry_review.md
       - docs/research/indicator_family_ablation_review.md
       - inputs/research_reviews/indicator_family_ablation_matrix.yaml
+      - inputs/research_reviews/indicator_family_ablation_final_matrix.yaml
+      - outputs/research_trends/indicator_family_ablation/action_value_by_family.csv
+      - outputs/research_trends/indicator_family_ablation/action_value_by_family_summary.json
+      - outputs/research_trends/indicator_family_ablation/family_only_models/*.json
       - outputs/research_trends/indicator_family_ablation/indicator_family_ablation_summary.yaml
     artifact_selection_policy: latest_available
     freshness_sla_days: 30
-    freshness_rationale: Indicator family ablation changes after family registry, allowed labels, blocked usage, or ablation questions change.
-    owner_action: review_boundary_aware_two_layer_framework_artifact
+    freshness_rationale: Indicator family ablation changes after family registry, selection rule, PIT coverage, channel evidence, or family selection conclusions change.
+    owner_action: review_indicator_family_ablation_evidence_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_pit_coverage_audit
+    title: Indicator Family PIT Coverage Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - docs/research/indicator_family_pit_coverage_audit.md
+      - inputs/research_reviews/indicator_family_pit_coverage_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: PIT coverage audit changes after feature matrix columns, registry family features, or coverage thresholds change.
+    owner_action: review_indicator_family_pit_coverage_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_do_not_de_risk_review
+    title: Indicator Family Do-Not-De-Risk Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - docs/research/indicator_family_do_not_de_risk_review.md
+      - inputs/research_reviews/indicator_family_do_not_de_risk_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Do-not-de-risk family review changes after false risk-off, missed-upside or defensive-regression evidence changes.
+    owner_action: review_indicator_family_do_not_de_risk_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_add_risk_review
+    title: Indicator Family Add-Risk Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - docs/research/indicator_family_add_risk_review.md
+      - inputs/research_reviews/indicator_family_add_risk_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Add-risk family review changes after same-risk delta, false add-risk cost, 2023+ dependence, or beta/TQQQ evidence changes.
+    owner_action: review_indicator_family_add_risk_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_risk_on_veto_review
+    title: Indicator Family Risk-On Veto Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - docs/research/indicator_family_risk_on_veto_review.md
+      - inputs/research_reviews/indicator_family_risk_on_veto_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Risk-on veto family review changes after false add-risk, veto effect, TQQQ stress or captured-upside tradeoff evidence changes.
+    owner_action: review_indicator_family_risk_on_veto_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: indicator_family_selection_matrix
+    title: Indicator Family Selection Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - docs/research/indicator_family_selection_review.md
+      - inputs/research_reviews/indicator_family_selection_matrix.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Family selection matrix changes after PIT, channel evidence, 2023+ dependence, beta/TQQQ dependence, or selected/blocked channel conclusions change.
+    owner_action: review_indicator_family_selection_matrix
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: channel_specific_feature_set_v1
+    title: Channel-Specific Feature Set v1
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends indicator-family-ablation
+    artifact_globs:
+      - config/research/channel_specific_feature_set_v1.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Channel-specific feature set changes after family selection, selected channels, or blocked family conclusions change.
+    owner_action: review_channel_specific_feature_set_v1
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

@@ -1,0 +1,13 @@
+{
+  "broker_action": "none",
+  "can_emit_weights": false,
+  "family_name": "event_risk",
+  "metrics": {},
+  "model_type": "monotonic_threshold_rule",
+  "paper_shadow_allowed": false,
+  "production_allowed": false,
+  "promotion_allowed": false,
+  "research_only": true,
+  "schema_version": "indicator_family_only_model_metrics.v1",
+  "status": "FAMILY_ONLY_MODEL_PIT_BLOCKED"
+}

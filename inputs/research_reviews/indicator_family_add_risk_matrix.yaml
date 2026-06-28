@@ -1,0 +1,175 @@
+schema_version: indicator_family_add_risk_matrix.v1
+report_type: indicator_family_add_risk_matrix
+status: INDICATOR_FAMILY_ADD_RISK_REVIEW_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+summary:
+  selected_family_count: 0
+  family_count: 7
+  diagnostic_only: true
+family_rows:
+- family_name: trend_persistence
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_2023_PLUS_DEPENDENT
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: 0.01256617
+  future_drawdown: -0.04002985
+  same_risk_delta: 0.00294626
+  false_risk_off_cost: 0.0
+  false_add_risk_cost: 0.01496323
+  missed_upside: 0.0
+  captured_upside: 0.00294626
+  veto_effect: 0.0
+  blocked_usage:
+  - add_risk
+  - allocation
+  - production
+  - broker
+  rejected_reason: 2023+ trend dependence blocks add-risk allocation evidence.
+- family_name: relative_strength
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_TQQQ_BETA_DEPENDENT
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: 0.00955342
+  future_drawdown: -0.04172269
+  same_risk_delta: 0.00195745
+  false_risk_off_cost: 0.0
+  false_add_risk_cost: 0.01550621
+  missed_upside: 0.0
+  captured_upside: 0.00195745
+  veto_effect: 0.0
+  blocked_usage:
+  - defensive_channel
+  - add_risk
+  - allocation
+  - production
+  - broker
+  rejected_reason: Relative-strength evidence includes QQQ/TQQQ consistency and is
+    beta/TQQQ dependent.
+- family_name: volatility_compression
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_REJECT_FALSE_ADD_RISK
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: 0.01828742
+  future_drawdown: -0.05243173
+  same_risk_delta: 0.00547823
+  false_risk_off_cost: 0.0
+  false_add_risk_cost: 0.01913677
+  missed_upside: 0.0
+  captured_upside: 0.00547823
+  veto_effect: 0.0
+  blocked_usage:
+  - add_risk
+  - allocation
+  - production
+  - broker
+  rejected_reason: Useful as veto evidence; not an add-risk accelerator.
+- family_name: drawdown_recovery
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_REJECT_FALSE_ADD_RISK
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: 0.01449158
+  future_drawdown: -0.04004808
+  same_risk_delta: 0.0039216
+  false_risk_off_cost: 0.0
+  false_add_risk_cost: 0.01480058
+  missed_upside: 0.0
+  captured_upside: 0.0039216
+  veto_effect: 0.0
+  blocked_usage:
+  - add_risk
+  - allocation
+  - production
+  - broker
+  rejected_reason: Selected only for do-not-de-risk; false rebound risk blocks add-risk.
+- family_name: breadth_participation
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_PIT_BLOCKED
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: ''
+  future_drawdown: ''
+  same_risk_delta: ''
+  false_risk_off_cost: ''
+  false_add_risk_cost: ''
+  missed_upside: ''
+  captured_upside: ''
+  veto_effect: ''
+  blocked_usage:
+  - all_channels_until_pit_source_approved
+  rejected_reason: No PIT-approved breadth or constituent-history source is available
+    locally.
+- family_name: rates_liquidity
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_REJECT_FALSE_ADD_RISK
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: 0.01083778
+  future_drawdown: -0.04625327
+  same_risk_delta: 0.00350605
+  false_risk_off_cost: 0.0
+  false_add_risk_cost: 0.01679631
+  missed_upside: 0.0
+  captured_upside: 0.00350605
+  veto_effect: 0.0
+  blocked_usage:
+  - add_risk
+  - allocation
+  - production
+  - broker
+  rejected_reason: Macro context is useful as risk-on veto, not return boost.
+- family_name: event_risk
+  channel: return_seeking_diagnostic
+  verdict: FAMILY_PIT_BLOCKED
+  selected_for_channel: false
+  diagnostic_only: true
+  future_return: ''
+  future_drawdown: ''
+  same_risk_delta: ''
+  false_risk_off_cost: ''
+  false_add_risk_cost: ''
+  missed_upside: ''
+  captured_upside: ''
+  veto_effect: ''
+  blocked_usage:
+  - all_channels_until_pit_source_approved
+  rejected_reason: Event timestamps and availability source are not PIT-approved.

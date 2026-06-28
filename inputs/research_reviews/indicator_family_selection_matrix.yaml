@@ -1,6 +1,6 @@
-schema_version: indicator_family_ablation_matrix.v1
-report_type: indicator_family_ablation_matrix
-status: INDICATOR_FAMILY_ABLATION_EVIDENCE_READY
+schema_version: indicator_family_selection_matrix.v1
+report_type: indicator_family_selection_matrix
+status: INDICATOR_FAMILY_SELECTION_READY
 market_regime: ai_after_chatgpt
 research_window_id: exact_three_asset_validated
 requested_start: '2021-02-22'
@@ -57,14 +57,6 @@ summary:
   - trend_persistence
   family_2023_plus_dependent_count: 2
   beta_tqqq_dependent_family_count: 1
-selection_rule: indicator_family_ablation_selection_rule_v1
-source_artifacts:
-- D:\Work\AITradingSystem\config\research\indicator_family_registry.yaml
-- D:\Work\AITradingSystem\config\research\indicator_family_ablation_selection_rule.yaml
-- D:\Work\AITradingSystem\outputs\research_trends\pit_feature_matrix\pit_feature_matrix_v3.csv
-- D:\Work\AITradingSystem\outputs\research_trends\trend_labels\upper_state_labels_v2.csv
-- D:\Work\AITradingSystem\outputs\research_trends\action_value_matrix_v2\action_value_matrix_v2.csv
-- D:\Work\AITradingSystem\outputs\research_trends\action_value_matrix_v2\action_value_summary_v2.json
 family_rows:
 - family_name: trend_persistence
   allowed_channels:

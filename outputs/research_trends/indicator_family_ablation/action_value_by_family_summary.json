@@ -1,0 +1,17 @@
+{
+  "broker_action": "none",
+  "family_count": 7,
+  "label_types": [
+    "do_not_de_risk",
+    "stay_constructive",
+    "add_risk",
+    "risk_on_veto"
+  ],
+  "production_effect": "none",
+  "report_type": "indicator_family_action_value_summary",
+  "row_count": 84,
+  "schema_version": "indicator_family_action_value_summary.v1",
+  "source_action_value_data_quality_status": "PASS_WITH_WARNINGS",
+  "source_action_value_status": "ACTION_VALUE_MATRIX_V2_READY_PROMOTION_BLOCKED",
+  "status": "INDICATOR_FAMILY_ACTION_VALUE_DATASET_READY"
+}

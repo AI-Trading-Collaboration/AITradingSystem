@@ -1,0 +1,85 @@
+schema_version: indicator_family_2022_slice_matrix.v1
+report_type: indicator_family_2022_slice_matrix
+status: INDICATOR_FAMILY_2022_SLICE_REVIEW_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+summary:
+  slice: 2022_drawdown_recovery_transition
+family_rows:
+- family_name: trend_persistence
+  slice_status: FAMILY_2022_FAILED_2023_PASSED
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  verdict: FAMILY_2022_FAILED_2023_PASSED
+  diagnostic_only: true
+- family_name: relative_strength
+  slice_status: FAMILY_2022_FAILED_2023_PASSED
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  verdict: FAMILY_2022_FAILED_2023_PASSED
+  diagnostic_only: true
+- family_name: volatility_compression
+  slice_status: FAMILY_2022_SLICE_COVERED
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  verdict: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+- family_name: drawdown_recovery
+  slice_status: FAMILY_2022_SLICE_COVERED
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  verdict: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+- family_name: breadth_participation
+  slice_status: PIT_BLOCKED
+  observation_count_2022: 0
+  has_2022_slice_coverage: false
+  verdict: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+- family_name: rates_liquidity
+  slice_status: FAMILY_2022_SLICE_COVERED
+  observation_count_2022: 251
+  has_2022_slice_coverage: true
+  verdict: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+- family_name: event_risk
+  slice_status: PIT_BLOCKED
+  observation_count_2022: 0
+  has_2022_slice_coverage: false
+  verdict: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true

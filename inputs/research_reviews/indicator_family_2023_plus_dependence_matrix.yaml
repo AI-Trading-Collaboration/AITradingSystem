@@ -1,0 +1,75 @@
+schema_version: indicator_family_2023_plus_dependence_matrix.v1
+report_type: indicator_family_2023_plus_dependence_matrix
+status: INDICATOR_FAMILY_2023_PLUS_DEPENDENCE_REVIEW_READY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+summary:
+  dependent_family_count: 2
+family_rows:
+- family_name: trend_persistence
+  dependence_status: FAMILY_2023_PLUS_DEPENDENT
+  diagnostic_only: true
+  blocked_usage:
+  - add_risk
+  - allocation
+- family_name: relative_strength
+  dependence_status: FAMILY_2023_PLUS_DEPENDENT
+  diagnostic_only: true
+  blocked_usage:
+  - add_risk
+  - allocation
+- family_name: volatility_compression
+  dependence_status: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+  blocked_usage: []
+- family_name: drawdown_recovery
+  dependence_status: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+  blocked_usage: []
+- family_name: breadth_participation
+  dependence_status: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+  blocked_usage: []
+- family_name: rates_liquidity
+  dependence_status: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+  blocked_usage: []
+- family_name: event_risk
+  dependence_status: FAMILY_PRIMARY_WINDOW_STABLE
+  diagnostic_only: true
+  blocked_usage: []

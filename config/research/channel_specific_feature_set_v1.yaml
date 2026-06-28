@@ -1,0 +1,81 @@
+schema_version: channel_specific_feature_set.v1
+report_type: channel_specific_feature_set_v1
+status: CHANNEL_SPECIFIC_FEATURE_SET_READY_RESEARCH_ONLY
+market_regime: ai_after_chatgpt
+research_window_id: exact_three_asset_validated
+requested_start: '2021-02-22'
+actual_portfolio_start: '2021-02-22'
+window_role: primary_validated
+data_quality_contract: PREVIOUS_VALIDATED_RESEARCH_ARTIFACTS
+source_action_value_data_quality_status: PASS_WITH_WARNINGS
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: indicator_family_ablation
+  frozen_channels:
+  - defensive
+  - return_seeking_diagnostic
+  - risk_veto
+  frozen_first_layer_version: first_layer_v2_return_seeking_diagnostic_only
+  frozen_second_layer_version: dynamic_second_layer_probe_registry_v2
+  research_window_id: exact_three_asset_validated
+  label_version: upper_state_label_taxonomy_v2
+  feature_set_version: channel_specific_feature_set_v1
+  model_version: indicator_family_ablation_evidence_v1
+  threshold_policy: indicator_family_ablation_selection_rule_v1
+  probe_registry_version: dynamic_second_layer_probe_registry_v2
+  signal_usage_matrix_version: first_layer_signal_usage_matrix_v2
+  boundary_contract_version: two_layer_strategy_boundary_contract_v1
+  selection_rule_version: indicator_family_ablation_selection_rule_v1
+  candidate_count: 0
+  pre_registered_selection_rule: indicator_family_ablation_selection_rule_v1
+policy_id: channel_specific_feature_set_v1
+owner: research_governance
+policy_metadata:
+  rationale: Only PIT-reviewed and channel-selected families may enter the next research-only
+    first-layer model.
+  intended_effect: Prevent PIT-blocked, beta-only or add-risk-unsafe families from
+    becoming model inputs.
+  validation_evidence: Generated from indicator_family_selection_matrix and guarded
+    by tests.
+  review_condition: Review before training channel-specific first-layer model v3.
+defensive_channel:
+  allowed_families: []
+  diagnostic_families:
+  - volatility_compression
+  - drawdown_recovery
+  - rates_liquidity
+do_not_de_risk:
+  allowed_families:
+  - drawdown_recovery
+risk_on_veto:
+  allowed_families:
+  - volatility_compression
+  - rates_liquidity
+add_risk:
+  allowed_families: []
+  status: ADD_RISK_FAMILY_DIAGNOSTIC_ONLY
+return_seeking_diagnostic:
+  allowed_families:
+  - trend_persistence
+  - relative_strength
+blocked_families:
+- breadth_participation
+- event_risk
+source_matrix: inputs/research_reviews/indicator_family_selection_matrix.yaml
+safety_boundary:
+  research_only: true
+  can_emit_weights: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

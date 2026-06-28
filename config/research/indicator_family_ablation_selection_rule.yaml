@@ -1,0 +1,67 @@
+schema_version: indicator_family_ablation_selection_rule.v1
+policy_id: indicator_family_ablation_selection_rule_v1
+status: pilot_baseline
+owner: research_governance
+policy_metadata:
+  rationale: >
+    Indicator families must pass PIT, coverage and channel-specific evidence
+    gates before they are allowed into the next research-only first-layer
+    channel model. The rule blocks target-path-only, beta-only and post-hoc
+    family promotion.
+  intended_effect: >
+    Keep family-level evidence auditable and prevent registry-only diagnostics
+    from becoming allocation inputs or strategy candidates.
+  validation_evidence: >
+    TRADING-1946 to 1975 guardrail tests verify PIT blockers, 2023+ dependence,
+    beta/TQQQ dependence, allowed/blocked channels and channel-specific feature
+    set construction.
+  review_condition: >
+    Review before allowing any family to drive allocation, promotion,
+    paper-shadow, production, broker action or second-layer optimization.
+indicator_family_ablation_selection_rule:
+  required:
+    primary_window: EXACT_THREE_ASSET_VALIDATED_WINDOW
+    primary_window_id: exact_three_asset_validated
+    pit_approved: true
+    target_path_diagnostic_only: true
+    no_promotion: true
+    can_emit_weights: false
+  coverage_thresholds:
+    primary_min_coverage_ratio: 0.8
+    legacy_min_coverage_ratio_for_primary_claim: 0.6
+    sensitivity_min_coverage_ratio_for_stability_claim: 0.6
+    min_2022_observation_count: 120
+  channel_pass:
+    do_not_de_risk:
+      require_false_risk_off_reduction: true
+      require_missed_upside_reduction: true
+      block_if_defensive_regression: true
+      block_if_pit_blocked: true
+    stay_constructive:
+      require_captured_upside_reported: true
+      require_same_risk_delta_reported: true
+      diagnostic_only_until_owner_review: true
+    add_risk:
+      require_same_risk_delta_reported: true
+      require_false_add_risk_cost_controlled: true
+      block_if_2023_plus_only: true
+      block_if_tqqq_beta_dependent: true
+      block_if_target_path_only: true
+    risk_on_veto:
+      require_false_add_risk_reduction: true
+      allow_captured_upside_tradeoff: true
+      block_if_pit_blocked: true
+  fail_if:
+    - PIT_BLOCKED
+    - INSUFFICIENT_PRIMARY_WINDOW_COVERAGE
+    - DEFENSIVE_PROBE_REGRESSION
+    - TQQQ_BETA_ONLY
+    - TARGET_PATH_ONLY_IMPROVEMENT
+safety_boundary:
+  research_only: true
+  diagnostic_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  dynamic_promotion_status: BLOCKED

@@ -329,6 +329,42 @@ def test_boundary_aware_two_layer_artifacts_have_channel_audit_metadata() -> Non
         assert artifact["broker_action"] == "none"
 
 
+def test_indicator_family_ablation_evidence_artifacts_have_audit_metadata() -> None:
+    schema = load_research_audit_metadata_schema()
+    paths = [
+        Path("inputs/research_reviews/indicator_family_ablation_scope.yaml"),
+        Path("inputs/research_reviews/indicator_family_registry_validation.yaml"),
+        Path("inputs/research_reviews/indicator_family_pit_coverage_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_do_not_de_risk_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_stay_constructive_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_add_risk_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_risk_on_veto_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_2022_slice_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_2023_plus_dependence_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_beta_tqqq_dependency_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_selection_matrix.yaml"),
+        Path("inputs/research_reviews/indicator_family_ablation_final_matrix.yaml"),
+        Path("config/research/channel_specific_feature_set_v1.yaml"),
+    ]
+
+    for path in paths:
+        artifact = _load_yaml(path)
+        metadata = artifact["research_audit_metadata"]
+
+        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
+        assert metadata["modified_layer"] == "validation_only"
+        assert metadata["modified_channel"] == "indicator_family_ablation"
+        assert metadata["feature_set_version"] == "channel_specific_feature_set_v1"
+        assert metadata["model_version"] == "indicator_family_ablation_evidence_v1"
+        assert metadata["threshold_policy"] == "indicator_family_ablation_selection_rule_v1"
+        assert metadata["candidate_count"] == 0
+        assert artifact["research_window_id"] == "exact_three_asset_validated"
+        assert artifact["promotion_allowed"] is False
+        assert artifact["paper_shadow_allowed"] is False
+        assert artifact["production_allowed"] is False
+        assert artifact["broker_action"] == "none"
+
+
 def _artifact() -> dict[str, object]:
     return {
         "research_window_id": "exact_three_asset_validated",
