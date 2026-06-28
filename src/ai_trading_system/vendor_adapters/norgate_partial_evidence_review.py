@@ -48,6 +48,7 @@ PARTIAL_EVIDENCE_SAFETY_BOUNDARY: dict[str, Any] = {
     "production_effect": "none",
     "candidate_count": 0,
     "dynamic_promotion_status": "BLOCKED",
+    "purchase_allowed": False,
     "purchase_allowed_without_owner_approval": False,
 }
 
@@ -180,7 +181,12 @@ def _write_blocked_review_pack(
         "trial_2y_feature_value": "weak",
         "full_history_needed_for_final_answer": True,
         "purchase_platinum_recommendation": "defer",
+        "trial_based_purchase_recommendation": "defer",
+        "stress_window_paid_experiment_recommendation": "not_reviewed",
         "purchase_rationale": "weak_evidence",
+        "owner_decision_required": True,
+        "purchase_allowed": False,
+        "purchase_decision_owner_approval_required": True,
         "review_policy": str(policy.get("policy_id", "")),
         "research_window_id": "norgate_trial_2y_partial",
         **PARTIAL_EVIDENCE_SAFETY_BOUNDARY,
@@ -617,11 +623,12 @@ def _build_conclusion_matrix(
         baseline_increment=baseline_increment,
         benchmark_consistency=benchmark_consistency,
     )
-    purchase_recommendation, purchase_rationale = _classify_purchase_decision(
+    purchase_decision = _build_purchase_decision(
         prior_conclusion=prior_conclusion,
         feature_variation=feature_variation,
         stress_window=stress_window,
         trial_feature_value=trial_feature_value,
+        policy=policy,
     )
     return {
         "schema_version": "norgate_2y_partial_evidence_conclusion_matrix.v1",
@@ -644,9 +651,7 @@ def _build_conclusion_matrix(
         "full_history_needed_for_final_answer": bool(
             stress_window.get("full_history_needed_for_final_answer")
         ),
-        "purchase_platinum_recommendation": purchase_recommendation,
-        "purchase_rationale": purchase_rationale,
-        "purchase_decision_owner_approval_required": True,
+        **purchase_decision,
         "earliest_price_date": coverage.get("earliest_price_date", ""),
         "latest_price_date": coverage.get("latest_price_date", ""),
         "member_day_coverage_ratio": coverage.get("member_day_coverage_ratio", 0.0),
@@ -740,9 +745,23 @@ def _build_decision_memo_payload(
             "purchase_platinum_recommendation": conclusion.get(
                 "purchase_platinum_recommendation"
             ),
+            "trial_based_purchase_recommendation": conclusion.get(
+                "trial_based_purchase_recommendation"
+            ),
+            "stress_window_paid_experiment_recommendation": conclusion.get(
+                "stress_window_paid_experiment_recommendation"
+            ),
             "purchase_rationale": conclusion.get("purchase_rationale"),
-            "purchase_decision_owner_approval_required": True,
-            "purchase_allowed_without_owner_approval": False,
+            "owner_decision_required": conclusion.get("owner_decision_required", True),
+            "purchase_decision_owner_approval_required": conclusion.get(
+                "purchase_decision_owner_approval_required",
+                True,
+            ),
+            "purchase_allowed": conclusion.get("purchase_allowed", False),
+            "purchase_allowed_without_owner_approval": conclusion.get(
+                "purchase_allowed_without_owner_approval",
+                False,
+            ),
             "full_history_needed_for_final_answer": conclusion.get(
                 "full_history_needed_for_final_answer"
             ),
@@ -814,15 +833,34 @@ def _classify_trial_feature_value(
     return "weak"
 
 
-def _classify_purchase_decision(
+def _build_purchase_decision(
     *,
     prior_conclusion: Mapping[str, Any],
     feature_variation: Mapping[str, Any],
     stress_window: Mapping[str, Any],
     trial_feature_value: str,
-) -> tuple[str, str]:
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    owner_decision_required = bool(
+        _policy_value(policy, ("purchase_decision_policy", "owner_decision_required"), True)
+    )
+    purchase_allowed = bool(
+        _policy_value(policy, ("purchase_decision_policy", "purchase_allowed_default"), False)
+    )
+    base: dict[str, Any] = {
+        "owner_decision_required": owner_decision_required,
+        "purchase_decision_owner_approval_required": owner_decision_required,
+        "purchase_allowed": purchase_allowed,
+        "purchase_allowed_without_owner_approval": False,
+    }
     if trial_feature_value == "strong":
-        return "yes", "strong_trial_signal"
+        return {
+            **base,
+            "purchase_platinum_recommendation": "yes",
+            "trial_based_purchase_recommendation": "yes",
+            "stress_window_paid_experiment_recommendation": "not_required",
+            "purchase_rationale": "strong_trial_signal",
+        }
     if (
         bool(prior_conclusion.get("source_engineering_useful"))
         and bool(prior_conclusion.get("feature_numeric_validated"))
@@ -830,10 +868,64 @@ def _classify_purchase_decision(
         and bool(stress_window.get("full_history_needed_for_final_answer"))
         and bool(stress_window.get("trial_2y_missing_2022_stress_sample"))
     ):
-        return "yes", "stress_window_required"
+        return {
+            **base,
+            "purchase_platinum_recommendation": str(
+                _policy_value(
+                    policy,
+                    (
+                        "purchase_decision_policy",
+                        "no_incremental_value_trial_based_purchase_recommendation",
+                    ),
+                    "no",
+                )
+            ),
+            "trial_based_purchase_recommendation": str(
+                _policy_value(
+                    policy,
+                    (
+                        "purchase_decision_policy",
+                        "no_incremental_value_trial_based_purchase_recommendation",
+                    ),
+                    "no",
+                )
+            ),
+            "stress_window_paid_experiment_recommendation": str(
+                _policy_value(
+                    policy,
+                    (
+                        "purchase_decision_policy",
+                        "no_incremental_value_stress_window_paid_experiment_recommendation",
+                    ),
+                    "conditional_yes",
+                )
+            ),
+            "purchase_rationale": str(
+                _policy_value(
+                    policy,
+                    (
+                        "purchase_decision_policy",
+                        "no_incremental_value_purchase_rationale",
+                    ),
+                    "trial_no_incremental_value_stress_window_required",
+                )
+            ),
+        }
     if bool(prior_conclusion.get("source_engineering_useful")):
-        return "defer", "engineering_only"
-    return "defer", "weak_evidence"
+        return {
+            **base,
+            "purchase_platinum_recommendation": "defer",
+            "trial_based_purchase_recommendation": "no",
+            "stress_window_paid_experiment_recommendation": "defer",
+            "purchase_rationale": "engineering_only",
+        }
+    return {
+        **base,
+        "purchase_platinum_recommendation": "no",
+        "trial_based_purchase_recommendation": "no",
+        "stress_window_paid_experiment_recommendation": "no",
+        "purchase_rationale": "weak_evidence",
+    }
 
 
 def _prepared_signal_frame(feature_frame: pd.DataFrame) -> pd.DataFrame:
@@ -1024,6 +1116,14 @@ def _render_evidence_review(review: Mapping[str, Any]) -> str:
                 "- full_history_needed_for_final_answer: "
                 f"`{conclusion.get('full_history_needed_for_final_answer')}`"
             ),
+            (
+                "- trial_based_purchase_recommendation: "
+                f"`{conclusion.get('trial_based_purchase_recommendation')}`"
+            ),
+            (
+                "- stress_window_paid_experiment_recommendation: "
+                f"`{conclusion.get('stress_window_paid_experiment_recommendation')}`"
+            ),
             "",
             "## 复盘结论",
             "",
@@ -1084,11 +1184,21 @@ def _render_decision_memo(memo: Mapping[str, Any], conclusion: Mapping[str, Any]
                 "- purchase_platinum_recommendation: "
                 f"`{decision.get('purchase_platinum_recommendation')}`"
             ),
+            (
+                "- trial_based_purchase_recommendation: "
+                f"`{decision.get('trial_based_purchase_recommendation')}`"
+            ),
+            (
+                "- stress_window_paid_experiment_recommendation: "
+                f"`{decision.get('stress_window_paid_experiment_recommendation')}`"
+            ),
             f"- purchase_rationale: `{decision.get('purchase_rationale')}`",
+            f"- owner_decision_required: `{decision.get('owner_decision_required')}`",
             (
                 "- purchase_decision_owner_approval_required: "
                 f"`{decision.get('purchase_decision_owner_approval_required')}`"
             ),
+            f"- purchase_allowed: `{decision.get('purchase_allowed')}`",
             (
                 "- purchase_allowed_without_owner_approval: "
                 f"`{memo.get('purchase_allowed_without_owner_approval')}`"
@@ -1106,9 +1216,10 @@ def _render_decision_memo(memo: Mapping[str, Any], conclusion: Mapping[str, Any]
             f"- benchmark_signal_consistent: `{evidence.get('benchmark_signal_consistent')}`",
             f"- stress_2022_sample_available: `{evidence.get('stress_2022_sample_available')}`",
             "",
-            "结论：当前 recommendation 只面向 owner 是否购买正式历史数据。"
-            "即使 recommendation 为 `yes`，也不允许自动购买、自动升级 provider、"
-            "恢复 first-layer、paper-shadow、production 或 broker action。",
+            "结论：2Y trial 不支持直接购买 Platinum；只有在 owner 接受付费验证"
+            " 2021-2024 stress window 的研究成本时，paid experiment 才是"
+            " conditional_yes。系统默认 purchase_allowed=false，不允许自动购买、"
+            "自动升级 provider、恢复 first-layer、paper-shadow、production 或 broker action。",
             "",
             "## Gate Status",
             "",

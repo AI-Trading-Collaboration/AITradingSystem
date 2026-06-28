@@ -49,8 +49,12 @@ def test_partial_evidence_review_explains_none_without_unlocking_gates(
     assert final["local_signal_evidence_reason"] == "no_incremental_value"
     assert final["trial_2y_feature_value"] == "weak"
     assert final["full_history_needed_for_final_answer"] is True
-    assert final["purchase_platinum_recommendation"] == "yes"
-    assert final["purchase_rationale"] == "stress_window_required"
+    assert final["purchase_platinum_recommendation"] == "no"
+    assert final["trial_based_purchase_recommendation"] == "no"
+    assert final["stress_window_paid_experiment_recommendation"] == "conditional_yes"
+    assert final["purchase_rationale"] == "trial_no_incremental_value_stress_window_required"
+    assert final["owner_decision_required"] is True
+    assert final["purchase_allowed"] is False
     assert final["primary_window_validated"] is False
     assert final["model_ready_for_2021_primary_window"] is False
     assert final["reopen_gate_allowed"] is False
@@ -62,6 +66,11 @@ def test_partial_evidence_review_explains_none_without_unlocking_gates(
     assert (tmp_path / "docs" / "norgate_2y_partial_evidence_review.md").exists()
     assert (tmp_path / "docs" / "norgate_platinum_decision_memo.md").exists()
     assert (tmp_path / "outputs" / "norgate_2y_benchmark_consistency.csv").exists()
+    memo_text = (tmp_path / "docs" / "norgate_platinum_decision_memo.md").read_text(
+        encoding="utf-8"
+    )
+    assert "trial_based_purchase_recommendation: `no`" in memo_text
+    assert "stress_window_paid_experiment_recommendation: `conditional_yes`" in memo_text
 
 
 def test_partial_evidence_review_artifacts_have_audit_metadata(tmp_path: Path) -> None:
@@ -116,6 +125,9 @@ def test_partial_evidence_review_fails_closed_when_2267_artifacts_missing(
     assert final["status"] == "NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_BLOCKED"
     assert final["local_signal_evidence_reason"] == "inconclusive"
     assert final["purchase_platinum_recommendation"] == "defer"
+    assert final["trial_based_purchase_recommendation"] == "defer"
+    assert final["stress_window_paid_experiment_recommendation"] == "not_reviewed"
+    assert final["purchase_allowed"] is False
     assert final["promotion_allowed"] is False
     assert final["paper_shadow_allowed"] is False
     assert final["production_allowed"] is False

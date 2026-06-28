@@ -58,6 +58,13 @@ benchmark_consistency_policy:
     - 20
   min_supporting_horizons_per_benchmark: 2
   min_supporting_benchmark_count_for_consistent_signal: 2
+purchase_decision_policy:
+  legacy_recommendation_field_role: trial_based_purchase_recommendation
+  no_incremental_value_trial_based_purchase_recommendation: "no"
+  no_incremental_value_stress_window_paid_experiment_recommendation: conditional_yes
+  no_incremental_value_purchase_rationale: trial_no_incremental_value_stress_window_required
+  owner_decision_required: true
+  purchase_allowed_default: false
 safety_boundary:
   primary_window_validated: false
   model_ready_for_2021_primary_window: false
@@ -66,4 +73,5 @@ safety_boundary:
   paper_shadow_allowed: false
   production_allowed: false
   broker_action: none
+  purchase_allowed: false
   purchase_allowed_without_owner_approval: false

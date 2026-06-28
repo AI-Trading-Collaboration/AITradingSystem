@@ -57,9 +57,16 @@ owner decision memo。
   `no_incremental_value`, `metric_design_issue`, `inconclusive`。
 - `trial_2y_feature_value`: one of `weak`, `moderate`, `strong`。
 - `full_history_needed_for_final_answer`: true/false。
-- `purchase_platinum_recommendation`: one of `no`, `defer`, `yes`。
-- `purchase_rationale`: one of `engineering_only`, `stress_window_required`,
-  `strong_trial_signal`, `weak_evidence`。
+- `purchase_platinum_recommendation`: legacy/direct-trial field, one of `no`,
+  `defer`, `yes`。
+- `trial_based_purchase_recommendation`: one of `no`, `defer`, `yes`。
+- `stress_window_paid_experiment_recommendation`: one of `no`, `defer`,
+  `conditional_yes`, `not_reviewed`, `not_required`。
+- `owner_decision_required`: true/false。
+- `purchase_allowed`: true/false；当前默认必须为 false。
+- `purchase_rationale`: one of `engineering_only`,
+  `trial_no_incremental_value_stress_window_required`, `strong_trial_signal`,
+  `weak_evidence`。
 - Gate status 必须保持 false：
   `primary_window_validated=false`、`model_ready_for_2021_primary_window=false`、
   `reopen_gate_allowed=false`、`promotion_allowed=false`、
@@ -81,8 +88,12 @@ first-layer acceptance rule。
   conclusion matrix。
 - 输出只包含日期级 / 聚合 summary，不提交完整 member symbol list 或 raw vendor price table。
 - QQQ、SPY、SMH benchmark consistency 使用相同 2Y trial window 的聚合结果。
-- 结论可以建议 owner 是否购买 full-history，但必须说明不是自动购买，也不是
-  primary-window validation。
+- 结论必须拆分 trial-based purchase answer 与 paid stress-window experiment owner
+  review；当前 no-incremental-value 路径为
+  `trial_based_purchase_recommendation=no`、
+  `stress_window_paid_experiment_recommendation=conditional_yes`、
+  `purchase_allowed=false`，并必须说明不是自动购买，也不是 primary-window
+  validation。
 - Report registry、artifact catalog、system flow、task register 和 research audit
   metadata 已更新。
 - Focused pytest、Ruff、compileall、documentation/report/task checks、diff checks 和
@@ -108,6 +119,13 @@ first-layer acceptance rule。
   `purchase_platinum_recommendation=yes`,
   `purchase_rationale=stress_window_required`, with
   `purchase_allowed_without_owner_approval=false` and all strategy gates false.
+- 2026-06-28: TRADING-2269 reconciled the purchase wording. The same evidence
+  now records `purchase_platinum_recommendation=no`,
+  `trial_based_purchase_recommendation=no`,
+  `stress_window_paid_experiment_recommendation=conditional_yes`,
+  `purchase_rationale=trial_no_incremental_value_stress_window_required`,
+  `owner_decision_required=true`, `purchase_allowed=false`, and all strategy
+  gates false. This supersedes the earlier ambiguous `yes` wording.
 - 2026-06-28: Validation passed: Ruff, compileall, focused Norgate partial
   evidence/effectiveness tests, report/documentation/task-register tests,
   research audit/governance tests and `contract-validation`. Runtime artifact:

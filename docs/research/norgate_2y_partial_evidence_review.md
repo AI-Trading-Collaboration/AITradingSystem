@@ -4,6 +4,8 @@
 - local_signal_evidence_reason: `no_incremental_value`
 - trial_2y_feature_value: `weak`
 - full_history_needed_for_final_answer: `True`
+- trial_based_purchase_recommendation: `no`
+- stress_window_paid_experiment_recommendation: `conditional_yes`
 
 ## 复盘结论
 

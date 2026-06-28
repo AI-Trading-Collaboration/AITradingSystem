@@ -22712,7 +22712,7 @@ reports:
       - docs/research/norgate_2y_partial_evidence_review_policy.md
     artifact_selection_policy: latest_available
     freshness_sla_days: 90
-    freshness_rationale: Policy defines local-signal-none review thresholds and owner purchase memo interpretation.
+    freshness_rationale: Policy defines local-signal-none review thresholds and split owner purchase memo interpretation.
     owner_action: review_policy_before_interpreting_norgate_2y_evidence_review
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
@@ -22752,7 +22752,7 @@ reports:
       - inputs/research_reviews/norgate_platinum_decision_memo.yaml
     artifact_selection_policy: latest_available
     freshness_sla_days: 7
-    freshness_rationale: Owner decision memo summarizes whether full-history Platinum purchase is justified.
+    freshness_rationale: Owner decision memo separates trial-based no from conditional paid stress-window experiment review.
     owner_action: owner_manual_decision_required_before_purchase
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
@@ -22771,7 +22771,7 @@ reports:
       - inputs/research_reviews/norgate_2y_partial_evidence_conclusion_matrix.yaml
     artifact_selection_policy: latest_available
     freshness_sla_days: 7
-    freshness_rationale: Conclusion matrix records local-signal-none reason, feature value, and purchase recommendation.
+    freshness_rationale: Conclusion matrix records local-signal-none reason, feature value, split purchase wording, and disabled gates.
     owner_action: review_conclusion_before_owner_approved_full_history_purchase
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false

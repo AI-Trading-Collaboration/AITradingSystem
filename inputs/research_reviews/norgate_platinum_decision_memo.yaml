@@ -1,12 +1,16 @@
 schema_version: norgate_platinum_decision_memo.v1
 report_type: norgate_platinum_decision_memo
 status: NORGATE_PLATINUM_OWNER_DECISION_MEMO_READY
-generated_at: '2026-06-28T10:58:53+00:00'
+generated_at: '2026-06-28T11:37:41+00:00'
 review_policy: norgate_2y_partial_evidence_review_policy_v1
 decision_summary:
-  purchase_platinum_recommendation: 'yes'
-  purchase_rationale: stress_window_required
+  purchase_platinum_recommendation: 'no'
+  trial_based_purchase_recommendation: 'no'
+  stress_window_paid_experiment_recommendation: conditional_yes
+  purchase_rationale: trial_no_incremental_value_stress_window_required
+  owner_decision_required: true
   purchase_decision_owner_approval_required: true
+  purchase_allowed: false
   purchase_allowed_without_owner_approval: false
   full_history_needed_for_final_answer: true
   trial_2y_feature_value: weak
@@ -33,6 +37,7 @@ broker_action: none
 production_effect: none
 candidate_count: 0
 dynamic_promotion_status: BLOCKED
+purchase_allowed: false
 purchase_allowed_without_owner_approval: false
 research_audit_metadata:
   modified_layer: validation_only
