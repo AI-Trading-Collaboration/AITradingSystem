@@ -22908,6 +22908,28 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_active_selection_rule_audit
+    title: First-Layer Active Selection Rule Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-active-selection-rule-audit
+    artifact_globs:
+      - docs/research/active_selection_rule_audit_report.md
+      - outputs/research_trends/first_layer_active_selection_rule_audit/active_selection_ablation_matrix.json
+      - outputs/research_trends/first_layer_active_selection_rule_audit/active_selection_counterfactual_report.json
+      - outputs/research_trends/first_layer_active_selection_rule_audit/active_selection_threshold_sensitivity.json
+      - outputs/research_trends/first_layer_active_selection_rule_audit/active_selection_recommended_policy.yaml
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Active selection rule audit should be regenerated after TRADING-2274 gate audit, TRADING-2275 gate policy v2 semantics, current active selection rule, or actual-path matrix changes.
+    owner_action: review_split_selection_and_promotion_recommendation_before_gate_policy_v2_challenger_rerun
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

@@ -51,6 +51,12 @@ from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_REPAIR_START as DEFAULT_EQUAL_WEIGHT_PROXY_REPAIR_START,
 )
 from ai_trading_system.equal_weight_proxy_data_fix import run_equal_weight_proxy_data_fix_pack
+from ai_trading_system.first_layer_active_selection_rule_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_AUDIT_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_active_selection_rule_audit import (
+    run_first_layer_active_selection_rule_audit_pack,
+)
 from ai_trading_system.first_layer_channel_closeout import (
     DEFAULT_ARCHIVE_POLICY_PATH as DEFAULT_FIRST_LAYER_CHANNEL_ARCHIVE_POLICY_PATH,
 )
@@ -1432,6 +1438,26 @@ def first_layer_gate_policy_v2_reconciliation_command(
         output_root=output_root,
     )
     _print_payload("First-layer gate policy v2 reconciliation", payload)
+
+
+@trends_app.command("first-layer-active-selection-rule-audit")
+def first_layer_active_selection_rule_audit_command(
+    active_selection_rule_path: Annotated[
+        Path, typer.Option("--active-selection-rule")
+    ] = DEFAULT_COVERAGE_SELECTION_RULE_PATH,
+    actual_path_path: Annotated[
+        Path, typer.Option("--actual-path")
+    ] = DEFAULT_ACTUAL_PATH_YAML_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_ACTIVE_SELECTION_AUDIT_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_active_selection_rule_audit_pack(
+        active_selection_rule_path=active_selection_rule_path,
+        actual_path_path=actual_path_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer active selection rule audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
