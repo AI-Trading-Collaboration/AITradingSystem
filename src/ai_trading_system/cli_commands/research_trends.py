@@ -7,6 +7,12 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.candidate_signal_prediction_artifact_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_ARTIFACT_AUDIT_OUTPUT_ROOT,
+)
+from ai_trading_system.candidate_signal_prediction_artifact_audit import (
+    run_candidate_signal_prediction_artifact_audit_pack,
+)
 from ai_trading_system.channel_specific_first_layer_v3 import (
     DEFAULT_ACTION_VALUE_MATRIX_PATH as DEFAULT_CHANNEL_V3_ACTION_VALUE_MATRIX_PATH,
 )
@@ -1546,6 +1552,22 @@ def first_layer_candidate_actual_path_validation_command(
         output_root=output_root,
     )
     _print_payload("First-layer candidate actual-path validation", payload)
+
+
+@trends_app.command("candidate-signal-prediction-artifact-audit")
+def candidate_signal_prediction_artifact_audit_command(
+    challenger_matrix_path: Annotated[
+        Path, typer.Option("--challenger-matrix")
+    ] = DEFAULT_PERF_GATE_AUDIT_CHALLENGER_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_CANDIDATE_ARTIFACT_AUDIT_OUTPUT_ROOT,
+) -> None:
+    payload = run_candidate_signal_prediction_artifact_audit_pack(
+        challenger_matrix_path=challenger_matrix_path,
+        output_root=output_root,
+    )
+    _print_payload("Candidate signal prediction artifact audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

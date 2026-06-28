@@ -23023,6 +23023,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: candidate_signal_prediction_artifact_audit
+    title: Candidate Signal / Prediction Artifact Backfill and Provenance Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends candidate-signal-prediction-artifact-audit
+    artifact_globs:
+      - docs/research/candidate_signal_prediction_artifact_gap_report.md
+      - docs/research/candidate_artifact_provenance_matrix.md
+      - docs/research/inconclusive_candidate_recovery_plan.md
+      - outputs/research_trends/candidate_signal_prediction_artifact_audit/candidate_artifact_provenance_matrix.json
+      - outputs/research_trends/candidate_signal_prediction_artifact_audit/candidate_artifact_gap_matrix.json
+      - outputs/research_trends/candidate_signal_prediction_artifact_audit/inconclusive_candidate_recovery_plan.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Candidate artifact provenance should be regenerated after candidate-level validation, challenger experiment definitions, report registry, or signal/prediction artifact generation changes.
+    owner_action: review_inconclusive_candidate_recovery_plan_before_signal_generator_or_actual_path_backfill
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
