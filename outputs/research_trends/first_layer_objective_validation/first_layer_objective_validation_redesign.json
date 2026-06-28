@@ -1,0 +1,321 @@
+{
+  "actual_path_required": true,
+  "actual_signal_end": "2026-03-27",
+  "actual_signal_start": "2023-02-22",
+  "anchor_date": "2022-11-30",
+  "anchor_event": "ChatGPT public launch",
+  "artifact_paths": {
+    "first_layer_objective_validation_redesign_doc": "D:\\Work\\AITradingSystem\\docs\\research\\first_layer_objective_validation_redesign.md",
+    "first_layer_objective_validation_redesign_json": "D:\\Work\\AITradingSystem\\outputs\\research_trends\\first_layer_objective_validation\\first_layer_objective_validation_redesign.json",
+    "first_layer_objective_validation_redesign_yaml": "D:\\Work\\AITradingSystem\\inputs\\research_reviews\\first_layer_objective_validation_redesign.yaml"
+  },
+  "as_of": "2026-06-26",
+  "broker_action": "none",
+  "candidate_count": 0,
+  "data_quality": {
+    "as_of": "2026-06-26",
+    "checked_at": "2026-06-28T12:40:05.642643+00:00",
+    "error_count": 0,
+    "expected_price_tickers": [
+      "QQQ",
+      "SPY",
+      "SMH"
+    ],
+    "expected_rate_series": [],
+    "passed": true,
+    "price_checksum": "5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d",
+    "price_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv",
+    "price_row_count": 56184,
+    "rate_checksum": "279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a",
+    "rate_row_count": 6352,
+    "rates_path": "D:\\Work\\AITradingSystem\\data\\raw\\rates_daily.csv",
+    "secondary_prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_marketstack_daily.csv",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "default_backtest_start": "2022-12-01",
+  "dynamic_promotion_status": "BLOCKED",
+  "generated_at": "2026-06-28T12:40:05+00:00",
+  "manual_review_required": true,
+  "market_regime": "ai_after_chatgpt",
+  "objective_terms": [
+    {
+      "baseline_unit": "event_count",
+      "current_baseline_value": 198,
+      "definition": "Count and later severity-weight cases where first-layer risk-on / constructive signals precede weak forward return or drawdown breach.\n",
+      "direction": "minimize",
+      "measurement_source": "first_layer_failure_taxonomy.failure_type.false_risk_on.event_count",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "benchmark_consistency": {
+          "consistency_score": 0.44,
+          "core_benchmark_count": 3,
+          "core_benchmark_event_counts": {
+            "QQQ": 54,
+            "SMH": 100,
+            "SPY": 44
+          },
+          "failure_type": "false_risk_on",
+          "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+        },
+        "benchmark_event_counts": {
+          "QQQ": 54,
+          "SMH": 100,
+          "SPY": 44
+        },
+        "failure_event_count": 198
+      },
+      "term_id": "false_risk_on_cost",
+      "validation_role": "primary_downside_cost"
+    },
+    {
+      "baseline_unit": "event_count",
+      "current_baseline_value": 499,
+      "definition": "Count and later opportunity-cost-weight cases where first-layer risk-off / defensive signals miss positive forward returns.\n",
+      "direction": "minimize",
+      "measurement_source": "first_layer_failure_taxonomy.failure_type.false_risk_off.event_count",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "benchmark_consistency": {
+          "consistency_score": 0.661692,
+          "core_benchmark_count": 3,
+          "core_benchmark_event_counts": {
+            "QQQ": 165,
+            "SMH": 201,
+            "SPY": 133
+          },
+          "failure_type": "false_risk_off",
+          "interpretation": "higher_is_more_consistent_across_core_benchmarks"
+        },
+        "benchmark_event_counts": {
+          "QQQ": 165,
+          "SMH": 201,
+          "SPY": 133
+        },
+        "failure_event_count": 499
+      },
+      "term_id": "false_risk_off_cost",
+      "validation_role": "missed_upside_cost"
+    },
+    {
+      "baseline_unit": "signal_days",
+      "current_baseline_value": 5,
+      "definition": "Minimum signal-day lead time required before drawdown breach; late risk-off events show cases that fail this warning objective.\n",
+      "direction": "maximize_lead_time_and_minimize_late_events",
+      "measurement_source": "policy.minimum_warning_lead_days plus late_risk_off.event_count",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "benchmark_event_counts": {
+          "QQQ": 18,
+          "SMH": 61,
+          "SPY": 7
+        },
+        "late_risk_off_event_count": 86,
+        "minimum_warning_lead_days": 5
+      },
+      "term_id": "drawdown_warning_lead_time",
+      "validation_role": "drawdown_warning_objective"
+    },
+    {
+      "baseline_unit": "signal_days",
+      "current_baseline_value": 5,
+      "definition": "Maximum signal-day delay allowed after recovery threshold; late risk-on events show cases that fail this recovery objective.\n",
+      "direction": "minimize_delay_and_late_events",
+      "measurement_source": "policy.maximum_recovery_delay_days plus late_risk_on.event_count",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "benchmark_event_counts": {
+          "QQQ": 88,
+          "SMH": 161,
+          "SPY": 57
+        },
+        "late_risk_on_event_count": 306,
+        "maximum_recovery_delay_days": 5
+      },
+      "term_id": "recovery_delay_days",
+      "validation_role": "recovery_reentry_objective"
+    },
+    {
+      "baseline_unit": "flips_per_20_observations",
+      "current_baseline_value": 1.956242,
+      "definition": "Penalize excessive first-layer signal-class flips using normalized flips per 20 observations from the current-state signal summary.\n",
+      "direction": "minimize",
+      "measurement_source": "first_layer_failure_taxonomy.signal_summary.regime_flip_rate_per_20_observations",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "regime_flip_count": 76,
+        "regime_flip_rate_per_20_observations": 1.956242
+      },
+      "term_id": "regime_flip_penalty",
+      "validation_role": "stability_penalty"
+    },
+    {
+      "baseline_unit": "score_0_to_1",
+      "current_baseline_value": 0.392621,
+      "definition": "Require failure behavior to be measured consistently across core QQQ/SPY/SMH benchmarks without imputing optional IWM/RSP coverage.\n",
+      "direction": "maximize",
+      "measurement_source": "benchmark_consistency_report.summary.benchmark_consistency_score",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "benchmark_consistency_score": 0.392621,
+        "benchmark_consistency_status": "CORE_BENCHMARKS_AVAILABLE",
+        "core_benchmarks_available": [
+          "QQQ",
+          "SPY",
+          "SMH"
+        ],
+        "optional_benchmarks_missing": [
+          "IWM",
+          "RSP"
+        ]
+      },
+      "term_id": "benchmark_consistency_score",
+      "validation_role": "cross_benchmark_consistency_check"
+    },
+    {
+      "baseline_unit": "slice_coverage_summary",
+      "current_baseline_value": "3/4 slices covered",
+      "definition": "Require every configured regime slice, including the 2022 bear / rate-shock stress comparison, to meet minimum signal coverage before stress validation can be claimed.\n",
+      "direction": "satisfy_all_required_slices",
+      "measurement_source": "first_layer_current_state_summary.regime_slices",
+      "promotion_interpretation": "diagnostic_contract_only_not_promotion",
+      "supporting_evidence": {
+        "requirements": "see stress_slice_minimum_requirements section"
+      },
+      "term_id": "stress_slice_minimum_requirements",
+      "validation_role": "stress_and_regime_coverage_gate"
+    }
+  ],
+  "paper_shadow_allowed": false,
+  "policy_id": "first_layer_objective_validation_policy_v1",
+  "primary_window_validated": false,
+  "production_allowed": false,
+  "production_effect": "none",
+  "promotion_allowed": false,
+  "proxy_replacement_status": {
+    "blocked_proxy_ids": [
+      "rates_liquidity_free_v1",
+      "volatility_compression_free_v1",
+      "macro_event_calendar_free_v1",
+      "event_risk_free_v1",
+      "participation_proxy_free_v1",
+      "smh_to_qqq",
+      "soxx_to_qqq",
+      "rsp_to_spy",
+      "qqqe_to_qqq",
+      "sector_etf_relative_strength",
+      "alpha_vantage_listing_status",
+      "fmp_etf_holdings_low_cost_gate"
+    ],
+    "proxy_audit_status": "FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED",
+    "proxy_count": 12,
+    "replacement_for_true_breadth_count": 0,
+    "true_breadth_replaced": false,
+    "validation_blocker": "TRUE_BREADTH_NOT_REPLACED_BY_FREE_OR_LOW_COST_PROXY"
+  },
+  "reopen_gate_allowed": false,
+  "report_type": "first_layer_objective_validation_redesign",
+  "requested_end": "latest",
+  "requested_start": "2022-12-01",
+  "research_audit_metadata": {
+    "boundary_contract_version": "first_layer_objective_validation_research_only_v1",
+    "candidate_count": 0,
+    "model_version": "first_layer_objective_validation_redesign_v1",
+    "modified_channel": "first_layer_objective_validation_redesign",
+    "modified_layer": "validation_only",
+    "threshold_policy": "first_layer_objective_validation_policy_v1"
+  },
+  "research_only": true,
+  "schema_version": "first_layer_objective_validation_redesign.v1",
+  "status": "FIRST_LAYER_OBJECTIVE_VALIDATION_REDESIGN_READY_PROMOTION_BLOCKED",
+  "stress_slice_minimum_requirements": {
+    "all_requirements_met": false,
+    "blocked_slice_ids": [
+      "2022_bear_rate_shock"
+    ],
+    "met_slice_count": 3,
+    "minimum_signal_observations": 60,
+    "required_coverage_status": "SIGNAL_COVERED",
+    "required_slice_count": 4,
+    "rows": [
+      {
+        "coverage_status": "NO_SIGNAL_COVERAGE",
+        "label": "2022 bear / rate shock",
+        "minimum_signal_observations": 60,
+        "primary_ai_conclusion_slice": false,
+        "required_coverage_status": "SIGNAL_COVERED",
+        "requirement_met": false,
+        "role": "stress_comparison_not_primary_ai_conclusion",
+        "signal_observation_count": 0,
+        "slice_id": "2022_bear_rate_shock"
+      },
+      {
+        "coverage_status": "SIGNAL_COVERED",
+        "label": "2023 recovery",
+        "minimum_signal_observations": 60,
+        "primary_ai_conclusion_slice": true,
+        "required_coverage_status": "SIGNAL_COVERED",
+        "requirement_met": true,
+        "role": "ai_after_chatgpt_recovery",
+        "signal_observation_count": 216,
+        "slice_id": "2023_recovery"
+      },
+      {
+        "coverage_status": "SIGNAL_COVERED",
+        "label": "2024 AI concentration",
+        "minimum_signal_observations": 60,
+        "primary_ai_conclusion_slice": true,
+        "required_coverage_status": "SIGNAL_COVERED",
+        "requirement_met": true,
+        "role": "ai_after_chatgpt_concentration",
+        "signal_observation_count": 252,
+        "slice_id": "2024_ai_concentration"
+      },
+      {
+        "coverage_status": "SIGNAL_COVERED",
+        "label": "2025-2026 trial-like window",
+        "minimum_signal_observations": 60,
+        "primary_ai_conclusion_slice": true,
+        "required_coverage_status": "SIGNAL_COVERED",
+        "requirement_met": true,
+        "role": "ai_after_chatgpt_recent_trial_like",
+        "signal_observation_count": 309,
+        "slice_id": "2025_2026_trial_like_window"
+      }
+    ],
+    "stress_validation_allowed": false,
+    "stress_validation_requires_2022_signal_coverage": true
+  },
+  "summary": {
+    "actual_signal_end": "2026-03-27",
+    "actual_signal_start": "2023-02-22",
+    "all_objective_terms_defined": true,
+    "as_of": "2026-06-26",
+    "blocking_conditions": [
+      "STRESS_SLICE_MINIMUM_REQUIREMENTS_NOT_MET",
+      "2022_STRESS_SLICE_NO_SIGNAL_COVERAGE",
+      "TRUE_BREADTH_NOT_REPLACED",
+      "OWNER_REVIEW_REQUIRED_BEFORE_CHALLENGER_PROMOTION"
+    ],
+    "candidate_count": 0,
+    "data_quality_status": "PASS_WITH_WARNINGS",
+    "final_status": "FIRST_LAYER_OBJECTIVE_VALIDATION_CONTRACT_READY_PROMOTION_BLOCKED",
+    "market_regime": "ai_after_chatgpt",
+    "next_required_tasks": [
+      "TRADING-2273"
+    ],
+    "objective_term_count": 7,
+    "promotion_allowed": false,
+    "requested_end": "latest",
+    "requested_start": "2022-12-01",
+    "required_objective_term_count": 7,
+    "stress_slice_requirements_met": false,
+    "stress_validation_allowed": false,
+    "true_breadth_replaced": false,
+    "validation_ready": false
+  },
+  "target_path_metrics_role": "diagnostic_only",
+  "title": "First-Layer Objective And Validation Redesign",
+  "validation_ready": false
+}

@@ -22822,3 +22822,24 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_objective_validation_redesign
+    title: First-Layer Objective And Validation Redesign
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-objective-validation-redesign
+    artifact_globs:
+      - config/research/first_layer_objective_validation_policy.yaml
+      - outputs/research_trends/first_layer_objective_validation/first_layer_objective_validation_redesign.json
+      - inputs/research_reviews/first_layer_objective_validation_redesign.yaml
+      - docs/research/first_layer_objective_validation_redesign.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Objective validation redesign should be regenerated after current-state failure taxonomy, benchmark consistency, proxy coverage audit, or objective policy changes.
+    owner_action: review_objective_contract_before_challenger_experiments
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

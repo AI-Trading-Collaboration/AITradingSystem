@@ -1,0 +1,289 @@
+schema_version: first_layer_objective_validation_redesign.v1
+report_type: first_layer_objective_validation_redesign
+title: First-Layer Objective And Validation Redesign
+status: FIRST_LAYER_OBJECTIVE_VALIDATION_REDESIGN_READY_PROMOTION_BLOCKED
+generated_at: '2026-06-28T12:40:05+00:00'
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+anchor_date: '2022-11-30'
+default_backtest_start: '2022-12-01'
+requested_start: '2022-12-01'
+requested_end: latest
+as_of: '2026-06-26'
+actual_signal_start: '2023-02-22'
+actual_signal_end: '2026-03-27'
+data_quality_status: PASS_WITH_WARNINGS
+data_quality:
+  status: PASS_WITH_WARNINGS
+  passed: true
+  checked_at: '2026-06-28T12:40:05.642643+00:00'
+  as_of: '2026-06-26'
+  price_path: D:\Work\AITradingSystem\data\raw\prices_daily.csv
+  rates_path: D:\Work\AITradingSystem\data\raw\rates_daily.csv
+  secondary_prices_path: D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv
+  expected_price_tickers:
+  - QQQ
+  - SPY
+  - SMH
+  expected_rate_series: []
+  price_row_count: 56184
+  rate_row_count: 6352
+  price_checksum: 5d4f5a4843a8cd5541e794e26865e35105345f212554216fd7fba338a76f689d
+  rate_checksum: 279a1af07cda2aaf17e938ac40d84fbd84c0724a9791af61800d09396754841a
+  warning_count: 1
+  error_count: 0
+policy_id: first_layer_objective_validation_policy_v1
+summary:
+  final_status: FIRST_LAYER_OBJECTIVE_VALIDATION_CONTRACT_READY_PROMOTION_BLOCKED
+  market_regime: ai_after_chatgpt
+  requested_start: '2022-12-01'
+  requested_end: latest
+  as_of: '2026-06-26'
+  actual_signal_start: '2023-02-22'
+  actual_signal_end: '2026-03-27'
+  data_quality_status: PASS_WITH_WARNINGS
+  objective_term_count: 7
+  required_objective_term_count: 7
+  all_objective_terms_defined: true
+  stress_slice_requirements_met: false
+  stress_validation_allowed: false
+  true_breadth_replaced: false
+  validation_ready: false
+  candidate_count: 0
+  promotion_allowed: false
+  blocking_conditions:
+  - STRESS_SLICE_MINIMUM_REQUIREMENTS_NOT_MET
+  - 2022_STRESS_SLICE_NO_SIGNAL_COVERAGE
+  - TRUE_BREADTH_NOT_REPLACED
+  - OWNER_REVIEW_REQUIRED_BEFORE_CHALLENGER_PROMOTION
+  next_required_tasks:
+  - TRADING-2273
+objective_terms:
+- term_id: false_risk_on_cost
+  definition: 'Count and later severity-weight cases where first-layer risk-on / constructive
+    signals precede weak forward return or drawdown breach.
+
+    '
+  measurement_source: first_layer_failure_taxonomy.failure_type.false_risk_on.event_count
+  direction: minimize
+  current_baseline_value: 198
+  baseline_unit: event_count
+  supporting_evidence:
+    failure_event_count: 198
+    benchmark_event_counts:
+      QQQ: 54
+      SMH: 100
+      SPY: 44
+    benchmark_consistency:
+      consistency_score: 0.44
+      core_benchmark_count: 3
+      core_benchmark_event_counts:
+        QQQ: 54
+        SMH: 100
+        SPY: 44
+      failure_type: false_risk_on
+      interpretation: higher_is_more_consistent_across_core_benchmarks
+  validation_role: primary_downside_cost
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: false_risk_off_cost
+  definition: 'Count and later opportunity-cost-weight cases where first-layer risk-off
+    / defensive signals miss positive forward returns.
+
+    '
+  measurement_source: first_layer_failure_taxonomy.failure_type.false_risk_off.event_count
+  direction: minimize
+  current_baseline_value: 499
+  baseline_unit: event_count
+  supporting_evidence:
+    failure_event_count: 499
+    benchmark_event_counts:
+      QQQ: 165
+      SMH: 201
+      SPY: 133
+    benchmark_consistency:
+      consistency_score: 0.661692
+      core_benchmark_count: 3
+      core_benchmark_event_counts:
+        QQQ: 165
+        SMH: 201
+        SPY: 133
+      failure_type: false_risk_off
+      interpretation: higher_is_more_consistent_across_core_benchmarks
+  validation_role: missed_upside_cost
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: drawdown_warning_lead_time
+  definition: 'Minimum signal-day lead time required before drawdown breach; late
+    risk-off events show cases that fail this warning objective.
+
+    '
+  measurement_source: policy.minimum_warning_lead_days plus late_risk_off.event_count
+  direction: maximize_lead_time_and_minimize_late_events
+  current_baseline_value: 5
+  baseline_unit: signal_days
+  supporting_evidence:
+    minimum_warning_lead_days: 5
+    late_risk_off_event_count: 86
+    benchmark_event_counts:
+      QQQ: 18
+      SMH: 61
+      SPY: 7
+  validation_role: drawdown_warning_objective
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: recovery_delay_days
+  definition: 'Maximum signal-day delay allowed after recovery threshold; late risk-on
+    events show cases that fail this recovery objective.
+
+    '
+  measurement_source: policy.maximum_recovery_delay_days plus late_risk_on.event_count
+  direction: minimize_delay_and_late_events
+  current_baseline_value: 5
+  baseline_unit: signal_days
+  supporting_evidence:
+    maximum_recovery_delay_days: 5
+    late_risk_on_event_count: 306
+    benchmark_event_counts:
+      QQQ: 88
+      SMH: 161
+      SPY: 57
+  validation_role: recovery_reentry_objective
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: regime_flip_penalty
+  definition: 'Penalize excessive first-layer signal-class flips using normalized
+    flips per 20 observations from the current-state signal summary.
+
+    '
+  measurement_source: first_layer_failure_taxonomy.signal_summary.regime_flip_rate_per_20_observations
+  direction: minimize
+  current_baseline_value: 1.956242
+  baseline_unit: flips_per_20_observations
+  supporting_evidence:
+    regime_flip_count: 76
+    regime_flip_rate_per_20_observations: 1.956242
+  validation_role: stability_penalty
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: benchmark_consistency_score
+  definition: 'Require failure behavior to be measured consistently across core QQQ/SPY/SMH
+    benchmarks without imputing optional IWM/RSP coverage.
+
+    '
+  measurement_source: benchmark_consistency_report.summary.benchmark_consistency_score
+  direction: maximize
+  current_baseline_value: 0.392621
+  baseline_unit: score_0_to_1
+  supporting_evidence:
+    benchmark_consistency_score: 0.392621
+    benchmark_consistency_status: CORE_BENCHMARKS_AVAILABLE
+    core_benchmarks_available:
+    - QQQ
+    - SPY
+    - SMH
+    optional_benchmarks_missing:
+    - IWM
+    - RSP
+  validation_role: cross_benchmark_consistency_check
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+- term_id: stress_slice_minimum_requirements
+  definition: 'Require every configured regime slice, including the 2022 bear / rate-shock
+    stress comparison, to meet minimum signal coverage before stress validation can
+    be claimed.
+
+    '
+  measurement_source: first_layer_current_state_summary.regime_slices
+  direction: satisfy_all_required_slices
+  current_baseline_value: 3/4 slices covered
+  baseline_unit: slice_coverage_summary
+  supporting_evidence:
+    requirements: see stress_slice_minimum_requirements section
+  validation_role: stress_and_regime_coverage_gate
+  promotion_interpretation: diagnostic_contract_only_not_promotion
+stress_slice_minimum_requirements:
+  minimum_signal_observations: 60
+  required_coverage_status: SIGNAL_COVERED
+  required_slice_count: 4
+  met_slice_count: 3
+  blocked_slice_ids:
+  - 2022_bear_rate_shock
+  all_requirements_met: false
+  stress_validation_allowed: false
+  stress_validation_requires_2022_signal_coverage: true
+  rows:
+  - slice_id: 2022_bear_rate_shock
+    label: 2022 bear / rate shock
+    role: stress_comparison_not_primary_ai_conclusion
+    coverage_status: NO_SIGNAL_COVERAGE
+    signal_observation_count: 0
+    minimum_signal_observations: 60
+    required_coverage_status: SIGNAL_COVERED
+    requirement_met: false
+    primary_ai_conclusion_slice: false
+  - slice_id: 2023_recovery
+    label: 2023 recovery
+    role: ai_after_chatgpt_recovery
+    coverage_status: SIGNAL_COVERED
+    signal_observation_count: 216
+    minimum_signal_observations: 60
+    required_coverage_status: SIGNAL_COVERED
+    requirement_met: true
+    primary_ai_conclusion_slice: true
+  - slice_id: 2024_ai_concentration
+    label: 2024 AI concentration
+    role: ai_after_chatgpt_concentration
+    coverage_status: SIGNAL_COVERED
+    signal_observation_count: 252
+    minimum_signal_observations: 60
+    required_coverage_status: SIGNAL_COVERED
+    requirement_met: true
+    primary_ai_conclusion_slice: true
+  - slice_id: 2025_2026_trial_like_window
+    label: 2025-2026 trial-like window
+    role: ai_after_chatgpt_recent_trial_like
+    coverage_status: SIGNAL_COVERED
+    signal_observation_count: 309
+    minimum_signal_observations: 60
+    required_coverage_status: SIGNAL_COVERED
+    requirement_met: true
+    primary_ai_conclusion_slice: true
+proxy_replacement_status:
+  proxy_audit_status: FREE_LOW_COST_PROXY_COVERAGE_AUDIT_READY_PROMOTION_BLOCKED
+  proxy_count: 12
+  replacement_for_true_breadth_count: 0
+  true_breadth_replaced: false
+  validation_blocker: TRUE_BREADTH_NOT_REPLACED_BY_FREE_OR_LOW_COST_PROXY
+  blocked_proxy_ids:
+  - rates_liquidity_free_v1
+  - volatility_compression_free_v1
+  - macro_event_calendar_free_v1
+  - event_risk_free_v1
+  - participation_proxy_free_v1
+  - smh_to_qqq
+  - soxx_to_qqq
+  - rsp_to_spy
+  - qqqe_to_qqq
+  - sector_etf_relative_strength
+  - alpha_vantage_listing_status
+  - fmp_etf_holdings_low_cost_gate
+research_audit_metadata:
+  modified_layer: validation_only
+  modified_channel: first_layer_objective_validation_redesign
+  model_version: first_layer_objective_validation_redesign_v1
+  threshold_policy: first_layer_objective_validation_policy_v1
+  candidate_count: 0
+  boundary_contract_version: first_layer_objective_validation_research_only_v1
+research_only: true
+actual_path_required: true
+target_path_metrics_role: diagnostic_only
+promotion_allowed: false
+paper_shadow_allowed: false
+production_allowed: false
+broker_action: none
+production_effect: none
+manual_review_required: true
+dynamic_promotion_status: BLOCKED
+primary_window_validated: false
+reopen_gate_allowed: false
+validation_ready: false
+candidate_count: 0
+artifact_paths:
+  first_layer_objective_validation_redesign_json: D:\Work\AITradingSystem\outputs\research_trends\first_layer_objective_validation\first_layer_objective_validation_redesign.json
+  first_layer_objective_validation_redesign_yaml: D:\Work\AITradingSystem\inputs\research_reviews\first_layer_objective_validation_redesign.yaml
+  first_layer_objective_validation_redesign_doc: D:\Work\AITradingSystem\docs\research\first_layer_objective_validation_redesign.md

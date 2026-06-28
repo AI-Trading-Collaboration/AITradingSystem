@@ -65,6 +65,27 @@ from ai_trading_system.first_layer_current_state import (
 from ai_trading_system.first_layer_defensive_regression_diagnosis import (
     run_first_layer_defensive_regression_diagnosis_pack,
 )
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_BENCHMARK_CONSISTENCY_PATH as DEFAULT_OBJECTIVE_VALIDATION_BENCHMARK_CONSISTENCY_PATH,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_CURRENT_STATE_SUMMARY_PATH as DEFAULT_OBJECTIVE_VALIDATION_CURRENT_STATE_SUMMARY_PATH,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_FAILURE_TAXONOMY_PATH as DEFAULT_OBJECTIVE_VALIDATION_FAILURE_TAXONOMY_PATH,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_OBJECTIVE_VALIDATION_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_POLICY_PATH as DEFAULT_OBJECTIVE_VALIDATION_POLICY_PATH,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    DEFAULT_PROXY_AUDIT_PATH as DEFAULT_OBJECTIVE_VALIDATION_PROXY_AUDIT_PATH,
+)
+from ai_trading_system.first_layer_objective_validation_redesign import (
+    run_first_layer_objective_validation_redesign_pack,
+)
 from ai_trading_system.first_layer_policy_calibration import (
     DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
     DEFAULT_MARKETSTACK_PRICES_PATH,
@@ -1184,6 +1205,48 @@ def first_layer_proxy_coverage_audit_command(
         as_of_date=_parse_optional_date(as_of),
     )
     _print_payload("First-layer proxy coverage audit", payload)
+
+
+@trends_app.command("first-layer-objective-validation-redesign")
+def first_layer_objective_validation_redesign_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_POLICY_PATH,
+    current_state_summary_path: Annotated[
+        Path, typer.Option("--current-state-summary")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_CURRENT_STATE_SUMMARY_PATH,
+    failure_taxonomy_path: Annotated[
+        Path, typer.Option("--failure-taxonomy")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_FAILURE_TAXONOMY_PATH,
+    benchmark_consistency_path: Annotated[
+        Path, typer.Option("--benchmark-consistency")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_BENCHMARK_CONSISTENCY_PATH,
+    proxy_audit_path: Annotated[
+        Path, typer.Option("--proxy-audit")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_PROXY_AUDIT_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_FREE_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_FREE_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_FREE_RATES_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_OBJECTIVE_VALIDATION_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_first_layer_objective_validation_redesign_pack(
+        policy_path=policy_path,
+        current_state_summary_path=current_state_summary_path,
+        failure_taxonomy_path=failure_taxonomy_path,
+        benchmark_consistency_path=benchmark_consistency_path,
+        proxy_audit_path=proxy_audit_path,
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_payload("First-layer objective validation redesign", payload)
 
 
 @trends_app.command("channel-specific-v4")
