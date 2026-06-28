@@ -22976,6 +22976,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_boundary_candidate_owner_review
+    title: First-Layer Boundary Candidate Owner Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-boundary-owner-review
+    artifact_globs:
+      - docs/research/first_layer_boundary_candidate_owner_review.md
+      - outputs/research_trends/first_layer_boundary_owner_review/boundary_candidate_comparison_matrix.json
+      - docs/research/owner_review_candidate_tradeoff_summary.md
+      - outputs/research_trends/first_layer_boundary_owner_review/offline_validation_ready_candidate_summary.json
+      - outputs/research_trends/first_layer_boundary_owner_review/blocked_candidate_failure_reason_summary.json
+      - docs/research/recommended_next_experiment_plan.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Boundary candidate owner review should be regenerated after challenger matrix v2, gate policy v2, active selection policy v2, or candidate-level actual-path evidence changes.
+    owner_action: review_wf_504d_and_wf_378d_tradeoffs_before_expanding_first_layer_neighborhoods
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
