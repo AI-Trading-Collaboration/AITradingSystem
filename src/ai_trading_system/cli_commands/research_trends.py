@@ -51,6 +51,12 @@ from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_REPAIR_START as DEFAULT_EQUAL_WEIGHT_PROXY_REPAIR_START,
 )
 from ai_trading_system.equal_weight_proxy_data_fix import run_equal_weight_proxy_data_fix_pack
+from ai_trading_system.first_layer_active_selection_policy_v2 import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_active_selection_policy_v2 import (
+    run_first_layer_active_selection_policy_v2_pack,
+)
 from ai_trading_system.first_layer_active_selection_rule_audit import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_AUDIT_OUTPUT_ROOT,
 )
@@ -1458,6 +1464,22 @@ def first_layer_active_selection_rule_audit_command(
         output_root=output_root,
     )
     _print_payload("First-layer active selection rule audit", payload)
+
+
+@trends_app.command("first-layer-active-selection-policy-v2")
+def first_layer_active_selection_policy_v2_command(
+    challenger_matrix_path: Annotated[
+        Path, typer.Option("--challenger-matrix")
+    ] = DEFAULT_PERF_GATE_AUDIT_CHALLENGER_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
+) -> None:
+    payload = run_first_layer_active_selection_policy_v2_pack(
+        challenger_matrix_path=challenger_matrix_path,
+        output_root=output_root,
+    )
+    _print_payload("First-layer active selection policy v2", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

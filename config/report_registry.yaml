@@ -22924,7 +22924,30 @@ reports:
     artifact_selection_policy: latest_available
     freshness_sla_days: 30
     freshness_rationale: Active selection rule audit should be regenerated after TRADING-2274 gate audit, TRADING-2275 gate policy v2 semantics, current active selection rule, or actual-path matrix changes.
-    owner_action: review_split_selection_and_promotion_recommendation_before_gate_policy_v2_challenger_rerun
+    owner_action: review_split_selection_and_promotion_recommendation_before_policy_v2_activation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: first_layer_active_selection_policy_v2
+    title: First-Layer Active Selection Policy v2
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-active-selection-policy-v2
+    artifact_globs:
+      - docs/research/active_selection_policy_v2.md
+      - outputs/research_trends/first_layer_active_selection_policy_v2/active_selection_policy_v2.yaml
+      - outputs/research_trends/first_layer_active_selection_policy_v2/research_candidate_queue.json
+      - outputs/research_trends/first_layer_active_selection_policy_v2/owner_review_queue.json
+      - docs/research/promotion_boundary_report.md
+      - outputs/research_trends/first_layer_active_selection_policy_v2/updated_challenger_selection_matrix.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: Active selection policy v2 should be regenerated after TRADING-2276 active selection audit, gate policy v2 semantics, challenger matrix, or promotion boundary changes.
+    owner_action: review_research_selection_owner_review_and_promotion_boundary_before_challenger_rerun
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

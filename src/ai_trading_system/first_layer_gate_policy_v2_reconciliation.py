@@ -352,7 +352,7 @@ def _summary(
         "layer_counts": rows_by_layer,
         "next_required_tasks": [
             "TRADING-2276_FIRST_LAYER_ACTIVE_SELECTION_RULE_AUDIT",
-            "TRADING-2277_GATE_POLICY_V2_CHALLENGER_RERUN",
+            "TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY",
         ],
         "promotion_allowed": False,
         "paper_shadow_allowed": False,
