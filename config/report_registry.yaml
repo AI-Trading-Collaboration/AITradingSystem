@@ -23046,6 +23046,35 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: candidate_signal_binding_schema_poc
+    title: Candidate Signal Binding Schema + Baseline Rewrap POC
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends candidate-signal-binding-schema-poc
+    artifact_globs:
+      - docs/research/candidate_signal_binding_schema.md
+      - docs/research/candidate_bound_artifact_contract.md
+      - docs/research/baseline_frozen_composer_rewrap_poc_report.md
+      - outputs/research_trends/candidate_signal_binding_schema/candidate_signal_binding_schema.json
+      - outputs/research_trends/candidate_signal_binding_schema/candidate_bound_signal_series_contract.json
+      - outputs/research_trends/candidate_signal_binding_schema/candidate_bound_prediction_artifact_contract.json
+      - outputs/research_trends/candidate_signal_binding_schema/baseline_rewrapped_candidate_signal_series.csv
+      - outputs/research_trends/candidate_signal_binding_schema/baseline_rewrapped_candidate_prediction_artifact.json
+      - outputs/research_trends/candidate_signal_binding_schema/baseline_rewrap_provenance_report.json
+      - outputs/research_trends/candidate_signal_binding_schema/baseline_rewrap_validation_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: schema_migration_poc
+    promotion_eligible: false
+    freshness_sla_days: 30
+    freshness_rationale: Candidate binding schema POC should be regenerated after signal binding schema, rewrap mapping, source composer predictions, or validator contract changes.
+    owner_action: review_schema_contract_before_executable_candidate_signal_generator
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

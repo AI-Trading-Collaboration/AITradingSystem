@@ -7,6 +7,15 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.baseline_frozen_composer_rewrap import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_SIGNAL_BINDING_SCHEMA_OUTPUT_ROOT,
+)
+from ai_trading_system.baseline_frozen_composer_rewrap import (
+    DEFAULT_SOURCE_PREDICTIONS_PATH as DEFAULT_CANDIDATE_SIGNAL_BINDING_SOURCE_PATH,
+)
+from ai_trading_system.baseline_frozen_composer_rewrap import (
+    run_candidate_signal_binding_schema_poc,
+)
 from ai_trading_system.candidate_signal_prediction_artifact_audit import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_ARTIFACT_AUDIT_OUTPUT_ROOT,
 )
@@ -1568,6 +1577,28 @@ def candidate_signal_prediction_artifact_audit_command(
         output_root=output_root,
     )
     _print_payload("Candidate signal prediction artifact audit", payload)
+
+
+@trends_app.command("candidate-signal-binding-schema-poc")
+def candidate_signal_binding_schema_poc_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id")] = "baseline",
+    source_predictions: Annotated[
+        Path,
+        typer.Option("--source-predictions"),
+    ] = DEFAULT_CANDIDATE_SIGNAL_BINDING_SOURCE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir"),
+    ] = DEFAULT_CANDIDATE_SIGNAL_BINDING_SCHEMA_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = "schema_migration_poc",
+) -> None:
+    payload = run_candidate_signal_binding_schema_poc(
+        candidate_id=candidate_id,
+        source_predictions=source_predictions,
+        output_dir=output_dir,
+        mode=mode,
+    )
+    _print_payload("Candidate signal binding schema POC", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
