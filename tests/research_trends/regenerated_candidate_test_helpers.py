@@ -15,6 +15,9 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGenerationBundle,
     CandidateGeneratorContext,
 )
+from ai_trading_system.regenerated_candidate_actual_path_validation import (
+    run_regenerated_candidate_actual_path_validation,
+)
 from ai_trading_system.regenerated_candidate_generator_common import (
     REGENERATED_CANDIDATE_FAMILY,
 )
@@ -99,6 +102,28 @@ def build_regenerated_artifact_fixture(tmp_path: Path) -> dict[str, Path]:
         "input_dir": output_dir,
         "prices_path": price_path,
         "rates_path": rates_path,
+    }
+
+
+def build_regenerated_actual_path_validation_fixture(tmp_path: Path) -> dict[str, Path]:
+    fixture = build_regenerated_artifact_fixture(tmp_path)
+    output_dir = tmp_path / "actual_path_validation"
+    run_regenerated_candidate_actual_path_validation(
+        input_dir=fixture["input_dir"],
+        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="actual_path_validation",
+        prices_path=fixture["prices_path"],
+        rates_path=fixture["rates_path"],
+        marketstack_prices_path=None,
+        docs_root=tmp_path / "actual_path_docs",
+    )
+    return {
+        **fixture,
+        "validation_dir": output_dir,
+        "generator_dir": fixture["input_dir"],
     }
 
 

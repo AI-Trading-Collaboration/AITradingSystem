@@ -380,6 +380,21 @@ from ai_trading_system.regenerated_candidate_actual_path_validation import (
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
     run_regenerated_candidate_actual_path_validation,
 )
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    DEFAULT_DOCS_ROOT as DEFAULT_INCONCLUSIVE_DIAGNOSTICS_DOCS_ROOT,
+)
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    DEFAULT_GENERATOR_ROOT as DEFAULT_INCONCLUSIVE_DIAGNOSTICS_GENERATOR_ROOT,
+)
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_INCONCLUSIVE_DIAGNOSTICS_OUTPUT_ROOT,
+)
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    DEFAULT_VALIDATION_ROOT as DEFAULT_INCONCLUSIVE_DIAGNOSTICS_VALIDATION_ROOT,
+)
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    run_regenerated_candidate_inconclusive_diagnostics,
+)
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
     DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
@@ -1711,6 +1726,32 @@ def regenerated_candidate_actual_path_validation_command(
         marketstack_prices_path=marketstack_prices_path,
     )
     _print_payload("Regenerated candidate actual-path validation", payload)
+
+
+@trends_app.command("regenerated-candidate-inconclusive-diagnostics")
+def regenerated_candidate_inconclusive_diagnostics_command(
+    validation_dir: Annotated[Path, typer.Option("--validation-dir")],
+    generator_dir: Annotated[Path, typer.Option("--generator-dir")],
+    candidates: Annotated[str, typer.Option("--candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_INCONCLUSIVE_DIAGNOSTICS_DOCS_ROOT,
+) -> None:
+    payload = run_regenerated_candidate_inconclusive_diagnostics(
+        validation_dir=validation_dir or DEFAULT_INCONCLUSIVE_DIAGNOSTICS_VALIDATION_ROOT,
+        generator_dir=generator_dir or DEFAULT_INCONCLUSIVE_DIAGNOSTICS_GENERATOR_ROOT,
+        candidates=candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_INCONCLUSIVE_DIAGNOSTICS_OUTPUT_ROOT,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Regenerated candidate inconclusive diagnostics", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
