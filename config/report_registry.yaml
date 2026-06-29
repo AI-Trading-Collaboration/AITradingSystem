@@ -23302,6 +23302,48 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: refined_candidate_actual_path_validation
+    title: Refined Candidate Actual-Path Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends refined-candidate-actual-path-validation
+    artifact_globs:
+      - docs/research/refined_candidate_actual_path_validation_report.md
+      - docs/research/refined_high_conviction_outcome_drilldown.md
+      - docs/research/original_vs_refined_actual_path_comparison.md
+      - docs/research/refined_candidate_state_recommendation.md
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_actual_path_validation_summary.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_actual_path_matrix.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_actual_path_matrix.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_prediction_outcome_matrix.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_prediction_outcome_matrix.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_validation_scorecard.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_high_conviction_outcome_drilldown.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_high_conviction_outcome_drilldown.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_false_signal_cost_matrix.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_false_signal_cost_matrix.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_guardrail_validation_matrix.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_guardrail_validation_matrix.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/original_vs_refined_actual_path_comparison.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/original_vs_refined_actual_path_comparison.csv
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_state_recommendation_matrix.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_error_attribution_seed.json
+      - outputs/research_trends/refined_candidate_actual_path_validation/refined_candidate_data_quality_report.json
+    artifact_selection_policy: latest_available
+    artifact_role: refined_candidate_actual_path_validation
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Refined candidate actual-path validation should be rerun after TRADING-2288 refined candidate artifacts, TRADING-2285 original validation outputs, TRADING-2287 guardrails, price cache, or alignment policy changes.
+    owner_action: review_refined_actual_path_high_conviction_and_false_cost_evidence_before_trading_2290_owner_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

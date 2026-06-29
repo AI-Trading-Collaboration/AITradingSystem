@@ -389,6 +389,24 @@ from ai_trading_system.participation_proxy_validation import (
 from ai_trading_system.participation_proxy_validation import (
     run_participation_proxy_validation_pack,
 )
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REFINED_ACTUAL_PATH_DOCS_ROOT,
+)
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    DEFAULT_ORIGINAL_VALIDATION_ROOT as DEFAULT_REFINED_ACTUAL_PATH_ORIGINAL_VALIDATION_ROOT,
+)
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REFINED_ACTUAL_PATH_OUTPUT_ROOT,
+)
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    DEFAULT_REFINED_GENERATOR_ROOT as DEFAULT_REFINED_ACTUAL_PATH_REFINED_GENERATOR_ROOT,
+)
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    DEFAULT_REFINEMENT_PLAN_ROOT as DEFAULT_REFINED_ACTUAL_PATH_REFINEMENT_PLAN_ROOT,
+)
+from ai_trading_system.refined_candidate_actual_path_validation import (
+    run_refined_candidate_actual_path_validation,
+)
 from ai_trading_system.refined_candidate_generators_regenerate import (
     DEFAULT_DOCS_ROOT as DEFAULT_REFINED_CANDIDATE_REGENERATION_DOCS_ROOT,
 )
@@ -1841,6 +1859,49 @@ def refined_candidate_generators_regenerate_command(
         docs_root=docs_root,
     )
     _print_payload("Refined candidate generators regenerate", payload)
+
+
+@trends_app.command("refined-candidate-actual-path-validation")
+def refined_candidate_actual_path_validation_command(
+    refined_generator_dir: Annotated[Path, typer.Option("--refined-generator-dir")],
+    original_validation_dir: Annotated[Path, typer.Option("--original-validation-dir")],
+    refinement_plan_dir: Annotated[Path, typer.Option("--refinement-plan-dir")],
+    candidates: Annotated[str, typer.Option("--candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_REFINED_ACTUAL_PATH_DOCS_ROOT,
+) -> None:
+    payload = run_refined_candidate_actual_path_validation(
+        refined_generator_dir=refined_generator_dir
+        or DEFAULT_REFINED_ACTUAL_PATH_REFINED_GENERATOR_ROOT,
+        original_validation_dir=original_validation_dir
+        or DEFAULT_REFINED_ACTUAL_PATH_ORIGINAL_VALIDATION_ROOT,
+        refinement_plan_dir=refinement_plan_dir
+        or DEFAULT_REFINED_ACTUAL_PATH_REFINEMENT_PLAN_ROOT,
+        candidates=candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_REFINED_ACTUAL_PATH_OUTPUT_ROOT,
+        mode=mode,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        docs_root=docs_root,
+    )
+    _print_payload("Refined candidate actual-path validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

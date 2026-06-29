@@ -18,6 +18,9 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGenerationBundle,
     CandidateGeneratorContext,
 )
+from ai_trading_system.refined_candidate_generators_regenerate import (
+    run_refined_candidate_generators_regenerate,
+)
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
     run_regenerated_candidate_actual_path_validation,
 )
@@ -170,6 +173,25 @@ def build_confidence_scaling_refinement_plan_fixture(tmp_path: Path) -> dict[str
         **fixture,
         "refinement_plan_dir": output_dir,
         "original_generator_dir": fixture["generator_dir"],
+    }
+
+
+def build_refined_candidate_regeneration_fixture(tmp_path: Path) -> dict[str, Path]:
+    fixture = build_confidence_scaling_refinement_plan_fixture(tmp_path)
+    output_dir = tmp_path / "refined_candidate_generators_regenerated"
+    run_refined_candidate_generators_regenerate(
+        refinement_plan_dir=fixture["refinement_plan_dir"],
+        original_generator_dir=fixture["original_generator_dir"],
+        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="refined_regeneration",
+        docs_root=tmp_path / "refined_generation_docs",
+    )
+    return {
+        **fixture,
+        "refined_generator_dir": output_dir,
     }
 
 
