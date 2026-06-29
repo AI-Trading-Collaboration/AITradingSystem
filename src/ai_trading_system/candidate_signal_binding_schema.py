@@ -21,6 +21,7 @@ ALLOWED_SIGNAL_DIRECTIONS = (
 ALLOWED_REGENERATION_MODES = (
     "original_generation",
     "deterministic_regeneration",
+    "deterministic_refined_regeneration",
     "framework_smoke_test",
     "schema_migration_poc",
     "manual_review_attachment",

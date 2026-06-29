@@ -294,6 +294,17 @@ class CandidateSignalBindingValidator:
                     f"{scope}: deterministic_regeneration requires "
                     "provenance.promotion_eligible=false"
                 )
+        if regeneration_mode == "deterministic_refined_regeneration":
+            if promotion_eligible is not False:
+                errors.append(
+                    f"{scope}: deterministic_refined_regeneration requires "
+                    "promotion_eligible=false"
+                )
+            if provenance_promotion_eligible is not False:
+                errors.append(
+                    f"{scope}: deterministic_refined_regeneration requires "
+                    "provenance.promotion_eligible=false"
+                )
         if pit_policy == "non_pit_source_evidence_only":
             if _to_bool(record.get("paper_shadow_allowed")) is not False:
                 errors.append(

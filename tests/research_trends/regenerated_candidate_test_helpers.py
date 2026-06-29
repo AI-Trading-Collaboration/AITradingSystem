@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    run_candidate_generator_confidence_scaling_refinement_plan,
+)
 from ai_trading_system.first_layer_candidate_generator_runtime import (
     validate_candidate_generation_bundle,
 )
@@ -146,6 +149,27 @@ def build_regenerated_inconclusive_diagnostics_fixture(tmp_path: Path) -> dict[s
     return {
         **fixture,
         "diagnostics_dir": output_dir,
+    }
+
+
+def build_confidence_scaling_refinement_plan_fixture(tmp_path: Path) -> dict[str, Path]:
+    fixture = build_regenerated_inconclusive_diagnostics_fixture(tmp_path)
+    output_dir = tmp_path / "confidence_scaling_refinement_plan"
+    run_candidate_generator_confidence_scaling_refinement_plan(
+        diagnostics_dir=fixture["diagnostics_dir"],
+        validation_dir=fixture["validation_dir"],
+        generator_dir=fixture["generator_dir"],
+        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="refinement_plan",
+        docs_root=tmp_path / "confidence_scaling_docs",
+    )
+    return {
+        **fixture,
+        "refinement_plan_dir": output_dir,
+        "original_generator_dir": fixture["generator_dir"],
     }
 
 

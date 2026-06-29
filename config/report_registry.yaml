@@ -23253,6 +23253,55 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: refined_candidate_regeneration
+    title: Refined Candidate Regeneration with Adjusted Confidence Scaling
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends refined-candidate-generators-regenerate
+    artifact_globs:
+      - docs/research/refined_candidate_regeneration_report.md
+      - docs/research/refined_candidate_parameter_application_report.md
+      - docs/research/refined_original_vs_refined_delta_summary.md
+      - outputs/research_trends/refined_candidate_generators_regenerated/refined_regeneration_run_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/refined_regeneration_validation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/refined_original_vs_refined_delta_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_candidate_signal_spec.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_candidate_signal_series.csv
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_candidate_prediction_artifact.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_generation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_validation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_parameter_application_report.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/baseline_plus_trend_structure_refined_confidence_v1/refined_original_vs_refined_delta.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_candidate_signal_spec.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_candidate_signal_series.csv
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_candidate_prediction_artifact.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_generation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_validation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_parameter_application_report.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/risk_appetite_refined_confidence_v1/refined_original_vs_refined_delta.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_candidate_signal_spec.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_candidate_signal_series.csv
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_candidate_prediction_artifact.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_generation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_validation_summary.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_parameter_application_report.json
+      - outputs/research_trends/refined_candidate_generators_regenerated/volatility_regime_refined_confidence_v1/refined_original_vs_refined_delta.json
+    artifact_selection_policy: latest_available
+    artifact_role: refined_regenerated_executable_candidate_artifact
+    promotion_eligible: false
+    actual_path_validation_ready: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Refined candidate regeneration should be rerun after confidence scaling plan, original regenerated artifacts, or refined artifact contract changes.
+    owner_action: run_trading_2289_refined_candidate_actual_path_validation_before_owner_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
