@@ -28,7 +28,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。启动阶段已有工作区改动，经 owner 澄清授权处理后，已先完成 TRADING-2283 验证、提交和 push，再继续本轮重构；未混入无关文件。未运行 task-register consistency CLI，因为当前仓库已有非本任务 malformed task id `TRADING-DATA-TQQQ-ADJUSTMENT-WARNING` blocker；本轮未引入新的 task id 格式异常。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/cli_commands/research_trends.py` 的 first-layer / Norgate / channel-specific command adapter 边界，以及 `candidate_signal_binding_validator.py` 中 schema POC 与 native generator validation 的责任边界；不得在同一低风险切片中改变投资解释或报告契约。
-- 本轮重构实现提交 SHA：`PENDING_BACKFILL`。
+- 本轮重构实现提交 SHA：`ed5177f78cfeb339be1e2f8e7cb9dcf72e89dd24`。
 
 ## 2026-06-28 Daily Incremental Refactor
 
