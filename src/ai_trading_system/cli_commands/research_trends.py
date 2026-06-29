@@ -93,6 +93,18 @@ from ai_trading_system.first_layer_candidate_actual_path_validation import (
 from ai_trading_system.first_layer_candidate_generator_runtime import (
     run_candidate_generator,
 )
+from ai_trading_system.first_layer_candidate_generators_regenerate import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
+)
+from ai_trading_system.first_layer_candidate_generators_regenerate import (
+    DEFAULT_PRICES_PATH as DEFAULT_REGENERATED_PRICES_PATH,
+)
+from ai_trading_system.first_layer_candidate_generators_regenerate import (
+    DEFAULT_RATES_PATH as DEFAULT_REGENERATED_RATES_PATH,
+)
+from ai_trading_system.first_layer_candidate_generators_regenerate import (
+    run_first_layer_candidate_generators_regenerate,
+)
 from ai_trading_system.first_layer_challenger_matrix_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CHALLENGER_MATRIX_V2_OUTPUT_ROOT,
 )
@@ -1626,6 +1638,40 @@ def first_layer_candidate_generator_framework_command(
     _print_payload("First-layer candidate generator framework", payload)
 
 
+@trends_app.command("first-layer-candidate-generators-regenerate")
+def first_layer_candidate_generators_regenerate_command(
+    candidates: Annotated[str, typer.Option("--candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    start_date: Annotated[str, typer.Option("--start-date")],
+    end_date: Annotated[str, typer.Option("--end-date")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
+) -> None:
+    payload = run_first_layer_candidate_generators_regenerate(
+        candidates=candidates,
+        target_assets=target_assets,
+        start_date=date.fromisoformat(start_date),
+        end_date=date.fromisoformat(end_date),
+        horizons=horizons,
+        output_dir=output_dir,
+        mode=mode,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+    )
+    _print_payload("First-layer candidate generators regenerate", payload)
+
+
 @trends_app.command("first-layer-proxy-challenger-experiments")
 def first_layer_proxy_challenger_experiments_command(
     policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
@@ -1713,7 +1759,10 @@ trends_app.add_typer(minimal_forward_diagnostic_app, name="minimal-forward-diagn
 def _print_payload(label: str, payload: dict[str, object]) -> None:
     status = str(payload.get("status"))
     style = "green" if "READY" in status or "CANDIDATE" in status else "yellow"
-    if "BLOCKED" in status and "PROMOTION_BLOCKED" not in status:
+    expected_blocked = (
+        "PROMOTION_BLOCKED" in status or "ACTUAL_PATH_VALIDATION_BLOCKED" in status
+    )
+    if "BLOCKED" in status and not expected_blocked:
         style = "red"
     console.print(f"[{style}]{label}: {status}[/{style}]")
     summary = payload.get("summary")
@@ -1733,7 +1782,7 @@ def _print_payload(label: str, payload: dict[str, object]) -> None:
         ("dynamic_promotion_status", "BLOCKED"),
     ):
         console.print(f"{field}={payload.get(field, expected)}")
-    if "BLOCKED" in status and "PROMOTION_BLOCKED" not in status:
+    if "BLOCKED" in status and not expected_blocked:
         raise typer.Exit(code=1)
 
 

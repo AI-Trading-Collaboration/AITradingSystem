@@ -47,12 +47,24 @@ class CandidateGeneratorRegistry:
 
 
 def default_candidate_generator_registry() -> CandidateGeneratorRegistry:
+    from ai_trading_system.baseline_plus_trend_structure_generator import (
+        BaselinePlusTrendStructureGenerator,
+    )
     from ai_trading_system.framework_smoke_candidate_generator import (
         FrameworkSmokeCandidateGenerator,
+    )
+    from ai_trading_system.risk_appetite_candidate_generator import (
+        RiskAppetiteCandidateGenerator,
+    )
+    from ai_trading_system.volatility_regime_candidate_generator import (
+        VolatilityRegimeCandidateGenerator,
     )
 
     registry = CandidateGeneratorRegistry()
     registry.register_generator(FrameworkSmokeCandidateGenerator())
+    registry.register_generator(BaselinePlusTrendStructureGenerator())
+    registry.register_generator(RiskAppetiteCandidateGenerator())
+    registry.register_generator(VolatilityRegimeCandidateGenerator())
     return registry
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
@@ -136,6 +137,22 @@ class CandidateSignalBindingValidator:
                 errors.append(
                     "prediction_artifact: framework_smoke_test requires promotion_eligible=false"
                 )
+        if artifact.get("artifact_role") == "regenerated_executable_candidate_artifact":
+            if artifact.get("historical_executable_artifact") is not True:
+                errors.append(
+                    "prediction_artifact: regenerated executable candidate must be "
+                    "historical executable"
+                )
+            if artifact.get("actual_path_validation_ready") is not False:
+                errors.append(
+                    "prediction_artifact: regenerated executable candidate must not be "
+                    "actual-path ready"
+                )
+            if _to_bool(artifact.get("promotion_eligible")) is not False:
+                errors.append(
+                    "prediction_artifact: regenerated executable candidate requires "
+                    "promotion_eligible=false"
+                )
         return CandidateSignalBindingValidationResult(
             passed=not errors,
             checked_record_count=checked_record_count,
@@ -170,9 +187,17 @@ class CandidateSignalBindingValidator:
         if signal_direction and signal_direction not in ALLOWED_SIGNAL_DIRECTIONS:
             errors.append(f"{scope}: unsupported signal_direction={signal_direction}")
 
+        signal_value = _to_float(record.get("signal_value"))
+        if signal_value is None:
+            errors.append(f"{scope}: signal_value is not numeric")
+        elif not math.isfinite(signal_value):
+            errors.append(f"{scope}: signal_value must be finite")
+
         confidence = _to_float(record.get("signal_confidence"))
         if confidence is None:
             errors.append(f"{scope}: signal_confidence is not numeric")
+        elif not math.isfinite(confidence):
+            errors.append(f"{scope}: signal_confidence must be finite")
         elif not 0.0 <= confidence <= 1.0:
             errors.append(f"{scope}: signal_confidence out of [0, 1]")
 
@@ -258,6 +283,16 @@ class CandidateSignalBindingValidator:
             if provenance_promotion_eligible is not False:
                 errors.append(
                     f"{scope}: framework_smoke_test requires provenance.promotion_eligible=false"
+                )
+        if regeneration_mode == "deterministic_regeneration":
+            if promotion_eligible is not False:
+                errors.append(
+                    f"{scope}: deterministic_regeneration requires promotion_eligible=false"
+                )
+            if provenance_promotion_eligible is not False:
+                errors.append(
+                    f"{scope}: deterministic_regeneration requires "
+                    "provenance.promotion_eligible=false"
                 )
         if pit_policy == "non_pit_source_evidence_only":
             if _to_bool(record.get("paper_shadow_allowed")) is not False:

@@ -21,6 +21,9 @@ from ai_trading_system.first_layer_candidate_generator_registry import (
     default_candidate_generator_registry,
 )
 from ai_trading_system.first_layer_candidate_signal_generator import (
+    FRAMEWORK_SMOKE_ARTIFACT_ROLE,
+    REGENERATED_CANDIDATE_GENERATOR_MODE,
+    REGENERATED_EXECUTABLE_CANDIDATE_ARTIFACT_ROLE,
     CandidateGenerationBundle,
     CandidateGeneratorContext,
     CandidateGeneratorError,
@@ -29,9 +32,6 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     framework_smoke_artifact_safety_fields,
     generator_operation_safety_fields,
     trading_2281_boundary_fields,
-)
-from ai_trading_system.framework_smoke_candidate_generator import (
-    FRAMEWORK_SMOKE_ARTIFACT_ROLE,
 )
 from ai_trading_system.post_2085_research_common import clean_for_yaml, mapping, write_json
 
@@ -196,7 +196,11 @@ def write_candidate_generation_bundle(
     return paths, generation_summary
 
 
-def validate_candidate_generation_bundle(bundle: CandidateGenerationBundle) -> dict[str, Any]:
+def validate_candidate_generation_bundle(
+    bundle: CandidateGenerationBundle,
+    *,
+    task_id: str = TASK_ID,
+) -> dict[str, Any]:
     validator = CandidateSignalBindingValidator()
     spec_validation = validator.validate_candidate_signal_spec(bundle.signal_spec.to_dict())
     signal_payloads = bundle.signal_payloads()
@@ -212,7 +216,7 @@ def validate_candidate_generation_bundle(bundle: CandidateGenerationBundle) -> d
     )
     return {
         "schema_version": "first_layer_candidate_generator_validation_summary.v1",
-        "task_id": TASK_ID,
+        "task_id": task_id,
         "status": "PASS" if not errors else "FAIL",
         "candidate_id": bundle.context.candidate_id,
         "mode": bundle.context.mode,
@@ -238,12 +242,13 @@ def generator_registry_payload(
     registry: CandidateGeneratorRegistry,
     *,
     generated_at: datetime,
+    task_id: str = TASK_ID,
 ) -> dict[str, Any]:
     generators = registry.list_generators()
     return {
         "schema_version": "first_layer_candidate_generator_registry.v1",
         "artifact_role": "generator_registry",
-        "task_id": TASK_ID,
+        "task_id": task_id,
         "generated_at": generated_at.isoformat(),
         "generator_count": len(generators),
         "generators": generators,
@@ -263,13 +268,18 @@ def _bundle_integrity_errors(
         errors.append("bundle: signal spec candidate_id does not match context")
     if spec.get("target_asset") != context.target_asset:
         errors.append("bundle: signal spec target_asset does not match context")
-    if context.horizon not in set(_as_strings(spec.get("supported_horizons"))):
+    supported_horizons = set(_as_strings(spec.get("supported_horizons")))
+    context_horizons = {item.strip() for item in context.horizon.split(",") if item.strip()}
+    if not context_horizons.issubset(supported_horizons):
         errors.append("bundle: context horizon missing from supported_horizons")
     for index, row in enumerate(signal_payloads):
         scope = f"bundle.signal_series[{index}]"
         _require_equal(row, "candidate_id", context.candidate_id, scope, errors)
-        _require_equal(row, "target_asset", context.target_asset, scope, errors)
-        _require_equal(row, "horizon", context.horizon, scope, errors)
+        if not _context_allows_value(context.target_asset, row.get("target_asset")):
+            errors.append(f"{scope}: target_asset must be within context target_asset")
+        if not _context_allows_value(context.horizon, row.get("horizon")):
+            errors.append(f"{scope}: horizon must be within context horizon")
+        _require_false(row, "promotion_eligible", scope, errors)
         _require_false(row, "promotion_allowed", scope, errors)
         _require_false(row, "paper_shadow_allowed", scope, errors)
         _require_false(row, "production_allowed", scope, errors)
@@ -281,14 +291,34 @@ def _bundle_integrity_errors(
     if len(prediction_records) != len(signal_payloads):
         errors.append("bundle: prediction_records count does not match signal series rows")
     _require_equal(artifact, "candidate_id", context.candidate_id, "bundle.prediction", errors)
-    _require_equal(
-        artifact,
-        "artifact_role",
-        FRAMEWORK_SMOKE_ARTIFACT_ROLE,
-        "bundle.prediction",
-        errors,
-    )
-    _require_false(artifact, "historical_executable_artifact", "bundle.prediction", errors)
+    if context.mode == REGENERATED_CANDIDATE_GENERATOR_MODE:
+        _require_equal(
+            artifact,
+            "artifact_role",
+            REGENERATED_EXECUTABLE_CANDIDATE_ARTIFACT_ROLE,
+            "bundle.prediction",
+            errors,
+        )
+        _require_true(
+            artifact,
+            "historical_executable_artifact",
+            "bundle.prediction",
+            errors,
+        )
+    else:
+        _require_equal(
+            artifact,
+            "artifact_role",
+            FRAMEWORK_SMOKE_ARTIFACT_ROLE,
+            "bundle.prediction",
+            errors,
+        )
+        _require_false(
+            artifact,
+            "historical_executable_artifact",
+            "bundle.prediction",
+            errors,
+        )
     _require_false(artifact, "actual_path_validation_ready", "bundle.prediction", errors)
     _require_false(artifact, "promotion_eligible", "bundle.prediction", errors)
     _require_false(artifact, "promotion_allowed", "bundle.prediction", errors)
@@ -420,3 +450,18 @@ def _require_false(
 ) -> None:
     if payload.get(field) is not False:
         errors.append(f"{scope}: {field} must be false")
+
+
+def _require_true(
+    payload: Mapping[str, Any],
+    field: str,
+    scope: str,
+    errors: list[str],
+) -> None:
+    if payload.get(field) is not True:
+        errors.append(f"{scope}: {field} must be true")
+
+
+def _context_allows_value(context_value: str, row_value: Any) -> bool:
+    allowed = {item.strip() for item in str(context_value).split(",") if item.strip()}
+    return row_value in allowed

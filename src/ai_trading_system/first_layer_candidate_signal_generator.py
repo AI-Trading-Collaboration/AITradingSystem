@@ -11,7 +11,15 @@ from ai_trading_system.candidate_signal_binding_schema import (
 )
 from ai_trading_system.post_2085_research_common import clean_for_yaml
 
-ALLOWED_CANDIDATE_GENERATOR_MODES = ("framework_smoke_test",)
+FRAMEWORK_SMOKE_ARTIFACT_ROLE = "framework_smoke_test"
+REGENERATED_CANDIDATE_GENERATOR_MODE = "regenerated_candidate_artifacts"
+REGENERATED_EXECUTABLE_CANDIDATE_ARTIFACT_ROLE = (
+    "regenerated_executable_candidate_artifact"
+)
+ALLOWED_CANDIDATE_GENERATOR_MODES = (
+    FRAMEWORK_SMOKE_ARTIFACT_ROLE,
+    REGENERATED_CANDIDATE_GENERATOR_MODE,
+)
 
 
 class CandidateGeneratorError(ValueError):
@@ -40,6 +48,14 @@ def candidate_artifact_safety_fields() -> dict[str, Any]:
 def framework_smoke_artifact_safety_fields() -> dict[str, Any]:
     return {
         "historical_executable_artifact": False,
+        "actual_path_validation_ready": False,
+        **candidate_artifact_safety_fields(),
+    }
+
+
+def regenerated_executable_candidate_artifact_safety_fields() -> dict[str, Any]:
+    return {
+        "historical_executable_artifact": True,
         "actual_path_validation_ready": False,
         **candidate_artifact_safety_fields(),
     }

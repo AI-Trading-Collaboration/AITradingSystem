@@ -23104,6 +23104,38 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_candidate_generators_regenerated
+    title: Trend / Risk / Volatility Regenerated Executable Candidate Generators
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-candidate-generators-regenerate
+    artifact_globs:
+      - docs/research/trend_risk_volatility_executable_candidate_generators.md
+      - docs/research/regenerated_candidate_artifact_summary.md
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/generator_registry.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/regeneration_run_summary.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/validation_summary.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/*/candidate_signal_spec.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/*/candidate_signal_series.csv
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/*/candidate_prediction_artifact.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/*/generation_summary.json
+      - outputs/research_trends/first_layer_candidate_generators_regenerated/*/validation_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: regenerated_executable_candidate_artifact
+    promotion_eligible: false
+    actual_path_validation_ready: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Regenerated candidate artifacts should be regenerated after generator rules, candidate-bound schema, validator, price cache, or first-layer registry changes.
+    owner_action: run_trading_2285_candidate_level_actual_path_validation_before_owner_review_or_promotion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
