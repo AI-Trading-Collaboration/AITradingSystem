@@ -23213,6 +23213,46 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: candidate_generator_confidence_scaling_refinement_plan
+    title: Candidate Generator Confidence Scaling Refinement Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends candidate-generator-confidence-scaling-refinement-plan
+    artifact_globs:
+      - docs/research/candidate_confidence_scaling_refinement_plan.md
+      - docs/research/candidate_confidence_failure_diagnosis.md
+      - docs/research/candidate_confidence_scaling_guardrails.md
+      - docs/research/candidate_2288_refined_regeneration_plan.md
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/confidence_scaling_refinement_summary.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_failure_diagnosis_matrix.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_failure_diagnosis_matrix.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_distribution_retargeting_matrix.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_distribution_retargeting_matrix.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_scaling_proposal_matrix.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_scaling_proposal_matrix.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_scaling_parameter_grid.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_confidence_scaling_parameter_grid.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_guardrail_matrix.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_guardrail_matrix.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_expected_risk_impact_matrix.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_expected_risk_impact_matrix.csv
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_2288_implementation_plan.json
+      - outputs/research_trends/candidate_generator_confidence_scaling_refinement_plan/candidate_2288_implementation_plan.csv
+    artifact_selection_policy: latest_available
+    artifact_role: confidence_scaling_refinement_plan
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Confidence scaling refinement plan should be rerun after regenerated candidate inconclusive diagnostics, actual-path validation outputs, generator context, or confidence retargeting guardrail policy changes.
+    owner_action: review_confidence_scaling_plan_before_trading_2288_refined_regeneration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

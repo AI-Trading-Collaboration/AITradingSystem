@@ -16,6 +16,24 @@ from ai_trading_system.baseline_frozen_composer_rewrap import (
 from ai_trading_system.baseline_frozen_composer_rewrap import (
     run_candidate_signal_binding_schema_poc,
 )
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    DEFAULT_DIAGNOSTICS_ROOT as DEFAULT_CONFIDENCE_SCALING_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_CONFIDENCE_SCALING_DOCS_ROOT,
+)
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    DEFAULT_GENERATOR_ROOT as DEFAULT_CONFIDENCE_SCALING_GENERATOR_ROOT,
+)
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_CONFIDENCE_SCALING_OUTPUT_ROOT,
+)
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    DEFAULT_VALIDATION_ROOT as DEFAULT_CONFIDENCE_SCALING_VALIDATION_ROOT,
+)
+from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
+    run_candidate_generator_confidence_scaling_refinement_plan,
+)
 from ai_trading_system.candidate_signal_prediction_artifact_audit import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_ARTIFACT_AUDIT_OUTPUT_ROOT,
 )
@@ -1752,6 +1770,34 @@ def regenerated_candidate_inconclusive_diagnostics_command(
         docs_root=docs_root,
     )
     _print_payload("Regenerated candidate inconclusive diagnostics", payload)
+
+
+@trends_app.command("candidate-generator-confidence-scaling-refinement-plan")
+def candidate_generator_confidence_scaling_refinement_plan_command(
+    diagnostics_dir: Annotated[Path, typer.Option("--diagnostics-dir")],
+    validation_dir: Annotated[Path, typer.Option("--validation-dir")],
+    generator_dir: Annotated[Path, typer.Option("--generator-dir")],
+    candidates: Annotated[str, typer.Option("--candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_CONFIDENCE_SCALING_DOCS_ROOT,
+) -> None:
+    payload = run_candidate_generator_confidence_scaling_refinement_plan(
+        diagnostics_dir=diagnostics_dir or DEFAULT_CONFIDENCE_SCALING_DIAGNOSTICS_ROOT,
+        validation_dir=validation_dir or DEFAULT_CONFIDENCE_SCALING_VALIDATION_ROOT,
+        generator_dir=generator_dir or DEFAULT_CONFIDENCE_SCALING_GENERATOR_ROOT,
+        candidates=candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_CONFIDENCE_SCALING_OUTPUT_ROOT,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Candidate generator confidence scaling refinement plan", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

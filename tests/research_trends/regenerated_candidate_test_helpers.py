@@ -21,6 +21,9 @@ from ai_trading_system.regenerated_candidate_actual_path_validation import (
 from ai_trading_system.regenerated_candidate_generator_common import (
     REGENERATED_CANDIDATE_FAMILY,
 )
+from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
+    run_regenerated_candidate_inconclusive_diagnostics,
+)
 
 
 def write_price_fixture(tmp_path: Path, *, include_vix: bool = True) -> Path:
@@ -124,6 +127,25 @@ def build_regenerated_actual_path_validation_fixture(tmp_path: Path) -> dict[str
         **fixture,
         "validation_dir": output_dir,
         "generator_dir": fixture["input_dir"],
+    }
+
+
+def build_regenerated_inconclusive_diagnostics_fixture(tmp_path: Path) -> dict[str, Path]:
+    fixture = build_regenerated_actual_path_validation_fixture(tmp_path)
+    output_dir = tmp_path / "inconclusive_diagnostics"
+    run_regenerated_candidate_inconclusive_diagnostics(
+        validation_dir=fixture["validation_dir"],
+        generator_dir=fixture["generator_dir"],
+        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="inconclusive_diagnostics",
+        docs_root=tmp_path / "diagnostics_docs",
+    )
+    return {
+        **fixture,
+        "diagnostics_dir": output_dir,
     }
 
 
