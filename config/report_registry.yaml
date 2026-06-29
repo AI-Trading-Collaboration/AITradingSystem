@@ -23136,6 +23136,39 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: regenerated_candidate_actual_path_validation
+    title: Regenerated Candidate Actual-Path Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends regenerated-candidate-actual-path-validation
+    artifact_globs:
+      - docs/research/regenerated_candidate_actual_path_validation_report.md
+      - docs/research/regenerated_candidate_prediction_outcome_summary.md
+      - docs/research/regenerated_candidate_error_attribution_seed.md
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/regenerated_candidate_actual_path_validation_summary.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/regenerated_candidate_actual_path_matrix.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/regenerated_candidate_actual_path_matrix.csv
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_prediction_outcome_matrix.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_prediction_outcome_matrix.csv
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_validation_scorecard.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_error_attribution_seed.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_data_quality_report.json
+      - outputs/research_trends/regenerated_candidate_actual_path_validation/candidate_state_recommendation_matrix.json
+    artifact_selection_policy: latest_available
+    artifact_role: regenerated_candidate_actual_path_validation
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Regenerated candidate actual-path validation should be rerun after regenerated candidate artifacts, validator contracts, price cache, or alignment policy changes.
+    owner_action: review_actual_path_evidence_before_risk_attribution_owner_review_or_any_promotion_discussion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

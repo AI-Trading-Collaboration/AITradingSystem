@@ -8,6 +8,9 @@ import pandas as pd
 from ai_trading_system.first_layer_candidate_generator_runtime import (
     validate_candidate_generation_bundle,
 )
+from ai_trading_system.first_layer_candidate_generators_regenerate import (
+    run_first_layer_candidate_generators_regenerate,
+)
 from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGenerationBundle,
     CandidateGeneratorContext,
@@ -59,6 +62,44 @@ def write_price_fixture(tmp_path: Path, *, include_vix: bool = True) -> Path:
             )
     pd.DataFrame(rows).to_csv(path, index=False)
     return path
+
+
+def write_rates_fixture(tmp_path: Path) -> Path:
+    path = tmp_path / "rates_daily.csv"
+    rows: list[dict[str, object]] = []
+    for index, current in enumerate(pd.bdate_range("2022-12-01", "2023-02-15")):
+        rows.append(
+            {
+                "date": current.date().isoformat(),
+                "series": "DGS10",
+                "value": 3.5 + index * 0.001,
+            }
+        )
+    pd.DataFrame(rows).to_csv(path, index=False)
+    return path
+
+
+def build_regenerated_artifact_fixture(tmp_path: Path) -> dict[str, Path]:
+    price_path = write_price_fixture(tmp_path)
+    rates_path = write_rates_fixture(tmp_path)
+    output_dir = tmp_path / "regenerated"
+    run_first_layer_candidate_generators_regenerate(
+        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
+        target_assets="QQQ,SPY,SMH",
+        start_date=date(2023, 1, 3),
+        end_date=date(2023, 1, 10),
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="regenerated_candidate_artifacts",
+        prices_path=price_path,
+        rates_path=rates_path,
+        marketstack_prices_path=None,
+    )
+    return {
+        "input_dir": output_dir,
+        "prices_path": price_path,
+        "rates_path": rates_path,
+    }
 
 
 def regenerated_context(

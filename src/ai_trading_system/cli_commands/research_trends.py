@@ -371,6 +371,15 @@ from ai_trading_system.participation_proxy_validation import (
 from ai_trading_system.participation_proxy_validation import (
     run_participation_proxy_validation_pack,
 )
+from ai_trading_system.regenerated_candidate_actual_path_validation import (
+    DEFAULT_INPUT_ROOT as DEFAULT_REGENERATED_ACTUAL_PATH_INPUT_ROOT,
+)
+from ai_trading_system.regenerated_candidate_actual_path_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REGENERATED_ACTUAL_PATH_OUTPUT_ROOT,
+)
+from ai_trading_system.regenerated_candidate_actual_path_validation import (
+    run_regenerated_candidate_actual_path_validation,
+)
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
     DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
@@ -1670,6 +1679,38 @@ def first_layer_candidate_generators_regenerate_command(
         marketstack_prices_path=marketstack_prices_path,
     )
     _print_payload("First-layer candidate generators regenerate", payload)
+
+
+@trends_app.command("regenerated-candidate-actual-path-validation")
+def regenerated_candidate_actual_path_validation_command(
+    input_dir: Annotated[Path, typer.Option("--input-dir")],
+    candidates: Annotated[str, typer.Option("--candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
+) -> None:
+    payload = run_regenerated_candidate_actual_path_validation(
+        input_dir=input_dir or DEFAULT_REGENERATED_ACTUAL_PATH_INPUT_ROOT,
+        candidates=candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_REGENERATED_ACTUAL_PATH_OUTPUT_ROOT,
+        mode=mode,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+    )
+    _print_payload("Regenerated candidate actual-path validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
