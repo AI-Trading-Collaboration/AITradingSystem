@@ -35,7 +35,7 @@
   - `git diff --check`：PASS。命令输出 3 条未修改 `docs/research/regenerated_candidate_*` 文件未来 CRLF 规范化 warning，但退出码为 0，未发现本轮 diff whitespace error。
 - 遇到的 blocker：无。Ruff 初次检查发现 4 个 import ordering 问题，已用 Ruff 机械修正并复验通过；未降低任何验证或文档规则。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/refined_candidate_actual_path_validation.py` 与 `src/ai_trading_system/refined_candidate_generators_regenerate.py` 中 large report renderer / loader / safety validation 边界；不得在同一低风险切片中改变投资解释或报告契约。
-- 本轮重构实现提交 SHA：待回填。
+- 本轮重构实现提交 SHA：`2d83ed6ea0ab5a5761ee6903a3f83c99ce4a76b8`。
 
 ## 2026-06-29 Daily Incremental Refactor
 
