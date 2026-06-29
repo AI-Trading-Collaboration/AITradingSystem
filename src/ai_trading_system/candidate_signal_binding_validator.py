@@ -17,8 +17,55 @@ from ai_trading_system.candidate_signal_binding_schema import (
     CandidateSignalBindingValidationResult,
 )
 
+REQUIRED_SIGNAL_SPEC_FIELDS = (
+    "candidate_id",
+    "candidate_family",
+    "generator_id",
+    "generator_version",
+    "signal_spec_version",
+    "prediction_schema_version",
+    "target_asset",
+    "supported_horizons",
+    "required_inputs",
+    "output_signal_names",
+    "signal_direction_mapping",
+    "validity_rule",
+    "pit_policy",
+    "promotion_allowed",
+    "paper_shadow_allowed",
+    "production_allowed",
+    "broker_action",
+)
+
 
 class CandidateSignalBindingValidator:
+    def validate_candidate_signal_spec(
+        self,
+        spec: Mapping[str, Any],
+    ) -> CandidateSignalBindingValidationResult:
+        errors: list[str] = []
+        for field in REQUIRED_SIGNAL_SPEC_FIELDS:
+            if _is_missing(spec.get(field)):
+                errors.append(f"candidate_signal_spec: missing {field}")
+        for field in ("supported_horizons", "output_signal_names"):
+            if _as_list(spec.get(field)) == []:
+                errors.append(f"candidate_signal_spec: {field} empty")
+        if "required_inputs" in spec and not isinstance(spec.get("required_inputs"), list):
+            errors.append("candidate_signal_spec: required_inputs must be list")
+        if not isinstance(spec.get("signal_direction_mapping"), Mapping):
+            errors.append("candidate_signal_spec: signal_direction_mapping is not object")
+        if str(spec.get("pit_policy") or "") not in ALLOWED_PIT_POLICIES:
+            errors.append(
+                f"candidate_signal_spec: unsupported pit_policy={spec.get('pit_policy')}"
+            )
+        errors.extend(self._validate_gating(spec, scope="candidate_signal_spec"))
+        return CandidateSignalBindingValidationResult(
+            passed=not errors,
+            checked_record_count=1,
+            errors=errors,
+            warnings=[],
+        )
+
     def validate_candidate_bound_signal_series(
         self,
         records: Sequence[Mapping[str, Any]],
@@ -59,7 +106,12 @@ class CandidateSignalBindingValidator:
                     errors.append(
                         f"prediction_artifact.prediction_records[{index}]: record is not object"
                     )
-        for field in ("artifact_id", "artifact_role", "historical_executable_artifact"):
+        for field in (
+            "artifact_id",
+            "artifact_role",
+            "historical_executable_artifact",
+            "actual_path_validation_ready",
+        ):
             if _is_missing(artifact.get(field)):
                 errors.append(f"prediction_artifact: missing {field}")
         if artifact.get("artifact_role") == "schema_migration_poc":
@@ -70,6 +122,19 @@ class CandidateSignalBindingValidator:
             if artifact.get("actual_path_validation_ready") is not False:
                 errors.append(
                     "prediction_artifact: schema_migration_poc must not be actual-path ready"
+                )
+        if artifact.get("artifact_role") == "framework_smoke_test":
+            if artifact.get("historical_executable_artifact") is not False:
+                errors.append(
+                    "prediction_artifact: framework_smoke_test must not be historical executable"
+                )
+            if artifact.get("actual_path_validation_ready") is not False:
+                errors.append(
+                    "prediction_artifact: framework_smoke_test must not be actual-path ready"
+                )
+            if _to_bool(artifact.get("promotion_eligible")) is not False:
+                errors.append(
+                    "prediction_artifact: framework_smoke_test requires promotion_eligible=false"
                 )
         return CandidateSignalBindingValidationResult(
             passed=not errors,
@@ -187,6 +252,13 @@ class CandidateSignalBindingValidator:
                 errors.append(
                     f"{scope}: schema_migration_poc requires provenance.promotion_eligible=false"
                 )
+        if regeneration_mode == "framework_smoke_test":
+            if promotion_eligible is not False:
+                errors.append(f"{scope}: framework_smoke_test requires promotion_eligible=false")
+            if provenance_promotion_eligible is not False:
+                errors.append(
+                    f"{scope}: framework_smoke_test requires provenance.promotion_eligible=false"
+                )
         if pit_policy == "non_pit_source_evidence_only":
             if _to_bool(record.get("paper_shadow_allowed")) is not False:
                 errors.append(
@@ -202,6 +274,12 @@ class CandidateSignalBindingValidator:
                 )
         if _to_bool(record.get("promotion_allowed")) is not False:
             errors.append(f"{scope}: promotion_allowed must be false")
+        if _to_bool(record.get("paper_shadow_allowed")) is not False:
+            errors.append(f"{scope}: paper_shadow_allowed must be false")
+        if _to_bool(record.get("production_allowed")) is not False:
+            errors.append(f"{scope}: production_allowed must be false")
+        if str(record.get("broker_action") or "") != "none":
+            errors.append(f"{scope}: broker_action=none required")
         if _to_bool(record.get("permanently_inconclusive_override_allowed")) is not False:
             errors.append(
                 f"{scope}: permanently_inconclusive_override_allowed must be false"
@@ -213,6 +291,12 @@ def validate_candidate_bound_signal_series(
     records: Sequence[Mapping[str, Any]],
 ) -> CandidateSignalBindingValidationResult:
     return CandidateSignalBindingValidator().validate_candidate_bound_signal_series(records)
+
+
+def validate_candidate_signal_spec(
+    spec: Mapping[str, Any],
+) -> CandidateSignalBindingValidationResult:
+    return CandidateSignalBindingValidator().validate_candidate_signal_spec(spec)
 
 
 def validate_candidate_bound_prediction_artifact(

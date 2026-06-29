@@ -21,6 +21,7 @@ ALLOWED_SIGNAL_DIRECTIONS = (
 ALLOWED_REGENERATION_MODES = (
     "original_generation",
     "deterministic_regeneration",
+    "framework_smoke_test",
     "schema_migration_poc",
     "manual_review_attachment",
 )
@@ -323,6 +324,7 @@ def candidate_bound_signal_series_contract_dict() -> dict[str, Any]:
             "missing as_of_timestamp",
             "valid_until earlier than valid_from",
             "schema_migration_poc with promotion_eligible=true",
+            "framework_smoke_test marked actual_path_validation_ready=true",
             "non_pit_source_evidence_only with paper_shadow_allowed=true",
         ],
     }
@@ -355,6 +357,7 @@ def candidate_bound_prediction_artifact_contract_dict() -> dict[str, Any]:
             "prediction artifact lacks source_artifact_hash",
             "prediction artifact lacks provenance.regeneration_mode",
             "schema_migration_poc marked promotion_eligible=true",
+            "framework_smoke_test marked historical_executable_artifact=true",
             "non_pit_source_evidence_only marked production_allowed=true",
             "broker_action other than none",
         ],

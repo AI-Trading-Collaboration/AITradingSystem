@@ -23075,6 +23075,35 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_candidate_generator_framework
+    title: First-Layer Executable Candidate Generator Framework
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-candidate-generator-framework
+    artifact_globs:
+      - docs/research/first_layer_executable_candidate_generator_framework.md
+      - docs/research/framework_smoke_candidate_generation_report.md
+      - outputs/research_trends/first_layer_candidate_generators/generator_registry.json
+      - outputs/research_trends/first_layer_candidate_generators/framework_smoke_candidate_signal_spec.json
+      - outputs/research_trends/first_layer_candidate_generators/framework_smoke_candidate_signal_series.csv
+      - outputs/research_trends/first_layer_candidate_generators/framework_smoke_candidate_prediction_artifact.json
+      - outputs/research_trends/first_layer_candidate_generators/framework_smoke_candidate_generation_summary.json
+      - outputs/research_trends/first_layer_candidate_generators/framework_smoke_candidate_validation_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: framework_smoke_test
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Candidate generator framework smoke artifacts should be regenerated after generator interface, runtime, registry, validator, or candidate-bound schema changes.
+    owner_action: review_framework_before_implementing_real_trend_risk_volatility_generators
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

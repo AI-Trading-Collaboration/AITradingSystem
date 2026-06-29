@@ -90,6 +90,9 @@ from ai_trading_system.first_layer_candidate_actual_path_validation import (
 from ai_trading_system.first_layer_candidate_actual_path_validation import (
     run_first_layer_candidate_actual_path_validation_pack,
 )
+from ai_trading_system.first_layer_candidate_generator_runtime import (
+    run_candidate_generator,
+)
 from ai_trading_system.first_layer_challenger_matrix_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CHALLENGER_MATRIX_V2_OUTPUT_ROOT,
 )
@@ -1599,6 +1602,28 @@ def candidate_signal_binding_schema_poc_command(
         mode=mode,
     )
     _print_payload("Candidate signal binding schema POC", payload)
+
+
+@trends_app.command("first-layer-candidate-generator-framework")
+def first_layer_candidate_generator_framework_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id")],
+    target_asset: Annotated[str, typer.Option("--target-asset")],
+    start_date: Annotated[str, typer.Option("--start-date")],
+    end_date: Annotated[str, typer.Option("--end-date")],
+    horizon: Annotated[str, typer.Option("--horizon")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+) -> None:
+    payload = run_candidate_generator(
+        candidate_id=candidate_id,
+        target_asset=target_asset,
+        start_date=date.fromisoformat(start_date),
+        end_date=date.fromisoformat(end_date),
+        horizon=horizon,
+        output_dir=output_dir,
+        mode=mode,
+    )
+    _print_payload("First-layer candidate generator framework", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
