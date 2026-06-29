@@ -540,10 +540,11 @@ def _provider_request_budget_status(
     )
     status = "NO_LIVE_REQUEST_NEEDED" if estimated_units == 0 else "PASS"
     owner_approved_overage: dict[str, object] | None = None
-    if quota_remaining is not None and quota_remaining < estimated_units:
+    if estimated_units > 0 and quota_remaining is not None and quota_remaining < estimated_units:
         owner_approved_overage = _marketstack_owner_approved_overage_status(
             estimated_units=estimated_units,
             fetch_windows=fetch_windows,
+            quota_limit=quota_limit,
             quota_remaining=quota_remaining,
         )
         if owner_approved_overage["approved"]:
@@ -575,6 +576,7 @@ def _marketstack_owner_approved_overage_status(
     *,
     estimated_units: int,
     fetch_windows: tuple[IncrementalPriceWindow, ...],
+    quota_limit: int | None,
     quota_remaining: int,
 ) -> dict[str, object]:
     policy = load_data_source_request_budget_policy()
@@ -589,6 +591,16 @@ def _marketstack_owner_approved_overage_status(
         violation_reasons.append("no_live_request_needed")
     if estimated_units > approval.max_estimated_increment_usage:
         violation_reasons.append("estimated_usage_exceeds_owner_approved_limit")
+    quota_shortfall = max(0, estimated_units - quota_remaining)
+    quota_overage_ratio = (
+        None
+        if quota_limit is None or quota_limit <= 0
+        else quota_shortfall / quota_limit
+    )
+    if quota_overage_ratio is None:
+        violation_reasons.append("quota_limit_missing_for_owner_approved_overage")
+    elif quota_overage_ratio > approval.max_quota_overage_ratio:
+        violation_reasons.append("quota_overage_ratio_exceeds_owner_approved_limit")
     if len(fetch_windows) > approval.max_fetch_window_count:
         violation_reasons.append("fetch_window_count_exceeds_owner_approved_limit")
     if any(days > approval.max_calendar_days_per_window for days in window_calendar_days):
@@ -599,10 +611,12 @@ def _marketstack_owner_approved_overage_status(
         "policy_version": policy.policy_version,
         "policy_status": policy.policy_metadata.status,
         "allowed_status": approval.allowed_status,
-        "quota_shortfall": max(0, estimated_units - quota_remaining),
+        "quota_shortfall": quota_shortfall,
+        "quota_overage_ratio": quota_overage_ratio,
         "max_estimated_increment_usage": approval.max_estimated_increment_usage,
         "max_fetch_window_count": approval.max_fetch_window_count,
         "max_calendar_days_per_window": approval.max_calendar_days_per_window,
+        "max_quota_overage_ratio": approval.max_quota_overage_ratio,
         "window_calendar_days": list(window_calendar_days),
         "violation_reasons": violation_reasons,
         "reason": approval.reason,

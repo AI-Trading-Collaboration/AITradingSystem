@@ -21,26 +21,33 @@
 9. `fundamentals validate-sec-metrics`
 10. `valuation fetch-fmp`
 11. `score-daily`
-12. `reports dashboard`
-13. `sec-pit shadow-observe --latest`
-14. `sec-pit shadow-monitor --latest`
-15. `reports score-change-attribution --latest`
-16. `reports market-panel --latest`
-17. `data freshness --latest`
-18. `data recover-freshness --latest`
-19. `portfolio track-candidate --latest`
-20. `portfolio review-tracking --latest --show-window-progress`
-21. `reports portfolio-tracking-review --latest`
-22. `reports index --latest`
-23. `docs report-contract --latest`
-24. `reports research-governance-summary --latest`
-25. `reports reader-brief --latest`
-26. `reports validate-reader-brief --latest`
-27. `etf dynamic-v3-rescue schedule observe --as-of {as_of}`
-28. `ops health`
-29. `security scan-secrets`
+12. `forward-evidence capture-dry-run-daily --as-of {as_of}`
+13. `reports dashboard`
+14. `sec-pit shadow-observe --latest`
+15. `sec-pit shadow-monitor --latest`
+16. `reports score-change-attribution --latest`
+17. `reports market-panel --latest`
+18. `data freshness --latest`
+19. `data recover-freshness --latest`
+20. `portfolio track-candidate --latest`
+21. `portfolio review-tracking --latest --show-window-progress`
+22. `reports portfolio-tracking-review --latest`
+23. `etf forward update --latest`
+24. `etf forward dashboard --latest`
+25. `etf forward watchlist --latest`
+26. `reports artifact-lineage --latest`
+27. `reports validate-artifact-lineage --latest`
+28. `reports index --latest`
+29. `docs report-contract --latest`
+30. `reports research-governance-summary --latest`
+31. `reports reader-brief --latest`
+32. `reports quality-gate --latest`
+33. `reports validate-reader-brief --latest`
+34. `etf dynamic-v3-rescue schedule observe --as-of {as_of}`
+35. `ops health`
+36. `security scan-secrets`
 
-`validate-data` 是 cached market / macro data 的必需质量门禁。任何 downstream scoring、technical features、backtest 或 daily report 不得绕过该门禁。Portfolio tracking review 的 `needs_more_data` 是 VALIDATING 下的正常窗口状态，不得作为 scheduler 失败或 production approval。Dynamic v3 rescue `schedule observe` 只允许检查 weekly due 条件、latest pointer validation、stale 状态和可选 observe-only shadow monitor；不得自动运行 `sweep run-profile`、real sweep、candidate attribution、walk-forward、overfit 或 `promotion pack`。
+`validate-data` 是 cached market / macro data 的必需质量门禁。任何 downstream scoring、technical features、backtest 或 daily report 不得绕过该门禁。`forward-evidence capture-dry-run-daily` 只在 `score-daily` 后写 dry-run archive 和 append-only ledger，固定 `production_effect=none`，不得触发 broker/order、paper-shadow、official weight 或 production mutation。Portfolio tracking review 的 `needs_more_data` 是 VALIDATING 下的正常窗口状态，不得作为 scheduler 失败或 production approval。Dynamic v3 rescue `schedule observe` 只允许检查 weekly due 条件、latest pointer validation、stale 状态和可选 observe-only shadow monitor；不得自动运行 `sweep run-profile`、real sweep、candidate attribution、walk-forward、overfit 或 `promotion pack`。
 
 ## 验证 Daily Plan
 
@@ -63,7 +70,7 @@ aits ops daily-run --as-of 2026-05-06
 周末或 NYSE 常规整日休市日：
 
 - 仍运行 `validate-data`、PIT fetch/build/validate、SEC companyfacts/metrics、valuation、Dynamic v3 rescue `schedule observe`（输出 closed-market skip audit）、`ops health --non-trading-day` 和 secret scan。
-- 跳过 `score-daily`、dashboard、SEC PIT shadow observe / monitor、score change attribution、market panel、market data freshness review、freshness recovery、portfolio candidate tracking、portfolio tracking review、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality。
+- 跳过 `score-daily`、forward evidence dry-run archive、dashboard、SEC PIT shadow observe / monitor、score change attribution、market panel、market data freshness review、freshness recovery、portfolio candidate tracking、portfolio tracking review、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality。
 - 不生成新的日报评分、decision snapshot、Reader Brief scoring artifacts、prediction ledger 行或执行动作。
 
 ## Weekly Cadence

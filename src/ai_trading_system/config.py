@@ -256,6 +256,7 @@ class OwnerApprovedProviderOverageConfig(BaseModel):
     max_estimated_increment_usage: int = Field(default=0, ge=0)
     max_fetch_window_count: int = Field(default=0, ge=0)
     max_calendar_days_per_window: int = Field(default=0, ge=0)
+    max_quota_overage_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
     allowed_status: str = Field(
         default="OWNER_APPROVED_SMALL_DAILY_OVERAGE",
         min_length=1,
@@ -272,6 +273,7 @@ class OwnerApprovedProviderOverageConfig(BaseModel):
             self.max_estimated_increment_usage <= 0
             or self.max_fetch_window_count <= 0
             or self.max_calendar_days_per_window <= 0
+            or self.max_quota_overage_ratio <= 0
         ):
             raise ValueError("enabled owner-approved overage must define positive limits")
         return self

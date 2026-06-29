@@ -322,7 +322,85 @@ def test_marketstack_owner_approved_small_daily_overage_allows_tail_preflight(
     assert owner_approved_overage["approved"] is True
     assert owner_approved_overage["policy_version"] == "data_source_request_budget_policy_v1"
     assert owner_approved_overage["max_estimated_increment_usage"] == 50
+    assert owner_approved_overage["max_quota_overage_ratio"] == 0.10
+    assert owner_approved_overage["quota_shortfall"] == 713
+    assert owner_approved_overage["quota_overage_ratio"] == pytest.approx(0.0713)
     assert owner_approved_overage["window_calendar_days"] == [1]
+
+
+def test_marketstack_owner_approved_overage_blocks_above_ratio_cap(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-1000",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+
+    with pytest.raises(ProviderQuotaBudgetError, match="Marketstack quota preflight blocked"):
+        _provider_request_budget_status(
+            provider,
+            (
+                IncrementalPriceWindow(
+                    tickers=supported_tickers,
+                    start=date(2026, 6, 26),
+                    end=date(2026, 6, 26),
+                ),
+            ),
+        )
+
+
+def test_marketstack_negative_quota_does_not_block_no_live_request(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-713",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        request_cache_dir=request_cache_dir,
+    )
+
+    status = _provider_request_budget_status(provider, ())
+
+    assert status is not None
+    assert status["status"] == "NO_LIVE_REQUEST_NEEDED"
+    assert status["estimated_increment_usage"] == 0
+    assert status["quota_remaining"] == -713
+    assert "owner_approved_overage" not in status
 
 
 def test_download_daily_data_adds_cboe_vix_when_primary_skips_it(tmp_path: Path) -> None:

@@ -208,7 +208,9 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
     assert step_by_id["pipeline_health"].command[-1] == "--non-trading-day"
 
 
-def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path) -> None:
+def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score_daily(
+    tmp_path: Path,
+) -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         project_root=tmp_path,
@@ -251,7 +253,8 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 23] == [
+    assert calls[score_index + 1 : score_index + 24] == [
+        ("forward-evidence", "capture-dry-run-daily", "--as-of", "2026-05-06"),
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
         ("sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-06"),

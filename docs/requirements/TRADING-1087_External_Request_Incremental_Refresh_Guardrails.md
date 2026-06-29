@@ -1,6 +1,6 @@
 # TRADING-1087: External Request Incremental Refresh Guardrails
 
-最后更新：2026-06-28
+最后更新：2026-06-29
 
 ## 背景
 
@@ -62,10 +62,12 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
 - 2026-06-27 owner 接受“单日几十级别请求量”后，允许在
   `config/data_source_request_budget_policy.yaml` 中登记的临时 owner-approved
   overage 继续执行：仅限 Marketstack `eod_daily_prices` 单窗口、单日、
-  `estimated_increment_usage <= 50` 的 tail refresh。该状态必须输出为
+  `estimated_increment_usage <= 50`、且 projected quota shortfall 不超过
+  `quota_limit` 10% 的 tail refresh。该状态必须输出为
   `OWNER_APPROVED_SMALL_DAILY_OVERAGE` 并记录 policy version、reason、
-  behavioral impact、risk、validation coverage 和 exit condition；任何多日、
-  multi-window、全历史或超上限请求仍 fail closed。
+  behavioral impact、risk、validation coverage、exit condition、
+  quota shortfall 和 overage ratio；任何多日、multi-window、全历史、
+  超 usage 上限或超过 10% projected shortfall 的请求仍 fail closed。
 
 ### C. 可观测性
 
@@ -101,6 +103,10 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
 - 当既有 cache 已覆盖请求结束日、`estimated_increment_usage=0` 且不会发起
   live provider request 时，重复 daily-run 必须输出可审计 cache-only / no-live-request
   状态并继续进入 `aits validate-data`；负 quota 只应阻断需要 live request 的路径。
+- 当需要 owner-approved Marketstack overage 的 live request 时，projected shortfall
+  必须同时满足 `estimated_increment_usage <= 50`、单窗口、单日和
+  `quota_shortfall / quota_limit <= 0.10`；缺 quota limit 或超过 10% 时继续
+  fail closed。
 - `prices_daily.csv`、`prices_marketstack_daily.csv`、macro/rates 输出和
   manifest 仍通过 `aits validate-data` 同源质量门禁。
 - 下游 reports 明确披露 data-quality status、provider request budget status、
@@ -169,3 +175,17 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   `download-data` 对 no-live-request 路径写出可审计 cache-only/request-budget
   状态并继续到 `aits validate-data`；需要 live request 的路径仍按现有 quota
   policy fail closed。不得用永久 `--without-marketstack` 或跳过第二源作为修复。
+- 2026-06-29: owner 明确“没有超过 Marketstack 10% 额度的情况下可以继续跑”。
+  本轮把该约束登记为 `max_quota_overage_ratio=0.10`，并修复 zero-increment
+  preflight：`estimated_increment_usage=0` 时不需要 live provider request，应输出
+  `NO_LIVE_REQUEST_NEEDED` 并进入后续 `aits validate-data`；需要 live request
+  的 owner-approved overage 仍必须同时满足单窗口、单日、estimated usage <= 50
+  和 projected shortfall <= quota_limit 10%，否则继续 fail closed。
+- 2026-06-29: 复验通过并转入 `VALIDATING`。`aits ops daily-run` 默认解析
+  `as_of=2026-06-26`，run id `daily_ops_run:2026-06-26:20260629T012701Z`，
+  36/36 steps PASS。`download_manifest.csv` 中 Marketstack 行记录
+  `fetch_window_count=0`、`estimated_increment_usage=0`、
+  `status=NO_LIVE_REQUEST_NEEDED`、`quota_remaining=-713`、`quota_limit=10000`；
+  `validate-data` 为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，PIT validation
+  PASS，Reader Brief validation command PASS（quality status `LIMITED_READER_CONTEXT`，
+  missing trace bundle 为 important artifact）。

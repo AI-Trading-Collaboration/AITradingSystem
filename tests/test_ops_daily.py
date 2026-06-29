@@ -396,7 +396,7 @@ def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuse
     )
 
 
-def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None:
+def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         skip_risk_event_openai_precheck=True,
@@ -404,6 +404,7 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
     step_ids = [step.step_id for step in plan.steps]
     dashboard_step = next(step for step in plan.steps if step.step_id == "reports_dashboard")
     expected_after_score = [
+        "forward_evidence_dry_run_daily",
         "reports_dashboard",
         "sec_pit_shadow_observe",
         "sec_pit_shadow_monitor",
@@ -432,6 +433,18 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
     assert step_ids[step_ids.index("score_daily") + 1 : step_ids.index("secret_hygiene")] == (
         expected_after_score
     )
+    forward_step = next(
+        step for step in plan.steps if step.step_id == "forward_evidence_dry_run_daily"
+    )
+    assert forward_step.command == (
+        "aits",
+        "forward-evidence",
+        "capture-dry-run-daily",
+        "--as-of",
+        "2026-05-06",
+    )
+    assert forward_step.required_env_vars == ()
+    assert forward_step.blocks_downstream is False
     assert dashboard_step.command == ("aits", "reports", "dashboard", "--as-of", "2026-05-06")
     assert dashboard_step.required_env_vars == ()
     assert dashboard_step.blocks_downstream is False

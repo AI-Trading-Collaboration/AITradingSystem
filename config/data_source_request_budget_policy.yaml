@@ -26,19 +26,25 @@ marketstack:
       max_estimated_increment_usage: 50
       max_fetch_window_count: 1
       max_calendar_days_per_window: 1
+      max_quota_overage_ratio: 0.10
       allowed_status: OWNER_APPROVED_SMALL_DAILY_OVERAGE
       reason: >
         Owner accepted single-day Marketstack request volume in the tens on
-        2026-06-27 after the head-gap incremental-refresh bug was fixed.
+        2026-06-27 after the head-gap incremental-refresh bug was fixed, and
+        confirmed on 2026-06-29 that continuation is acceptable only while the
+        projected Marketstack overage stays within 10% of the quota limit.
       behavioral_impact: >
         Allows a single-day Marketstack tail refresh to proceed even when the
-        latest cached quota header reports negative remaining quota.
+        latest cached quota header reports negative remaining quota, provided
+        the projected shortfall remains within the owner-approved ratio.
       risk: >
         Marketstack may reject the live request, bill overage usage, or continue
-        reporting negative quota until the plan/monthly allowance resets.
+        reporting negative quota until the plan/monthly allowance resets; the
+        10% cap limits but does not remove that external provider risk.
       validation_coverage: >
-        Focused unit tests validate both the allowed small daily tail case and
-        the blocked large-refresh case; daily-run diagnostics expose the status.
+        Focused unit tests validate the allowed small daily tail case, the
+        cache-only no-live-request rerun case, and blocked large-refresh or
+        over-10%-shortfall cases; daily-run diagnostics expose the status.
       exit_condition: >
         Replace with the normal quota preflight once Marketstack quota recovers
         or a reviewed paid/vendor quota policy supersedes this temporary
