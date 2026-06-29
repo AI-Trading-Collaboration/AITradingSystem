@@ -14,6 +14,10 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGeneratorContext,
     CandidateGeneratorError,
     CandidateSignalSpec,
+    candidate_artifact_safety_fields,
+    framework_smoke_artifact_safety_fields,
+    generator_operation_safety_fields,
+    trading_2281_boundary_fields,
 )
 
 FRAMEWORK_SMOKE_CANDIDATE_ID = "framework_smoke_candidate"
@@ -60,10 +64,7 @@ class FrameworkSmokeCandidateGenerator:
             },
             validity_rule="valid_until is valid_from plus parsed horizon calendar days",
             pit_policy="strict_pit",
-            promotion_allowed=False,
-            paper_shadow_allowed=False,
-            production_allowed=False,
-            broker_action="none",
+            **generator_operation_safety_fields(),
         )
 
     def generate_signal_series(
@@ -109,12 +110,7 @@ class FrameworkSmokeCandidateGenerator:
                     feature_snapshot_hash=context.feature_snapshot_hash,
                     model_or_rule_version=FRAMEWORK_SMOKE_MODEL_OR_RULE_VERSION,
                     provenance=provenance,
-                    promotion_eligible=False,
-                    promotion_allowed=False,
-                    paper_shadow_allowed=False,
-                    production_allowed=False,
-                    broker_action="none",
-                    permanently_inconclusive_override_allowed=False,
+                    **candidate_artifact_safety_fields(),
                     source_row_index=index,
                     source_date=current_date.isoformat(),
                     source_trend_state="framework_smoke_test",
@@ -169,14 +165,7 @@ class FrameworkSmokeCandidateGenerator:
             provenance=_provenance(context),
             prediction_records=prediction_records,
             source_schema_status="candidate_bound",
-            historical_executable_artifact=False,
-            actual_path_validation_ready=False,
-            promotion_eligible=False,
-            promotion_allowed=False,
-            paper_shadow_allowed=False,
-            production_allowed=False,
-            broker_action="none",
-            permanently_inconclusive_override_allowed=False,
+            **framework_smoke_artifact_safety_fields(),
         )
         payload = artifact.to_dict()
         payload["schema_version"] = context.prediction_schema_version
@@ -184,7 +173,7 @@ class FrameworkSmokeCandidateGenerator:
         payload["generation_mode"] = context.mode
         payload["candidate_binding_method"] = "native_candidate_id"
         payload["framework_smoke_candidate_validation_only"] = True
-        payload["trading_2281_permanently_inconclusive_decisions_changed"] = False
+        payload.update(trading_2281_boundary_fields())
         return payload
 
 
@@ -211,7 +200,7 @@ def _provenance(context: CandidateGeneratorContext) -> CandidateArtifactProvenan
         pit_policy="strict_pit",
         candidate_binding_method="native_candidate_id",
         source_schema_status="candidate_bound",
-        promotion_eligible=False,
+        promotion_eligible=candidate_artifact_safety_fields()["promotion_eligible"],
     )
 
 

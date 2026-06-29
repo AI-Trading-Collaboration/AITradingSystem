@@ -18,6 +18,39 @@ class CandidateGeneratorError(ValueError):
     """Raised when candidate generation cannot produce a validated fail-closed bundle."""
 
 
+# Invariant research-only safety metadata for candidate generator framework outputs.
+# These are not tunable thresholds or investment policy knobs.
+def generator_operation_safety_fields() -> dict[str, Any]:
+    return {
+        "promotion_allowed": False,
+        "paper_shadow_allowed": False,
+        "production_allowed": False,
+        "broker_action": "none",
+    }
+
+
+def candidate_artifact_safety_fields() -> dict[str, Any]:
+    return {
+        "promotion_eligible": False,
+        **generator_operation_safety_fields(),
+        "permanently_inconclusive_override_allowed": False,
+    }
+
+
+def framework_smoke_artifact_safety_fields() -> dict[str, Any]:
+    return {
+        "historical_executable_artifact": False,
+        "actual_path_validation_ready": False,
+        **candidate_artifact_safety_fields(),
+    }
+
+
+def trading_2281_boundary_fields() -> dict[str, Any]:
+    return {
+        "trading_2281_permanently_inconclusive_decisions_changed": False,
+    }
+
+
 @dataclass(frozen=True)
 class CandidateGeneratorContext:
     candidate_id: str
@@ -103,8 +136,7 @@ class CandidateSignalSpec:
         payload["supported_horizons"] = list(self.supported_horizons)
         payload["required_inputs"] = list(self.required_inputs)
         payload["output_signal_names"] = list(self.output_signal_names)
-        payload["promotion_eligible"] = False
-        payload["permanently_inconclusive_override_allowed"] = False
+        payload.update(candidate_artifact_safety_fields())
         return clean_for_yaml(payload)
 
 

@@ -1,5 +1,35 @@
 # Refactor Log
 
+## 2026-06-29 Daily Incremental Refactor
+
+- 检查时间：2026-06-29 10:19 Asia/Tokyo。
+- 起始 HEAD：`d8b1401224498f627377ff8be64dde4570d43988` (`feat: add first-layer candidate generator framework`)。本轮启动时工作区已有 TRADING-2283 改动；owner 澄清授权自动化先处理工作区提交后，已验证并提交 / push 为 `d8b1401224498f627377ff8be64dde4570d43988`，再继续本轮重构巡检。
+- 最近一次合格重构基线提交：`e2b9720456e4de56d4a6191dfe989d2baf80c836` (`refactor: record AITradingSystem execution semantics CLI refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `acff890f01ef488a6d20bcbb3f58c75ea76d217a`。
+- 评估范围：`e2b9720456e4de56d4a6191dfe989d2baf80c836..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 first-layer / Norgate trial / research governance / candidate artifact governance 增量。主要维护风险是 TRADING-2283 新增 first-layer executable candidate generator framework 后，registry、runtime、signal spec 和 framework smoke generator 多处重复写入相同 research-only safety metadata。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2296_Daily_Incremental_Refactor_Candidate_Generator_Safety_Boundary.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/first_layer_candidate_signal_generator.py`
+  - `src/ai_trading_system/first_layer_candidate_generator_registry.py`
+  - `src/ai_trading_system/first_layer_candidate_generator_runtime.py`
+  - `src/ai_trading_system/framework_smoke_candidate_generator.py`
+- 重构理由：TRADING-2283 的 generator framework 固定禁止 promotion、paper-shadow、production 和 broker action，但这些 false/none safety fields 分散重复在多个 payload builder 中。集中为 shared helper 可降低后续真实 trend/risk/volatility generator 扩展时字段遗漏或不一致风险，并把这些安全字段表达为 invariant boundary，而不是可调 heuristic。
+- 行为影响：预期无外部行为变化；`aits research trends first-layer-candidate-generator-framework` 命令名、参数、默认路径、artifact path、artifact schema、validation status、framework smoke status 和 FAIL/PASS 语义保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent scoring/backtest/daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 TRADING-2283 generator framework 内部 helper，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src/ai_trading_system/first_layer_candidate_signal_generator.py src/ai_trading_system/first_layer_candidate_generator_registry.py src/ai_trading_system/first_layer_candidate_generator_runtime.py src/ai_trading_system/framework_smoke_candidate_generator.py tests/research_trends`：PASS。
+  - `python -m compileall -q src/ai_trading_system/first_layer_candidate_signal_generator.py src/ai_trading_system/first_layer_candidate_generator_registry.py src/ai_trading_system/first_layer_candidate_generator_runtime.py src/ai_trading_system/framework_smoke_candidate_generator.py tests/research_trends`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests/research_trends tests/test_candidate_signal_binding_validator.py tests/test_candidate_bound_artifact_contract.py`：PASS，24 passed。
+  - `python -m ai_trading_system.cli research trends first-layer-candidate-generator-framework --candidate-id framework_smoke_candidate --target-asset QQQ --start-date 2023-01-01 --end-date 2023-03-31 --horizon 10d --output-dir outputs/research_trends/first_layer_candidate_generators --mode framework_smoke_test`：PASS，status=`FIRST_LAYER_CANDIDATE_GENERATOR_FRAMEWORK_READY_PROMOTION_BLOCKED`，`promotion_allowed=False`，`paper_shadow_allowed=False`，`production_allowed=False`，`broker_action=none`。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，466 docs checked，0 issues。
+  - `git diff --check`：PASS。
+- 遇到的 blocker：无。启动阶段已有工作区改动，经 owner 澄清授权处理后，已先完成 TRADING-2283 验证、提交和 push，再继续本轮重构；未混入无关文件。未运行 task-register consistency CLI，因为当前仓库已有非本任务 malformed task id `TRADING-DATA-TQQQ-ADJUSTMENT-WARNING` blocker；本轮未引入新的 task id 格式异常。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/cli_commands/research_trends.py` 的 first-layer / Norgate / channel-specific command adapter 边界，以及 `candidate_signal_binding_validator.py` 中 schema POC 与 native generator validation 的责任边界；不得在同一低风险切片中改变投资解释或报告契约。
+- 本轮重构实现提交 SHA：`PENDING_BACKFILL`。
+
 ## 2026-06-28 Daily Incremental Refactor
 
 - 检查时间：2026-06-28 11:41 Asia/Tokyo。

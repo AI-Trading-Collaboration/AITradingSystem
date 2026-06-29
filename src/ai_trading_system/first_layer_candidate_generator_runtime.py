@@ -25,6 +25,10 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGeneratorContext,
     CandidateGeneratorError,
     CandidateGeneratorResult,
+    candidate_artifact_safety_fields,
+    framework_smoke_artifact_safety_fields,
+    generator_operation_safety_fields,
+    trading_2281_boundary_fields,
 )
 from ai_trading_system.framework_smoke_candidate_generator import (
     FRAMEWORK_SMOKE_ARTIFACT_ROLE,
@@ -157,16 +161,9 @@ def run_candidate_generator(
         "generator_registry": registry_payload,
         "artifact_paths": result.artifact_paths,
         "research_only": True,
-        "historical_executable_artifact": False,
-        "actual_path_validation_ready": False,
-        "promotion_eligible": False,
-        "promotion_allowed": False,
-        "paper_shadow_allowed": False,
-        "production_allowed": False,
-        "broker_action": "none",
-        "permanently_inconclusive_override_allowed": False,
+        **framework_smoke_artifact_safety_fields(),
         "dynamic_promotion_status": "BLOCKED",
-        "trading_2281_permanently_inconclusive_decisions_changed": False,
+        **trading_2281_boundary_fields(),
     }
 
 
@@ -231,12 +228,9 @@ def validate_candidate_generation_bundle(bundle: CandidateGenerationBundle) -> d
         "candidate_bound_validator_reused": True,
         "candidate_bound_minimum_fields_satisfied": not errors,
         "errors": errors,
-        "promotion_allowed": False,
-        "paper_shadow_allowed": False,
-        "production_allowed": False,
-        "broker_action": "none",
+        **generator_operation_safety_fields(),
         "permanently_inconclusive_override_allowed": False,
-        "trading_2281_permanently_inconclusive_decisions_changed": False,
+        **trading_2281_boundary_fields(),
     }
 
 
@@ -253,10 +247,7 @@ def generator_registry_payload(
         "generated_at": generated_at.isoformat(),
         "generator_count": len(generators),
         "generators": generators,
-        "promotion_allowed": False,
-        "paper_shadow_allowed": False,
-        "production_allowed": False,
-        "broker_action": "none",
+        **generator_operation_safety_fields(),
     }
 
 
@@ -341,12 +332,9 @@ def _generation_summary(
         "candidate_prediction_artifact": "generated",
         "framework_smoke_candidate_validation": validation_summary.get("status"),
         "candidate_binding_validator_reused": True,
-        "promotion_allowed": False,
-        "paper_shadow_allowed": False,
-        "production_allowed": False,
-        "broker_action": "none",
+        **generator_operation_safety_fields(),
         "permanently_inconclusive_override_allowed": False,
-        "trading_2281_permanently_inconclusive_decisions_changed": False,
+        **trading_2281_boundary_fields(),
     }
     return clean_for_yaml(
         {
@@ -355,19 +343,17 @@ def _generation_summary(
             "status": STATUS,
             "generated_at": context.generated_at.isoformat(),
             "artifact_role": FRAMEWORK_SMOKE_ARTIFACT_ROLE,
-            "historical_executable_artifact": False,
-            "actual_path_validation_ready": False,
+            **{
+                key: value
+                for key, value in framework_smoke_artifact_safety_fields().items()
+                if key in {"historical_executable_artifact", "actual_path_validation_ready"}
+            },
             "summary": summary,
             "context": context.to_dict(),
             "signal_spec": bundle.signal_spec.to_dict(),
             "artifact_paths": {key: str(path) for key, path in paths.items()},
             "validation_summary": dict(validation_summary),
-            "promotion_eligible": False,
-            "promotion_allowed": False,
-            "paper_shadow_allowed": False,
-            "production_allowed": False,
-            "broker_action": "none",
-            "permanently_inconclusive_override_allowed": False,
+            **candidate_artifact_safety_fields(),
             "dynamic_promotion_status": "BLOCKED",
         }
     )

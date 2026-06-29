@@ -6,6 +6,7 @@ from typing import Any
 from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGeneratorError,
     FirstLayerCandidateSignalGenerator,
+    generator_operation_safety_fields,
 )
 
 
@@ -36,10 +37,7 @@ class CandidateGeneratorRegistry:
                 "generator_id": generator.generator_id,
                 "generator_version": generator.generator_version,
                 "candidate_family": generator.candidate_family,
-                "promotion_allowed": False,
-                "paper_shadow_allowed": False,
-                "production_allowed": False,
-                "broker_action": "none",
+                **generator_operation_safety_fields(),
             }
             for generator in sorted(
                 self._generators.values(),
