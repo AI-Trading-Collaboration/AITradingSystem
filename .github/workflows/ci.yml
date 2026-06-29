@@ -4,10 +4,29 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      validation_tier:
+        description: "Validation tier to run"
+        required: true
+        default: full
+        type: choice
+        options:
+          - fast-unit
+          - contract-validation
+          - full
+  schedule:
+    - cron: "0 18 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      VALIDATION_TIER: fast-unit
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,9 +38,15 @@ jobs:
         run: python -m ruff check .
       - name: Docs freshness
         run: python -m ai_trading_system.cli docs validate-freshness
+      - name: Select scheduled validation tier
+        if: ${{ github.event_name == 'schedule' }}
+        run: echo "VALIDATION_TIER=full" >> "$GITHUB_ENV"
+      - name: Select manual validation tier
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "VALIDATION_TIER=${{ inputs.validation_tier }}" >> "$GITHUB_ENV"
       - name: Test
         id: pytest
-        run: python scripts/run_validation_tier.py full --pytest-arg=--junitxml=pytest-results.xml
+        run: python scripts/run_validation_tier.py "$VALIDATION_TIER" --pytest-arg=--junitxml=pytest-results.xml
       - name: Test failure annotations
         if: ${{ failure() && steps.pytest.conclusion == 'failure' }}
         run: |
