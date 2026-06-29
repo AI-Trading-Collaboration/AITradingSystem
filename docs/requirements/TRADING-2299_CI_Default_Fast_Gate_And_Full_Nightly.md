@@ -41,3 +41,11 @@ GitHub Actions CI 当前每次 push / pull request 都运行
   10 passed、Ruff、docs freshness、`git diff --check` 和 `fast-unit` tier
   194 passed（runtime artifact=`outputs/validation_runtime/fast-unit_20260629T015021Z/test_runtime_summary.json`）；
   等待 GitHub Actions 新 run 结果。
+- 2026-06-29: GitHub Actions run #712 失败于 clean-cache 环境下的
+  `test_source_qualification_remediation_contract` 固定本机 cache count 断言；测试合同改为校验
+  updated acceptance summary 与 acceptance report 自洽，并继续要求 diagnostic / blocked
+  fail-closed source counts 覆盖至少 5 个 qualification items，不放宽 data-quality、scoring、
+  backtest、report 或 production gate。
+- 2026-06-29: 修复后验证通过 focused parallel pytest 11 passed、clean worktree targeted
+  pytest 1 passed、Ruff、docs freshness、`git diff --check` 和 `fast-unit` tier
+  194 passed（runtime artifact=`outputs/validation_runtime/fast-unit_20260629T021606Z/test_runtime_summary.json`）。
