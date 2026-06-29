@@ -10,8 +10,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from ai_trading_system.candidate_signal_binding_validator import (
     CandidateSignalBindingValidator,
 )
@@ -28,6 +26,7 @@ from ai_trading_system.post_2085_research_common import (
     round_float,
     to_float,
     validate_cached_market_data,
+    write_csv_rows,
     write_json,
     write_markdown,
 )
@@ -328,18 +327,18 @@ def run_refined_candidate_actual_path_validation(
 
     write_json(paths["summary"], {**common, "summary": summary})
     write_json(paths["actual_path_matrix_json"], {**common, "rows": actual_path_rows})
-    _write_csv(paths["actual_path_matrix_csv"], actual_path_rows)
+    write_csv_rows(paths["actual_path_matrix_csv"], actual_path_rows)
     write_json(paths["prediction_outcome_matrix_json"], {**common, "rows": outcome_rows})
-    _write_csv(paths["prediction_outcome_matrix_csv"], outcome_rows)
+    write_csv_rows(paths["prediction_outcome_matrix_csv"], outcome_rows)
     write_json(paths["scorecard"], {**common, "candidate_scorecards": scorecards})
     write_json(paths["high_conviction_json"], {**common, "rows": high_conviction_rows})
-    _write_csv(paths["high_conviction_csv"], high_conviction_rows)
+    write_csv_rows(paths["high_conviction_csv"], high_conviction_rows)
     write_json(paths["false_signal_cost_json"], {**common, "rows": false_cost_rows})
-    _write_csv(paths["false_signal_cost_csv"], false_cost_rows)
+    write_csv_rows(paths["false_signal_cost_csv"], false_cost_rows)
     write_json(paths["guardrail_json"], {**common, "rows": guardrail_rows})
-    _write_csv(paths["guardrail_csv"], guardrail_rows)
+    write_csv_rows(paths["guardrail_csv"], guardrail_rows)
     write_json(paths["comparison_json"], {**common, "rows": comparison_rows})
-    _write_csv(paths["comparison_csv"], comparison_rows)
+    write_csv_rows(paths["comparison_csv"], comparison_rows)
     write_json(paths["state_recommendation_matrix"], {**common, "candidate_rows": state_rows})
     write_json(paths["error_attribution_seed"], {**common, "error_rows": error_rows})
     write_json(paths["data_quality_report"], {**common, "candidate_rows": data_quality_rows})
@@ -1521,11 +1520,6 @@ def _read_signal_series_csv(path: Path) -> list[dict[str, Any]]:
                 except json.JSONDecodeError:
                     pass
     return rows
-
-
-def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame([clean_for_yaml(dict(row)) for row in rows]).to_csv(path, index=False)
 
 
 def _render_validation_report(

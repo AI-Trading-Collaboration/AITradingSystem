@@ -254,6 +254,23 @@ def write_markdown(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_csv_rows(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([clean_for_yaml(dict(row)) for row in rows]).to_csv(path, index=False)
+
+
+def write_matrix_artifacts(
+    json_path: Path,
+    csv_path: Path,
+    common: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    rows_key: str = "rows",
+) -> None:
+    write_json(json_path, {**dict(common), rows_key: list(rows)})
+    write_csv_rows(csv_path, rows)
+
+
 def write_parquet(frame: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_parquet(path, index=False)

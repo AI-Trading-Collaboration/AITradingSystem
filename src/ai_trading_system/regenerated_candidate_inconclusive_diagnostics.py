@@ -10,8 +10,6 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.first_layer_candidate_signal_generator import (
     trading_2281_boundary_fields,
@@ -22,6 +20,7 @@ from ai_trading_system.post_2085_research_common import (
     to_float,
     write_json,
     write_markdown,
+    write_matrix_artifacts,
 )
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
     DEFAULT_INPUT_ROOT as DEFAULT_GENERATOR_ROOT,
@@ -178,42 +177,49 @@ def run_regenerated_candidate_inconclusive_diagnostics(
     paths = _artifact_paths(output_dir=output_dir, docs_root=docs_root)
 
     write_json(paths["summary"], {**common, "summary": summary})
-    _write_matrix(paths["signal_density_json"], paths["signal_density_csv"], common, density_rows)
-    _write_matrix(
+    write_matrix_artifacts(
+        paths["signal_density_json"], paths["signal_density_csv"], common, density_rows
+    )
+    write_matrix_artifacts(
         paths["confidence_distribution_json"],
         paths["confidence_distribution_csv"],
         common,
         confidence_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["horizon_asset_drilldown_json"],
         paths["horizon_asset_drilldown_csv"],
         common,
         horizon_asset_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["direction_alignment_drilldown_json"],
         paths["direction_alignment_drilldown_csv"],
         common,
         direction_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["false_signal_cost_json"],
         paths["false_signal_cost_csv"],
         common,
         false_cost_rows,
     )
-    _write_matrix(paths["signal_overlap_json"], paths["signal_overlap_csv"], common, overlap_rows)
-    _write_matrix(
+    write_matrix_artifacts(
+        paths["signal_overlap_json"],
+        paths["signal_overlap_csv"],
+        common,
+        overlap_rows,
+    )
+    write_matrix_artifacts(
         paths["data_quality_impact_json"],
         paths["data_quality_impact_csv"],
         common,
         data_quality_impact_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["regime_drilldown_json"], paths["regime_drilldown_csv"], common, regime_rows
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["refinement_recommendation_json"],
         paths["refinement_recommendation_csv"],
         common,
@@ -1036,27 +1042,12 @@ def _artifact_paths(*, output_dir: Path, docs_root: Path) -> dict[str, Path]:
     }
 
 
-def _write_matrix(
-    json_path: Path,
-    csv_path: Path,
-    common: Mapping[str, Any],
-    rows: Sequence[Mapping[str, Any]],
-) -> None:
-    write_json(json_path, {**dict(common), "rows": list(rows)})
-    _write_csv(csv_path, rows)
-
-
 def _read_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
     if not isinstance(payload, dict):
         raise RegeneratedCandidateInconclusiveDiagnosticsError(f"{path}: expected JSON object")
     return payload
-
-
-def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame([clean_for_yaml(dict(row)) for row in rows]).to_csv(path, index=False)
 
 
 def _rows_from_payload(payload: Mapping[str, Any], key: str) -> list[dict[str, Any]]:

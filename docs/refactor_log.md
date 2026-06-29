@@ -1,5 +1,42 @@
 # Refactor Log
 
+## 2026-06-30 Daily Incremental Refactor
+
+- 检查时间：2026-06-30 08:08 Asia/Tokyo。
+- 起始 HEAD：`e416fa69585eebf4d5b0e037206615adf0a8430b` (`TRADING-2289 validate refined candidate actual paths`)。
+- 最近一次合格重构基线提交：`656aa565aa63ff37f2e795e72e393c7796981c48` (`refactor: record AITradingSystem candidate generator safety refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `ed5177f78cfeb339be1e2f8e7cb9dcf72e89dd24`。
+- 评估范围：`656aa565aa63ff37f2e795e72e393c7796981c48..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 CI default fast gate、TRADING-1087 request-budget cleanup、first-layer executable candidate generators、regenerated/refined candidate actual-path validation、inconclusive diagnostics、confidence scaling refinement、report registry、artifact catalog、system flow 和 research trend CLI adapters。主要维护风险是 TRADING-2285～2289 新增多个 candidate/refined research report modules 后，JSON+CSV matrix writer 与 CSV row writer 在 actual-path、refined actual-path、inconclusive diagnostics 和 confidence scaling 模块中重复实现。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2300_Daily_Incremental_Refactor_Candidate_Report_Writer_Boundary.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/post_2085_research_common.py`
+  - `src/ai_trading_system/candidate_confidence_scaling_refinement_plan.py`
+  - `src/ai_trading_system/regenerated_candidate_inconclusive_diagnostics.py`
+  - `src/ai_trading_system/regenerated_candidate_actual_path_validation.py`
+  - `src/ai_trading_system/refined_candidate_actual_path_validation.py`
+  - `tests/test_post_2085_research_common.py`
+- 重构理由：candidate/refined report modules 已统一使用 `write_json` / `write_markdown`，但 matrix CSV serialization 仍在多个模块内重复以 `clean_for_yaml` + `DataFrame.to_csv` 手写。集中到 `post_2085_research_common.write_csv_rows()` / `write_matrix_artifacts()` 可降低后续 report artifact 清洗行为分叉风险，并让 JSON+CSV matrix writer 成为 research report helper 而不是每个 report module 的局部复制。
+- 行为影响：预期无外部行为变化；`aits research trends regenerated-candidate-actual-path-validation`、`regenerated-candidate-inconclusive-diagnostics`、`candidate-generator-confidence-scaling-refinement-plan` 和 `refined-candidate-actual-path-validation` 命令名、参数、默认路径、artifact path、JSON keys、CSV columns、report schema、status/safety fields 和 FAIL/PASS 语义保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent scoring/backtest/daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。既有 data-dependent report commands 仍由原 run path 调用同源 cached-data validation gate。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 shared serialization helper，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output 契约、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\post_2085_research_common.py src\ai_trading_system\candidate_confidence_scaling_refinement_plan.py src\ai_trading_system\regenerated_candidate_inconclusive_diagnostics.py src\ai_trading_system\regenerated_candidate_actual_path_validation.py src\ai_trading_system\refined_candidate_actual_path_validation.py tests\test_post_2085_research_common.py`：PASS。
+  - `python -m compileall src\ai_trading_system\post_2085_research_common.py src\ai_trading_system\candidate_confidence_scaling_refinement_plan.py src\ai_trading_system\regenerated_candidate_inconclusive_diagnostics.py src\ai_trading_system\regenerated_candidate_actual_path_validation.py src\ai_trading_system\refined_candidate_actual_path_validation.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\test_post_2085_research_common.py ... tests\research_trends\test_original_vs_refined_actual_path_comparison.py`：PASS，99 passed。
+  - `python -m ai_trading_system.cli research trends regenerated-candidate-actual-path-validation --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research trends regenerated-candidate-inconclusive-diagnostics --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research trends candidate-generator-confidence-scaling-refinement-plan --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli research trends refined-candidate-actual-path-validation --help`：PASS，命令仍在原路径下可见，参数 help 与默认 path 可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，475 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，10 passed。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。命令输出 3 条未修改 `docs/research/regenerated_candidate_*` 文件未来 CRLF 规范化 warning，但退出码为 0，未发现本轮 diff whitespace error。
+- 遇到的 blocker：无。Ruff 初次检查发现 4 个 import ordering 问题，已用 Ruff 机械修正并复验通过；未降低任何验证或文档规则。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `src/ai_trading_system/refined_candidate_actual_path_validation.py` 与 `src/ai_trading_system/refined_candidate_generators_regenerate.py` 中 large report renderer / loader / safety validation 边界；不得在同一低风险切片中改变投资解释或报告契约。
+- 本轮重构实现提交 SHA：待回填。
+
 ## 2026-06-29 Daily Incremental Refactor
 
 - 检查时间：2026-06-29 10:19 Asia/Tokyo。

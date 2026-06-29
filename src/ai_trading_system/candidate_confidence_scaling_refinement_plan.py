@@ -9,8 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.first_layer_candidate_signal_generator import (
     trading_2281_boundary_fields,
@@ -21,6 +19,7 @@ from ai_trading_system.post_2085_research_common import (
     to_float,
     write_json,
     write_markdown,
+    write_matrix_artifacts,
 )
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
     DEFAULT_INPUT_ROOT as DEFAULT_GENERATOR_ROOT,
@@ -230,38 +229,38 @@ def run_candidate_generator_confidence_scaling_refinement_plan(
 
     paths = _artifact_paths(output_dir=output_dir, docs_root=docs_root)
     write_json(paths["summary"], {**common, "summary": summary})
-    _write_matrix(
+    write_matrix_artifacts(
         paths["failure_diagnosis_json"],
         paths["failure_diagnosis_csv"],
         common,
         diagnosis_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["distribution_retargeting_json"],
         paths["distribution_retargeting_csv"],
         common,
         retargeting_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["scaling_proposal_json"],
         paths["scaling_proposal_csv"],
         common,
         proposal_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["parameter_grid_json"],
         paths["parameter_grid_csv"],
         common,
         grid_rows,
     )
-    _write_matrix(paths["guardrail_json"], paths["guardrail_csv"], common, guardrail_rows)
-    _write_matrix(
+    write_matrix_artifacts(paths["guardrail_json"], paths["guardrail_csv"], common, guardrail_rows)
+    write_matrix_artifacts(
         paths["risk_impact_json"],
         paths["risk_impact_csv"],
         common,
         risk_impact_rows,
     )
-    _write_matrix(
+    write_matrix_artifacts(
         paths["implementation_plan_json"],
         paths["implementation_plan_csv"],
         common,
@@ -998,17 +997,6 @@ def _artifact_paths(*, output_dir: Path, docs_root: Path) -> dict[str, Path]:
         "guardrails_doc": docs_root / "candidate_confidence_scaling_guardrails.md",
         "implementation_plan_doc": docs_root / "candidate_2288_refined_regeneration_plan.md",
     }
-
-
-def _write_matrix(
-    json_path: Path,
-    csv_path: Path,
-    common: Mapping[str, Any],
-    rows: Sequence[Mapping[str, Any]],
-) -> None:
-    write_json(json_path, {**dict(common), "rows": list(rows)})
-    csv_path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame([clean_for_yaml(dict(row)) for row in rows]).to_csv(csv_path, index=False)
 
 
 def _read_json(path: Path) -> dict[str, Any]:
