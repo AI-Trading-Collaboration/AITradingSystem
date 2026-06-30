@@ -169,6 +169,18 @@ from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
 from ai_trading_system.first_layer_gate_policy_v2_reconciliation import (
     run_first_layer_gate_policy_v2_reconciliation_pack,
 )
+from ai_trading_system.first_layer_new_candidate_family_prioritization import (
+    DEFAULT_DOCS_ROOT as DEFAULT_NEW_CANDIDATE_FAMILY_DOCS_ROOT,
+)
+from ai_trading_system.first_layer_new_candidate_family_prioritization import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_NEW_CANDIDATE_FAMILY_OUTPUT_ROOT,
+)
+from ai_trading_system.first_layer_new_candidate_family_prioritization import (
+    MODE as NEW_CANDIDATE_FAMILY_MODE,
+)
+from ai_trading_system.first_layer_new_candidate_family_prioritization import (
+    run_first_layer_new_candidate_family_prioritization,
+)
 from ai_trading_system.first_layer_objective_validation_redesign import (
     DEFAULT_BENCHMARK_CONSISTENCY_PATH as DEFAULT_OBJECTIVE_VALIDATION_BENCHMARK_CONSISTENCY_PATH,
 )
@@ -2126,6 +2138,24 @@ def scope_narrowed_forward_observe_readiness_review_command(
         docs_root=docs_root,
     )
     _print_payload("Scope-narrowed forward observe readiness review", payload)
+
+
+@trends_app.command("first-layer-new-candidate-family-prioritization")
+def first_layer_new_candidate_family_prioritization_command(
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_NEW_CANDIDATE_FAMILY_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = NEW_CANDIDATE_FAMILY_MODE,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_NEW_CANDIDATE_FAMILY_DOCS_ROOT,
+) -> None:
+    payload = run_first_layer_new_candidate_family_prioritization(
+        output_dir=output_dir,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("First-layer new candidate family prioritization", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

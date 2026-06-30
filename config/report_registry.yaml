@@ -23526,6 +23526,50 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: first_layer_new_candidate_family_prioritization
+    title: First-Layer New Candidate Family Prioritization
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends first-layer-new-candidate-family-prioritization
+    artifact_globs:
+      - docs/research/first_layer_new_candidate_family_prioritization.md
+      - docs/research/first_layer_new_candidate_family_task_backlog.md
+      - docs/research/first_layer_new_candidate_family_safety_boundary.md
+      - docs/research/first_layer_new_candidate_family_owner_review_note.md
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/first_layer_new_candidate_family_prioritization_summary.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_score_matrix.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_score_matrix.csv
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_data_feasibility_matrix.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_data_feasibility_matrix.csv
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_task_backlog.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_task_backlog.csv
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_standard_validation_path.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/deferred_current_form_matrix.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/deferred_current_form_matrix.csv
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_safety_boundary.json
+      - outputs/research_trends/first_layer_new_candidate_family_prioritization/candidate_family_owner_review_note.json
+    artifact_selection_policy: latest_available
+    artifact_role: first_layer_new_candidate_family_prioritization
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    candidate_generation_allowed: false
+    actual_path_validation_executed: false
+    forward_observe_runtime_started: false
+    freshness_sla_days: 30
+    freshness_rationale: >
+      New first-layer candidate family prioritization should be rerun after
+      TRADING-2293 readiness outputs, rejected/archived candidate state, true
+      breadth data-source availability, owner research priorities, or first-layer
+      candidate safety policy changes.
+    owner_action: review_candidate_family_backlog_before_trading_2302_breadth_spec
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
