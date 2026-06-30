@@ -23484,6 +23484,48 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: scope_narrowed_forward_observe_readiness_review
+    title: Scope-Narrowed Forward Observe Readiness Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends scope-narrowed-forward-observe-readiness-review
+    artifact_globs:
+      - docs/research/scope_narrowed_forward_observe_readiness_review.md
+      - docs/research/risk_cap_forward_observe_evidence_collection_spec.md
+      - docs/research/forward_observe_stop_continue_rules.md
+      - docs/research/rejected_and_archived_candidate_carry_forward.md
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_readiness_review_summary.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_candidate_readiness_matrix.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_candidate_readiness_matrix.csv
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_gate_checklist.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_evidence_collection_spec.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_daily_report_contract.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_weekly_review_contract.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_stop_continue_rules.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_operational_boundary.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/risk_cap_forward_observe_metric_spec.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/risk_cap_trigger_interpretation_spec.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/rejected_candidate_carry_forward_matrix.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/rejected_candidate_carry_forward_matrix.csv
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/archived_candidate_carry_forward_matrix.json
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/archived_candidate_carry_forward_matrix.csv
+      - outputs/research_trends/scope_narrowed_forward_observe_readiness_review/forward_observe_next_task_recommendation.json
+    artifact_selection_policy: latest_available
+    artifact_role: scope_narrowed_forward_observe_readiness_review
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    forward_observe_started: false
+    freshness_sla_days: 30
+    freshness_rationale: Scope-narrowed forward observe readiness review should be rerun after TRADING-2292 validation outputs, TRADING-2291 scope-narrowed generator artifacts, TRADING-2290 scope review outputs, or observe-only readiness policy changes.
+    owner_action: review_forward_observe_ready_with_warnings_before_trading_2294_evidence_accumulation_extension
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

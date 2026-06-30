@@ -34,6 +34,9 @@ from ai_trading_system.regenerated_candidate_generator_common import (
 from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
     run_regenerated_candidate_inconclusive_diagnostics,
 )
+from ai_trading_system.scope_narrowed_candidate_actual_path_validation import (
+    run_scope_narrowed_candidate_actual_path_validation,
+)
 from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
     run_scope_narrowed_candidate_generators_regenerate,
 )
@@ -914,6 +917,35 @@ def build_scope_narrowed_candidate_actual_path_validation_fixture(
         "scope_narrowed_generator_dir": output_dir,
         "prices_path": write_price_fixture(tmp_path),
         "rates_path": write_rates_fixture(tmp_path),
+    }
+
+
+def build_scope_narrowed_forward_observe_readiness_fixture(
+    tmp_path: Path,
+) -> dict[str, Path]:
+    fixture = build_scope_narrowed_candidate_actual_path_validation_fixture(tmp_path)
+    scope_validation_dir = tmp_path / "scope_narrowed_validation"
+    run_scope_narrowed_candidate_actual_path_validation(
+        scope_narrowed_generator_dir=fixture["scope_narrowed_generator_dir"],
+        scope_review_dir=fixture["scope_review_dir"],
+        refined_validation_dir=fixture["refined_validation_dir"],
+        include_candidates=(
+            "baseline_plus_trend_structure_scope_narrowed_confirmation_v1,"
+            "volatility_regime_scope_narrowed_risk_cap_v1"
+        ),
+        archived_candidates="risk_appetite_refined_confidence_v1",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=scope_validation_dir,
+        mode="scope_narrowed_actual_path_validation",
+        prices_path=fixture["prices_path"],
+        rates_path=fixture["rates_path"],
+        marketstack_prices_path=None,
+        docs_root=tmp_path / "scope_narrowed_validation_docs",
+    )
+    return {
+        **fixture,
+        "scope_validation_dir": scope_validation_dir,
     }
 
 

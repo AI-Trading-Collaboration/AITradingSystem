@@ -533,6 +533,24 @@ from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
 from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
     run_scope_narrowed_candidate_generators_regenerate,
 )
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_DOCS_ROOT,
+)
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_OUTPUT_ROOT,
+)
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    DEFAULT_SCOPE_GENERATOR_ROOT as DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_GENERATOR_ROOT,
+)
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    DEFAULT_SCOPE_REVIEW_ROOT as DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_SCOPE_REVIEW_ROOT,
+)
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    DEFAULT_SCOPE_VALIDATION_ROOT as DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_VALIDATION_ROOT,
+)
+from ai_trading_system.scope_narrowed_forward_observe_readiness_review import (
+    run_scope_narrowed_forward_observe_readiness_review,
+)
 from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
 )
@@ -2073,6 +2091,41 @@ def scope_narrowed_candidate_actual_path_validation_command(
         docs_root=docs_root,
     )
     _print_payload("Scope-narrowed candidate actual-path validation", payload)
+
+
+@trends_app.command("scope-narrowed-forward-observe-readiness-review")
+def scope_narrowed_forward_observe_readiness_review_command(
+    scope_validation_dir: Annotated[Path, typer.Option("--scope-validation-dir")],
+    scope_generator_dir: Annotated[Path, typer.Option("--scope-generator-dir")],
+    scope_review_dir: Annotated[Path, typer.Option("--scope-review-dir")],
+    candidate: Annotated[str, typer.Option("--candidate")],
+    rejected_candidates: Annotated[str, typer.Option("--rejected-candidates")],
+    archived_candidates: Annotated[str, typer.Option("--archived-candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_DOCS_ROOT,
+) -> None:
+    payload = run_scope_narrowed_forward_observe_readiness_review(
+        scope_validation_dir=scope_validation_dir
+        or DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_VALIDATION_ROOT,
+        scope_generator_dir=scope_generator_dir
+        or DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_GENERATOR_ROOT,
+        scope_review_dir=scope_review_dir
+        or DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_SCOPE_REVIEW_ROOT,
+        candidate=candidate,
+        rejected_candidates=rejected_candidates,
+        archived_candidates=archived_candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_OUTPUT_ROOT,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Scope-narrowed forward observe readiness review", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
