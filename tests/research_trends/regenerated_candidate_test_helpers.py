@@ -34,6 +34,9 @@ from ai_trading_system.regenerated_candidate_generator_common import (
 from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
     run_regenerated_candidate_inconclusive_diagnostics,
 )
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    run_scope_narrowed_candidate_generators_regenerate,
+)
 
 REFINED_REVIEW_CANDIDATES = (
     "baseline_plus_trend_structure_refined_confidence_v1",
@@ -672,6 +675,7 @@ def build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path: Path) ->
             archive_scope="current_form",
         ),
         "candidate_next_task_recommendation_matrix.json": safe_payload(rows=[]),
+        "candidate_scope_review_decision_summary.json": safe_payload(rows=scope_rows),
     }.items():
         write_json_fixture(scope_review_dir / filename, payload)
 
@@ -882,6 +886,34 @@ def build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path: Path) ->
         "scope_review_dir": scope_review_dir,
         "refined_generator_dir": refined_generator_dir,
         "refined_validation_dir": refined_validation_dir,
+    }
+
+
+def build_scope_narrowed_candidate_actual_path_validation_fixture(
+    tmp_path: Path,
+) -> dict[str, Path]:
+    inputs = build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path)
+    output_dir = tmp_path / "scope_narrowed_generator"
+    run_scope_narrowed_candidate_generators_regenerate(
+        scope_review_dir=inputs["scope_review_dir"],
+        refined_generator_dir=inputs["refined_generator_dir"],
+        refined_validation_dir=inputs["refined_validation_dir"],
+        include_candidates=(
+            "baseline_plus_trend_structure_refined_confidence_v1,"
+            "volatility_regime_refined_confidence_v1"
+        ),
+        archive_candidates="risk_appetite_refined_confidence_v1",
+        target_assets="QQQ,SPY,SMH",
+        horizons="5d,10d,20d",
+        output_dir=output_dir,
+        mode="scope_narrowed_regeneration",
+        docs_root=tmp_path / "scope_narrowed_docs",
+    )
+    return {
+        **inputs,
+        "scope_narrowed_generator_dir": output_dir,
+        "prices_path": write_price_fixture(tmp_path),
+        "rates_path": write_rates_fixture(tmp_path),
     }
 
 

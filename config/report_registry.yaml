@@ -23436,6 +23436,54 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: scope_narrowed_candidate_actual_path_validation
+    title: Scope-Narrowed Candidate Actual-Path Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends scope-narrowed-candidate-actual-path-validation
+    artifact_globs:
+      - docs/research/scope_narrowed_candidate_actual_path_validation_report.md
+      - docs/research/confirmation_only_actual_path_validation.md
+      - docs/research/risk_cap_only_actual_path_validation.md
+      - docs/research/scope_narrowed_active_vs_inactive_comparison.md
+      - docs/research/scope_narrowed_state_recommendation.md
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_actual_path_validation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_actual_path_matrix.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_actual_path_matrix.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_prediction_outcome_matrix.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_prediction_outcome_matrix.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_inactive_reference_matrix.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_inactive_reference_matrix.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_vs_inactive_comparison.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_vs_inactive_comparison.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/confirmation_only_validation_scorecard.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/confirmation_only_validation_scorecard.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/risk_cap_only_validation_scorecard.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/risk_cap_only_validation_scorecard.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_sample_sufficiency_report.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_sample_sufficiency_report.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_false_signal_cost_matrix.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_false_signal_cost_matrix.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_state_recommendation_matrix.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_state_recommendation_matrix.csv
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_error_attribution_seed.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_data_quality_report.json
+      - outputs/research_trends/scope_narrowed_candidate_actual_path_validation/risk_appetite_archive_carry_forward.json
+    artifact_selection_policy: latest_available
+    artifact_role: scope_narrowed_candidate_actual_path_validation
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Scope-narrowed candidate actual-path validation should be rerun after TRADING-2291 scope-narrowed artifacts, TRADING-2290 scope review outputs, TRADING-2289 refined validation outputs, price cache, or TRADING-2292 usage-specific alignment policy changes.
+    owner_action: review_scope_narrowed_confirmation_reject_and_risk_cap_forward_observe_readiness_route_before_trading_2293
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
