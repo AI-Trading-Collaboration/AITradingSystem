@@ -492,6 +492,399 @@ def build_refined_scope_review_input_fixture(tmp_path: Path) -> dict[str, Path]:
     }
 
 
+def build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path: Path) -> dict[str, Path]:
+    scope_review_dir = tmp_path / "scope_review"
+    refined_generator_dir = tmp_path / "refined_generator"
+    refined_validation_dir = tmp_path / "refined_validation"
+    scope_review_dir.mkdir(parents=True)
+    refined_generator_dir.mkdir(parents=True)
+    refined_validation_dir.mkdir(parents=True)
+
+    def safe_payload(**extra: object) -> dict[str, object]:
+        return {
+            "artifact_role": "pytest_fixture",
+            "promotion_eligible": False,
+            "promotion_allowed": False,
+            "paper_shadow_allowed": False,
+            "production_allowed": False,
+            "broker_action": "none",
+            "owner_review_required": False,
+            "paper_shadow_recommendation_allowed": False,
+            "production_recommendation_allowed": False,
+            "broker_action_recommendation_allowed": False,
+            **extra,
+        }
+
+    def write_json_fixture(path: Path, payload: dict[str, object]) -> None:
+        path.write_text(json.dumps(payload), encoding="utf-8")
+
+    baseline = "baseline_plus_trend_structure_refined_confidence_v1"
+    volatility = "volatility_regime_refined_confidence_v1"
+    risk = "risk_appetite_refined_confidence_v1"
+    scope_rows = [
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            recommended_scope_action="SCOPE_NARROW_AND_REGENERATE",
+            usage_recommendation="confirmation_only",
+            candidate_status_after_2289="REFINED_ACTUAL_PATH_VALIDATED_CONTINUE_RESEARCH",
+            scope_review_status="LOCAL_EDGE_PRESENT",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_KEEP_ONLY",
+            kept_assets=[],
+            dropped_assets=["QQQ", "SPY", "SMH"],
+            kept_horizons=["5d"],
+            dropped_horizons=["10d", "20d"],
+            kept_directions=["risk_on", "risk_off", "trend_confirming", "trend_weakening"],
+            dropped_directions=["neutral"],
+            kept_regimes=["uptrend"],
+            next_task_recommendation="TRADING-2291_Scope_Narrowed_Candidate_Regeneration",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            recommended_scope_action="SCOPE_NARROW_AND_REGENERATE",
+            usage_recommendation="risk_cap_only",
+            candidate_status_after_2289="REFINED_ACTUAL_PATH_VALIDATED_CONTINUE_RESEARCH",
+            scope_review_status="LOCAL_EDGE_WEAK",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_KEEP_ONLY",
+            kept_assets=["SPY"],
+            dropped_assets=["QQQ", "SMH"],
+            kept_horizons=["5d"],
+            dropped_horizons=["10d", "20d"],
+            kept_directions=["risk_off", "volatility_compression", "volatility_expansion"],
+            dropped_directions=["neutral"],
+            kept_regimes=["high_volatility"],
+            next_task_recommendation="TRADING-2291_Scope_Narrowed_Candidate_Regeneration",
+        ),
+        safe_payload(
+            refined_candidate_id=risk,
+            original_candidate_id="risk_appetite",
+            recommended_scope_action="REJECT_CURRENT_FORM",
+            usage_recommendation="reject",
+            candidate_status_after_2289="REFINED_ACTUAL_PATH_VALIDATED_REJECT_RECOMMENDED",
+            scope_review_status="LOCAL_EDGE_NOT_FOUND",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_INCONCLUSIVE",
+            kept_assets=["QQQ"],
+            dropped_assets=["SMH"],
+            kept_horizons=["5d"],
+            dropped_horizons=[],
+            kept_directions=["risk_on"],
+            dropped_directions=[],
+            kept_regimes=[],
+            next_task_recommendation="TRADING-2291_Archive_Rejected_Candidate_Current_Form",
+        ),
+    ]
+    direction_rows = [
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            signal_direction="trend_confirming",
+            direction_scope_label="DIRECTION_CONFIRMATION_ONLY",
+        ),
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            signal_direction="risk_on",
+            direction_scope_label="DIRECTION_KEEP",
+        ),
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            signal_direction="neutral",
+            direction_scope_label="DIRECTION_DROP",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            signal_direction="volatility_expansion",
+            direction_scope_label="DIRECTION_RISK_CAP_ONLY",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            signal_direction="risk_off",
+            direction_scope_label="DIRECTION_RISK_CAP_ONLY",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            signal_direction="volatility_compression",
+            direction_scope_label="DIRECTION_KEEP",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            signal_direction="risk_on",
+            direction_scope_label="DIRECTION_DROP",
+        ),
+    ]
+    high_rows = [
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_KEEP_ONLY",
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_KEEP_ONLY",
+        ),
+        safe_payload(
+            refined_candidate_id=risk,
+            original_candidate_id="risk_appetite",
+            high_conviction_scope_label="HIGH_CONVICTION_SCOPE_INCONCLUSIVE",
+        ),
+    ]
+    false_cost_rows = []
+    for refined_id, original_id, directions in [
+        (baseline, "baseline_plus_trend_structure", ["trend_confirming", "risk_on", "neutral"]),
+        (
+            volatility,
+            "volatility_regime",
+            ["volatility_expansion", "risk_off", "volatility_compression", "risk_on"],
+        ),
+    ]:
+        for dimension, values in {
+            "asset": ["QQQ", "SPY", "SMH"],
+            "horizon": ["5d", "10d", "20d"],
+            "direction": directions,
+            "high_conviction": ["high_conviction_only"],
+        }.items():
+            for value in values:
+                false_cost_rows.append(
+                    safe_payload(
+                        refined_candidate_id=refined_id,
+                        original_candidate_id=original_id,
+                        scope_dimension=dimension,
+                        scope_value=value,
+                        false_cost_label="FALSE_COST_ACCEPTABLE",
+                    )
+                )
+    for filename, payload in {
+        "local_edge_scope_review_summary.json": safe_payload(summary={}),
+        "candidate_scope_narrowing_recommendation_matrix.json": safe_payload(rows=scope_rows),
+        "candidate_direction_scope_matrix.json": safe_payload(rows=direction_rows),
+        "candidate_high_conviction_scope_matrix.json": safe_payload(rows=high_rows),
+        "candidate_false_cost_scope_matrix.json": safe_payload(rows=false_cost_rows),
+        "risk_appetite_reject_record.json": safe_payload(
+            refined_candidate_id=risk,
+            original_candidate_id="risk_appetite",
+            archive_scope="current_form",
+        ),
+        "candidate_next_task_recommendation_matrix.json": safe_payload(rows=[]),
+    }.items():
+        write_json_fixture(scope_review_dir / filename, payload)
+
+    state_rows = [
+        safe_payload(
+            refined_candidate_id=baseline,
+            original_candidate_id="baseline_plus_trend_structure",
+            recommended_research_status="REFINED_ACTUAL_PATH_VALIDATED_CONTINUE_RESEARCH",
+            owner_review_candidate_recommendation=False,
+        ),
+        safe_payload(
+            refined_candidate_id=volatility,
+            original_candidate_id="volatility_regime",
+            recommended_research_status="REFINED_ACTUAL_PATH_VALIDATED_CONTINUE_RESEARCH",
+            owner_review_candidate_recommendation=False,
+        ),
+        safe_payload(
+            refined_candidate_id=risk,
+            original_candidate_id="risk_appetite",
+            recommended_research_status="REFINED_ACTUAL_PATH_VALIDATED_REJECT_RECOMMENDED",
+            owner_review_candidate_recommendation=False,
+        ),
+    ]
+    for filename, payload in {
+        "refined_candidate_actual_path_validation_summary.json": safe_payload(summary={}),
+        "refined_candidate_validation_scorecard.json": safe_payload(candidate_scorecards=[]),
+        "refined_high_conviction_outcome_drilldown.json": safe_payload(rows=[]),
+        "refined_false_signal_cost_matrix.json": safe_payload(rows=[]),
+        "refined_guardrail_validation_matrix.json": safe_payload(rows=[]),
+        "original_vs_refined_actual_path_comparison.json": safe_payload(rows=[]),
+        "refined_candidate_state_recommendation_matrix.json": safe_payload(
+            candidate_rows=state_rows
+        ),
+        "refined_candidate_data_quality_report.json": safe_payload(candidate_rows=[]),
+    }.items():
+        write_json_fixture(refined_validation_dir / filename, payload)
+
+    for filename in (
+        "refined_regeneration_run_summary.json",
+        "refined_regeneration_validation_summary.json",
+        "refined_original_vs_refined_delta_summary.json",
+    ):
+        write_json_fixture(refined_generator_dir / filename, safe_payload(rows=[]))
+
+    def provenance() -> dict[str, object]:
+        return {
+            "source_paths": ["pytest_source.csv"],
+            "source_hashes": ["pytest_hash"],
+            "regeneration_mode": "deterministic_refined_regeneration",
+            "pit_policy": "strict_pit",
+            "candidate_binding_method": "native_candidate_id",
+            "source_schema_status": "candidate_bound",
+            "promotion_eligible": False,
+        }
+
+    def make_records(refined_id: str, original_id: str) -> list[dict[str, object]]:
+        directions = (
+            ["trend_confirming", "neutral", "risk_on", "trend_confirming"]
+            if "baseline" in refined_id
+            else ["volatility_expansion", "volatility_compression", "risk_on", "risk_off"]
+        )
+        assets = (
+            ["QQQ", "QQQ", "QQQ", "SPY"]
+            if "baseline" in refined_id
+            else ["SPY", "SPY", "SPY", "SPY"]
+        )
+        highs = [True, True, False, True]
+        rows = []
+        for index, direction in enumerate(directions):
+            rows.append(
+                {
+                    "candidate_id": refined_id,
+                    "candidate_family": "first_layer_executable_candidate",
+                    "source_experiment_id": f"{refined_id}_generator",
+                    "source_artifact_id": refined_id,
+                    "source_artifact_path": "pytest_source.csv",
+                    "source_artifact_hash": f"{refined_id}_hash",
+                    "signal_spec_version": "first_layer_candidate_signal_spec.v1",
+                    "prediction_schema_version": "candidate_bound_prediction_artifact.v1",
+                    "generated_at": "2026-06-30T00:00:00+00:00",
+                    "as_of_timestamp": "2023-01-03T21:00:00+00:00",
+                    "decision_timestamp": "2023-01-04T21:00:00+00:00",
+                    "target_asset": assets[index],
+                    "horizon": "5d" if index != 1 else "10d",
+                    "signal_name": f"{direction}_score",
+                    "signal_value": (
+                        0.6
+                        if direction not in {"risk_off", "trend_weakening"}
+                        else -0.6
+                    ),
+                    "signal_direction": direction,
+                    "signal_confidence": 0.8,
+                    "valid_from": "2023-01-04T21:00:00+00:00",
+                    "valid_until": "2023-01-09T21:00:00+00:00",
+                    "input_snapshot_hash": "input_hash",
+                    "feature_snapshot_hash": "feature_hash",
+                    "model_or_rule_version": f"{original_id}.refined.v1",
+                    "provenance": provenance(),
+                    "promotion_eligible": False,
+                    "promotion_allowed": False,
+                    "paper_shadow_allowed": False,
+                    "production_allowed": False,
+                    "broker_action": "none",
+                    "permanently_inconclusive_override_allowed": False,
+                    "source_row_index": index,
+                    "source_date": "2023-01-03",
+                    "source_trend_state": direction,
+                    "source_confidence": 0.8,
+                    "source_prediction_flags": {"high_conviction_flag": highs[index]},
+                    "original_candidate_id": original_id,
+                    "refined_candidate_id": refined_id,
+                    "refinement_source_task": "TRADING-2287",
+                    "refinement_task_id": (
+                        "TRADING-2288_REFINED_CANDIDATE_REGENERATION_WITH_ADJUSTED_CONFIDENCE_SCALING"
+                    ),
+                    "refinement_version": "refined_confidence_v1",
+                    "high_conviction_flag": highs[index],
+                    "refined_signal_value": 0.6,
+                    "refined_signal_confidence": 0.8,
+                    "actual_path_validation_ready": False,
+                    "actual_path_validation_executed": False,
+                }
+            )
+        return rows
+
+    def write_refined_candidate(refined_id: str, original_id: str) -> None:
+        candidate_dir = refined_generator_dir / refined_id
+        candidate_dir.mkdir()
+        records = make_records(refined_id, original_id)
+        signal_spec = safe_payload(
+            schema_version="first_layer_candidate_signal_spec.v1",
+            candidate_id=refined_id,
+            candidate_family="first_layer_executable_candidate",
+            generator_id=f"{refined_id}_generator",
+            signal_spec_version="first_layer_candidate_signal_spec.v1",
+            prediction_schema_version="candidate_bound_prediction_artifact.v1",
+            target_asset="QQQ,SPY,SMH",
+            supported_horizons=["5d", "10d", "20d"],
+            output_signal_names=["pytest_signal"],
+            required_inputs=["pytest_input"],
+            signal_direction_mapping={"pytest": "risk_on"},
+            pit_policy="strict_pit",
+            original_candidate_id=original_id,
+            refined_candidate_id=refined_id,
+        )
+        artifact = safe_payload(
+            schema_version="candidate_bound_prediction_artifact.v1",
+            artifact_id=f"{refined_id}_prediction_artifact",
+            artifact_role="refined_regenerated_executable_candidate_artifact",
+            candidate_id=refined_id,
+            candidate_family="first_layer_executable_candidate",
+            original_candidate_id=original_id,
+            refined_candidate_id=refined_id,
+            source_experiment_id=f"{refined_id}_generator",
+            source_artifact_id=refined_id,
+            source_artifact_path="pytest_source.csv",
+            source_artifact_hash=f"{refined_id}_hash",
+            signal_spec_version="first_layer_candidate_signal_spec.v1",
+            prediction_schema_version="candidate_bound_prediction_artifact.v1",
+            generated_at="2026-06-30T00:00:00+00:00",
+            as_of_timestamp="2023-01-03T21:00:00+00:00",
+            decision_timestamp="2023-01-04T21:00:00+00:00",
+            target_asset=records[-1]["target_asset"],
+            horizon=records[-1]["horizon"],
+            signal_name=records[-1]["signal_name"],
+            signal_value=records[-1]["signal_value"],
+            signal_direction=records[-1]["signal_direction"],
+            signal_confidence=records[-1]["signal_confidence"],
+            valid_from="2023-01-04T21:00:00+00:00",
+            valid_until="2023-01-09T21:00:00+00:00",
+            input_snapshot_hash="input_hash",
+            feature_snapshot_hash="feature_hash",
+            model_or_rule_version=f"{original_id}.refined.v1",
+            provenance=provenance(),
+            prediction_records=records,
+            historical_executable_artifact=True,
+            actual_path_validation_ready=False,
+            actual_path_validation_executed=False,
+            permanently_inconclusive_override_allowed=False,
+        )
+        write_json_fixture(candidate_dir / "refined_candidate_signal_spec.json", signal_spec)
+        write_json_fixture(candidate_dir / "refined_candidate_prediction_artifact.json", artifact)
+        write_json_fixture(candidate_dir / "refined_generation_summary.json", safe_payload())
+        write_json_fixture(
+            candidate_dir / "refined_validation_summary.json",
+            safe_payload(status="PASS"),
+        )
+        write_json_fixture(
+            candidate_dir / "refined_parameter_application_report.json",
+            safe_payload(),
+        )
+        write_json_fixture(candidate_dir / "refined_original_vs_refined_delta.json", safe_payload())
+        csv_rows = []
+        for row in records:
+            csv_row = dict(row)
+            csv_row["provenance"] = json.dumps(csv_row["provenance"])
+            csv_row["source_prediction_flags"] = json.dumps(csv_row["source_prediction_flags"])
+            csv_rows.append(csv_row)
+        pd.DataFrame(csv_rows).to_csv(
+            candidate_dir / "refined_candidate_signal_series.csv",
+            index=False,
+        )
+
+    write_refined_candidate(baseline, "baseline_plus_trend_structure")
+    write_refined_candidate(volatility, "volatility_regime")
+    write_refined_candidate(risk, "risk_appetite")
+    return {
+        "scope_review_dir": scope_review_dir,
+        "refined_generator_dir": refined_generator_dir,
+        "refined_validation_dir": refined_validation_dir,
+    }
+
+
 def regenerated_context(
     tmp_path: Path,
     *,

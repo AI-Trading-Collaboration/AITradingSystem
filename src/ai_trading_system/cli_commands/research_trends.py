@@ -497,6 +497,24 @@ from ai_trading_system.risk_on_veto_diagnostic import (
     DEFAULT_RISK_VETO_LABELS_PATH as DEFAULT_RISK_ON_VETO_LABELS_PATH,
 )
 from ai_trading_system.risk_on_veto_diagnostic import run_risk_on_veto_diagnostic_pack
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    DEFAULT_DOCS_ROOT as DEFAULT_SCOPE_NARROWED_REGENERATION_DOCS_ROOT,
+)
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_SCOPE_NARROWED_REGENERATION_OUTPUT_ROOT,
+)
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    DEFAULT_REFINED_GENERATOR_ROOT as DEFAULT_SCOPE_NARROWED_REFINED_GENERATOR_ROOT,
+)
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    DEFAULT_REFINED_VALIDATION_ROOT as DEFAULT_SCOPE_NARROWED_REFINED_VALIDATION_ROOT,
+)
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    DEFAULT_SCOPE_REVIEW_ROOT as DEFAULT_SCOPE_NARROWED_SCOPE_REVIEW_ROOT,
+)
+from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
+    run_scope_narrowed_candidate_generators_regenerate,
+)
 from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_SECOND_LAYER_PROBE_OUTPUT_ROOT,
 )
@@ -1957,6 +1975,38 @@ def refined_candidate_local_edge_scope_review_command(
         docs_root=docs_root,
     )
     _print_payload("Refined candidate local edge scope review", payload)
+
+
+@trends_app.command("scope-narrowed-candidate-generators-regenerate")
+def scope_narrowed_candidate_generators_regenerate_command(
+    scope_review_dir: Annotated[Path, typer.Option("--scope-review-dir")],
+    refined_generator_dir: Annotated[Path, typer.Option("--refined-generator-dir")],
+    refined_validation_dir: Annotated[Path, typer.Option("--refined-validation-dir")],
+    include_candidates: Annotated[str, typer.Option("--include-candidates")],
+    archive_candidates: Annotated[str, typer.Option("--archive-candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_SCOPE_NARROWED_REGENERATION_DOCS_ROOT,
+) -> None:
+    payload = run_scope_narrowed_candidate_generators_regenerate(
+        scope_review_dir=scope_review_dir or DEFAULT_SCOPE_NARROWED_SCOPE_REVIEW_ROOT,
+        refined_generator_dir=refined_generator_dir
+        or DEFAULT_SCOPE_NARROWED_REFINED_GENERATOR_ROOT,
+        refined_validation_dir=refined_validation_dir
+        or DEFAULT_SCOPE_NARROWED_REFINED_VALIDATION_ROOT,
+        include_candidates=include_candidates,
+        archive_candidates=archive_candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_SCOPE_NARROWED_REGENERATION_OUTPUT_ROOT,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Scope-narrowed candidate generators regenerate", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

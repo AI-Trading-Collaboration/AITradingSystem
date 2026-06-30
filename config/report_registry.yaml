@@ -23390,6 +23390,52 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: scope_narrowed_candidate_regeneration
+    title: Scope-Narrowed Candidate Regeneration
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends scope-narrowed-candidate-generators-regenerate
+    artifact_globs:
+      - docs/research/scope_narrowed_candidate_regeneration_report.md
+      - docs/research/scope_narrowed_candidate_scope_filter_report.md
+      - docs/research/scope_narrowed_original_vs_refined_delta_summary.md
+      - docs/research/risk_appetite_current_form_archive_record.md
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/scope_narrowed_regeneration_run_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/scope_narrowed_regeneration_validation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/scope_narrowed_candidate_registry.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/scope_narrowed_original_vs_refined_vs_scope_delta_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_candidate_signal_spec.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_candidate_signal_series.csv
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_candidate_prediction_artifact.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_generation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_validation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/scope_narrowed_lineage_report.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/baseline_plus_trend_structure_scope_narrowed_confirmation_v1/refined_vs_scope_narrowed_delta.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_candidate_signal_spec.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_candidate_signal_series.csv
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_candidate_prediction_artifact.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_generation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_validation_summary.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/scope_narrowed_lineage_report.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/volatility_regime_scope_narrowed_risk_cap_v1/refined_vs_scope_narrowed_delta.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/risk_appetite_archive/risk_appetite_current_form_archive_record.json
+      - outputs/research_trends/scope_narrowed_candidate_generators_regenerated/risk_appetite_archive/risk_appetite_current_form_archive_record.md
+    artifact_selection_policy: latest_available
+    artifact_role: scope_narrowed_regenerated_candidate_artifact
+    promotion_eligible: false
+    actual_path_validation_ready: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Scope-narrowed candidate regeneration should be rerun after TRADING-2290 scope review outputs, TRADING-2288 refined artifacts, or TRADING-2289 refined validation outputs change.
+    owner_action: run_trading_2292_scope_narrowed_candidate_actual_path_validation_before_owner_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
