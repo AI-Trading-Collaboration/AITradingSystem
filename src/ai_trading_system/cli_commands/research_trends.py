@@ -422,6 +422,24 @@ from ai_trading_system.refined_candidate_generators_regenerate import (
 from ai_trading_system.refined_candidate_generators_regenerate import (
     run_refined_candidate_generators_regenerate,
 )
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REFINED_SCOPE_REVIEW_DOCS_ROOT,
+)
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REFINED_SCOPE_REVIEW_OUTPUT_ROOT,
+)
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    DEFAULT_REFINED_GENERATOR_ROOT as DEFAULT_REFINED_SCOPE_REVIEW_REFINED_GENERATOR_ROOT,
+)
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    DEFAULT_REFINED_VALIDATION_ROOT as DEFAULT_REFINED_SCOPE_REVIEW_VALIDATION_ROOT,
+)
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    DEFAULT_REFINEMENT_PLAN_ROOT as DEFAULT_REFINED_SCOPE_REVIEW_REFINEMENT_PLAN_ROOT,
+)
+from ai_trading_system.refined_candidate_local_edge_scope_review import (
+    run_refined_candidate_local_edge_scope_review,
+)
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
     DEFAULT_INPUT_ROOT as DEFAULT_REGENERATED_ACTUAL_PATH_INPUT_ROOT,
 )
@@ -1902,6 +1920,43 @@ def refined_candidate_actual_path_validation_command(
         docs_root=docs_root,
     )
     _print_payload("Refined candidate actual-path validation", payload)
+
+
+@trends_app.command("refined-candidate-local-edge-scope-review")
+def refined_candidate_local_edge_scope_review_command(
+    refined_validation_dir: Annotated[Path, typer.Option("--refined-validation-dir")],
+    refined_generator_dir: Annotated[Path, typer.Option("--refined-generator-dir")],
+    refinement_plan_dir: Annotated[Path, typer.Option("--refinement-plan-dir")],
+    candidates: Annotated[str, typer.Option("--candidates")],
+    continue_research_candidates: Annotated[
+        str, typer.Option("--continue-research-candidates")
+    ],
+    reject_candidates: Annotated[str, typer.Option("--reject-candidates")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    horizons: Annotated[str, typer.Option("--horizons")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_REFINED_SCOPE_REVIEW_DOCS_ROOT,
+) -> None:
+    payload = run_refined_candidate_local_edge_scope_review(
+        refined_validation_dir=refined_validation_dir
+        or DEFAULT_REFINED_SCOPE_REVIEW_VALIDATION_ROOT,
+        refined_generator_dir=refined_generator_dir
+        or DEFAULT_REFINED_SCOPE_REVIEW_REFINED_GENERATOR_ROOT,
+        refinement_plan_dir=refinement_plan_dir
+        or DEFAULT_REFINED_SCOPE_REVIEW_REFINEMENT_PLAN_ROOT,
+        candidates=candidates,
+        continue_research_candidates=continue_research_candidates,
+        reject_candidates=reject_candidates,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir or DEFAULT_REFINED_SCOPE_REVIEW_OUTPUT_ROOT,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Refined candidate local edge scope review", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

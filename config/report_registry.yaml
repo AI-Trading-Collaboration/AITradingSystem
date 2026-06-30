@@ -23338,7 +23338,53 @@ reports:
     production_allowed: false
     freshness_sla_days: 30
     freshness_rationale: Refined candidate actual-path validation should be rerun after TRADING-2288 refined candidate artifacts, TRADING-2285 original validation outputs, TRADING-2287 guardrails, price cache, or alignment policy changes.
-    owner_action: review_refined_actual_path_high_conviction_and_false_cost_evidence_before_trading_2290_owner_review
+    owner_action: review_refined_actual_path_high_conviction_and_false_cost_evidence_before_trading_2290_scope_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: refined_candidate_local_edge_scope_review
+    title: Refined Candidate Local Edge and Scope Narrowing Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends refined-candidate-local-edge-scope-review
+    artifact_globs:
+      - docs/research/refined_candidate_local_edge_scope_review.md
+      - docs/research/refined_candidate_scope_narrowing_recommendation.md
+      - docs/research/risk_appetite_reject_record.md
+      - docs/research/candidate_next_task_recommendation_after_2289.md
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/local_edge_scope_review_summary.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_local_edge_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_local_edge_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_asset_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_asset_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_horizon_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_horizon_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_direction_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_direction_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_high_conviction_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_high_conviction_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_regime_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_regime_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_false_cost_scope_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_false_cost_scope_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_scope_narrowing_recommendation_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_scope_narrowing_recommendation_matrix.csv
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/risk_appetite_reject_record.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/risk_appetite_reject_record.md
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_next_task_recommendation_matrix.json
+      - outputs/research_trends/refined_candidate_local_edge_scope_review/candidate_scope_review_decision_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: refined_candidate_local_edge_scope_review
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    freshness_sla_days: 30
+    freshness_rationale: Refined candidate local-edge scope review should be rerun after TRADING-2289 refined validation outputs, TRADING-2288 refined artifacts, or TRADING-2287 guardrail changes.
+    owner_action: review_scope_narrowing_and_risk_appetite_current_form_reject_before_trading_2291
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
