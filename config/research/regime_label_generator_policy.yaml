@@ -1,0 +1,204 @@
+policy_id: regime_label_generator_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Regime labels can help explain candidate behavior by market state, but they
+  can become hindsight labels if generated from final episode outcomes. This
+  policy allows a diagnostic-only POC that uses only trailing adjusted-close
+  features known after each market close.
+intended_effect: >
+  Generate PIT-safe or PIT-approx primary trend regimes and volatility overlays
+  for validation segmentation only, without producing candidate signals,
+  portfolio weights, paper-shadow actions, production behavior or broker
+  actions.
+validation_evidence: >
+  Planned TRADING-2316 diagnostic POC. Validation is limited to schema,
+  data-quality gate, PIT guardrails, label distribution sanity checks and
+  safety-boundary tests; it is not actual-path validation or promotion evidence.
+review_condition: >
+  Review before TRADING-2317 regime-segmented candidate validation, before any
+  threshold changes, before adding assets, before using labels in reports, and
+  before any forward observe, paper-shadow, production or broker path.
+expiry_condition: >
+  Replace with an evidence-backed calibrated policy before any label affects
+  scoring, position sizing, risk-cap execution, daily report recommendations,
+  paper-shadow, production or broker actions.
+inputs:
+  required_symbols:
+    - QQQ
+    - SMH
+    - SPY
+  required_price_column: adj_close
+  required_data_quality_gate: aits validate-data
+  required_rate_series_policy: configured_universe_macro_rates
+  source_type: cached_adjusted_close_price_proxy
+known_at_policy:
+  policy_id: trailing_close_known_after_market_close
+  label_known_at: market_close_plus_processing_lag
+  feature_lag_days: 0
+  pit_policy_status: PIT_APPROX_TRAILING_CLOSE_ONLY
+  allowed_inputs:
+    - current_or_prior_adjusted_close
+    - trailing_returns
+    - trailing_drawdown_from_observed_high
+    - trailing_rebound_from_observed_low
+    - trailing_realized_volatility
+  prohibited_inputs:
+    - future_return
+    - future_drawdown
+    - future_volatility
+    - final_episode_peak_or_trough
+    - post_hoc_event_name
+    - hindsight_relabeling
+label_axes:
+  primary_trend_regime:
+    allowed_labels:
+      - uptrend
+      - late_uptrend
+      - drawdown
+      - panic
+      - rebound
+      - failed_rebound
+      - range_bound
+    neutral_label_allowed: false
+    diagnostic_usage: validation_segmentation_primary_state
+  volatility_overlay:
+    allowed_labels:
+      - high_volatility
+      - low_volatility
+    neutral_label: normal_volatility
+    neutral_label_allowed: true
+    diagnostic_usage: validation_segmentation_volatility_context
+threshold_governance:
+  owner: research_governance
+  status: pilot_baseline
+  rationale: >
+    These thresholds are conservative diagnostic baselines for segmenting price
+    regimes. They are not calibrated acceptance, promotion, scoring or position
+    gates.
+  intended_effect: >
+    Produce interpretable, trailing-feature labels with enough state diversity
+    for TRADING-2317 segmentation diagnostics.
+  validation_evidence: >
+    Planned unit tests, real cached-data CLI smoke test, distribution sanity
+    checks, PIT policy artifact and data-quality gate. No threshold is promoted
+    as evidence-backed investment policy in this task.
+  review_condition: >
+    Review after TRADING-2317 segmentation results, after material distribution
+    imbalance, or before any report/scoring/execution use.
+  expiry_condition: >
+    Replace with calibrated policy before promotion, paper-shadow, production,
+    broker path or investment-facing threshold interpretation.
+thresholds:
+  minimum_history_days:
+    value: 126
+    rationale: >
+      Requires roughly six months of warm-up before assigning diagnostic labels,
+      so drawdown and trend features are not dominated by a short startup window.
+  short_return_lookback_days:
+    value: 21
+    rationale: >
+      Approximate one trading month used only as a trailing momentum feature for
+      diagnostic regime assignment.
+  long_return_lookback_days:
+    value: 63
+    rationale: >
+      Approximate one trading quarter used only as a trailing trend context.
+  drawdown_lookback_days:
+    value: 126
+    rationale: >
+      Approximate six-month observed-to-date high watermark window; does not use
+      future troughs.
+  rebound_lookback_days:
+    value: 21
+    rationale: >
+      Short trailing window for recovery attempts from an already observed low.
+  volatility_lookback_days:
+    value: 21
+    rationale: >
+      One-month realized volatility window using only trailing daily returns.
+  short_uptrend_min_return:
+    value: 0.02
+    rationale: >
+      Pilot baseline for positive short-term trend confirmation; diagnostic only.
+  long_uptrend_min_return:
+    value: 0.05
+    rationale: >
+      Pilot baseline for positive quarterly trend context; diagnostic only.
+  late_uptrend_drawdown_threshold:
+    value: -0.03
+    rationale: >
+      Mild observed drawdown or weakening short trend marks constructive but
+      fragile uptrend context; diagnostic only.
+  drawdown_threshold:
+    value: -0.08
+    rationale: >
+      Observed-to-date drawdown pressure baseline; not a risk-off or sell signal.
+  panic_drawdown_threshold:
+    value: -0.15
+    rationale: >
+      Extreme observed drawdown baseline used only for stress segmentation.
+  panic_volatility_threshold:
+    value: 0.30
+    rationale: >
+      Annualized realized volatility context for acute stress segmentation.
+  rebound_return_threshold:
+    value: 0.06
+    rationale: >
+      Trailing recovery from an observed low large enough to distinguish rebound
+      attempts from minor noise.
+  rebound_prior_drawdown_threshold:
+    value: -0.06
+    rationale: >
+      Requires the asset to remain meaningfully below its observed high before a
+      rebound label is assigned.
+  failed_rebound_min_rebound:
+    value: 0.03
+    rationale: >
+      Minimum observed bounce before a weakening recovery can be labeled as a
+      failed rebound diagnostic.
+  failed_rebound_drawdown_threshold:
+    value: -0.06
+    rationale: >
+      Failed rebound requires the asset to remain in meaningful observed
+      drawdown, avoiding hindsight failure labels from shallow pullbacks.
+  range_long_abs_return_threshold:
+    value: 0.04
+    rationale: >
+      Quarterly absolute-return band for choppy / range-bound diagnostic state.
+  range_drawdown_floor:
+    value: -0.08
+    rationale: >
+      Separates range-bound from active drawdown pressure.
+  high_volatility_annualized_threshold:
+    value: 0.28
+    rationale: >
+      Pilot realized-volatility overlay baseline for elevated stress context.
+  low_volatility_annualized_threshold:
+    value: 0.12
+    rationale: >
+      Pilot realized-volatility overlay baseline for quiet-market context.
+safety:
+  research_only: true
+  diagnostic_only: true
+  segmentation_only: true
+  generator_implemented: true
+  regime_label_series_generated: true
+  candidate_signal_generated: false
+  candidate_artifact_generated: false
+  actual_path_validation_executed: false
+  scope_review_executed: false
+  forward_observe_started: false
+  direct_strategy_signal_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  portfolio_effect: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

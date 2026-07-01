@@ -24265,6 +24265,76 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: regime_label_generator_diagnostic_poc
+    title: Regime Label Generator Diagnostic POC
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends regime-label-generator-diagnostic-poc
+    artifact_globs:
+      - config/research/regime_label_generator_policy.yaml
+      - config/research/regime_state_machine_design_policy.yaml
+      - docs/research/regime_label_generator_diagnostic_poc.md
+      - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_generation_summary.json
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_series.csv
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_pit_policy.json
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_distribution_matrix.json
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_distribution_matrix.csv
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_transition_matrix.json
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_transition_matrix.csv
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_generation_safety_boundary.json
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/data_quality_2026-06-29.md
+    artifact_selection_policy: latest_available
+    artifact_role: regime_label_series_diagnostic_poc
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY
+    diagnostic_only: true
+    segmentation_only: true
+    generator_implemented: true
+    regime_label_series_generated: true
+    candidate_signal_generated: false
+    candidate_artifact_generated: false
+    actual_path_validation_executed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    direct_strategy_signal_allowed: false
+    label_axes:
+      - primary_trend_regime
+      - volatility_overlay
+    label_ids:
+      - uptrend
+      - late_uptrend
+      - drawdown
+      - panic
+      - rebound
+      - failed_rebound
+      - range_bound
+      - high_volatility
+      - low_volatility
+    overlay_neutral_label: normal_volatility
+    required_symbols:
+      - QQQ
+      - SMH
+      - SPY
+    policy_id: regime_label_generator_policy
+    policy_version: v1
+    freshness_sla_days: 14
+    freshness_rationale: >
+      Regime label series should be regenerated after price cache updates,
+      data-quality policy changes, threshold policy changes, PIT / known-at
+      assumption changes or before TRADING-2317 segmentation diagnostics.
+    owner_action: review_diagnostic_label_distribution_before_trading_2317_segmentation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

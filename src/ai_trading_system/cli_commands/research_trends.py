@@ -662,6 +662,33 @@ from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
 from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
     run_regenerated_candidate_inconclusive_diagnostics,
 )
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_DESIGN_POLICY_PATH as DEFAULT_REGIME_LABEL_GENERATOR_DESIGN_POLICY_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REGIME_LABEL_GENERATOR_DOCS_ROOT,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_MARKETSTACK_PRICES_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REGIME_LABEL_GENERATOR_OUTPUT_ROOT,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_POLICY_PATH as DEFAULT_REGIME_LABEL_GENERATOR_POLICY_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_PRICES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_PRICES_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_RATES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_RATES_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    MODE as REGIME_LABEL_GENERATOR_MODE,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    run_regime_label_generator_diagnostic_poc,
+)
 from ai_trading_system.regime_state_machine_design_audit import (
     DEFAULT_DOCS_ROOT as DEFAULT_REGIME_STATE_MACHINE_DOCS_ROOT,
 )
@@ -2815,6 +2842,50 @@ def regime_state_machine_design_audit_command(
         mode=mode,
     )
     _print_payload("Regime state machine design audit", payload)
+
+
+@trends_app.command("regime-label-generator-diagnostic-poc")
+def regime_label_generator_diagnostic_poc_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_POLICY_PATH,
+    design_policy_path: Annotated[
+        Path, typer.Option("--design-policy")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_DESIGN_POLICY_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_MARKETSTACK_PRICES_PATH,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = REGIME_LABEL_GENERATOR_MODE,
+) -> None:
+    payload = run_regime_label_generator_diagnostic_poc(
+        policy_path=policy_path,
+        design_policy_path=design_policy_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        quality_as_of=quality_as_of,
+        start_date=start_date,
+        end_date=end_date,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Regime label generator diagnostic POC", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
