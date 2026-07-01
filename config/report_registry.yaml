@@ -23783,6 +23783,53 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: ai_semiconductor_leadership_generator_poc
+    title: AI Semiconductor Leadership Generator POC
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends ai-semiconductor-leadership-generator-poc
+    artifact_globs:
+      - config/research/ai_semiconductor_leadership_generator_policy.yaml
+      - docs/research/ai_semiconductor_leadership_generator_poc.md
+      - docs/requirements/TRADING-2308_AI_Semiconductor_Leadership_Generator_POC.md
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/ai_semiconductor_leadership_generator_poc_summary.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/ai_leadership_generator_policy_summary.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/ai_leadership_generator_safety_boundary.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/ai_leadership_generator_validation_summary.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/data_quality_*.md
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/*/candidate_signal_spec.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/*/candidate_signal_series.csv
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/*/candidate_prediction_artifact.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/*/generation_summary.json
+      - outputs/research_trends/ai_semiconductor_leadership_generator_poc/*/validation_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: ai_semiconductor_leadership_generator_poc
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: true
+    actual_path_validation_executed: false
+    actual_path_validation_ready: false
+    candidate_artifact_generated: true
+    candidate_signal_series_generated: true
+    candidate_prediction_artifact_generated: true
+    full_universe_readiness_claimed: false
+    data_quality_status: PASS_WITH_WARNINGS
+    policy_id: ai_semiconductor_leadership_generator_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      AI / semiconductor leadership generator POC outputs should be rerun after
+      required-symbol price data changes, policy weights or basket membership
+      changes, or before TRADING-2309 actual-path validation consumes the bundle.
+    owner_action: review_generator_poc_before_trading_2309_actual_path_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

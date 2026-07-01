@@ -19,6 +19,24 @@ from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
 from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
     run_ai_semiconductor_leadership_feasibility_audit,
 )
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    DEFAULT_DOCS_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_DOCS_ROOT,
+)
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    DEFAULT_FEASIBILITY_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_FEASIBILITY_ROOT,
+)
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_OUTPUT_ROOT,
+)
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    DEFAULT_POLICY_PATH as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_POLICY_PATH,
+)
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    MODE as AI_SEMICONDUCTOR_LEADERSHIP_POC_MODE,
+)
+from ai_trading_system.ai_semiconductor_leadership_generator_poc import (
+    run_ai_semiconductor_leadership_generator_poc,
+)
 from ai_trading_system.baseline_frozen_composer_rewrap import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_SIGNAL_BINDING_SCHEMA_OUTPUT_ROOT,
 )
@@ -2356,6 +2374,58 @@ def ai_semiconductor_leadership_feasibility_audit_command(
     _print_payload("AI / 半导体 leadership 可行性审计", payload)
 
 
+@trends_app.command("ai-semiconductor-leadership-generator-poc")
+def ai_semiconductor_leadership_generator_poc_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_POLICY_PATH,
+    feasibility_dir: Annotated[
+        Path, typer.Option("--feasibility-dir")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_FEASIBILITY_ROOT,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
+    candidates: Annotated[
+        str, typer.Option("--candidates")
+    ] = (
+        "smh_relative_strength_leadership_v1,"
+        "ai_semiconductor_leadership_quality_v1,"
+        "ai_core_basket_leadership_v1"
+    ),
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = AI_SEMICONDUCTOR_LEADERSHIP_POC_MODE,
+) -> None:
+    payload = run_ai_semiconductor_leadership_generator_poc(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        policy_path=policy_path,
+        feasibility_dir=feasibility_dir,
+        target_assets=target_assets,
+        horizons=horizons,
+        candidates=candidates,
+        start_date=start_date,
+        end_date=end_date,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("AI / 半导体 leadership generator POC", payload)
+
+
 @trends_app.command("first-layer-proxy-challenger-experiments")
 def first_layer_proxy_challenger_experiments_command(
     policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
@@ -2444,7 +2514,9 @@ def _print_payload(label: str, payload: dict[str, object]) -> None:
     status = str(payload.get("status"))
     style = "green" if "READY" in status or "CANDIDATE" in status else "yellow"
     expected_blocked = (
-        "PROMOTION_BLOCKED" in status or "ACTUAL_PATH_VALIDATION_BLOCKED" in status
+        "PROMOTION_BLOCKED" in status
+        or "ACTUAL_PATH_VALIDATION_BLOCKED" in status
+        or "VALIDATION_BLOCKED" in status
         or "SOURCE_BLOCKED" in status
     )
     if "BLOCKED" in status and not expected_blocked:

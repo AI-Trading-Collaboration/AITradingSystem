@@ -1,0 +1,133 @@
+policy_id: ai_semiconductor_leadership_generator_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_feasibility_task: TRADING-2307_AI_SEMICONDUCTOR_LEADERSHIP_CANDIDATE_FAMILY_FEASIBILITY_AUDIT
+rationale: >
+  TRADING-2307 found that AI / semiconductor leadership is price-proxy feasible
+  after the cached-data quality gate, while weight, event and fundamental inputs
+  still require separate PIT/source audits. This policy restricts TRADING-2308
+  to a deterministic price-relative-strength POC.
+intended_effect: >
+  Produce non-promotable candidate-bound research artifacts for SMH leadership,
+  AI chain quality and a pre-registered AI core basket leadership proxy, so
+  TRADING-2309 can later run actual-path validation without reopening the
+  archived generic risk_appetite form.
+validation_evidence: >
+  Planned validation only. TRADING-2308 artifacts are not validation evidence;
+  TRADING-2309 must test SMH future relative return, QQQ / SMH drawdown risk
+  and leadership weakening windows before any interpretation can advance.
+review_condition: >
+  Review after TRADING-2309 actual-path validation or earlier if owner changes
+  the AI core basket, score scale, neutral band, confidence policy or required
+  symbol set.
+expiry_condition: >
+  Replace this pilot policy before promotion, paper-shadow, production, broker
+  use, or any report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - NVDA
+    - AMD
+    - TSM
+    - AVGO
+    - ASML
+  full_universe_blocker_out_of_scope:
+    ticker: ASX
+    reason: >
+      `aits validate-data --full-universe` currently fails because ASX is
+      configured outside the TRADING-2308 required symbol set and missing from
+      the local cache. TRADING-2308 may not claim full-universe readiness.
+signal_policy:
+  lookback_trading_days:
+    value: 20
+    rationale: >
+      Matches the roadmap's 20d AI leadership review horizon and keeps the POC
+      comparable with existing first-layer regenerated candidate lookbacks.
+  relative_strength_score_scale:
+    value: 0.1
+    rationale: >
+      Treats a 10 percentage point 20-trading-day relative return gap as a full
+      pilot score. This is a subjective pilot normalization, not a validated
+      effect size.
+  neutral_band:
+    value: 0.1
+    rationale: >
+      Reuses the existing regenerated candidate neutral band for a research-only
+      direction label. TRADING-2309 must validate or recalibrate it.
+  base_confidence:
+    value: 0.62
+    rationale: >
+      Reuses the existing regenerated candidate baseline confidence so the POC
+      fits the candidate-bound schema without implying calibrated probability.
+  data_quality_warning_confidence_penalty:
+    value: 0.06
+    rationale: >
+      Reduces confidence when validate_data_cache passes with warnings. This is
+      a conservative pilot penalty, not a promotion gate.
+  confidence_floor:
+    value: 0.2
+    rationale: >
+      Matches existing regenerated candidate low-confidence floor for records
+      with limited usable history.
+candidate_policy:
+  smh_relative_strength_leadership_v1:
+    required_symbols:
+      - SMH
+      - QQQ
+    output_signal_names:
+      - smh_vs_qqq_relative_strength_score
+      - smh_overweight_confirmation_score
+      - semiconductor_leadership_weakening_score
+    role: SMH overweight confirmation and semiconductor leadership weakening warning.
+  ai_semiconductor_leadership_quality_v1:
+    required_symbols:
+      - QQQ
+      - SMH
+      - NVDA
+      - AMD
+      - TSM
+      - AVGO
+      - ASML
+    component_weights:
+      smh_vs_qqq: 0.4
+      nvda_vs_smh: 0.3
+      peer_diffusion_vs_smh: 0.3
+    output_signal_names:
+      - ai_semiconductor_leadership_quality_score
+      - nvda_vs_smh_leadership_score
+      - peer_diffusion_vs_smh_score
+    role: AI chain confirmation and leadership quality proxy.
+  ai_core_basket_leadership_v1:
+    basket_policy_status: pre_registered_pilot_basket
+    basket_symbols:
+      - NVDA
+      - AMD
+      - TSM
+      - AVGO
+      - ASML
+    benchmark_symbol: QQQ
+    output_signal_names:
+      - ai_core_basket_vs_qqq_score
+      - ai_core_basket_leadership_confirmation_score
+      - ai_core_basket_weakening_score
+    role: AI core basket leadership proxy; not strict PIT constituent breadth.
+safety:
+  research_only: true
+  actual_path_validation_ready: false
+  actual_path_validation_executed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
