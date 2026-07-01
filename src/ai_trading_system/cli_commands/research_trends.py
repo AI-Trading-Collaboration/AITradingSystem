@@ -898,6 +898,24 @@ from ai_trading_system.second_layer_probe_library_freeze import (
     DEFAULT_PROBE_REGISTRY_V2_PATH,
     run_second_layer_probe_library_freeze_pack,
 )
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    DEFAULT_DOCS_ROOT as DEFAULT_SIGNAL_VALIDITY_AGING_DOCS_ROOT,
+)
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_SIGNAL_VALIDITY_AGING_OUTPUT_ROOT,
+)
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    DEFAULT_POLICY_PATH as DEFAULT_SIGNAL_VALIDITY_AGING_POLICY_PATH,
+)
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    DEFAULT_SOURCE_ROOT as DEFAULT_SIGNAL_VALIDITY_AGING_SOURCE_ROOT,
+)
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    MODE as SIGNAL_VALIDITY_AGING_MODE,
+)
+from ai_trading_system.signal_validity_aging_runtime_design import (
+    run_signal_validity_aging_runtime_design,
+)
 from ai_trading_system.two_layer_policy_compiler import (
     DEFAULT_POLICY_SCHEMA_PATH,
     DEFAULT_SIGNAL_USAGE_MATRIX_V2_PATH,
@@ -2519,6 +2537,32 @@ def risk_cap_cooldown_decay_design_command(
         mode=mode,
     )
     _print_payload("Risk-cap cooldown / decay design", payload)
+
+
+@trends_app.command("signal-validity-aging-runtime-design")
+def signal_validity_aging_runtime_design_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_SIGNAL_VALIDITY_AGING_POLICY_PATH,
+    source_dir: Annotated[
+        Path, typer.Option("--source-dir")
+    ] = DEFAULT_SIGNAL_VALIDITY_AGING_SOURCE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_SIGNAL_VALIDITY_AGING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_SIGNAL_VALIDITY_AGING_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = SIGNAL_VALIDITY_AGING_MODE,
+) -> None:
+    payload = run_signal_validity_aging_runtime_design(
+        policy_path=policy_path,
+        source_dir=source_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Signal validity / aging runtime design", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

@@ -1,0 +1,230 @@
+policy_id: signal_validity_aging_runtime_design_policy
+version: v1
+status: pilot_research_design_only
+owner: research_governance
+task_id: TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Risk-cap execution mechanics cannot become runtime behavior until signal
+  validity, aging, decay, staleness and release / restore semantics are
+  auditable. TRADING-2321 is still design-only, so TRADING-2322 must define
+  runtime fields and state transitions without starting any runtime or
+  producing portfolio actions.
+intended_effect: >
+  Convert the TRADING-2321 execution mechanics package into a design-only
+  signal validity / aging runtime contract covering valid_from, valid_until,
+  decay, staleness, trigger aging and release / restore rules.
+validation_evidence: >
+  Planned TRADING-2322 design-only run using TRADING-2321 artifacts, policy
+  validation tests, CLI output tests, report registry / artifact catalog tests
+  and contract validation. No runtime records, portfolio weights, market orders,
+  paper-shadow orders or production decisions are generated.
+review_condition: >
+  Review before any signal validity runtime implementation, before connecting
+  to daily or weekly reports, before TRADING-2323 exposure-cap mechanics
+  simulation, and before defining executable expiry or release thresholds.
+expiry_condition: >
+  Replace with calibrated runtime policy only after owner review, forward
+  observe evidence and TRADING-2323 simulation define evidence-backed validity
+  windows, aging thresholds and release / restore rules.
+source_dependency:
+  required_task_id: TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN
+  required_status: RISK_CAP_COOLDOWN_DECAY_DESIGN_READY_PROMOTION_BLOCKED
+  required_artifact_role: risk_cap_cooldown_decay_design_only
+  required_design_only: true
+  required_runtime_started: false
+  required_execution_runtime_started: false
+  required_forward_observe_started: false
+  required_broker_action: none
+  required_candidate_id: volatility_regime_scope_narrowed_risk_cap_v1
+  required_state_count: 4
+required_lifecycle_fields:
+  valid_from:
+    field_role: first_timestamp_or_trading_date_when_signal_context_is_observable
+    source: observe_record_or_trigger_context_design_only
+    allowed_current_effect: schema_contract_only
+    forbidden_effects:
+      - trade_start_permission
+      - target_weight_change
+      - broker_order
+  valid_until:
+    field_role: design_placeholder_for_latest_review_date_or_expiry_boundary
+    source: policy_review_rule_not_calibrated
+    allowed_current_effect: schema_contract_only_no_expiry_execution
+    forbidden_effects:
+      - automatic_expiry_trade
+      - automatic_cap_release
+      - broker_order
+  decay:
+    field_role: non_executable_signal_strength_decay_state
+    source: inherited_followup_checkpoint_review
+    allowed_current_effect: design_contract_only_no_decay_multiplier
+    forbidden_effects:
+      - decay_multiplier_application
+      - portfolio_weight_reduction
+      - broker_order
+  staleness:
+    field_role: manual_review_route_for_old_or_unresolved_signal_context
+    source: trigger_age_and_followup_status_design_only
+    allowed_current_effect: manual_review_contract_only
+    forbidden_effects:
+      - automatic_signal_drop
+      - automatic_trade_approval
+      - broker_order
+  trigger_aging:
+    field_role: elapsed_followup_checkpoint_state_for_risk_cap_trigger
+    source: TRADING_2294_and_2321_followup_checkpoints
+    allowed_current_effect: aging_state_contract_only
+    forbidden_effects:
+      - automatic_transition
+      - target_weight_change
+      - broker_order
+  release_restore_rule:
+    field_role: owner_review_required_rule_for_leaving_aging_or_cooldown_state
+    source: TRADING_2321_manual_review_and_cooldown_contract
+    allowed_current_effect: release_restore_schema_only
+    forbidden_effects:
+      - automatic_reentry
+      - automatic_exposure_restore
+      - broker_order
+aging_checkpoints:
+  - 5d
+  - 10d
+  - 20d
+aging_rules:
+  - rule_id: record_valid_from_on_observe_context
+    lifecycle_field: valid_from
+    trigger_state: fresh_observe_context
+    evidence_required:
+      - observed_at
+      - source_artifact_checksum
+      - data_quality_status_visible
+  - rule_id: keep_valid_until_unexecuted_until_calibrated
+    lifecycle_field: valid_until
+    trigger_state: valid_until_design_placeholder
+    evidence_required:
+      - owner_review_required
+      - expiry_threshold_not_calibrated
+      - no_portfolio_write
+  - rule_id: route_decay_to_checkpoint_review
+    lifecycle_field: decay
+    trigger_state: checkpoint_review_pending
+    evidence_required:
+      - followup_checkpoint
+      - cooldown_state_context
+      - no_decay_multiplier
+  - rule_id: route_staleness_to_manual_review
+    lifecycle_field: staleness
+    trigger_state: stale_pending_review
+    evidence_required:
+      - trigger_age_state
+      - unresolved_release_or_restore_rule
+      - owner_review_required
+  - rule_id: release_restore_requires_review_record
+    lifecycle_field: release_restore_rule
+    trigger_state: release_restore_review_pending
+    evidence_required:
+      - release_request_reason
+      - false_risk_cap_and_missed_stress_summary
+      - broker_guard_confirmed
+trigger_aging_states:
+  - state_id: fresh_observe_context
+    state_role: valid_from_context_recorded_design_only
+    aging_status: DESIGN_ONLY_NOT_EXECUTABLE
+  - state_id: checkpoint_review_pending
+    state_role: followup_checkpoint_requires_manual_review
+    aging_status: DESIGN_ONLY_NOT_EXECUTABLE
+  - state_id: stale_pending_review
+    state_role: stale_or_unresolved_trigger_requires_manual_review
+    aging_status: DESIGN_ONLY_NOT_EXECUTABLE
+  - state_id: release_restore_review_pending
+    state_role: release_or_restore_request_requires_owner_review
+    aging_status: DESIGN_ONLY_NOT_EXECUTABLE
+release_restore_rules:
+  - rule_id: no_automatic_release_from_no_add
+    source_state: no_add_mode
+    restore_target_state: normal_observe_context
+    release_allowed_now: false
+    owner_review_required: true
+  - rule_id: no_automatic_release_from_reduced_exposure
+    source_state: reduced_max_exposure_mode
+    restore_target_state: exposure_cap_policy_review
+    release_allowed_now: false
+    owner_review_required: true
+  - rule_id: manual_review_required_for_stale_signal
+    source_state: manual_review_mode
+    restore_target_state: manual_review_resolution_record
+    release_allowed_now: false
+    owner_review_required: true
+  - rule_id: cooldown_release_requires_followup_review
+    source_state: cooldown_mode
+    restore_target_state: normal_observe_context
+    release_allowed_now: false
+    owner_review_required: true
+runtime_record_schema:
+  allowed_action_values:
+    - observe_only_design_contract
+  required_fields:
+    - observed_at
+    - candidate_id
+    - signal_id
+    - trigger_id
+    - valid_from
+    - valid_until
+    - decay
+    - staleness
+    - trigger_aging
+    - release_restore_rule
+    - data_quality_status
+    - allowed_action
+    - source_artifact_checksum
+  forbidden_fields:
+    - target_weight
+    - max_exposure_number
+    - rebalance_instruction
+    - buy_signal
+    - sell_signal
+    - broker_order
+    - paper_shadow_order
+    - production_decision
+calibration_policy:
+  validity_duration_defined: false
+  decay_multiplier_defined: false
+  staleness_threshold_defined: false
+  release_threshold_defined: false
+  calibration_task: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+  forbidden_current_outputs:
+    - valid_until_expiry_action
+    - decay_multiplier
+    - staleness_auto_drop
+    - exposure_restore_instruction
+    - broker_order
+safety:
+  research_only: true
+  design_only: true
+  aging_runtime_started: false
+  signal_validity_runtime_started: false
+  execution_runtime_started: false
+  forward_observe_started: false
+  runtime_started: false
+  portfolio_weights_read: false
+  portfolio_weights_written: false
+  target_weight_generated: false
+  max_exposure_number_generated: false
+  rebalance_instruction_generated: false
+  broker_order_generated: false
+  paper_shadow_order_generated: false
+  production_decision_generated: false
+  validity_runtime_executable: false
+  aging_rule_executable: false
+  release_restore_rule_executable: false
+  manual_review_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  portfolio_effect: none
+  dynamic_promotion_status: BLOCKED
