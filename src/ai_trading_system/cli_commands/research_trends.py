@@ -16,6 +16,15 @@ from ai_trading_system.baseline_frozen_composer_rewrap import (
 from ai_trading_system.baseline_frozen_composer_rewrap import (
     run_candidate_signal_binding_schema_poc,
 )
+from ai_trading_system.breadth_participation_feasibility_audit import (
+    DEFAULT_DOCS_ROOT as DEFAULT_BREADTH_FEASIBILITY_DOCS_ROOT,
+)
+from ai_trading_system.breadth_participation_feasibility_audit import (
+    MODE as BREADTH_FEASIBILITY_MODE,
+)
+from ai_trading_system.breadth_participation_feasibility_audit import (
+    run_breadth_participation_feasibility_audit,
+)
 from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
     DEFAULT_DIAGNOSTICS_ROOT as DEFAULT_CONFIDENCE_SCALING_DIAGNOSTICS_ROOT,
 )
@@ -2156,6 +2165,28 @@ def first_layer_new_candidate_family_prioritization_command(
         docs_root=docs_root,
     )
     _print_payload("First-layer new candidate family prioritization", payload)
+
+
+@trends_app.command("breadth-participation-candidate-family-feasibility-audit")
+def breadth_participation_candidate_family_feasibility_audit_command(
+    target_etfs: Annotated[str, typer.Option("--target-etfs")],
+    target_assets: Annotated[str, typer.Option("--target-assets")],
+    candidate_family: Annotated[str, typer.Option("--candidate-family")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_BREADTH_FEASIBILITY_DOCS_ROOT,
+) -> None:
+    payload = run_breadth_participation_feasibility_audit(
+        target_etfs=target_etfs,
+        target_assets=target_assets,
+        candidate_family=candidate_family,
+        output_dir=output_dir,
+        mode=mode or BREADTH_FEASIBILITY_MODE,
+        docs_root=docs_root,
+    )
+    _print_payload("Breadth participation candidate family feasibility audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
