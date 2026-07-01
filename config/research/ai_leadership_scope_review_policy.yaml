@@ -1,0 +1,180 @@
+policy_id: ai_leadership_scope_review_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_validation_task: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
+rationale: >
+  TRADING-2309 found enough actual-path evidence to continue AI / semiconductor
+  leadership research, but not enough to treat the generated signals as broad
+  investment signals. This policy defines a research-only scope-review lens for
+  deciding whether the family should be narrowed to specific assets, horizons
+  and use cases before any further owner review.
+intended_effect: >
+  Produce an auditable scope decision for AI leadership without opening
+  promotion, paper-shadow, production or broker paths.
+validation_evidence: >
+  Planned validation in TRADING-2310 using TRADING-2309 actual-path evidence.
+  Thresholds are pilot scope-review baselines, not calibrated investment
+  acceptance rules.
+review_condition: >
+  Review after TRADING-2310 scope review, before any forward-observe design,
+  owner precheck, report integration or use-case expansion, or earlier if
+  TRADING-2309 objective definitions, candidate artifacts, thresholds, horizons
+  or source data quality changes.
+expiry_condition: >
+  Replace this pilot policy before any paper-shadow, production, broker action
+  or report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - NVDA
+    - AMD
+    - TSM
+    - AVGO
+    - ASML
+  outcome_assets:
+    - QQQ
+    - SMH
+  full_universe_blocker_out_of_scope:
+    ticker: ASX
+    reason: >
+      `aits validate-data --full-universe` currently fails because ASX is
+      configured outside the TRADING-2310 required symbol and outcome asset set.
+      TRADING-2310 may not claim full-universe readiness.
+scope_options:
+  asset_scopes:
+    - qqq_only_diagnostic
+    - smh_only
+    - qqq_plus_smh
+  owner_review_horizons:
+    - 10d
+    - 20d
+  diagnostic_horizons:
+    - 5d
+  use_cases:
+    confirmation_only:
+      signal_name_contains:
+        - confirmation
+        - relative_strength
+        - leadership_quality
+        - basket_vs_qqq
+      intended_scope: >
+        Confirm AI / semiconductor leadership state; does not create a
+        standalone allocation or buy signal.
+    exposure_cap_modifier:
+      score_fields:
+        - drawdown_risk_score
+        - weakening_window_score
+      intended_scope: >
+        Use as research-only exposure-cap modifier candidate when drawdown and
+        weakening evidence are supportive.
+    standalone_alpha:
+      score_fields:
+        - smh_relative_return_score
+      intended_scope: >
+        Explicit negative control. TRADING-2310 should not recommend standalone
+        alpha use unless SMH relative return evidence is strong.
+scope_thresholds:
+  minimum_scope_records:
+    value: 300
+    rationale: >
+      Scope decisions should not be based on a tiny row slice. TRADING-2309
+      emits multiple candidate / target / horizon / signal rows per source
+      date, so this is a sample sufficiency guard, not an investment standard.
+  minimum_horizon_records:
+    value: 120
+    rationale: >
+      Each reviewed horizon should contain enough eligible records across
+      candidate and signal variants to avoid a single short episode driving the
+      scope decision.
+  minimum_use_case_records:
+    value: 120
+    rationale: >
+      Each use-case decision should aggregate enough signal rows to be
+      interpretable for research-only scope review.
+  asset_keep_alignment_score:
+    value: 0.03
+    rationale: >
+      Asset scope average alignment must be modestly positive before keeping
+      the scope for continued research.
+  asset_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative asset-scope alignment score recommends rejecting
+      that scope in the current form.
+  horizon_keep_alignment_score:
+    value: 0.03
+    rationale: >
+      Horizon average alignment must be modestly positive before keeping the
+      horizon as a primary research scope.
+  horizon_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative horizon alignment score recommends rejecting the
+      horizon in the current form.
+  use_case_keep_alignment_score:
+    value: 0.03
+    rationale: >
+      Use-case average alignment must be modestly positive before keeping that
+      use case for continued research.
+  use_case_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative use-case alignment score recommends rejecting that
+      use case in the current form.
+  drawdown_support_score:
+    value: 0.05
+    rationale: >
+      Exposure-cap modifier scope requires drawdown-risk evidence to be
+      positive, not merely overall alignment.
+  smh_only_primary_min_alignment_score:
+    value: 0.03
+    rationale: >
+      SMH-only primary scope must clear the same modest positive alignment
+      threshold as other kept asset scopes.
+  qqq_plus_smh_min_alignment_score:
+    value: 0.03
+    rationale: >
+      QQQ + SMH combined scope must clear a modest positive alignment threshold
+      before it can be kept for research-only scope.
+  minimum_objective_pass_count_for_ready:
+    value: 2
+    rationale: >
+      Family-level scope readiness requires at least two owner-requested
+      objective rows to have passed in TRADING-2309.
+status_rule:
+  allowed_statuses:
+    - AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY
+    - AI_LEADERSHIP_SCOPE_REVIEW_INCONCLUSIVE
+    - AI_LEADERSHIP_SCOPE_REVIEW_REJECT_RECOMMENDED
+  ready_research_only: >
+    Use AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY when at least one asset
+    scope, one owner-reviewed horizon and one intended use case are kept, and
+    TRADING-2309 objective pass count meets the policy minimum.
+  reject_recommended: >
+    Use AI_LEADERSHIP_SCOPE_REVIEW_REJECT_RECOMMENDED when no asset scope and
+    no intended use case is keepable under the current evidence.
+  otherwise: >
+    Use AI_LEADERSHIP_SCOPE_REVIEW_INCONCLUSIVE.
+safety:
+  research_only: true
+  actual_path_validation_consumed: true
+  scope_review_executed: true
+  forward_observe_started: false
+  owner_approval_required_before_forward_observe: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
