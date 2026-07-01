@@ -23830,6 +23830,59 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: ai_leadership_actual_path_validation
+    title: AI Leadership Actual-Path Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends ai-leadership-actual-path-validation
+    artifact_globs:
+      - config/research/ai_leadership_actual_path_validation_policy.yaml
+      - docs/research/ai_semiconductor_leadership_actual_path_validation.md
+      - docs/requirements/TRADING-2309_AI_Leadership_Actual_Path_Validation.md
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_validation_summary.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_matrix.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_matrix.csv
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_prediction_outcome_matrix.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_prediction_outcome_matrix.csv
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_candidate_scorecard.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_objective_coverage_matrix.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_state_recommendation_matrix.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_safety_boundary.json
+      - outputs/research_trends/ai_leadership_actual_path_validation/data_quality_*.md
+    artifact_selection_policy: latest_available
+    artifact_role: ai_leadership_actual_path_validation
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: false
+    actual_path_validation_executed: true
+    scope_review_ready: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    candidate_prediction_artifact_generated: false
+    full_universe_readiness_claimed: false
+    data_quality_status: PASS_WITH_WARNINGS
+    policy_id: ai_leadership_actual_path_validation_policy
+    policy_version: v1
+    allowed_statuses:
+      - AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH
+      - AI_LEADERSHIP_VALIDATED_INCONCLUSIVE
+      - AI_LEADERSHIP_REJECT_RECOMMENDED
+    freshness_sla_days: 30
+    freshness_rationale: >
+      AI leadership actual-path validation should be rerun after TRADING-2308
+      generator artifacts, required-symbol price data, objective definitions,
+      thresholds, horizons or target assets change, or before TRADING-2310
+      scope review consumes the evidence.
+    owner_action: review_actual_path_validation_before_trading_2310_scope_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

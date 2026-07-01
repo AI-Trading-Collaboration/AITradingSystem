@@ -1,0 +1,137 @@
+policy_id: ai_leadership_actual_path_validation_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_generator_task: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
+rationale: >
+  TRADING-2308 generated schema-valid AI / semiconductor leadership price-proxy
+  candidate artifacts, but the artifacts are not evidence of predictive utility.
+  This policy defines a research-only actual-path validation lens for checking
+  whether the generated signals explain SMH relative return, QQQ / SMH drawdown
+  risk, leadership weakening windows and SMH overweight risk.
+intended_effect: >
+  Produce auditable actual-path evidence for TRADING-2310 scope review without
+  opening promotion, paper-shadow, production or broker paths.
+validation_evidence: >
+  Planned validation in TRADING-2309. Thresholds are pilot baselines and must be
+  reviewed after the first real run; they are not promotion gates or calibrated
+  investment acceptance rules.
+review_condition: >
+  Review after TRADING-2309 actual-path validation, before TRADING-2310 scope
+  review, or earlier if the TRADING-2308 generator policy, AI basket, required
+  symbols, objective definitions or source data quality gate changes.
+expiry_condition: >
+  Replace this pilot policy before any paper-shadow, production, broker action
+  or report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - NVDA
+    - AMD
+    - TSM
+    - AVGO
+    - ASML
+  outcome_assets:
+    - QQQ
+    - SMH
+  full_universe_blocker_out_of_scope:
+    ticker: ASX
+    reason: >
+      `aits validate-data --full-universe` currently fails because ASX is
+      configured outside the TRADING-2309 required symbol and outcome asset set.
+      TRADING-2309 may not claim full-universe readiness.
+validation_thresholds:
+  minimum_candidate_records:
+    value: 300
+    rationale: >
+      Requires at least a few hundred candidate signal rows before a candidate
+      scorecard can be interpreted. The generated POC emits multiple target /
+      horizon / signal rows per source date, so this is a sample sufficiency
+      guard rather than a promotion threshold.
+  minimum_objective_records:
+    value: 120
+    rationale: >
+      Each objective should have enough rows across dates and horizons to avoid
+      a single short window driving the status.
+  relative_return_positive_threshold:
+    value: 0.0025
+    rationale: >
+      Treats 25 bps SMH-vs-QQQ forward relative return as a minimal positive
+      actual-path observation for research scoring.
+  relative_return_negative_threshold:
+    value: -0.0025
+    rationale: >
+      Symmetric pilot boundary for leadership weakening and false risk-on cases.
+  drawdown_warning_threshold:
+    value: -0.03
+    rationale: >
+      Marks a 3% horizon drawdown as a risk-relevant observation for QQQ / SMH
+      drawdown diagnostics.
+  false_risk_on_drawdown_threshold:
+    value: -0.04
+    rationale: >
+      Treats a 4% drawdown after a risk-on / overweight confirmation signal as
+      a false-risk-on cost event for research review.
+  objective_pass_alignment_score:
+    value: 0.05
+    rationale: >
+      Objective-level average alignment must be modestly positive before the
+      objective can be called supportive for continue-research.
+  candidate_continue_alignment_score:
+    value: 0.03
+    rationale: >
+      Candidate-level average alignment must be positive enough to justify
+      continued research but remains far below a promotion standard.
+  candidate_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative candidate alignment score recommends rejecting the
+      current candidate form.
+  continue_research_min_objectives_passed:
+    value: 2
+    rationale: >
+      AI leadership should support at least two of the four owner-requested
+      objective families before the family can continue to TRADING-2310 scope
+      review as a researched candidate family.
+  reject_recommended_min_candidates_rejected:
+    value: 2
+    rationale: >
+      Rejecting the family requires most generated candidates to fail the
+      actual-path lens, avoiding a single noisy candidate from closing the
+      direction.
+status_rule:
+  allowed_statuses:
+    - AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH
+    - AI_LEADERSHIP_VALIDATED_INCONCLUSIVE
+    - AI_LEADERSHIP_REJECT_RECOMMENDED
+  continue_research: >
+    Use AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH when at least
+    continue_research_min_objectives_passed objective rows pass and at least one
+    candidate scorecard recommends continue research.
+  reject_recommended: >
+    Use AI_LEADERSHIP_REJECT_RECOMMENDED when at least
+    reject_recommended_min_candidates_rejected candidate scorecards recommend
+    rejecting the current form.
+  otherwise: >
+    Use AI_LEADERSHIP_VALIDATED_INCONCLUSIVE.
+safety:
+  research_only: true
+  actual_path_validation_executed: true
+  scope_review_ready: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  paper_shadow_recommendation_allowed: false

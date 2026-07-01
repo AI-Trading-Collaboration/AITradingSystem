@@ -7,6 +7,24 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_DOCS_ROOT,
+)
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    DEFAULT_GENERATOR_ROOT as DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_GENERATOR_ROOT,
+)
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_OUTPUT_ROOT,
+)
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    DEFAULT_POLICY_PATH as DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_POLICY_PATH,
+)
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    MODE as AI_LEADERSHIP_ACTUAL_PATH_MODE,
+)
+from ai_trading_system.ai_leadership_actual_path_validation import (
+    run_ai_leadership_actual_path_validation,
+)
 from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
     DEFAULT_DOCS_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_DOCS_ROOT,
 )
@@ -2424,6 +2442,58 @@ def ai_semiconductor_leadership_generator_poc_command(
         mode=mode,
     )
     _print_payload("AI / 半导体 leadership generator POC", payload)
+
+
+@trends_app.command("ai-leadership-actual-path-validation")
+def ai_leadership_actual_path_validation_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    generator_dir: Annotated[
+        Path, typer.Option("--generator-dir")
+    ] = DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_GENERATOR_ROOT,
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_POLICY_PATH,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
+    candidates: Annotated[
+        str, typer.Option("--candidates")
+    ] = (
+        "smh_relative_strength_leadership_v1,"
+        "ai_semiconductor_leadership_quality_v1,"
+        "ai_core_basket_leadership_v1"
+    ),
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = AI_LEADERSHIP_ACTUAL_PATH_MODE,
+) -> None:
+    payload = run_ai_leadership_actual_path_validation(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        generator_dir=generator_dir,
+        policy_path=policy_path,
+        target_assets=target_assets,
+        horizons=horizons,
+        candidates=candidates,
+        start_date=start_date,
+        end_date=end_date,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("AI / 半导体 leadership actual-path validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
