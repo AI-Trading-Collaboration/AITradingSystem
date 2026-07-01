@@ -256,6 +256,24 @@ from ai_trading_system.exposure_cap_mechanics_simulation import (
 from ai_trading_system.exposure_cap_mechanics_simulation import (
     run_exposure_cap_mechanics_simulation,
 )
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_DOCS_ROOT,
+)
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_OUTPUT_ROOT,
+)
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    DEFAULT_POLICY_PATH as DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_POLICY_PATH,
+)
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_SIMULATION_ROOT,
+)
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    MODE as EXPOSURE_CAP_SOURCE_BINDING_MODE,
+)
+from ai_trading_system.exposure_cap_simulation_source_binding import (
+    run_exposure_cap_simulation_source_binding,
+)
 from ai_trading_system.first_layer_active_selection_policy_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
 )
@@ -2607,6 +2625,62 @@ def exposure_cap_mechanics_simulation_command(
         mode=mode,
     )
     _print_payload("Exposure-cap mechanics simulation", payload)
+
+
+@trends_app.command("exposure-cap-simulation-source-binding")
+def exposure_cap_simulation_source_binding_command(
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_SIMULATION_ROOT,
+    risk_cap_source_dir: Annotated[
+        Path, typer.Option("--risk-cap-source-dir")
+    ] = DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_GENERATOR_ROOT,
+    scope_validation_dir: Annotated[
+        Path, typer.Option("--scope-validation-dir")
+    ] = DEFAULT_SCOPE_NARROWED_FORWARD_OBSERVE_VALIDATION_ROOT,
+    market_data_source: Annotated[
+        Path, typer.Option("--market-data-source")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    portfolio_baseline_source: Annotated[
+        Path | None, typer.Option("--portfolio-baseline-source")
+    ] = None,
+    rates_source: Annotated[
+        Path, typer.Option("--rates-source")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_source: Annotated[
+        Path | None, typer.Option("--marketstack-prices-source")
+    ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_POLICY_PATH,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
+    quality_as_of: Annotated[
+        str | None, typer.Option("--quality-as-of")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EXPOSURE_CAP_SOURCE_BINDING_MODE,
+) -> None:
+    payload = run_exposure_cap_simulation_source_binding(
+        simulation_policy_dir=simulation_policy_dir,
+        risk_cap_source_dir=risk_cap_source_dir,
+        scope_validation_dir=scope_validation_dir,
+        market_data_source=market_data_source,
+        rates_source=rates_source,
+        marketstack_prices_source=marketstack_prices_source,
+        portfolio_baseline_source=portfolio_baseline_source,
+        policy_path=policy_path,
+        target_assets=target_assets,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Exposure-cap simulation source binding", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

@@ -23712,6 +23712,81 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: exposure_cap_simulation_source_binding
+    title: Exposure-Cap Simulation Source Binding
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends exposure-cap-simulation-source-binding
+    artifact_globs:
+      - config/research/exposure_cap_simulation_source_binding_policy.yaml
+      - docs/research/exposure_cap_simulation_source_binding_report.md
+      - docs/research/exposure_cap_source_inventory.md
+      - docs/research/source_bound_exposure_cap_dry_run_readiness.md
+      - docs/research/exposure_cap_simulation_next_task_route.md
+      - docs/requirements/TRADING-2324_Exposure_Cap_Simulation_Source_Binding_and_Runtime_Data_Integration.md
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_source_binding_summary.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_source_inventory.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_source_gap_matrix.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/risk_cap_trigger_series_binding_report.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/market_data_binding_report.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/portfolio_baseline_binding_report.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/turnover_rebalance_assumption_report.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/source_bound_dry_run_simulation_readiness.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/source_bound_dry_run_safety_boundary.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_simulation_next_task_route.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/source_bound_exposure_cap_dry_run_result.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/source_bound_exposure_cap_dry_run_result.csv
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_vs_no_cap_comparison.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_turnover_impact_report.json
+      - outputs/research_trends/exposure_cap_simulation_source_binding/exposure_cap_cooldown_impact_report.json
+    artifact_selection_policy: latest_available
+    artifact_role: exposure_cap_simulation_source_binding
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: EXPOSURE_CAP_SIMULATION_SOURCE_BOUND_DRY_RUN_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    source_status: EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED
+    source_artifact_role: exposure_cap_mechanics_simulation_source_blocked
+    data_quality_gate_required: true
+    data_quality_gate_executed: true
+    source_binding_status: SOURCE_BOUND_WITH_SYNTHETIC_BASELINE
+    dry_run_readiness_status: SOURCE_BOUND_DRY_RUN_READY_WITH_SYNTHETIC_BASELINE
+    full_simulation_readiness_status: FULL_SIMULATION_BLOCKED
+    portfolio_source_mode: synthetic_observe_only
+    real_portfolio_baseline_bound: false
+    dry_run_allowed: true
+    dry_run_executed: true
+    dry_run_result_generated: true
+    full_simulation_allowed: false
+    research_only: true
+    observe_only: true
+    dry_run_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Source binding should be rerun after TRADING-2323 source package changes,
+      risk-cap trigger artifacts change, cached market data refreshes, a real
+      portfolio baseline becomes available, or turnover / runtime observe
+      records are supplied.
+    owner_action: provide_or_review_real_portfolio_baseline_before_full_simulation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

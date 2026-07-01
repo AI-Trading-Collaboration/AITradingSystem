@@ -1,0 +1,88 @@
+policy_id: exposure_cap_simulation_source_binding_policy
+version: v1
+status: pilot_research_source_bound_dry_run
+owner: research_governance
+task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  TRADING-2324 binds the TRADING-2323 source-blocked exposure-cap simulation
+  framework to auditable risk-cap trigger, market price, portfolio-baseline,
+  turnover, cooldown and simulation-calendar sources. The initial portfolio
+  baseline may be synthetic observe-only when no reviewed portfolio exposure
+  source exists, but all resulting return, drawdown and turnover numbers remain
+  proxy diagnostics.
+intended_effect: >
+  Allow a source-bound dry-run readiness package without opening paper-shadow,
+  production, broker, target-weight or rebalance gates.
+validation_evidence: >
+  Planned source-binding focused tests, CLI output tests, report registry /
+  artifact catalog checks, cached data quality gate execution and contract
+  validation. Dry-run outputs are proxy diagnostics only.
+review_condition: >
+  Review before replacing the synthetic baseline with real portfolio exposure
+  history, before treating turnover proxy as real turnover, before connecting to
+  daily reports, and before using any result in investment interpretation.
+expiry_condition: >
+  Replace this pilot policy after a reviewed real portfolio baseline, turnover
+  history and runtime observe source are available and validated.
+source_requirements:
+  required_candidate_id: volatility_regime_scope_narrowed_risk_cap_v1
+  required_scope_state: SCOPE_NARROWED_VALIDATED_FORWARD_OBSERVE_CANDIDATE
+  required_2323_status: EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED
+  required_2323_artifact_role: exposure_cap_mechanics_simulation_source_blocked
+  required_market_symbols:
+    - QQQ
+    - SPY
+    - SMH
+  allow_synthetic_observe_only_baseline: true
+dry_run_policy:
+  target_assets:
+    - QQQ
+    - SPY
+    - SMH
+  synthetic_baseline_source_mode: synthetic_observe_only
+  synthetic_baseline_exposure:
+    QQQ: 1.0
+    SPY: 1.0
+    SMH: 1.0
+  portfolio_baseline_required_for_full_simulation: true
+  interpretation_boundary: >
+    Synthetic observe-only portfolio baseline means return, drawdown and
+    turnover outputs are proxy diagnostics only and cannot support promotion,
+    paper-shadow, production or broker action.
+cap_policy:
+  default_max_allowed_exposure: 1.0
+  unknown_intensity: medium
+  max_allowed_exposure_by_intensity:
+    low: 0.85
+    medium: 0.7
+    high: 0.5
+cooldown_policy:
+  default_cooldown_days: 3
+  cooldown_days_by_intensity:
+    low: 1
+    medium: 3
+    high: 5
+turnover_assumption:
+  turnover_proxy_method: absolute_final_exposure_change
+  rebalance_calendar_mode: market_trading_days
+  transaction_cost_model: not_applied_proxy_only
+  real_turnover_history_bound: false
+safety:
+  research_only: true
+  observe_only: true
+  dry_run_only: true
+  manual_review_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  portfolio_effect: none
+  target_weight_generated: false
+  rebalance_instruction_generated: false
+  broker_order_generated: false
+  paper_shadow_order_generated: false
+  production_decision_generated: false
