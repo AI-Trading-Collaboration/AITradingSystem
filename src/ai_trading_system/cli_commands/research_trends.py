@@ -499,6 +499,24 @@ from ai_trading_system.indicator_family_ablation import (
     DEFAULT_PIT_FEATURE_MATRIX_PATH,
     run_indicator_family_ablation,
 )
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_DOCS_ROOT,
+)
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    DEFAULT_GENERATOR_ROOT as DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_GENERATOR_ROOT,
+)
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_OUTPUT_ROOT,
+)
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    DEFAULT_POLICY_PATH as DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_POLICY_PATH,
+)
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    MODE as LIQUIDITY_RATES_ACTUAL_PATH_MODE,
+)
+from ai_trading_system.liquidity_rates_actual_path_validation import (
+    run_liquidity_rates_actual_path_validation,
+)
 from ai_trading_system.liquidity_rates_feasibility_audit import (
     DEFAULT_DOCS_ROOT as DEFAULT_LIQUIDITY_RATES_FEASIBILITY_DOCS_ROOT,
 )
@@ -2658,6 +2676,54 @@ def liquidity_rates_pressure_generator_poc_command(
         mode=mode,
     )
     _print_payload("Liquidity / rates pressure generator POC", payload)
+
+
+@trends_app.command("liquidity-rates-actual-path-validation")
+def liquidity_rates_actual_path_validation_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    generator_dir: Annotated[
+        Path, typer.Option("--generator-dir")
+    ] = DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_GENERATOR_ROOT,
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_POLICY_PATH,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "10d,20d,1m",
+    candidates: Annotated[
+        str, typer.Option("--candidates")
+    ] = "duration_pressure_proxy_v1,rates_pressure_exposure_cap_modifier_v1",
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_LIQUIDITY_RATES_ACTUAL_PATH_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = LIQUIDITY_RATES_ACTUAL_PATH_MODE,
+) -> None:
+    payload = run_liquidity_rates_actual_path_validation(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        generator_dir=generator_dir,
+        policy_path=policy_path,
+        target_assets=target_assets,
+        horizons=horizons,
+        candidates=candidates,
+        start_date=start_date,
+        end_date=end_date,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Liquidity / rates actual-path validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

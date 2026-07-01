@@ -1,0 +1,157 @@
+policy_id: liquidity_rates_actual_path_validation_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_generator_task: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+rationale: >
+  TRADING-2312 generated schema-valid partial rates-only candidate artifacts for
+  duration pressure and rates-pressure exposure-cap context, but those artifacts
+  are not evidence of actual-path utility. This policy defines the research-only
+  validation lens for checking whether those signals explain QQQ / SMH valuation
+  pressure, high duration asset drawdown and risk-on exposure-cap risk.
+intended_effect: >
+  Produce auditable actual-path evidence for TRADING-2314 scope review without
+  opening promotion, paper-shadow, production or broker paths, and without
+  converting the blocked liquidity_headwind_proxy_v1 route into validation rows.
+validation_evidence: >
+  Planned validation in TRADING-2313. Thresholds are pilot baselines and must be
+  reviewed after the first real run; they are not promotion gates or calibrated
+  investment acceptance rules.
+review_condition: >
+  Review after TRADING-2313 actual-path validation, before TRADING-2314 scope
+  review, or earlier if the TRADING-2312 generator policy, source coverage,
+  target assets, horizons, objective definitions or data-quality gate changes.
+expiry_condition: >
+  Replace this pilot policy before any paper-shadow, production, broker action
+  or report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - TLT
+    - SHY
+  required_rate_series:
+    - DGS10
+    - DGS2
+    - DTWEXBGS
+  outcome_assets:
+    - QQQ
+    - SMH
+    - TLT
+    - SHY
+source_boundary:
+  generated_candidates:
+    - duration_pressure_proxy_v1
+    - rates_pressure_exposure_cap_modifier_v1
+  blocked_candidates:
+    liquidity_headwind_proxy_v1:
+      missing_inputs:
+        - UUP_or_DXY_price_proxy
+        - HYG_price_proxy
+        - LQD_price_proxy
+      behavioral_impact: >
+        Full USD liquidity and credit-liquidity headwind cannot be validated
+        because TRADING-2312 did not and must not generate a candidate-bound
+        signal series for this candidate.
+      exit_condition: >
+        Ingest and validate UUP or audited DXY proxy plus HYG and LQD price
+        history, rerun TRADING-2311 feasibility and TRADING-2312 generator POC,
+        then add a separate full liquidity / credit validation route.
+validation_thresholds:
+  minimum_candidate_records:
+    value: 300
+    rationale: >
+      Requires at least a few hundred eligible candidate signal rows before a
+      candidate scorecard can be interpreted. The generator emits multiple
+      target / horizon / signal rows per source date, so this is a sample
+      sufficiency guard rather than a promotion threshold.
+  minimum_objective_records:
+    value: 120
+    rationale: >
+      Each objective should have enough eligible rows across dates and horizons
+      to avoid one short window driving the status.
+  return_pressure_threshold:
+    value: -0.02
+    rationale: >
+      Treats a 2% forward return loss as a valuation-pressure observation for
+      QQQ / SMH and high duration asset diagnostics.
+  return_relief_threshold:
+    value: 0.015
+    rationale: >
+      Treats a 1.5% positive forward return as a relief observation after a
+      risk-on / rates-relief signal.
+  drawdown_pressure_threshold:
+    value: -0.035
+    rationale: >
+      Marks a 3.5% horizon drawdown as a risk-relevant pressure observation for
+      QQQ / SMH and TLT diagnostics.
+  false_risk_on_drawdown_threshold:
+    value: -0.04
+    rationale: >
+      Treats a 4% drawdown after a risk-on / exposure-relief signal as a
+      false-risk-on cost event for research review.
+  objective_pass_alignment_score:
+    value: 0.05
+    rationale: >
+      Objective-level average alignment must be modestly positive before the
+      objective can be called supportive for continue-research.
+  candidate_continue_alignment_score:
+    value: 0.03
+    rationale: >
+      Candidate-level average alignment must be positive enough to justify
+      continued research but remains far below a promotion standard.
+  candidate_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative candidate alignment score recommends rejecting the
+      current candidate form.
+  continue_research_min_objectives_passed:
+    value: 2
+    rationale: >
+      The liquidity / rates family should support at least two of the three
+      owner-requested objective families before it can continue to TRADING-2314
+      scope review as a researched candidate family.
+  reject_recommended_min_candidates_rejected:
+    value: 2
+    rationale: >
+      Rejecting the family requires both generated candidates to fail the
+      actual-path lens, avoiding a single noisy signal name from closing the
+      direction.
+status_rule:
+  allowed_statuses:
+    - LIQUIDITY_RATES_VALIDATED_CONTINUE_RESEARCH
+    - LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE
+    - LIQUIDITY_RATES_REJECT_RECOMMENDED
+  continue_research: >
+    Use LIQUIDITY_RATES_VALIDATED_CONTINUE_RESEARCH when at least
+    continue_research_min_objectives_passed objective rows pass and at least one
+    candidate scorecard recommends continue research.
+  reject_recommended: >
+    Use LIQUIDITY_RATES_REJECT_RECOMMENDED when at least
+    reject_recommended_min_candidates_rejected candidate scorecards recommend
+    rejecting the current form.
+  otherwise: >
+    Use LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE.
+safety:
+  research_only: true
+  actual_path_validation_executed: true
+  scope_review_ready: false
+  partial_rates_only_validation: true
+  liquidity_headwind_validation_executed: false
+  full_liquidity_pressure_validation_ready: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
+  paper_shadow_recommendation_allowed: false
