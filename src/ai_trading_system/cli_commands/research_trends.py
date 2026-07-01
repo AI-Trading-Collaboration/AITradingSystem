@@ -238,6 +238,24 @@ from ai_trading_system.event_gating_validation import (
     MODE as EVENT_GATING_VALIDATION_MODE,
 )
 from ai_trading_system.event_gating_validation import run_event_gating_validation
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EXPOSURE_CAP_SIMULATION_DOCS_ROOT,
+)
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EXPOSURE_CAP_SIMULATION_OUTPUT_ROOT,
+)
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    DEFAULT_POLICY_PATH as DEFAULT_EXPOSURE_CAP_SIMULATION_POLICY_PATH,
+)
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    DEFAULT_SOURCE_ROOT as DEFAULT_EXPOSURE_CAP_SIMULATION_SOURCE_ROOT,
+)
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    MODE as EXPOSURE_CAP_SIMULATION_MODE,
+)
+from ai_trading_system.exposure_cap_mechanics_simulation import (
+    run_exposure_cap_mechanics_simulation,
+)
 from ai_trading_system.first_layer_active_selection_policy_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
 )
@@ -2563,6 +2581,32 @@ def signal_validity_aging_runtime_design_command(
         mode=mode,
     )
     _print_payload("Signal validity / aging runtime design", payload)
+
+
+@trends_app.command("exposure-cap-mechanics-simulation")
+def exposure_cap_mechanics_simulation_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_EXPOSURE_CAP_SIMULATION_POLICY_PATH,
+    source_dir: Annotated[
+        Path, typer.Option("--source-dir")
+    ] = DEFAULT_EXPOSURE_CAP_SIMULATION_SOURCE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EXPOSURE_CAP_SIMULATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EXPOSURE_CAP_SIMULATION_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EXPOSURE_CAP_SIMULATION_MODE,
+) -> None:
+    payload = run_exposure_cap_mechanics_simulation(
+        policy_path=policy_path,
+        source_dir=source_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Exposure-cap mechanics simulation", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

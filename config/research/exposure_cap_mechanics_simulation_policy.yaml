@@ -1,0 +1,232 @@
+policy_id: exposure_cap_mechanics_simulation_policy
+version: v1
+status: pilot_research_source_blocked
+owner: research_governance
+task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Exposure-cap mechanics cannot be simulated from TRADING-2321 / TRADING-2322
+  design-only artifacts alone. A valid simulation needs runtime observe records,
+  calibrated cap multipliers, portfolio exposure history, turnover or trade
+  intent history, post-trigger outcomes and release / restore decisions. Until
+  those sources exist, TRADING-2323 must produce a source-blocked simulation
+  readiness package instead of numeric exposure or turnover conclusions.
+intended_effect: >
+  Define the auditable objective, input, metric and safety contract for a future
+  exposure-cap mechanics simulation while preventing fake max exposure deltas,
+  turnover effects, restore lag or false risk-cap cost estimates.
+validation_evidence: >
+  Planned TRADING-2323 source-blocked run using TRADING-2322 design-only artifacts,
+  policy validation tests, CLI output tests, report registry / artifact catalog
+  tests and contract validation. No runtime records, portfolio weights,
+  exposure histories, turnover histories, simulation results, paper-shadow orders,
+  production decisions or broker orders are generated.
+review_condition: >
+  Review before any executable exposure-cap simulation, before applying cap
+  multipliers to target weights, before connecting cooldown turnover analysis to
+  daily reports, and before using false risk-cap cost in investment interpretation.
+expiry_condition: >
+  Replace with calibrated simulation policy only after owner review, runtime
+  observe records, exposure / turnover records, post-trigger outcomes and release
+  / restore decisions are available and validated.
+source_dependency:
+  required_task_id: TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+  required_status: SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED
+  required_artifact_role: signal_validity_aging_runtime_design_only
+  required_data_quality_status: NOT_APPLICABLE_DESIGN_ONLY_SIGNAL_VALIDITY_AGING
+  required_design_only: true
+  required_runtime_started: false
+  required_aging_runtime_started: false
+  required_signal_validity_runtime_started: false
+  required_execution_runtime_started: false
+  required_forward_observe_started: false
+  required_broker_action: none
+  required_candidate_id: volatility_regime_scope_narrowed_risk_cap_v1
+  required_lifecycle_field_count: 6
+  required_aging_rule_count: 5
+  required_trigger_aging_state_count: 4
+  required_release_restore_rule_count: 4
+  allow_design_only_source_blocked_simulation: true
+simulation_objectives:
+  max_exposure_change_after_risk_cap_trigger:
+    target_question: >
+      After a validated risk-cap trigger, how would max exposure change under a
+      calibrated exposure-cap policy?
+    required_runtime_inputs:
+      - runtime_observe_records
+      - calibrated_cap_multiplier_policy
+      - current_portfolio_exposure_snapshot
+      - exposure_cap_policy_state_history
+      - cached_data_quality_gate
+    blocked_reason: >
+      TRADING-2322 only defines lifecycle schema fields; it does not provide
+      runtime observe records, calibrated multipliers or portfolio exposure state.
+  cooldown_turnover_effect:
+    target_question: >
+      Does cooldown reduce turnover or only defer trade intent under observe-only
+      execution mechanics?
+    required_runtime_inputs:
+      - runtime_observe_records
+      - cooldown_state_history
+      - turnover_history_or_trade_intent_log
+      - pre_post_cooldown_comparison_window
+      - cached_data_quality_gate
+    blocked_reason: >
+      No cooldown runtime state history, turnover history or trade intent log is
+      available from the design-only upstream package.
+  release_restore_after_risk_cap_clear:
+    target_question: >
+      After risk-cap clears, how long does release / restore take and what
+      exposure path would be allowed?
+    required_runtime_inputs:
+      - runtime_observe_records
+      - release_restore_decision_records
+      - risk_cap_clear_records
+      - portfolio_exposure_history
+      - cached_data_quality_gate
+    blocked_reason: >
+      Release / restore rules are design-only and owner-review gated; no runtime
+      clear records or restore decisions exist.
+  false_risk_cap_cost:
+    target_question: >
+      What opportunity cost arises when a risk-cap trigger later proves to be a
+      false positive?
+    required_runtime_inputs:
+      - runtime_observe_records
+      - post_trigger_return_outcomes
+      - benchmark_or_unconstrained_exposure_path
+      - realized_drawdown_or_stress_outcome
+      - cached_data_quality_gate
+    blocked_reason: >
+      No post-trigger return outcomes, unconstrained exposure path or realized
+      stress labels are available for false-risk-cap cost estimation.
+required_runtime_inputs:
+  - runtime_observe_records
+  - calibrated_cap_multiplier_policy
+  - current_portfolio_exposure_snapshot
+  - exposure_cap_policy_state_history
+  - cooldown_state_history
+  - turnover_history_or_trade_intent_log
+  - pre_post_cooldown_comparison_window
+  - release_restore_decision_records
+  - risk_cap_clear_records
+  - portfolio_exposure_history
+  - post_trigger_return_outcomes
+  - benchmark_or_unconstrained_exposure_path
+  - realized_drawdown_or_stress_outcome
+  - cached_data_quality_gate
+metric_contract:
+  contract_status: SOURCE_BLOCKED_METRIC_CONTRACT_ONLY
+  metrics:
+    max_exposure_delta_after_trigger:
+      simulation_objective: max_exposure_change_after_risk_cap_trigger
+      metric_definition: >
+        Difference between pre-trigger max exposure and post-trigger capped max
+        exposure under a calibrated policy.
+      required_output_fields_after_unblock:
+        - trigger_id
+        - pre_trigger_max_exposure
+        - post_trigger_max_exposure
+        - exposure_delta
+      result_generated_now: false
+    cooldown_turnover_delta:
+      simulation_objective: cooldown_turnover_effect
+      metric_definition: >
+        Turnover difference between cooldown-constrained and unconstrained trade
+        intent over a fixed comparison window.
+      required_output_fields_after_unblock:
+        - trigger_id
+        - unconstrained_turnover
+        - cooldown_turnover
+        - turnover_delta
+      result_generated_now: false
+    restore_lag_after_clear:
+      simulation_objective: release_restore_after_risk_cap_clear
+      metric_definition: >
+        Number of reviewed trading days from risk-cap clear event to allowed
+        exposure restore under release / restore policy.
+      required_output_fields_after_unblock:
+        - trigger_id
+        - cleared_at
+        - restore_allowed_at
+        - restore_lag_trading_days
+      result_generated_now: false
+    false_risk_cap_cost:
+      simulation_objective: false_risk_cap_cost
+      metric_definition: >
+        Opportunity cost of reduced exposure when subsequent stress outcome does
+        not justify the risk-cap trigger.
+      required_output_fields_after_unblock:
+        - trigger_id
+        - reduced_exposure_return
+        - unconstrained_reference_return
+        - false_risk_cap_cost
+      result_generated_now: false
+  blocked_actions:
+    - exposure_delta_claim
+    - turnover_effect_claim
+    - restore_lag_claim
+    - false_risk_cap_cost_claim
+    - target_weight_change
+    - rebalance_instruction
+    - broker_order
+blocker_catalog:
+  - blocker_id: TRADING_2322_DESIGN_ONLY_NO_RUNTIME_RECORDS
+    blocker_scope: source_runtime
+    exit_condition: runtime observe records are generated by an approved observe-only path
+  - blocker_id: CAP_MULTIPLIER_NOT_CALIBRATED
+    blocker_scope: exposure_policy
+    exit_condition: owner-reviewed cap multiplier policy exists with validation evidence
+  - blocker_id: PORTFOLIO_EXPOSURE_HISTORY_NOT_CONSUMED
+    blocker_scope: portfolio_exposure
+    exit_condition: validated portfolio exposure history is available and gated
+  - blocker_id: TURNOVER_HISTORY_NOT_CONSUMED
+    blocker_scope: turnover
+    exit_condition: validated turnover or trade intent log is available and gated
+  - blocker_id: FALSE_RISK_CAP_OUTCOME_DATA_NOT_AVAILABLE
+    blocker_scope: outcome
+    exit_condition: post-trigger return and stress outcome records are available
+  - blocker_id: RELEASE_RESTORE_RECORDS_NOT_AVAILABLE
+    blocker_scope: release_restore
+    exit_condition: reviewed release / restore decision records are available
+safety:
+  research_only: true
+  source_blocked_no_simulation: true
+  simulation_runtime_started: false
+  simulation_executed: false
+  simulation_result_generated: false
+  metric_result_generated: false
+  market_data_consumed: false
+  cached_market_data_consumed: false
+  runtime_records_consumed: false
+  portfolio_weights_read: false
+  portfolio_weights_written: false
+  portfolio_exposure_history_consumed: false
+  turnover_records_consumed: false
+  post_trigger_return_outcomes_consumed: false
+  release_restore_records_consumed: false
+  target_weight_generated: false
+  max_exposure_number_generated: false
+  rebalance_instruction_generated: false
+  broker_order_generated: false
+  paper_shadow_order_generated: false
+  production_decision_generated: false
+  execution_runtime_started: false
+  forward_observe_started: false
+  runtime_started: false
+  aging_runtime_started: false
+  signal_validity_runtime_started: false
+  validity_runtime_executable: false
+  exposure_cap_policy_executable: false
+  cooldown_turnover_effect_claim_generated: false
+  false_risk_cap_cost_claim_generated: false
+  release_restore_effect_claim_generated: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  portfolio_effect: none
+  dynamic_promotion_status: BLOCKED
