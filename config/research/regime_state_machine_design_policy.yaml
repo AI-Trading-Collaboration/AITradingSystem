@@ -1,0 +1,267 @@
+policy_id: regime_state_machine_design_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Regime state labels are useful for diagnostic segmentation and candidate
+  interpretation, but they can easily become hindsight labels or overfit state
+  selectors. This policy limits TRADING-2315 to a static design audit and
+  blocks label generation until a later PIT-safe or PIT-approx generator POC.
+intended_effect: >
+  Define a diagnostic-only regime taxonomy, transition design, anti-lookahead
+  guardrails and candidate segmentation use cases without producing label
+  series, candidate signals, scores, portfolio weights, paper-shadow artifacts,
+  production behavior or broker actions.
+validation_evidence: >
+  Planned TRADING-2315 static design audit using owner post-2302 roadmap and
+  TRADING-2301 candidate-family prioritization context. No market data or
+  future outcomes are consumed in this design audit.
+review_condition: >
+  Review before TRADING-2316 generator POC, before using any regime state in
+  validation segmentation, and whenever label taxonomy, allowed usage, PIT
+  requirements, candidate families or anti-lookahead guardrails change.
+expiry_condition: >
+  Replace or promote this policy before any runtime regime label generation,
+  scoring integration, report integration, forward observe, paper-shadow,
+  production or broker path uses regime states.
+data_quality:
+  status: NOT_APPLICABLE_STATIC_DESIGN_AUDIT
+  rationale: >
+    TRADING-2315 does not read cached market / macro data and does not compute
+    technical features, scores, backtests, daily reports or label series.
+  later_generator_requirement: >
+    TRADING-2316 must reassess cached-data validation and PIT / known-at
+    requirements before any label series is generated.
+label_taxonomy:
+  uptrend:
+    regime_group: constructive
+    diagnostic_interpretation: persistent upward trend with broad enough trend support
+    allowed_usage:
+      - validation_segmentation
+      - candidate_context
+      - owner_review_context
+    blocked_usage:
+      - direct_buy_signal
+      - position_size_increase
+      - broker_action
+    pit_requirement: ex_ante_trend_features_only
+    lookahead_risk: low_if_defined_with_lagged_trend_features
+  late_uptrend:
+    regime_group: constructive_fragile
+    diagnostic_interpretation: extended uptrend with fragility or exhaustion warnings
+    allowed_usage:
+      - false_risk_on_review
+      - risk_cap_interpretation
+      - candidate_context
+    blocked_usage:
+      - automatic_de_risk
+      - standalone_no_add_gate
+      - broker_action
+    pit_requirement: ex_ante_trend_and_fragility_features_only
+    lookahead_risk: medium_if_defined_with_future_peak_or_drawdown
+  drawdown:
+    regime_group: defensive
+    diagnostic_interpretation: ongoing drawdown pressure based on known price path
+    allowed_usage:
+      - risk_cap_validation_stratification
+      - stress_capture_review
+      - candidate_failure_attribution
+    blocked_usage:
+      - hindsight_relabeling
+      - production_risk_off_trigger
+      - broker_action
+    pit_requirement: observed_to_date_drawdown_only
+    lookahead_risk: high_if_final_trough_or_full_episode_is_used
+  panic:
+    regime_group: defensive_extreme
+    diagnostic_interpretation: acute high-volatility drawdown or disorderly stress state
+    allowed_usage:
+      - stress_case_segmentation
+      - risk_cap_false_negative_review
+      - owner_review_context
+    blocked_usage:
+      - post_hoc_crash_label
+      - production_risk_off_trigger
+      - broker_action
+    pit_requirement: observed_to_date_volatility_and_drawdown_only
+    lookahead_risk: high_if_crash_event_is_labeled_after_the_fact
+  rebound:
+    regime_group: recovery
+    diagnostic_interpretation: recovery attempt after drawdown using known recovery evidence
+    allowed_usage:
+      - recovery_behavior_review
+      - re_risk_timing_diagnostic
+      - candidate_context
+    blocked_usage:
+      - automatic_re_risk_signal
+      - future_recovery_confirmation
+      - broker_action
+    pit_requirement: lagged_recovery_confirmation_only
+    lookahead_risk: high_if_future_recovery_path_is_required
+  failed_rebound:
+    regime_group: recovery_failure
+    diagnostic_interpretation: recovery attempt that weakens or reverses using observed evidence
+    allowed_usage:
+      - false_rebound_review
+      - risk_cap_release_diagnostic
+      - candidate_failure_attribution
+    blocked_usage:
+      - hindsight_failed_rebound_label
+      - direct_short_or_sell_signal
+      - broker_action
+    pit_requirement: lagged_failure_confirmation_only
+    lookahead_risk: high_if_failure_is_known_only_after_future_decline
+  range_bound:
+    regime_group: neutral_choppy
+    diagnostic_interpretation: sideways or choppy market with weak directional persistence
+    allowed_usage:
+      - whipsaw_review
+      - trend_signal_quality_diagnostic
+      - candidate_context
+    blocked_usage:
+      - allocation_override
+      - standalone_no_trade_state
+      - broker_action
+    pit_requirement: trailing_range_and_trend_features_only
+    lookahead_risk: medium_if_defined_by_full_future_range
+  high_volatility:
+    regime_group: volatility
+    diagnostic_interpretation: elevated realized or implied volatility context
+    allowed_usage:
+      - risk_cap_interpretation
+      - volatility_candidate_segmentation
+      - stress_review
+    blocked_usage:
+      - direct_risk_cap_signal
+      - production_volatility_gate
+      - broker_action
+    pit_requirement: known_realized_or_pit_implied_volatility_only
+    lookahead_risk: medium_if_future_volatility_window_is_used
+  low_volatility:
+    regime_group: volatility
+    diagnostic_interpretation: compressed or quiet volatility context
+    allowed_usage:
+      - complacency_review
+      - risk_on_false_signal_review
+      - candidate_context
+    blocked_usage:
+      - direct_risk_on_signal
+      - leverage_increase_signal
+      - broker_action
+    pit_requirement: known_realized_or_pit_implied_volatility_only
+    lookahead_risk: medium_if_future_volatility_window_is_used
+transition_design:
+  allowed_transition_modes:
+    - same_state_persistence
+    - lagged_confirmation_transition
+    - manual_review_transition
+    - missing_input_blocked
+  disallowed_transition_modes:
+    - future_return_confirmed_transition
+    - full_episode_hindsight_transition
+    - owner_unreviewed_production_transition
+  transition_rows:
+    - transition_id: constructive_to_fragile
+      from_state: uptrend
+      to_state: late_uptrend
+      trigger_family: lagged_trend_fragility
+      allowed_confirmation: trailing_feature_confirmation
+      blocked_confirmation: future_peak_or_future_drawdown
+    - transition_id: fragile_to_drawdown
+      from_state: late_uptrend
+      to_state: drawdown
+      trigger_family: observed_drawdown_pressure
+      allowed_confirmation: observed_to_date_drawdown
+      blocked_confirmation: final_trough_or_future_loss
+    - transition_id: drawdown_to_panic
+      from_state: drawdown
+      to_state: panic
+      trigger_family: acute_volatility_and_drawdown
+      allowed_confirmation: observed_to_date_stress
+      blocked_confirmation: post_hoc_crash_event_name
+    - transition_id: panic_to_rebound
+      from_state: panic
+      to_state: rebound
+      trigger_family: lagged_recovery_confirmation
+      allowed_confirmation: delayed_observed_recovery
+      blocked_confirmation: future_recovery_path
+    - transition_id: rebound_to_failed_rebound
+      from_state: rebound
+      to_state: failed_rebound
+      trigger_family: lagged_recovery_failure
+      allowed_confirmation: delayed_observed_failure
+      blocked_confirmation: future_failed_rebound_outcome
+    - transition_id: directional_to_range_bound
+      from_state: uptrend_or_drawdown
+      to_state: range_bound
+      trigger_family: trailing_chop_or_range
+      allowed_confirmation: trailing_range_features
+      blocked_confirmation: full_future_sideways_window
+    - transition_id: volatility_overlay_high
+      from_state: any_state
+      to_state: high_volatility
+      trigger_family: volatility_overlay
+      allowed_confirmation: known_realized_or_pit_implied_volatility
+      blocked_confirmation: future_volatility_window
+    - transition_id: volatility_overlay_low
+      from_state: any_state
+      to_state: low_volatility
+      trigger_family: volatility_overlay
+      allowed_confirmation: known_realized_or_pit_implied_volatility
+      blocked_confirmation: future_volatility_window
+guardrails:
+  - guardrail_id: no_future_outcome_labeling
+    blocked_failure_mode: future_return_or_future_drawdown_defines_runtime_state
+    required_control: labels_must_use_only_features_known_at_decision_time
+  - guardrail_id: no_hindsight_episode_relabeling
+    blocked_failure_mode: full_episode_peak_trough_or_recovery_path_rewrites_labels
+    required_control: immutable_daily_label_records_with_label_version
+  - guardrail_id: delayed_confirmation_required
+    blocked_failure_mode: same_day_state_flip_from_unconfirmed_noise
+    required_control: transition_requires_lagged_or_trailing_confirmation
+  - guardrail_id: missing_input_fail_closed
+    blocked_failure_mode: missing_trend_or_volatility_input_defaults_to_tradeable_state
+    required_control: output_blocked_or_unknown_diagnostic_state
+  - guardrail_id: diagnostic_only_usage
+    blocked_failure_mode: regime_state_used_as_buy_sell_or_position_size_signal
+    required_control: no_portfolio_weight_no_broker_no_production_effect
+  - guardrail_id: validation_not_promotion
+    blocked_failure_mode: positive_regime_segment_result_treated_as_promotion_evidence
+    required_control: owner_review_required_before_any_forward_observe_or_promotion_route
+candidate_segmentation_use_cases:
+  volatility_risk_cap:
+    candidate_family: volatility_risk_cap
+    allowed_usage: risk_cap_stress_capture_and_false_positive_segmentation
+    blocked_usage: replacing_validated_risk_cap_signal
+  breadth_proxy:
+    candidate_family: breadth_participation_proxy
+    allowed_usage: proxy_bias_and_trend_fragility_segmentation
+    blocked_usage: promotion_grade_breadth_evidence
+  ai_leadership:
+    candidate_family: ai_semiconductor_leadership
+    allowed_usage: leadership_weakening_and_overweight_risk_context
+    blocked_usage: standalone_ai_regime_alpha
+  liquidity_rates:
+    candidate_family: liquidity_rates_pressure
+    allowed_usage: rates_pressure_context_and_exposure_cap_interpretation
+    blocked_usage: full_liquidity_credit_pressure_claim
+safety:
+  research_only: true
+  diagnostic_only: true
+  design_audit_only: true
+  candidate_signal_generated: false
+  regime_label_series_generated: false
+  generator_implemented: false
+  actual_path_validation_executed: false
+  scope_review_executed: false
+  forward_observe_started: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

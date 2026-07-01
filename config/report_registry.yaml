@@ -24197,6 +24197,74 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: regime_state_machine_design_audit
+    title: Regime State Machine Design Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends regime-state-machine-design-audit
+    artifact_globs:
+      - config/research/regime_state_machine_design_policy.yaml
+      - docs/research/regime_state_machine_design_audit.md
+      - docs/requirements/TRADING-2315_Regime_State_Machine_Design_Audit.md
+      - outputs/research_trends/regime_state_machine_design_audit/regime_state_machine_design_audit_summary.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_label_taxonomy.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_label_taxonomy.csv
+      - outputs/research_trends/regime_state_machine_design_audit/regime_transition_rule_matrix.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_transition_rule_matrix.csv
+      - outputs/research_trends/regime_state_machine_design_audit/regime_anti_lookahead_guardrail_matrix.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_anti_lookahead_guardrail_matrix.csv
+      - outputs/research_trends/regime_state_machine_design_audit/regime_candidate_segmentation_use_case_matrix.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_candidate_segmentation_use_case_matrix.csv
+      - outputs/research_trends/regime_state_machine_design_audit/regime_label_generator_poc_route.json
+      - outputs/research_trends/regime_state_machine_design_audit/regime_state_machine_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: regime_state_machine_design_audit
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    data_quality_status: NOT_APPLICABLE_STATIC_DESIGN_AUDIT
+    validation_status: REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY
+    diagnostic_only: true
+    design_audit_only: true
+    generator_implemented: false
+    candidate_signal_generated: false
+    regime_label_series_generated: false
+    candidate_artifact_generated: false
+    actual_path_validation_executed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    label_ids:
+      - uptrend
+      - late_uptrend
+      - drawdown
+      - panic
+      - rebound
+      - failed_rebound
+      - range_bound
+      - high_volatility
+      - low_volatility
+    candidate_segmentation_use_cases:
+      - volatility_risk_cap
+      - breadth_proxy
+      - ai_leadership
+      - liquidity_rates
+    policy_id: regime_state_machine_design_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Regime state machine design audit should be rerun after the regime label
+      taxonomy, transition design, anti-lookahead guardrails, candidate
+      segmentation use cases, PIT / known-at assumptions or owner roadmap
+      sequencing change.
+    owner_action: review_diagnostic_design_before_trading_2316_label_generator_poc
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

@@ -662,6 +662,21 @@ from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
 from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
     run_regenerated_candidate_inconclusive_diagnostics,
 )
+from ai_trading_system.regime_state_machine_design_audit import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REGIME_STATE_MACHINE_DOCS_ROOT,
+)
+from ai_trading_system.regime_state_machine_design_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REGIME_STATE_MACHINE_OUTPUT_ROOT,
+)
+from ai_trading_system.regime_state_machine_design_audit import (
+    DEFAULT_POLICY_PATH as DEFAULT_REGIME_STATE_MACHINE_POLICY_PATH,
+)
+from ai_trading_system.regime_state_machine_design_audit import (
+    MODE as REGIME_STATE_MACHINE_MODE,
+)
+from ai_trading_system.regime_state_machine_design_audit import (
+    run_regime_state_machine_design_audit,
+)
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
     DEFAULT_WINDOW_AWARE_WALK_FORWARD_POLICY_PATH,
@@ -2778,6 +2793,28 @@ def liquidity_rates_scope_review_command(
         mode=mode,
     )
     _print_payload("Liquidity / rates scope review", payload)
+
+
+@trends_app.command("regime-state-machine-design-audit")
+def regime_state_machine_design_audit_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_REGIME_STATE_MACHINE_POLICY_PATH,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_REGIME_STATE_MACHINE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_REGIME_STATE_MACHINE_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = REGIME_STATE_MACHINE_MODE,
+) -> None:
+    payload = run_regime_state_machine_design_audit(
+        policy_path=policy_path,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Regime state machine design audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
