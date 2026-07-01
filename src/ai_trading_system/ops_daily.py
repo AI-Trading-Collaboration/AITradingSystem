@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -262,6 +262,9 @@ class DailyOpsRunReport:
 
 DailyOpsCommandRunner = subprocess.run
 _DIAGNOSTIC_TEXT_MAX_CHARS = 60_000
+DAILY_OPS_PROVIDER_READY_POST_CLOSE_BUFFER = timedelta(hours=3)
+# TRADING-1087: daily ops must wait for late same-day provider artifacts such as
+# the Cboe VIX full-history CSV before defaulting to the just-closed trading day.
 _DIAGNOSTIC_ENV_SECRET_TOKENS = (
     "KEY",
     "TOKEN",
@@ -299,7 +302,10 @@ def daily_ops_step_result_to_workflow_step_result(
 
 
 def resolve_daily_ops_default_as_of(observed_at: datetime | None = None) -> date:
-    return latest_completed_us_equity_trading_day(observed_at)
+    return latest_completed_us_equity_trading_day(
+        observed_at,
+        post_close_buffer=DAILY_OPS_PROVIDER_READY_POST_CLOSE_BUFFER,
+    )
 
 
 def resolve_daily_ops_market_date(observed_at: datetime | None = None) -> date:

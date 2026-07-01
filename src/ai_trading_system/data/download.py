@@ -39,6 +39,7 @@ from ai_trading_system.external_request_cache import (
     external_request_cache_trace,
     sanitize_diagnostic_text,
 )
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 _PRICE_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 
@@ -444,7 +445,7 @@ def _price_fetch_windows(
             if latest >= end:
                 continue
             else:
-                fetch_start = latest + timedelta(days=1)
+                fetch_start = _next_us_equity_trading_day(latest)
         if fetch_start <= end:
             grouped.setdefault(fetch_start, []).append(ticker)
     return tuple(
@@ -455,6 +456,13 @@ def _price_fetch_windows(
         )
         for fetch_start in sorted(grouped)
     )
+
+
+def _next_us_equity_trading_day(value: date) -> date:
+    candidate = value + timedelta(days=1)
+    while not is_us_equity_trading_day(candidate):
+        candidate += timedelta(days=1)
+    return candidate
 
 
 def _price_date_ranges(frame: pd.DataFrame) -> dict[str, tuple[date, date]]:

@@ -1,6 +1,6 @@
 # TRADING-1087: External Request Incremental Refresh Guardrails
 
-最后更新：2026-06-29
+最后更新：2026-06-30
 
 ## 背景
 
@@ -44,7 +44,9 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   计算每个 ticker 的缺口，只请求缺口区间或带审计说明的受控 overlap。
 - `Marketstack` 第二行情源必须基于已有 `prices_marketstack_daily.csv`
   覆盖计算缺口，分页请求应随缺口窗口缩小，不再每天扫描 2018 起全历史页。
-- Daily incremental refresh 只自动补已有 cache ticker 的尾部缺口；请求起点落在
+- Daily incremental refresh 只自动补已有 cache ticker 的尾部缺口；已有 cache
+  ticker 的尾部窗口从 latest cached row 后的下一美股交易日开始，而不是自然日
+  `latest + 1`，避免周末/节假日窗口被误算为多日 live refresh；请求起点落在
   休市日、节假日或 ticker 上市前造成的 head gap 不得在 daily-run 中自动回补，
   需要历史修复时必须走显式 repair/backfill 路径并单独审计。
 - `Cboe VIX` 应使用稳定 URL/content identity、conditional GET 或明确的
@@ -189,3 +191,26 @@ api family、endpoint、params 等精确 identity 命中缓存；但每日调度
   `validate-data` 为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，PIT validation
   PASS，Reader Brief validation command PASS（quality status `LIMITED_READER_CONTEXT`，
   missing trace bundle 为 important artifact）。
+- 2026-06-30: 每日 PIT 自动化默认解析 `as_of=2026-06-29` 后在
+  `download_data` fail closed，run id
+  `daily_ops_run:2026-06-29:20260629T223153Z`，阻断摘要为
+  `Cboe VIX response had no rows for 2026-06-27 to 2026-06-29`。实时复核显示
+  Cboe 稍后已发布 `2026-06-29` 行，根因是 daily ops 默认 as-of 使用交易所
+  close+30 分钟口径，而 Cboe VIX full-history CSV 在该窗口尚未 ready。任务退回
+  `IN_PROGRESS`；修复应在 unified `aits ops daily-run` 默认 as-of 解析处登记
+  可审计 vendor-ready buffer，避免过早切换到尚未可验证的当日数据。不得用旧 VIX
+  行、静默跳过 Cboe、永久 provider bypass 或降低 data quality gate 继续下游。
+- 2026-06-30: 复跑 `aits download-data --start 2018-01-01 --end 2026-06-29`
+  进一步暴露 Marketstack tail window 从周六 `2026-06-27` 开始，虽然实际只需
+  周一 `2026-06-29` 行，导致 single-day owner-approved overage policy 被
+  三个 calendar days 误阻断。本轮补充 tail window 计算：已有 cache ticker 从
+  latest cached row 后的下一美股交易日开始刷新；新增 ticker 仍按请求 start 走
+  显式 backfill 语义。
+- 2026-06-30: 修复后真实复验通过。`aits download-data --start 2018-01-01
+  --end 2026-06-29` 成功，Marketstack request budget 为
+  `OWNER_APPROVED_SMALL_DAILY_OVERAGE`、`estimated_increment_usage=25`、
+  live request count=1，Cboe VIX/FRED 均为 request cache hit。`aits
+  validate-data --as-of 2026-06-29` 为 `PASS_WITH_WARNINGS` / errors=0 /
+  warnings=1。`aits ops daily-run --as-of 2026-06-29` 通过，run id
+  `daily_ops_run:2026-06-29:20260630T014214Z`，36/36 steps PASS，
+  production_effect=`none`；任务转回 `VALIDATING`。

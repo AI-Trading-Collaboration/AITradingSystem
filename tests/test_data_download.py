@@ -234,6 +234,26 @@ def test_marketstack_incremental_windows_ignore_head_gap_for_existing_cache() ->
     )
 
 
+def test_incremental_windows_skip_weekend_tail_for_existing_cache() -> None:
+    existing = pd.DataFrame(
+        [
+            {"date": "2026-06-26", "ticker": "NVDA"},
+            {"date": "2026-06-26", "ticker": "MSFT"},
+        ]
+    )
+
+    windows = _price_fetch_windows(
+        existing,
+        tickers=("NVDA", "MSFT"),
+        start=date(2018, 1, 1),
+        end=date(2026, 6, 29),
+    )
+
+    assert [(window.start, window.end, window.tickers) for window in windows] == [
+        (date(2026, 6, 29), date(2026, 6, 29), ("MSFT", "NVDA"))
+    ]
+
+
 def test_download_daily_data_blocks_marketstack_when_quota_preflight_fails(
     tmp_path: Path,
 ) -> None:

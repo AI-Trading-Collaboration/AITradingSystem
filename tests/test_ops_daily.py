@@ -87,6 +87,12 @@ def test_daily_ops_default_as_of_uses_latest_completed_us_market_day() -> None:
     assert resolve_daily_ops_default_as_of(observed_at) == date(2026, 5, 11)
 
 
+def test_daily_ops_default_as_of_waits_for_provider_ready_buffer() -> None:
+    observed_at = datetime(2026, 6, 29, 22, 31, tzinfo=UTC)
+
+    assert resolve_daily_ops_default_as_of(observed_at) == date(2026, 6, 26)
+
+
 def test_daily_ops_plan_cli_default_as_of_uses_market_resolver(monkeypatch) -> None:
     monkeypatch.setattr(
         ops_cli,
