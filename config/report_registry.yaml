@@ -23850,6 +23850,90 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: source_bound_exposure_cap_dry_run_static_etf_baseline
+    title: Source-Bound Exposure-Cap Dry-Run With Static ETF Baseline
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends source-bound-exposure-cap-dry-run
+    artifact_globs:
+      - docs/research/source_bound_exposure_cap_dry_run_static_etf_report.md
+      - docs/research/static_etf_baseline_exposure_schedule.md
+      - docs/research/exposure_cap_vs_no_cap_static_etf_comparison.md
+      - docs/research/exposure_cap_turnover_and_cooldown_impact.md
+      - docs/research/exposure_cap_false_cost_and_downside_protection.md
+      - docs/requirements/TRADING-2326_Source_Bound_Exposure_Cap_Dry_Run_With_Static_ETF_Baseline.md
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/source_bound_static_etf_dry_run_summary.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/static_etf_baseline_source_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/static_etf_baseline_exposure_schedule.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/static_etf_baseline_exposure_schedule.csv
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/risk_cap_trigger_alignment_matrix.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/risk_cap_trigger_alignment_matrix.csv
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/source_bound_static_etf_exposure_cap_dry_run_result.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/source_bound_static_etf_exposure_cap_dry_run_result.csv
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_vs_no_cap_static_etf_comparison.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_vs_no_cap_static_etf_comparison.csv
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_binding_day_matrix.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_binding_day_matrix.csv
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_turnover_impact_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_cooldown_impact_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_false_risk_cap_cost_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_missed_upside_cost_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_downside_protection_proxy_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_data_quality_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_simulation_interpretation_boundary.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/exposure_cap_2327_task_route.json
+      - outputs/research_trends/source_bound_exposure_cap_dry_run_static_etf_baseline/data_quality_2026-06-29.md
+    artifact_selection_policy: latest_available
+    artifact_role: source_bound_static_etf_exposure_cap_dry_run
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: SOURCE_BOUND_STATIC_ETF_EXPOSURE_CAP_DRY_RUN_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION
+    source_status: PORTFOLIO_BASELINE_SOURCE_DECISION_READY_PROMOTION_BLOCKED
+    source_artifact_role: portfolio_baseline_source_decision
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_quality_gate_required: true
+    data_quality_gate_executed: true
+    selected_baseline: static_etf_allocation_baseline
+    portfolio_source_mode: static_etf_allocation_baseline
+    cap_policy_interpretation: portfolio_total_risk_exposure_cap
+    risk_assets_scaled_pro_rata: true
+    static_cash_weight_unchanged: true
+    dry_run_executed: true
+    dry_run_result_generated: true
+    exposure_cap_vs_no_cap_comparison_generated: true
+    cap_binding_days: 382
+    record_count: 3460
+    next_task: TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review
+    research_only: true
+    dry_run_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Static ETF exposure-cap dry-run should be rerun after TRADING-2325 baseline
+      source decision changes, TRADING-2324 risk-cap trigger binding changes,
+      static ETF allocation config changes, cached market data refreshes, or
+      cooldown / exposure-cap policy changes.
+    owner_action: review_static_etf_proxy_diagnostics_before_TRADING_2327_scope
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

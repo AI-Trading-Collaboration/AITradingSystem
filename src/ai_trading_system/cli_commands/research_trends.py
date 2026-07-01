@@ -976,6 +976,33 @@ from ai_trading_system.signal_validity_aging_runtime_design import (
 from ai_trading_system.signal_validity_aging_runtime_design import (
     run_signal_validity_aging_runtime_design,
 )
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_BASELINE_DECISION_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_BASELINE_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_DOCS_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_DOCS_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_OUTPUT_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_POLICY_PATH as DEFAULT_SOURCE_BOUND_STATIC_ETF_POLICY_PATH,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_PORTFOLIO_CONFIG_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_CONFIG_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_SIMULATION_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    DEFAULT_SOURCE_BINDING_ROOT as DEFAULT_SOURCE_BOUND_STATIC_ETF_SOURCE_ROOT,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    MODE as SOURCE_BOUND_STATIC_ETF_MODE,
+)
+from ai_trading_system.source_bound_static_etf_dry_run import (
+    run_source_bound_static_etf_dry_run,
+)
 from ai_trading_system.two_layer_policy_compiler import (
     DEFAULT_POLICY_SCHEMA_PATH,
     DEFAULT_SIGNAL_USAGE_MATRIX_V2_PATH,
@@ -2748,6 +2775,62 @@ def portfolio_baseline_source_decision_command(
         mode=mode,
     )
     _print_payload("Portfolio baseline source decision", payload)
+
+
+@trends_app.command("source-bound-exposure-cap-dry-run")
+def source_bound_exposure_cap_dry_run_command(
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_SOURCE_ROOT,
+    baseline_decision_dir: Annotated[
+        Path, typer.Option("--baseline-decision-dir")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_BASELINE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_SIMULATION_ROOT,
+    portfolio_config_dir: Annotated[
+        Path, typer.Option("--portfolio-config-dir")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_CONFIG_ROOT,
+    market_data_source: Annotated[
+        Path, typer.Option("--market-data-source")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_source: Annotated[
+        Path, typer.Option("--rates-source")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_source: Annotated[
+        Path | None, typer.Option("--marketstack-prices-source")
+    ] = None,
+    policy_path: Annotated[
+        Path | None, typer.Option("--policy")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_POLICY_PATH,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
+    quality_as_of: Annotated[
+        str | None, typer.Option("--quality-as-of")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = SOURCE_BOUND_STATIC_ETF_MODE,
+) -> None:
+    payload = run_source_bound_static_etf_dry_run(
+        source_binding_dir=source_binding_dir,
+        baseline_decision_dir=baseline_decision_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        portfolio_config_dir=portfolio_config_dir,
+        market_data_source=market_data_source,
+        rates_source=rates_source,
+        marketstack_prices_source=marketstack_prices_source,
+        policy_path=policy_path,
+        target_assets=target_assets,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Source-bound exposure-cap dry-run", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
