@@ -335,6 +335,21 @@ from ai_trading_system.first_layer_walk_forward_coverage import (
     DEFAULT_MODEL_MATRIX_YAML_PATH,
     run_first_layer_walk_forward_coverage_rebuild_pack,
 )
+from ai_trading_system.forward_observe_evidence_accumulation_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_FORWARD_OBSERVE_EVIDENCE_DOCS_ROOT,
+)
+from ai_trading_system.forward_observe_evidence_accumulation_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_FORWARD_OBSERVE_EVIDENCE_OUTPUT_ROOT,
+)
+from ai_trading_system.forward_observe_evidence_accumulation_plan import (
+    DEFAULT_READINESS_ROOT as DEFAULT_FORWARD_OBSERVE_EVIDENCE_READINESS_ROOT,
+)
+from ai_trading_system.forward_observe_evidence_accumulation_plan import (
+    MODE as FORWARD_OBSERVE_EVIDENCE_MODE,
+)
+from ai_trading_system.forward_observe_evidence_accumulation_plan import (
+    run_forward_observe_evidence_accumulation_plan,
+)
 from ai_trading_system.free_feature_family_reablation import (
     DEFAULT_CHANNEL_CLOSEOUT_PATH as DEFAULT_FREE_REABLATION_CHANNEL_CLOSEOUT_PATH,
 )
@@ -2147,6 +2162,36 @@ def scope_narrowed_forward_observe_readiness_review_command(
         docs_root=docs_root,
     )
     _print_payload("Scope-narrowed forward observe readiness review", payload)
+
+
+@trends_app.command("forward-observe-evidence-accumulation-plan")
+def forward_observe_evidence_accumulation_plan_command(
+    readiness_dir: Annotated[
+        Path, typer.Option("--readiness-dir")
+    ] = DEFAULT_FORWARD_OBSERVE_EVIDENCE_READINESS_ROOT,
+    candidate: Annotated[
+        str, typer.Option("--candidate")
+    ] = "volatility_regime_scope_narrowed_risk_cap_v1",
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_FORWARD_OBSERVE_EVIDENCE_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = FORWARD_OBSERVE_EVIDENCE_MODE,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_FORWARD_OBSERVE_EVIDENCE_DOCS_ROOT,
+) -> None:
+    payload = run_forward_observe_evidence_accumulation_plan(
+        readiness_dir=readiness_dir,
+        candidate=candidate,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir,
+        mode=mode,
+        docs_root=docs_root,
+    )
+    _print_payload("Forward observe evidence accumulation plan", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

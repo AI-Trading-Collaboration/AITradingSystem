@@ -23526,6 +23526,51 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: forward_observe_evidence_accumulation_plan
+    title: Forward Observe Evidence Accumulation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends forward-observe-evidence-accumulation-plan
+    artifact_globs:
+      - docs/research/forward_observe_runtime_design.md
+      - docs/research/risk_cap_daily_observe_record_schema.md
+      - docs/research/risk_cap_trigger_followup_schema.md
+      - docs/research/forward_observe_runtime_safety_boundary.md
+      - docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_evidence_accumulation_plan_summary.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_evidence_accumulation_plan.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_runtime_contract.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/risk_cap_daily_observe_record_schema.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/risk_cap_trigger_followup_schema.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_storage_layout.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_runtime_safety_boundary.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_minimum_observation_policy.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_weekly_review_cadence.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_evidence_decision_matrix.json
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_evidence_decision_matrix.csv
+      - outputs/research_trends/forward_observe_evidence_accumulation_plan/forward_observe_runtime_design.md
+    artifact_selection_policy: latest_available
+    artifact_role: forward_observe_evidence_accumulation_plan
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    forward_observe_started: false
+    runtime_started: false
+    daily_report_integration: design_only
+    weekly_report_integration: design_only
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Forward observe evidence accumulation plan should be rerun after
+      TRADING-2293 readiness outputs, risk-cap observation policy, data-quality
+      visibility requirements, or observe-only runtime safety boundaries change.
+    owner_action: review_observe_only_runtime_contract_before_any_runtime_implementation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_new_candidate_family_prioritization
     title: First-Layer New Candidate Family Prioritization
     group: research
