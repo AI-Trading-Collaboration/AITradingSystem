@@ -222,6 +222,22 @@ from ai_trading_system.event_calendar_gating_generator_poc import (
 from ai_trading_system.event_calendar_gating_generator_poc import (
     run_event_calendar_gating_generator_poc,
 )
+from ai_trading_system.event_gating_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EVENT_GATING_VALIDATION_DOCS_ROOT,
+)
+from ai_trading_system.event_gating_validation import (
+    DEFAULT_GENERATOR_ROOT as DEFAULT_EVENT_GATING_VALIDATION_GENERATOR_ROOT,
+)
+from ai_trading_system.event_gating_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EVENT_GATING_VALIDATION_OUTPUT_ROOT,
+)
+from ai_trading_system.event_gating_validation import (
+    DEFAULT_POLICY_PATH as DEFAULT_EVENT_GATING_VALIDATION_POLICY_PATH,
+)
+from ai_trading_system.event_gating_validation import (
+    MODE as EVENT_GATING_VALIDATION_MODE,
+)
+from ai_trading_system.event_gating_validation import run_event_gating_validation
 from ai_trading_system.first_layer_active_selection_policy_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
 )
@@ -3041,6 +3057,32 @@ def event_calendar_gating_generator_poc_command(
         mode=mode,
     )
     _print_payload("Event calendar gating generator POC", payload)
+
+
+@trends_app.command("event-gating-validation")
+def event_gating_validation_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_EVENT_GATING_VALIDATION_POLICY_PATH,
+    generator_dir: Annotated[
+        Path, typer.Option("--generator-dir")
+    ] = DEFAULT_EVENT_GATING_VALIDATION_GENERATOR_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EVENT_GATING_VALIDATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EVENT_GATING_VALIDATION_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EVENT_GATING_VALIDATION_MODE,
+) -> None:
+    payload = run_event_gating_validation(
+        policy_path=policy_path,
+        generator_dir=generator_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Event gating validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

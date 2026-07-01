@@ -24564,6 +24564,84 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: event_gating_validation
+    title: Event Gating Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends event-gating-validation
+    artifact_globs:
+      - config/research/event_gating_validation_policy.yaml
+      - docs/research/event_gating_validation.md
+      - docs/requirements/TRADING-2320_Event_Gating_Validation.md
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_calendar_gating_generator_summary.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_signal_spec.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_summary.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_metric_contract.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_readiness_matrix.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_readiness_matrix.csv
+      - outputs/research_trends/event_gating_validation/event_gating_validation_blocker_report.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_blocker_report.csv
+      - outputs/research_trends/event_gating_validation/event_gating_validation_data_requirement_matrix.json
+      - outputs/research_trends/event_gating_validation/event_gating_validation_data_requirement_matrix.csv
+      - outputs/research_trends/event_gating_validation/event_gating_validation_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: event_gating_validation_source_blocked
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    data_quality_status: NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_VALIDATION
+    validation_status: EVENT_GATING_VALIDATION_SOURCE_BLOCKED_NOT_EXECUTED
+    source_status: EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL
+    source_signal_spec_status: SOURCE_BLOCKED_INACTIVE_SPEC_ONLY
+    source_gating_signal_generated: false
+    source_event_gating_signal_series_generated: false
+    source_event_rows_consumed: false
+    source_blocked_no_validation: true
+    event_gating_validation_cli_implemented: true
+    executable_validation_ready: false
+    validation_objective_count: 3
+    blocked_objective_count: 3
+    data_requirement_count: 15
+    blocker_count: 18
+    metric_contract_status: SOURCE_BLOCKED_METRIC_CONTRACT_ONLY
+    event_rows_consumed: false
+    event_rows_downloaded: false
+    event_calendar_cache_written: false
+    gating_signal_consumed: false
+    event_gating_signal_series_consumed: false
+    market_data_consumed: false
+    turnover_records_consumed: false
+    exposure_records_consumed: false
+    event_gating_validation_executed: false
+    validation_result_generated: false
+    event_outcome_prediction_allowed: false
+    trading_direction_prediction_allowed: false
+    candidate_generation_allowed: false
+    candidate_artifact_generated: false
+    actual_path_validation_executed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    validation_objectives:
+      - pre_event_false_risk_on
+      - event_window_overtrading
+      - earnings_cluster_exposure_risk
+    policy_id: event_gating_validation_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Event gating validation readiness should be rerun after TRADING-2319
+      generator output changes, event source manifests are added, executable
+      gating signal series are generated, or before any event gating effect
+      validation is attempted.
+    owner_action: provide_event_source_manifest_and_executable_gating_signal_before_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

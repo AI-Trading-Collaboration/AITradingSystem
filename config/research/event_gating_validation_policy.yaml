@@ -1,0 +1,134 @@
+policy_id: event_gating_validation_policy
+version: v1
+status: pilot_research_source_blocked
+owner: research_governance
+task_id: TRADING-2320_EVENT_GATING_VALIDATION
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Event gating validation can only test whether no-add, post-event confirmation,
+  manual-review and earnings-cluster controls reduce risk after an executable
+  gating signal exists. TRADING-2319 produced a source-blocked inactive signal
+  spec with no event rows and no signal series, so TRADING-2320 must fail closed
+  and document validation requirements instead of producing effect claims.
+intended_effect: >
+  Convert TRADING-2319 source-blocked generator findings into a validation
+  readiness package: objective readiness, metric contract, data requirements,
+  blocker report, validation summary and safety boundary.
+validation_evidence: >
+  Planned TRADING-2320 source-blocked run using TRADING-2319 artifacts, policy
+  validation tests, CLI output tests, report registry / artifact catalog tests
+  and contract validation. No event rows, market data, turnover records or
+  exposure records are consumed.
+review_condition: >
+  Review after TRADING-2319 is rerun with an executable gating signal, after
+  event-row source manifests and known-at validation are complete, and before
+  any event gating effect validation is executed.
+expiry_condition: >
+  Replace with an executable validation policy only after event rows, gating
+  signal series, risk-on/add records, event-window turnover records, earnings
+  cluster exposure records and cached-data quality gates are available.
+source_dependency:
+  required_task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+  required_status: EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL
+  required_data_quality_status: NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR
+  required_signal_spec_status: SOURCE_BLOCKED_INACTIVE_SPEC_ONLY
+  allow_source_blocked_package: true
+  executable_signal_required_for_real_validation: true
+  source_blocked_status: EVENT_GATING_VALIDATION_SOURCE_BLOCKED_NOT_EXECUTED
+validation_objectives:
+  pre_event_false_risk_on:
+    target_question: Did pre-event no-add reduce false risk-on additions?
+    required_gating_use_cases:
+      - pre_event_no_add
+      - manual_review_trigger
+    required_data:
+      - pit_event_rows_with_known_at
+      - executable_gating_signal_series
+      - risk_on_add_decision_records
+      - post_window_return_outcomes
+      - cached_market_data_quality_report
+    blocked_reason: missing_pit_event_rows_and_gating_signal_series
+  event_window_overtrading:
+    target_question: Did event windows reduce churn and avoid overtrading?
+    required_gating_use_cases:
+      - pre_event_no_add
+      - post_event_confirmation_window
+      - manual_review_trigger
+    required_data:
+      - pit_event_rows_with_known_at
+      - executable_gating_signal_series
+      - event_window_turnover_records
+      - comparable_non_event_window_turnover_records
+      - cached_market_data_quality_report
+    blocked_reason: missing_event_window_turnover_records_and_gating_signal_series
+  earnings_cluster_exposure_risk:
+    target_question: Did AI / semiconductor earnings clusters reduce exposure risk?
+    required_gating_use_cases:
+      - earnings_cluster_risk
+      - manual_review_trigger
+    required_data:
+      - issuer_event_source_manifest
+      - executable_gating_signal_series
+      - earnings_cluster_exposure_records
+      - cluster_window_drawdown_outcomes
+      - cached_market_data_quality_report
+    blocked_reason: missing_issuer_event_manifest_and_cluster_exposure_records
+metric_contract:
+  contract_status: SOURCE_BLOCKED_METRIC_CONTRACT_ONLY
+  comparison_windows:
+    - pre_event_window
+    - event_window
+    - post_event_confirmation_window
+    - matched_non_event_window
+  required_output_fields_after_unblock:
+    - validation_objective
+    - event_family
+    - decision_date
+    - window_start
+    - window_end
+    - gating_action
+    - comparison_group
+    - risk_on_add_blocked_count
+    - turnover_delta
+    - cluster_exposure_delta
+    - outcome_window_return
+    - known_at_policy_status
+    - data_quality_status
+  blocked_actions:
+    - event_outcome_prediction
+    - trading_direction_prediction
+    - position_sizing
+    - broker_order
+    - paper_shadow_enrollment
+    - production_decision
+    - validation_effect_claim
+safety:
+  research_only: true
+  source_blocked_no_validation: true
+  event_rows_consumed: false
+  event_rows_downloaded: false
+  event_calendar_cache_written: false
+  gating_signal_consumed: false
+  event_gating_signal_series_consumed: false
+  market_data_consumed: false
+  turnover_records_consumed: false
+  exposure_records_consumed: false
+  event_gating_validation_executed: false
+  validation_result_generated: false
+  event_outcome_prediction_allowed: false
+  trading_direction_prediction_allowed: false
+  candidate_generation_allowed: false
+  candidate_artifact_generated: false
+  candidate_signal_series_generated: false
+  prediction_artifact_generated: false
+  actual_path_validation_executed: false
+  scope_review_executed: false
+  forward_observe_started: false
+  paper_shadow_allowed: false
+  promotion_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED
