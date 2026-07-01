@@ -40,6 +40,21 @@ from ai_trading_system.breadth_participation_feasibility_audit import (
 from ai_trading_system.breadth_participation_feasibility_audit import (
     run_breadth_participation_feasibility_audit,
 )
+from ai_trading_system.breadth_proxy_signal_concept_selection import (
+    DEFAULT_DIAGNOSTICS_ROOT as DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.breadth_proxy_signal_concept_selection import (
+    DEFAULT_DOCS_ROOT as DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_DOCS_ROOT,
+)
+from ai_trading_system.breadth_proxy_signal_concept_selection import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_OUTPUT_ROOT,
+)
+from ai_trading_system.breadth_proxy_signal_concept_selection import (
+    MODE as BREADTH_PROXY_SIGNAL_SELECTION_MODE,
+)
+from ai_trading_system.breadth_proxy_signal_concept_selection import (
+    run_breadth_proxy_signal_concept_selection,
+)
 from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
     DEFAULT_DIAGNOSTICS_ROOT as DEFAULT_CONFIDENCE_SCALING_DIAGNOSTICS_ROOT,
 )
@@ -2279,6 +2294,28 @@ def current_constituents_breadth_proxy_diagnostics_command(
         mode=mode,
     )
     _print_payload("Current constituents breadth proxy diagnostics", payload)
+
+
+@trends_app.command("breadth-proxy-signal-concept-selection")
+def breadth_proxy_signal_concept_selection_command(
+    diagnostics_dir: Annotated[
+        Path, typer.Option("--diagnostics-dir")
+    ] = DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_DIAGNOSTICS_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = BREADTH_PROXY_SIGNAL_SELECTION_MODE,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_BREADTH_PROXY_SIGNAL_SELECTION_DOCS_ROOT,
+) -> None:
+    payload = run_breadth_proxy_signal_concept_selection(
+        diagnostics_dir=diagnostics_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Breadth proxy signal concept selection", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

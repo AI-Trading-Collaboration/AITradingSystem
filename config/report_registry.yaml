@@ -23705,6 +23705,45 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: breadth_proxy_signal_concept_selection
+    title: Breadth Proxy Signal Concept Selection
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends breadth-proxy-signal-concept-selection
+    artifact_globs:
+      - docs/research/breadth_proxy_signal_selection_report.md
+      - docs/requirements/TRADING-2304_Breadth_Proxy_Signal_Concept_Selection.md
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_proxy_signal_selection_summary.json
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_signal_concept_scorecard.json
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_signal_concept_scorecard.csv
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/selected_breadth_signal_concepts.json
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/rejected_breadth_signal_concepts.json
+      - outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_proxy_signal_selection_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: breadth_proxy_signal_concept_selection
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    source_blocked_default: true
+    selected_concept_count: 0
+    advance_to_generator_allowed: false
+    generator_implemented: false
+    actual_path_validation_executed: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Breadth proxy signal concept selection should be rerun after TRADING-2303
+      computes actual signal distribution diagnostics from frozen current
+      constituent snapshots and constituent price coverage.
+    owner_action: provide_constituent_snapshots_before_breadth_concept_selection_can_advance
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
