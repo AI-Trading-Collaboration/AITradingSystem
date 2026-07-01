@@ -204,6 +204,24 @@ from ai_trading_system.event_calendar_feasibility_audit import (
 from ai_trading_system.event_calendar_feasibility_audit import (
     run_event_calendar_data_feasibility_audit,
 )
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EVENT_GATING_GENERATOR_DOCS_ROOT,
+)
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    DEFAULT_FEASIBILITY_ROOT as DEFAULT_EVENT_GATING_GENERATOR_FEASIBILITY_ROOT,
+)
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EVENT_GATING_GENERATOR_OUTPUT_ROOT,
+)
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    DEFAULT_POLICY_PATH as DEFAULT_EVENT_GATING_GENERATOR_POLICY_PATH,
+)
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    MODE as EVENT_GATING_GENERATOR_MODE,
+)
+from ai_trading_system.event_calendar_gating_generator_poc import (
+    run_event_calendar_gating_generator_poc,
+)
 from ai_trading_system.first_layer_active_selection_policy_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
 )
@@ -2997,6 +3015,32 @@ def event_calendar_data_feasibility_audit_command(
         mode=mode,
     )
     _print_payload("Event calendar data feasibility audit", payload)
+
+
+@trends_app.command("event-calendar-gating-generator-poc")
+def event_calendar_gating_generator_poc_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_EVENT_GATING_GENERATOR_POLICY_PATH,
+    feasibility_dir: Annotated[
+        Path, typer.Option("--feasibility-dir")
+    ] = DEFAULT_EVENT_GATING_GENERATOR_FEASIBILITY_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EVENT_GATING_GENERATOR_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EVENT_GATING_GENERATOR_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EVENT_GATING_GENERATOR_MODE,
+) -> None:
+    payload = run_event_calendar_gating_generator_poc(
+        policy_path=policy_path,
+        feasibility_dir=feasibility_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Event calendar gating generator POC", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

@@ -1,0 +1,122 @@
+policy_id: event_calendar_gating_generator_policy
+version: v1
+status: pilot_research_source_blocked
+owner: research_governance
+task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Event calendar gating can only become a generator POC after provider-specific
+  event rows and known-at timestamps are validated. TRADING-2318 found no
+  PIT-ready event sources, so TRADING-2319 must fail closed and produce a
+  source-blocked package instead of executable signals.
+intended_effect: >
+  Convert TRADING-2318 source feasibility findings into a generator POC boundary
+  package: inactive signal spec, use-case readiness matrix, source blocker report,
+  manual review contract carry-forward, validation summary and safety boundary.
+validation_evidence: >
+  Planned TRADING-2319 source-blocked run using TRADING-2318 artifacts, policy
+  validation tests, CLI output tests, report registry / artifact catalog tests
+  and contract validation. No event rows are generated or consumed.
+review_condition: >
+  Review after provider-specific event source manifests are added, before
+  changing use-case semantics, before allowing any event rows into a generator,
+  and before TRADING-2320 validation.
+expiry_condition: >
+  Replace with an executable generator policy only after all required event
+  families have source manifests, row-level known-at validation, checksums and
+  owner approval for use-case windows.
+source_dependency:
+  required_task_id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+  required_status: EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY
+  required_data_quality_status: NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT
+  minimum_pit_ready_sources_for_executable_generator: 1
+  allow_source_blocked_package: true
+  source_blocked_status: EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL
+required_use_cases:
+  pre_event_no_add:
+    output_role: inactive_gating_use_case_spec
+    intended_effect: prevent_new_risk_on_additions_before_known_high_impact_events
+    required_before_activation:
+      - all_required_event_families_have_source_manifest
+      - event_rows_have_known_at_before_decision
+      - owner_review_no_add_semantics
+      - TRADING_2319_executable_generator_rerun
+  post_event_confirmation_window:
+    output_role: inactive_gating_use_case_spec
+    intended_effect: require post-event price confirmation before event risk clears
+    required_before_activation:
+      - event_rows_have_known_at_before_decision
+      - price_confirmation_policy_manifest
+      - owner_review_window_semantics
+      - TRADING_2320_validation_plan
+  manual_review_trigger:
+    output_role: inactive_manual_review_contract_spec
+    intended_effect: route known high-impact macro or AI earnings clusters to manual review
+    required_before_activation:
+      - manual_review_owner_contract
+      - event_rows_have_known_at_before_decision
+      - alert_channel_boundary_review
+      - no_broker_action_guard
+  earnings_cluster_risk:
+    output_role: inactive_cluster_risk_spec
+    intended_effect: flag clustered AI / semiconductor earnings windows for diagnostics
+    required_before_activation:
+      - semiconductor_issuer_universe_policy
+      - issuer_event_source_manifest
+      - cross_timezone_policy
+      - owner_review_cluster_window
+inactive_signal_spec:
+  spec_status: SOURCE_BLOCKED_INACTIVE_SPEC_ONLY
+  required_event_row_fields:
+    - event_id
+    - event_family
+    - event_date
+    - event_time
+    - source_published_time
+    - known_at
+    - available_at
+    - provider_name
+    - source_manifest_id
+    - checksum
+  required_output_fields_after_unblock:
+    - decision_date
+    - gating_use_case
+    - window_start
+    - window_end
+    - allowed_action
+    - blocked_action
+    - manual_review_required
+    - known_at_policy_status
+  blocked_actions:
+    - event_outcome_prediction
+    - trading_direction_prediction
+    - position_sizing
+    - broker_order
+    - paper_shadow_enrollment
+    - production_decision
+safety:
+  research_only: true
+  source_blocked_no_generation: true
+  event_rows_consumed: false
+  event_rows_downloaded: false
+  event_calendar_cache_written: false
+  gating_generator_executed: false
+  gating_signal_generated: false
+  event_gating_signal_series_generated: false
+  event_outcome_prediction_allowed: false
+  trading_direction_prediction_allowed: false
+  candidate_generation_allowed: false
+  candidate_artifact_generated: false
+  candidate_signal_series_generated: false
+  prediction_artifact_generated: false
+  actual_path_validation_executed: false
+  scope_review_executed: false
+  forward_observe_started: false
+  paper_shadow_allowed: false
+  promotion_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

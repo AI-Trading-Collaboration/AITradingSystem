@@ -24491,6 +24491,79 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: event_calendar_gating_generator_poc
+    title: Event Calendar Gating Generator POC
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends event-calendar-gating-generator-poc
+    artifact_globs:
+      - config/research/event_calendar_gating_generator_policy.yaml
+      - docs/research/event_calendar_gating_generator_poc.md
+      - docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md
+      - outputs/research_trends/event_calendar_data_feasibility_audit/event_calendar_data_feasibility_summary.json
+      - outputs/research_trends/event_calendar_data_feasibility_audit/event_calendar_source_inventory.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_calendar_gating_generator_summary.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_signal_spec.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_use_case_readiness_matrix.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_use_case_readiness_matrix.csv
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_source_blocker_report.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_source_blocker_report.csv
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_manual_review_trigger_contract.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_generator_validation_summary.json
+      - outputs/research_trends/event_calendar_gating_generator_poc/event_gating_generator_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: event_calendar_gating_generator_poc_source_blocked
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    data_quality_status: NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR
+    validation_status: EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL
+    source_status: EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY
+    source_pit_ready_source_count: 0
+    source_audit_required_count: 8
+    source_blocked_count: 4
+    source_blocker_count: 8
+    use_case_readiness_count: 4
+    blocked_use_case_count: 4
+    source_blocked_no_generation: true
+    generator_poc_cli_implemented: true
+    executable_generator_ready: false
+    signal_spec_status: SOURCE_BLOCKED_INACTIVE_SPEC_ONLY
+    event_rows_consumed: false
+    event_rows_downloaded: false
+    event_calendar_cache_written: false
+    gating_generator_executed: false
+    gating_signal_generated: false
+    event_gating_signal_series_generated: false
+    event_outcome_prediction_allowed: false
+    trading_direction_prediction_allowed: false
+    candidate_generation_allowed: false
+    candidate_artifact_generated: false
+    actual_path_validation_executed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    gating_use_cases:
+      - pre_event_no_add
+      - post_event_confirmation_window
+      - manual_review_trigger
+      - earnings_cluster_risk
+    policy_id: event_calendar_gating_generator_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Event gating generator POC should be rerun after TRADING-2318 source
+      feasibility changes, provider-specific event source manifests are added,
+      known-at validation changes, or before any executable event gating signal
+      generation is attempted.
+    owner_action: provide_event_source_manifest_before_executable_event_gating_generator
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
