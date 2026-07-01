@@ -44,7 +44,7 @@ aits research trends breadth-participation-candidate-family-feasibility-audit \
    - 不生成 candidate-bound signal spec、signal series、prediction artifact，也不执行 actual-path validation。
 
 4. Validation route and 2303 task route。
-   - strict PIT 或 PIT approximation 可行时，后续才允许 `TRADING-2303_Breadth_Participation_Executable_Generator_POC`。
+   - strict PIT 或 PIT approximation 可行时，后续才允许 `TRADING-2305_Breadth_Proxy_Candidate_Generator_POC`。
    - 若只有 current constituents proxy 可行，则进入 `TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only`。
    - 若无可靠数据，则进入 data source decision。
 

@@ -193,10 +193,10 @@ FAMILY_PRIORITIES: tuple[CandidateFamilyPriority, ...] = (
         score=80,
         priority="P1",
         legal_task_id=(
-            "TRADING-2303_AI_SEMICONDUCTOR_LEADERSHIP_CANDIDATE_FAMILY_SPEC"
+            "TRADING-2307_AI_SEMICONDUCTOR_LEADERSHIP_CANDIDATE_FAMILY_FEASIBILITY_AUDIT"
         ),
         legacy_alias="TRADING-2295B",
-        recommended_next_step="candidate family spec",
+        recommended_next_step="feasibility audit + candidate family design sketch",
         primary_use=(
             "SMH_exposure_confirmation",
             "AI_chain_trend_quality_confirmation",
@@ -235,9 +235,7 @@ FAMILY_PRIORITIES: tuple[CandidateFamilyPriority, ...] = (
         family_type="new_candidate_family",
         score=77,
         priority="P1/P2",
-        legal_task_id=(
-            "TRADING-2304_LIQUIDITY_RATES_PRESSURE_PROXY_AUDIT_AND_CANDIDATE_SPEC"
-        ),
+        legal_task_id="TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT",
         legacy_alias="TRADING-2296B",
         recommended_next_step="proxy audit + PIT design",
         primary_use=(
@@ -280,7 +278,7 @@ FAMILY_PRIORITIES: tuple[CandidateFamilyPriority, ...] = (
         family_type="diagnostic_selector_layer",
         score=72,
         priority="P2",
-        legal_task_id="TRADING-2305_REGIME_STATE_MACHINE_DIAGNOSTIC_LABEL_FRAMEWORK",
+        legal_task_id="TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT",
         legacy_alias="TRADING-2297B",
         recommended_next_step="regime label framework",
         primary_use=(
@@ -317,7 +315,7 @@ FAMILY_PRIORITIES: tuple[CandidateFamilyPriority, ...] = (
         family_type="gating_layer",
         score=65,
         priority="P2",
-        legal_task_id="TRADING-2306_EVENT_CALENDAR_GATING_FEASIBILITY_AUDIT",
+        legal_task_id="TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT",
         legacy_alias="TRADING-2298B",
         recommended_next_step="PIT event calendar audit",
         primary_use=(
@@ -360,7 +358,7 @@ FAMILY_PRIORITIES: tuple[CandidateFamilyPriority, ...] = (
         family_type="execution_research",
         score=69,
         priority="P0.5/P2",
-        legal_task_id="TRADING-2307_FORWARD_OBSERVE_RUNTIME_EVIDENCE_AND_CAP_MECHANICS_PLAN",
+        legal_task_id="TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN",
         legacy_alias="TRADING-2294 runtime / execution mechanics",
         recommended_next_step="pair with risk-cap runtime",
         primary_use=(

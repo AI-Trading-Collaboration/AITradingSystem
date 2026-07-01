@@ -23,11 +23,15 @@ Owner 附件 `G:/Download/first_layer_new_candidate_family_research_prioritizati
 |`TRADING-2294`|TRADING-2294 mainline|Risk-cap evidence accumulation extension plan|
 |`TRADING-2301`|`TRADING-2293B`|First-layer new candidate family backlog and feasibility audit|
 |`TRADING-2302`|`TRADING-2294B`|Breadth participation data feasibility and candidate spec|
-|`TRADING-2303`|`TRADING-2295B`|AI semiconductor leadership candidate family spec|
-|`TRADING-2304`|`TRADING-2296B`|Liquidity rates pressure proxy audit and candidate spec|
-|`TRADING-2305`|`TRADING-2297B`|Regime state machine diagnostic label framework|
-|`TRADING-2306`|`TRADING-2298B`|Event calendar gating feasibility audit|
-|`TRADING-2307`|execution mechanics note|Forward observe runtime evidence and cap mechanics plan|
+|`TRADING-2303`|post-2302 roadmap|Current constituents proxy diagnostics only|
+|`TRADING-2304`|post-2302 roadmap|Breadth proxy signal concept selection|
+|`TRADING-2305`|post-2302 roadmap|Breadth proxy candidate generator POC|
+|`TRADING-2306`|post-2302 roadmap|Breadth proxy diagnostics validation / data-source decision|
+|`TRADING-2307`|`TRADING-2295B`|AI semiconductor leadership candidate family feasibility audit|
+|`TRADING-2311`|`TRADING-2296B`|Liquidity rates pressure data feasibility audit|
+|`TRADING-2315`|`TRADING-2297B`|Regime state machine design audit|
+|`TRADING-2318`|`TRADING-2298B`|Event calendar data feasibility audit|
+|`TRADING-2321`|execution mechanics note|Risk-cap cooldown / decay design|
 
 ## 目标
 
@@ -73,7 +77,7 @@ forward_observe_runtime_started: false
    - 对 `trend_structure` / current `risk_appetite` 生成 deferred current-form matrix。
 
 3. Task route。
-   - 将附件 alias 映射到合法 `TRADING-2301`～`TRADING-2307`。
+   - 将附件 alias 和 post-2302 roadmap 映射到合法且不冲突的 task ids。
    - 明确 first next new family 是 breadth / participation，第二是 AI / semiconductor leadership，第三是 liquidity / rates pressure。
    - 保留 risk-cap forward observe mainline，不把新 family 直接接入 generator、validator 或 report runtime。
 
@@ -91,7 +95,7 @@ forward_observe_runtime_started: false
 
 - CLI implemented: `aits research trends first-layer-new-candidate-family-prioritization`。
 - 生成 JSON/CSV/Markdown artifacts，并可复现附件中的排序：risk-cap mainline P0，breadth / participation 和 AI / semiconductor leadership 为 P1，liquidity / rates pressure 为 P1/P2，regime / event / execution 为辅助层，current trend/risk_appetite 形态暂缓。
-- 任务登记记录 `TRADING-2301`～`TRADING-2307`，并保留附件 legacy alias。
+- 任务登记记录 `TRADING-2301`～`TRADING-2307`、`TRADING-2311`、`TRADING-2315`、`TRADING-2318`、`TRADING-2321`，并保留附件 legacy alias。
 - 所有 outputs 固定 promotion、paper-shadow、production、broker false/none。
 - 不生成新的 candidate-bound executable artifacts，不执行 actual-path validation，不启动 forward observe runtime。
 
@@ -99,3 +103,4 @@ forward_observe_runtime_started: false
 
 - 2026-07-01: 根据 owner 附件新增并进入 `IN_PROGRESS`。当前 worktree 已存在 TRADING-1087 / ops / data download 相关未提交改动；本任务必须 selective staging，不能混入无关改动。
 - 2026-07-01: 实现完成并转入 `VALIDATING`。新增 `aits research trends first-layer-new-candidate-family-prioritization`、deterministic prioritization builder、report registry / artifact catalog / system flow 更新和 focused tests。真实 run 输出 status=`FIRST_LAYER_NEW_CANDIDATE_FAMILY_BACKLOG_READY_PROMOTION_BLOCKED`，next new family=`TRADING-2302_BREADTH_PARTICIPATION_DATA_FEASIBILITY_AND_CANDIDATE_SPEC`，next mainline=`TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN`，data quality status=`NOT_APPLICABLE_STATIC_OWNER_BRIEF`；所有 outputs 固定 promotion / paper-shadow / production / broker false / none，且 `candidate_generation_allowed=false`、`actual_path_validation_executed=false`、`forward_observe_runtime_started=false`。验证通过 focused parallel pytest 12 passed、Ruff、compileall、docs freshness 480 docs / 0 issues、documentation contract PASS、contract-validation 193 passed、task-register consistency run/validate PASS 和 `git diff --check`。
+- 2026-07-01: 根据 post-2302 roadmap 修正后续任务编号，避免 TRADING-2303 与 breadth current-constituents diagnostics 冲突。AI leadership 改为 `TRADING-2307`，liquidity/rates 改为 `TRADING-2311`，regime 改为 `TRADING-2315`，event 改为 `TRADING-2318`，execution mechanics 改为 `TRADING-2321`；TRADING-2303～2306 保留给 breadth proxy diagnostics / selection / POC / validation。

@@ -521,7 +521,7 @@ def build_candidate_validation_route_matrix() -> list[dict[str, Any]]:
                 "daily_adjusted_constituent_prices",
                 "source_hash_and_known_at_manifest",
             ],
-            next_task="TRADING-2303_Breadth_Data_Source_Decision",
+            next_task="TRADING-2306_Breadth_Data_Source_Investment_Decision",
         ),
         _validation_route_row(
             candidate_id="smh_breadth_participation_v1",
@@ -547,7 +547,7 @@ def build_candidate_validation_route_matrix() -> list[dict[str, Any]]:
                 "known_at_caveat_report",
                 "bias_risk_matrix",
             ],
-            next_task="TRADING-2303_Breadth_Data_Source_Decision",
+            next_task="TRADING-2306_Breadth_Data_Source_Investment_Decision",
         ),
         _validation_route_row(
             candidate_id="mega_cap_concentration_fragility_v1",
@@ -573,7 +573,7 @@ def build_data_feasibility_recommendation_matrix() -> list[dict[str, Any]]:
             "pit_approximation_feasibility": False,
             "current_constituents_proxy_feasibility": False,
             "recommendation": "BLOCKED_PENDING_DATA_SOURCE",
-            "next_task": "TRADING-2303_Breadth_Data_Source_Decision",
+            "next_task": "TRADING-2306_Breadth_Data_Source_Investment_Decision",
             "reason": "Historical membership, weights, delisted coverage and known_at are missing.",
             **SAFETY_FIELDS,
         },
@@ -600,16 +600,16 @@ def build_2303_task_route(
     current_constituents_proxy_feasibility: bool,
 ) -> dict[str, Any]:
     if strict_pit_feasibility:
-        next_task = "TRADING-2303_Breadth_Participation_Executable_Generator_POC"
+        next_task = "TRADING-2305_Breadth_Proxy_Candidate_Generator_POC"
         caveat = "STRICT_PIT_READY"
     elif pit_approximation_feasibility:
-        next_task = "TRADING-2303_Breadth_Participation_Executable_Generator_POC"
+        next_task = "TRADING-2305_Breadth_Proxy_Candidate_Generator_POC"
         caveat = "PIT_APPROXIMATION_ONLY"
     elif current_constituents_proxy_feasibility:
         next_task = "TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only"
         caveat = "SURVIVORSHIP_BIAS"
     else:
-        next_task = "TRADING-2303_Breadth_Data_Source_Decision"
+        next_task = "TRADING-2306_Breadth_Data_Source_Investment_Decision"
         caveat = "NO_RELIABLE_DATA"
     return {
         "route_status": next_task,

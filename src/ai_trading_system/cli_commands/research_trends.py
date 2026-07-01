@@ -16,6 +16,21 @@ from ai_trading_system.baseline_frozen_composer_rewrap import (
 from ai_trading_system.baseline_frozen_composer_rewrap import (
     run_candidate_signal_binding_schema_poc,
 )
+from ai_trading_system.breadth_current_constituents_proxy_diagnostics import (
+    DEFAULT_DOCS_ROOT as DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_DOCS_ROOT,
+)
+from ai_trading_system.breadth_current_constituents_proxy_diagnostics import (
+    DEFAULT_FEASIBILITY_ROOT as DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_FEASIBILITY_ROOT,
+)
+from ai_trading_system.breadth_current_constituents_proxy_diagnostics import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_OUTPUT_ROOT,
+)
+from ai_trading_system.breadth_current_constituents_proxy_diagnostics import (
+    MODE as CURRENT_CONSTITUENTS_BREADTH_PROXY_MODE,
+)
+from ai_trading_system.breadth_current_constituents_proxy_diagnostics import (
+    run_current_constituents_breadth_proxy_diagnostics,
+)
 from ai_trading_system.breadth_participation_feasibility_audit import (
     DEFAULT_DOCS_ROOT as DEFAULT_BREADTH_FEASIBILITY_DOCS_ROOT,
 )
@@ -2234,6 +2249,38 @@ def breadth_participation_candidate_family_feasibility_audit_command(
     _print_payload("Breadth participation candidate family feasibility audit", payload)
 
 
+@trends_app.command("current-constituents-breadth-proxy-diagnostics")
+def current_constituents_breadth_proxy_diagnostics_command(
+    feasibility_dir: Annotated[
+        Path, typer.Option("--feasibility-dir")
+    ] = DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_FEASIBILITY_ROOT,
+    current_constituents_dir: Annotated[
+        Path | None, typer.Option("--current-constituents-dir")
+    ] = None,
+    target_etfs: Annotated[str, typer.Option("--target-etfs")] = "QQQ,SPY,SMH",
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = CURRENT_CONSTITUENTS_BREADTH_PROXY_MODE,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_CURRENT_CONSTITUENTS_BREADTH_PROXY_DOCS_ROOT,
+) -> None:
+    payload = run_current_constituents_breadth_proxy_diagnostics(
+        feasibility_dir=feasibility_dir,
+        current_constituents_dir=current_constituents_dir,
+        target_etfs=target_etfs,
+        target_assets=target_assets,
+        horizons=horizons,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Current constituents breadth proxy diagnostics", payload)
+
+
 @trends_app.command("first-layer-proxy-challenger-experiments")
 def first_layer_proxy_challenger_experiments_command(
     policy_path: Annotated[Path, typer.Option("--policy")] = DEFAULT_PROXY_CHALLENGER_POLICY_PATH,
@@ -2323,6 +2370,7 @@ def _print_payload(label: str, payload: dict[str, object]) -> None:
     style = "green" if "READY" in status or "CANDIDATE" in status else "yellow"
     expected_blocked = (
         "PROMOTION_BLOCKED" in status or "ACTUAL_PATH_VALIDATION_BLOCKED" in status
+        or "SOURCE_BLOCKED" in status
     )
     if "BLOCKED" in status and not expected_blocked:
         style = "red"

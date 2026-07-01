@@ -39,8 +39,14 @@ def test_new_candidate_family_task_backlog_maps_legacy_aliases_to_legal_ids() ->
     assert "2294B" not in breadth["task_id"]
 
     execution = by_family["execution_cooldown_decay_cap_mechanics"]
-    assert execution["task_id"].startswith("TRADING-2307_")
+    assert execution["task_id"].startswith("TRADING-2321_")
     assert execution["broker_action"] == "none"
+
+    leadership = by_family["ai_semiconductor_leadership"]
+    assert leadership["task_id"].startswith("TRADING-2307_")
+
+    rates = by_family["liquidity_rates_pressure"]
+    assert rates["task_id"].startswith("TRADING-2311_")
 
 
 def test_new_candidate_family_validation_path_and_boundary_are_non_runtime() -> None:

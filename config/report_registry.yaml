@@ -23663,6 +23663,48 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: current_constituents_breadth_proxy_diagnostics
+    title: Current Constituents Breadth Proxy Diagnostics
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends current-constituents-breadth-proxy-diagnostics
+    artifact_globs:
+      - docs/research/current_constituents_breadth_proxy_diagnostics_report.md
+      - docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_diagnostics_summary.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_source_coverage_matrix.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_source_coverage_matrix.csv
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_signal_distribution_matrix.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_signal_distribution_matrix.csv
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_asset_horizon_drilldown.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_asset_horizon_drilldown.csv
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_bias_warning_report.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_next_step_recommendation.json
+      - outputs/research_trends/current_constituents_breadth_proxy_diagnostics/breadth_proxy_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: current_constituents_breadth_proxy_diagnostics
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    strict_pit_ready: false
+    source_blocked_default: true
+    generator_implemented: false
+    actual_path_validation_executed: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Current constituents breadth proxy diagnostics should be rerun after owner
+      supplies frozen QQQ/SPY/SMH current constituent snapshots, constituent
+      price coverage improves, or TRADING-2302 feasibility route changes.
+    owner_action: provide_frozen_current_constituent_snapshots_or_continue_data_source_due_diligence
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

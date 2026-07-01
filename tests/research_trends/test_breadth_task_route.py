@@ -10,7 +10,7 @@ def test_breadth_task_route_strict_pit_goes_to_generator_poc() -> None:
         current_constituents_proxy_feasibility=False,
     )
 
-    assert route["next_task"] == "TRADING-2303_Breadth_Participation_Executable_Generator_POC"
+    assert route["next_task"] == "TRADING-2305_Breadth_Proxy_Candidate_Generator_POC"
     assert route["caveat"] == "STRICT_PIT_READY"
 
 
@@ -21,7 +21,7 @@ def test_breadth_task_route_pit_approximation_goes_to_generator_poc_with_caveat(
         current_constituents_proxy_feasibility=False,
     )
 
-    assert route["next_task"] == "TRADING-2303_Breadth_Participation_Executable_Generator_POC"
+    assert route["next_task"] == "TRADING-2305_Breadth_Proxy_Candidate_Generator_POC"
     assert route["caveat"] == "PIT_APPROXIMATION_ONLY"
 
 
@@ -43,7 +43,7 @@ def test_breadth_task_route_no_reliable_data_goes_to_data_source_decision() -> N
         current_constituents_proxy_feasibility=False,
     )
 
-    assert route["next_task"] == "TRADING-2303_Breadth_Data_Source_Decision"
+    assert route["next_task"] == "TRADING-2306_Breadth_Data_Source_Investment_Decision"
     assert route["caveat"] == "NO_RELIABLE_DATA"
 
 
