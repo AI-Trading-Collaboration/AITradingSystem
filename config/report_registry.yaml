@@ -23571,6 +23571,71 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: risk_cap_cooldown_decay_design
+    title: Risk-Cap Cooldown / Decay Design
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends risk-cap-cooldown-decay-design
+    artifact_globs:
+      - config/research/risk_cap_cooldown_decay_design_policy.yaml
+      - docs/research/risk_cap_cooldown_decay_design.md
+      - docs/requirements/TRADING-2321_Risk_Cap_Cooldown_Decay_Design.md
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_cooldown_decay_design_summary.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_execution_state_contract.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_cooldown_decay_rule_matrix.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_cooldown_decay_rule_matrix.csv
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_exposure_cap_state_matrix.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_exposure_cap_state_matrix.csv
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_manual_review_mode_contract.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_execution_transition_matrix.json
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_execution_transition_matrix.csv
+      - outputs/research_trends/risk_cap_cooldown_decay_design/risk_cap_cooldown_decay_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: risk_cap_cooldown_decay_design_only
+    data_quality_status: NOT_APPLICABLE_DESIGN_ONLY_EXECUTION_MECHANICS
+    validation_status: RISK_CAP_COOLDOWN_DECAY_DESIGN_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+    source_status: FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED
+    design_only: true
+    research_only: true
+    execution_runtime_started: false
+    forward_observe_started: false
+    runtime_started: false
+    portfolio_weights_read: false
+    portfolio_weights_written: false
+    target_weight_generated: false
+    max_exposure_number_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    cooldown_state_executable: false
+    decay_rule_executable: false
+    exposure_cap_rule_executable: false
+    state_count: 4
+    cooldown_decay_rule_count: 3
+    exposure_cap_state_count: 4
+    transition_count: 5
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: design_only
+    weekly_report_integration: design_only
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Risk-cap cooldown / decay design should be rerun after TRADING-2294
+      observe-only evidence plan, execution-state policy, cap calibration route,
+      or owner review requirements change.
+    owner_action: review_design_only_execution_state_contract_before_runtime_or_simulation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_new_candidate_family_prioritization
     title: First-Layer New Candidate Family Prioritization
     group: research

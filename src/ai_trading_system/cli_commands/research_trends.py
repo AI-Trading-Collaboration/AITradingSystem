@@ -794,6 +794,24 @@ from ai_trading_system.return_seeking_diagnostic_lane import (
     DEFAULT_RETURN_SEEKING_POLICY_PATH,
     run_return_seeking_diagnostic_lane_pack,
 )
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    DEFAULT_DOCS_ROOT as DEFAULT_RISK_CAP_COOLDOWN_DECAY_DOCS_ROOT,
+)
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_RISK_CAP_COOLDOWN_DECAY_OUTPUT_ROOT,
+)
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    DEFAULT_POLICY_PATH as DEFAULT_RISK_CAP_COOLDOWN_DECAY_POLICY_PATH,
+)
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    DEFAULT_SOURCE_ROOT as DEFAULT_RISK_CAP_COOLDOWN_DECAY_SOURCE_ROOT,
+)
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    MODE as RISK_CAP_COOLDOWN_DECAY_MODE,
+)
+from ai_trading_system.risk_cap_cooldown_decay_design import (
+    run_risk_cap_cooldown_decay_design,
+)
 from ai_trading_system.risk_on_veto_diagnostic import (
     DEFAULT_CHANNEL_PIT_MATRIX_PATH as DEFAULT_RISK_ON_VETO_CHANNEL_PIT_MATRIX_PATH,
 )
@@ -2475,6 +2493,32 @@ def forward_observe_evidence_accumulation_plan_command(
         docs_root=docs_root,
     )
     _print_payload("Forward observe evidence accumulation plan", payload)
+
+
+@trends_app.command("risk-cap-cooldown-decay-design")
+def risk_cap_cooldown_decay_design_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_RISK_CAP_COOLDOWN_DECAY_POLICY_PATH,
+    source_dir: Annotated[
+        Path, typer.Option("--source-dir")
+    ] = DEFAULT_RISK_CAP_COOLDOWN_DECAY_SOURCE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_RISK_CAP_COOLDOWN_DECAY_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_RISK_CAP_COOLDOWN_DECAY_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = RISK_CAP_COOLDOWN_DECAY_MODE,
+) -> None:
+    payload = run_risk_cap_cooldown_decay_design(
+        policy_path=policy_path,
+        source_dir=source_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Risk-cap cooldown / decay design", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

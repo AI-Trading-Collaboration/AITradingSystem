@@ -1,0 +1,162 @@
+policy_id: risk_cap_cooldown_decay_design_policy
+version: v1
+status: pilot_research_design_only
+owner: research_governance
+task_id: TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Risk-cap observe evidence can only become execution mechanics after its
+  post-trigger behavior, false-risk-cap cost and owner review path are
+  auditable. TRADING-2294 is still an observe-only design contract, so
+  TRADING-2321 must define execution states without starting runtime or
+  producing target weights.
+intended_effect: >
+  Convert the TRADING-2294 observe-only plan into a design-only execution
+  mechanics package covering no-add, reduced max exposure, manual review and
+  cooldown / decay state transitions.
+validation_evidence: >
+  Planned TRADING-2321 design-only run using TRADING-2294 artifacts, policy
+  validation tests, CLI output tests, report registry / artifact catalog tests
+  and contract validation. No portfolio weights, market orders, paper-shadow
+  orders or production decisions are generated.
+review_condition: >
+  Review before any execution runtime implementation, before defining numeric
+  cap multipliers, before connecting to daily reports, and before TRADING-2323
+  exposure-cap mechanics simulation.
+expiry_condition: >
+  Replace with calibrated execution policy only after TRADING-2323 simulation,
+  owner review and runtime safety approval define evidence-backed cooldown
+  durations, cap multipliers and release rules.
+source_dependency:
+  required_task_id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+  required_status: FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED
+  required_observe_mode: observe_only
+  required_runtime_started: false
+  required_forward_observe_started: false
+  required_daily_report_integration: design_only
+  required_weekly_report_integration: design_only
+  required_broker_action: none
+  required_candidate_id: volatility_regime_scope_narrowed_risk_cap_v1
+required_execution_states:
+  no_add_mode:
+    state_role: block_new_risk_on_additions_design_only
+    activation_source: risk_cap_triggered_or_manual_review_required
+    allowed_current_effect: observe_only_design_contract
+    forbidden_effects:
+      - target_weight_change
+      - rebalance_instruction
+      - broker_order
+      - paper_shadow_order
+  reduced_max_exposure_mode:
+    state_role: cap_future_max_exposure_design_only
+    activation_source: active_risk_cap_trigger_with_owner_review
+    cap_multiplier_status: owner_calibration_required
+    allowed_current_effect: design_contract_only_no_numeric_cap
+    forbidden_effects:
+      - automatic_exposure_reduction
+      - portfolio_weight_write
+      - production_cap_update
+      - broker_order
+  manual_review_mode:
+    state_role: route_ambiguous_or_high_impact_trigger_to_manual_review
+    activation_source: data_quality_warning_sparse_sample_or_state_conflict
+    allowed_current_effect: manual_review_contract_only
+    forbidden_effects:
+      - automatic_trade_approval
+      - owner_approval_substitution
+      - broker_order
+  cooldown_mode:
+    state_role: hold_execution_state_after_trigger_clears_until_review_checkpoint
+    activation_source: risk_cap_trigger_cleared_after_active_state
+    checkpoint_source: TRADING_2294_followup_horizons
+    allowed_current_effect: cooldown_design_contract_only
+    forbidden_effects:
+      - automatic_reentry
+      - automatic_cap_release
+      - broker_order
+cooldown_decay_checkpoints:
+  - 5d
+  - 10d
+  - 20d
+transition_rules:
+  - rule_id: trigger_to_no_add
+    from_state: normal_observe
+    to_state: no_add_mode
+    evidence_required:
+      - risk_cap_triggered
+      - data_quality_status_visible
+      - source_artifact_checksum
+  - rule_id: trigger_to_reduced_max_exposure_review
+    from_state: no_add_mode
+    to_state: reduced_max_exposure_mode
+    evidence_required:
+      - active_trigger_intensity
+      - owner_review_required_before_numeric_cap
+      - no_portfolio_write
+  - rule_id: ambiguous_trigger_to_manual_review
+    from_state: any_design_state
+    to_state: manual_review_mode
+    evidence_required:
+      - data_quality_warning_or_sparse_sample
+      - trigger_interpretation_note
+      - no_broker_action_guard
+  - rule_id: cleared_trigger_to_cooldown
+    from_state: no_add_mode
+    to_state: cooldown_mode
+    evidence_required:
+      - trigger_cleared
+      - followup_window_pending_or_mature
+      - release_not_automatic
+  - rule_id: cooldown_to_manual_review_release
+    from_state: cooldown_mode
+    to_state: manual_review_mode
+    evidence_required:
+      - followup_checkpoint_review
+      - false_risk_cap_and_missed_stress_summary
+      - owner_release_decision_required
+cap_calibration_policy:
+  cap_multiplier_defined: false
+  cap_multiplier_status: owner_calibration_required_after_simulation
+  calibration_task: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+  forbidden_current_outputs:
+    - target_weight
+    - max_exposure_number
+    - rebalance_instruction
+    - broker_order
+manual_review_policy:
+  manual_review_only: true
+  automatic_approval_allowed: false
+  owner_approval_required_before_runtime: true
+  review_reasons:
+    - data_quality_warning
+    - sparse_trigger_sample
+    - cooldown_release_request
+    - cap_calibration_request
+    - conflicting_state_evidence
+safety:
+  research_only: true
+  design_only: true
+  execution_runtime_started: false
+  forward_observe_started: false
+  runtime_started: false
+  portfolio_weights_read: false
+  portfolio_weights_written: false
+  target_weight_generated: false
+  max_exposure_number_generated: false
+  rebalance_instruction_generated: false
+  broker_order_generated: false
+  paper_shadow_order_generated: false
+  production_decision_generated: false
+  cooldown_state_executable: false
+  decay_rule_executable: false
+  exposure_cap_rule_executable: false
+  manual_review_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  portfolio_effect: none
+  dynamic_promotion_status: BLOCKED
