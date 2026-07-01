@@ -1,0 +1,151 @@
+policy_id: liquidity_rates_pressure_generator_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_feasibility_task: TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
+rationale: >
+  TRADING-2311 found a partial liquidity / rates pressure route using TLT, SHY,
+  DGS10 and DGS2 after the cached-data quality gate. Full liquidity headwind is
+  still source-gap blocked by missing UUP / DXY, HYG, LQD and real-rate inputs.
+  This policy restricts TRADING-2312 to a deterministic partial rates-only POC.
+intended_effect: >
+  Produce non-promotable candidate-bound research artifacts for duration
+  pressure and rates-pressure exposure-cap context, so TRADING-2313 can later
+  run actual-path validation without treating source-gapped liquidity / credit
+  inputs as available.
+validation_evidence: >
+  Planned validation only. TRADING-2312 artifacts are not validation evidence;
+  TRADING-2313 must test QQQ / SMH valuation pressure, high duration asset
+  drawdown, risk-on exposure cap behavior and 10d / 20d / 1m horizons before
+  any investment interpretation can advance.
+review_condition: >
+  Review after TRADING-2313 actual-path validation, or earlier if source
+  coverage changes for UUP / DXY, HYG, LQD, real rates, score scales,
+  lookbacks, component weights, target assets or horizons.
+expiry_condition: >
+  Replace this pilot policy before promotion, paper-shadow, production, broker
+  use, or any report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - TLT
+    - SHY
+  required_rate_series:
+    - DGS10
+    - DGS2
+    - DTWEXBGS
+source_gap_policy:
+  blocked_candidates:
+    liquidity_headwind_proxy_v1:
+      missing_inputs:
+        - UUP_or_DXY_price_proxy
+        - HYG_price_proxy
+        - LQD_price_proxy
+      behavioral_impact: >
+        Full USD liquidity and credit-liquidity headwind cannot be represented
+        as a candidate-bound signal in TRADING-2312.
+      risk: >
+        Using DTWEXBGS alone would silently replace a multi-input liquidity /
+        credit proxy with a narrower USD macro series and overstate readiness.
+      validation_coverage: >
+        Covered by TRADING-2311 source-gap inventory and TRADING-2312 blocked
+        candidate report; no signal series is generated for this candidate.
+      exit_condition: >
+        Ingest and validate UUP or audited DXY proxy plus HYG and LQD price
+        history, then rerun feasibility before enabling full liquidity headwind.
+signal_policy:
+  lookback_trading_days:
+    value: 20
+    rationale: >
+      Matches the 20d owner review horizon and keeps the rates-pressure POC
+      comparable with nearby first-layer generator POC artifacts.
+  duration_return_score_scale:
+    value: 0.05
+    rationale: >
+      Treats a 5 percentage point 20-trading-day TLT underperformance versus
+      SHY as full pilot duration pressure. This is a subjective normalization,
+      not a validated effect size.
+  yield_change_score_scale:
+    value: 0.75
+    rationale: >
+      Treats a 75 basis point 20-observation yield increase as full pilot rates
+      pressure. This is a research normalization for candidate generation only.
+  neutral_band:
+    value: 0.1
+    rationale: >
+      Reuses the nearby first-layer generated-candidate neutral band for
+      research-only direction labels. TRADING-2313 must validate or recalibrate.
+  base_confidence:
+    value: 0.58
+    rationale: >
+      Uses a lower pilot confidence than AI leadership because macro rates have
+      release-timing and revision limitations that are not fully encoded.
+  data_quality_warning_confidence_penalty:
+    value: 0.06
+    rationale: >
+      Reduces confidence when validate_data_cache passes with warnings. This is
+      conservative pilot metadata, not a promotion gate.
+  macro_known_at_confidence_penalty:
+    value: 0.08
+    rationale: >
+      Reduces confidence because FRED observation dates are cached but
+      release timestamps are not yet represented in the local rates cache.
+  confidence_floor:
+    value: 0.2
+    rationale: >
+      Matches the existing low-confidence floor for records with limited usable
+      history or known data limitations.
+candidate_policy:
+  duration_pressure_proxy_v1:
+    required_price_symbols:
+      - TLT
+      - SHY
+    required_rate_series:
+      - DGS10
+      - DGS2
+    component_weights:
+      tlt_vs_shy_pressure: 0.5
+      dgs10_pressure: 0.3
+      dgs2_pressure: 0.2
+    output_signal_names:
+      - duration_pressure_score
+      - tlt_vs_shy_pressure_score
+      - yield_curve_pressure_score
+    role: Duration asset pressure filter using TLT, SHY, DGS10 and DGS2.
+  rates_pressure_exposure_cap_modifier_v1:
+    required_price_symbols:
+      - TLT
+    required_rate_series:
+      - DGS10
+      - DGS2
+    component_weights:
+      duration_pressure: 0.45
+      ten_year_yield_pressure: 0.35
+      two_year_yield_pressure: 0.2
+    output_signal_names:
+      - rates_pressure_exposure_cap_score
+      - valuation_pressure_context_score
+      - exposure_cap_modifier_pressure_score
+    role: Max exposure modifier / risk-cap enhancer context for QQQ and SMH.
+safety:
+  research_only: true
+  partial_rates_only_generator_poc: true
+  full_liquidity_pressure_poc_ready: false
+  liquidity_headwind_generator_implemented: false
+  actual_path_validation_ready: false
+  actual_path_validation_executed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none

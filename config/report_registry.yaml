@@ -23999,6 +23999,64 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: liquidity_rates_pressure_generator_poc
+    title: Liquidity Rates Pressure Generator POC
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends liquidity-rates-pressure-generator-poc
+    artifact_globs:
+      - config/research/liquidity_rates_pressure_generator_policy.yaml
+      - docs/research/liquidity_rates_pressure_generator_poc.md
+      - docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/liquidity_rates_pressure_generator_poc_summary.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/liquidity_rates_generator_policy_summary.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/liquidity_rates_generator_validation_summary.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/liquidity_rates_generator_safety_boundary.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/blocked_liquidity_rates_candidate_report.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/data_quality_*.md
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/*/candidate_signal_spec.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/*/candidate_signal_series.csv
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/*/candidate_prediction_artifact.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/*/generation_summary.json
+      - outputs/research_trends/liquidity_rates_pressure_generator_poc/*/validation_summary.json
+    artifact_selection_policy: latest_available
+    artifact_role: liquidity_rates_pressure_generator_poc
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: true
+    partial_rates_only_generator_poc: true
+    full_liquidity_pressure_poc_ready: false
+    liquidity_headwind_generator_implemented: false
+    actual_path_validation_executed: false
+    actual_path_validation_ready: false
+    scope_review_executed: false
+    forward_observe_started: false
+    candidate_artifact_generated: true
+    candidate_signal_series_generated: true
+    candidate_prediction_artifact_generated: true
+    generated_candidate_ids:
+      - duration_pressure_proxy_v1
+      - rates_pressure_exposure_cap_modifier_v1
+    blocked_candidate_ids:
+      - liquidity_headwind_proxy_v1
+    data_quality_status: PASS_WITH_WARNINGS
+    policy_id: liquidity_rates_pressure_generator_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Liquidity / rates pressure generator POC should be rerun after TRADING-2311
+      feasibility artifacts, required price/rates cache coverage, policy
+      parameters, target assets or horizon assumptions change.
+    owner_action: review_partial_rates_generator_before_trading_2313_actual_path_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
