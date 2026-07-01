@@ -23941,6 +23941,64 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: liquidity_rates_data_feasibility_audit
+    title: Liquidity Rates Pressure Data Feasibility Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends liquidity-rates-pressure-feasibility-audit
+    artifact_globs:
+      - docs/research/liquidity_rates_data_feasibility_audit.md
+      - docs/requirements/TRADING-2311_Liquidity_Rates_Pressure_Data_Feasibility_Audit.md
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_rates_data_feasibility_summary.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/rates_proxy_inventory.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/rates_proxy_inventory.csv
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_rates_price_proxy_coverage_matrix.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_rates_price_proxy_coverage_matrix.csv
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/macro_rates_coverage_matrix.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/macro_rates_coverage_matrix.csv
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_pressure_candidate_design_sketch.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_rates_validation_route.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/liquidity_rates_safety_boundary.json
+      - outputs/research_trends/liquidity_rates_data_feasibility_audit/data_quality_*.md
+    artifact_selection_policy: latest_available
+    artifact_role: liquidity_rates_feasibility_audit
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    candidate_prediction_artifact_generated: false
+    actual_path_validation_executed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    full_universe_readiness_claimed: false
+    data_quality_status: PASS_WITH_WARNINGS
+    partial_poc_possible: true
+    full_liquidity_pressure_poc_ready: false
+    missing_price_proxies:
+      - IEF
+      - UUP
+      - HYG
+      - LQD
+    missing_macro_series:
+      - DFII10
+      - T10YIE
+      - SOFR
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Liquidity / rates pressure feasibility audit should be rerun after price
+      proxy coverage, FRED/rates cache coverage, real-rate source policy, data
+      quality rules, target assets or horizon assumptions change.
+    owner_action: review_source_gaps_before_trading_2312_partial_generator_poc
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

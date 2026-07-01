@@ -499,6 +499,18 @@ from ai_trading_system.indicator_family_ablation import (
     DEFAULT_PIT_FEATURE_MATRIX_PATH,
     run_indicator_family_ablation,
 )
+from ai_trading_system.liquidity_rates_feasibility_audit import (
+    DEFAULT_DOCS_ROOT as DEFAULT_LIQUIDITY_RATES_FEASIBILITY_DOCS_ROOT,
+)
+from ai_trading_system.liquidity_rates_feasibility_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_LIQUIDITY_RATES_FEASIBILITY_OUTPUT_ROOT,
+)
+from ai_trading_system.liquidity_rates_feasibility_audit import (
+    MODE as LIQUIDITY_RATES_FEASIBILITY_MODE,
+)
+from ai_trading_system.liquidity_rates_feasibility_audit import (
+    run_liquidity_rates_pressure_feasibility_audit,
+)
 from ai_trading_system.minimal_forward_diagnostic import (
     DEFAULT_POLICY_PATH as DEFAULT_MINIMAL_FORWARD_POLICY_PATH,
 )
@@ -2548,6 +2560,38 @@ def ai_leadership_scope_review_command(
         mode=mode,
     )
     _print_payload("AI / 半导体 leadership scope review", payload)
+
+
+@trends_app.command("liquidity-rates-pressure-feasibility-audit")
+def liquidity_rates_pressure_feasibility_audit_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "10d,20d,1m",
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_LIQUIDITY_RATES_FEASIBILITY_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_LIQUIDITY_RATES_FEASIBILITY_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = LIQUIDITY_RATES_FEASIBILITY_MODE,
+) -> None:
+    payload = run_liquidity_rates_pressure_feasibility_audit(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        target_assets=target_assets,
+        horizons=horizons,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Liquidity / rates pressure feasibility audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
