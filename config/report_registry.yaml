@@ -24335,6 +24335,85 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: regime_segmented_candidate_validation
+    title: Regime-Segmented Candidate Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends regime-segmented-candidate-validation
+    artifact_globs:
+      - config/research/regime_segmented_candidate_validation_policy.yaml
+      - docs/research/regime_segmented_candidate_validation.md
+      - docs/requirements/TRADING-2317_Regime_Segmented_Candidate_Validation.md
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_series.csv
+      - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_generation_summary.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_validation_summary.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_performance_matrix.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_performance_matrix.csv
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_coverage_matrix.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_coverage_matrix.csv
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_family_blocker_matrix.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_family_blocker_matrix.csv
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_interpretation_matrix.json
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_interpretation_matrix.csv
+      - outputs/research_trends/regime_segmented_candidate_validation/regime_segmented_candidate_validation_safety_boundary.json
+      - outputs/research_trends/regime_segmented_candidate_validation/data_quality_2026-06-29.md
+    artifact_selection_policy: latest_available
+    artifact_role: regime_segmented_candidate_validation_diagnostic
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY
+    diagnostic_only: true
+    segmentation_only: true
+    actual_path_validation_consumed: true
+    new_actual_path_validation_executed: false
+    candidate_signal_generated: false
+    candidate_artifact_generated: false
+    existing_candidate_verdict_changed: false
+    direct_strategy_signal_allowed: false
+    scope_review_executed: false
+    forward_observe_started: false
+    candidate_family_count: 4
+    segmentable_family_count: 3
+    blocked_family_count: 1
+    performance_row_count: 294
+    coverage_row_count: 31
+    family_blocker_row_count: 4
+    interpretation_row_count: 4
+    candidate_source_families:
+      - volatility_risk_cap
+      - breadth_proxy
+      - ai_leadership
+      - liquidity_pressure
+    segmentable_families:
+      - volatility_risk_cap
+      - ai_leadership
+      - liquidity_pressure
+    blocked_families:
+      - breadth_proxy
+    label_axes:
+      - primary_trend_regime
+      - volatility_overlay
+    label_source_report_id: regime_label_generator_diagnostic_poc
+    policy_id: regime_segmented_candidate_validation_policy
+    policy_version: v1
+    freshness_sla_days: 14
+    freshness_rationale: >
+      Regime-segmented candidate validation should be rerun after regime label
+      series updates, upstream actual-path validation artifacts change,
+      breadth source-blocked status changes, data-quality policy changes,
+      segmentation threshold policy changes or before any downstream report or
+      forward-observe interpretation consumes the segment matrices.
+    owner_action: review_segmented_candidate_diagnostics_before_report_or_observe_usage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research

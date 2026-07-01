@@ -1,0 +1,150 @@
+policy_id: regime_segmented_candidate_validation_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Regime segmentation can explain whether existing candidate validation evidence
+  is concentrated in specific market states, but it must not become a direct
+  strategy signal or promotion shortcut.
+intended_effect: >
+  Reinterpret prior actual-path validation and source-blocked diagnostics by
+  PIT-approx regime labels, producing diagnostic-only segment coverage,
+  performance and blocker matrices.
+validation_evidence: >
+  Planned TRADING-2317 diagnostic run using TRADING-2316 label series, existing
+  actual-path validation artifacts, source-blocked breadth selection artifacts,
+  data-quality gate, schema tests and safety-boundary tests. This is not new
+  promotion evidence.
+review_condition: >
+  Review after TRADING-2317 results, before changing segment sample floors, before
+  adding candidate families, before report integration, and before any forward
+  observe, paper-shadow, production or broker path uses regime segmentation.
+expiry_condition: >
+  Replace with calibrated, owner-reviewed evidence policy before regime
+  segmentation affects scoring, position sizing, daily reports, forward observe,
+  paper-shadow, production or broker actions.
+data_quality:
+  required_command: aits validate-data
+  required_price_tickers:
+    - QQQ
+    - SMH
+    - SPY
+    - TLT
+    - SHY
+  expected_rate_series_policy: configured_universe_macro_rates
+label_source:
+  required_status: REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY
+  required_data_quality_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_label_axes:
+    - primary_trend_regime
+    - volatility_overlay
+  label_join_date_policy: decision_date_or_source_date_same_day
+candidate_sources:
+  volatility_risk_cap:
+    family_id: volatility_risk_cap
+    source_type: prior_actual_path_validation
+    source_statuses_allowed:
+      - SCOPE_NARROWED_ACTUAL_PATH_VALIDATION_READY_PROMOTION_BLOCKED
+    candidate_ids:
+      - volatility_regime_scope_narrowed_risk_cap_v1
+    source_matrix: outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_active_actual_path_matrix.csv
+    source_summary: outputs/research_trends/scope_narrowed_candidate_actual_path_validation/scope_narrowed_actual_path_validation_summary.json
+    target_asset_column: target_asset
+    source_date_column: decision_timestamp
+    forward_return_column: forward_return
+    max_drawdown_column: max_drawdown_during_horizon
+    stress_event_column: stress_event
+  breadth_proxy:
+    family_id: breadth_proxy
+    source_type: source_blocked_diagnostics_selection
+    source_statuses_allowed:
+      - BREADTH_PROXY_SIGNAL_SELECTION_SOURCE_BLOCKED_NO_SELECTION
+    source_summary: outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_proxy_signal_selection_summary.json
+    source_scorecard: outputs/research_trends/breadth_proxy_signal_concept_selection/breadth_signal_concept_scorecard.csv
+    blocked_expected: true
+  ai_leadership:
+    family_id: ai_leadership
+    source_type: prior_actual_path_validation
+    source_statuses_allowed:
+      - AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH
+      - AI_LEADERSHIP_VALIDATED_INCONCLUSIVE
+    source_matrix: outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_matrix.csv
+    source_summary: outputs/research_trends/ai_leadership_actual_path_validation/ai_leadership_actual_path_validation_summary.json
+    target_asset_column: target_asset
+    source_date_column: source_date
+    forward_return_column: target_forward_return
+    max_drawdown_column: target_max_drawdown
+    relative_return_column: smh_relative_forward_return
+  liquidity_pressure:
+    family_id: liquidity_pressure
+    source_type: prior_actual_path_validation
+    source_statuses_allowed:
+      - LIQUIDITY_RATES_VALIDATED_CONTINUE_RESEARCH
+      - LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE
+    source_matrix: outputs/research_trends/liquidity_rates_actual_path_validation/liquidity_rates_actual_path_matrix.csv
+    source_summary: outputs/research_trends/liquidity_rates_actual_path_validation/liquidity_rates_actual_path_validation_summary.json
+    target_asset_column: target_asset
+    source_date_column: source_date
+    forward_return_column: target_forward_return
+    max_drawdown_column: target_max_drawdown
+    family_average_forward_return_column: qqq_smh_average_forward_return
+    family_worst_drawdown_column: qqq_smh_worst_drawdown
+threshold_governance:
+  owner: research_governance
+  status: pilot_baseline
+  rationale: >
+    Segment sample floors and interpretation labels are diagnostic baselines only.
+    They prevent over-reading sparse regime buckets and do not define promotion,
+    scoring or position gates.
+  intended_effect: >
+    Separate interpretable segment buckets from sparse buckets in TRADING-2317
+    outputs.
+  validation_evidence: >
+    Planned unit tests, real cached-data CLI smoke test, output schema tests and
+    contract-validation. No floor is calibrated in this task.
+  review_condition: >
+    Review after owner inspects first segmented validation package or before
+    changing candidate families, labels, horizons or downstream report usage.
+  expiry_condition: >
+    Replace with calibrated policy before using segment diagnostics in forward
+    observe, paper-shadow, production, scoring or broker workflows.
+thresholds:
+  segment_min_eligible_records:
+    value: 30
+    rationale: >
+      Pilot minimum for treating a segment bucket as interpretable enough for
+      diagnostic commentary; below this, rows stay visible but are marked sparse.
+  segment_min_candidate_count:
+    value: 1
+    rationale: >
+      Low-risk structural floor: at least one candidate row must exist before a
+      segment bucket is emitted.
+interpretation_labels:
+  interpretable: SEGMENT_DIAGNOSTIC_INTERPRETABLE
+  sparse: SEGMENT_SAMPLE_SMALL_DIAGNOSTIC_ONLY
+  source_blocked: SEGMENTATION_SOURCE_BLOCKED
+  label_unmatched: SEGMENT_LABEL_UNMATCHED
+safety:
+  research_only: true
+  diagnostic_only: true
+  segmentation_only: true
+  actual_path_validation_consumed: true
+  new_actual_path_validation_executed: false
+  candidate_signal_generated: false
+  candidate_artifact_generated: false
+  direct_strategy_signal_allowed: false
+  existing_candidate_verdict_changed: false
+  forward_observe_started: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  portfolio_effect: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

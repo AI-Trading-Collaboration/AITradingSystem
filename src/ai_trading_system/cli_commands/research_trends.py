@@ -689,6 +689,36 @@ from ai_trading_system.regime_label_generator_diagnostic_poc import (
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
     run_regime_label_generator_diagnostic_poc,
 )
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REGIME_SEGMENTED_VALIDATION_DOCS_ROOT,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_LABEL_SERIES_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_LABEL_SERIES_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_LABEL_SUMMARY_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_LABEL_SUMMARY_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_MARKETSTACK_PRICES_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_REGIME_SEGMENTED_VALIDATION_OUTPUT_ROOT,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_POLICY_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_POLICY_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_PRICES_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_PRICES_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    DEFAULT_RATES_PATH as DEFAULT_REGIME_SEGMENTED_VALIDATION_RATES_PATH,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    MODE as REGIME_SEGMENTED_VALIDATION_MODE,
+)
+from ai_trading_system.regime_segmented_candidate_validation import (
+    run_regime_segmented_candidate_validation,
+)
 from ai_trading_system.regime_state_machine_design_audit import (
     DEFAULT_DOCS_ROOT as DEFAULT_REGIME_STATE_MACHINE_DOCS_ROOT,
 )
@@ -2886,6 +2916,50 @@ def regime_label_generator_diagnostic_poc_command(
         mode=mode,
     )
     _print_payload("Regime label generator diagnostic POC", payload)
+
+
+@trends_app.command("regime-segmented-candidate-validation")
+def regime_segmented_candidate_validation_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_POLICY_PATH,
+    label_series_path: Annotated[
+        Path, typer.Option("--label-series")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_LABEL_SERIES_PATH,
+    label_summary_path: Annotated[
+        Path, typer.Option("--label-summary")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_LABEL_SUMMARY_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_MARKETSTACK_PRICES_PATH,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_REGIME_SEGMENTED_VALIDATION_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = REGIME_SEGMENTED_VALIDATION_MODE,
+) -> None:
+    payload = run_regime_segmented_candidate_validation(
+        policy_path=policy_path,
+        label_series_path=label_series_path,
+        label_summary_path=label_summary_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Regime-segmented candidate validation", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
