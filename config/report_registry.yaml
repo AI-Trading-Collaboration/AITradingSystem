@@ -23787,6 +23787,69 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: portfolio_baseline_source_decision
+    title: Portfolio Baseline Source Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends portfolio-baseline-source-decision
+    artifact_globs:
+      - docs/research/portfolio_baseline_source_decision_report.md
+      - docs/research/portfolio_baseline_candidate_matrix.md
+      - docs/research/portfolio_baseline_pit_reproducibility_audit.md
+      - docs/research/recommended_exposure_cap_simulation_baseline.md
+      - docs/requirements/TRADING-2325_Portfolio_Baseline_Source_Decision.md
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_source_decision_summary.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_candidate_matrix.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_source_feasibility_matrix.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_pit_reproducibility_audit.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_risk_matrix.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_field_requirement_matrix.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_recommendation.json
+      - outputs/research_trends/portfolio_baseline_source_decision/recommended_exposure_cap_simulation_baseline.json
+      - outputs/research_trends/portfolio_baseline_source_decision/exposure_cap_2326_task_route.json
+      - outputs/research_trends/portfolio_baseline_source_decision/portfolio_baseline_source_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: portfolio_baseline_source_decision
+    data_quality_status: NOT_APPLICABLE_SOURCE_DECISION_ONLY
+    validation_status: PORTFOLIO_BASELINE_SOURCE_DECISION_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    source_status: EXPOSURE_CAP_SIMULATION_SOURCE_BOUND_DRY_RUN_READY_PROMOTION_BLOCKED
+    source_artifact_role: exposure_cap_simulation_source_binding
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    source_decision_only: true
+    simulation_executed: false
+    selected_baseline_for_2326: static_etf_allocation_baseline
+    fallback_baseline: synthetic_observe_only_baseline
+    next_task: TRADING-2326_Source_Bound_Exposure_Cap_Dry_Run_With_Static_ETF_Baseline
+    research_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Portfolio baseline source decision should be rerun after TRADING-2324
+      source-binding outputs change, static ETF allocation config changes, PIT
+      target exposure artifacts become available, paper advisory continuity is
+      audited, or owner provides an actual holdings source for manual reference.
+    owner_action: review_static_etf_baseline_route_before_TRADING_2326_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

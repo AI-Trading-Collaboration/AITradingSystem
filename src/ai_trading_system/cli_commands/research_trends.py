@@ -672,6 +672,30 @@ from ai_trading_system.participation_proxy_validation import (
 from ai_trading_system.participation_proxy_validation import (
     run_participation_proxy_validation_pack,
 )
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_DOCS_ROOT as DEFAULT_PORTFOLIO_BASELINE_DECISION_DOCS_ROOT,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_PORTFOLIO_BASELINE_DECISION_OUTPUT_ROOT,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_PAPER_PORTFOLIO_CONFIG as DEFAULT_PORTFOLIO_BASELINE_DECISION_PAPER_CONFIG,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_PORTFOLIO_CONFIG_ROOT as DEFAULT_PORTFOLIO_BASELINE_DECISION_CONFIG_ROOT,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_PORTFOLIO_BASELINE_DECISION_SIMULATION_ROOT,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    DEFAULT_SOURCE_BINDING_ROOT as DEFAULT_PORTFOLIO_BASELINE_DECISION_SOURCE_ROOT,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    MODE as PORTFOLIO_BASELINE_DECISION_MODE,
+)
+from ai_trading_system.portfolio_baseline_source_decision import (
+    run_portfolio_baseline_source_decision,
+)
 from ai_trading_system.refined_candidate_actual_path_validation import (
     DEFAULT_DOCS_ROOT as DEFAULT_REFINED_ACTUAL_PATH_DOCS_ROOT,
 )
@@ -2681,6 +2705,49 @@ def exposure_cap_simulation_source_binding_command(
         mode=mode,
     )
     _print_payload("Exposure-cap simulation source binding", payload)
+
+
+@trends_app.command("portfolio-baseline-source-decision")
+def portfolio_baseline_source_decision_command(
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_SOURCE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_SIMULATION_ROOT,
+    portfolio_config_dir: Annotated[
+        Path | None, typer.Option("--portfolio-config-dir")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_CONFIG_ROOT,
+    paper_portfolio_config: Annotated[
+        Path | None, typer.Option("--paper-portfolio-config")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_PAPER_CONFIG,
+    actual_holdings_source: Annotated[
+        Path | None, typer.Option("--actual-holdings-source")
+    ] = None,
+    allow_synthetic_baseline: Annotated[
+        bool,
+        typer.Option("--allow-synthetic-baseline/--no-allow-synthetic-baseline"),
+    ] = True,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = PORTFOLIO_BASELINE_DECISION_MODE,
+) -> None:
+    payload = run_portfolio_baseline_source_decision(
+        source_binding_dir=source_binding_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        portfolio_config_dir=portfolio_config_dir,
+        paper_portfolio_config=paper_portfolio_config,
+        actual_holdings_source=actual_holdings_source,
+        allow_synthetic_baseline=allow_synthetic_baseline,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Portfolio baseline source decision", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
