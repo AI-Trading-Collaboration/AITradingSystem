@@ -1,0 +1,217 @@
+policy_id: liquidity_rates_scope_review_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+source_validation_task: TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
+rationale: >
+  TRADING-2313 produced inconclusive partial rates-only actual-path evidence:
+  risk-on exposure-cap behavior passed, valuation pressure was weak and high
+  duration drawdown failed. This policy defines a research-only scope-review
+  lens for deciding whether the current liquidity / rates artifacts are suited
+  for risk-cap modification, no-add gating, max exposure limitation or
+  diagnostic-only use.
+intended_effect: >
+  Produce an auditable scope decision for partial rates-only liquidity / rates
+  pressure evidence without opening forward observe, promotion, paper-shadow,
+  production or broker paths, and without treating the blocked liquidity
+  headwind route as validated.
+validation_evidence: >
+  Planned scope review in TRADING-2314 using TRADING-2313 actual-path evidence.
+  Thresholds are pilot baselines for evidence triage, not calibrated investment
+  acceptance rules.
+review_condition: >
+  Review after TRADING-2314 scope review, before any owner precheck,
+  forward-observe design, report integration or use-case expansion, or earlier
+  if TRADING-2313 objective definitions, candidate artifacts, thresholds,
+  horizons, source coverage or data-quality rules change.
+expiry_condition: >
+  Replace this pilot policy before any paper-shadow, production, broker action
+  or report that claims validated investment edge.
+data_quality:
+  required_command: aits validate-data
+  required_code_path: validate_data_cache
+  allowed_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  required_price_symbols:
+    - QQQ
+    - SMH
+    - TLT
+    - SHY
+  required_rate_series:
+    - DGS10
+    - DGS2
+    - DTWEXBGS
+  outcome_assets:
+    - QQQ
+    - SMH
+    - TLT
+    - SHY
+source_boundary:
+  allowed_source_statuses:
+    - LIQUIDITY_RATES_VALIDATED_CONTINUE_RESEARCH
+    - LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE
+  generated_candidates:
+    - duration_pressure_proxy_v1
+    - rates_pressure_exposure_cap_modifier_v1
+  blocked_candidates:
+    liquidity_headwind_proxy_v1:
+      missing_inputs:
+        - UUP_or_DXY_price_proxy
+        - HYG_price_proxy
+        - LQD_price_proxy
+      behavioral_impact: >
+        Full liquidity / credit headwind is outside TRADING-2314 scope because
+        TRADING-2312 did not generate, and TRADING-2313 did not validate, this
+        candidate.
+scope_options:
+  candidate_scopes:
+    - duration_pressure_proxy_v1
+    - rates_pressure_exposure_cap_modifier_v1
+  owner_review_horizons:
+    - 10d
+    - 20d
+    - 1m
+  use_cases:
+    risk_cap_modifier:
+      signal_name_contains:
+        - duration_pressure
+        - rates_pressure
+        - exposure_cap
+      score_fields:
+        - exposure_cap_score
+        - combined_alignment_score
+      primary_score_field: exposure_cap_score
+      intended_scope: >
+        Research-only risk-cap modifier candidate. It cannot change portfolio
+        exposure without later owner review and separate execution design.
+    no_add_gate:
+      signal_name_contains:
+        - duration_pressure
+        - valuation_pressure
+        - yield_curve
+      score_fields:
+        - valuation_pressure_score
+        - duration_drawdown_score
+      primary_score_field: weakest_average_score
+      intended_scope: >
+        Research-only no-add gate candidate. It requires pressure evidence to
+        support valuation and duration objectives, not only exposure-cap
+        behavior.
+    max_exposure_limiter:
+      signal_name_contains:
+        - rates_pressure_exposure_cap
+        - exposure_cap_modifier
+      score_fields:
+        - exposure_cap_score
+        - combined_alignment_score
+      primary_score_field: exposure_cap_score
+      intended_scope: >
+        Research-only max exposure limiter candidate for later execution-layer
+        simulation, not a current position cap.
+    diagnostic_only:
+      signal_name_contains: []
+      score_fields:
+        - combined_alignment_score
+      primary_score_field: combined_alignment_score
+      intended_scope: >
+        Diagnostic-only interpretation for explaining rates-pressure context
+        without gating or sizing behavior.
+scope_thresholds:
+  minimum_candidate_records:
+    value: 300
+    rationale: >
+      Candidate scope decisions should not be based on a tiny row slice.
+      TRADING-2313 emits multiple target / horizon / signal rows per source
+      date, so this is a sample sufficiency guard.
+  minimum_horizon_records:
+    value: 120
+    rationale: >
+      Each reviewed horizon should contain enough eligible records across
+      candidates and signal variants to avoid one short episode driving scope.
+  minimum_use_case_records:
+    value: 120
+    rationale: >
+      Each use-case decision should aggregate enough rows to be interpretable
+      for research-only scope review.
+  candidate_keep_alignment_score:
+    value: 0.03
+    rationale: >
+      Candidate average alignment must be modestly positive before being kept
+      for continued research-only scope.
+  candidate_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative candidate alignment score recommends rejecting the
+      current candidate form.
+  horizon_keep_alignment_score:
+    value: 0.03
+    rationale: >
+      Horizon average alignment must be modestly positive before being kept as
+      a primary research scope.
+  horizon_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative horizon alignment score recommends rejecting that
+      horizon in the current form.
+  use_case_keep_alignment_score:
+    value: 0.05
+    rationale: >
+      Use-case average alignment must be positive before keeping that use case
+      for continued research. This is deliberately above the generic candidate
+      threshold because use-case labels affect investment interpretation.
+  use_case_reject_alignment_score:
+    value: -0.05
+    rationale: >
+      A materially negative use-case score recommends rejecting that use case
+      in the current form.
+  exposure_cap_support_score:
+    value: 0.1
+    rationale: >
+      Risk-cap modifier and max exposure limiter scopes require exposure-cap
+      objective evidence to be clearly positive, not merely overall alignment.
+  diagnostic_keep_min_records:
+    value: 120
+    rationale: >
+      Diagnostic-only scope can remain usable when enough eligible rows exist,
+      even if primary trading or gating uses are inconclusive.
+  minimum_objective_pass_count_for_ready:
+    value: 2
+    rationale: >
+      Family-level research-scope readiness requires at least two owner
+      objective rows to pass in TRADING-2313. The first real run has only one
+      PASS, so it should remain diagnostic-only unless later evidence changes.
+status_rule:
+  allowed_statuses:
+    - LIQUIDITY_RATES_SCOPE_REVIEW_READY_RESEARCH_ONLY
+    - LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY
+    - LIQUIDITY_RATES_SCOPE_REVIEW_REJECT_RECOMMENDED
+  ready_research_only: >
+    Use LIQUIDITY_RATES_SCOPE_REVIEW_READY_RESEARCH_ONLY only when the source
+    status is continue-research, objective pass count meets the policy minimum,
+    and at least one non-diagnostic use case is kept.
+  diagnostic_only: >
+    Use LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY when the evidence is
+    incomplete or mixed but diagnostic interpretation remains useful.
+  reject_recommended: >
+    Use LIQUIDITY_RATES_SCOPE_REVIEW_REJECT_RECOMMENDED when no candidate,
+    horizon or diagnostic use case remains interpretable.
+safety:
+  research_only: true
+  actual_path_validation_consumed: true
+  scope_review_executed: true
+  forward_observe_started: false
+  owner_approval_required_before_forward_observe: true
+  partial_rates_only_scope_review: true
+  liquidity_headwind_scope_review_executed: false
+  full_liquidity_pressure_scope_ready: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

@@ -547,6 +547,24 @@ from ai_trading_system.liquidity_rates_generator_poc import (
 from ai_trading_system.liquidity_rates_generator_poc import (
     run_liquidity_rates_pressure_generator_poc,
 )
+from ai_trading_system.liquidity_rates_scope_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_DOCS_ROOT,
+)
+from ai_trading_system.liquidity_rates_scope_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_OUTPUT_ROOT,
+)
+from ai_trading_system.liquidity_rates_scope_review import (
+    DEFAULT_POLICY_PATH as DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_POLICY_PATH,
+)
+from ai_trading_system.liquidity_rates_scope_review import (
+    DEFAULT_VALIDATION_ROOT as DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_VALIDATION_ROOT,
+)
+from ai_trading_system.liquidity_rates_scope_review import (
+    MODE as LIQUIDITY_RATES_SCOPE_REVIEW_MODE,
+)
+from ai_trading_system.liquidity_rates_scope_review import (
+    run_liquidity_rates_scope_review,
+)
 from ai_trading_system.minimal_forward_diagnostic import (
     DEFAULT_POLICY_PATH as DEFAULT_MINIMAL_FORWARD_POLICY_PATH,
 )
@@ -2724,6 +2742,42 @@ def liquidity_rates_actual_path_validation_command(
         mode=mode,
     )
     _print_payload("Liquidity / rates actual-path validation", payload)
+
+
+@trends_app.command("liquidity-rates-scope-review")
+def liquidity_rates_scope_review_command(
+    validation_dir: Annotated[
+        Path, typer.Option("--validation-dir")
+    ] = DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_VALIDATION_ROOT,
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_POLICY_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_LIQUIDITY_RATES_SCOPE_REVIEW_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = LIQUIDITY_RATES_SCOPE_REVIEW_MODE,
+) -> None:
+    payload = run_liquidity_rates_scope_review(
+        validation_dir=validation_dir,
+        policy_path=policy_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Liquidity / rates scope review", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

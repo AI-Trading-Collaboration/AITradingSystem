@@ -24120,6 +24120,83 @@ reports:
     production_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: liquidity_rates_scope_review
+    title: Liquidity Rates Scope Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends liquidity-rates-scope-review
+    artifact_globs:
+      - config/research/liquidity_rates_scope_review_policy.yaml
+      - docs/research/liquidity_rates_scope_review.md
+      - docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_scope_review_summary.json
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_candidate_scope_matrix.json
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_candidate_scope_matrix.csv
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_horizon_scope_matrix.json
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_horizon_scope_matrix.csv
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_use_case_scope_matrix.json
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_use_case_scope_matrix.csv
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_recommended_scope.json
+      - outputs/research_trends/liquidity_rates_scope_review/liquidity_rates_scope_review_safety_boundary.json
+      - outputs/research_trends/liquidity_rates_scope_review/data_quality_*.md
+    artifact_selection_policy: latest_available
+    artifact_role: liquidity_rates_scope_review
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    candidate_prediction_artifact_generated: false
+    actual_path_validation_consumed: true
+    scope_review_executed: true
+    forward_observe_started: false
+    owner_approval_required_before_forward_observe: true
+    partial_rates_only_scope_review: true
+    liquidity_headwind_scope_review_executed: false
+    full_liquidity_pressure_scope_ready: false
+    allowed_statuses:
+      - LIQUIDITY_RATES_SCOPE_REVIEW_READY_RESEARCH_ONLY
+      - LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY
+      - LIQUIDITY_RATES_SCOPE_REVIEW_REJECT_RECOMMENDED
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY
+    source_validation_status: LIQUIDITY_RATES_VALIDATED_INCONCLUSIVE
+    scope_review_result: DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE
+    recommended_candidate_ids:
+      - duration_pressure_proxy_v1
+    diagnostic_candidate_ids:
+      - rates_pressure_exposure_cap_modifier_v1
+    preferred_owner_review_horizons:
+      - 10d
+    diagnostic_owner_review_horizons:
+      - 20d
+      - 1m
+    recommended_use_cases:
+      - risk_cap_modifier
+      - max_exposure_limiter
+      - diagnostic_only
+    rejected_use_cases:
+      - no_add_gate
+    blocked_candidate_ids:
+      - liquidity_headwind_proxy_v1
+    policy_id: liquidity_rates_scope_review_policy
+    policy_version: v1
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Liquidity / rates scope review should be rerun after TRADING-2313
+      actual-path validation, scope-review policy thresholds, source data
+      quality, objective definitions, candidate artifacts, source gaps,
+      target assets or owner-reviewed horizons change.
+    owner_action: review_diagnostic_only_scope_before_any_forward_observe_design
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
