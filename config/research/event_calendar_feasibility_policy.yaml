@@ -1,0 +1,284 @@
+policy_id: event_calendar_feasibility_policy
+version: v1
+status: pilot_research
+owner: research_governance
+task_id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+market_regime: ai_after_chatgpt
+anchor_event: ChatGPT public launch
+default_start_date: "2022-12-01"
+rationale: >
+  Event calendar gating can reduce pre-event overtrading and force manual review
+  around known macro and AI earnings windows, but only if event timestamps are
+  PIT-safe and known before the trading decision.
+intended_effect: >
+  Audit macro and AI earnings event source feasibility before any generator POC,
+  validation, no-add gate, manual-review trigger, post-event confirmation logic,
+  paper-shadow, production or broker path consumes event calendar data.
+validation_evidence: >
+  Planned TRADING-2318 static source feasibility run, policy validation tests,
+  CLI output tests, report registry / artifact catalog tests and contract
+  validation. This task does not download event rows or prove entitlement.
+review_condition: >
+  Review before changing event families, source providers, known-at fields,
+  gating use cases, event window semantics or before TRADING-2319 generator POC.
+expiry_condition: >
+  Replace with a provider-specific, row-level event calendar source manifest and
+  schema validation policy before event gating affects scoring, reports, forward
+  observe, paper-shadow, production or broker workflows.
+data_quality:
+  status: NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT
+  reason: >
+    This command does not read cached market / macro prices, event rows, scoring
+    inputs or reports. Future event-row ingestion, scoring, backtest, validation
+    and report workflows must run their own source schema gate and aits
+    validate-data or the same validation code path when cached market data is
+    consumed.
+source_manifest_requirements:
+  required: true
+  fields:
+    - provider_name
+    - provider_class
+    - endpoint_or_file
+    - request_parameters
+    - event_time
+    - source_published_time
+    - known_at
+    - available_at
+    - download_timestamp
+    - row_count
+    - checksum
+    - schema_version
+    - coverage_universe
+event_sources:
+  fomc_calendar:
+    event_family: FOMC
+    provider_name: Federal Reserve Board / FOMC
+    provider_class: primary_source
+    endpoint_or_file: FOMC meeting calendar and policy statement release schedule
+    request_parameters: scheduled_meetings_and_release_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: KNOWN_AT_POLICY_REQUIRED_BEFORE_GENERATOR
+    feasibility_grade: PRIMARY_SOURCE_FEASIBLE_AFTER_MANIFEST
+    required_timestamps:
+      - meeting_date
+      - scheduled_statement_time
+      - source_published_time
+      - known_at
+      - available_at
+    major_risks:
+      - meeting_schedule_revision
+      - statement_release_time_handling
+      - timezone_policy
+    recommended_usage: macro_event_gating_after_source_manifest
+  cpi_release_calendar:
+    event_family: CPI
+    provider_name: U.S. Bureau of Labor Statistics
+    provider_class: primary_source
+    endpoint_or_file: CPI release calendar
+    request_parameters: scheduled_release_dates_and_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: KNOWN_AT_POLICY_REQUIRED_BEFORE_GENERATOR
+    feasibility_grade: PRIMARY_SOURCE_FEASIBLE_AFTER_MANIFEST
+    required_timestamps:
+      - release_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+    major_risks:
+      - release_calendar_revision
+      - embargo_time_handling
+      - timezone_policy
+    recommended_usage: inflation_event_gating_after_source_manifest
+  pce_release_calendar:
+    event_family: PCE
+    provider_name: U.S. Bureau of Economic Analysis
+    provider_class: primary_source
+    endpoint_or_file: Personal Income and Outlays release schedule
+    request_parameters: scheduled_release_dates_and_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: KNOWN_AT_POLICY_REQUIRED_BEFORE_GENERATOR
+    feasibility_grade: PRIMARY_SOURCE_FEASIBLE_AFTER_MANIFEST
+    required_timestamps:
+      - release_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+    major_risks:
+      - release_calendar_revision
+      - macro_revision_misread
+      - timezone_policy
+    recommended_usage: inflation_event_gating_after_source_manifest
+  nfp_release_calendar:
+    event_family: NFP
+    provider_name: U.S. Bureau of Labor Statistics
+    provider_class: primary_source
+    endpoint_or_file: Employment Situation release calendar
+    request_parameters: scheduled_release_dates_and_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: KNOWN_AT_POLICY_REQUIRED_BEFORE_GENERATOR
+    feasibility_grade: PRIMARY_SOURCE_FEASIBLE_AFTER_MANIFEST
+    required_timestamps:
+      - release_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+    major_risks:
+      - release_calendar_revision
+      - first_friday_exception_handling
+      - timezone_policy
+    recommended_usage: labor_event_gating_after_source_manifest
+  nvda_earnings_calendar:
+    event_family: NVDA_EARNINGS
+    provider_name: NVDA investor relations / SEC EDGAR / approved earnings vendor
+    provider_class: primary_or_paid_vendor_required
+    endpoint_or_file: earnings announcement date and release timestamp archive
+    request_parameters: issuer_specific_earnings_calendar_and_filing_release_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: BLOCKED_PENDING_AS_KNOWN_BEFORE_EARNINGS_SOURCE
+    feasibility_grade: SOURCE_AUDIT_REQUIRED
+    required_timestamps:
+      - event_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+      - filing_accepted_time
+    major_risks:
+      - current_view_calendar_revision
+      - after_hours_timestamp_gap
+      - event_outcome_hindsight
+    recommended_usage: manual_review_context_after_as_known_source
+  ai_mega_cap_earnings_calendar:
+    event_family: AI_MEGA_CAP_EARNINGS
+    provider_name: MSFT / GOOGL / AMZN / META investor relations and SEC EDGAR
+    provider_class: primary_or_paid_vendor_required
+    endpoint_or_file: issuer earnings date and release timestamp archive
+    request_parameters: pre_registered_ai_mega_cap_universe
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: BLOCKED_PENDING_AS_KNOWN_BEFORE_EARNINGS_SOURCE
+    feasibility_grade: SOURCE_AUDIT_REQUIRED
+    required_timestamps:
+      - event_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+      - filing_accepted_time
+    major_risks:
+      - current_view_calendar_revision
+      - ticker_universe_hindsight
+      - after_hours_timestamp_gap
+    recommended_usage: earnings_cluster_manual_review_after_source_manifest
+  tsm_monthly_revenue_calendar:
+    event_family: TSM_MONTHLY_REVENUE
+    provider_name: TSM investor relations
+    provider_class: primary_source
+    endpoint_or_file: monthly revenue release archive
+    request_parameters: monthly_revenue_release_dates_and_publish_times
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: BLOCKED_PENDING_RELEASE_TIME_ARCHIVE
+    feasibility_grade: SOURCE_AUDIT_REQUIRED
+    required_timestamps:
+      - report_month
+      - release_date
+      - source_published_time
+      - known_at
+      - available_at
+      - timezone
+    major_risks:
+      - taiwan_us_timezone_alignment
+      - unscheduled_release_timing
+      - revenue_outcome_hindsight
+    recommended_usage: semiconductor_manual_review_context_after_source_manifest
+  semiconductor_earnings_window:
+    event_family: SEMICONDUCTOR_EARNINGS_WINDOW
+    provider_name: pre-registered semiconductor issuer set plus primary / paid earnings source
+    provider_class: composite_source_policy_required
+    endpoint_or_file: issuer earnings calendar archive
+    request_parameters: NVDA_AMD_AVGO_ASML_TSM_AMAT_LRCX_MU_pre_registered_universe
+    source_status: SOURCE_AUDIT_REQUIRED
+    pit_status: BLOCKED_PENDING_UNIVERSE_AND_AS_KNOWN_SOURCE
+    feasibility_grade: SOURCE_AUDIT_REQUIRED
+    required_timestamps:
+      - event_date
+      - scheduled_release_time
+      - source_published_time
+      - known_at
+      - available_at
+      - universe_membership_known_at
+    major_risks:
+      - issuer_universe_hindsight
+      - current_view_calendar_revision
+      - cross_listing_timezone_policy
+    recommended_usage: earnings_cluster_risk_after_universe_policy_and_source_manifest
+gating_use_cases:
+  pre_event_no_add:
+    use_case: pre_event_no_add
+    intended_effect: prevent_new_risk_on_additions_before_known_high_impact_events
+    required_event_families:
+      - FOMC
+      - CPI
+      - PCE
+      - NFP
+      - NVDA_EARNINGS
+      - AI_MEGA_CAP_EARNINGS
+    runtime_status: BLOCKED_PENDING_TRADING_2319_GENERATOR_POC
+    owner_review_required: true
+  post_event_confirmation_window:
+    use_case: post_event_confirmation_window
+    intended_effect: require post-event price confirmation before treating event risk as cleared
+    required_event_families:
+      - FOMC
+      - CPI
+      - PCE
+      - NFP
+      - NVDA_EARNINGS
+      - AI_MEGA_CAP_EARNINGS
+    runtime_status: BLOCKED_PENDING_TRADING_2319_GENERATOR_POC
+    owner_review_required: true
+  manual_review_trigger:
+    use_case: manual_review_trigger
+    intended_effect: route known high-impact macro or AI earnings clusters to manual review
+    required_event_families:
+      - FOMC
+      - CPI
+      - PCE
+      - NFP
+      - NVDA_EARNINGS
+      - AI_MEGA_CAP_EARNINGS
+      - TSM_MONTHLY_REVENUE
+    runtime_status: BLOCKED_PENDING_MANUAL_REVIEW_CONTRACT
+    owner_review_required: true
+  earnings_cluster_risk:
+    use_case: earnings_cluster_risk
+    intended_effect: flag clustered AI / semiconductor earnings windows for diagnostic review
+    required_event_families:
+      - NVDA_EARNINGS
+      - AI_MEGA_CAP_EARNINGS
+      - TSM_MONTHLY_REVENUE
+      - SEMICONDUCTOR_EARNINGS_WINDOW
+    runtime_status: BLOCKED_PENDING_UNIVERSE_POLICY_AND_SOURCE_MANIFEST
+    owner_review_required: true
+safety:
+  research_only: true
+  static_feasibility_audit: true
+  event_rows_downloaded: false
+  event_calendar_cache_written: false
+  gating_signal_generated: false
+  event_outcome_prediction_allowed: false
+  candidate_generation_allowed: false
+  candidate_artifact_generated: false
+  candidate_signal_series_generated: false
+  prediction_artifact_generated: false
+  actual_path_validation_executed: false
+  scope_review_executed: false
+  forward_observe_started: false
+  paper_shadow_allowed: false
+  promotion_allowed: false
+  production_allowed: false
+  broker_action: none
+  production_effect: none
+  dynamic_promotion_status: BLOCKED

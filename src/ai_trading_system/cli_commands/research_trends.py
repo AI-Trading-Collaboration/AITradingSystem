@@ -189,6 +189,21 @@ from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_REPAIR_START as DEFAULT_EQUAL_WEIGHT_PROXY_REPAIR_START,
 )
 from ai_trading_system.equal_weight_proxy_data_fix import run_equal_weight_proxy_data_fix_pack
+from ai_trading_system.event_calendar_feasibility_audit import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EVENT_CALENDAR_FEASIBILITY_DOCS_ROOT,
+)
+from ai_trading_system.event_calendar_feasibility_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EVENT_CALENDAR_FEASIBILITY_OUTPUT_ROOT,
+)
+from ai_trading_system.event_calendar_feasibility_audit import (
+    DEFAULT_POLICY_PATH as DEFAULT_EVENT_CALENDAR_FEASIBILITY_POLICY_PATH,
+)
+from ai_trading_system.event_calendar_feasibility_audit import (
+    MODE as EVENT_CALENDAR_FEASIBILITY_MODE,
+)
+from ai_trading_system.event_calendar_feasibility_audit import (
+    run_event_calendar_data_feasibility_audit,
+)
 from ai_trading_system.first_layer_active_selection_policy_v2 import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_ACTIVE_SELECTION_POLICY_V2_OUTPUT_ROOT,
 )
@@ -2960,6 +2975,28 @@ def regime_segmented_candidate_validation_command(
         mode=mode,
     )
     _print_payload("Regime-segmented candidate validation", payload)
+
+
+@trends_app.command("event-calendar-data-feasibility-audit")
+def event_calendar_data_feasibility_audit_command(
+    policy_path: Annotated[
+        Path, typer.Option("--policy")
+    ] = DEFAULT_EVENT_CALENDAR_FEASIBILITY_POLICY_PATH,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EVENT_CALENDAR_FEASIBILITY_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EVENT_CALENDAR_FEASIBILITY_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EVENT_CALENDAR_FEASIBILITY_MODE,
+) -> None:
+    payload = run_event_calendar_data_feasibility_audit(
+        policy_path=policy_path,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Event calendar data feasibility audit", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")
