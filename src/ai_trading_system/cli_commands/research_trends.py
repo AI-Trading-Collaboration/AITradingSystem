@@ -7,6 +7,18 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
+    DEFAULT_DOCS_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_DOCS_ROOT,
+)
+from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_OUTPUT_ROOT,
+)
+from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
+    MODE as AI_SEMICONDUCTOR_LEADERSHIP_MODE,
+)
+from ai_trading_system.ai_semiconductor_leadership_feasibility_audit import (
+    run_ai_semiconductor_leadership_feasibility_audit,
+)
 from ai_trading_system.baseline_frozen_composer_rewrap import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_CANDIDATE_SIGNAL_BINDING_SCHEMA_OUTPUT_ROOT,
 )
@@ -2316,6 +2328,32 @@ def breadth_proxy_signal_concept_selection_command(
         mode=mode,
     )
     _print_payload("Breadth proxy signal concept selection", payload)
+
+
+@trends_app.command("ai-semiconductor-leadership-feasibility-audit")
+def ai_semiconductor_leadership_feasibility_audit_command(
+    target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
+    horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
+    candidate_family: Annotated[
+        str, typer.Option("--candidate-family")
+    ] = "ai_semiconductor_leadership",
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_OUTPUT_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = AI_SEMICONDUCTOR_LEADERSHIP_MODE,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_DOCS_ROOT,
+) -> None:
+    payload = run_ai_semiconductor_leadership_feasibility_audit(
+        target_assets=target_assets,
+        horizons=horizons,
+        candidate_family=candidate_family,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("AI / 半导体 leadership 可行性审计", payload)
 
 
 @trends_app.command("first-layer-proxy-challenger-experiments")

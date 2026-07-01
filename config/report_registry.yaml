@@ -23744,6 +23744,45 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: ai_semiconductor_leadership_feasibility_audit
+    title: AI Semiconductor Leadership Feasibility Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends ai-semiconductor-leadership-feasibility-audit
+    artifact_globs:
+      - docs/research/ai_semiconductor_leadership_feasibility_audit.md
+      - docs/requirements/TRADING-2307_AI_Semiconductor_Leadership_Candidate_Family_Feasibility_Audit.md
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_semiconductor_leadership_feasibility_summary.json
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_input_inventory.json
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_input_inventory.csv
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_candidate_design_sketch.json
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_validation_route.json
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_validation_route.csv
+      - outputs/research_trends/ai_semiconductor_leadership_feasibility_audit/ai_leadership_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: ai_semiconductor_leadership_feasibility_audit
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    generator_implemented: false
+    actual_path_validation_executed: false
+    candidate_artifact_generated: false
+    candidate_signal_series_generated: false
+    data_quality_status: NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT
+    freshness_sla_days: 30
+    freshness_rationale: >
+      AI / semiconductor leadership feasibility should be rerun after owner
+      approves an AI core basket policy, updates the semiconductor leadership
+      input universe, supplies a PIT event / weight source, or TRADING-2308
+      generator prerequisites change.
+    owner_action: review_price_proxy_route_and_basket_policy_before_trading_2308_generator_poc
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: first_layer_proxy_challenger_experiments
     title: First-Layer Proxy Challenger Experiments
     group: research
