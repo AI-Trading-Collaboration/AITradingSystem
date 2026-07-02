@@ -24029,6 +24029,93 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: dynamic_target_baseline_preparation
+    title: Dynamic Target Baseline Preparation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends dynamic-target-baseline-preparation
+    artifact_globs:
+      - docs/research/dynamic_target_baseline_preparation_report.md
+      - docs/research/dynamic_target_source_inventory.md
+      - docs/research/dynamic_target_pit_replayability_audit.md
+      - docs/research/dynamic_target_risk_cap_alignment_readiness.md
+      - docs/research/recommended_dynamic_target_baseline_spec.md
+      - docs/requirements/TRADING-2328_Dynamic_Target_Baseline_Preparation.md
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_preparation_summary.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_source_inventory.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_source_inventory.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_source_gap_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_source_gap_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_pit_replayability_audit.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_pit_replayability_audit.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_field_coverage_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_field_coverage_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_risk_cap_alignment_readiness.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_risk_cap_alignment_readiness.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_market_data_alignment_readiness.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_market_data_alignment_readiness.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_candidate_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_candidate_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_preparation/recommended_dynamic_target_baseline_spec.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_2329_readiness_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_2329_task_route.json
+      - outputs/research_trends/dynamic_target_baseline_preparation/dynamic_target_baseline_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: dynamic_target_baseline_preparation
+    data_quality_status: NOT_APPLICABLE_SOURCE_PREPARATION_ONLY
+    validation_status: DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    source_status: EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED
+    source_artifact_role: exposure_cap_diagnostics_review
+    upstream_static_dry_run_task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    upstream_baseline_decision_task_id: TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_validation_policy: NOT_APPLICABLE_SOURCE_PREPARATION_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_preparation_only: true
+    diagnostics_overall_recommendation: MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION
+    static_baseline_reference: static_etf_allocation_baseline
+    simulation_executed: false
+    inventory_source_count: 34
+    available_source_count: 34
+    pit_ready_source_count: 0
+    recommended_candidate_count: 0
+    blocking_gap_count: 136
+    readiness_status: DYNAMIC_BASELINE_SOURCE_REMEDIATION_REQUIRED
+    dynamic_target_baseline_readiness_status: BLOCKED_BY_DYNAMIC_TARGET_SOURCE_GAPS
+    next_task: TRADING-2329_Dynamic_Target_Baseline_Source_Remediation
+    research_only: true
+    source_preparation_only_boundary: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic target baseline preparation should be rerun after TRADING-2327
+      diagnostics route changes, a PIT dynamic target exposure source is added,
+      candidate artifact roots change, or before TRADING-2329 source remediation
+      / schema-adapter work is reviewed by the project owner.
+    owner_action: remediate_dynamic_target_source_before_dynamic_exposure_cap_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

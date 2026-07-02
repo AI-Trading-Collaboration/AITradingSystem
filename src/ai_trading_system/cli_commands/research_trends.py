@@ -179,6 +179,33 @@ from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
     run_defensive_preservation_lane_pack,
 )
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_BASELINE_DECISION_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_BASELINE_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_DIAGNOSTICS_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_DOCS_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_OUTPUT_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_SIMULATION_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_SOURCE_BINDING_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_SOURCE_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    DEFAULT_STATIC_DRY_RUN_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_STATIC_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    MODE as DYNAMIC_TARGET_BASELINE_MODE,
+)
+from ai_trading_system.dynamic_target_baseline_preparation import (
+    run_dynamic_target_baseline_preparation,
+)
 from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_DOWNLOAD_MANIFEST_PATH as DEFAULT_EQUAL_WEIGHT_PROXY_DOWNLOAD_MANIFEST_PATH,
 )
@@ -2889,6 +2916,48 @@ def exposure_cap_vs_no_cap_diagnostics_review_command(
         mode=mode,
     )
     _print_payload("Exposure-cap vs no-cap diagnostics review", payload)
+
+
+@trends_app.command("dynamic-target-baseline-preparation")
+def dynamic_target_baseline_preparation_command(
+    diagnostics_dir: Annotated[
+        Path, typer.Option("--diagnostics-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_DIAGNOSTICS_ROOT,
+    static_dry_run_dir: Annotated[
+        Path, typer.Option("--static-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_STATIC_ROOT,
+    baseline_decision_dir: Annotated[
+        Path, typer.Option("--baseline-decision-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_BASELINE_ROOT,
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SOURCE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SIMULATION_ROOT,
+    candidate_artifact_roots: Annotated[
+        str | None, typer.Option("--candidate-artifact-roots")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = DYNAMIC_TARGET_BASELINE_MODE,
+) -> None:
+    payload = run_dynamic_target_baseline_preparation(
+        diagnostics_dir=diagnostics_dir,
+        static_dry_run_dir=static_dry_run_dir,
+        baseline_decision_dir=baseline_decision_dir,
+        source_binding_dir=source_binding_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        candidate_artifact_roots=candidate_artifact_roots,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Dynamic target baseline preparation", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
