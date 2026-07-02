@@ -179,6 +179,24 @@ from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
     run_defensive_preservation_lane_pack,
 )
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_DOCS_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_OUTPUT_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    DEFAULT_SOURCE_REMEDIATION_ROOT as DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_SOURCE_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    DEFAULT_TIMESTAMP_REMEDIATION_ROOT as DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_TIMESTAMP_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    MODE as DYNAMIC_TARGET_DRY_RUN_READINESS_MODE,
+)
+from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
+    run_dynamic_target_baseline_dry_run_readiness_with_pit_caveat,
+)
 from ai_trading_system.dynamic_target_baseline_preparation import (
     DEFAULT_BASELINE_DECISION_ROOT as DEFAULT_DYNAMIC_TARGET_BASELINE_BASELINE_ROOT,
 )
@@ -3068,6 +3086,48 @@ def dynamic_target_baseline_timestamp_remediation_command(
         mode=mode,
     )
     _print_payload("Dynamic target baseline timestamp remediation", payload)
+
+
+@trends_app.command("dynamic-target-baseline-dry-run-readiness-with-pit-caveat")
+def dynamic_target_baseline_dry_run_readiness_with_pit_caveat_command(
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_TIMESTAMP_ROOT,
+    source_remediation_dir: Annotated[
+        Path, typer.Option("--source-remediation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_SOURCE_ROOT,
+    dynamic_preparation_dir: Annotated[
+        Path, typer.Option("--dynamic-preparation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_PREP_ROOT,
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SOURCE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SIMULATION_ROOT,
+    static_dry_run_dir: Annotated[
+        Path, typer.Option("--static-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_STATIC_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = DYNAMIC_TARGET_DRY_RUN_READINESS_MODE,
+) -> None:
+    payload = run_dynamic_target_baseline_dry_run_readiness_with_pit_caveat(
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        source_remediation_dir=source_remediation_dir,
+        dynamic_preparation_dir=dynamic_preparation_dir,
+        source_binding_dir=source_binding_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        static_dry_run_dir=static_dry_run_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Dynamic target baseline dry-run readiness with PIT caveat", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

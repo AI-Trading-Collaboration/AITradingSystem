@@ -24301,6 +24301,90 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: dynamic_target_baseline_dry_run_readiness_with_pit_caveat
+    title: Dynamic Target Baseline Dry-Run Readiness With PIT Caveat
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat
+    artifact_globs:
+      - docs/research/dynamic_target_baseline_dry_run_readiness_with_pit_caveat.md
+      - docs/research/dynamic_dry_run_pit_caveat_acceptance_report.md
+      - docs/research/dynamic_dry_run_input_contract.md
+      - docs/research/dynamic_dry_run_2332_readiness_route.md
+      - docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_readiness_summary.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_gate_checklist.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_pit_caveat_acceptance_report.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_wrapper_field_validation_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_wrapper_field_validation_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_timestamp_alignment_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_timestamp_alignment_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_risk_cap_alignment_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_risk_cap_alignment_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_market_data_alignment_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_market_data_alignment_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_policy_compatibility_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_policy_compatibility_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_input_contract.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_data_quality_precheck.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_interpretation_boundary.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_2332_readiness_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_dry_run_readiness_with_pit_caveat/dynamic_dry_run_2332_task_route.json
+    artifact_selection_policy: latest_available
+    artifact_role: dynamic_target_baseline_dry_run_readiness_with_pit_caveat
+    data_quality_status: NOT_APPLICABLE_DRY_RUN_READINESS_ONLY
+    validation_status: DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    source_status: DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION_READY_PROMOTION_BLOCKED
+    source_artifact_role: dynamic_target_baseline_timestamp_remediation
+    upstream_source_remediation_task_id: TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION
+    upstream_dynamic_preparation_task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    upstream_static_dry_run_task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    data_validation_policy: NOT_APPLICABLE_DRY_RUN_READINESS_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    dry_run_readiness_only: true
+    simulation_executed: false
+    wrapper_record_count: 2682
+    wrapper_validation_status: PASS_WITH_WARNINGS
+    pit_caveat_acceptance_status: PIT_CAVEAT_ACCEPTED_FOR_RESEARCH_DRY_RUN_WITH_WARNINGS
+    gate_status: DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT
+    readiness_status: DYNAMIC_DRY_RUN_READY_FOR_2332_WITH_PIT_CAVEAT
+    gate_warning_count: 7
+    gate_blocker_count: 0
+    2332_allowed: true
+    next_task: TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline
+    research_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic target baseline dry-run readiness should be rerun after
+      TRADING-2330 timestamp-remediated wrapper artifacts, market-data binding,
+      risk-cap alignment, or source lineage artifacts change, and before
+      TRADING-2332 dynamic target baseline dry-run is executed.
+    owner_action: review_pit_caveat_and_2332_readiness_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
