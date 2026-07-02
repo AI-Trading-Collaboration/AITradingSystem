@@ -24116,6 +24116,100 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: dynamic_target_baseline_source_remediation
+    title: Dynamic Target Baseline Source Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends dynamic-target-baseline-source-remediation
+    artifact_globs:
+      - docs/research/dynamic_target_baseline_source_remediation_report.md
+      - docs/research/dynamic_target_baseline_schema_contract.md
+      - docs/research/dynamic_target_schema_adapter_spec.md
+      - docs/research/dynamic_target_wrapper_pit_caveat_report.md
+      - docs/research/dynamic_target_2330_readiness_route.md
+      - docs/requirements/TRADING-2329_Dynamic_Target_Baseline_Source_Remediation.md
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_source_remediation_summary.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_source_family_ranking.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_source_family_ranking.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_gap_to_schema_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_gap_to_schema_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_remediation_action_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_remediation_action_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_baseline_schema_contract.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_schema_adapter_spec.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_schema_adapter_spec.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_remediated_baseline_candidates.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_remediated_baseline_candidates.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_baseline_wrapper_artifact.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_baseline_wrapper_artifact.csv
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_wrapper_validation_summary.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_wrapper_pit_caveat_report.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_wrapper_alignment_readiness.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_remediation_blocked_sources.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_2330_readiness_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_2330_task_route.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_source_remediation_safety_boundary.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_no_remediable_source_report.json
+      - outputs/research_trends/dynamic_target_baseline_source_remediation/dynamic_target_source_generation_requirements.json
+    artifact_selection_policy: latest_available
+    artifact_role: dynamic_target_baseline_source_remediation
+    data_quality_status: NOT_APPLICABLE_SOURCE_REMEDIATION_ONLY
+    validation_status: DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+    source_status: DYNAMIC_TARGET_BASELINE_PREPARATION_READY_PROMOTION_BLOCKED
+    source_artifact_role: dynamic_target_baseline_preparation
+    upstream_diagnostics_task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    upstream_static_dry_run_task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_validation_policy: NOT_APPLICABLE_SOURCE_REMEDIATION_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_remediation_only: true
+    simulation_executed: false
+    upstream_candidate_artifacts_found: 34
+    upstream_pit_ready_source_count: 0
+    upstream_recommended_candidate_count: 0
+    remediable_source_count: 4
+    blocked_source_count: 30
+    wrapper_generated: true
+    wrapper_record_count: 2682
+    wrapper_validation_status: PASS_WITH_WARNINGS
+    readiness_status: DYNAMIC_WRAPPER_SCHEMA_ADAPTER_REQUIRED
+    pit_policy: PIT_APPROXIMATION_READY
+    alignment_readiness_status: WRAPPER_ALIGNMENT_BLOCKED
+    2330_allowed: false
+    next_task: TRADING-2330_Dynamic_Target_Baseline_Timestamp_Remediation
+    research_only: true
+    source_remediation_only_boundary: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic target baseline source remediation should be rerun after
+      TRADING-2328 inventory/gap artifacts change, candidate target/advisory
+      artifacts are regenerated, or before TRADING-2330 timestamp / registry /
+      source-generation routing is reviewed by the project owner.
+    owner_action: remediate_timestamp_and_asset_alignment_before_dynamic_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

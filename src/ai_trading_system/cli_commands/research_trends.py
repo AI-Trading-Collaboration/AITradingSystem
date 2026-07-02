@@ -206,6 +206,21 @@ from ai_trading_system.dynamic_target_baseline_preparation import (
 from ai_trading_system.dynamic_target_baseline_preparation import (
     run_dynamic_target_baseline_preparation,
 )
+from ai_trading_system.dynamic_target_baseline_source_remediation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_DOCS_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_source_remediation import (
+    DEFAULT_DYNAMIC_PREPARATION_ROOT as DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_PREP_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_source_remediation import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_OUTPUT_ROOT,
+)
+from ai_trading_system.dynamic_target_baseline_source_remediation import (
+    MODE as DYNAMIC_TARGET_SOURCE_REMEDIATION_MODE,
+)
+from ai_trading_system.dynamic_target_baseline_source_remediation import (
+    run_dynamic_target_baseline_source_remediation,
+)
 from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_DOWNLOAD_MANIFEST_PATH as DEFAULT_EQUAL_WEIGHT_PROXY_DOWNLOAD_MANIFEST_PATH,
 )
@@ -2958,6 +2973,48 @@ def dynamic_target_baseline_preparation_command(
         mode=mode,
     )
     _print_payload("Dynamic target baseline preparation", payload)
+
+
+@trends_app.command("dynamic-target-baseline-source-remediation")
+def dynamic_target_baseline_source_remediation_command(
+    dynamic_preparation_dir: Annotated[
+        Path, typer.Option("--dynamic-preparation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_PREP_ROOT,
+    diagnostics_dir: Annotated[
+        Path, typer.Option("--diagnostics-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_DIAGNOSTICS_ROOT,
+    static_dry_run_dir: Annotated[
+        Path, typer.Option("--static-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_STATIC_ROOT,
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SOURCE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SIMULATION_ROOT,
+    candidate_artifact_roots: Annotated[
+        str | None, typer.Option("--candidate-artifact-roots")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_TARGET_SOURCE_REMEDIATION_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = DYNAMIC_TARGET_SOURCE_REMEDIATION_MODE,
+) -> None:
+    payload = run_dynamic_target_baseline_source_remediation(
+        dynamic_preparation_dir=dynamic_preparation_dir,
+        diagnostics_dir=diagnostics_dir,
+        static_dry_run_dir=static_dry_run_dir,
+        source_binding_dir=source_binding_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        candidate_artifact_roots=candidate_artifact_roots,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Dynamic target baseline source remediation", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
