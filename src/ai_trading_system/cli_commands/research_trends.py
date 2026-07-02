@@ -238,6 +238,30 @@ from ai_trading_system.event_gating_validation import (
     MODE as EVENT_GATING_VALIDATION_MODE,
 )
 from ai_trading_system.event_gating_validation import run_event_gating_validation
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_BASELINE_DECISION_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_BASELINE_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_DOCS_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_DRY_RUN_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_DRY_RUN_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_OUTPUT_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_SIMULATION_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    DEFAULT_SOURCE_BINDING_ROOT as DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_SOURCE_ROOT,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    MODE as EXPOSURE_CAP_DIAGNOSTICS_MODE,
+)
+from ai_trading_system.exposure_cap_diagnostics_review import (
+    run_exposure_cap_vs_no_cap_diagnostics_review,
+)
 from ai_trading_system.exposure_cap_mechanics_simulation import (
     DEFAULT_DOCS_ROOT as DEFAULT_EXPOSURE_CAP_SIMULATION_DOCS_ROOT,
 )
@@ -2831,6 +2855,40 @@ def source_bound_exposure_cap_dry_run_command(
         mode=mode,
     )
     _print_payload("Source-bound exposure-cap dry-run", payload)
+
+
+@trends_app.command("exposure-cap-vs-no-cap-diagnostics-review")
+def exposure_cap_vs_no_cap_diagnostics_review_command(
+    dry_run_dir: Annotated[
+        Path, typer.Option("--dry-run-dir")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_DRY_RUN_ROOT,
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_SOURCE_ROOT,
+    baseline_decision_dir: Annotated[
+        Path, typer.Option("--baseline-decision-dir")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_BASELINE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_SIMULATION_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_EXPOSURE_CAP_DIAGNOSTICS_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = EXPOSURE_CAP_DIAGNOSTICS_MODE,
+) -> None:
+    payload = run_exposure_cap_vs_no_cap_diagnostics_review(
+        dry_run_dir=dry_run_dir,
+        source_binding_dir=source_binding_dir,
+        baseline_decision_dir=baseline_decision_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Exposure-cap vs no-cap diagnostics review", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

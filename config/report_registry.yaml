@@ -23934,6 +23934,101 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: exposure_cap_vs_no_cap_diagnostics_review
+    title: Exposure-Cap vs No-Cap Diagnostics Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends exposure-cap-vs-no-cap-diagnostics-review
+    artifact_globs:
+      - docs/research/exposure_cap_vs_no_cap_diagnostics_review.md
+      - docs/research/exposure_cap_binding_diagnostics.md
+      - docs/research/exposure_cap_return_drawdown_proxy_review.md
+      - docs/research/exposure_cap_turnover_cooldown_review.md
+      - docs/research/exposure_cap_false_cost_downside_protection_review.md
+      - docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/exposure_cap_diagnostics_review_summary.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/cap_binding_diagnostics_matrix.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/cap_binding_diagnostics_matrix.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/exposure_reduction_diagnostics_matrix.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/exposure_reduction_diagnostics_matrix.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/return_drawdown_proxy_diagnostics.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/return_drawdown_proxy_diagnostics.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/turnover_cooldown_diagnostics.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/turnover_cooldown_diagnostics.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/false_cost_missed_upside_diagnostics.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/false_cost_missed_upside_diagnostics.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/downside_protection_diagnostics.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/downside_protection_diagnostics.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/cap_binding_period_attribution.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/cap_binding_period_attribution.csv
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/policy_sensitivity_recommendation_matrix.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/dynamic_baseline_readiness_recommendation.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/exposure_cap_diagnostics_decision_matrix.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/exposure_cap_2328_task_route.json
+      - outputs/research_trends/exposure_cap_vs_no_cap_diagnostics_review/diagnostics_interpretation_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: exposure_cap_diagnostics_review
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    source_status: SOURCE_BOUND_STATIC_ETF_EXPOSURE_CAP_DRY_RUN_READY_PROMOTION_BLOCKED
+    source_artifact_role: source_bound_static_etf_exposure_cap_dry_run
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_baseline_decision_task_id: TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_DRY_RUN_ARTIFACTS_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    prior_data_quality_report_present: true
+    diagnostics_only: true
+    dry_run_artifacts_only: true
+    simulation_executed: false
+    selected_baseline: static_etf_allocation_baseline
+    portfolio_source_mode: static_etf_allocation_baseline
+    cap_binding_days: 382
+    cap_binding_rate: 0.441618
+    record_count: 3460
+    return_proxy_delta: -0.174103
+    drawdown_proxy_delta: 0.06548
+    cap_binding_frequency_label: EXCESSIVE_BINDING_FREQUENCY
+    exposure_reduction_label: EXPOSURE_REDUCTION_MODEST
+    return_drawdown_tradeoff_label: DRAWDOWN_IMPROVED_RETURN_COSTLY
+    turnover_cooldown_label: TURNOVER_HIGH_AND_COOLDOWN_COSTLY
+    false_cost_label: FALSE_COST_BLOCKING
+    missed_upside_label: MISSED_UPSIDE_BLOCKING
+    downside_protection_label: DOWNSIDE_PROTECTION_POSITIVE_PROXY
+    recommended_policy_action: MOVE_TO_DYNAMIC_BASELINE_BEFORE_POLICY_CHANGE
+    dynamic_baseline_next_step_recommended: DYNAMIC_BASELINE_PREPARATION_RECOMMENDED
+    overall_recommendation: MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION
+    next_task: TRADING-2328_Dynamic_Target_Baseline_Preparation
+    research_only: true
+    dry_run_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Exposure-cap diagnostics review should be rerun after TRADING-2326 static
+      ETF dry-run artifacts change, upstream data-quality status changes, or
+      before TRADING-2328 route selection is reviewed by the project owner.
+    owner_action: review_dynamic_baseline_route_before_policy_or_runtime_changes
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
