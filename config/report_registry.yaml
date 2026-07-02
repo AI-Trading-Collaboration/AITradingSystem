@@ -24210,6 +24210,97 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: dynamic_target_baseline_timestamp_remediation
+    title: Dynamic Target Baseline Timestamp Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends dynamic-target-baseline-timestamp-remediation
+    artifact_globs:
+      - docs/research/dynamic_target_baseline_timestamp_remediation_report.md
+      - docs/research/dynamic_target_timestamp_gap_matrix.md
+      - docs/research/dynamic_target_known_at_semantics_report.md
+      - docs/research/dynamic_target_validity_window_remediation_report.md
+      - docs/research/dynamic_target_2331_readiness_route.md
+      - docs/requirements/TRADING-2330_Dynamic_Target_Baseline_Timestamp_Remediation.md
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediation_summary.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_gap_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_gap_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_source_priority_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_source_priority_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediation_policy.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_derivation_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_derivation_matrix.csv
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_known_at_semantics_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_validity_window_remediation_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_latency_policy_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_rebalance_timing_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediated_wrapper_artifact.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediated_wrapper_artifact.csv
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_wrapper_validation_summary.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_pit_caveat_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_risk_cap_timestamp_alignment_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_2331_readiness_matrix.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_2331_task_route.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediation_safety_boundary.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_remediation_blocked_report.json
+      - outputs/research_trends/dynamic_target_baseline_timestamp_remediation/dynamic_target_timestamp_source_generation_requirements.json
+    artifact_selection_policy: latest_available
+    artifact_role: dynamic_target_baseline_timestamp_remediation
+    data_quality_status: NOT_APPLICABLE_TIMESTAMP_REMEDIATION_ONLY
+    validation_status: DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION
+    source_status: DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION_READY_PROMOTION_BLOCKED
+    source_artifact_role: dynamic_target_baseline_source_remediation
+    upstream_dynamic_preparation_task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+    upstream_diagnostics_task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_validation_policy: NOT_APPLICABLE_TIMESTAMP_REMEDIATION_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    timestamp_remediation_only: true
+    simulation_executed: false
+    wrapper_input_record_count: 2682
+    timestamp_remediated_wrapper_generated: true
+    timestamp_remediated_wrapper_record_count: 2682
+    wrapper_validation_status: PASS_WITH_WARNINGS
+    known_at_policy: NEXT_SESSION_DECISION_POLICY
+    pit_policy: PIT_APPROXIMATION_READY
+    latency_policy: NEXT_TRADING_DAY_DECISION
+    rebalance_policy: DAILY_DECISION_REBALANCE
+    alignment_readiness_status: TIMESTAMP_ALIGNMENT_READY_WITH_WARNINGS
+    readiness_status: TIMESTAMP_REMEDIATED_READY_WITH_WARNINGS_FOR_2331
+    2331_allowed: true
+    next_task: TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat
+    research_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic target baseline timestamp remediation should be rerun after
+      TRADING-2329 wrapper artifacts change, source timestamp semantics are
+      improved, or before TRADING-2331 wrapper readiness / dry-run caveat
+      routing is reviewed by the project owner.
+    owner_action: recheck_wrapper_readiness_before_dynamic_target_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
