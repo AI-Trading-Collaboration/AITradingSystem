@@ -33,6 +33,9 @@ def build_exposure_cap_diagnostics_review_fixture(tmp_path: Path) -> dict[str, P
         "source_binding_dir": source_fixture["source_binding_dir"],
         "baseline_decision_dir": source_fixture["baseline_decision_dir"],
         "simulation_policy_dir": source_fixture["simulation_policy_dir"],
+        "prices_path": source_fixture["prices_path"],
+        "rates_path": source_fixture["rates_path"],
+        "policy_path": source_fixture["policy_path"],
     }
 
 

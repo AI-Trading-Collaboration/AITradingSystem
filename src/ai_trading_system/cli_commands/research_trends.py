@@ -254,6 +254,18 @@ from ai_trading_system.dynamic_target_baseline_timestamp_remediation import (
 from ai_trading_system.dynamic_target_baseline_timestamp_remediation import (
     run_dynamic_target_baseline_timestamp_remediation,
 )
+from ai_trading_system.dynamic_target_exposure_cap_dry_run import (
+    DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_DOCS_ROOT,
+)
+from ai_trading_system.dynamic_target_exposure_cap_dry_run import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_OUTPUT_ROOT,
+)
+from ai_trading_system.dynamic_target_exposure_cap_dry_run import (
+    MODE as DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_MODE,
+)
+from ai_trading_system.dynamic_target_exposure_cap_dry_run import (
+    run_dynamic_target_exposure_cap_dry_run,
+)
 from ai_trading_system.equal_weight_proxy_data_fix import (
     DEFAULT_DOWNLOAD_MANIFEST_PATH as DEFAULT_EQUAL_WEIGHT_PROXY_DOWNLOAD_MANIFEST_PATH,
 )
@@ -3128,6 +3140,68 @@ def dynamic_target_baseline_dry_run_readiness_with_pit_caveat_command(
         mode=mode,
     )
     _print_payload("Dynamic target baseline dry-run readiness with PIT caveat", payload)
+
+
+@trends_app.command("source-bound-exposure-cap-dynamic-target-dry-run")
+def source_bound_exposure_cap_dynamic_target_dry_run_command(
+    dry_run_readiness_dir: Annotated[
+        Path, typer.Option("--dry-run-readiness-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_OUTPUT_ROOT,
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_TIMESTAMP_ROOT,
+    source_remediation_dir: Annotated[
+        Path, typer.Option("--source-remediation-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_SOURCE_ROOT,
+    source_binding_dir: Annotated[
+        Path, typer.Option("--source-binding-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SOURCE_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_SIMULATION_ROOT,
+    static_dry_run_dir: Annotated[
+        Path, typer.Option("--static-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_BASELINE_STATIC_ROOT,
+    market_data_source: Annotated[
+        Path, typer.Option("--market-data-source")
+    ] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_source: Annotated[
+        Path, typer.Option("--rates-source")
+    ] = DEFAULT_REGENERATED_RATES_PATH,
+    marketstack_prices_source: Annotated[
+        Path | None, typer.Option("--marketstack-prices-source")
+    ] = None,
+    policy_path: Annotated[
+        Path | None, typer.Option("--policy")
+    ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_POLICY_PATH,
+    quality_as_of: Annotated[
+        str | None, typer.Option("--quality-as-of")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_MODE,
+) -> None:
+    payload = run_dynamic_target_exposure_cap_dry_run(
+        dry_run_readiness_dir=dry_run_readiness_dir,
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        source_remediation_dir=source_remediation_dir,
+        source_binding_dir=source_binding_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        static_dry_run_dir=static_dry_run_dir,
+        market_data_source=market_data_source,
+        rates_source=rates_source,
+        marketstack_prices_source=marketstack_prices_source,
+        policy_path=policy_path,
+        quality_as_of=quality_as_of,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Source-bound exposure-cap dynamic target dry-run", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

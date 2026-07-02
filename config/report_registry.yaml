@@ -24385,6 +24385,107 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: source_bound_exposure_cap_dynamic_target_dry_run
+    title: Source-Bound Exposure-Cap Dry-Run With Dynamic Target Baseline
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends source-bound-exposure-cap-dynamic-target-dry-run
+    artifact_globs:
+      - docs/research/dynamic_target_exposure_cap_dry_run_report.md
+      - docs/research/dynamic_target_cap_vs_no_cap_comparison.md
+      - docs/research/dynamic_target_strategy_overlap_report.md
+      - docs/research/dynamic_target_false_cost_downside_protection_review.md
+      - docs/research/dynamic_target_static_vs_dynamic_comparison.md
+      - docs/requirements/TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline.md
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_exposure_cap_dry_run_summary.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_baseline_source_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_baseline_exposure_schedule.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_baseline_exposure_schedule.csv
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_risk_cap_trigger_alignment_matrix.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_risk_cap_trigger_alignment_matrix.csv
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_exposure_cap_dry_run_result.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_exposure_cap_dry_run_result.csv
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_cap_vs_no_cap_comparison.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_cap_vs_no_cap_comparison.csv
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_cap_binding_day_matrix.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_cap_binding_day_matrix.csv
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_exposure_reduction_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_return_drawdown_proxy_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_turnover_impact_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_cooldown_impact_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_false_risk_cap_cost_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_missed_upside_cost_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_downside_protection_proxy_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_strategy_overlap_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_static_vs_dynamic_comparison.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_data_quality_report.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_pit_caveat_interpretation_boundary.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/dynamic_target_2333_task_route.json
+      - outputs/research_trends/source_bound_exposure_cap_dynamic_target_dry_run/data_quality_2026-06-29.md
+    artifact_selection_policy: latest_available
+    artifact_role: source_bound_dynamic_target_exposure_cap_dry_run
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: SOURCE_BOUND_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    source_status: DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_READY_PROMOTION_BLOCKED
+    source_artifact_role: dynamic_target_baseline_dry_run_readiness_with_pit_caveat
+    upstream_timestamp_remediation_task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    upstream_source_remediation_task_id: TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION
+    upstream_source_binding_task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    upstream_static_dry_run_task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    data_validation_policy: CACHED_DATA_VALIDATION_REQUIRED
+    data_quality_gate_required: true
+    data_quality_gate_executed: true
+    aits_validate_data_executed: true
+    dry_run_executed: true
+    simulation_executed: true
+    portfolio_source_mode: dynamic_target_baseline_wrapper_with_pit_caveat
+    target_assets:
+      - QQQ
+      - SGOV
+      - TQQQ
+    wrapper_record_count: 2682
+    schedule_record_count: 2490
+    record_count: 2490
+    cap_binding_days: 378
+    cap_binding_rate: 0.455422
+    return_proxy_delta: -0.187258
+    drawdown_proxy_delta: 0.045294
+    strategy_overlap_label: RISK_CAP_BINDING_WHEN_DYNAMIC_MISSES_RISK
+    pit_policy: PIT_APPROXIMATION_READY
+    known_at_policy: NEXT_SESSION_DECISION_POLICY
+    2333_task_route_generated: true
+    next_task: TRADING-2333_Dynamic_Exposure_Cap_vs_No_Cap_Diagnostics_Review
+    research_only: true
+    dry_run_only: true
+    manual_review_only: true
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic target exposure-cap dry-run should be rerun after TRADING-2331
+      readiness outputs, TRADING-2330 timestamp-remediated wrapper artifacts,
+      source-bound risk-cap trigger binding, cached market data, or exposure-cap
+      policy changes before TRADING-2333 diagnostics review.
+    owner_action: review_dynamic_target_cap_vs_no_cap_diagnostics_before_policy_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

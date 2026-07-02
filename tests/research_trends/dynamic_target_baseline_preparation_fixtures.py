@@ -47,6 +47,9 @@ def build_dynamic_target_baseline_preparation_fixture(
         "baseline_decision_dir": upstream["baseline_decision_dir"],
         "source_binding_dir": upstream["source_binding_dir"],
         "simulation_policy_dir": upstream["simulation_policy_dir"],
+        "prices_path": upstream["prices_path"],
+        "rates_path": upstream["rates_path"],
+        "policy_path": upstream["policy_path"],
         "candidate_root": candidate_root,
     }
 
