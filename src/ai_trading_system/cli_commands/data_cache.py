@@ -83,6 +83,16 @@ def download_data(
         str,
         typer.Option(help="读取 Marketstack API key 的环境变量名。"),
     ] = "MARKETSTACK_API_KEY",
+    marketstack_tail_catch_up: Annotated[
+        bool,
+        typer.Option(
+            "--marketstack-tail-catch-up/--no-marketstack-tail-catch-up",
+            help=(
+                "Marketstack 第二源额度不足且只存在 missed-day tail gap 时，"
+                "是否使用受控逐交易日 catch-up。"
+            ),
+        ),
+    ] = True,
     failure_report_path: Annotated[
         Path | None,
         typer.Option(help="下载失败诊断报告路径；默认写入 outputs/reports。"),
@@ -123,6 +133,7 @@ def download_data(
             include_full_ai_chain=full_universe,
             price_provider=primary_price_provider,
             secondary_price_provider=marketstack_provider,
+            marketstack_tail_catch_up=marketstack_tail_catch_up,
         )
     except Exception as exc:
         report_path = failure_report_path or default_download_failure_report_path(
@@ -157,12 +168,22 @@ def download_data(
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
     console.print(f"FRED 宏观序列：{', '.join(summary.rate_series)}")
     for budget in summary.request_budget_statuses:
+        violation_reasons = _budget_violation_reasons(budget)
+        tail_catch_up = budget.get("tail_catch_up")
+        tail_catch_up_applied = (
+            tail_catch_up.get("applied")
+            if isinstance(tail_catch_up, dict)
+            else None
+        )
         console.print(
             "请求预算："
             f"{budget.get('provider')} / {budget.get('api_family')} "
+            f"profile={budget.get('budget_profile')} "
             f"status={budget.get('status')} "
             f"estimated_increment_usage={budget.get('estimated_increment_usage')} "
-            f"quota_remaining={budget.get('quota_remaining')}"
+            f"quota_remaining={budget.get('quota_remaining')} "
+            f"violation_reasons={','.join(violation_reasons)} "
+            f"tail_catch_up_applied={tail_catch_up_applied}"
         )
     for cache_summary in summary.request_cache_summaries:
         console.print(
@@ -272,6 +293,16 @@ def _parse_date(value: str) -> date:
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
+
+
+def _budget_violation_reasons(budget: dict[str, object]) -> list[str]:
+    for key in ("owner_approved_tail_catch_up", "owner_approved_overage"):
+        approval = budget.get(key)
+        if isinstance(approval, dict):
+            reasons = approval.get("violation_reasons")
+            if isinstance(reasons, list):
+                return [str(reason) for reason in reasons]
+    return []
 
 
 def _marketstack_prices_path(prices_path: Path) -> Path:

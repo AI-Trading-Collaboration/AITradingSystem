@@ -88,6 +88,21 @@ class IncrementalPriceDownload:
 class ProviderQuotaBudgetError(RuntimeError):
     """Raised before live provider calls when cached quota metadata says they cannot finish."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        budget_status: Mapping[str, object] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.budget_status = dict(budget_status or {})
+
+
+_MARKETSTACK_DAILY_OVERAGE_PROFILE = "owner_approved_overage"
+_MARKETSTACK_TAIL_CATCH_UP_PROFILE = "owner_approved_tail_catch_up"
+_MARKETSTACK_BLOCKED_STATUS = "BLOCKED_QUOTA_INSUFFICIENT"
+_MARKETSTACK_CALENDAR_WINDOW_BLOCKER = "calendar_window_exceeds_owner_approved_limit"
+
 
 def default_download_failure_report_path(reports_dir: Path, as_of: date) -> Path:
     return reports_dir / f"download_data_diagnostics_{as_of.isoformat()}.md"
@@ -107,6 +122,7 @@ def write_download_failure_report(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     generated_at = datetime.now(tz=UTC)
     diagnostic = _provider_diagnostic_from_error(error)
+    budget_status = _provider_budget_status_from_error(error)
     lines = [
         "# download-data 失败诊断报告",
         "",
@@ -126,6 +142,8 @@ def write_download_failure_report(
         f"- Exception type：`{type(error).__name__}`",
         f"- Sanitized message：{sanitize_diagnostic_text(str(error))}",
     ]
+    if budget_status:
+        lines.extend(_render_provider_budget_status(budget_status))
     if diagnostic is None:
         lines.extend(
             [
@@ -162,6 +180,7 @@ def download_daily_data(
     vix_price_provider: PriceDataProvider | None = None,
     secondary_price_provider: PriceDataProvider | None = None,
     rate_provider: RateDataProvider | None = None,
+    marketstack_tail_catch_up: bool = True,
 ) -> DataDownloadSummary:
     if start > end:
         raise ValueError("start date must be earlier than or equal to end date")
@@ -234,6 +253,7 @@ def download_daily_data(
                     interval="1d",
                 ),
                 existing_path=secondary_prices_path_target,
+                marketstack_tail_catch_up=marketstack_tail_catch_up,
             )
 
     prices_path = cache.write_prices(prices)
@@ -321,6 +341,7 @@ def _download_incremental_prices(
     provider: PriceDataProvider,
     request: PriceRequest,
     existing_path: Path,
+    marketstack_tail_catch_up: bool = False,
 ) -> IncrementalPriceDownload:
     supported_tickers = _supported_price_tickers(provider, request.tickers)
     skipped_tickers = tuple(ticker for ticker in request.tickers if ticker not in supported_tickers)
@@ -336,7 +357,12 @@ def _download_incremental_prices(
         start=request.start,
         end=request.end,
     )
-    request_budget_status = _provider_request_budget_status(provider, fetch_windows)
+    fetch_windows, request_budget_status = _marketstack_fetch_windows_and_budget_status(
+        provider=provider,
+        request=request,
+        fetch_windows=fetch_windows,
+        allow_tail_catch_up=marketstack_tail_catch_up,
+    )
 
     fetched_frames: list[pd.DataFrame] = []
     for window in fetch_windows:
@@ -523,9 +549,103 @@ def _empty_price_frame() -> pd.DataFrame:
     return pd.DataFrame(columns=list(_PRICE_COLUMNS))
 
 
+def _marketstack_fetch_windows_and_budget_status(
+    *,
+    provider: PriceDataProvider,
+    request: PriceRequest,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+    allow_tail_catch_up: bool,
+) -> tuple[tuple[IncrementalPriceWindow, ...], dict[str, object] | None]:
+    request_budget_status = _provider_request_budget_status(
+        provider,
+        fetch_windows,
+        raise_on_block=False,
+    )
+    if not isinstance(provider, MarketstackPriceProvider):
+        return fetch_windows, request_budget_status
+    if (
+        allow_tail_catch_up
+        and request_budget_status is not None
+        and _should_attempt_marketstack_tail_catch_up(
+            request_budget_status,
+            fetch_windows=fetch_windows,
+            request_start=request.start,
+        )
+    ):
+        split_windows = _split_marketstack_tail_catch_up_windows(fetch_windows)
+        catch_up_status = _provider_request_budget_status(
+            provider,
+            split_windows,
+            approval_profile=_MARKETSTACK_TAIL_CATCH_UP_PROFILE,
+            raise_on_block=False,
+        )
+        if catch_up_status is not None:
+            catch_up_status["tail_catch_up"] = {
+                "applied": catch_up_status.get("status") != _MARKETSTACK_BLOCKED_STATUS,
+                "source_budget_profile": _MARKETSTACK_DAILY_OVERAGE_PROFILE,
+                "catch_up_budget_profile": _MARKETSTACK_TAIL_CATCH_UP_PROFILE,
+                "original_fetch_windows": [window.to_payload() for window in fetch_windows],
+                "split_fetch_windows": [window.to_payload() for window in split_windows],
+                "original_violation_reasons": _budget_violation_reasons(
+                    request_budget_status
+                ),
+            }
+        if (
+            catch_up_status is not None
+            and catch_up_status.get("status") != _MARKETSTACK_BLOCKED_STATUS
+        ):
+            return split_windows, catch_up_status
+        if catch_up_status is not None:
+            _raise_provider_quota_budget_error(catch_up_status)
+    if (
+        request_budget_status is not None
+        and request_budget_status.get("status") == _MARKETSTACK_BLOCKED_STATUS
+    ):
+        _raise_provider_quota_budget_error(request_budget_status)
+    return fetch_windows, request_budget_status
+
+
+def _should_attempt_marketstack_tail_catch_up(
+    request_budget_status: Mapping[str, object],
+    *,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+    request_start: date,
+) -> bool:
+    if request_budget_status.get("status") != _MARKETSTACK_BLOCKED_STATUS:
+        return False
+    reasons = set(_budget_violation_reasons(request_budget_status))
+    if reasons != {_MARKETSTACK_CALENDAR_WINDOW_BLOCKER}:
+        return False
+    if not fetch_windows:
+        return False
+    return all(window.start > request_start for window in fetch_windows)
+
+
+def _split_marketstack_tail_catch_up_windows(
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+) -> tuple[IncrementalPriceWindow, ...]:
+    split_windows: list[IncrementalPriceWindow] = []
+    for window in fetch_windows:
+        current = window.start
+        while current <= window.end:
+            if is_us_equity_trading_day(current):
+                split_windows.append(
+                    IncrementalPriceWindow(
+                        tickers=window.tickers,
+                        start=current,
+                        end=current,
+                    )
+                )
+            current += timedelta(days=1)
+    return tuple(split_windows) or fetch_windows
+
+
 def _provider_request_budget_status(
     provider: PriceDataProvider,
     fetch_windows: tuple[IncrementalPriceWindow, ...],
+    *,
+    approval_profile: str = _MARKETSTACK_DAILY_OVERAGE_PROFILE,
+    raise_on_block: bool = True,
 ) -> dict[str, object] | None:
     if not isinstance(provider, MarketstackPriceProvider):
         return None
@@ -549,19 +669,26 @@ def _provider_request_budget_status(
     status = "NO_LIVE_REQUEST_NEEDED" if estimated_units == 0 else "PASS"
     owner_approved_overage: dict[str, object] | None = None
     if estimated_units > 0 and quota_remaining is not None and quota_remaining < estimated_units:
-        owner_approved_overage = _marketstack_owner_approved_overage_status(
+        owner_approved_overage = _marketstack_owner_approved_budget_status(
             estimated_units=estimated_units,
             fetch_windows=fetch_windows,
             quota_limit=quota_limit,
             quota_remaining=quota_remaining,
+            approval_profile=approval_profile,
         )
         if owner_approved_overage["approved"]:
             status = str(owner_approved_overage["allowed_status"])
         else:
-            status = "BLOCKED_QUOTA_INSUFFICIENT"
+            status = _MARKETSTACK_BLOCKED_STATUS
+    approval_status_key = (
+        "owner_approved_tail_catch_up"
+        if approval_profile == _MARKETSTACK_TAIL_CATCH_UP_PROFILE
+        else "owner_approved_overage"
+    )
     payload: dict[str, object] = {
         "provider": "Marketstack",
         "api_family": "eod_daily_prices",
+        "budget_profile": approval_profile,
         "status": status,
         "estimated_increment_usage": estimated_units,
         "quota_limit": quota_limit,
@@ -570,13 +697,9 @@ def _provider_request_budget_status(
         "fetch_window_count": len(fetch_windows),
     }
     if owner_approved_overage is not None:
-        payload["owner_approved_overage"] = owner_approved_overage
-    if status == "BLOCKED_QUOTA_INSUFFICIENT":
-        raise ProviderQuotaBudgetError(
-            "Marketstack quota preflight blocked download: "
-            f"estimated_increment_usage={estimated_units}, "
-            f"quota_remaining={quota_remaining}, quota_limit={quota_limit}"
-        )
+        payload[approval_status_key] = owner_approved_overage
+    if status == _MARKETSTACK_BLOCKED_STATUS and raise_on_block:
+        _raise_provider_quota_budget_error(payload)
     return payload
 
 
@@ -587,8 +710,30 @@ def _marketstack_owner_approved_overage_status(
     quota_limit: int | None,
     quota_remaining: int,
 ) -> dict[str, object]:
+    return _marketstack_owner_approved_budget_status(
+        estimated_units=estimated_units,
+        fetch_windows=fetch_windows,
+        quota_limit=quota_limit,
+        quota_remaining=quota_remaining,
+        approval_profile=_MARKETSTACK_DAILY_OVERAGE_PROFILE,
+    )
+
+
+def _marketstack_owner_approved_budget_status(
+    *,
+    estimated_units: int,
+    fetch_windows: tuple[IncrementalPriceWindow, ...],
+    quota_limit: int | None,
+    quota_remaining: int,
+    approval_profile: str,
+) -> dict[str, object]:
     policy = load_data_source_request_budget_policy()
-    approval = policy.marketstack.eod_daily_prices.owner_approved_overage
+    if approval_profile == _MARKETSTACK_DAILY_OVERAGE_PROFILE:
+        approval = policy.marketstack.eod_daily_prices.owner_approved_overage
+    elif approval_profile == _MARKETSTACK_TAIL_CATCH_UP_PROFILE:
+        approval = policy.marketstack.eod_daily_prices.owner_approved_tail_catch_up
+    else:
+        raise ValueError(f"Unknown Marketstack approval profile: {approval_profile}")
     window_calendar_days = tuple(
         max(1, (window.end - window.start).days + 1) for window in fetch_windows
     )
@@ -616,6 +761,7 @@ def _marketstack_owner_approved_overage_status(
 
     return {
         "approved": not violation_reasons,
+        "approval_profile": approval_profile,
         "policy_version": policy.policy_version,
         "policy_status": policy.policy_metadata.status,
         "allowed_status": approval.allowed_status,
@@ -633,6 +779,32 @@ def _marketstack_owner_approved_overage_status(
         "validation_coverage": approval.validation_coverage,
         "exit_condition": approval.exit_condition,
     }
+
+
+def _raise_provider_quota_budget_error(payload: Mapping[str, object]) -> None:
+    reasons = _budget_violation_reasons(payload)
+    reason_suffix = ""
+    if reasons:
+        reason_suffix = ", violation_reasons=" + ",".join(reasons)
+    raise ProviderQuotaBudgetError(
+        "Marketstack quota preflight blocked download: "
+        f"estimated_increment_usage={payload.get('estimated_increment_usage')}, "
+        f"quota_remaining={payload.get('quota_remaining')}, "
+        f"quota_limit={payload.get('quota_limit')}, "
+        f"budget_profile={payload.get('budget_profile')}"
+        f"{reason_suffix}",
+        budget_status=payload,
+    )
+
+
+def _budget_violation_reasons(payload: Mapping[str, object]) -> list[str]:
+    for key in ("owner_approved_tail_catch_up", "owner_approved_overage"):
+        approval = payload.get(key)
+        if isinstance(approval, Mapping):
+            reasons = approval.get("violation_reasons")
+            if isinstance(reasons, list):
+                return [str(reason) for reason in reasons]
+    return []
 
 
 def _estimate_marketstack_increment_usage(
@@ -758,6 +930,55 @@ def _provider_diagnostic_from_error(error: BaseException) -> ProviderRequestDiag
             return current.diagnostic
         current = current.__cause__ or current.__context__
     return None
+
+
+def _provider_budget_status_from_error(error: BaseException) -> Mapping[str, object] | None:
+    current: BaseException | None = error
+    while current is not None:
+        if isinstance(current, ProviderQuotaBudgetError) and current.budget_status:
+            return current.budget_status
+        current = current.__cause__ or current.__context__
+    return None
+
+
+def _render_provider_budget_status(budget_status: Mapping[str, object]) -> list[str]:
+    safe_status = json.dumps(
+        budget_status,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+        default=str,
+    )
+    rows = [
+        ("Provider", budget_status.get("provider", "")),
+        ("API family", budget_status.get("api_family", "")),
+        ("Status", budget_status.get("status", "")),
+        ("Budget profile", budget_status.get("budget_profile", "")),
+        ("Estimated increment usage", budget_status.get("estimated_increment_usage", "")),
+        ("Quota limit", budget_status.get("quota_limit", "")),
+        ("Quota remaining", budget_status.get("quota_remaining", "")),
+        ("Fetch window count", budget_status.get("fetch_window_count", "")),
+        ("Violation reasons", ", ".join(_budget_violation_reasons(budget_status))),
+    ]
+    lines = [
+        "",
+        "## Provider 请求预算",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+    ]
+    lines.extend(f"| {key} | {_escape_markdown_table(value)} |" for key, value in rows)
+    lines.extend(
+        [
+            "",
+            "### 请求预算 JSON",
+            "",
+            "```json",
+            safe_status,
+            "```",
+        ]
+    )
+    return lines
 
 
 def _render_provider_diagnostic(diagnostic: ProviderRequestDiagnostic) -> list[str]:

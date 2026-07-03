@@ -283,6 +283,9 @@ class MarketstackEodDailyPricesBudgetPolicyConfig(BaseModel):
     owner_approved_overage: OwnerApprovedProviderOverageConfig = Field(
         default_factory=OwnerApprovedProviderOverageConfig
     )
+    owner_approved_tail_catch_up: OwnerApprovedProviderOverageConfig = Field(
+        default_factory=OwnerApprovedProviderOverageConfig
+    )
 
 
 class MarketstackRequestBudgetPolicyConfig(BaseModel):

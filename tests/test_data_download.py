@@ -390,6 +390,203 @@ def test_marketstack_owner_approved_overage_blocks_above_ratio_cap(
         )
 
 
+def test_marketstack_tail_catch_up_splits_missed_trading_days(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-738",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        requests_module=_FakeMarketstackCatchUpRequests(),
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+    _write_price_cache(
+        tmp_path / "prices_marketstack_daily.csv",
+        tickers=supported_tickers,
+        price_date=date(2026, 6, 29),
+    )
+
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2018, 1, 1),
+        end=date(2026, 7, 1),
+        output_dir=tmp_path,
+        price_provider=FakePriceProvider(),
+        secondary_price_provider=provider,
+        rate_provider=FakeRateProvider(),
+    )
+
+    assert isinstance(provider.requests_module, _FakeMarketstackCatchUpRequests)
+    assert [call["date_from"] for call in provider.requests_module.calls] == [
+        "2026-06-30",
+        "2026-07-01",
+    ]
+    budget = summary.request_budget_statuses[0]
+    assert budget["budget_profile"] == "owner_approved_tail_catch_up"
+    assert budget["status"] == "OWNER_APPROVED_SMALL_TAIL_CATCH_UP"
+    assert budget["estimated_increment_usage"] == 50
+    assert budget["fetch_window_count"] == 2
+    assert budget["tail_catch_up"]["applied"] is True
+    assert budget["tail_catch_up"]["original_fetch_windows"] == [
+        {
+            "tickers": sorted(supported_tickers),
+            "start": "2026-06-30",
+            "end": "2026-07-01",
+        }
+    ]
+    assert [window["start"] for window in budget["tail_catch_up"]["split_fetch_windows"]] == [
+        "2026-06-30",
+        "2026-07-01",
+    ]
+
+    manifest = pd.read_csv(summary.manifest_path)
+    marketstack_manifest = manifest.loc[
+        manifest["source_id"] == "marketstack_eod_daily_prices"
+    ].iloc[0]
+    request_parameters = json.loads(str(marketstack_manifest["request_parameters"]))
+    incremental = request_parameters["incremental_refresh"]
+    assert incremental["fetch_window_count"] == 2
+    assert incremental["request_budget_status"]["budget_profile"] == (
+        "owner_approved_tail_catch_up"
+    )
+    assert incremental["request_budget_status"]["tail_catch_up"]["applied"] is True
+
+
+def test_marketstack_tail_catch_up_does_not_convert_full_history_refresh(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-738",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    fake_marketstack_requests = _NeverRequests()
+
+    with pytest.raises(ProviderQuotaBudgetError) as exc_info:
+        download_daily_data(
+            load_universe(),
+            start=date(2026, 6, 30),
+            end=date(2026, 7, 1),
+            output_dir=tmp_path,
+            price_provider=FakePriceProvider(),
+            secondary_price_provider=MarketstackPriceProvider(
+                api_key="test-key",
+                requests_module=fake_marketstack_requests,
+                request_cache_dir=request_cache_dir,
+            ),
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert fake_marketstack_requests.calls == []
+    assert exc_info.value.budget_status["budget_profile"] == "owner_approved_overage"
+    assert (
+        "calendar_window_exceeds_owner_approved_limit"
+        in exc_info.value.budget_status["owner_approved_overage"]["violation_reasons"]
+    )
+
+
+def test_marketstack_tail_catch_up_blocks_when_split_shortfall_exceeds_ratio(
+    tmp_path: Path,
+) -> None:
+    request_cache_dir = tmp_path / "request_cache"
+    write_external_request_cache_response(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        method="GET",
+        url="https://api.marketstack.com/v2/eod",
+        params={"symbols": "NVDA"},
+        status_code=200,
+        response_headers={
+            "x-quota-limit": "10000",
+            "x-quota-remaining": "-960",
+            "x-increment-usage": "25",
+        },
+        content=b'{"data":[]}',
+        cache_dir=request_cache_dir,
+    )
+    fake_marketstack_requests = _NeverRequests()
+    provider = MarketstackPriceProvider(
+        api_key="test-key",
+        requests_module=fake_marketstack_requests,
+        request_cache_dir=request_cache_dir,
+    )
+    supported_tickers = tuple(
+        ticker
+        for ticker in configured_price_tickers(load_universe())
+        if provider.symbol_aliases.get(ticker, ticker) is not None
+    )
+    _write_price_cache(
+        tmp_path / "prices_marketstack_daily.csv",
+        tickers=supported_tickers,
+        price_date=date(2026, 6, 29),
+    )
+
+    with pytest.raises(ProviderQuotaBudgetError) as exc_info:
+        download_daily_data(
+            load_universe(),
+            start=date(2018, 1, 1),
+            end=date(2026, 7, 1),
+            output_dir=tmp_path,
+            price_provider=FakePriceProvider(),
+            secondary_price_provider=provider,
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert fake_marketstack_requests.calls == []
+    budget = exc_info.value.budget_status
+    assert budget["budget_profile"] == "owner_approved_tail_catch_up"
+    assert budget["tail_catch_up"]["applied"] is False
+    assert (
+        "quota_overage_ratio_exceeds_owner_approved_limit"
+        in budget["owner_approved_tail_catch_up"]["violation_reasons"]
+    )
+
+    report_path = write_download_failure_report(
+        output_path=tmp_path / "download_data_diagnostics_2026-07-01.md",
+        start=date(2018, 1, 1),
+        end=date(2026, 7, 1),
+        raw_output_dir=tmp_path,
+        include_full_ai_chain=False,
+        price_provider_name="fmp",
+        with_marketstack=True,
+        error=exc_info.value,
+    )
+    text = report_path.read_text(encoding="utf-8")
+    assert "## Provider 请求预算" in text
+    assert "owner_approved_tail_catch_up" in text
+    assert "quota_overage_ratio_exceeds_owner_approved_limit" in text
+
+
 def test_marketstack_negative_quota_does_not_block_no_live_request(
     tmp_path: Path,
 ) -> None:
@@ -546,10 +743,11 @@ def test_write_download_failure_report_redacts_marketstack_diagnostics(tmp_path:
 
 
 class _FakeResponse:
-    def __init__(self, payload: object) -> None:
+    def __init__(self, payload: object, headers: dict[str, str] | None = None) -> None:
         self._payload = payload
         self.ok = True
         self.status_code = 200
+        self.headers = headers or {}
 
     def json(self) -> object:
         return self._payload
@@ -569,6 +767,47 @@ class _FakeRequests:
         assert params["apikey"] == "test-key"
         assert timeout == 30
         return _FakeResponse(self._payload)
+
+
+class _FakeMarketstackCatchUpRequests:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def get(
+        self,
+        _url: str,
+        *,
+        params: dict[str, object],
+        timeout: int,
+    ) -> _FakeResponse:
+        assert params["access_key"] == "test-key"
+        assert timeout == 30
+        self.calls.append(dict(params))
+        symbols = str(params["symbols"]).split(",")
+        date_from = str(params["date_from"])
+        date_to = str(params["date_to"])
+        assert date_from == date_to
+        records = [
+            {
+                "date": date_from,
+                "symbol": symbol,
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+                "adj_close": 1.0,
+                "volume": 1,
+            }
+            for symbol in symbols
+        ]
+        return _FakeResponse(
+            {"pagination": {"count": len(records), "total": len(records)}, "data": records},
+            headers={
+                "x-quota-limit": "10000",
+                "x-quota-remaining": "-788",
+                "x-increment-usage": "25",
+            },
+        )
 
 
 class _FakeCboeResponse:
@@ -599,3 +838,21 @@ class _NeverRequests:
     def get(self, url: str, **kwargs: object) -> _FakeResponse:
         self.calls.append({"url": url, **kwargs})
         raise AssertionError("Marketstack should not be called after quota preflight failure")
+
+
+def _write_price_cache(path: Path, *, tickers: tuple[str, ...], price_date: date) -> None:
+    pd.DataFrame(
+        [
+            {
+                "date": price_date.isoformat(),
+                "ticker": ticker,
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+                "adj_close": 1.0,
+                "volume": 1,
+            }
+            for ticker in tickers
+        ]
+    ).to_csv(path, index=False)

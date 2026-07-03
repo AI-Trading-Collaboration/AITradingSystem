@@ -49,3 +49,35 @@ marketstack:
         Replace with the normal quota preflight once Marketstack quota recovers
         or a reviewed paid/vendor quota policy supersedes this temporary
         approval.
+    owner_approved_tail_catch_up:
+      enabled: true
+      max_estimated_increment_usage: 50
+      max_fetch_window_count: 2
+      max_calendar_days_per_window: 1
+      max_quota_overage_ratio: 0.10
+      allowed_status: OWNER_APPROVED_SMALL_TAIL_CATCH_UP
+      reason: >
+        Owner approved a durable missed-day repair path on 2026-07-03 after
+        daily PIT automation observed a two-trading-day Marketstack tail gap
+        with projected overage still below the 10% quota cap. This profile is
+        separate from the normal single-day daily overage and is limited to
+        audited tail catch-up windows.
+      behavioral_impact: >
+        Allows an eligible missed daily Marketstack tail gap to be split into
+        one U.S. equity trading day per live request, with original and split
+        windows recorded in the download manifest. It does not allow
+        full-history refreshes, new-ticker backfills, mixed stale windows, or
+        large quota shortfalls.
+      risk: >
+        Marketstack may reject live requests, bill overage usage, or keep
+        reporting negative quota until reset. Splitting catch-up requests can
+        consume more request units than a single multi-day request, so the
+        same 10% projected shortfall cap and small estimated usage ceiling
+        remain binding.
+      validation_coverage: >
+        Focused unit tests cover allowed two-day tail catch-up, full-history
+        fail-closed behavior, over-ratio fail-closed behavior, manifest
+        catch-up metadata, and failure diagnostics with violation reasons.
+      exit_condition: >
+        Remove or tighten after Marketstack quota recovers, the vendor plan
+        changes, or the scheduler no longer permits missed daily tail gaps.
