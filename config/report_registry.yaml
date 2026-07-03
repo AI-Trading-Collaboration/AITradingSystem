@@ -24688,6 +24688,117 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_threshold_selection
+    title: High-Intensity Risk-Cap Threshold Selection
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-threshold-selection
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_threshold_selection.md
+      - docs/research/high_intensity_selected_trigger_rule.md
+      - docs/research/high_intensity_threshold_selection_caveat_report.md
+      - docs/research/high_intensity_event_logger_input_contract.md
+      - docs/research/high_intensity_2336_readiness_route.md
+      - docs/requirements/TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection.md
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_selection_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_candidate_scoring_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_candidate_scoring_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_trigger_density_guardrail.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_selection_decision_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_trigger_rule.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_trigger_rule.md
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_trigger_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_selection_caveat_report.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_event_logger_input_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_rule_backtest_context.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_rule_false_warning_context.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_rule_missed_stress_context.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_selected_rule_manual_review_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_2336_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_2336_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_threshold_selection/high_intensity_threshold_selection_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_threshold_selection
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: HIGH_INTENSITY_THRESHOLD_SELECTION_READY_WITH_WARNINGS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    source_status: HIGH_INTENSITY_FORWARD_OBSERVE_PLAN_READY_PROMOTION_BLOCKED
+    source_artifact_role: high_intensity_risk_cap_forward_observe_plan
+    upstream_dynamic_dry_run_task_id: TRADING-2332_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_WITH_DYNAMIC_TARGET_BASELINE
+    upstream_dynamic_diagnostics_task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    upstream_readiness_task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    upstream_timestamp_remediation_task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_2332_2333_2334_ARTIFACTS_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    prior_2332_data_quality_gate_executed: true
+    diagnostics_review_executed: false
+    simulation_executed: false
+    runtime_observe_started: false
+    candidate_scoring_matrix_generated: true
+    density_guardrail_generated: true
+    threshold_selection_decision_matrix_generated: true
+    selected_trigger_rule_generated: true
+    selected_trigger_contract_generated: true
+    threshold_selection_caveat_report_generated: true
+    event_logger_input_contract_generated: true
+    selected_rule_backtest_context_generated: true
+    selected_rule_false_warning_context_generated: true
+    selected_rule_missed_stress_context_generated: true
+    selected_rule_manual_review_boundary_generated: true
+    2336_readiness_checklist_generated: true
+    2336_task_route_generated: true
+    pit_policy: PIT_APPROXIMATION_READY
+    known_at_policy: NEXT_SESSION_DECISION_POLICY
+    latency_policy: NEXT_TRADING_DAY_DECISION
+    strict_pit_ready: false
+    pit_approximation_ready: true
+    record_count: 2490
+    cap_binding_rate: 0.455422
+    selected_threshold_id: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_threshold_type: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_threshold_density: 0.06747
+    density_guardrail_status: PASS_WITH_WARNINGS
+    density_guardrail_warning: MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL
+    threshold_selection_status: THRESHOLD_SELECTED_WITH_WARNINGS_PROMOTION_BLOCKED
+    overall_decision: PROCEED_TO_EVENT_LOGGER_WITH_CAVEAT
+    readiness_status: READY_FOR_2336_EVENT_LOGGER_WITH_CAVEAT
+    next_task: TRADING-2336_High_Intensity_Risk_Cap_Forward_Observe_Event_Logger
+    route_caveat: THRESHOLD_SELECTION_RESEARCH_ONLY
+    research_only: true
+    threshold_selection_only: true
+    manual_review_only: true
+    runtime_observe_allowed_for_2336: true
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      High-intensity threshold selection should be rerun after TRADING-2334
+      forward observe plan artifacts, TRADING-2333 diagnostics, TRADING-2332
+      dynamic dry-run artifacts, PIT caveat context, or timestamp remediation
+      context changes.
+    owner_action: implement_observe_only_event_logger_after_trading_2335_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

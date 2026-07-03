@@ -740,6 +740,33 @@ from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
 from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
     run_high_intensity_risk_cap_forward_observe_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_DYNAMIC_DIAGNOSTICS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_DYNAMIC_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_READINESS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_READINESS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    DEFAULT_TIMESTAMP_REMEDIATION_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_TIMESTAMP_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    MODE as HIGH_INTENSITY_THRESHOLD_SELECTION_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
+    run_high_intensity_risk_cap_threshold_selection,
+)
 from ai_trading_system.indicator_family_ablation import (
     DEFAULT_ACTION_VALUE_MATRIX_PATH,
     DEFAULT_ACTION_VALUE_SUMMARY_PATH,
@@ -3339,6 +3366,46 @@ def high_intensity_risk_cap_forward_observe_plan_command(
         mode=mode,
     )
     _print_payload("High-intensity risk-cap forward observe plan", payload)
+
+
+@trends_app.command("high-intensity-risk-cap-threshold-selection")
+def high_intensity_risk_cap_threshold_selection_command(
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_PLAN_ROOT,
+    dynamic_diagnostics_dir: Annotated[
+        Path, typer.Option("--dynamic-diagnostics-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DIAGNOSTICS_ROOT,
+    dynamic_dry_run_dir: Annotated[
+        Path, typer.Option("--dynamic-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DRY_RUN_ROOT,
+    readiness_dir: Annotated[
+        Path, typer.Option("--readiness-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_READINESS_ROOT,
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_TIMESTAMP_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_THRESHOLD_SELECTION_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_threshold_selection(
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        dynamic_diagnostics_dir=dynamic_diagnostics_dir,
+        dynamic_dry_run_dir=dynamic_dry_run_dir,
+        readiness_dir=readiness_dir,
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("High-intensity risk-cap threshold selection", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
