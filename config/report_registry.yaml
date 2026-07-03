@@ -24589,6 +24589,105 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_forward_observe_plan
+    title: High-Intensity-Only Risk-Cap Forward Observe Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-forward-observe-plan
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_forward_observe_plan.md
+      - docs/research/high_intensity_trigger_selection_criteria.md
+      - docs/research/high_intensity_forward_observe_event_schema.md
+      - docs/research/high_intensity_actual_path_evidence_contract.md
+      - docs/research/high_intensity_stop_continue_archive_rules.md
+      - docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_forward_observe_plan_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_trigger_selection_criteria.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_trigger_threshold_candidate_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_trigger_threshold_candidate_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_trigger_candidate_backtest_context.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_forward_observe_event_schema.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_forward_observe_evidence_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_actual_path_outcome_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_manual_review_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_false_warning_missed_stress_framework.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_stop_continue_archive_rules.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_observe_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_2335_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_plan/high_intensity_forward_observe_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_forward_observe_plan
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: HIGH_INTENSITY_FORWARD_OBSERVE_PLAN_READY_PROMOTION_BLOCKED
+    source_task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    source_status: DYNAMIC_EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED
+    source_artifact_role: dynamic_exposure_cap_diagnostics_review
+    upstream_dynamic_dry_run_task_id: TRADING-2332_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_WITH_DYNAMIC_TARGET_BASELINE
+    upstream_readiness_task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    upstream_timestamp_remediation_task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    upstream_simulation_policy_task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_2332_2333_ARTIFACTS_ONLY
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    prior_2332_data_quality_gate_executed: true
+    diagnostics_review_executed: false
+    simulation_executed: false
+    runtime_observe_started: false
+    forward_observe_plan_only: true
+    trigger_selection_criteria_generated: true
+    threshold_candidate_matrix_generated: true
+    forward_observe_event_schema_generated: true
+    forward_observe_evidence_contract_generated: true
+    actual_path_outcome_contract_generated: true
+    manual_review_boundary_generated: true
+    false_warning_missed_stress_framework_generated: true
+    stop_continue_archive_rules_generated: true
+    observe_readiness_checklist_generated: true
+    task_route_generated: true
+    pit_policy: PIT_APPROXIMATION_READY
+    known_at_policy: NEXT_SESSION_DECISION_POLICY
+    latency_policy: NEXT_TRADING_DAY_DECISION
+    strict_pit_ready: false
+    pit_approximation_ready: true
+    record_count: 2490
+    cap_binding_rate: 0.455422
+    return_proxy_delta: -0.187258
+    drawdown_proxy_delta: 0.045294
+    prior_2333_overall_recommendation: HIGH_INTENSITY_ONLY_FORWARD_OBSERVE
+    readiness_status: THRESHOLD_SELECTION_REQUIRED
+    overall_recommendation: HIGH_INTENSITY_ONLY_PLAN_READY_FOR_2335
+    next_task: TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection
+    research_only: true
+    manual_review_only: true
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      High-intensity risk-cap observe plan should be rerun after TRADING-2333
+      diagnostics, TRADING-2332 dynamic dry-run artifacts, PIT caveat context,
+      timestamp remediation, or exposure-cap policy context changes.
+    owner_action: review_threshold_candidates_before_trading_2335_selection
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

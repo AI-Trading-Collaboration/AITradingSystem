@@ -713,6 +713,33 @@ from ai_trading_system.free_pit_data_sources import (
 from ai_trading_system.free_pit_data_sources import (
     DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
 )
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_DYNAMIC_DIAGNOSTICS_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_DYNAMIC_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_READINESS_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_READINESS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_POLICY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    DEFAULT_TIMESTAMP_REMEDIATION_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_TIMESTAMP_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    MODE as HIGH_INTENSITY_RISK_CAP_PLAN_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
+    run_high_intensity_risk_cap_forward_observe_plan,
+)
 from ai_trading_system.indicator_family_ablation import (
     DEFAULT_ACTION_VALUE_MATRIX_PATH,
     DEFAULT_ACTION_VALUE_SUMMARY_PATH,
@@ -3274,6 +3301,44 @@ def dynamic_exposure_cap_vs_no_cap_diagnostics_review_command(
         mode=mode,
     )
     _print_payload("Dynamic exposure-cap vs no-cap diagnostics review", payload)
+
+
+@trends_app.command("high-intensity-risk-cap-forward-observe-plan")
+def high_intensity_risk_cap_forward_observe_plan_command(
+    dynamic_diagnostics_dir: Annotated[
+        Path, typer.Option("--dynamic-diagnostics-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DIAGNOSTICS_ROOT,
+    dynamic_dry_run_dir: Annotated[
+        Path, typer.Option("--dynamic-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DRY_RUN_ROOT,
+    readiness_dir: Annotated[
+        Path, typer.Option("--readiness-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_READINESS_ROOT,
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_TIMESTAMP_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_POLICY_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_RISK_CAP_PLAN_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_forward_observe_plan(
+        dynamic_diagnostics_dir=dynamic_diagnostics_dir,
+        dynamic_dry_run_dir=dynamic_dry_run_dir,
+        readiness_dir=readiness_dir,
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("High-intensity risk-cap forward observe plan", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
