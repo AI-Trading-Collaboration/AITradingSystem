@@ -179,6 +179,36 @@ from ai_trading_system.defensive_preservation_lane import (
     DEFAULT_LIMITED_ADJUSTMENT_REFERENCE_PATH,
     run_defensive_preservation_lane_pack,
 )
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_DOCS_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_DYNAMIC_DRY_RUN_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_DRY_RUN_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_OUTPUT_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_READINESS_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_READINESS_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_SIMULATION_POLICY_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_POLICY_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_STATIC_DIAGNOSTICS_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_STATIC_DIAG_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_STATIC_DRY_RUN_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_STATIC_DRY_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    DEFAULT_TIMESTAMP_REMEDIATION_ROOT as DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_TIMESTAMP_ROOT,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    MODE as DYNAMIC_EXPOSURE_CAP_DIAGNOSTICS_MODE,
+)
+from ai_trading_system.dynamic_exposure_cap_diagnostics_review import (
+    run_dynamic_exposure_cap_vs_no_cap_diagnostics_review,
+)
 from ai_trading_system.dynamic_target_baseline_dry_run_readiness import (
     DEFAULT_DOCS_ROOT as DEFAULT_DYNAMIC_TARGET_DRY_RUN_READINESS_DOCS_ROOT,
 )
@@ -3202,6 +3232,48 @@ def source_bound_exposure_cap_dynamic_target_dry_run_command(
         mode=mode,
     )
     _print_payload("Source-bound exposure-cap dynamic target dry-run", payload)
+
+
+@trends_app.command("dynamic-exposure-cap-vs-no-cap-diagnostics-review")
+def dynamic_exposure_cap_vs_no_cap_diagnostics_review_command(
+    dynamic_dry_run_dir: Annotated[
+        Path, typer.Option("--dynamic-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_DRY_RUN_ROOT,
+    static_diagnostics_dir: Annotated[
+        Path, typer.Option("--static-diagnostics-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_STATIC_DIAG_ROOT,
+    static_dry_run_dir: Annotated[
+        Path, typer.Option("--static-dry-run-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_STATIC_DRY_ROOT,
+    readiness_dir: Annotated[
+        Path, typer.Option("--readiness-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_READINESS_ROOT,
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_TIMESTAMP_ROOT,
+    simulation_policy_dir: Annotated[
+        Path, typer.Option("--simulation-policy-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_POLICY_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_EXPOSURE_CAP_REVIEW_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = DYNAMIC_EXPOSURE_CAP_DIAGNOSTICS_MODE,
+) -> None:
+    payload = run_dynamic_exposure_cap_vs_no_cap_diagnostics_review(
+        dynamic_dry_run_dir=dynamic_dry_run_dir,
+        static_diagnostics_dir=static_diagnostics_dir,
+        static_dry_run_dir=static_dry_run_dir,
+        readiness_dir=readiness_dir,
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        simulation_policy_dir=simulation_policy_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("Dynamic exposure-cap vs no-cap diagnostics review", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
