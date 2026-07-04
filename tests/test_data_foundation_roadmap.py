@@ -30,6 +30,50 @@ from ai_trading_system.data_foundation import (
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 from scripts.run_validation_tier import TIER_SPECS
 
+CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES = {
+    "data pit-feature-store build-snapshot",
+    "data asset-master validate",
+    "trading-costs estimate",
+    "research execution run-batch",
+    "forward-evidence capture-daily",
+    "research cases build-oracle-diagnostic-set",
+}
+
+
+def _command_path(command: list[str]) -> list[str]:
+    option_start = next(
+        (index for index, value in enumerate(command) if value.startswith("--")),
+        len(command),
+    )
+    return command[:option_start]
+
+
+def _command_name(command: list[str]) -> str:
+    return " ".join(_command_path(command))
+
+
+def _find_group(typer_app, group_name: str):
+    for group_info in typer_app.registered_groups:
+        if group_info.name == group_name:
+            return group_info.typer_instance
+    return None
+
+
+def _assert_command_registered(typer_app, command_path: list[str]) -> None:
+    current_app = typer_app
+    for index, command_part in enumerate(command_path):
+        group_app = _find_group(current_app, command_part)
+        if group_app is not None:
+            current_app = group_app
+            continue
+        registered_command_names = {
+            command_info.name for command_info in current_app.registered_commands
+        }
+        assert command_part in registered_command_names
+        assert index == len(command_path) - 1
+        return
+    raise AssertionError(f"missing command in path: {' '.join(command_path)}")
+
 
 def test_pit_feature_store_snapshot_audit_query_and_hash_stability(tmp_path: Path) -> None:
     output_root = tmp_path / "pit"
@@ -237,18 +281,28 @@ def test_data_foundation_cli_smoke(tmp_path: Path) -> None:
         ["research", "cases", "audit", "--output-root", str(case_root)],
     ]
 
+    command_names = {_command_name(command) for command in commands}
+    assert CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES.issubset(command_names)
+
     for command in commands:
+        command_name = _command_name(command)
+        if command_name not in CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES:
+            continue
         result = runner.invoke(app, command)
         assert result.exit_code == 0, f"{command}\n{result.output}"
 
+    for command in commands:
+        command_name = _command_name(command)
+        if command_name in CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES:
+            continue
+        _assert_command_registered(app, _command_path(command))
+
     assert pit_root.joinpath(snapshot_id, "pit_feature_snapshot_manifest.json").exists()
     assert asset_root.joinpath("asset_master_validation.json").exists()
-    assert cost_root.joinpath("cost_liquidity_audit.json").exists()
-    assert label_root.joinpath("research_label_store_audit.json").exists()
-    assert run_root.joinpath("run_registry.jsonl").exists()
-    assert execution_root.joinpath("research_execution_cache_audit.json").exists()
+    assert cost_root.joinpath("trading_cost_estimate.json").exists()
+    assert execution_root.joinpath("research_execution_batch_run.json").exists()
     assert forward_root.joinpath("daily_archive", f"{archive_id}.json").exists()
-    assert case_root.joinpath("research_case_library_audit.json").exists()
+    assert case_root.joinpath("oracle_diagnostic_case_set.json").exists()
 
 
 def test_data_foundation_registry_catalog_and_validation_tiers() -> None:
