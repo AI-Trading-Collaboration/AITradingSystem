@@ -289,6 +289,10 @@ def _write_event_logger_artifacts(
         {"rows": list(events_by_id.values()), **safety},
     )
     write_json(
+        directory / "high_intensity_observe_trigger_day_log.json",
+        {"rows": list(events_by_id.values()), **safety},
+    )
+    write_json(
         directory / "high_intensity_observe_event_cluster_registry.json",
         {"rows": logger_clusters, **safety},
     )
@@ -362,6 +366,15 @@ def _write_threshold_selection_artifacts(directory: Path) -> None:
 
 def _write_forward_observe_plan_artifacts(directory: Path) -> None:
     safety = _source_safety(outcome_binding_executed=False)
+    write_json(
+        directory / "high_intensity_forward_observe_plan_summary.json",
+        {
+            "status": "HIGH_INTENSITY_FORWARD_OBSERVE_PLAN_READY",
+            "selected_rule_id": "COMPOSITE_HIGH_INTENSITY_RULE",
+            "next_task": "TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection",
+            **safety,
+        },
+    )
     for filename in (
         "high_intensity_forward_observe_event_schema.json",
         "high_intensity_forward_observe_evidence_contract.json",

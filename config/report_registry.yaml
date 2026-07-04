@@ -25493,6 +25493,137 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_observe_only_runtime_dry_run
+    title: High-Intensity Risk-Cap Observe-Only Runtime Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-observe-only-runtime-dry-run
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_observe_only_runtime_dry_run.md
+      - docs/research/high_intensity_runtime_event_detection_dry_run.md
+      - docs/research/high_intensity_runtime_event_append_cluster_update_dry_run.md
+      - docs/research/high_intensity_runtime_safety_gate_dry_run.md
+      - docs/research/high_intensity_2344_readiness_route.md
+      - docs/requirements/TRADING-2343_High_Intensity_Risk_Cap_Observe_Only_Runtime_Dry_Run.md
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_dry_run_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_contract_validation_report.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_input_validation_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_input_validation_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_event_detection_dry_run_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_event_detection_dry_run_result.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_event_append_dry_run_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_event_append_dry_run_result.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_cluster_update_dry_run_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_cluster_update_dry_run_result.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_pending_outcome_update_dry_run_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_pending_outcome_update_dry_run_result.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_manual_review_context_dry_run_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_manual_review_context_dry_run_result.csv
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_monthly_concentration_monitoring_dry_run.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_fail_closed_safety_gate_result.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_artifact_registry_dry_run_report.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_dry_run_data_quality_report.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_2344_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_2344_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_dry_run_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_dry_run/high_intensity_runtime_dry_run_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_observe_only_runtime_dry_run
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: OBSERVE_ONLY_RUNTIME_DRY_RUN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2342_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_INTEGRATION_PLAN
+    source_status: OBSERVE_ONLY_RUNTIME_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_readiness_status: READY_FOR_2343_WITH_CAVEATS
+    source_next_task: TRADING-2343_High_Intensity_Risk_Cap_Observe_Only_Runtime_Dry_Run
+    upstream_continue_decision_task_id: TRADING-2341_HIGH_INTENSITY_RISK_CAP_CONTINUE_FORWARD_OBSERVE_DECISION
+    upstream_event_logger_task_id: TRADING-2336_HIGH_INTENSITY_RISK_CAP_FORWARD_OBSERVE_EVENT_LOGGER
+    upstream_threshold_selection_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    upstream_dynamic_dry_run_task_id: TRADING-2332_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_WITH_DYNAMIC_TARGET_BASELINE
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_RESEARCH_ARTIFACTS_ONLY_NO_MARKET_DATA_READ_NO_OUTCOME_BINDING
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    selected_rule_id: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_rule_hash: c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec
+    runtime_dry_run_status: OBSERVE_ONLY_RUNTIME_DRY_RUN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    contract_validation_status: PASS_WITH_WARNINGS
+    runtime_input_validation_passed: true
+    record_count: 2490
+    detected_event_count: 168
+    would_append_event_count: 0
+    would_extend_cluster_count: 0
+    would_create_pending_outcome_count: 0
+    append_dedup_interpretation: historical_replay_detected_existing_events_only
+    monthly_concentration_status: PASS_WITH_WARNINGS
+    safety_gate_status: PASS
+    2344_readiness_status: READY_FOR_2344_WITH_CAVEATS
+    next_task: TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan
+    route_caveats:
+      - DERIVED_RUNTIME_INPUT_FIELDS_USED
+      - MONTHLY_CONCENTRATION_MONITORING_REQUIRED
+      - MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL
+      - NO_NEW_RUNTIME_EVENTS_IN_HISTORICAL_REPLAY
+      - NO_PAPER_SHADOW
+      - NO_PRODUCTION
+      - OBSERVE_ONLY
+      - PARTIAL_COVERAGE_CAVEAT
+      - PIT_APPROXIMATION_CAVEAT
+    contract_validation_report_generated: true
+    input_validation_matrix_generated: true
+    event_detection_dry_run_generated: true
+    event_append_dry_run_generated: true
+    cluster_update_dry_run_generated: true
+    pending_outcome_update_dry_run_generated: true
+    manual_review_context_dry_run_generated: true
+    monthly_concentration_monitoring_generated: true
+    fail_closed_safety_gate_generated: true
+    artifact_registry_dry_run_generated: true
+    data_quality_report_generated: true
+    2344_readiness_checklist_generated: true
+    2344_task_route_generated: true
+    research_only: true
+    manual_review_only: true
+    observe_only: true
+    observe_only_runtime_dry_run: true
+    runtime_scheduler_enabled: false
+    new_event_logging_executed: false
+    event_append_executed: false
+    event_append_dry_run_executed: true
+    outcome_binding_executed: false
+    pending_outcome_update_dry_run_executed: true
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Runtime dry-run should be rerun after TRADING-2342 contracts change,
+      selected-rule semantics change, event logger lineage changes, or dry-run
+      replay source changes.
+    owner_action: review_2344_observe_only_scheduler_integration_plan_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
