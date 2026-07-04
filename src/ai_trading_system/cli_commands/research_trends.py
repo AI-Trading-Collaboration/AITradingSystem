@@ -950,6 +950,36 @@ from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review 
 from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
     run_high_intensity_risk_cap_partial_outcome_readiness_review,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_CONTINUE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_EVENT_LOGGER_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_EVENT_LOGGER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_RUNTIME_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_RUNTIME_INTEGRATION_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_RUNTIME_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    MODE as HIGH_INTENSITY_SCHEDULER_PLAN_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
+    run_high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan,
+)
 from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
 )
@@ -3884,6 +3914,53 @@ def high_intensity_risk_cap_observe_only_runtime_dry_run_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only runtime dry-run",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan"
+)
+def high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan_command(
+    runtime_dry_run_dir: Annotated[
+        Path, typer.Option("--runtime-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_DRY_RUN_ROOT,
+    runtime_integration_plan_dir: Annotated[
+        Path, typer.Option("--runtime-integration-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_RUNTIME_ROOT,
+    continue_decision_dir: Annotated[
+        Path, typer.Option("--continue-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_CONTINUE_ROOT,
+    event_logger_dir: Annotated[
+        Path, typer.Option("--event-logger-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_EVENT_LOGGER_ROOT,
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_THRESHOLD_ROOT,
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_PLAN_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_SCHEDULER_PLAN_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan(
+        runtime_dry_run_dir=runtime_dry_run_dir,
+        runtime_integration_plan_dir=runtime_integration_plan_dir,
+        continue_decision_dir=continue_decision_dir,
+        event_logger_dir=event_logger_dir,
+        threshold_selection_dir=threshold_selection_dir,
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only runtime scheduler integration plan",
         payload,
     )
 

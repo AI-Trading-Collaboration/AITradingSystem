@@ -25624,6 +25624,122 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan
+    title: High-Intensity Risk-Cap Observe-Only Runtime Scheduler Integration Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan.md
+      - docs/research/high_intensity_scheduler_cadence_and_input_contract.md
+      - docs/research/high_intensity_scheduler_event_append_and_outcome_jobs.md
+      - docs/research/high_intensity_scheduler_fail_closed_safety_gate.md
+      - docs/research/high_intensity_2345_readiness_route.md
+      - docs/requirements/TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan.md
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_integration_plan_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_scope_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_cadence_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_input_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_event_detection_job_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_event_append_job_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_cluster_update_job_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_pending_outcome_update_job_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_outcome_update_job_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_manual_review_context_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_monthly_concentration_monitoring_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_artifact_path_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_registry_update_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_fail_closed_safety_gate.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_disabled_by_default_policy.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_dry_run_execution_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_failure_mode_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_integration_risk_register.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_2345_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_2345_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_integration_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan/high_intensity_scheduler_integration_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2343_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_DRY_RUN
+    source_status: OBSERVE_ONLY_RUNTIME_DRY_RUN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_readiness_status: READY_FOR_2344_WITH_CAVEATS
+    source_next_task: TRADING-2344_High_Intensity_Risk_Cap_Observe_Only_Runtime_Scheduler_Integration_Plan
+    upstream_runtime_integration_task_id: TRADING-2342_HIGH_INTENSITY_RISK_CAP_OBSERVE_ONLY_RUNTIME_INTEGRATION_PLAN
+    upstream_continue_decision_task_id: TRADING-2341_HIGH_INTENSITY_RISK_CAP_CONTINUE_FORWARD_OBSERVE_DECISION
+    upstream_event_logger_task_id: TRADING-2336_HIGH_INTENSITY_RISK_CAP_FORWARD_OBSERVE_EVENT_LOGGER
+    upstream_threshold_selection_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_2343_2342_ARTIFACTS_ONLY_NO_MARKET_DATA_READ_NO_OUTCOME_BINDING
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    selected_rule_id: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_rule_hash: c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec
+    scheduler_integration_plan_status: OBSERVE_ONLY_SCHEDULER_INTEGRATION_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    scheduler_scope_contract_generated: true
+    scheduler_cadence_plan_generated: true
+    scheduler_input_contract_generated: true
+    event_detection_job_contract_generated: true
+    event_append_job_contract_generated: true
+    cluster_update_job_contract_generated: true
+    pending_outcome_update_job_contract_generated: true
+    outcome_update_job_contract_generated: true
+    manual_review_context_contract_generated: true
+    monthly_monitoring_contract_generated: true
+    artifact_path_plan_generated: true
+    registry_update_plan_generated: true
+    disabled_by_default_policy_generated: true
+    dry_run_execution_plan_generated: true
+    failure_mode_matrix_generated: true
+    safety_gate_status: PASS
+    safety_error_count: 0
+    2345_readiness_status: READY_FOR_2345_WITH_CAVEATS
+    next_task: TRADING-2345_High_Intensity_Risk_Cap_Observe_Only_Scheduler_Dry_Run
+    route_caveats:
+      - OBSERVE_ONLY
+      - SCHEDULER_DISABLED_BY_DEFAULT
+      - PARTIAL_COVERAGE_CAVEAT
+      - MONTHLY_CONCENTRATION_MONITORING_REQUIRED
+      - NO_PAPER_SHADOW
+      - NO_PRODUCTION
+    research_only: true
+    manual_review_only: true
+    observe_only: true
+    scheduler_integration_plan_only: true
+    scheduler_enabled: false
+    scheduler_default_enabled: false
+    scheduler_activation_allowed_in_2344: false
+    event_append_executed: false
+    outcome_binding_executed: false
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    promotion_allowed: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Scheduler integration plan should be rerun after TRADING-2343 dry-run
+      outputs, TRADING-2342 runtime contracts, selected-rule lineage, event
+      logger lineage, or monthly concentration guardrails change.
+    owner_action: review_2345_observe_only_scheduler_dry_run_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
