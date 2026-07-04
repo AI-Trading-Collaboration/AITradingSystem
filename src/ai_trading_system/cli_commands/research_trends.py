@@ -950,6 +950,24 @@ from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review 
 from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
     run_high_intensity_risk_cap_partial_outcome_readiness_review,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    DEFAULT_SCHEDULER_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    DEFAULT_WIRING_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    MODE as HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
+    run_high_intensity_risk_cap_observe_only_scheduler_disabled_wiring,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_dry_run import (
     DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DRY_RUN_CONTINUE_ROOT,
 )
@@ -4134,6 +4152,39 @@ def high_intensity_risk_cap_observe_only_scheduler_wiring_plan_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler wiring plan",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-disabled-wiring"
+)
+def high_intensity_risk_cap_observe_only_scheduler_disabled_wiring_command(
+    wiring_plan_dir: Annotated[
+        Path, typer.Option("--wiring-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_PLAN_ROOT,
+    scheduler_dry_run_dir: Annotated[
+        Path, typer.Option("--scheduler-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DRY_RUN_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_disabled_wiring(
+        wiring_plan_dir=wiring_plan_dir,
+        scheduler_dry_run_dir=scheduler_dry_run_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler disabled wiring",
         payload,
     )
 
