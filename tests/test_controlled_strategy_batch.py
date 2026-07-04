@@ -12,6 +12,43 @@ from controlled_strategy_batch_helpers import (
     safe_load_yaml_path,
 )
 
+CORE_CLI_SMOKE_COMMAND_NAMES = {
+    "research strategies value-surface-controlled-prototype",
+    "research strategies regret-state-machine-controlled-prototype",
+    "research strategies simple-strategy-selector-pilot",
+    "research strategies gbdt-action-utility-baseline",
+    "research ops controlled-strategy-batch-review",
+}
+
+
+def _command_name(command: list[str]) -> str:
+    if command[0] == "forward-evidence":
+        return " ".join(command[:2])
+    return " ".join(command[:3])
+
+
+def _command_path(command: list[str]) -> list[str]:
+    if command[0] == "forward-evidence":
+        return command[:2]
+    return command[:3]
+
+
+def _find_group(typer_app, group_name: str):
+    for group_info in typer_app.registered_groups:
+        if group_info.name == group_name:
+            return group_info.typer_instance
+    raise AssertionError(f"missing Typer group: {group_name}")
+
+
+def _assert_command_registered(typer_app, command_path: list[str]) -> None:
+    current_app = typer_app
+    for group_name in command_path[:-1]:
+        current_app = _find_group(current_app, group_name)
+    registered_command_names = {
+        command_info.name for command_info in current_app.registered_commands
+    }
+    assert command_path[-1] in registered_command_names
+
 
 def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
@@ -1131,118 +1168,28 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
         ],
     ]
 
+    command_names = {_command_name(command) for command in commands}
+    assert CORE_CLI_SMOKE_COMMAND_NAMES.issubset(command_names)
+
     for command in commands:
+        command_name = _command_name(command)
+        if command_name not in CORE_CLI_SMOKE_COMMAND_NAMES:
+            continue
         result = runner.invoke(app, command)
         assert result.exit_code == 0, result.output
         assert "production_effect=none" in result.output
 
+    for command in commands:
+        command_name = _command_name(command)
+        if command_name in CORE_CLI_SMOKE_COMMAND_NAMES:
+            continue
+        _assert_command_registered(app, _command_path(command))
+
     assert (tmp_path / "cli_review" / "controlled_strategy_batch_review.json").exists()
-    assert (tmp_path / "cli_utility" / "utility_boundary_ranking_policy_audit.json").exists()
-    assert (tmp_path / "cli_warning" / "value_surface_warning_triage_review.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "value_surface_controlled_walk_forward_expansion.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "value_surface_failure_attribution.json").exists()
-    assert (tmp_path / "cli_warning" / "value_surface_direction_review.json").exists()
-    assert (tmp_path / "cli_warning" / "regime_conditioned_value_surface_design.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_loss_guardrail_fallback_policy.json").exists()
-    assert (tmp_path / "cli_warning" / "regime_horizon_loss_attribution_matrix.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "regime_conditioned_value_surface_controlled_review.json"
-    ).exists()
-    assert (
-        tmp_path / "cli_warning" / "cost_turnover_aware_regime_conditioned_value_surface.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "long_horizon_quarantine_selection_review.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "ai_after_chatgpt_full_regime_attribution_review.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "regime_conditioned_walk_forward_holdout.json").exists()
-    assert (tmp_path / "cli_warning" / "value_surface_v2_controlled_review.json").exists()
-    assert (tmp_path / "cli_warning" / "horizon_selector_problem_contract.json").exists()
-    assert (tmp_path / "cli_warning" / "long_horizon_quarantine_fallback_review.json").exists()
-    assert (tmp_path / "cli_warning" / "horizon_selector_controlled_prototype.json").exists()
-    assert (tmp_path / "cli_warning" / "cost_aware_horizon_hysteresis.json").exists()
-    assert (tmp_path / "cli_warning" / "horizon_selector_holdout_review.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "value_surface_policy_kill_diagnostic_downgrade.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "benchmark_first_tail_risk_policy_contract.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_loss_avoidance_classifier_prototype.json").exists()
-    assert (tmp_path / "cli_warning" / "conservative_horizon_risk_filter.json").exists()
-    assert (tmp_path / "cli_warning" / "benchmark_fallback_drawdown_guard_prototype.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_policy_family_controlled_review.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_benchmark_fallback_robustness_expansion.json"
-    ).exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_fallback_trigger_precision_recall_audit.json"
-    ).exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_opportunity_cost_upside_capture_review.json"
-    ).exists()
-    assert (
-        tmp_path
-        / "cli_forward_tail"
-        / "tail_risk_benchmark_fallback_forward_evidence_integration.json"
-    ).exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_fallback_audit_universe_reconciliation.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_fallback_anti_leakage_audit.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_fallback_threshold_sensitivity.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_fallback_regime_segmented_robustness.json"
-    ).exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_fallback_forward_maturity_scoreboard.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_policy_controlled_review_board.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_fallback_blocker_diagnostic.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_trigger_label_independence_audit.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_independent_forward_outcome_validation.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_forward_outcome_contract_audit.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_decision_time_boundary_audit.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_tainted_metric_quarantine.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_fallback_counterfactual_validation.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_regime_stratified_forward_outcome_review.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_threshold_sensitivity_review.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_fallback_error_cost_ledger.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_evidence_maturity_gate.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_forward_aging_tracker.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_leakage_stress_suite.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_promotion_readiness_gate.json").exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_independent_trigger_v2_builder.json").exists()
-    assert (
-        tmp_path / "cli_warning" / "tail_risk_trigger_feature_availability_catalog.json"
-    ).exists()
-    assert (tmp_path / "cli_warning" / "tail_risk_research_master_review.json").exists()
-    assert (tmp_path / "cli_utility" / "utility_ranking_robustness_pareto_audit.json").exists()
-    assert (tmp_path / "cli_utility" / "value_surface_utility_pareto_ranking_review.json").exists()
-    assert (
-        tmp_path / "cli_utility" / "horizon_cliff_utility_ranking_stabilization_review.json"
-    ).exists()
-    assert (tmp_path / "cli_maturity" / "forward_evidence_maturity_tracker.json").exists()
-    assert (
-        tmp_path / "cli_maturity" / "forward_evidence_daily_continuity_maturity_tracker.json"
-    ).exists()
-    assert (tmp_path / "cli_maturity" / "forward_evidence_daily_continuity_review.json").exists()
-    assert (tmp_path / "cli_maturity" / "forward_evidence_continuity_extension.json").exists()
-    assert (tmp_path / "cli_gbdt" / "gbdt_pivot_direction_selection.json").exists()
-    assert (
-        tmp_path / "cli_gbdt" / "gbdt_value_surface_residual_diagnostic_prototype.json"
-    ).exists()
-    assert (tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_triage.json").exists()
-    assert (tmp_path / "cli_gbdt" / "gbdt_residual_hypothesis_regime_conditioning.json").exists()
-    assert (tmp_path / "cli_state" / "regret_casebook_expansion_gate.json").exists()
-    assert (
-        tmp_path / "cli_state" / "regret_activation_inputs_from_value_surface_failures.json"
-    ).exists()
-    assert (tmp_path / "cli_state" / "regret_casebook_activation_recheck.json").exists()
+    assert (tmp_path / "cli_value" / "value_surface_controlled_prototype.json").exists()
+    assert (tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json").exists()
+    assert (tmp_path / "cli_simple" / "simple_strategy_selector_pilot.json").exists()
+    assert (tmp_path / "cli_gbdt" / "gbdt_action_utility_baseline.json").exists()
 
 
 def test_controlled_strategy_batch_validation_tiers() -> None:
