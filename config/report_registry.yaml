@@ -25128,6 +25128,127 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_forward_outcome_review
+    title: High-Intensity Risk-Cap Forward Outcome Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-forward-outcome-review
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_forward_outcome_review.md
+      - docs/research/high_intensity_cluster_outcome_review.md
+      - docs/research/high_intensity_false_warning_missed_upside_review.md
+      - docs/research/high_intensity_downside_capture_manual_review_usefulness.md
+      - docs/research/high_intensity_continue_refine_archive_decision.md
+      - docs/requirements/TRADING-2340_High_Intensity_Risk_Cap_Forward_Outcome_Review_With_Partial_Coverage_Caveat.md
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_forward_outcome_review_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_cluster_outcome_review_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_cluster_outcome_review_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_horizon_outcome_review_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_horizon_outcome_review_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_false_warning_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_missed_upside_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_downside_capture_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_manual_review_usefulness_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_rebound_stress_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_partial_coverage_caveat_report.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_monthly_concentration_effect_review.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_cluster_weighted_evidence_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_threshold_rule_outcome_assessment.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_continue_refine_archive_decision_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_2341_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_2341_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_forward_outcome_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_outcome_review/high_intensity_forward_outcome_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_forward_outcome_review
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT
+    source_task_id: TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+    source_status: READY_FOR_2340_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+    source_artifact_role: high_intensity_risk_cap_partial_outcome_readiness_review
+    upstream_outcome_binder_task_id: TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+    upstream_event_logger_task_id: TRADING-2336_HIGH_INTENSITY_RISK_CAP_FORWARD_OBSERVE_EVENT_LOGGER
+    upstream_threshold_selection_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_2337_2339_OUTCOME_ARTIFACTS_ONLY_NO_MARKET_DATA_READ
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    primary_analysis_level: cluster
+    trigger_day_level_usage: context_only
+    cluster_count: 60
+    expected_outcome_count: 240
+    bound_outcome_count: 231
+    not_due_outcome_count: 9
+    critical_clusters_with_not_due: 0
+    coverage_ratio: 0.9625
+    false_warning_cluster_rate: 0.383333
+    false_warning_label: FALSE_WARNING_MODERATE
+    missed_upside_cluster_rate: 0.466667
+    missed_upside_label: MISSED_UPSIDE_MODERATE
+    downside_capture_cluster_rate: 0.35
+    downside_capture_label: DOWNSIDE_CAPTURE_MODERATE
+    manual_review_usefulness_proxy: 0.583333
+    manual_review_usefulness_label: MANUAL_REVIEW_CONTEXT_USEFUL_PROXY
+    monthly_concentration_effect_label: CONCENTRATION_MODERATE_IMPACT
+    partial_coverage_caveat_label: PARTIAL_COVERAGE_LOW_IMPACT
+    evidence_balance_label: EVIDENCE_SUPPORTS_CONTINUE_OBSERVE
+    rule_outcome_label: RULE_SHOWS_FORWARD_OBSERVE_VALUE
+    overall_recommendation: CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE
+    readiness_status: READY_FOR_2341_WITH_PARTIAL_COVERAGE_CAVEAT
+    next_task: TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision
+    cluster_outcome_review_matrix_generated: true
+    horizon_outcome_review_matrix_generated: true
+    false_warning_review_generated: true
+    missed_upside_review_generated: true
+    downside_capture_review_generated: true
+    manual_review_usefulness_review_generated: true
+    partial_coverage_caveat_report_generated: true
+    monthly_concentration_effect_review_generated: true
+    cluster_weighted_evidence_summary_generated: true
+    threshold_rule_outcome_assessment_generated: true
+    continue_refine_archive_decision_matrix_generated: true
+    2341_readiness_checklist_generated: true
+    2341_task_route_generated: true
+    research_only: true
+    manual_review_only: true
+    forward_outcome_review_only: true
+    partial_coverage_caveat_required: true
+    outcome_binding_executed: false
+    original_event_log_mutated: false
+    runtime_scheduler_enabled: false
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Forward outcome review should be rerun after TRADING-2337 outcome binder
+      or TRADING-2339 partial readiness reruns, not-due horizons mature, source
+      validation status changes, or continue/refine/archive routing policy changes.
+    owner_action: review_2341_continue_forward_observe_decision_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

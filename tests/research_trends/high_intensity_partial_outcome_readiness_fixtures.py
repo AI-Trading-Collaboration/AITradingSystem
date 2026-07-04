@@ -89,6 +89,22 @@ def _sample_outcome_rows() -> tuple[
             }[horizon]
             status = "OUTCOME_NOT_DUE" if horizon in not_due_horizons else "OUTCOME_BOUND"
             quality = "OUTCOME_PENDING_NOT_DUE" if status == "OUTCOME_NOT_DUE" else "PASS"
+            downside = index < 21 and status == "OUTCOME_BOUND"
+            false_warning = 21 <= index < 44 and status == "OUTCOME_BOUND"
+            missed_upside = 44 <= index < 54 and status == "OUTCOME_BOUND"
+            rebound = (false_warning or missed_upside) and status == "OUTCOME_BOUND"
+            if downside:
+                forward_return = -0.04
+                max_drawdown = -0.06
+            elif false_warning:
+                forward_return = 0.025
+                max_drawdown = -0.004
+            elif missed_upside:
+                forward_return = 0.08
+                max_drawdown = -0.003
+            else:
+                forward_return = 0.0
+                max_drawdown = -0.002
             event_rows.append(
                 {
                     "event_id": event_id,
@@ -103,6 +119,8 @@ def _sample_outcome_rows() -> tuple[
                     "outcome_binding_status": status,
                     "outcome_quality_status": quality,
                     "pending_outcome_id": f"hiout_{index:03d}_{horizon}",
+                    "forward_return": forward_return,
+                    "forward_max_drawdown": max_drawdown,
                     "promotion_allowed": False,
                     "paper_shadow_allowed": False,
                     "production_allowed": False,
@@ -124,6 +142,20 @@ def _sample_outcome_rows() -> tuple[
                     else "HISTORICAL_DUE",
                     "cluster_outcome_binding_status": status,
                     "cluster_outcome_quality_status": quality,
+                    "cluster_forward_return": forward_return,
+                    "cluster_forward_max_drawdown": max_drawdown,
+                    "cluster_forward_max_return": max(forward_return, 0.0),
+                    "cluster_forward_min_return": min(forward_return, max_drawdown),
+                    "cluster_stress_detected": downside,
+                    "cluster_rebound_detected": rebound,
+                    "cluster_false_warning_candidate": false_warning,
+                    "cluster_missed_upside_candidate": missed_upside,
+                    "cluster_downside_capture_candidate": downside,
+                    "cluster_manual_review_would_have_helped_candidate": downside
+                    or false_warning,
+                    "cluster_realized_volatility": 0.25 if downside else 0.1,
+                    "selected_rule_id": "COMPOSITE_HIGH_INTENSITY_RULE",
+                    "trigger_day_count": 1,
                     "promotion_allowed": False,
                     "paper_shadow_allowed": False,
                     "production_allowed": False,
@@ -183,17 +215,30 @@ def _write_outcome_binder_artifacts(
         directory / "high_intensity_horizon_outcome_quality_report.json",
         {"rows": [], **source_safety},
     )
+    write_json(
+        directory / "high_intensity_rebound_stress_classification_matrix.json",
+        {"rows": [], **source_safety},
+    )
     for filename in (
         "high_intensity_false_warning_classification_report.json",
         "high_intensity_missed_upside_classification_report.json",
         "high_intensity_downside_capture_classification_report.json",
         "high_intensity_manual_review_usefulness_proxy_report.json",
-        "high_intensity_cluster_weighting_policy.json",
         "high_intensity_outcome_binder_interpretation_boundary.json",
         "high_intensity_2339_readiness_checklist.json",
         "high_intensity_outcome_binder_safety_boundary.json",
     ):
         write_json(directory / filename, source_safety)
+    write_json(
+        directory / "high_intensity_cluster_weighting_policy.json",
+        {
+            "primary_analysis_level": "cluster",
+            "secondary_analysis_level": "event",
+            "trigger_day_level_usage": "context_only",
+            "cluster_weighting_rule": "one_cluster_horizon_one_primary_sample",
+            **source_safety,
+        },
+    )
     write_json(
         directory / "high_intensity_actual_path_data_quality_report.json",
         {
@@ -252,8 +297,13 @@ def _write_event_logger_artifacts(
         {
             "monthly_concentration_status": "PASS_WITH_WARNINGS",
             "monthly_concentration_warnings": ["MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL"],
+            "monthly_event_counts": {"2026-04": 54, "2026-06": 6},
             **safety,
         },
+    )
+    write_json(
+        directory / "high_intensity_manual_review_event_queue.json",
+        {"rows": list(events_by_id.values()), **safety},
     )
     write_json(directory / "high_intensity_event_logger_interpretation_boundary.json", safety)
     write_json(directory / "high_intensity_event_logger_safety_boundary.json", safety)
@@ -266,7 +316,16 @@ def _write_threshold_selection_artifacts(directory: Path) -> None:
         {"selected_rule_id": "COMPOSITE_HIGH_INTENSITY_RULE", **safety},
     )
     write_json(directory / "high_intensity_threshold_selection_caveat_report.json", safety)
+    write_json(
+        directory / "high_intensity_selected_rule_backtest_context.json",
+        {
+            "selected_threshold_id": "COMPOSITE_HIGH_INTENSITY_RULE",
+            "trigger_density_estimate": 0.06747,
+            **safety,
+        },
+    )
     write_json(directory / "high_intensity_selected_rule_manual_review_boundary.json", safety)
+    write_json(directory / "high_intensity_threshold_selection_safety_boundary.json", safety)
 
 
 def _write_forward_observe_plan_artifacts(directory: Path) -> None:
