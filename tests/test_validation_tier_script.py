@@ -5,7 +5,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.run_validation_tier import TIER_SPECS, build_command, resolve_tier
+from scripts.run_validation_tier import (
+    TIER_SPECS,
+    _parse_pytest_slow_durations,
+    build_command,
+    resolve_tier,
+)
 
 
 def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> None:
@@ -127,6 +132,109 @@ def test_runtime_artifacts_are_written_for_print_only(tmp_path: Path) -> None:
     assert "test_runtime_reader_brief.md" in payload["reader_brief_path"]
     assert "Can support promotion evidence: `False`" in reader_brief
     assert "Production effect: `none`" in reader_brief
+
+
+def test_pytest_slow_duration_parser_extracts_duration_rows() -> None:
+    durations = _parse_pytest_slow_durations(
+        """
+        ============================= slowest 3 durations =============================
+        12.34s call     tests/test_example.py::test_slow_case
+        2.50s setup    tests/test_other.py::test_setup
+        0.99s teardown tests/test_other.py::test_teardown
+        """
+    )
+
+    assert durations == [
+        {
+            "seconds": 12.34,
+            "phase": "call",
+            "nodeid": "tests/test_example.py::test_slow_case",
+        },
+        {
+            "seconds": 2.5,
+            "phase": "setup",
+            "nodeid": "tests/test_other.py::test_setup",
+        },
+        {
+            "seconds": 0.99,
+            "phase": "teardown",
+            "nodeid": "tests/test_other.py::test_teardown",
+        },
+    ]
+
+
+def test_validation_tier_print_only_can_render_benchmark_variants(tmp_path: Path) -> None:
+    report_path = tmp_path / "validation_benchmark_plan.json"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "fast",
+            "--print-only",
+            "--benchmark-dist",
+            "loadfile,worksteal",
+            "--json-output",
+            str(report_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0
+    assert "Benchmark variants: 2" in completed.stdout
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    variants = payload["benchmark_runs"]
+
+    assert payload["benchmark_mode"] is True
+    assert payload["benchmark_variant_count"] == 2
+    assert [variant["dist"] for variant in variants] == ["loadfile", "worksteal"]
+    assert all(variant["status"] == "PRINT_ONLY" for variant in variants)
+    assert "--dist worksteal" in " ".join(variants[1]["command"])
+
+
+def test_runtime_artifact_records_pytest_output_and_slow_durations(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "runtime_artifact"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "fast",
+            "--write-runtime-artifact",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--workers",
+            "1",
+            "--pytest-arg=-k",
+            "--pytest-arg",
+            "test_pytest_slow_duration_parser_extracts_duration_rows",
+            "--pytest-arg=-s",
+            "--pytest-arg=--durations=1",
+            "--pytest-arg=--durations-min=0",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0
+    summary_path = artifact_dir / "test_runtime_summary.json"
+    output_log_path = artifact_dir / "pytest_output.log"
+    reader_brief_path = artifact_dir / "test_runtime_reader_brief.md"
+    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    reader_brief = reader_brief_path.read_text(encoding="utf-8")
+
+    assert output_log_path.exists()
+    assert payload["pytest_output_captured"] is True
+    assert payload["pytest_output_log_path"].endswith("pytest_output.log")
+    assert payload["pytest_slow_duration_count"] >= 1
+    assert payload["pytest_slow_durations"][0]["nodeid"].endswith(
+        "test_pytest_slow_duration_parser_extracts_duration_rows"
+    )
+    assert "## Slow Durations" in reader_brief
+    assert "## Pytest Output" in reader_brief
 
 
 def test_formal_suite_contracts_are_registered() -> None:

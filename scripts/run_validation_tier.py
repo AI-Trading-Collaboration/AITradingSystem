@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -16,6 +17,13 @@ DEFAULT_WORKERS = "16"
 DEFAULT_DIST = "loadfile"
 DEFAULT_ARTIFACT_ROOT = Path("outputs/validation_runtime")
 SERIAL_WORKER_VALUES = {"", "0", "1", "serial", "none"}
+PYTEST_OUTPUT_LOG_NAME = "pytest_output.log"
+BENCHMARK_SUMMARY_NAME = "validation_benchmark_summary.json"
+PYTEST_SLOW_DURATION_RE = re.compile(
+    r"^\s*(?P<seconds>\d+(?:\.\d+)?)s\s+"
+    r"(?P<phase>call|setup|teardown)\s+"
+    r"(?P<nodeid>.+?)\s*$"
+)
 SAFETY_BOUNDARY = {
     "strategy_logic_changed": False,
     "production_effect": "none",
@@ -265,12 +273,151 @@ def _format_command(command: Sequence[str]) -> str:
 
 def _run_command(command: Sequence[str], *, cwd: Path) -> dict[str, object]:
     started = time.perf_counter()
-    completed = subprocess.run(command, cwd=cwd, check=False)
+    output_parts: list[str] = []
+    with subprocess.Popen(
+        command,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    ) as process:
+        if process.stdout is not None:
+            for line in process.stdout:
+                print(line, end="", flush=True)
+                output_parts.append(line)
+        return_code = process.wait()
     elapsed = round(time.perf_counter() - started, 2)
     return {
         "command": list(command),
-        "exit_code": completed.returncode,
+        "exit_code": return_code,
         "elapsed_seconds": elapsed,
+        "pytest_output": "".join(output_parts),
+    }
+
+
+def _parse_pytest_slow_durations(pytest_output: str) -> list[dict[str, object]]:
+    durations: list[dict[str, object]] = []
+    for line in pytest_output.splitlines():
+        match = PYTEST_SLOW_DURATION_RE.match(line)
+        if match is None:
+            continue
+        durations.append(
+            {
+                "seconds": float(match.group("seconds")),
+                "phase": match.group("phase"),
+                "nodeid": match.group("nodeid"),
+            }
+        )
+    return sorted(durations, key=lambda row: float(row["seconds"]), reverse=True)
+
+
+def _tail_lines(text: str, line_count: int = 80) -> list[str]:
+    if not text:
+        return []
+    return text.splitlines()[-line_count:]
+
+
+def _pytest_output_summary(
+    pytest_output: str,
+    *,
+    artifact_dir: Path | None = None,
+    log_name: str = PYTEST_OUTPUT_LOG_NAME,
+) -> dict[str, object]:
+    slow_durations = _parse_pytest_slow_durations(pytest_output)
+    total_slow_duration = round(
+        sum(float(row["seconds"]) for row in slow_durations),
+        2,
+    )
+    summary: dict[str, object] = {
+        "pytest_output_captured": bool(pytest_output),
+        "pytest_output_tail": _tail_lines(pytest_output),
+        "pytest_slow_durations": slow_durations,
+        "pytest_slow_duration_count": len(slow_durations),
+        "pytest_slow_duration_total_seconds": total_slow_duration,
+    }
+    if slow_durations:
+        summary["pytest_slowest_duration"] = slow_durations[0]
+        summary["pytest_slowest_nodeid"] = slow_durations[0]["nodeid"]
+    if artifact_dir is not None and pytest_output:
+        summary["pytest_output_log_path"] = str(artifact_dir / log_name)
+    return summary
+
+
+def _split_cli_values(values: Sequence[str]) -> list[str]:
+    split_values: list[str] = []
+    for raw_value in values:
+        for value in raw_value.split(","):
+            normalized = value.strip()
+            if normalized:
+                split_values.append(normalized)
+    return _unique(split_values)
+
+
+def _safe_variant_id(*parts: str) -> str:
+    safe_parts = []
+    for part in parts:
+        safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", part.strip() or "default")
+        safe_parts.append(safe)
+    return "_".join(safe_parts)
+
+
+def _benchmark_variants(
+    *,
+    tier: str,
+    python_executable: str,
+    repo_root: Path,
+    extra_pytest_args: Sequence[str],
+    workers: str,
+    dist: str,
+    benchmark_workers: Sequence[str],
+    benchmark_dists: Sequence[str],
+) -> list[dict[str, object]]:
+    worker_values = _split_cli_values(benchmark_workers) or [workers]
+    dist_values = _split_cli_values(benchmark_dists) or [dist]
+    variants: list[dict[str, object]] = []
+    for worker_value in worker_values:
+        for dist_value in dist_values:
+            command = build_command(
+                tier,
+                python_executable=python_executable,
+                repo_root=repo_root,
+                extra_pytest_args=extra_pytest_args,
+                workers=worker_value,
+                dist=dist_value,
+            )
+            variants.append(
+                {
+                    "workers": worker_value,
+                    "dist": dist_value,
+                    "command": command,
+                    "variant_id": _safe_variant_id(worker_value, dist_value),
+                }
+            )
+    return variants
+
+
+def _summarize_benchmark_runs(runs: Sequence[dict[str, object]]) -> dict[str, object]:
+    completed_runs = [run for run in runs if run.get("elapsed_seconds") is not None]
+    successful_runs = [run for run in completed_runs if run.get("status") == "PASS"]
+    best_run = min(
+        successful_runs,
+        key=lambda run: float(run.get("elapsed_seconds") or float("inf")),
+        default=None,
+    )
+    slowest_run = max(
+        completed_runs,
+        key=lambda run: float(run.get("elapsed_seconds") or 0),
+        default=None,
+    )
+    return {
+        "benchmark_variant_count": len(runs),
+        "benchmark_pass_count": len(successful_runs),
+        "benchmark_fail_count": len(completed_runs) - len(successful_runs),
+        "benchmark_best_variant": best_run,
+        "benchmark_slowest_variant": slowest_run,
     }
 
 
@@ -315,6 +462,7 @@ def _runtime_payload(
     elapsed = round((ended_at - started_at).total_seconds(), 2)
     input_artifacts = _command_input_artifacts(command, repo_root=repo_root)
     output_artifacts = _runtime_output_artifacts(artifact_dir)
+    pytest_output = str(result.get("pytest_output") or "") if result else ""
     payload: dict[str, object] = {
         "schema_version": 1,
         "report_type": "test_runtime_summary",
@@ -350,7 +498,9 @@ def _runtime_payload(
         **SAFETY_BOUNDARY,
     }
     if result is not None:
-        payload.update(result)
+        payload.update({key: value for key, value in result.items() if key != "pytest_output"})
+    if pytest_output:
+        payload.update(_pytest_output_summary(pytest_output, artifact_dir=artifact_dir))
     if status == "PRINT_ONLY":
         payload["promotion_evidence_limitation"] = (
             "PRINT_ONLY renders the command and artifact contract but does not execute pytest."
@@ -387,6 +537,7 @@ def _runtime_output_artifacts(artifact_dir: Path | None) -> list[dict[str, objec
     return [
         _artifact_record(artifact_dir / "test_runtime_summary.json"),
         _artifact_record(artifact_dir / "test_runtime_reader_brief.md"),
+        _artifact_record(artifact_dir / PYTEST_OUTPUT_LOG_NAME),
     ]
 
 
@@ -482,25 +633,88 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         _format_command(payload["command"]),  # type: ignore[arg-type]
         "```",
         "",
-        "## Safety Boundary",
-        "",
-        (
-            "This runtime artifact records pytest execution only. It does not mutate strategy "
-            "logic, cached market data, production state, portfolio state, order tickets, or "
-            "broker state."
-        ),
-        "",
     ]
+    if payload.get("benchmark_mode"):
+        lines.extend(
+            [
+                "## Benchmark Runs",
+                "",
+                "|workers|dist|status|elapsed_seconds|slow_duration_count|",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for run in payload.get("benchmark_runs", []):
+            if not isinstance(run, dict):
+                continue
+            lines.append(
+                "|"
+                f"`{run.get('workers')}`|"
+                f"`{run.get('dist')}`|"
+                f"`{run.get('status')}`|"
+                f"`{run.get('elapsed_seconds')}`|"
+                f"`{run.get('pytest_slow_duration_count', 0)}`|"
+            )
+        lines.append("")
+    slow_durations = payload.get("pytest_slow_durations")
+    if isinstance(slow_durations, list) and slow_durations:
+        lines.extend(
+            [
+                "## Slow Durations",
+                "",
+                "|seconds|phase|nodeid|",
+                "|---|---|---|",
+            ]
+        )
+        for row in slow_durations[:10]:
+            if not isinstance(row, dict):
+                continue
+            lines.append(
+                "|"
+                f"`{row.get('seconds')}`|"
+                f"`{row.get('phase')}`|"
+                f"`{row.get('nodeid')}`|"
+            )
+        lines.append("")
+    if payload.get("pytest_output_log_path"):
+        lines.extend(
+            [
+                "## Pytest Output",
+                "",
+                f"- Log: `{payload['pytest_output_log_path']}`",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Safety Boundary",
+            "",
+            (
+                "This runtime artifact records pytest execution only. It does not mutate strategy "
+                "logic, cached market data, production state, portfolio state, order tickets, or "
+                "broker state."
+            ),
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
-def _write_runtime_artifacts(artifact_dir: Path, payload: dict[str, object]) -> None:
+def _write_runtime_artifacts(
+    artifact_dir: Path,
+    payload: dict[str, object],
+    *,
+    pytest_output: str = "",
+) -> None:
     artifact_dir.mkdir(parents=True, exist_ok=True)
     _write_report(artifact_dir / "test_runtime_summary.json", payload)
     (artifact_dir / "test_runtime_reader_brief.md").write_text(
         _render_runtime_reader_brief(payload),
         encoding="utf-8",
     )
+    if pytest_output:
+        (artifact_dir / PYTEST_OUTPUT_LOG_NAME).write_text(pytest_output, encoding="utf-8")
+    if payload.get("benchmark_mode"):
+        _write_report(artifact_dir / BENCHMARK_SUMMARY_NAME, payload)
 
 
 def _list_tiers() -> str:
@@ -576,6 +790,25 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_DIST,
         help="pytest-xdist distribution strategy used when workers > 1. Defaults to loadfile.",
     )
+    parser.add_argument(
+        "--benchmark-dist",
+        action="append",
+        default=[],
+        help=(
+            "Run or print benchmark variants for one or more pytest-xdist distribution "
+            "strategies. Accepts repeated values or comma-separated lists, for example "
+            "--benchmark-dist=loadfile --benchmark-dist=worksteal."
+        ),
+    )
+    parser.add_argument(
+        "--benchmark-worker",
+        action="append",
+        default=[],
+        help=(
+            "Worker counts to combine with --benchmark-dist. Accepts repeated values or "
+            "comma-separated lists; defaults to --workers when omitted."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -602,6 +835,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         workers=args.workers,
         dist=args.dist,
     )
+    benchmark_mode = bool(args.benchmark_dist or args.benchmark_worker)
+    benchmark_variants = (
+        _benchmark_variants(
+            tier=args.tier,
+            python_executable=args.python,
+            repo_root=repo_root,
+            extra_pytest_args=args.pytest_arg,
+            workers=args.workers,
+            dist=args.dist,
+            benchmark_workers=args.benchmark_worker,
+            benchmark_dists=args.benchmark_dist,
+        )
+        if benchmark_mode
+        else []
+    )
     print(f"Validation tier: {args.tier}", flush=True)
     print(f"Resolved tier: {resolved_tier}", flush=True)
     print(f"Coverage: {spec.description}", flush=True)
@@ -611,6 +859,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"Workers: {args.workers}", flush=True)
     print(f"Distribution: {args.dist}", flush=True)
     print(f"Command: {_format_command(command)}", flush=True)
+    if benchmark_mode:
+        print(f"Benchmark variants: {len(benchmark_variants)}", flush=True)
+        for variant in benchmark_variants:
+            print(
+                "Benchmark command "
+                f"workers={variant['workers']} dist={variant['dist']}: "
+                f"{_format_command(variant['command'])}",
+                flush=True,
+            )
 
     if args.print_only:
         ended_at = _utc_now()
@@ -628,6 +885,32 @@ def main(argv: Sequence[str] | None = None) -> int:
             extra_pytest_args=args.pytest_arg,
             artifact_dir=artifact_dir,
         )
+        if benchmark_mode:
+            payload.update(
+                {
+                    "benchmark_mode": True,
+                    "benchmark_runs": [
+                        {
+                            "workers": variant["workers"],
+                            "dist": variant["dist"],
+                            "status": "PRINT_ONLY",
+                            "command": variant["command"],
+                            "variant_id": variant["variant_id"],
+                        }
+                        for variant in benchmark_variants
+                    ],
+                    "benchmark_variant_count": len(benchmark_variants),
+                    "benchmark_summary_path": (
+                        str(artifact_dir / BENCHMARK_SUMMARY_NAME)
+                        if artifact_dir is not None
+                        else None
+                    ),
+                    "promotion_evidence_limitation": (
+                        "BENCHMARK_PRINT_ONLY renders comparison commands but does not "
+                        "execute pytest."
+                    ),
+                }
+            )
         if args.json_output:
             _write_report(args.json_output, payload)
         if artifact_dir is not None:
@@ -638,6 +921,88 @@ def main(argv: Sequence[str] | None = None) -> int:
                 flush=True,
             )
         return 0
+
+    if benchmark_mode:
+        if artifact_dir is not None:
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+        benchmark_runs: list[dict[str, object]] = []
+        for variant in benchmark_variants:
+            print(
+                "Running benchmark variant "
+                f"workers={variant['workers']} dist={variant['dist']}",
+                flush=True,
+            )
+            result = _run_command(variant["command"], cwd=repo_root)  # type: ignore[arg-type]
+            status = "PASS" if result["exit_code"] == 0 else "FAIL"
+            log_name = f"pytest_output_{variant['variant_id']}.log"
+            pytest_output = str(result.get("pytest_output") or "")
+            if artifact_dir is not None and pytest_output:
+                (artifact_dir / log_name).write_text(pytest_output, encoding="utf-8")
+            run_summary = {
+                "workers": variant["workers"],
+                "dist": variant["dist"],
+                "variant_id": variant["variant_id"],
+                "command": variant["command"],
+                "status": status,
+                "exit_code": result["exit_code"],
+                "elapsed_seconds": result["elapsed_seconds"],
+            }
+            run_summary.update(
+                _pytest_output_summary(pytest_output, artifact_dir=artifact_dir, log_name=log_name)
+            )
+            benchmark_runs.append(run_summary)
+        overall_exit_code = 0 if all(run["exit_code"] == 0 for run in benchmark_runs) else 1
+        status = "PASS" if overall_exit_code == 0 else "FAIL"
+        ended_at = _utc_now()
+        payload = _runtime_payload(
+            repo_root=repo_root,
+            requested_tier=args.tier,
+            resolved_tier=resolved_tier,
+            spec=spec,
+            command=command,
+            workers=args.workers,
+            dist=args.dist,
+            status=status,
+            started_at=started_at,
+            ended_at=ended_at,
+            result={"exit_code": overall_exit_code},
+            extra_pytest_args=args.pytest_arg,
+            artifact_dir=artifact_dir,
+        )
+        payload.update(
+            {
+                "benchmark_mode": True,
+                "benchmark_runs": benchmark_runs,
+                "benchmark_summary_path": (
+                    str(artifact_dir / BENCHMARK_SUMMARY_NAME)
+                    if artifact_dir is not None
+                    else None
+                ),
+                "can_support_promotion_evidence": False,
+                "promotion_evidence_limitation": (
+                    "BENCHMARK_MODE compares validation runtime profiles and is not passing "
+                    "promotion evidence. Run the selected tier once in normal mode for formal "
+                    "validation evidence."
+                ),
+                **_summarize_benchmark_runs(benchmark_runs),
+            }
+        )
+        print(f"Status: {status}")
+        print(f"Elapsed seconds: {payload['elapsed_seconds']}")
+        if args.json_output:
+            _write_report(args.json_output, payload)
+        if artifact_dir is not None:
+            _write_runtime_artifacts(artifact_dir, payload)
+            print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)
+            print(
+                f"Benchmark summary: {artifact_dir / BENCHMARK_SUMMARY_NAME}",
+                flush=True,
+            )
+            print(
+                f"Runtime reader brief: {artifact_dir / 'test_runtime_reader_brief.md'}",
+                flush=True,
+            )
+        return overall_exit_code
 
     result = _run_command(command, cwd=repo_root)
     status = "PASS" if result["exit_code"] == 0 else "FAIL"
@@ -662,7 +1027,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.json_output:
         _write_report(args.json_output, payload)
     if artifact_dir is not None:
-        _write_runtime_artifacts(artifact_dir, payload)
+        _write_runtime_artifacts(
+            artifact_dir,
+            payload,
+            pytest_output=str(result.get("pytest_output") or ""),
+        )
         print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)
         print(f"Runtime reader brief: {artifact_dir / 'test_runtime_reader_brief.md'}", flush=True)
     return int(result["exit_code"])
