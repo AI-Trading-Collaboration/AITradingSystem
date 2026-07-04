@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.documentation_contract import (
+    _artifact_pattern_matches,
     build_documentation_contract_payload,
     render_documentation_contract_report,
 )
@@ -63,6 +64,21 @@ def test_documentation_contract_fails_when_catalog_row_is_missing(tmp_path: Path
     assert payload["status"] == "FAIL"
     assert payload["summary"]["missing_catalog_count"] == 1
     assert payload["issues"][0]["code"] == "missing_artifact_catalog_row"
+
+
+def test_documentation_contract_matcher_preserves_glob_date_semantics() -> None:
+    assert _artifact_pattern_matches(
+        "outputs/reports/example_*.json",
+        "`outputs/reports/example_2026-05-28.md`",
+    )
+    assert _artifact_pattern_matches(
+        "outputs/reports/research_????-??-??.json",
+        "`outputs/reports/research_2026-05-28.json`",
+    )
+    assert not _artifact_pattern_matches(
+        "outputs/reports/research_????-??-??.json",
+        "`outputs/reports/other_2026-05-28.json`",
+    )
 
 
 def test_default_documentation_contract_covers_current_report_registry() -> None:

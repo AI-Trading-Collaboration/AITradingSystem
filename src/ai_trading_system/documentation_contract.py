@@ -5,6 +5,7 @@ import re
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from fnmatch import fnmatch
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -344,8 +345,10 @@ def _catalog_row_matches(
 
 def _artifact_pattern_matches(pattern: str, artifact_text: str) -> bool:
     normalized_pattern = _normalize_path_text(pattern)
-    candidates = _code_spans(artifact_text) or [artifact_text]
+    candidates = _code_spans(artifact_text) or (artifact_text,)
     prefix = normalized_pattern.split("*", maxsplit=1)[0]
+    if prefix and _literal_prefix_can_short_circuit(prefix):
+        return any(prefix in _normalize_path_text(candidate) for candidate in candidates)
     for candidate in candidates:
         normalized_candidate = _normalize_path_text(candidate)
         if fnmatch(normalized_candidate, normalized_pattern):
@@ -410,10 +413,16 @@ def _is_header_or_separator(cells: Sequence[str]) -> bool:
     return all(set(cell.strip()) <= {"-", ":"} for cell in cells if cell.strip())
 
 
-def _code_spans(text: str) -> list[str]:
-    return re.findall(r"`([^`]+)`", text)
+def _literal_prefix_can_short_circuit(prefix: str) -> bool:
+    return not any(marker in prefix for marker in ("?", "[", "]"))
 
 
+@cache
+def _code_spans(text: str) -> tuple[str, ...]:
+    return tuple(re.findall(r"`([^`]+)`", text))
+
+
+@cache
 def _normalize_path_text(value: str) -> str:
     return value.replace("\\", "/").strip()
 
