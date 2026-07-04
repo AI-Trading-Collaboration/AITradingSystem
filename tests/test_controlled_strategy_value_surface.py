@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import Any
+
+import pytest
 from controlled_strategy_batch_helpers import (
     TEST_AS_OF,
     Path,
@@ -31,15 +34,64 @@ from controlled_strategy_batch_helpers import (
 )
 
 
-def test_value_surface_schema(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+@pytest.fixture(scope="module")
+def value_surface_price_caches(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> tuple[Path, Path, Path]:
+    tmp_path = tmp_path_factory.mktemp("value_surface_price_caches")
+    return _write_price_caches(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def value_surface_context(
+    tmp_path_factory: pytest.TempPathFactory,
+    value_surface_price_caches: tuple[Path, Path, Path],
+) -> tuple[dict[str, Any], Path]:
+    prices_path, marketstack_path, rates_path = value_surface_price_caches
+    output_root = tmp_path_factory.mktemp("value_surface_payload") / "value_surface"
     payload = run_value_surface_controlled_prototype(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,
         rates_path=rates_path,
-        output_root=tmp_path / "value_surface",
+        output_root=output_root,
         as_of_date=TEST_AS_OF,
     )
+    return payload, output_root
+
+
+@pytest.fixture(scope="module")
+def value_expansion_context(
+    tmp_path_factory: pytest.TempPathFactory,
+    value_surface_price_caches: tuple[Path, Path, Path],
+) -> tuple[dict[str, Any], Path]:
+    prices_path, marketstack_path, rates_path = value_surface_price_caches
+    output_root = tmp_path_factory.mktemp("value_expansion_payload") / "value_expansion"
+    payload = run_value_surface_controlled_expansion(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_path,
+        rates_path=rates_path,
+        output_root=output_root,
+        as_of_date=TEST_AS_OF,
+    )
+    return payload, output_root
+
+
+@pytest.fixture(scope="module")
+def next_stage_inputs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("next_stage_inputs")
+    return _run_next_stage_inputs(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def direction_review_inputs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("direction_review_inputs")
+    return _run_direction_review_inputs(tmp_path)
+
+
+def test_value_surface_schema(
+    value_surface_context: tuple[dict[str, Any], Path],
+) -> None:
+    payload, output_root = value_surface_context
 
     _assert_safety(payload)
     assert payload["report_type"] == "value_surface_controlled_prototype"
@@ -47,29 +99,27 @@ def test_value_surface_schema(tmp_path: Path) -> None:
     assert payload["summary"]["candidate_action_count"] >= payload["summary"]["configured_minimum"]
     assert payload["summary"]["horizon_count"] >= payload["summary"]["horizon_configured_minimum"]
     assert payload["summary"]["sample_quality_report_present"] is True
-    assert (tmp_path / "value_surface" / "value_surface_controlled_prototype.json").exists()
-    assert (tmp_path / "value_surface" / "value_surface_horizon_audit.json").exists()
-    assert (tmp_path / "value_surface" / "value_surface_benchmark_comparison.json").exists()
+    assert (output_root / "value_surface_controlled_prototype.json").exists()
+    assert (output_root / "value_surface_horizon_audit.json").exists()
+    assert (output_root / "value_surface_benchmark_comparison.json").exists()
 
 
-def test_value_surface_no_future_horizon_selection(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    run_value_surface_controlled_prototype(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_surface",
-        as_of_date=TEST_AS_OF,
-    )
-    audit = _read_json(tmp_path / "value_surface" / "value_surface_horizon_audit.json")
+def test_value_surface_no_future_horizon_selection(
+    value_surface_context: tuple[dict[str, Any], Path],
+) -> None:
+    _payload, output_root = value_surface_context
+    audit = _read_json(output_root / "value_surface_horizon_audit.json")
 
     assert audit["summary"]["horizon_leakage_check_pass"] is True
     assert audit["summary"]["future_outcome_used_for_horizon_selection"] is False
     assert audit["future_outcome_policy"]["strategy_input_allowed"] is False
 
 
-def test_value_surface_control_failure_blocks_recommendation(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
+def test_value_surface_control_failure_blocks_recommendation(
+    tmp_path: Path,
+    value_surface_price_caches: tuple[Path, Path, Path],
+) -> None:
+    prices_path, marketstack_path, rates_path = value_surface_price_caches
     control_audit = _write_json(
         tmp_path / "control_audit_failed.json",
         {
@@ -93,45 +143,27 @@ def test_value_surface_control_failure_blocks_recommendation(tmp_path: Path) -> 
     assert payload["summary"]["promotion_gate_allowed"] is False
 
 
-def test_value_surface_benchmark_comparison_required(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    payload = run_value_surface_controlled_prototype(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_surface",
-        as_of_date=TEST_AS_OF,
-    )
-
+def test_value_surface_benchmark_comparison_required(
+    value_surface_context: tuple[dict[str, Any], Path],
+) -> None:
+    payload, _output_root = value_surface_context
     assert payload["summary"]["benchmark_comparison_present"] is True
     assert payload["benchmark_comparison"]
     assert payload["summary"]["future_leakage_trap_blocked"] is True
 
 
-def test_value_surface_promotion_false(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    payload = run_value_surface_controlled_prototype(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_surface",
-        as_of_date=TEST_AS_OF,
-    )
-
+def test_value_surface_promotion_false(
+    value_surface_context: tuple[dict[str, Any], Path],
+) -> None:
+    payload, _output_root = value_surface_context
     _assert_safety(payload)
     assert payload["summary"]["promotion_gate_allowed"] is False
 
 
-def test_value_surface_controlled_expansion_schema(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    payload = run_value_surface_controlled_expansion(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_expansion",
-        as_of_date=TEST_AS_OF,
-    )
-
+def test_value_surface_controlled_expansion_schema(
+    value_expansion_context: tuple[dict[str, Any], Path],
+) -> None:
+    payload, output_root = value_expansion_context
     _assert_safety(payload)
     assert payload["report_type"] == "value_surface_controlled_expansion"
     assert payload["summary"]["value_surface_expansion_generated"] is True
@@ -140,25 +172,17 @@ def test_value_surface_controlled_expansion_schema(tmp_path: Path) -> None:
     assert payload["summary"]["horizon_leakage_check_pass"] is True
     assert payload["summary"]["by_cluster_breakdown_present"] is True
     assert payload["summary"]["gross_net_turnover_drawdown_present"] is True
-    assert (tmp_path / "value_expansion" / "value_surface_controlled_expansion.json").exists()
-    assert (
-        tmp_path / "value_expansion" / "value_surface_expansion_horizon_smoothness_audit.json"
-    ).exists()
+    assert (output_root / "value_surface_controlled_expansion.json").exists()
+    assert (output_root / "value_surface_expansion_horizon_smoothness_audit.json").exists()
 
 
-def test_utility_boundary_audit_status_cap(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    run_value_surface_controlled_expansion(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_expansion",
-        as_of_date=TEST_AS_OF,
-    )
+def test_utility_boundary_audit_status_cap(
+    tmp_path: Path,
+    value_expansion_context: tuple[dict[str, Any], Path],
+) -> None:
+    expansion, _output_root = value_expansion_context
     payload = run_utility_boundary_ranking_policy_audit(
-        value_surface_expansion_path=(
-            tmp_path / "value_expansion" / "value_surface_controlled_expansion.json"
-        ),
+        value_surface_expansion_path=Path(expansion["artifact_paths"]["json_path"]),
         output_root=tmp_path / "utility",
     )
 
@@ -170,15 +194,13 @@ def test_utility_boundary_audit_status_cap(tmp_path: Path) -> None:
     assert payload["summary"]["pareto_frontier_present"] is True
 
 
-def test_forward_evidence_maturity_tracker_append_only(tmp_path: Path) -> None:
-    prices_path, marketstack_path, rates_path = _write_price_caches(tmp_path)
-    expansion = run_value_surface_controlled_expansion(
-        prices_path=prices_path,
-        marketstack_prices_path=marketstack_path,
-        rates_path=rates_path,
-        output_root=tmp_path / "value_expansion",
-        as_of_date=TEST_AS_OF,
-    )
+def test_forward_evidence_maturity_tracker_append_only(
+    tmp_path: Path,
+    value_surface_price_caches: tuple[Path, Path, Path],
+    value_expansion_context: tuple[dict[str, Any], Path],
+) -> None:
+    prices_path, marketstack_path, rates_path = value_surface_price_caches
+    expansion, _output_root = value_expansion_context
     ledger_path = _write_forward_ledger(tmp_path)
     payload = run_forward_evidence_maturity_tracker(
         prices_path=prices_path,
@@ -204,8 +226,11 @@ def test_forward_evidence_maturity_tracker_append_only(tmp_path: Path) -> None:
     }
 
 
-def test_value_surface_warning_triage_decision_enum(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_value_surface_warning_triage_decision_enum(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     payload = run_value_surface_warning_triage_review(
         value_surface_expansion_path=paths["value_expansion"],
         utility_boundary_audit_path=paths["utility"],
@@ -227,8 +252,11 @@ def test_value_surface_warning_triage_decision_enum(tmp_path: Path) -> None:
     }
 
 
-def test_utility_ranking_robustness_remains_sensitivity_tested(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_utility_ranking_robustness_remains_sensitivity_tested(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     payload = run_utility_ranking_robustness_pareto_audit(
         value_surface_expansion_path=paths["value_expansion"],
         utility_boundary_audit_path=paths["utility"],
@@ -243,8 +271,11 @@ def test_utility_ranking_robustness_remains_sensitivity_tested(tmp_path: Path) -
     assert payload["diagnostic_boundary_assessment"]["boundary_use"] == "diagnostic_only"
 
 
-def test_forward_evidence_daily_continuity_tracker(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_forward_evidence_daily_continuity_tracker(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     prices_path, marketstack_path, rates_path = (
         paths["prices"],
         paths["marketstack"],
@@ -269,8 +300,11 @@ def test_forward_evidence_daily_continuity_tracker(tmp_path: Path) -> None:
     assert payload["summary"]["output_coverage_present"] is True
 
 
-def test_value_surface_controlled_walk_forward_expansion(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_value_surface_controlled_walk_forward_expansion(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     warning = run_value_surface_warning_triage_review(
         value_surface_expansion_path=paths["value_expansion"],
         utility_boundary_audit_path=paths["utility"],
@@ -303,8 +337,11 @@ def test_value_surface_controlled_walk_forward_expansion(tmp_path: Path) -> None
     }
 
 
-def test_value_surface_utility_pareto_ranking_review(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_value_surface_utility_pareto_ranking_review(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     payload = run_value_surface_utility_pareto_ranking_review(
         value_surface_expansion_path=paths["value_expansion"],
         utility_boundary_audit_path=paths["utility"],
@@ -321,8 +358,11 @@ def test_value_surface_utility_pareto_ranking_review(tmp_path: Path) -> None:
     assert "horizon_cliff_count" in payload["summary"]
 
 
-def test_forward_evidence_daily_continuity_review(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_forward_evidence_daily_continuity_review(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     payload = run_forward_evidence_daily_continuity_review(
         prices_path=paths["prices"],
         marketstack_prices_path=paths["marketstack"],
@@ -341,8 +381,11 @@ def test_forward_evidence_daily_continuity_review(tmp_path: Path) -> None:
     assert payload["summary"]["output_coverage_present"] is True
 
 
-def test_gbdt_value_surface_residual_diagnostic_no_strategy(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_gbdt_value_surface_residual_diagnostic_no_strategy(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     payload = run_gbdt_value_surface_residual_diagnostic_prototype(
         value_surface_expansion_path=paths["value_expansion"],
         output_root=tmp_path / "gbdt_residual",
@@ -356,8 +399,11 @@ def test_gbdt_value_surface_residual_diagnostic_no_strategy(tmp_path: Path) -> N
     assert payload["diagnostic_boundary"]["direct_action_utility_prediction"] is False
 
 
-def test_regret_casebook_activation_recheck_stays_watchlist(tmp_path: Path) -> None:
-    paths = _run_next_stage_inputs(tmp_path)
+def test_regret_casebook_activation_recheck_stays_watchlist(
+    tmp_path: Path,
+    next_stage_inputs: dict[str, Path],
+) -> None:
+    paths = next_stage_inputs
     activation = run_regret_activation_inputs_from_value_surface_failures(
         value_surface_expansion_path=paths["value_expansion"],
         regret_casebook_expansion_gate_path=tmp_path / "missing_regret_gate.json",
@@ -377,8 +423,11 @@ def test_regret_casebook_activation_recheck_stays_watchlist(tmp_path: Path) -> N
     assert payload["activation_recheck_decision"]["expansion_executed"] is False
 
 
-def test_value_surface_failure_attribution_explains_loss_delta(tmp_path: Path) -> None:
-    paths = _run_direction_review_inputs(tmp_path)
+def test_value_surface_failure_attribution_explains_loss_delta(
+    tmp_path: Path,
+    direction_review_inputs: dict[str, Path],
+) -> None:
+    paths = direction_review_inputs
     payload = run_value_surface_failure_attribution(
         prices_path=paths["prices"],
         marketstack_prices_path=paths["marketstack"],
@@ -398,8 +447,11 @@ def test_value_surface_failure_attribution_explains_loss_delta(tmp_path: Path) -
     assert payload["benchmark_relative_downside_attribution"]["promotion_gate_allowed"] is False
 
 
-def test_horizon_cliff_stabilization_review_diagnostic_only(tmp_path: Path) -> None:
-    paths = _run_direction_review_inputs(tmp_path)
+def test_horizon_cliff_stabilization_review_diagnostic_only(
+    tmp_path: Path,
+    direction_review_inputs: dict[str, Path],
+) -> None:
+    paths = direction_review_inputs
     payload = run_horizon_cliff_utility_ranking_stabilization_review(
         value_surface_expansion_path=paths["value_expansion"],
         utility_pareto_ranking_path=paths["utility_pareto"],
@@ -414,8 +466,11 @@ def test_horizon_cliff_stabilization_review_diagnostic_only(tmp_path: Path) -> N
     assert "ranking_jump_count" in payload["summary"]
 
 
-def test_gbdt_residual_hypothesis_triage_no_strategy(tmp_path: Path) -> None:
-    paths = _run_direction_review_inputs(tmp_path)
+def test_gbdt_residual_hypothesis_triage_no_strategy(
+    tmp_path: Path,
+    direction_review_inputs: dict[str, Path],
+) -> None:
+    paths = direction_review_inputs
     payload = run_gbdt_residual_hypothesis_triage(
         value_surface_expansion_path=paths["value_expansion"],
         residual_diagnostic_path=paths["residual_diagnostic"],
@@ -430,8 +485,11 @@ def test_gbdt_residual_hypothesis_triage_no_strategy(tmp_path: Path) -> None:
     assert payload["diagnostic_boundary"]["direct_action_policy_generated"] is False
 
 
-def test_forward_evidence_continuity_extension(tmp_path: Path) -> None:
-    paths = _run_direction_review_inputs(tmp_path)
+def test_forward_evidence_continuity_extension(
+    tmp_path: Path,
+    direction_review_inputs: dict[str, Path],
+) -> None:
+    paths = direction_review_inputs
     payload = run_forward_evidence_continuity_extension(
         prices_path=paths["prices"],
         marketstack_prices_path=paths["marketstack"],
@@ -449,8 +507,11 @@ def test_forward_evidence_continuity_extension(tmp_path: Path) -> None:
     assert payload["forward_evidence_scope"]["paper_shadow_ready"] is False
 
 
-def test_value_surface_direction_review_does_not_default_continue(tmp_path: Path) -> None:
-    paths = _run_direction_review_inputs(tmp_path)
+def test_value_surface_direction_review_does_not_default_continue(
+    tmp_path: Path,
+    direction_review_inputs: dict[str, Path],
+) -> None:
+    paths = direction_review_inputs
     failure = run_value_surface_failure_attribution(
         prices_path=paths["prices"],
         marketstack_prices_path=paths["marketstack"],
