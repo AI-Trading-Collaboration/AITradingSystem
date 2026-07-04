@@ -1,13 +1,10 @@
 from __future__ import annotations
 
+import pytest
 from controlled_strategy_batch_helpers import (
     Path,
     _assert_safety,
-    _run_horizon_selector_full_inputs,
-    _run_horizon_selector_inputs,
     _run_regime_conditioning_inputs,
-    _run_value_surface_v2_full_inputs,
-    _run_value_surface_v2_inputs,
     run_ai_after_chatgpt_full_regime_attribution_review,
     run_cost_aware_horizon_hysteresis,
     run_cost_turnover_aware_regime_conditioned_value_surface,
@@ -26,8 +23,173 @@ from controlled_strategy_batch_helpers import (
 )
 
 
-def test_regime_conditioned_value_surface_design_protocol(tmp_path: Path) -> None:
-    paths = _run_regime_conditioning_inputs(tmp_path)
+@pytest.fixture(scope="module")
+def regime_conditioning_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("regime_conditioning_inputs")
+    return _run_regime_conditioning_inputs(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def value_surface_v2_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    regime_conditioning_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("value_surface_v2_inputs")
+    paths = dict(regime_conditioning_inputs)
+    design = run_regime_conditioned_value_surface_design(
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        residual_triage_path=paths["residual_triage"],
+        direction_review_path=paths["direction"],
+        output_root=tmp_path / "v2_design",
+    )
+    guardrail = run_tail_loss_guardrail_fallback_policy(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=Path(design["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_guardrail",
+    )
+    return {
+        **paths,
+        "design": Path(design["artifact_paths"]["json_path"]),
+        "guardrail": Path(guardrail["artifact_paths"]["json_path"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def value_surface_v2_full_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    value_surface_v2_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("value_surface_v2_full_inputs")
+    paths = dict(value_surface_v2_inputs)
+    cost = run_cost_turnover_aware_regime_conditioned_value_surface(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        guardrail_policy_path=paths["guardrail"],
+        output_root=tmp_path / "v2_cost",
+    )
+    long_horizon = run_long_horizon_quarantine_selection_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        cost_turnover_path=Path(cost["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_long_horizon",
+    )
+    matrix = run_regime_horizon_loss_attribution_matrix(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        output_root=tmp_path / "v2_matrix",
+    )
+    ai_regime = run_ai_after_chatgpt_full_regime_attribution_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        loss_matrix_path=Path(matrix["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "v2_ai_regime",
+    )
+    return {
+        **paths,
+        "cost_turnover": Path(cost["artifact_paths"]["json_path"]),
+        "long_horizon": Path(long_horizon["artifact_paths"]["json_path"]),
+        "loss_matrix": Path(matrix["artifact_paths"]["json_path"]),
+        "ai_regime": Path(ai_regime["artifact_paths"]["json_path"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def horizon_selector_review_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    value_surface_v2_full_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("horizon_selector_review_inputs")
+    paths = dict(value_surface_v2_full_inputs)
+    holdout = run_regime_conditioned_walk_forward_holdout(
+        value_surface_expansion_path=paths["value_expansion"],
+        failure_attribution_path=paths["failure"],
+        horizon_stabilization_path=paths["horizon"],
+        design_path=paths["design"],
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        output_root=tmp_path / "horizon_v2_holdout",
+    )
+    v2_review = run_value_surface_v2_controlled_review(
+        cost_turnover_path=paths["cost_turnover"],
+        horizon_quarantine_path=paths["long_horizon"],
+        regime_attribution_path=paths["ai_regime"],
+        holdout_path=Path(holdout["artifact_paths"]["json_path"]),
+        output_root=tmp_path / "horizon_v2_review",
+    )
+    return {
+        **paths,
+        "v2_holdout": Path(holdout["artifact_paths"]["json_path"]),
+        "v2_review": Path(v2_review["artifact_paths"]["json_path"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def horizon_selector_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    horizon_selector_review_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("horizon_selector_inputs")
+    paths = dict(horizon_selector_review_inputs)
+    contract = run_horizon_selector_problem_contract(
+        v2_review_path=paths["v2_review"],
+        long_horizon_review_path=paths["long_horizon"],
+        output_root=tmp_path / "horizon_contract",
+    )
+    fallback = run_long_horizon_quarantine_fallback_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=Path(contract["artifact_paths"]["json_path"]),
+        v2_review_path=paths["v2_review"],
+        output_root=tmp_path / "horizon_fallback",
+    )
+    return {
+        **paths,
+        "contract": Path(contract["artifact_paths"]["json_path"]),
+        "fallback_review": Path(fallback["artifact_paths"]["json_path"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def horizon_selector_full_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    horizon_selector_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("horizon_selector_full_inputs")
+    paths = dict(horizon_selector_inputs)
+    prototype = run_horizon_selector_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_prototype",
+    )
+    hysteresis = run_cost_aware_horizon_hysteresis(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        prototype_path=Path(prototype["artifact_paths"]["json_path"]),
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_hysteresis",
+    )
+    return {
+        **paths,
+        "prototype": Path(prototype["artifact_paths"]["json_path"]),
+        "hysteresis": Path(hysteresis["artifact_paths"]["json_path"]),
+    }
+
+
+def test_regime_conditioned_value_surface_design_protocol(
+    tmp_path: Path,
+    regime_conditioning_inputs: dict[str, Path],
+) -> None:
+    paths = regime_conditioning_inputs
     payload = run_regime_conditioned_value_surface_design(
         failure_attribution_path=paths["failure"],
         horizon_stabilization_path=paths["horizon"],
@@ -44,8 +206,11 @@ def test_regime_conditioned_value_surface_design_protocol(tmp_path: Path) -> Non
     assert payload["controlled_only_validation_plan"]
 
 
-def test_tail_loss_guardrail_fallback_policy_compares_variants(tmp_path: Path) -> None:
-    paths = _run_regime_conditioning_inputs(tmp_path)
+def test_tail_loss_guardrail_fallback_policy_compares_variants(
+    tmp_path: Path,
+    regime_conditioning_inputs: dict[str, Path],
+) -> None:
+    paths = regime_conditioning_inputs
     design = run_regime_conditioned_value_surface_design(
         failure_attribution_path=paths["failure"],
         horizon_stabilization_path=paths["horizon"],
@@ -74,8 +239,11 @@ def test_tail_loss_guardrail_fallback_policy_compares_variants(tmp_path: Path) -
     assert payload["guardrail_diagnostic_boundary"]["retrospective_ablation_only"] is True
 
 
-def test_regime_horizon_loss_attribution_matrix(tmp_path: Path) -> None:
-    paths = _run_regime_conditioning_inputs(tmp_path)
+def test_regime_horizon_loss_attribution_matrix(
+    tmp_path: Path,
+    regime_conditioning_inputs: dict[str, Path],
+) -> None:
+    paths = regime_conditioning_inputs
     payload = run_regime_horizon_loss_attribution_matrix(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -90,8 +258,11 @@ def test_regime_horizon_loss_attribution_matrix(tmp_path: Path) -> None:
     assert payload["loss_by_utility_profile"]["groups"] is not None
 
 
-def test_gbdt_residual_regime_conditioning_no_strategy(tmp_path: Path) -> None:
-    paths = _run_regime_conditioning_inputs(tmp_path)
+def test_gbdt_residual_regime_conditioning_no_strategy(
+    tmp_path: Path,
+    regime_conditioning_inputs: dict[str, Path],
+) -> None:
+    paths = regime_conditioning_inputs
     payload = run_gbdt_residual_hypothesis_regime_conditioning(
         value_surface_expansion_path=paths["value_expansion"],
         residual_triage_path=paths["residual_triage"],
@@ -106,8 +277,11 @@ def test_gbdt_residual_regime_conditioning_no_strategy(tmp_path: Path) -> None:
     assert payload["diagnostic_boundary"]["direct_action_policy_generated"] is False
 
 
-def test_regime_conditioned_controlled_review_decision_enum(tmp_path: Path) -> None:
-    paths = _run_regime_conditioning_inputs(tmp_path)
+def test_regime_conditioned_controlled_review_decision_enum(
+    tmp_path: Path,
+    regime_conditioning_inputs: dict[str, Path],
+) -> None:
+    paths = regime_conditioning_inputs
     design = run_regime_conditioned_value_surface_design(
         failure_attribution_path=paths["failure"],
         horizon_stabilization_path=paths["horizon"],
@@ -153,8 +327,11 @@ def test_regime_conditioned_controlled_review_decision_enum(tmp_path: Path) -> N
     assert payload["review_decision"]["promotion_gate_allowed"] is False
 
 
-def test_cost_turnover_aware_regime_conditioned_value_surface(tmp_path: Path) -> None:
-    paths = _run_value_surface_v2_inputs(tmp_path)
+def test_cost_turnover_aware_regime_conditioned_value_surface(
+    tmp_path: Path,
+    value_surface_v2_inputs: dict[str, Path],
+) -> None:
+    paths = value_surface_v2_inputs
     payload = run_cost_turnover_aware_regime_conditioned_value_surface(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -178,8 +355,11 @@ def test_cost_turnover_aware_regime_conditioned_value_surface(tmp_path: Path) ->
     assert payload["diagnostic_boundary"]["production_execution_rule"] is False
 
 
-def test_long_horizon_quarantine_selection_review(tmp_path: Path) -> None:
-    paths = _run_value_surface_v2_inputs(tmp_path)
+def test_long_horizon_quarantine_selection_review(
+    tmp_path: Path,
+    value_surface_v2_inputs: dict[str, Path],
+) -> None:
+    paths = value_surface_v2_inputs
     cost = run_cost_turnover_aware_regime_conditioned_value_surface(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -203,8 +383,11 @@ def test_long_horizon_quarantine_selection_review(tmp_path: Path) -> None:
     assert payload["disable_vs_downgrade_comparison"]
 
 
-def test_ai_after_chatgpt_full_regime_attribution_review(tmp_path: Path) -> None:
-    paths = _run_value_surface_v2_inputs(tmp_path)
+def test_ai_after_chatgpt_full_regime_attribution_review(
+    tmp_path: Path,
+    value_surface_v2_inputs: dict[str, Path],
+) -> None:
+    paths = value_surface_v2_inputs
     matrix = run_regime_horizon_loss_attribution_matrix(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -224,8 +407,11 @@ def test_ai_after_chatgpt_full_regime_attribution_review(tmp_path: Path) -> None
     assert payload["candidate_repairs"]
 
 
-def test_regime_conditioned_walk_forward_holdout(tmp_path: Path) -> None:
-    paths = _run_value_surface_v2_full_inputs(tmp_path)
+def test_regime_conditioned_walk_forward_holdout(
+    tmp_path: Path,
+    value_surface_v2_full_inputs: dict[str, Path],
+) -> None:
+    paths = value_surface_v2_full_inputs
     payload = run_regime_conditioned_walk_forward_holdout(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -244,8 +430,11 @@ def test_regime_conditioned_walk_forward_holdout(tmp_path: Path) -> None:
     assert payload["leave_one_horizon_out"] is not None
 
 
-def test_value_surface_v2_controlled_review_decision_enum(tmp_path: Path) -> None:
-    paths = _run_value_surface_v2_full_inputs(tmp_path)
+def test_value_surface_v2_controlled_review_decision_enum(
+    tmp_path: Path,
+    value_surface_v2_full_inputs: dict[str, Path],
+) -> None:
+    paths = value_surface_v2_full_inputs
     holdout = run_regime_conditioned_walk_forward_holdout(
         value_surface_expansion_path=paths["value_expansion"],
         failure_attribution_path=paths["failure"],
@@ -277,8 +466,11 @@ def test_value_surface_v2_controlled_review_decision_enum(tmp_path: Path) -> Non
     assert payload["review_decision"]["promotion_gate_allowed"] is False
 
 
-def test_horizon_selector_problem_contract(tmp_path: Path) -> None:
-    paths = _run_horizon_selector_inputs(tmp_path)
+def test_horizon_selector_problem_contract(
+    tmp_path: Path,
+    horizon_selector_review_inputs: dict[str, Path],
+) -> None:
+    paths = horizon_selector_review_inputs
     payload = run_horizon_selector_problem_contract(
         v2_review_path=paths["v2_review"],
         long_horizon_review_path=paths["long_horizon"],
@@ -299,11 +491,19 @@ def test_horizon_selector_problem_contract(tmp_path: Path) -> None:
     assert "invalidation_condition" in {row["field"] for row in payload["selector_output_schema"]}
 
 
-def test_long_horizon_quarantine_fallback_review(tmp_path: Path) -> None:
-    paths = _run_horizon_selector_inputs(tmp_path)
+def test_long_horizon_quarantine_fallback_review(
+    tmp_path: Path,
+    horizon_selector_review_inputs: dict[str, Path],
+) -> None:
+    paths = horizon_selector_review_inputs
+    contract = run_horizon_selector_problem_contract(
+        v2_review_path=paths["v2_review"],
+        long_horizon_review_path=paths["long_horizon"],
+        output_root=tmp_path / "horizon_fallback_check",
+    )
     payload = run_long_horizon_quarantine_fallback_review(
         value_surface_expansion_path=paths["value_expansion"],
-        contract_path=paths["contract"],
+        contract_path=Path(contract["artifact_paths"]["json_path"]),
         v2_review_path=paths["v2_review"],
         output_root=tmp_path / "horizon_fallback_check",
     )
@@ -318,8 +518,11 @@ def test_long_horizon_quarantine_fallback_review(tmp_path: Path) -> None:
     assert payload["review_summary"]["promotion_gate_allowed"] is False
 
 
-def test_horizon_selector_controlled_prototype(tmp_path: Path) -> None:
-    paths = _run_horizon_selector_inputs(tmp_path)
+def test_horizon_selector_controlled_prototype(
+    tmp_path: Path,
+    horizon_selector_inputs: dict[str, Path],
+) -> None:
+    paths = horizon_selector_inputs
     payload = run_horizon_selector_controlled_prototype(
         value_surface_expansion_path=paths["value_expansion"],
         contract_path=paths["contract"],
@@ -336,12 +539,22 @@ def test_horizon_selector_controlled_prototype(tmp_path: Path) -> None:
     assert payload["selector_metric"]["promotion_gate_allowed"] is False
 
 
-def test_cost_aware_horizon_hysteresis(tmp_path: Path) -> None:
-    paths = _run_horizon_selector_full_inputs(tmp_path)
+def test_cost_aware_horizon_hysteresis(
+    tmp_path: Path,
+    horizon_selector_inputs: dict[str, Path],
+) -> None:
+    paths = horizon_selector_inputs
+    prototype = run_horizon_selector_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        contract_path=paths["contract"],
+        fallback_review_path=paths["fallback_review"],
+        horizon_stabilization_path=paths["horizon"],
+        output_root=tmp_path / "horizon_hysteresis_check",
+    )
     payload = run_cost_aware_horizon_hysteresis(
         value_surface_expansion_path=paths["value_expansion"],
         contract_path=paths["contract"],
-        prototype_path=paths["prototype"],
+        prototype_path=Path(prototype["artifact_paths"]["json_path"]),
         horizon_stabilization_path=paths["horizon"],
         output_root=tmp_path / "horizon_hysteresis_check",
     )
@@ -353,8 +566,11 @@ def test_cost_aware_horizon_hysteresis(tmp_path: Path) -> None:
     assert payload["hysteresis_metric"]["promotion_gate_allowed"] is False
 
 
-def test_horizon_selector_holdout_review_decision_enum(tmp_path: Path) -> None:
-    paths = _run_horizon_selector_full_inputs(tmp_path)
+def test_horizon_selector_holdout_review_decision_enum(
+    tmp_path: Path,
+    horizon_selector_full_inputs: dict[str, Path],
+) -> None:
+    paths = horizon_selector_full_inputs
     payload = run_horizon_selector_holdout_review(
         value_surface_expansion_path=paths["value_expansion"],
         contract_path=paths["contract"],
