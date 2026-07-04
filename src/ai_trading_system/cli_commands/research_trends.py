@@ -713,6 +713,42 @@ from ai_trading_system.free_pit_data_sources import (
 from ai_trading_system.free_pit_data_sources import (
     DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
 )
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_DYNAMIC_DIAGNOSTICS_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_DYNAMIC_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_EVENT_LOGGER_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_EVENT_LOGGER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_MARKETSTACK_PATH,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_PRICES_PATH as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_PRICES_PATH,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_RATES_PATH as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_RATES_PATH,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    MODE as HIGH_INTENSITY_OUTCOME_BINDER_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
+    run_high_intensity_risk_cap_actual_path_outcome_binder,
+)
 from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DOCS_ROOT,
 )
@@ -3478,6 +3514,60 @@ def high_intensity_risk_cap_forward_observe_event_logger_command(
         mode=mode,
     )
     _print_payload("High-intensity risk-cap forward observe event logger", payload)
+
+
+@trends_app.command("high-intensity-risk-cap-actual-path-outcome-binder")
+def high_intensity_risk_cap_actual_path_outcome_binder_command(
+    event_logger_dir: Annotated[
+        Path, typer.Option("--event-logger-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_EVENT_LOGGER_ROOT,
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_THRESHOLD_ROOT,
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_PLAN_ROOT,
+    dynamic_dry_run_dir: Annotated[
+        Path, typer.Option("--dynamic-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DRY_RUN_ROOT,
+    dynamic_diagnostics_dir: Annotated[
+        Path, typer.Option("--dynamic-diagnostics-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DIAGNOSTICS_ROOT,
+    market_data_source: Annotated[
+        Path, typer.Option("--market-data-source")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_RATES_PATH,
+    marketstack_prices_path: Annotated[
+        Path | None, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_MARKETSTACK_PATH,
+    quality_as_of: Annotated[
+        str | None, typer.Option("--quality-as-of")
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_OUTCOME_BINDER_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_actual_path_outcome_binder(
+        event_logger_dir=event_logger_dir,
+        threshold_selection_dir=threshold_selection_dir,
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        dynamic_dry_run_dir=dynamic_dry_run_dir,
+        dynamic_diagnostics_dir=dynamic_diagnostics_dir,
+        market_data_source=market_data_source,
+        rates_path=rates_path,
+        marketstack_prices_path=marketstack_prices_path,
+        quality_as_of=date.fromisoformat(quality_as_of) if quality_as_of else None,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("High-intensity risk-cap actual path outcome binder", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")

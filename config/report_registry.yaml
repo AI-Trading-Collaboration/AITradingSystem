@@ -24913,6 +24913,116 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_actual_path_outcome_binder
+    title: High-Intensity Risk-Cap Actual Path Outcome Binder
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-actual-path-outcome-binder
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_actual_path_outcome_binder.md
+      - docs/research/high_intensity_event_actual_path_outcomes.md
+      - docs/research/high_intensity_cluster_actual_path_outcomes.md
+      - docs/research/high_intensity_false_warning_missed_upside_downside_capture.md
+      - docs/research/high_intensity_2339_readiness_route.md
+      - docs/requirements/TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder.md
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_outcome_binder_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_event_actual_path_outcome_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_event_actual_path_outcome_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_cluster_actual_path_outcome_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_cluster_actual_path_outcome_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_trigger_day_actual_path_context.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_trigger_day_actual_path_context.csv
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_outcome_coverage_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_horizon_outcome_quality_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_rebound_stress_classification_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_rebound_stress_classification_matrix.csv
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_false_warning_classification_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_missed_upside_classification_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_downside_capture_classification_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_manual_review_usefulness_proxy_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_cluster_weighting_policy.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_actual_path_data_quality_report.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_outcome_binder_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_2339_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_2339_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/high_intensity_outcome_binder_safety_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_actual_path_outcome_binder/data_quality_2026-06-29.md
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_actual_path_outcome_binder
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: PARTIAL_OUTCOME_BINDING_WITH_NOT_DUE_HORIZONS
+    source_task_id: TRADING-2336_HIGH_INTENSITY_RISK_CAP_FORWARD_OBSERVE_EVENT_LOGGER
+    source_status: HIGH_INTENSITY_EVENT_LOGGER_READY_WITH_WARNINGS_PROMOTION_BLOCKED
+    source_artifact_role: high_intensity_risk_cap_forward_observe_event_logger
+    upstream_threshold_selection_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    upstream_dynamic_dry_run_task_id: TRADING-2332_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_WITH_DYNAMIC_TARGET_BASELINE
+    upstream_dynamic_diagnostics_task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    data_validation_policy: CACHED_MARKET_PRICE_DATA_VALIDATION_REQUIRED
+    data_quality_gate_required: true
+    data_quality_gate_executed: true
+    aits_validate_data_executed: true
+    validate_data_as_of: 2026-06-29
+    validate_data_status: PASS_WITH_WARNINGS
+    validate_data_error_count: 0
+    validate_data_warning_count: 2
+    outcome_binding_executed: true
+    original_event_log_mutated: false
+    runtime_scheduler_enabled: false
+    event_actual_path_outcome_matrix_generated: true
+    cluster_actual_path_outcome_matrix_generated: true
+    trigger_day_actual_path_context_generated: true
+    outcome_coverage_report_generated: true
+    false_warning_report_generated: true
+    missed_upside_report_generated: true
+    downside_capture_report_generated: true
+    manual_review_usefulness_report_generated: true
+    actual_path_data_quality_report_generated: true
+    2339_readiness_checklist_generated: true
+    2339_task_route_generated: true
+    primary_analysis_level: cluster
+    secondary_analysis_level: event
+    trigger_day_level_usage: context_only
+    event_count: 60
+    cluster_count: 60
+    pending_outcome_count: 240
+    event_actual_path_outcome_count: 240
+    cluster_actual_path_outcome_count: 240
+    cluster_outcome_bound_count: 231
+    coverage_status: PARTIAL_COVERAGE_WITH_NOT_DUE_HORIZONS
+    readiness_status: PARTIAL_OUTCOME_REVIEW_REQUIRED
+    next_task: TRADING-2339_High_Intensity_Risk_Cap_Partial_Outcome_Readiness_Review
+    research_only: true
+    manual_review_only: true
+    actual_path_outcome_binding_only: true
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Actual-path outcome binding should be rerun when TRADING-2336 event
+      inventory changes, canonical price cache advances enough to mature
+      not-due horizons, or classification policy changes.
+    owner_action: review_partial_outcome_readiness_before_trading_2339
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
