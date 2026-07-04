@@ -29,7 +29,7 @@
   - `git diff --check`：PASS。
 - 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 TRADING-2351 manual-run replay no-side-effect validation 与 high-intensity scheduler manual route 的模块边界；不得在同一低风险切片中改变 scheduler enablement、promotion gate、paper-shadow、production、broker/action 或投资解释。
-- 本轮重构实现提交 SHA：`待回填`。
+- 本轮重构实现提交 SHA：`00fe68e48834e3ce17cc7ed1512a4804d1e17c12`。
 
 ## 2026-06-30 Daily Incremental Refactor
 
