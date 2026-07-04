@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from controlled_strategy_batch_helpers import (
     TEST_AS_OF,
     Path,
     _assert_safety,
-    _run_tail_risk_falsification_inputs,
     _run_tail_risk_review_board_inputs,
     run_tail_risk_fallback_anti_leakage_audit,
     run_tail_risk_fallback_audit_universe_reconciliation,
@@ -19,8 +19,66 @@ from controlled_strategy_batch_helpers import (
 )
 
 
-def test_tail_risk_fallback_audit_universe_reconciliation_counts(tmp_path: Path) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+@pytest.fixture(scope="module")
+def tail_risk_review_board_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_review_board_inputs")
+    return _run_tail_risk_review_board_inputs(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def tail_risk_falsification_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_falsification_inputs")
+    paths = dict(tail_risk_review_board_inputs)
+    reconciliation = run_tail_risk_fallback_audit_universe_reconciliation(
+        robustness_path=paths["robustness"],
+        precision_recall_path=paths["precision"],
+        opportunity_cost_path=paths["opportunity"],
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "tail_reconciliation",
+    )
+    anti_leakage = run_tail_risk_fallback_anti_leakage_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_anti_leakage",
+    )
+    sensitivity = run_tail_risk_fallback_threshold_sensitivity(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_sensitivity",
+    )
+    regime = run_tail_risk_fallback_regime_segmented_robustness(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_regime",
+    )
+    scoreboard = run_tail_risk_fallback_forward_maturity_scoreboard(
+        forward_integration_path=paths["forward"],
+        output_root=tmp_path / "tail_scoreboard",
+        as_of_date=TEST_AS_OF,
+    )
+    return {
+        **paths,
+        "reconciliation": Path(reconciliation["artifact_paths"]["json_path"]),
+        "anti_leakage": Path(anti_leakage["artifact_paths"]["json_path"]),
+        "sensitivity": Path(sensitivity["artifact_paths"]["json_path"]),
+        "regime": Path(regime["artifact_paths"]["json_path"]),
+        "scoreboard": Path(scoreboard["artifact_paths"]["json_path"]),
+    }
+
+
+def test_tail_risk_fallback_audit_universe_reconciliation_counts(
+    tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_fallback_audit_universe_reconciliation(
         robustness_path=paths["robustness"],
         precision_recall_path=paths["precision"],
@@ -45,8 +103,9 @@ def test_tail_risk_fallback_audit_universe_reconciliation_counts(tmp_path: Path)
 
 def test_tail_risk_fallback_reconciliation_missing_denominator_blocks_reconciled(
     tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
 ) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+    paths = tail_risk_review_board_inputs
     broken = json.loads(paths["robustness"].read_text(encoding="utf-8"))
     broken["original_metric"].pop("case_count", None)
     broken_path = tmp_path / "broken_robustness.json"
@@ -68,8 +127,11 @@ def test_tail_risk_fallback_reconciliation_missing_denominator_blocks_reconciled
     )
 
 
-def test_tail_risk_fallback_anti_leakage_flags_label_coupling(tmp_path: Path) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+def test_tail_risk_fallback_anti_leakage_flags_label_coupling(
+    tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_fallback_anti_leakage_audit(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -88,8 +150,11 @@ def test_tail_risk_fallback_anti_leakage_flags_label_coupling(tmp_path: Path) ->
     assert any(row["pit_status"] == "unknown" for row in payload["pit_revision_audit"])
 
 
-def test_tail_risk_fallback_sensitivity_covers_perturbation_families(tmp_path: Path) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+def test_tail_risk_fallback_sensitivity_covers_perturbation_families(
+    tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_fallback_threshold_sensitivity(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -110,8 +175,11 @@ def test_tail_risk_fallback_sensitivity_covers_perturbation_families(tmp_path: P
         assert payload["status"] == "SENSITIVITY_FRAGILE"
 
 
-def test_tail_risk_fallback_regime_segmented_outputs_required_segments(tmp_path: Path) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+def test_tail_risk_fallback_regime_segmented_outputs_required_segments(
+    tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_fallback_regime_segmented_robustness(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -135,8 +203,9 @@ def test_tail_risk_fallback_regime_segmented_outputs_required_segments(tmp_path:
 
 def test_tail_risk_fallback_forward_maturity_excludes_pending_records(
     tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
 ) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_fallback_forward_maturity_scoreboard(
         forward_integration_path=paths["forward"],
         output_root=tmp_path / "scoreboard",
@@ -156,8 +225,9 @@ def test_tail_risk_fallback_forward_maturity_excludes_pending_records(
 
 def test_tail_risk_controlled_review_board_reads_falsification_reports(
     tmp_path: Path,
+    tail_risk_falsification_inputs: dict[str, Path],
 ) -> None:
-    paths = _run_tail_risk_falsification_inputs(tmp_path)
+    paths = tail_risk_falsification_inputs
     payload = run_tail_risk_policy_controlled_review_board(
         robustness_path=paths["robustness"],
         precision_recall_path=paths["precision"],
@@ -179,8 +249,9 @@ def test_tail_risk_controlled_review_board_reads_falsification_reports(
 
 def test_tail_risk_fallback_blocker_diagnostic_sorts_root_causes(
     tmp_path: Path,
+    tail_risk_falsification_inputs: dict[str, Path],
 ) -> None:
-    paths = _run_tail_risk_falsification_inputs(tmp_path)
+    paths = tail_risk_falsification_inputs
     board = run_tail_risk_policy_controlled_review_board(
         robustness_path=paths["robustness"],
         precision_recall_path=paths["precision"],
@@ -218,8 +289,9 @@ def test_tail_risk_fallback_blocker_diagnostic_sorts_root_causes(
 
 def test_tail_risk_trigger_label_independence_audit_blocks_shared_risk_definition(
     tmp_path: Path,
+    tail_risk_falsification_inputs: dict[str, Path],
 ) -> None:
-    paths = _run_tail_risk_falsification_inputs(tmp_path)
+    paths = tail_risk_falsification_inputs
     payload = run_tail_risk_trigger_label_independence_audit(
         classifier_path=paths["classifier"],
         robustness_path=paths["robustness"],

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+import pytest
 from controlled_strategy_batch_helpers import (
     TEST_AS_OF,
     Path,
     _assert_safety,
-    _run_tail_risk_policy_full_inputs,
     _run_tail_risk_policy_inputs,
-    _run_tail_risk_review_board_inputs,
-    _run_tail_risk_robustness_inputs,
     run_benchmark_fallback_drawdown_guard_controlled_prototype,
     run_benchmark_first_tail_risk_policy_contract,
     run_conservative_horizon_risk_filter,
@@ -22,8 +20,97 @@ from controlled_strategy_batch_helpers import (
 )
 
 
-def test_value_surface_policy_kill_diagnostic_downgrade(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_inputs(tmp_path)
+@pytest.fixture(scope="module")
+def tail_risk_policy_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_policy_inputs")
+    return _run_tail_risk_policy_inputs(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def tail_risk_policy_full_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    tail_risk_policy_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_policy_full_inputs")
+    paths = dict(tail_risk_policy_inputs)
+    horizon_filter = run_conservative_horizon_risk_filter(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        contract_path=paths["contract"],
+        output_root=tmp_path / "tail_horizon_filter",
+    )
+    fallback = run_benchmark_fallback_drawdown_guard_controlled_prototype(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        horizon_filter_path=Path(horizon_filter["artifact_paths"]["json_path"]),
+        contract_path=paths["contract"],
+        output_root=tmp_path / "tail_fallback",
+    )
+    return {
+        **paths,
+        "horizon_filter": Path(horizon_filter["artifact_paths"]["json_path"]),
+        "fallback": Path(fallback["artifact_paths"]["json_path"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def tail_risk_robustness_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    tail_risk_policy_full_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_robustness_inputs")
+    paths = dict(tail_risk_policy_full_inputs)
+    robustness = run_tail_risk_benchmark_fallback_robustness_expansion(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        fallback_path=paths["fallback"],
+        output_root=tmp_path / "tail_robustness",
+    )
+    return {**paths, "robustness": Path(robustness["artifact_paths"]["json_path"])}
+
+
+@pytest.fixture(scope="module")
+def tail_risk_review_board_inputs(
+    tmp_path_factory: pytest.TempPathFactory,
+    tail_risk_robustness_inputs: dict[str, Path],
+) -> dict[str, Path]:
+    tmp_path = tmp_path_factory.mktemp("tail_risk_review_board_inputs")
+    paths = dict(tail_risk_robustness_inputs)
+    precision = run_tail_risk_fallback_trigger_precision_recall_audit(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_precision",
+    )
+    opportunity = run_tail_risk_opportunity_cost_upside_capture_review(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        output_root=tmp_path / "tail_opportunity",
+    )
+    forward = run_tail_risk_forward_evidence_integration(
+        value_surface_expansion_path=paths["value_expansion"],
+        classifier_path=paths["classifier"],
+        robustness_path=paths["robustness"],
+        ledger_path=tmp_path / "tail_forward" / "ledger.jsonl",
+        output_root=tmp_path / "tail_forward",
+        as_of_date=TEST_AS_OF,
+    )
+    return {
+        **paths,
+        "precision": Path(precision["artifact_paths"]["json_path"]),
+        "opportunity": Path(opportunity["artifact_paths"]["json_path"]),
+        "forward": Path(forward["artifact_paths"]["json_path"]),
+    }
+
+
+def test_value_surface_policy_kill_diagnostic_downgrade(
+    tmp_path: Path,
+    tail_risk_policy_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_inputs
     payload = run_value_surface_policy_kill_diagnostic_downgrade(
         horizon_selector_holdout_path=paths["horizon_holdout"],
         v2_review_path=paths["v2_review"],
@@ -44,8 +131,11 @@ def test_value_surface_policy_kill_diagnostic_downgrade(tmp_path: Path) -> None:
     assert "direct_action_policy" in payload["policy_downgrade"]["disallowed_uses"]
 
 
-def test_benchmark_first_tail_risk_policy_contract(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_inputs(tmp_path)
+def test_benchmark_first_tail_risk_policy_contract(
+    tmp_path: Path,
+    tail_risk_policy_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_inputs
     payload = run_benchmark_first_tail_risk_policy_contract(
         policy_kill_path=paths["policy_kill"],
         output_root=tmp_path / "tail_contract_check",
@@ -61,8 +151,11 @@ def test_benchmark_first_tail_risk_policy_contract(tmp_path: Path) -> None:
     assert contract["direct_position_policy"] is False
 
 
-def test_tail_loss_avoidance_classifier_prototype_is_gate_only(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_inputs(tmp_path)
+def test_tail_loss_avoidance_classifier_prototype_is_gate_only(
+    tmp_path: Path,
+    tail_risk_policy_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_inputs
     payload = run_tail_loss_avoidance_classifier_prototype(
         value_surface_expansion_path=paths["value_expansion"],
         policy_kill_path=paths["policy_kill"],
@@ -79,8 +172,11 @@ def test_tail_loss_avoidance_classifier_prototype_is_gate_only(tmp_path: Path) -
     assert payload["summary"]["long_horizon_failure_case_count"] >= 0
 
 
-def test_conservative_horizon_risk_filter_status(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_inputs(tmp_path)
+def test_conservative_horizon_risk_filter_status(
+    tmp_path: Path,
+    tail_risk_policy_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_inputs
     payload = run_conservative_horizon_risk_filter(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -99,8 +195,11 @@ def test_conservative_horizon_risk_filter_status(tmp_path: Path) -> None:
     assert payload["selector_mode"] == "risk_filter_not_optimal_horizon_selector"
 
 
-def test_benchmark_fallback_drawdown_guard_controlled_prototype(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+def test_benchmark_fallback_drawdown_guard_controlled_prototype(
+    tmp_path: Path,
+    tail_risk_policy_full_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_full_inputs
     payload = run_benchmark_fallback_drawdown_guard_controlled_prototype(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -121,8 +220,11 @@ def test_benchmark_fallback_drawdown_guard_controlled_prototype(tmp_path: Path) 
     assert "beat_rate_retention" in payload["variant_metrics"][0]
 
 
-def test_tail_risk_policy_family_controlled_review_decision_enum(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+def test_tail_risk_policy_family_controlled_review_decision_enum(
+    tmp_path: Path,
+    tail_risk_policy_full_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_full_inputs
     payload = run_tail_risk_policy_family_controlled_review(
         policy_kill_path=paths["policy_kill"],
         contract_path=paths["contract"],
@@ -144,8 +246,11 @@ def test_tail_risk_policy_family_controlled_review_decision_enum(tmp_path: Path)
     assert payload["review_decision"]["promotion_gate_allowed"] is False
 
 
-def test_tail_risk_benchmark_fallback_robustness_expansion(tmp_path: Path) -> None:
-    paths = _run_tail_risk_policy_full_inputs(tmp_path)
+def test_tail_risk_benchmark_fallback_robustness_expansion(
+    tmp_path: Path,
+    tail_risk_policy_full_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_policy_full_inputs
     payload = run_tail_risk_benchmark_fallback_robustness_expansion(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -169,8 +274,11 @@ def test_tail_risk_benchmark_fallback_robustness_expansion(tmp_path: Path) -> No
     assert payload["by_cluster"]
 
 
-def test_tail_risk_fallback_trigger_precision_recall_audit(tmp_path: Path) -> None:
-    paths = _run_tail_risk_robustness_inputs(tmp_path)
+def test_tail_risk_fallback_trigger_precision_recall_audit(
+    tmp_path: Path,
+    tail_risk_robustness_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_robustness_inputs
     payload = run_tail_risk_fallback_trigger_precision_recall_audit(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -187,8 +295,11 @@ def test_tail_risk_fallback_trigger_precision_recall_audit(tmp_path: Path) -> No
     assert "tail_loss_from_false_negative" in payload["summary"]
 
 
-def test_tail_risk_opportunity_cost_upside_capture_review(tmp_path: Path) -> None:
-    paths = _run_tail_risk_robustness_inputs(tmp_path)
+def test_tail_risk_opportunity_cost_upside_capture_review(
+    tmp_path: Path,
+    tail_risk_robustness_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_robustness_inputs
     payload = run_tail_risk_opportunity_cost_upside_capture_review(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -208,8 +319,11 @@ def test_tail_risk_opportunity_cost_upside_capture_review(tmp_path: Path) -> Non
     )
 
 
-def test_tail_risk_forward_evidence_integration_pending_only(tmp_path: Path) -> None:
-    paths = _run_tail_risk_robustness_inputs(tmp_path)
+def test_tail_risk_forward_evidence_integration_pending_only(
+    tmp_path: Path,
+    tail_risk_robustness_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_robustness_inputs
     payload = run_tail_risk_forward_evidence_integration(
         value_surface_expansion_path=paths["value_expansion"],
         classifier_path=paths["classifier"],
@@ -234,8 +348,11 @@ def test_tail_risk_forward_evidence_integration_pending_only(tmp_path: Path) -> 
     )
 
 
-def test_tail_risk_policy_controlled_review_board_decision_enum(tmp_path: Path) -> None:
-    paths = _run_tail_risk_review_board_inputs(tmp_path)
+def test_tail_risk_policy_controlled_review_board_decision_enum(
+    tmp_path: Path,
+    tail_risk_review_board_inputs: dict[str, Path],
+) -> None:
+    paths = tail_risk_review_board_inputs
     payload = run_tail_risk_policy_controlled_review_board(
         robustness_path=paths["robustness"],
         precision_recall_path=paths["precision"],
