@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.high_intensity_risk_cap_scheduler_common import (
+    collect_real_scheduler_creation_fields,
+    collect_unsafe_fields,
+    emits_action,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_WIRING_PLAN_ROOT,
 )
@@ -909,22 +914,12 @@ def _validate_no_unsafe_fields(label: str, payload: Mapping[str, Any]) -> None:
 
 
 def _collect_unsafe_fields(value: object, prefix: str = "") -> list[str]:
-    violations: list[str] = []
-    if isinstance(value, Mapping):
-        for key, item in value.items():
-            key_text = str(key)
-            path = f"{prefix}.{key_text}" if prefix else key_text
-            if key_text in INPUT_SAFETY_FALSE_FIELDS and item is True:
-                violations.append(path)
-            if key_text == "broker_action" and str(item).lower() not in {"", "none"}:
-                violations.append(path)
-            if key_text in FORBIDDEN_EMIT_FIELDS and _emits_action(item):
-                violations.append(path)
-            violations.extend(_collect_unsafe_fields(item, path))
-    elif isinstance(value, list):
-        for index, item in enumerate(value):
-            violations.extend(_collect_unsafe_fields(item, f"{prefix}[{index}]"))
-    return violations
+    return collect_unsafe_fields(
+        value,
+        false_fields=INPUT_SAFETY_FALSE_FIELDS,
+        forbidden_emit_fields=FORBIDDEN_EMIT_FIELDS,
+        prefix=prefix,
+    )
 
 
 def _collect_real_scheduler_creation_fields(
@@ -939,28 +934,15 @@ def _collect_real_scheduler_creation_fields(
         "daily_scheduler_entry_created",
         "real_scheduler_created",
     }
-    violations: list[str] = []
-    if isinstance(value, Mapping):
-        for key, item in value.items():
-            key_text = str(key)
-            path = f"{prefix}.{key_text}" if prefix else key_text
-            if key_text in fields and item is True:
-                violations.append(path)
-            violations.extend(_collect_real_scheduler_creation_fields(item, path))
-    elif isinstance(value, list):
-        for index, item in enumerate(value):
-            violations.extend(
-                _collect_real_scheduler_creation_fields(item, f"{prefix}[{index}]")
-            )
-    return violations
+    return collect_real_scheduler_creation_fields(
+        value,
+        prefix=prefix,
+        real_scheduler_fields=fields,
+    )
 
 
 def _emits_action(value: object) -> bool:
-    if value in (False, None, "", [], {}):
-        return False
-    if isinstance(value, str):
-        return value.lower() not in {"none", "false", "not_applicable", "blocked"}
-    return True
+    return emits_action(value)
 
 
 def _require_false(payload: Mapping[str, Any], field: str, label: str) -> None:

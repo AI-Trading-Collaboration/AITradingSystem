@@ -1,5 +1,36 @@
 # Refactor Log
 
+## 2026-07-05 Daily Incremental Refactor
+
+- 检查时间：2026-07-05 08:07 Asia/Tokyo。
+- 起始 HEAD：`1d603195d2147c523d6a70d27389dc35d4106561` (`Implement TRADING-2350 manual-run dry-run`)。
+- 最近一次合格重构基线提交：`c1224b51a38036c03578da4687736649fa9dea07` (`refactor: record AITradingSystem candidate report writer refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `2d83ed6ea0ab5a5761ee6903a3f83c99ce4a76b8`。
+- 评估范围：`c1224b51a38036c03578da4687736649fa9dea07..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2347～2350 high-intensity risk-cap observe-only scheduler disabled wiring、smoke dry-run、manual review gate、manual-run dry-run，以及同期 validation runtime fixture cleanup。主要维护风险是 scheduler safety guardrail payload scanner 在相邻模块中重复实现，后续若只改一处，可能导致 unsafe-field、real-scheduler creation 或 forbidden action emission 的 fail-closed 行为分叉。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`
+  - `src/ai_trading_system/high_intensity_risk_cap_scheduler_disabled_wiring.py`
+  - `src/ai_trading_system/high_intensity_risk_cap_scheduler_smoke_dry_run.py`
+  - `tests/research_trends/test_high_intensity_scheduler_common.py`
+- 重构理由：TRADING-2347 disabled wiring 与 TRADING-2348 smoke dry-run 都需要递归扫描 payload，识别 scheduler enablement、real scheduler creation、target weight、rebalance instruction、event append、outcome binding、paper-shadow、production 和 broker action 等 forbidden surfaces。抽取为 `high_intensity_risk_cap_scheduler_common.py` 可把共享 safety scanner 作为内部边界维护，同时保留每个 task module 自己的 field set、status/readiness、artifact writer 和 error type。
+- 行为影响：预期无外部行为变化；`aits research trends high-intensity-risk-cap-observe-only-scheduler-disabled-wiring`、`...-smoke-dry-run`、`...-manual-review-gate` 和 `...-manual-run-dry-run` 的命令名、参数、默认路径、artifact path、JSON keys、Markdown 输出、status/readiness、safety fields、FAIL/PASS 语义和 promotion blocked 边界保持兼容。字符串 action 判定保持原有不 trim 空格的合约。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent scoring/backtest/daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 observe-only scheduler safety scanner 的内部 helper 边界，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output 契约、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\high_intensity_risk_cap_scheduler_common.py src\ai_trading_system\high_intensity_risk_cap_scheduler_disabled_wiring.py src\ai_trading_system\high_intensity_risk_cap_scheduler_smoke_dry_run.py tests\research_trends\test_high_intensity_scheduler_common.py`：PASS。初次运行发现 2 个 import ordering 问题，已用 `python -m ruff check --fix ...` 机械修正后复验通过。
+  - `python -m compileall src\ai_trading_system\high_intensity_risk_cap_scheduler_common.py src\ai_trading_system\high_intensity_risk_cap_scheduler_disabled_wiring.py src\ai_trading_system\high_intensity_risk_cap_scheduler_smoke_dry_run.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\research_trends\test_high_intensity_scheduler_common.py tests\research_trends\test_high_intensity_scheduler_disabled_wiring.py tests\research_trends\test_high_intensity_scheduler_smoke_dry_run.py tests\research_trends\test_high_intensity_scheduler_manual_review_gate.py tests\research_trends\test_high_intensity_scheduler_manual_run_dry_run.py`：PASS，44 passed。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。
+- 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 TRADING-2351 manual-run replay no-side-effect validation 与 high-intensity scheduler manual route 的模块边界；不得在同一低风险切片中改变 scheduler enablement、promotion gate、paper-shadow、production、broker/action 或投资解释。
+- 本轮重构实现提交 SHA：`待回填`。
+
 ## 2026-06-30 Daily Incremental Refactor
 
 - 检查时间：2026-06-30 08:08 Asia/Tokyo。
