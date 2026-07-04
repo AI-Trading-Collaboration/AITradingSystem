@@ -1034,6 +1034,39 @@ from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import
 from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
     run_high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_MANUAL_GATE_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_MANUAL_GATE_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    MODE as HIGH_INTENSITY_MANUAL_GATE_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
+    run_high_intensity_risk_cap_observe_only_scheduler_manual_review_gate,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_smoke_dry_run import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_SOURCE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_smoke_dry_run import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_smoke_dry_run import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_smoke_dry_run import (
+    MODE as HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_smoke_dry_run import (
+    run_high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
     DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_CONTINUE_ROOT,
 )
@@ -4185,6 +4218,68 @@ def high_intensity_risk_cap_observe_only_scheduler_disabled_wiring_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler disabled wiring",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run"
+)
+def high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_SOURCE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run(
+        disabled_wiring_dir=disabled_wiring_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler smoke dry-run",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-manual-review-gate"
+)
+def high_intensity_risk_cap_observe_only_scheduler_manual_review_gate_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_MANUAL_GATE_SMOKE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_MANUAL_GATE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_MANUAL_GATE_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_manual_review_gate(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler manual review gate",
         payload,
     )
 
