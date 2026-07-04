@@ -1016,6 +1016,39 @@ from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import
 from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
     run_high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_CONTINUE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_EVENT_LOGGER_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_EVENT_LOGGER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_RUNTIME_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_RUNTIME_DRY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_RUNTIME_INTEGRATION_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_RUNTIME_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_SCHEDULER_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_SCHEDULER_INTEGRATION_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    MODE as HIGH_INTENSITY_SCHEDULER_WIRING_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_wiring_plan import (
+    run_high_intensity_risk_cap_observe_only_scheduler_wiring_plan,
+)
 from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
 )
@@ -4050,6 +4083,57 @@ def high_intensity_risk_cap_observe_only_scheduler_dry_run_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler dry-run",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-wiring-plan"
+)
+def high_intensity_risk_cap_observe_only_scheduler_wiring_plan_command(
+    scheduler_dry_run_dir: Annotated[
+        Path, typer.Option("--scheduler-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_DRY_RUN_ROOT,
+    scheduler_integration_plan_dir: Annotated[
+        Path, typer.Option("--scheduler-integration-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_PLAN_ROOT,
+    runtime_dry_run_dir: Annotated[
+        Path, typer.Option("--runtime-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_RUNTIME_DRY_ROOT,
+    runtime_integration_plan_dir: Annotated[
+        Path, typer.Option("--runtime-integration-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_RUNTIME_ROOT,
+    continue_decision_dir: Annotated[
+        Path, typer.Option("--continue-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_CONTINUE_ROOT,
+    event_logger_dir: Annotated[
+        Path, typer.Option("--event-logger-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_EVENT_LOGGER_ROOT,
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_THRESHOLD_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_WIRING_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_SCHEDULER_WIRING_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_wiring_plan(
+        scheduler_dry_run_dir=scheduler_dry_run_dir,
+        scheduler_integration_plan_dir=scheduler_integration_plan_dir,
+        runtime_dry_run_dir=runtime_dry_run_dir,
+        runtime_integration_plan_dir=runtime_integration_plan_dir,
+        continue_decision_dir=continue_decision_dir,
+        event_logger_dir=event_logger_dir,
+        threshold_selection_dir=threshold_selection_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler wiring plan",
         payload,
     )
 
