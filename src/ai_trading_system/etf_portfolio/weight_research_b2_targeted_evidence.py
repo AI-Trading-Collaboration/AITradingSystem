@@ -24,6 +24,7 @@ from ai_trading_system.etf_portfolio.weight_research_unblock import (
     DEFAULT_WEIGHT_RESEARCH_UNBLOCK_CONFIG_PATH,
     prepare_research_data_context,
 )
+from ai_trading_system.post_2085_research_common import max_price_date
 
 DEFAULT_WEIGHT_RESEARCH_REPORT_DIR = DEFAULT_ETF_REPORT_DIR / "weight_research"
 DEFAULT_RESEARCH_SOURCE_DIR = PROJECT_ROOT / "docs" / "research"
@@ -154,6 +155,7 @@ def run_b2_targeted_evidence_research(
     locked_windows = _locked_target_windows(sources)
     context_start = min(date.fromisoformat(row["start_date"]) for row in locked_windows)
     context_end = max(date.fromisoformat(row["end_date"]) for row in locked_windows)
+    quality_as_of = max_price_date(prices_path)
     context = prepare_research_data_context(
         prices_path=prices_path,
         rates_path=rates_path,
@@ -165,6 +167,7 @@ def run_b2_targeted_evidence_research(
         config_path=DEFAULT_WEIGHT_RESEARCH_UNBLOCK_CONFIG_PATH,
         generated_at=generated,
         data_quality_output_path=None,
+        data_quality_as_of=quality_as_of,
     )
     data_quality = _data_quality_gate(context)
     risk_policy, target_policy = load_b2_policies(modules_config_path)
@@ -1195,6 +1198,8 @@ def _data_quality_gate(context: Any) -> dict[str, Any]:
         "error_count": report.error_count,
         "warning_count": report.warning_count,
         "info_count": report.info_count,
+        "as_of": report.as_of.isoformat(),
+        "as_of_basis": "latest_price_cache_date",
         "report_path": str(context.data_quality_output_path),
     }
 

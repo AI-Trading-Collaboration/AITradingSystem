@@ -1812,6 +1812,7 @@ def _prepare_research_data_context(
     config_path: Path,
     generated_at: datetime | None,
     data_quality_output_path: Path | None,
+    data_quality_as_of: date | None = None,
 ) -> ResearchDataContext:
     generated = generated_at or datetime.now(UTC)
     contract_validation = build_contract_validation(
@@ -1827,7 +1828,7 @@ def _prepare_research_data_context(
     data_quality_report, quality_output = _run_validate_data_gate(
         prices_path=prices_path,
         rates_path=rates_path,
-        as_of=generated.date(),
+        as_of=data_quality_as_of or generated.date(),
         output_path=data_quality_output_path,
     )
     etf_config = load_etf_config_bundle()
@@ -1855,6 +1856,7 @@ def prepare_research_data_context(
     config_path: Path,
     generated_at: datetime | None,
     data_quality_output_path: Path | None,
+    data_quality_as_of: date | None = None,
 ) -> ResearchDataContext:
     return _prepare_research_data_context(
         prices_path=prices_path,
@@ -1867,6 +1869,7 @@ def prepare_research_data_context(
         config_path=config_path,
         generated_at=generated_at,
         data_quality_output_path=data_quality_output_path,
+        data_quality_as_of=data_quality_as_of,
     )
 
 

@@ -19,6 +19,7 @@ from ai_trading_system.data.quality import (
 )
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH, DEFAULT_ETF_REPORT_DIR
 from ai_trading_system.etf_portfolio.weight_research_unblock import DEFAULT_RATES_CACHE_PATH
+from ai_trading_system.post_2085_research_common import max_price_date
 
 DEFAULT_WEIGHT_RESEARCH_REPORT_DIR = DEFAULT_ETF_REPORT_DIR / "weight_research"
 DEFAULT_RESEARCH_SOURCE_DIR = PROJECT_ROOT / "docs" / "research"
@@ -175,7 +176,7 @@ def run_b2_full_diagnostic_research(
     data_quality = _run_quality_gate(
         prices_path=prices_path,
         rates_path=rates_path,
-        as_of=generated.date(),
+        as_of=max_price_date(prices_path),
         output_path=data_quality_output_path,
     )
 
@@ -1083,6 +1084,8 @@ def _run_quality_gate(
         "error_count": report.error_count,
         "warning_count": report.warning_count,
         "info_count": report.info_count,
+        "as_of": report.as_of.isoformat(),
+        "as_of_basis": "latest_price_cache_date",
         "report_path": str(quality_output),
     }
 

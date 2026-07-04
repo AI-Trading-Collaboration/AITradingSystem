@@ -24799,6 +24799,120 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_forward_observe_event_logger
+    title: High-Intensity Risk-Cap Forward Observe Event Logger
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-forward-observe-event-logger
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_forward_observe_event_logger.md
+      - docs/research/high_intensity_observe_event_schema_usage.md
+      - docs/research/high_intensity_observe_event_clustering_and_dedup.md
+      - docs/research/high_intensity_pending_outcome_registry.md
+      - docs/research/high_intensity_2337_readiness_route.md
+      - docs/requirements/TRADING-2336_High_Intensity_Risk_Cap_Forward_Observe_Event_Logger.md
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_event_logger_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_selected_rule_execution_report.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_trigger_day_log.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_trigger_day_log.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_event_log.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_event_log.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_event_cluster_registry.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_observe_event_cluster_registry.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_monthly_concentration_report.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_pending_outcome_registry.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_pending_outcome_registry.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_outcome_collection_schedule.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_outcome_collection_schedule.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_manual_review_event_queue.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_manual_review_event_queue.csv
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_event_logger_data_quality_report.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_event_logger_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_2337_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_2337_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_forward_observe_event_logger/high_intensity_event_logger_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_forward_observe_event_logger
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: HIGH_INTENSITY_EVENT_LOGGER_READY_WITH_WARNINGS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    source_status: HIGH_INTENSITY_THRESHOLD_SELECTION_READY_WITH_WARNINGS_PROMOTION_BLOCKED
+    source_artifact_role: high_intensity_risk_cap_threshold_selection
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    upstream_dynamic_dry_run_task_id: TRADING-2332_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_WITH_DYNAMIC_TARGET_BASELINE
+    upstream_dynamic_diagnostics_task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    upstream_readiness_task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    upstream_timestamp_remediation_task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_RESEARCH_ARTIFACTS_ONLY_NO_OUTCOME_BINDING
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    prior_2332_data_quality_gate_executed: true
+    diagnostics_review_executed: false
+    simulation_executed: false
+    runtime_observe_started: false
+    runtime_scheduler_enabled: false
+    outcome_binding_executed: false
+    observe_event_logger_only: true
+    trigger_day_log_generated: true
+    observe_event_log_generated: true
+    observe_event_cluster_registry_generated: true
+    monthly_concentration_report_generated: true
+    pending_outcome_registry_generated: true
+    outcome_collection_schedule_generated: true
+    manual_review_event_queue_generated: true
+    event_logger_data_quality_report_generated: true
+    event_logger_interpretation_boundary_generated: true
+    2337_readiness_checklist_generated: true
+    2337_task_route_generated: true
+    pit_policy: PIT_APPROXIMATION_READY
+    known_at_policy: NEXT_SESSION_DECISION_POLICY
+    latency_policy: NEXT_TRADING_DAY_DECISION
+    strict_pit_ready: false
+    pit_approximation_ready: true
+    selected_rule_id: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_rule_version: v1
+    trigger_source_record_count: 2490
+    trigger_day_count: 168
+    trigger_day_density: 0.06747
+    event_count_after_dedup: 60
+    event_density_after_dedup: 0.024096
+    cluster_count: 60
+    monthly_concentration_status: PASS_WITH_WARNINGS
+    monthly_concentration_warning: MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL
+    readiness_status: READY_FOR_2337_OUTCOME_BINDER_WITH_WARNINGS
+    next_task: TRADING-2337_High_Intensity_Risk_Cap_Actual_Path_Outcome_Binder
+    research_only: true
+    manual_review_only: true
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 30
+    freshness_rationale: >
+      High-intensity event logger should be rerun after TRADING-2335 selected
+      rule / event logger contract changes, TRADING-2334 observe schema changes,
+      TRADING-2332 dynamic dry-run trigger source changes, or PIT caveat /
+      timestamp remediation context changes.
+    owner_action: review_2336_event_inventory_before_trading_2337_outcome_binding
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

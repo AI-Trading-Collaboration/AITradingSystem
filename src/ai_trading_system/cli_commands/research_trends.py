@@ -713,6 +713,36 @@ from ai_trading_system.free_pit_data_sources import (
 from ai_trading_system.free_pit_data_sources import (
     DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
 )
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_DYNAMIC_DIAGNOSTICS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DIAGNOSTICS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_DYNAMIC_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DRY_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_READINESS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_READINESS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    DEFAULT_TIMESTAMP_REMEDIATION_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_TIMESTAMP_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    MODE as HIGH_INTENSITY_EVENT_LOGGER_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
+    run_high_intensity_risk_cap_forward_observe_event_logger,
+)
 from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_RISK_CAP_PLAN_DOCS_ROOT,
 )
@@ -3406,6 +3436,48 @@ def high_intensity_risk_cap_threshold_selection_command(
         mode=mode,
     )
     _print_payload("High-intensity risk-cap threshold selection", payload)
+
+
+@trends_app.command("high-intensity-risk-cap-forward-observe-event-logger")
+def high_intensity_risk_cap_forward_observe_event_logger_command(
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_THRESHOLD_ROOT,
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_PLAN_ROOT,
+    dynamic_dry_run_dir: Annotated[
+        Path, typer.Option("--dynamic-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DRY_RUN_ROOT,
+    dynamic_diagnostics_dir: Annotated[
+        Path, typer.Option("--dynamic-diagnostics-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DIAGNOSTICS_ROOT,
+    readiness_dir: Annotated[
+        Path, typer.Option("--readiness-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_READINESS_ROOT,
+    timestamp_remediation_dir: Annotated[
+        Path, typer.Option("--timestamp-remediation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_TIMESTAMP_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_EVENT_LOGGER_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_forward_observe_event_logger(
+        threshold_selection_dir=threshold_selection_dir,
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        dynamic_dry_run_dir=dynamic_dry_run_dir,
+        dynamic_diagnostics_dir=dynamic_diagnostics_dir,
+        readiness_dir=readiness_dir,
+        timestamp_remediation_dir=timestamp_remediation_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload("High-intensity risk-cap forward observe event logger", payload)
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
