@@ -806,6 +806,30 @@ from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
 from ai_trading_system.high_intensity_risk_cap_forward_observe_plan import (
     run_high_intensity_risk_cap_forward_observe_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_EVENT_LOGGER_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_EVENT_LOGGER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_OUTCOME_BINDER_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_BINDER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    MODE as HIGH_INTENSITY_PARTIAL_OUTCOME_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
+    run_high_intensity_risk_cap_partial_outcome_readiness_review,
+)
 from ai_trading_system.high_intensity_risk_cap_threshold_selection import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
 )
@@ -2497,12 +2521,8 @@ def first_layer_candidate_generators_regenerate_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    prices_path: Annotated[
-        Path, typer.Option("--prices-path")
-    ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_path: Annotated[
-        Path, typer.Option("--rates-path")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_path: Annotated[
         Path | None, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
@@ -2530,12 +2550,8 @@ def regenerated_candidate_actual_path_validation_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    prices_path: Annotated[
-        Path, typer.Option("--prices-path")
-    ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_path: Annotated[
-        Path, typer.Option("--rates-path")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_path: Annotated[
         Path | None, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
@@ -2590,9 +2606,7 @@ def candidate_generator_confidence_scaling_refinement_plan_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    docs_root: Annotated[
-        Path, typer.Option("--docs-root")
-    ] = DEFAULT_CONFIDENCE_SCALING_DOCS_ROOT,
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = DEFAULT_CONFIDENCE_SCALING_DOCS_ROOT,
 ) -> None:
     payload = run_candidate_generator_confidence_scaling_refinement_plan(
         diagnostics_dir=diagnostics_dir or DEFAULT_CONFIDENCE_SCALING_DIAGNOSTICS_ROOT,
@@ -2622,8 +2636,7 @@ def refined_candidate_generators_regenerate_command(
     ] = DEFAULT_REFINED_CANDIDATE_REGENERATION_DOCS_ROOT,
 ) -> None:
     payload = run_refined_candidate_generators_regenerate(
-        refinement_plan_dir=refinement_plan_dir
-        or DEFAULT_REFINED_CANDIDATE_REFINEMENT_PLAN_ROOT,
+        refinement_plan_dir=refinement_plan_dir or DEFAULT_REFINED_CANDIDATE_REFINEMENT_PLAN_ROOT,
         original_generator_dir=original_generator_dir
         or DEFAULT_REFINED_CANDIDATE_ORIGINAL_GENERATOR_ROOT,
         candidates=candidates,
@@ -2646,26 +2659,19 @@ def refined_candidate_actual_path_validation_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    prices_path: Annotated[
-        Path, typer.Option("--prices-path")
-    ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_path: Annotated[
-        Path, typer.Option("--rates-path")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_path: Annotated[
         Path | None, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
-    docs_root: Annotated[
-        Path, typer.Option("--docs-root")
-    ] = DEFAULT_REFINED_ACTUAL_PATH_DOCS_ROOT,
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = DEFAULT_REFINED_ACTUAL_PATH_DOCS_ROOT,
 ) -> None:
     payload = run_refined_candidate_actual_path_validation(
         refined_generator_dir=refined_generator_dir
         or DEFAULT_REFINED_ACTUAL_PATH_REFINED_GENERATOR_ROOT,
         original_validation_dir=original_validation_dir
         or DEFAULT_REFINED_ACTUAL_PATH_ORIGINAL_VALIDATION_ROOT,
-        refinement_plan_dir=refinement_plan_dir
-        or DEFAULT_REFINED_ACTUAL_PATH_REFINEMENT_PLAN_ROOT,
+        refinement_plan_dir=refinement_plan_dir or DEFAULT_REFINED_ACTUAL_PATH_REFINEMENT_PLAN_ROOT,
         candidates=candidates,
         target_assets=target_assets,
         horizons=horizons,
@@ -2685,9 +2691,7 @@ def refined_candidate_local_edge_scope_review_command(
     refined_generator_dir: Annotated[Path, typer.Option("--refined-generator-dir")],
     refinement_plan_dir: Annotated[Path, typer.Option("--refinement-plan-dir")],
     candidates: Annotated[str, typer.Option("--candidates")],
-    continue_research_candidates: Annotated[
-        str, typer.Option("--continue-research-candidates")
-    ],
+    continue_research_candidates: Annotated[str, typer.Option("--continue-research-candidates")],
     reject_candidates: Annotated[str, typer.Option("--reject-candidates")],
     target_assets: Annotated[str, typer.Option("--target-assets")],
     horizons: Annotated[str, typer.Option("--horizons")],
@@ -2762,12 +2766,8 @@ def scope_narrowed_candidate_actual_path_validation_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    prices_path: Annotated[
-        Path, typer.Option("--prices-path")
-    ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_path: Annotated[
-        Path, typer.Option("--rates-path")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_REGENERATED_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_path: Annotated[
         Path | None, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
@@ -2778,8 +2778,7 @@ def scope_narrowed_candidate_actual_path_validation_command(
     payload = run_scope_narrowed_candidate_actual_path_validation(
         scope_narrowed_generator_dir=scope_narrowed_generator_dir
         or DEFAULT_SCOPE_NARROWED_ACTUAL_PATH_GENERATOR_ROOT,
-        scope_review_dir=scope_review_dir
-        or DEFAULT_SCOPE_NARROWED_ACTUAL_PATH_SCOPE_REVIEW_ROOT,
+        scope_review_dir=scope_review_dir or DEFAULT_SCOPE_NARROWED_ACTUAL_PATH_SCOPE_REVIEW_ROOT,
         refined_validation_dir=refined_validation_dir
         or DEFAULT_SCOPE_NARROWED_ACTUAL_PATH_REFINED_VALIDATION_ROOT,
         include_candidates=include_candidates,
@@ -2956,9 +2955,7 @@ def exposure_cap_simulation_source_binding_command(
     portfolio_baseline_source: Annotated[
         Path | None, typer.Option("--portfolio-baseline-source")
     ] = None,
-    rates_source: Annotated[
-        Path, typer.Option("--rates-source")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    rates_source: Annotated[Path, typer.Option("--rates-source")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_source: Annotated[
         Path | None, typer.Option("--marketstack-prices-source")
     ] = DEFAULT_REGENERATED_MARKETSTACK_PRICES_PATH,
@@ -2966,9 +2963,7 @@ def exposure_cap_simulation_source_binding_command(
         Path, typer.Option("--policy")
     ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_POLICY_PATH,
     target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
-    quality_as_of: Annotated[
-        str | None, typer.Option("--quality-as-of")
-    ] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_EXPOSURE_CAP_SOURCE_BINDING_OUTPUT_ROOT,
@@ -3009,9 +3004,7 @@ def portfolio_baseline_source_decision_command(
     paper_portfolio_config: Annotated[
         Path | None, typer.Option("--paper-portfolio-config")
     ] = DEFAULT_PORTFOLIO_BASELINE_DECISION_PAPER_CONFIG,
-    actual_holdings_source: Annotated[
-        Path | None, typer.Option("--actual-holdings-source")
-    ] = None,
+    actual_holdings_source: Annotated[Path | None, typer.Option("--actual-holdings-source")] = None,
     allow_synthetic_baseline: Annotated[
         bool,
         typer.Option("--allow-synthetic-baseline/--no-allow-synthetic-baseline"),
@@ -3055,9 +3048,7 @@ def source_bound_exposure_cap_dry_run_command(
     market_data_source: Annotated[
         Path, typer.Option("--market-data-source")
     ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_source: Annotated[
-        Path, typer.Option("--rates-source")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    rates_source: Annotated[Path, typer.Option("--rates-source")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_source: Annotated[
         Path | None, typer.Option("--marketstack-prices-source")
     ] = None,
@@ -3065,9 +3056,7 @@ def source_bound_exposure_cap_dry_run_command(
         Path | None, typer.Option("--policy")
     ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_POLICY_PATH,
     target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SPY,SMH",
-    quality_as_of: Annotated[
-        str | None, typer.Option("--quality-as-of")
-    ] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_OUTPUT_ROOT,
@@ -3315,18 +3304,14 @@ def source_bound_exposure_cap_dynamic_target_dry_run_command(
     market_data_source: Annotated[
         Path, typer.Option("--market-data-source")
     ] = DEFAULT_REGENERATED_PRICES_PATH,
-    rates_source: Annotated[
-        Path, typer.Option("--rates-source")
-    ] = DEFAULT_REGENERATED_RATES_PATH,
+    rates_source: Annotated[Path, typer.Option("--rates-source")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_source: Annotated[
         Path | None, typer.Option("--marketstack-prices-source")
     ] = None,
     policy_path: Annotated[
         Path | None, typer.Option("--policy")
     ] = DEFAULT_SOURCE_BOUND_STATIC_ETF_POLICY_PATH,
-    quality_as_of: Annotated[
-        str | None, typer.Option("--quality-as-of")
-    ] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_DYNAMIC_TARGET_EXPOSURE_CAP_DRY_RUN_OUTPUT_ROOT,
@@ -3457,9 +3442,7 @@ def high_intensity_risk_cap_threshold_selection_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_THRESHOLD_SELECTION_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_THRESHOLD_SELECTION_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_THRESHOLD_SELECTION_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_threshold_selection(
         forward_observe_plan_dir=forward_observe_plan_dir,
@@ -3542,9 +3525,7 @@ def high_intensity_risk_cap_actual_path_outcome_binder_command(
     marketstack_prices_path: Annotated[
         Path | None, typer.Option("--marketstack-prices-path")
     ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_MARKETSTACK_PATH,
-    quality_as_of: Annotated[
-        str | None, typer.Option("--quality-as-of")
-    ] = None,
+    quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDER_OUTPUT_ROOT,
@@ -3568,6 +3549,43 @@ def high_intensity_risk_cap_actual_path_outcome_binder_command(
         mode=mode,
     )
     _print_payload("High-intensity risk-cap actual path outcome binder", payload)
+
+
+@trends_app.command("high-intensity-risk-cap-partial-outcome-readiness-review")
+def high_intensity_risk_cap_partial_outcome_readiness_review_command(
+    outcome_binder_dir: Annotated[
+        Path, typer.Option("--outcome-binder-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_BINDER_ROOT,
+    event_logger_dir: Annotated[
+        Path, typer.Option("--event-logger-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_EVENT_LOGGER_ROOT,
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_THRESHOLD_ROOT,
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_PLAN_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_PARTIAL_OUTCOME_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_partial_outcome_readiness_review(
+        outcome_binder_dir=outcome_binder_dir,
+        event_logger_dir=event_logger_dir,
+        threshold_selection_dir=threshold_selection_dir,
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap partial outcome readiness review",
+        payload,
+    )
 
 
 @trends_app.command("first-layer-new-candidate-family-prioritization")
@@ -3595,9 +3613,7 @@ def breadth_participation_candidate_family_feasibility_audit_command(
     candidate_family: Annotated[str, typer.Option("--candidate-family")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
-    docs_root: Annotated[
-        Path, typer.Option("--docs-root")
-    ] = DEFAULT_BREADTH_FEASIBILITY_DOCS_ROOT,
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = DEFAULT_BREADTH_FEASIBILITY_DOCS_ROOT,
 ) -> None:
     payload = run_breadth_participation_feasibility_audit(
         target_etfs=target_etfs,
@@ -3705,9 +3721,7 @@ def ai_semiconductor_leadership_generator_poc_command(
     ] = DEFAULT_AI_SEMICONDUCTOR_LEADERSHIP_POC_FEASIBILITY_ROOT,
     target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
     horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
-    candidates: Annotated[
-        str, typer.Option("--candidates")
-    ] = (
+    candidates: Annotated[str, typer.Option("--candidates")] = (
         "smh_relative_strength_leadership_v1,"
         "ai_semiconductor_leadership_quality_v1,"
         "ai_core_basket_leadership_v1"
@@ -3757,9 +3771,7 @@ def ai_leadership_actual_path_validation_command(
     ] = DEFAULT_AI_LEADERSHIP_ACTUAL_PATH_POLICY_PATH,
     target_assets: Annotated[str, typer.Option("--target-assets")] = "QQQ,SMH",
     horizons: Annotated[str, typer.Option("--horizons")] = "5d,10d,20d",
-    candidates: Annotated[
-        str, typer.Option("--candidates")
-    ] = (
+    candidates: Annotated[str, typer.Option("--candidates")] = (
         "smh_relative_strength_leadership_v1,"
         "ai_semiconductor_leadership_quality_v1,"
         "ai_core_basket_leadership_v1"
