@@ -25249,6 +25249,125 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_continue_forward_observe_decision
+    title: High-Intensity Risk-Cap Continue Forward Observe Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-continue-forward-observe-decision
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_continue_forward_observe_decision.md
+      - docs/research/high_intensity_selected_rule_continuation_contract.md
+      - docs/research/high_intensity_observe_continuation_scope.md
+      - docs/research/high_intensity_monthly_concentration_monitoring_plan.md
+      - docs/research/high_intensity_2342_readiness_route.md
+      - docs/requirements/TRADING-2341_High_Intensity_Risk_Cap_Continue_Forward_Observe_Decision.md
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_continue_observe_decision_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_continue_observe_decision_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_selected_rule_continuation_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_observe_continuation_scope.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_partial_coverage_carryforward_caveat.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_monthly_concentration_monitoring_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_event_logger_continuation_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_outcome_update_policy.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_manual_review_context_policy.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_stop_refine_archive_policy.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_runtime_integration_prerequisite_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_2342_readiness_checklist.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_2342_task_route.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_continue_observe_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_continue_forward_observe_decision/high_intensity_continue_observe_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_continue_forward_observe_decision
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: CONTINUE_FORWARD_OBSERVE_DECISION_CONFIRMED_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2340_HIGH_INTENSITY_RISK_CAP_FORWARD_OUTCOME_REVIEW_WITH_PARTIAL_COVERAGE_CAVEAT
+    source_status: FORWARD_OUTCOME_REVIEW_COMPLETE_WITH_PARTIAL_COVERAGE_CAVEAT
+    source_recommendation: CONTINUE_HIGH_INTENSITY_FORWARD_OBSERVE
+    source_artifact_role: high_intensity_risk_cap_forward_outcome_review
+    upstream_partial_readiness_task_id: TRADING-2339_HIGH_INTENSITY_RISK_CAP_PARTIAL_OUTCOME_READINESS_REVIEW
+    upstream_outcome_binder_task_id: TRADING-2337_HIGH_INTENSITY_RISK_CAP_ACTUAL_PATH_OUTCOME_BINDER
+    upstream_event_logger_task_id: TRADING-2336_HIGH_INTENSITY_RISK_CAP_FORWARD_OBSERVE_EVENT_LOGGER
+    upstream_threshold_selection_task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+    upstream_forward_observe_plan_task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_2340_2339_2337_ARTIFACTS_ONLY_NO_MARKET_DATA_READ
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    selected_rule_id: COMPOSITE_HIGH_INTENSITY_RULE
+    selected_rule_hash: c0ade3f13c9d238977b882d062a4d0ba125e05ab1f26ee11dfd9475868dba4ec
+    selected_rule_continued: true
+    selected_rule_changed: false
+    decision_status: CONTINUE_DECISION_CONFIRMED_WITH_CAVEATS_PROMOTION_BLOCKED
+    overall_decision: CONTINUE_OBSERVE_ONLY_WITH_PARTIAL_COVERAGE_CAVEAT
+    partial_coverage_caveat_required: true
+    partial_coverage_ratio: 0.9625
+    expected_outcome_count: 240
+    bound_outcome_count: 231
+    not_due_outcome_count: 9
+    critical_clusters_with_not_due: 0
+    inherited_monthly_warning: MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL
+    monthly_concentration_monitoring_required: true
+    monthly_concentration_monitoring_status: MONITORING_REQUIRED_WITH_STRICT_GUARDRAILS
+    event_logger_trigger_day_count: 168
+    event_logger_event_count_after_dedup: 60
+    event_logger_cluster_count: 60
+    runtime_integration_prerequisite_status: READY_FOR_2342_WITH_CAVEATS
+    readiness_status: READY_FOR_2342_WITH_CAVEATS
+    route_caveats:
+      - PARTIAL_COVERAGE_CAVEAT
+      - MONTHLY_CONCENTRATION_MONITORING_REQUIRED
+    next_task: TRADING-2342_High_Intensity_Risk_Cap_Observe_Only_Runtime_Integration_Plan
+    continue_observe_decision_matrix_generated: true
+    selected_rule_continuation_contract_generated: true
+    observe_continuation_scope_generated: true
+    partial_coverage_carryforward_caveat_generated: true
+    monthly_concentration_monitoring_plan_generated: true
+    event_logger_continuation_contract_generated: true
+    outcome_update_policy_generated: true
+    manual_review_context_policy_generated: true
+    stop_refine_archive_policy_generated: true
+    runtime_integration_prerequisite_checklist_generated: true
+    2342_readiness_checklist_generated: true
+    2342_task_route_generated: true
+    research_only: true
+    manual_review_only: true
+    continue_forward_observe_decision_only: true
+    runtime_scheduler_enabled: false
+    new_event_logging_executed: false
+    outcome_binding_executed: false
+    target_weight_action_allowed: false
+    rebalance_instruction_allowed: false
+    automatic_exposure_cap_allowed: false
+    target_weight_generated: false
+    rebalance_instruction_generated: false
+    broker_order_generated: false
+    paper_shadow_order_generated: false
+    production_decision_generated: false
+    promotion_eligible: false
+    paper_shadow_allowed: false
+    production_allowed: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Continue observe decision should be rerun after TRADING-2340 forward
+      outcome review reruns, partial coverage materially changes, monthly
+      concentration guardrails change, or selected-rule continuation policy
+      changes.
+    owner_action: review_2342_observe_only_runtime_integration_plan_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research

@@ -275,7 +275,15 @@ def _write_event_logger_artifacts(
         }
         for row in event_rows
     }
-    write_json(directory / "high_intensity_event_logger_summary.json", safety)
+    write_json(
+        directory / "high_intensity_event_logger_summary.json",
+        {
+            "trigger_day_count": 168,
+            "event_count_after_dedup": len(events_by_id),
+            "cluster_count": len(logger_clusters),
+            **safety,
+        },
+    )
     write_json(
         directory / "high_intensity_observe_event_log.json",
         {"rows": list(events_by_id.values()), **safety},
@@ -298,6 +306,7 @@ def _write_event_logger_artifacts(
             "monthly_concentration_status": "PASS_WITH_WARNINGS",
             "monthly_concentration_warnings": ["MONTHLY_EVENT_CONCENTRATION_ABOVE_GUARDRAIL"],
             "monthly_event_counts": {"2026-04": 54, "2026-06": 6},
+            "monthly_event_guardrail": 3,
             **safety,
         },
     )
@@ -315,6 +324,29 @@ def _write_threshold_selection_artifacts(directory: Path) -> None:
         directory / "high_intensity_selected_trigger_rule.json",
         {"selected_rule_id": "COMPOSITE_HIGH_INTENSITY_RULE", **safety},
     )
+    write_json(
+        directory / "high_intensity_selected_trigger_contract.json",
+        {
+            "contract_id": "HIGH_INTENSITY_SELECTED_TRIGGER_CONTRACT_V1",
+            "contract_version": "v1",
+            "selected_rule_hash": "fixture-selected-rule-hash",
+            "required_input_fields": [
+                "date",
+                "target_asset",
+                "risk_cap_triggered",
+                "risk_cap_intensity",
+                "risk_cap_score",
+                "scope_active",
+                "signal_direction",
+                "as_of_timestamp",
+                "decision_timestamp",
+                "known_at_policy",
+                "pit_policy",
+            ],
+            **safety,
+        },
+    )
+    write_json(directory / "high_intensity_event_logger_input_contract.json", safety)
     write_json(directory / "high_intensity_threshold_selection_caveat_report.json", safety)
     write_json(
         directory / "high_intensity_selected_rule_backtest_context.json",
@@ -331,6 +363,9 @@ def _write_threshold_selection_artifacts(directory: Path) -> None:
 def _write_forward_observe_plan_artifacts(directory: Path) -> None:
     safety = _source_safety(outcome_binding_executed=False)
     for filename in (
+        "high_intensity_forward_observe_event_schema.json",
+        "high_intensity_forward_observe_evidence_contract.json",
+        "high_intensity_actual_path_outcome_contract.json",
         "high_intensity_false_warning_missed_stress_framework.json",
         "high_intensity_stop_continue_archive_rules.json",
         "high_intensity_manual_review_boundary.json",
