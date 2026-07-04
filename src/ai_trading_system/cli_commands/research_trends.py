@@ -863,6 +863,39 @@ from ai_trading_system.high_intensity_risk_cap_forward_outcome_review import (
 from ai_trading_system.high_intensity_risk_cap_forward_outcome_review import (
     run_high_intensity_risk_cap_forward_outcome_review,
 )
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_CONTINUE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_EVENT_LOGGER_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_EVENT_LOGGER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_FORWARD_OBSERVE_PLAN_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_PLAN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_FORWARD_OUTCOME_REVIEW_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_FORWARD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_OUTCOME_BINDER_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_BINDER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_PARTIAL_READINESS_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_PARTIAL_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    DEFAULT_THRESHOLD_SELECTION_ROOT as DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_THRESHOLD_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    MODE as HIGH_INTENSITY_RUNTIME_PLAN_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_observe_only_runtime_integration_plan import (
+    run_high_intensity_risk_cap_observe_only_runtime_integration_plan,
+)
 from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_PARTIAL_OUTCOME_DOCS_ROOT,
 )
@@ -3727,6 +3760,55 @@ def high_intensity_risk_cap_continue_forward_observe_decision_command(
     )
     _print_payload(
         "High-intensity risk-cap continue forward observe decision",
+        payload,
+    )
+
+
+@trends_app.command("high-intensity-risk-cap-observe-only-runtime-integration-plan")
+def high_intensity_risk_cap_observe_only_runtime_integration_plan_command(
+    continue_decision_dir: Annotated[
+        Path, typer.Option("--continue-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_CONTINUE_ROOT,
+    forward_outcome_review_dir: Annotated[
+        Path, typer.Option("--forward-outcome-review-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_FORWARD_ROOT,
+    partial_readiness_dir: Annotated[
+        Path, typer.Option("--partial-readiness-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_PARTIAL_ROOT,
+    outcome_binder_dir: Annotated[
+        Path, typer.Option("--outcome-binder-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_BINDER_ROOT,
+    event_logger_dir: Annotated[
+        Path, typer.Option("--event-logger-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_EVENT_LOGGER_ROOT,
+    threshold_selection_dir: Annotated[
+        Path, typer.Option("--threshold-selection-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_THRESHOLD_ROOT,
+    forward_observe_plan_dir: Annotated[
+        Path, typer.Option("--forward-observe-plan-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_PLAN_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_RUNTIME_PLAN_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_RUNTIME_PLAN_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_runtime_integration_plan(
+        continue_decision_dir=continue_decision_dir,
+        forward_outcome_review_dir=forward_outcome_review_dir,
+        partial_readiness_dir=partial_readiness_dir,
+        outcome_binder_dir=outcome_binder_dir,
+        event_logger_dir=event_logger_dir,
+        threshold_selection_dir=threshold_selection_dir,
+        forward_observe_plan_dir=forward_observe_plan_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only runtime integration plan",
         payload,
     )
 
