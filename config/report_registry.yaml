@@ -18614,6 +18614,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_guarded_variant_owner_review_decision
+    title: Dynamic Strategy Guarded Variant Owner Review And Observation Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-guarded-variant-owner-review-decision
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_guarded_variant_owner_review_decision/owner_review_decision.json
+      - outputs/research_strategies/dynamic_strategy_guarded_variant_owner_review_decision/two_line_candidate_review.json
+      - outputs/research_strategies/dynamic_strategy_guarded_variant_owner_review_decision/next_research_direction_decision.json
+      - docs/research/dynamic_strategy_guarded_variant_owner_review_decision.md
+      - docs/research/dynamic_strategy_two_line_candidate_review.md
+      - docs/research/dynamic_strategy_observation_rejection_after_guarded_retest.md
+      - docs/research/dynamic_strategy_2385_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2384 consumes TRADING-2379/2380/2381/2382/2383 prior artifacts to record guarded variant owner review, rejects observation, closes local optimization, and routes TRADING-2385 candidate-pool expansion without reading fresh cached market data.
+    owner_action: review_dynamic_strategy_guarded_variant_owner_review_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

@@ -49,6 +49,44 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    run_dynamic_strategy_guarded_variant_owner_review_decision,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH as DEFAULT_2384_SOURCE_VARIANT_RANKING,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH as DEFAULT_2384_SOURCE_VARIANT_RETEST,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2380_OBSERVATION_REJECTION_PATH as DEFAULT_2384_SOURCE_OBSERVATION_REJECTION,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2380_OWNER_REVIEW_PATH as DEFAULT_2384_SOURCE_OWNER_REVIEW,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2381_NEXT_DIRECTION_PATH as DEFAULT_2384_SOURCE_NEXT_DIRECTION,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2381_PLATEAU_DECISION_PATH as DEFAULT_2384_SOURCE_PLATEAU_DECISION,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2382_GUARDED_VARIANT_PLAN_PATH as DEFAULT_2384_SOURCE_GUARDED_PLAN,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2382_RETEST_PLAN_PATH as DEFAULT_2384_SOURCE_RETEST_PLAN,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2383_DECISION_UPDATE_PATH as DEFAULT_2384_SOURCE_GUARDED_DECISION,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2383_GUARDED_VARIANT_RANKING_PATH as DEFAULT_2384_SOURCE_GUARDED_RANKING,
+)
+from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2383_GUARDED_VARIANT_RETEST_PATH as DEFAULT_2384_SOURCE_GUARDED_RETEST,
+)
 from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_OUTPUT_ROOT,
@@ -550,6 +588,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-ranking-top-guarded-variant-retest"
     )(_dynamic_strategy_ranking_top_guarded_variant_retest_command)
+    strategies_app.command(
+        "dynamic-strategy-guarded-variant-owner-review-decision"
+    )(_dynamic_strategy_guarded_variant_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2396,6 +2437,70 @@ def _dynamic_strategy_ranking_top_guarded_variant_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy ranking top guarded variant retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_guarded_variant_owner_review_decision_command(
+    source_guarded_variant_retest_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-retest")
+    ] = DEFAULT_2384_SOURCE_GUARDED_RETEST,
+    source_guarded_decision_update_path: Annotated[
+        Path, typer.Option("--source-guarded-decision-update")
+    ] = DEFAULT_2384_SOURCE_GUARDED_DECISION,
+    source_guarded_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-ranking")
+    ] = DEFAULT_2384_SOURCE_GUARDED_RANKING,
+    source_retest_plan_path: Annotated[
+        Path, typer.Option("--source-retest-plan")
+    ] = DEFAULT_2384_SOURCE_RETEST_PLAN,
+    source_guarded_variant_plan_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-plan")
+    ] = DEFAULT_2384_SOURCE_GUARDED_PLAN,
+    source_plateau_decision_path: Annotated[
+        Path, typer.Option("--source-plateau-decision")
+    ] = DEFAULT_2384_SOURCE_PLATEAU_DECISION,
+    source_next_direction_path: Annotated[
+        Path, typer.Option("--source-next-direction")
+    ] = DEFAULT_2384_SOURCE_NEXT_DIRECTION,
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = DEFAULT_2384_SOURCE_VARIANT_RETEST,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = DEFAULT_2384_SOURCE_VARIANT_RANKING,
+    source_owner_review_path: Annotated[
+        Path, typer.Option("--source-owner-review")
+    ] = DEFAULT_2384_SOURCE_OWNER_REVIEW,
+    source_observation_rejection_path: Annotated[
+        Path, typer.Option("--source-observation-rejection")
+    ] = DEFAULT_2384_SOURCE_OBSERVATION_REJECTION,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_GUARDED_VARIANT_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_guarded_variant_owner_review_decision(
+        source_guarded_variant_retest_path=source_guarded_variant_retest_path,
+        source_guarded_decision_update_path=source_guarded_decision_update_path,
+        source_guarded_variant_ranking_path=source_guarded_variant_ranking_path,
+        source_retest_plan_path=source_retest_plan_path,
+        source_guarded_variant_plan_path=source_guarded_variant_plan_path,
+        source_plateau_decision_path=source_plateau_decision_path,
+        source_next_direction_path=source_next_direction_path,
+        source_variant_retest_path=source_variant_retest_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        source_owner_review_path=source_owner_review_path,
+        source_observation_rejection_path=source_observation_rejection_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy guarded variant owner review decision",
         payload,
     )
 
