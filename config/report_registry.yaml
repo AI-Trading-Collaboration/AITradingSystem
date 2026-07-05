@@ -18185,6 +18185,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_cost_turnover_cooldown_sensitivity
+    title: Dynamic Strategy Cost Turnover And Cooldown Sensitivity
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-cost-turnover-cooldown-sensitivity
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_cost_turnover_cooldown_sensitivity/sensitivity_result.json
+      - outputs/research_strategies/dynamic_strategy_cost_turnover_cooldown_sensitivity/sensitivity_matrix.json
+      - outputs/research_strategies/dynamic_strategy_cost_turnover_cooldown_sensitivity/decision_update.json
+      - docs/research/dynamic_strategy_cost_turnover_cooldown_sensitivity.md
+      - docs/research/dynamic_strategy_sensitivity_matrix.md
+      - docs/research/dynamic_strategy_decision_update_summary.md
+      - docs/research/dynamic_strategy_2367_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2366 consumes TRADING-2365 event-driven retest ranking and stress-tests cost, turnover, cooldown and min-holding assumptions before owner review / shadow research gate.
+    owner_action: review_dynamic_strategy_cost_turnover_cooldown_sensitivity
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

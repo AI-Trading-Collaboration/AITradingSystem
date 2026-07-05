@@ -497,6 +497,13 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "command": "aits research strategies dynamic-strategy-event-driven-retest",
     },
     {
+        "report_id": "dynamic_strategy_cost_turnover_cooldown_sensitivity",
+        "title": "Dynamic Strategy Cost Turnover And Cooldown Sensitivity",
+        "command": (
+            "aits research strategies dynamic-strategy-cost-turnover-cooldown-sensitivity"
+        ),
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",

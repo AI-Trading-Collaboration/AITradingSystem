@@ -9,6 +9,14 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.dynamic_strategy_cost_turnover_cooldown_sensitivity import (
+    DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_OUTPUT_ROOT,
+    DEFAULT_SOURCE_CADENCE_MATRIX_PATH,
+    DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    run_dynamic_strategy_cost_turnover_cooldown_sensitivity,
+)
 from ai_trading_system.dynamic_strategy_event_driven_retest import (
     DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_OUTPUT_ROOT,
@@ -170,6 +178,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-event-driven-retest")(
         _dynamic_strategy_event_driven_retest_command
+    )
+    strategies_app.command("dynamic-strategy-cost-turnover-cooldown-sensitivity")(
+        _dynamic_strategy_cost_turnover_cooldown_sensitivity_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -1066,6 +1077,71 @@ def _dynamic_strategy_event_driven_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy event-driven retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_cost_turnover_cooldown_sensitivity_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    source_cadence_matrix_path: Annotated[
+        Path, typer.Option("--source-cadence-matrix")
+    ] = DEFAULT_SOURCE_CADENCE_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_DOCS_ROOT,
+    strategy: Annotated[
+        list[str] | None,
+        typer.Option("--strategy", help="Dynamic strategy id; may be repeated."),
+    ] = None,
+    turnover_penalty: Annotated[
+        float,
+        typer.Option("--turnover-penalty"),
+    ] = 0.0,
+    risk_cap_enabled: Annotated[
+        bool,
+        typer.Option("--risk-cap-enabled/--risk-cap-disabled"),
+    ] = True,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_cost_turnover_cooldown_sensitivity(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_cadence_matrix_path=source_cadence_matrix_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strategy_ids=strategy,
+        turnover_penalty=turnover_penalty,
+        risk_cap_enabled=risk_cap_enabled,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy cost turnover cooldown sensitivity",
         payload,
     )
 
