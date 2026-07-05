@@ -40,6 +40,16 @@ from ai_trading_system.dynamic_strategy_research_only_observation_owner_decision
     DEFAULT_SOURCE_REPLAY_VALIDATION_PATH,
     run_dynamic_strategy_research_only_shadow_observation_owner_review_decision,
 )
+from ai_trading_system.dynamic_strategy_research_only_observation_report_dry_run import (
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_OUTPUT_ROOT,
+    DEFAULT_SOURCE_2369_OBSERVATION_DRY_RUN_RECORD_PATH,
+    DEFAULT_SOURCE_2369_OBSERVATION_DRY_RUN_RESULT_PATH,
+    DEFAULT_SOURCE_2370_REPLAY_VALIDATION_PATH,
+    DEFAULT_SOURCE_2371_OWNER_REVIEW_DECISION_PATH,
+    DEFAULT_SOURCE_2372_LOG_SCHEMA_PLAN_PATH,
+    run_dynamic_strategy_research_only_observation_report_dry_run,
+)
 from ai_trading_system.dynamic_strategy_research_only_shadow_observation_dry_run import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_OUTPUT_ROOT,
@@ -251,6 +261,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-research-only-observation-log-schema-plan"
     )(_dynamic_strategy_research_only_observation_log_schema_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-research-only-observation-report-dry-run"
+    )(_dynamic_strategy_research_only_observation_report_dry_run_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1457,6 +1470,46 @@ def _dynamic_strategy_research_only_observation_log_schema_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only observation log schema plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_only_observation_report_dry_run_command(
+    source_owner_review_decision_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision")
+    ] = DEFAULT_SOURCE_2371_OWNER_REVIEW_DECISION_PATH,
+    source_log_schema_plan_path: Annotated[
+        Path, typer.Option("--source-log-schema-plan")
+    ] = DEFAULT_SOURCE_2372_LOG_SCHEMA_PLAN_PATH,
+    source_observation_dry_run_result_path: Annotated[
+        Path, typer.Option("--source-observation-dry-run-result")
+    ] = DEFAULT_SOURCE_2369_OBSERVATION_DRY_RUN_RESULT_PATH,
+    source_observation_dry_run_record_path: Annotated[
+        Path, typer.Option("--source-observation-dry-run-record")
+    ] = DEFAULT_SOURCE_2369_OBSERVATION_DRY_RUN_RECORD_PATH,
+    source_replay_validation_path: Annotated[
+        Path, typer.Option("--source-replay-validation")
+    ] = DEFAULT_SOURCE_2370_REPLAY_VALIDATION_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_research_only_observation_report_dry_run(
+        source_owner_review_decision_path=source_owner_review_decision_path,
+        source_log_schema_plan_path=source_log_schema_plan_path,
+        source_observation_dry_run_result_path=source_observation_dry_run_result_path,
+        source_observation_dry_run_record_path=source_observation_dry_run_record_path,
+        source_replay_validation_path=source_replay_validation_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research-only observation report dry-run",
         payload,
     )
 

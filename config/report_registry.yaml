@@ -18352,6 +18352,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_only_observation_report_dry_run
+    title: Dynamic Strategy Research-Only Observation Report Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-only-observation-report-dry-run
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_report_dry_run/observation_report_dry_run_result.json
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_report_dry_run/observation_record_example.json
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_report_dry_run/no_side_effect_evidence.json
+      - docs/research/dynamic_strategy_research_only_observation_report_dry_run.md
+      - docs/research/dynamic_strategy_research_only_observation_record_example.md
+      - docs/research/dynamic_strategy_2374_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2373 consumes TRADING-2371 owner decision, TRADING-2372 schema/plan, TRADING-2369 dry-run and TRADING-2370 replay evidence to generate a manual research-only observation report dry-run before TRADING-2374 owner reassessment.
+    owner_action: review_dynamic_strategy_research_only_observation_report_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
