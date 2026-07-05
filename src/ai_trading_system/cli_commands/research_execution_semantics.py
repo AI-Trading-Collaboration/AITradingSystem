@@ -30,6 +30,41 @@ from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH as DEFAULT_OPT_SOURCE_SENSITIVITY_RESULT,
 )
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_POOL_EXPANSION_PLAN_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_POOL_EXPANSION_PLAN_OUTPUT_ROOT,
+    run_dynamic_strategy_candidate_pool_expansion_plan,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_2385_SOURCE_SENS_DECISION,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH as DEFAULT_2385_SOURCE_SENS_RESULT,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH as DEFAULT_2385_SOURCE_VARIANT_RANKING,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH as DEFAULT_2385_SOURCE_VARIANT_RETEST,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2383_DECISION_UPDATE_PATH as DEFAULT_2385_SOURCE_GUARDED_DECISION,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2383_GUARDED_VARIANT_RANKING_PATH as DEFAULT_2385_SOURCE_GUARDED_RANKING,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2383_GUARDED_VARIANT_RETEST_PATH as DEFAULT_2385_SOURCE_GUARDED_RETEST,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2384_NEXT_DIRECTION_PATH as DEFAULT_2385_SOURCE_NEXT_DIRECTION,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_2384_OWNER_REVIEW_PATH as DEFAULT_2385_SOURCE_OWNER_REVIEW,
+)
+from ai_trading_system.dynamic_strategy_candidate_pool_expansion_plan import (
+    DEFAULT_SOURCE_CANDIDATE_RANKING_PATH as DEFAULT_2385_SOURCE_CANDIDATE_RANKING,
+)
 from ai_trading_system.dynamic_strategy_cost_turnover_cooldown_sensitivity import (
     DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_OUTPUT_ROOT,
@@ -591,6 +626,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-guarded-variant-owner-review-decision"
     )(_dynamic_strategy_guarded_variant_owner_review_decision_command)
+    strategies_app.command(
+        "dynamic-strategy-candidate-pool-expansion-plan"
+    )(_dynamic_strategy_candidate_pool_expansion_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2501,6 +2539,68 @@ def _dynamic_strategy_guarded_variant_owner_review_decision_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy guarded variant owner review decision",
+        payload,
+    )
+
+
+def _dynamic_strategy_candidate_pool_expansion_plan_command(
+    source_owner_review_path: Annotated[
+        Path, typer.Option("--source-owner-review")
+    ] = DEFAULT_2385_SOURCE_OWNER_REVIEW,
+    source_next_direction_path: Annotated[
+        Path, typer.Option("--source-next-direction")
+    ] = DEFAULT_2385_SOURCE_NEXT_DIRECTION,
+    source_guarded_variant_retest_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-retest")
+    ] = DEFAULT_2385_SOURCE_GUARDED_RETEST,
+    source_guarded_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-ranking")
+    ] = DEFAULT_2385_SOURCE_GUARDED_RANKING,
+    source_guarded_decision_update_path: Annotated[
+        Path, typer.Option("--source-guarded-decision-update")
+    ] = DEFAULT_2385_SOURCE_GUARDED_DECISION,
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = DEFAULT_2385_SOURCE_VARIANT_RETEST,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = DEFAULT_2385_SOURCE_VARIANT_RANKING,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_2385_SOURCE_CANDIDATE_RANKING,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_2385_SOURCE_SENS_RESULT,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_2385_SOURCE_SENS_DECISION,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_POOL_EXPANSION_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_POOL_EXPANSION_PLAN_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_candidate_pool_expansion_plan(
+        source_owner_review_path=source_owner_review_path,
+        source_next_direction_path=source_next_direction_path,
+        source_guarded_variant_retest_path=source_guarded_variant_retest_path,
+        source_guarded_variant_ranking_path=source_guarded_variant_ranking_path,
+        source_guarded_decision_update_path=source_guarded_decision_update_path,
+        source_variant_retest_path=source_variant_retest_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy candidate pool expansion plan",
         payload,
     )
 

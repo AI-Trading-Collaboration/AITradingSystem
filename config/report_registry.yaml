@@ -18638,6 +18638,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_candidate_pool_expansion_plan
+    title: Dynamic Strategy Candidate Pool Expansion And Signal Family Diversification Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-candidate-pool-expansion-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_candidate_pool_expansion_plan/candidate_pool_expansion_plan.json
+      - outputs/research_strategies/dynamic_strategy_candidate_pool_expansion_plan/signal_family_diversification_plan.json
+      - outputs/research_strategies/dynamic_strategy_candidate_pool_expansion_plan/candidate_budget_guardrails.json
+      - outputs/research_strategies/dynamic_strategy_candidate_pool_expansion_plan/retest_plan_2386.json
+      - docs/research/dynamic_strategy_candidate_pool_expansion_plan.md
+      - docs/research/dynamic_strategy_signal_family_diversification_plan.md
+      - docs/research/dynamic_strategy_candidate_budget_and_anti_overfit_guardrails.md
+      - docs/research/dynamic_strategy_2386_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2385 consumes TRADING-2365/2366/2379/2383/2384 prior artifacts to define candidate-pool expansion, signal-family diversification, anti-overfit guardrails, and the TRADING-2386 retest route without reading fresh cached market data.
+    owner_action: review_dynamic_strategy_candidate_pool_expansion_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
