@@ -28,6 +28,14 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_top_candidate_owner_review_gate import (
+    DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_OUTPUT_ROOT,
+    DEFAULT_SOURCE_DECISION_UPDATE_PATH,
+    DEFAULT_SOURCE_SENSITIVITY_MATRIX_PATH,
+    DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH,
+    run_dynamic_strategy_top_candidate_owner_review_gate,
+)
 from ai_trading_system.execution_semantics import (
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_MATRIX_YAML_PATH,
     DEFAULT_ACTUAL_PATH_EDGE_ATTRIBUTION_REVIEW_PATH,
@@ -181,6 +189,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-cost-turnover-cooldown-sensitivity")(
         _dynamic_strategy_cost_turnover_cooldown_sensitivity_command
+    )
+    strategies_app.command("dynamic-strategy-top-candidate-owner-review-gate")(
+        _dynamic_strategy_top_candidate_owner_review_gate_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -1142,6 +1153,50 @@ def _dynamic_strategy_cost_turnover_cooldown_sensitivity_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy cost turnover cooldown sensitivity",
+        payload,
+    )
+
+
+def _dynamic_strategy_top_candidate_owner_review_gate_command(
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    source_cadence_matrix_path: Annotated[
+        Path, typer.Option("--source-cadence-matrix")
+    ] = DEFAULT_SOURCE_CADENCE_MATRIX_PATH,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH,
+    source_sensitivity_matrix_path: Annotated[
+        Path, typer.Option("--source-sensitivity-matrix")
+    ] = DEFAULT_SOURCE_SENSITIVITY_MATRIX_PATH,
+    source_decision_update_path: Annotated[
+        Path, typer.Option("--source-decision-update")
+    ] = DEFAULT_SOURCE_DECISION_UPDATE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_top_candidate_owner_review_gate(
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_cadence_matrix_path=source_cadence_matrix_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_matrix_path=source_sensitivity_matrix_path,
+        source_decision_update_path=source_decision_update_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy top candidate owner review gate",
         payload,
     )
 

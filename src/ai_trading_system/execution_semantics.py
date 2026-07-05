@@ -504,6 +504,13 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "report_id": "dynamic_strategy_top_candidate_owner_review_gate",
+        "title": "Dynamic Strategy Top Candidate Owner Review And Shadow Research Gate",
+        "command": (
+            "aits research strategies dynamic-strategy-top-candidate-owner-review-gate"
+        ),
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",
