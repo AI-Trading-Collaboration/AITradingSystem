@@ -18689,6 +18689,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_observation_gate_threshold_calibration_review
+    title: Dynamic Strategy Observation Gate Threshold Calibration Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-observation-gate-threshold-calibration-review
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_observation_gate_threshold_calibration_review/gate_calibration_review_result.json
+      - outputs/research_strategies/dynamic_strategy_observation_gate_threshold_calibration_review/gate_policy_review.json
+      - outputs/research_strategies/dynamic_strategy_observation_gate_threshold_calibration_review/candidate_reclassification_preview.json
+      - outputs/research_strategies/dynamic_strategy_observation_gate_threshold_calibration_review/recommended_gate_policy_update.json
+      - docs/research/dynamic_strategy_observation_gate_threshold_calibration_review.md
+      - docs/research/dynamic_strategy_gate_policy_review.md
+      - docs/research/dynamic_strategy_candidate_reclassification_preview.md
+      - docs/research/dynamic_strategy_2388_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2387 consumes prior validated TRADING-2365/2366/2384/2385/2386 research artifacts and existing observation-gate threshold constants to produce a no-side-effect calibration review; it does not read fresh cached market data, rerun backtests, generate signals, mutate rules, or approve observation.
+    owner_action: review_dynamic_strategy_observation_gate_threshold_calibration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

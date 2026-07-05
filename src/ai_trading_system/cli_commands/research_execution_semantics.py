@@ -155,6 +155,38 @@ from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision im
 from ai_trading_system.dynamic_strategy_guarded_variant_owner_review_decision import (
     DEFAULT_SOURCE_2383_GUARDED_VARIANT_RETEST_PATH as DEFAULT_2384_SOURCE_GUARDED_RETEST,
 )
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_DYNAMIC_STRATEGY_OBSERVATION_GATE_THRESHOLD_CALIBRATION_REVIEW_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_OBSERVATION_GATE_THRESHOLD_CALIBRATION_REVIEW_OUTPUT_ROOT,
+    run_dynamic_strategy_observation_gate_threshold_calibration_review,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_2387_SOURCE_SENS_DECISION,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH as DEFAULT_2387_SOURCE_SENS_RESULT,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2384_OWNER_REVIEW_PATH as DEFAULT_2387_SOURCE_OWNER_REVIEW,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2385_CANDIDATE_POOL_EXPANSION_PLAN_PATH as DEFAULT_2387_SOURCE_POOL_PLAN,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2386_DECISION_UPDATE_PATH as DEFAULT_2387_SOURCE_DECISION_UPDATE,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH as DEFAULT_2387_SOURCE_RANKING,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH as DEFAULT_2387_SOURCE_RETEST,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_2386_SIGNAL_FAMILY_SCREENING_PATH as DEFAULT_2387_SOURCE_SIGNAL_FAMILY,
+)
+from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
+    DEFAULT_SOURCE_CANDIDATE_RANKING_PATH as DEFAULT_2387_SOURCE_CANDIDATE_RANKING,
+)
 from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_OUTPUT_ROOT,
@@ -665,6 +697,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-expanded-candidate-pool-retest"
     )(_dynamic_strategy_expanded_candidate_pool_retest_command)
+    strategies_app.command(
+        "dynamic-strategy-observation-gate-threshold-calibration-review"
+    )(_dynamic_strategy_observation_gate_threshold_calibration_review_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2718,6 +2753,64 @@ def _dynamic_strategy_expanded_candidate_pool_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy expanded candidate pool retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_observation_gate_threshold_calibration_review_command(
+    source_expanded_candidate_retest_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest")
+    ] = DEFAULT_2387_SOURCE_RETEST,
+    source_expanded_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking")
+    ] = DEFAULT_2387_SOURCE_RANKING,
+    source_signal_family_screening_path: Annotated[
+        Path, typer.Option("--source-signal-family-screening")
+    ] = DEFAULT_2387_SOURCE_SIGNAL_FAMILY,
+    source_decision_update_path: Annotated[
+        Path, typer.Option("--source-decision-update")
+    ] = DEFAULT_2387_SOURCE_DECISION_UPDATE,
+    source_candidate_pool_plan_path: Annotated[
+        Path, typer.Option("--source-candidate-pool-plan")
+    ] = DEFAULT_2387_SOURCE_POOL_PLAN,
+    source_owner_review_path: Annotated[
+        Path, typer.Option("--source-owner-review")
+    ] = DEFAULT_2387_SOURCE_OWNER_REVIEW,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_2387_SOURCE_CANDIDATE_RANKING,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_2387_SOURCE_SENS_RESULT,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_2387_SOURCE_SENS_DECISION,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBSERVATION_GATE_THRESHOLD_CALIBRATION_REVIEW_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OBSERVATION_GATE_THRESHOLD_CALIBRATION_REVIEW_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_observation_gate_threshold_calibration_review(
+        source_expanded_candidate_retest_path=source_expanded_candidate_retest_path,
+        source_expanded_candidate_ranking_path=source_expanded_candidate_ranking_path,
+        source_signal_family_screening_path=source_signal_family_screening_path,
+        source_decision_update_path=source_decision_update_path,
+        source_candidate_pool_plan_path=source_candidate_pool_plan_path,
+        source_owner_review_path=source_owner_review_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy observation gate threshold calibration review",
         payload,
     )
 
