@@ -44,6 +44,21 @@ from ai_trading_system.dynamic_strategy_research_only_shadow_observation_protoco
     DEFAULT_SOURCE_SHADOW_RESEARCH_GATE_DECISION_PATH,
     run_dynamic_strategy_research_only_shadow_observation_protocol,
 )
+from ai_trading_system.dynamic_strategy_research_only_shadow_observation_replay_validation import (
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_REPLAY_VALIDATION_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_REPLAY_VALIDATION_OUTPUT_ROOT,
+    DEFAULT_REPLAY_COUNT,
+    DEFAULT_SOURCE_DRY_RUN_NO_SIDE_EFFECT_EVIDENCE_PATH,
+    DEFAULT_SOURCE_DRY_RUN_RECORD_PATH,
+    DEFAULT_SOURCE_DRY_RUN_RESULT_PATH,
+    run_dynamic_strategy_research_only_shadow_observation_replay_validation,
+)
+from ai_trading_system.dynamic_strategy_research_only_shadow_observation_replay_validation import (
+    DEFAULT_SOURCE_OBSERVATION_PROTOCOL_PATH as DEFAULT_REPLAY_SOURCE_OBSERVATION_PROTOCOL_PATH,
+)
+from ai_trading_system.dynamic_strategy_research_only_shadow_observation_replay_validation import (
+    DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH as DEFAULT_REPLAY_SOURCE_OWNER_REVIEW_GATE_PATH,
+)
 from ai_trading_system.dynamic_strategy_top_candidate_owner_review_gate import (
     DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_TOP_CANDIDATE_OWNER_REVIEW_GATE_OUTPUT_ROOT,
@@ -215,6 +230,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command("dynamic-strategy-research-only-shadow-observation-dry-run")(
         _dynamic_strategy_research_only_shadow_observation_dry_run_command
     )
+    strategies_app.command(
+        "dynamic-strategy-research-only-shadow-observation-replay-validation"
+    )(_dynamic_strategy_research_only_shadow_observation_replay_validation_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1329,6 +1347,50 @@ def _dynamic_strategy_research_only_shadow_observation_dry_run_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only shadow observation dry-run",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_only_shadow_observation_replay_validation_command(
+    source_dry_run_result_path: Annotated[
+        Path, typer.Option("--source-dry-run-result")
+    ] = DEFAULT_SOURCE_DRY_RUN_RESULT_PATH,
+    source_dry_run_record_path: Annotated[
+        Path, typer.Option("--source-dry-run-record")
+    ] = DEFAULT_SOURCE_DRY_RUN_RECORD_PATH,
+    source_dry_run_no_side_effect_evidence_path: Annotated[
+        Path, typer.Option("--source-dry-run-no-side-effect-evidence")
+    ] = DEFAULT_SOURCE_DRY_RUN_NO_SIDE_EFFECT_EVIDENCE_PATH,
+    source_observation_protocol_path: Annotated[
+        Path, typer.Option("--source-observation-protocol")
+    ] = DEFAULT_REPLAY_SOURCE_OBSERVATION_PROTOCOL_PATH,
+    source_owner_review_gate_path: Annotated[
+        Path, typer.Option("--source-owner-review-gate")
+    ] = DEFAULT_REPLAY_SOURCE_OWNER_REVIEW_GATE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_REPLAY_VALIDATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_REPLAY_VALIDATION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    replay_count: Annotated[int, typer.Option("--replay-count")] = DEFAULT_REPLAY_COUNT,
+) -> None:
+    payload = run_dynamic_strategy_research_only_shadow_observation_replay_validation(
+        source_dry_run_result_path=source_dry_run_result_path,
+        source_dry_run_record_path=source_dry_run_record_path,
+        source_dry_run_no_side_effect_evidence_path=(
+            source_dry_run_no_side_effect_evidence_path
+        ),
+        source_observation_protocol_path=source_observation_protocol_path,
+        source_owner_review_gate_path=source_owner_review_gate_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        replay_count=replay_count,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research-only shadow observation replay validation",
         payload,
     )
 

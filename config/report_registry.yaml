@@ -18281,6 +18281,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_only_shadow_observation_replay_validation
+    title: Dynamic Strategy Research-Only Shadow Observation Replay Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-only-shadow-observation-replay-validation
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_replay_validation/replay_validation_result.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_replay_validation/replay_no_side_effect_evidence.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_replay_validation/stable_semantic_hash_report.json
+      - docs/research/dynamic_strategy_research_only_shadow_observation_replay_validation.md
+      - docs/research/dynamic_strategy_shadow_observation_replay_no_side_effect_evidence.md
+      - docs/research/dynamic_strategy_shadow_observation_replay_semantic_hash.md
+      - docs/research/dynamic_strategy_2371_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2370 consumes TRADING-2369 dry-run result, dry-run record and no-side-effect evidence plus TRADING-2368 / TRADING-2367 governance artifacts to validate deterministic replay semantics before TRADING-2371 owner review decision.
+    owner_action: review_dynamic_strategy_research_only_shadow_observation_replay_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
