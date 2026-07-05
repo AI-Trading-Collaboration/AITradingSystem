@@ -28,6 +28,12 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_research_only_observation_owner_decision import (
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    DEFAULT_SOURCE_REPLAY_VALIDATION_PATH,
+    run_dynamic_strategy_research_only_shadow_observation_owner_review_decision,
+)
 from ai_trading_system.dynamic_strategy_research_only_shadow_observation_dry_run import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_OUTPUT_ROOT,
@@ -233,6 +239,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-research-only-shadow-observation-replay-validation"
     )(_dynamic_strategy_research_only_shadow_observation_replay_validation_command)
+    strategies_app.command(
+        "dynamic-strategy-research-only-shadow-observation-owner-review-decision"
+    )(_dynamic_strategy_research_only_shadow_observation_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1391,6 +1400,30 @@ def _dynamic_strategy_research_only_shadow_observation_replay_validation_command
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only shadow observation replay validation",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_only_shadow_observation_owner_review_decision_command(
+    source_replay_validation_path: Annotated[
+        Path, typer.Option("--source-replay-validation")
+    ] = DEFAULT_SOURCE_REPLAY_VALIDATION_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_research_only_shadow_observation_owner_review_decision(
+        source_replay_validation_path=source_replay_validation_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research-only shadow observation owner review decision",
         payload,
     )
 

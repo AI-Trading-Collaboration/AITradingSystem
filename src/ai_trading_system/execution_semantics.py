@@ -539,6 +539,18 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "report_id": (
+            "dynamic_strategy_research_only_shadow_observation_owner_review_decision"
+        ),
+        "title": (
+            "Dynamic Strategy Research-Only Shadow Observation Owner Review Decision"
+        ),
+        "command": (
+            "aits research strategies "
+            "dynamic-strategy-research-only-shadow-observation-owner-review-decision"
+        ),
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",
