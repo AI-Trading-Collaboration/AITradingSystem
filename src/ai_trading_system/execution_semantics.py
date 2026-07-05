@@ -579,6 +579,17 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "report_id": "dynamic_strategy_candidate_optimization_divergence_review",
+        "title": (
+            "Dynamic Strategy Candidate Optimization And Ranking-Robustness "
+            "Divergence Review"
+        ),
+        "command": (
+            "aits research strategies "
+            "dynamic-strategy-candidate-optimization-divergence-review"
+        ),
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",

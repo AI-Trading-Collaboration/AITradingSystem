@@ -9,6 +9,27 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_OUTPUT_ROOT,
+    DEFAULT_SOURCE_OWNER_REASSESSMENT_PATH,
+    run_dynamic_strategy_candidate_optimization_divergence_review,
+)
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_SOURCE_CANDIDATE_OWNER_REVIEW_COMPARISON_PATH as DEFAULT_OPT_CANDIDATE_CMP,
+)
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_SOURCE_DECISION_UPDATE_PATH as DEFAULT_OPT_SOURCE_DECISION_UPDATE,
+)
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH as DEFAULT_OPT_SOURCE_OWNER_GATE,
+)
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_SOURCE_SENSITIVITY_MATRIX_PATH as DEFAULT_OPT_SOURCE_SENSITIVITY_MATRIX,
+)
+from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
+    DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH as DEFAULT_OPT_SOURCE_SENSITIVITY_RESULT,
+)
 from ai_trading_system.dynamic_strategy_cost_turnover_cooldown_sensitivity import (
     DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_COST_TURNOVER_COOLDOWN_SENSITIVITY_OUTPUT_ROOT,
@@ -273,6 +294,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-research-only-observation-owner-reassessment"
     )(_dynamic_strategy_research_only_observation_owner_reassessment_command)
+    strategies_app.command(
+        "dynamic-strategy-candidate-optimization-divergence-review"
+    )(_dynamic_strategy_candidate_optimization_divergence_review_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1353,10 +1377,10 @@ def _dynamic_strategy_research_only_shadow_observation_dry_run_command(
     ] = DEFAULT_SOURCE_REVIEW_THRESHOLDS_PATH,
     source_owner_review_gate_path: Annotated[
         Path, typer.Option("--source-owner-review-gate")
-    ] = DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH,
+    ] = DEFAULT_OPT_SOURCE_OWNER_GATE,
     source_candidate_owner_review_comparison_path: Annotated[
         Path, typer.Option("--source-candidate-owner-review-comparison")
-    ] = DEFAULT_SOURCE_CANDIDATE_OWNER_REVIEW_COMPARISON_PATH,
+    ] = DEFAULT_OPT_CANDIDATE_CMP,
     source_sensitivity_result_path: Annotated[
         Path, typer.Option("--source-sensitivity-result")
     ] = DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH,
@@ -1547,6 +1571,82 @@ def _dynamic_strategy_research_only_observation_owner_reassessment_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only observation owner reassessment",
+        payload,
+    )
+
+
+def _dynamic_strategy_candidate_optimization_divergence_review_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    source_cadence_matrix_path: Annotated[
+        Path, typer.Option("--source-cadence-matrix")
+    ] = DEFAULT_SOURCE_CADENCE_MATRIX_PATH,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_OPT_SOURCE_SENSITIVITY_RESULT,
+    source_sensitivity_matrix_path: Annotated[
+        Path, typer.Option("--source-sensitivity-matrix")
+    ] = DEFAULT_OPT_SOURCE_SENSITIVITY_MATRIX,
+    source_decision_update_path: Annotated[
+        Path, typer.Option("--source-decision-update")
+    ] = DEFAULT_OPT_SOURCE_DECISION_UPDATE,
+    source_owner_review_gate_path: Annotated[
+        Path, typer.Option("--source-owner-review-gate")
+    ] = DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH,
+    source_candidate_owner_review_comparison_path: Annotated[
+        Path, typer.Option("--source-candidate-owner-review-comparison")
+    ] = DEFAULT_SOURCE_CANDIDATE_OWNER_REVIEW_COMPARISON_PATH,
+    source_owner_reassessment_path: Annotated[
+        Path, typer.Option("--source-owner-reassessment")
+    ] = DEFAULT_SOURCE_OWNER_REASSESSMENT_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_candidate_optimization_divergence_review(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_cadence_matrix_path=source_cadence_matrix_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_matrix_path=source_sensitivity_matrix_path,
+        source_decision_update_path=source_decision_update_path,
+        source_owner_review_gate_path=source_owner_review_gate_path,
+        source_candidate_owner_review_comparison_path=(
+            source_candidate_owner_review_comparison_path
+        ),
+        source_owner_reassessment_path=source_owner_reassessment_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy candidate optimization divergence review",
         payload,
     )
 

@@ -18398,6 +18398,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_candidate_optimization_divergence_review
+    title: Dynamic Strategy Candidate Optimization And Ranking-Robustness Divergence Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-candidate-optimization-divergence-review
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_candidate_optimization_divergence_review/divergence_review_result.json
+      - outputs/research_strategies/dynamic_strategy_candidate_optimization_divergence_review/optimization_matrix.json
+      - outputs/research_strategies/dynamic_strategy_candidate_optimization_divergence_review/candidate_decision_update.json
+      - docs/research/dynamic_strategy_candidate_optimization_divergence_review.md
+      - docs/research/dynamic_strategy_ranking_vs_robustness_divergence_review.md
+      - docs/research/dynamic_strategy_candidate_optimization_matrix.md
+      - docs/research/dynamic_strategy_2376_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2375 consumes TRADING-2365/2366/2367/2374 artifacts and the cached-data quality gate to review ranking-vs-robustness divergence before TRADING-2376 targeted retest.
+    owner_action: review_dynamic_strategy_candidate_optimization_divergence_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
