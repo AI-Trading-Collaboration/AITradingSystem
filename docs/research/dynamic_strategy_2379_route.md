@@ -1,0 +1,7 @@
+# TRADING-2379 route
+
+- current status：`DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_AND_RETURN_GAP_OPTIMIZATION_PLAN_READY`
+- primary candidate：`dynamic_regime_overlay_v0_4_lower_turnover`
+- planned variants：`dynamic_regime_overlay_v0_4_reentry_repair_v1, dynamic_regime_overlay_v0_4_upside_capture_guarded_v1, dynamic_regime_overlay_v0_4_valid_until_decay_tuned_v1, dynamic_regime_overlay_v0_4_cooldown_balanced_v1, dynamic_regime_overlay_v0_4_return_gap_repair_fusion_v1`
+- next route：`TRADING-2379_Dynamic_Strategy_Slice_Robustness_Optimized_Variant_Retest`
+- route boundary：slice-robustness optimized variant retest；不是 observation、paper-shadow、scheduler、production、broker 或 daily report approval。

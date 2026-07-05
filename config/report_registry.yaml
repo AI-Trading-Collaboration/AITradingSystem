@@ -18469,6 +18469,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_slice_robustness_return_gap_optimization_plan
+    title: Dynamic Strategy Slice Robustness And Return Gap Optimization Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-slice-robustness-return-gap-optimization-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_return_gap_optimization_plan/optimization_plan_result.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_return_gap_optimization_plan/time_regime_slice_gap_diagnosis.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_return_gap_optimization_plan/return_gap_repair_variant_plan.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_return_gap_optimization_plan/variant_evaluation_plan.json
+      - docs/research/dynamic_strategy_slice_robustness_return_gap_optimization_plan.md
+      - docs/research/dynamic_strategy_time_regime_slice_gap_diagnosis.md
+      - docs/research/dynamic_strategy_return_gap_repair_variant_plan.md
+      - docs/research/dynamic_strategy_2379_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2378 consumes TRADING-2365/2366/2375/2376/2377 prior artifacts to plan slice robustness and return-gap optimized variants before TRADING-2379; it does not rerun cached-data backtests.
+    owner_action: review_dynamic_strategy_slice_robustness_return_gap_optimization_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
