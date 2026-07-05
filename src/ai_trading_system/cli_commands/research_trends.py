@@ -950,6 +950,33 @@ from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review 
 from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
     run_high_intensity_risk_cap_partial_outcome_readiness_review,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    MODE as HIGH_INTENSITY_AUDIT_PACKAGE_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
+    run_high_intensity_risk_cap_observe_only_scheduler_audit_package,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_disabled_wiring import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DOCS_ROOT,
 )
@@ -4412,6 +4439,49 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation_
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler manual-run replay validation",
+        payload,
+    )
+
+
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-audit-package")
+def high_intensity_risk_cap_observe_only_scheduler_audit_package_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_REPLAY_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_AUDIT_PACKAGE_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_audit_package(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler audit package",
         payload,
     )
 
