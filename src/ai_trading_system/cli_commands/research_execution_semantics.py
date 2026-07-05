@@ -49,6 +49,35 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_OUTPUT_ROOT,
+    run_dynamic_strategy_optimization_plateau_next_candidate_decision,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2365_CANDIDATE_RANKING_PATH as DEFAULT_2381_SOURCE_CANDIDATE_RANKING,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_2381_SOURCE_SENS_DECISION,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH as DEFAULT_2381_SOURCE_SENS_RESULT,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2376_TARGETED_RETEST_PATH as DEFAULT_2381_SOURCE_TARGETED_RETEST,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH as DEFAULT_2381_SOURCE_VARIANT_RANKING,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH as DEFAULT_2381_SOURCE_VARIANT_RETEST,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2380_OBSERVATION_REJECTION_PATH as DEFAULT_2381_SOURCE_OBSERVATION_REJECTION,
+)
+from ai_trading_system.dynamic_strategy_optimization_plateau_next_candidate_decision import (
+    DEFAULT_SOURCE_2380_OWNER_REVIEW_PATH as DEFAULT_2381_SOURCE_OWNER_REVIEW,
+)
 from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_OUTPUT_ROOT,
@@ -451,6 +480,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-optimized-variant-owner-review-decision"
     )(_dynamic_strategy_optimized_variant_owner_review_decision_command)
+    strategies_app.command(
+        "dynamic-strategy-optimization-plateau-next-candidate-decision"
+    )(_dynamic_strategy_optimization_plateau_next_candidate_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2116,6 +2148,58 @@ def _dynamic_strategy_optimized_variant_owner_review_decision_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy optimized variant owner review decision",
+        payload,
+    )
+
+
+def _dynamic_strategy_optimization_plateau_next_candidate_decision_command(
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_2381_SOURCE_CANDIDATE_RANKING,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_2381_SOURCE_SENS_RESULT,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_2381_SOURCE_SENS_DECISION,
+    source_targeted_retest_path: Annotated[
+        Path, typer.Option("--source-targeted-retest")
+    ] = DEFAULT_2381_SOURCE_TARGETED_RETEST,
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = DEFAULT_2381_SOURCE_VARIANT_RETEST,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = DEFAULT_2381_SOURCE_VARIANT_RANKING,
+    source_owner_review_path: Annotated[
+        Path, typer.Option("--source-owner-review")
+    ] = DEFAULT_2381_SOURCE_OWNER_REVIEW,
+    source_observation_rejection_path: Annotated[
+        Path, typer.Option("--source-observation-rejection")
+    ] = DEFAULT_2381_SOURCE_OBSERVATION_REJECTION,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZATION_PLATEAU_NEXT_CANDIDATE_DECISION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_optimization_plateau_next_candidate_decision(
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=source_sensitivity_decision_update_path,
+        source_targeted_retest_path=source_targeted_retest_path,
+        source_variant_retest_path=source_variant_retest_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        source_owner_review_path=source_owner_review_path,
+        source_observation_rejection_path=source_observation_rejection_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy optimization plateau next candidate decision",
         payload,
     )
 

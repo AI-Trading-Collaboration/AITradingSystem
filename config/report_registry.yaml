@@ -18541,6 +18541,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_optimization_plateau_next_candidate_decision
+    title: Dynamic Strategy Optimization Plateau And Next Candidate Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-optimization-plateau-next-candidate-decision
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_optimization_plateau_next_candidate_decision/optimization_plateau_decision.json
+      - outputs/research_strategies/dynamic_strategy_optimization_plateau_next_candidate_decision/next_candidate_direction.json
+      - docs/research/dynamic_strategy_optimization_plateau_next_candidate_decision.md
+      - docs/research/dynamic_strategy_plateau_review.md
+      - docs/research/dynamic_strategy_next_candidate_direction.md
+      - docs/research/dynamic_strategy_2382_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2381 consumes TRADING-2365/2366/2376/2379/2380 prior artifacts to decide local optimization plateau and next candidate direction before TRADING-2382; it does not rerun cached-data backtests.
+    owner_action: review_dynamic_strategy_optimization_plateau_next_candidate_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
