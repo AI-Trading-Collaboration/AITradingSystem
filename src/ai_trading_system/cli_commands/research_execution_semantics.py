@@ -40,6 +40,12 @@ from ai_trading_system.dynamic_strategy_research_only_observation_owner_decision
     DEFAULT_SOURCE_REPLAY_VALIDATION_PATH,
     run_dynamic_strategy_research_only_shadow_observation_owner_review_decision,
 )
+from ai_trading_system.dynamic_strategy_research_only_observation_owner_reassessment import (
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_OUTPUT_ROOT,
+    DEFAULT_SOURCE_2373_REPORT_DRY_RUN_PATH,
+    run_dynamic_strategy_research_only_observation_owner_reassessment,
+)
 from ai_trading_system.dynamic_strategy_research_only_observation_report_dry_run import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_REPORT_DRY_RUN_OUTPUT_ROOT,
@@ -264,6 +270,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-research-only-observation-report-dry-run"
     )(_dynamic_strategy_research_only_observation_report_dry_run_command)
+    strategies_app.command(
+        "dynamic-strategy-research-only-observation-owner-reassessment"
+    )(_dynamic_strategy_research_only_observation_owner_reassessment_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1510,6 +1519,34 @@ def _dynamic_strategy_research_only_observation_report_dry_run_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only observation report dry-run",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_only_observation_owner_reassessment_command(
+    source_report_dry_run_path: Annotated[
+        Path, typer.Option("--source-report-dry-run")
+    ] = DEFAULT_SOURCE_2373_REPORT_DRY_RUN_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_OWNER_REASSESSMENT_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_research_only_observation_owner_reassessment(
+        source_report_dry_run_path=source_report_dry_run_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research-only observation owner reassessment",
         payload,
     )
 

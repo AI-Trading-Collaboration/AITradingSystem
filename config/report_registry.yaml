@@ -18375,6 +18375,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_only_observation_owner_reassessment
+    title: Dynamic Strategy Research-Only Observation Owner Reassessment
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-only-observation-owner-reassessment
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_owner_reassessment/owner_reassessment_result.json
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_owner_reassessment/owner_reassessment_checkpoint.json
+      - outputs/research_strategies/dynamic_strategy_research_only_observation_owner_reassessment/no_side_effect_evidence.json
+      - docs/research/dynamic_strategy_research_only_observation_owner_reassessment.md
+      - docs/research/dynamic_strategy_research_only_observation_owner_reassessment_checkpoint.md
+      - docs/research/dynamic_strategy_research_only_observation_reassessment_options.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2374 consumes TRADING-2373 manual report dry-run evidence to stop the linear observation line until owner reassessment before any TRADING-2375 work.
+    owner_action: review_dynamic_strategy_research_only_observation_owner_reassessment
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
