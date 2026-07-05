@@ -1130,6 +1130,45 @@ from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import
 from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
     run_high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_HARDENING_BACKLOG_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_HARDENING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_KILL_SWITCH_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    MODE as HIGH_INTENSITY_KILL_SWITCH_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_kill_switch_plan import (
+    run_high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_manual_review_gate import (
     DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DISABLED_ROOT,
 )
@@ -4749,6 +4788,67 @@ def high_intensity_risk_cap_observe_only_scheduler_hardening_backlog_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler hardening backlog",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan"
+)
+def high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_GAP_CLOSURE_ROOT,
+    hardening_backlog_dir: Annotated[
+        Path, typer.Option("--hardening-backlog-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_HARDENING_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_KILL_SWITCH_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler kill-switch plan",
         payload,
     )
 
