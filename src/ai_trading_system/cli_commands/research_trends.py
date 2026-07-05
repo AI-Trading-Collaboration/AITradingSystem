@@ -1064,6 +1064,42 @@ from ai_trading_system.high_intensity_risk_cap_scheduler_gap_closure_plan import
 from ai_trading_system.high_intensity_risk_cap_scheduler_gap_closure_plan import (
     run_high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_HARDENING_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    MODE as HIGH_INTENSITY_HARDENING_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_scheduler_hardening_backlog import (
+    run_high_intensity_risk_cap_observe_only_scheduler_hardening_backlog,
+)
 from ai_trading_system.high_intensity_risk_cap_scheduler_integration_plan import (
     DEFAULT_CONTINUE_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_SCHEDULER_PLAN_CONTINUE_ROOT,
 )
@@ -4656,6 +4692,63 @@ def high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler gap closure plan",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-scheduler-hardening-backlog"
+)
+def high_intensity_risk_cap_observe_only_scheduler_hardening_backlog_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_GAP_CLOSURE_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_HARDENING_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_HARDENING_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_hardening_backlog(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only scheduler hardening backlog",
         payload,
     )
 

@@ -26913,6 +26913,148 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_observe_only_scheduler_hardening_backlog
+    title: High-Intensity Risk-Cap Observe-Only Scheduler Hardening Backlog And Evidence Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-observe-only-scheduler-hardening-backlog
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog.md
+      - docs/research/high_intensity_2356_scheduler_kill_switch_route.md
+      - docs/requirements/TRADING-2355_Observe_Only_Scheduler_Hardening_Backlog_And_Evidence_Matrix.md
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_backlog_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_backlog_source_artifact_review.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_backlog_items.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_evidence_matrix.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_blocked_promotion_rationale.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_2356_scheduler_kill_switch_route.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_backlog_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_hardening_backlog/high_intensity_scheduler_hardening_backlog_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_observe_only_scheduler_hardening_backlog
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: OBSERVE_ONLY_SCHEDULER_HARDENING_BACKLOG_AND_EVIDENCE_MATRIX_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2354_OBSERVE_ONLY_SCHEDULER_GAP_CLOSURE_AND_READINESS_HARDENING_PLAN
+    source_status: OBSERVE_ONLY_SCHEDULER_GAP_CLOSURE_AND_READINESS_HARDENING_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_readiness_status: READY_FOR_2355_WITH_CAVEATS
+    source_next_task: TRADING-2355_Observe_Only_Scheduler_Hardening_Backlog_And_Evidence_Matrix
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_RESEARCH_ARTIFACTS_ONLY_NO_MARKET_DATA_READ_NO_OUTCOME_BINDING
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    source_tasks:
+      - TRADING-2347
+      - TRADING-2348
+      - TRADING-2349
+      - TRADING-2350
+      - TRADING-2351
+      - TRADING-2352
+      - TRADING-2353
+      - TRADING-2354
+    evidence_chain_complete: true
+    owner_decision: KEEP_DISABLED_AND_PROMOTION_BLOCKED
+    hardening_backlog_ready: true
+    evidence_matrix_ready: true
+    promotion_decision: BLOCKED
+    promotion_allowed: false
+    readiness: READY_FOR_2356_WITH_CAVEATS
+    next_task: TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan
+    next_route: TRADING-2356_Observe_Only_Scheduler_Kill_Switch_And_Disabled_Enforcement_Evidence_Plan
+    hardening_backlog_categories:
+      - scheduler_enablement_guardrail
+      - scheduler_idempotency
+      - event_append_guardrail
+      - outcome_binding_guardrail
+      - paper_shadow_guardrail
+    evidence_matrix_items:
+      - scheduler_kill_switch
+      - scheduler_idempotency
+      - event_append_contract
+      - outcome_binding_contract
+      - paper_shadow_scope
+      - production_risk_review
+      - broker_action_contract
+    all_backlog_items_side_effect_allowed: false
+    all_backlog_items_promotion_allowed_after_task: false
+    route_caveats:
+      - OWNER_DECISION_KEEP_DISABLED
+      - PROMOTION_BLOCKED
+      - OBSERVE_ONLY
+      - MANUAL_REVIEW_REQUIRED
+      - SCHEDULER_DISABLED
+      - MANUAL_RUN_ONLY
+      - DRY_RUN_ONLY
+      - HARDENING_BACKLOG_ONLY
+      - EVIDENCE_MATRIX_ONLY
+      - NO_AUTOMATED_CADENCE
+      - NO_EVENT_APPEND
+      - NO_OUTCOME_BINDING
+      - NO_PAPER_SHADOW
+      - NO_PRODUCTION
+      - NO_BROKER_ACTION
+      - KILL_SWITCH_EVIDENCE_REQUIRED
+    research_only: true
+    observe_only: true
+    hardening_backlog_only: true
+    evidence_matrix_only: true
+    prior_validated_artifacts_only: true
+    source_artifacts_only: true
+    scheduler_enabled: false
+    scheduler_default_enabled: false
+    automated_cadence_enabled: false
+    automated_cadence_created: false
+    manual_run_only: true
+    dry_run_only: true
+    manual_run_executed: false
+    event_append_enabled: false
+    event_append_attempted: false
+    event_append_executed: false
+    outcome_binding_enabled: false
+    outcome_binding_attempted: false
+    outcome_binding_executed: false
+    paper_shadow_enabled: false
+    paper_shadow_attempted: false
+    paper_shadow_allowed: false
+    production_enabled: false
+    production_attempted: false
+    production_allowed: false
+    broker_action_enabled: false
+    broker_action_attempted: false
+    broker_action_allowed: false
+    real_scheduler_created: false
+    cron_created: false
+    cron_entry_created: false
+    windows_task_created: false
+    github_actions_schedule_created: false
+    github_action_schedule_created: false
+    event_log_mutated: false
+    outcome_store_mutated: false
+    fresh_market_data_read: false
+    new_signal_generated: false
+    backtest_run: false
+    daily_report_generated: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Hardening backlog and evidence matrix should be rerun after TRADING-2354
+      gap closure artifacts change, or after project owner explicitly changes
+      the scheduler decision.
+    owner_action: complete_2356_scheduler_kill_switch_and_disabled_enforcement_evidence_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
