@@ -551,6 +551,14 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         ),
     },
     {
+        "report_id": "dynamic_strategy_research_only_observation_log_schema_plan",
+        "title": "Dynamic Strategy Research-Only Observation Log Schema And Report Plan",
+        "command": (
+            "aits research strategies "
+            "dynamic-strategy-research-only-observation-log-schema-plan"
+        ),
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",
