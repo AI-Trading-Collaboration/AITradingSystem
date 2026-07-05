@@ -18233,6 +18233,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_only_shadow_observation_protocol
+    title: Dynamic Strategy Research-Only Shadow Observation Protocol
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-only-shadow-observation-protocol
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_protocol/observation_protocol.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_protocol/observation_field_schema.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_protocol/review_thresholds.json
+      - docs/research/dynamic_strategy_research_only_shadow_observation_protocol.md
+      - docs/research/dynamic_strategy_shadow_observation_field_schema.md
+      - docs/research/dynamic_strategy_shadow_observation_review_thresholds.md
+      - docs/research/dynamic_strategy_2369_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2368 consumes TRADING-2365, TRADING-2366 and TRADING-2367 artifacts to define the research-only shadow observation protocol before TRADING-2369 dry-run.
+    owner_action: review_dynamic_strategy_research_only_shadow_observation_protocol
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
