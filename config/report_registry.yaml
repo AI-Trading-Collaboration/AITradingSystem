@@ -18257,6 +18257,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_only_shadow_observation_dry_run
+    title: Dynamic Strategy Research-Only Shadow Observation Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-only-shadow-observation-dry-run
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_dry_run/observation_dry_run_result.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_dry_run/observation_dry_run_record.json
+      - outputs/research_strategies/dynamic_strategy_research_only_shadow_observation_dry_run/no_side_effect_evidence.json
+      - docs/research/dynamic_strategy_research_only_shadow_observation_dry_run.md
+      - docs/research/dynamic_strategy_shadow_observation_dry_run_record.md
+      - docs/research/dynamic_strategy_shadow_observation_no_side_effect_evidence.md
+      - docs/research/dynamic_strategy_2370_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2369 consumes TRADING-2368 protocol plus TRADING-2367, TRADING-2366 and TRADING-2365 artifacts to generate a research-only dry-run preview before TRADING-2370 replay no-side-effect validation.
+    owner_action: review_dynamic_strategy_research_only_shadow_observation_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

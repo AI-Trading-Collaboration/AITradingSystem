@@ -28,6 +28,14 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_research_only_shadow_observation_dry_run import (
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_OUTPUT_ROOT,
+    DEFAULT_SOURCE_OBSERVATION_FIELD_SCHEMA_PATH,
+    DEFAULT_SOURCE_OBSERVATION_PROTOCOL_PATH,
+    DEFAULT_SOURCE_REVIEW_THRESHOLDS_PATH,
+    run_dynamic_strategy_research_only_shadow_observation_dry_run,
+)
 from ai_trading_system.dynamic_strategy_research_only_shadow_observation_protocol import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_PROTOCOL_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_PROTOCOL_OUTPUT_ROOT,
@@ -203,6 +211,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-research-only-shadow-observation-protocol")(
         _dynamic_strategy_research_only_shadow_observation_protocol_command
+    )
+    strategies_app.command("dynamic-strategy-research-only-shadow-observation-dry-run")(
+        _dynamic_strategy_research_only_shadow_observation_dry_run_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -1268,6 +1279,56 @@ def _dynamic_strategy_research_only_shadow_observation_protocol_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research-only shadow observation protocol",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_only_shadow_observation_dry_run_command(
+    source_observation_protocol_path: Annotated[
+        Path, typer.Option("--source-observation-protocol")
+    ] = DEFAULT_SOURCE_OBSERVATION_PROTOCOL_PATH,
+    source_observation_field_schema_path: Annotated[
+        Path, typer.Option("--source-observation-field-schema")
+    ] = DEFAULT_SOURCE_OBSERVATION_FIELD_SCHEMA_PATH,
+    source_review_thresholds_path: Annotated[
+        Path, typer.Option("--source-review-thresholds")
+    ] = DEFAULT_SOURCE_REVIEW_THRESHOLDS_PATH,
+    source_owner_review_gate_path: Annotated[
+        Path, typer.Option("--source-owner-review-gate")
+    ] = DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH,
+    source_candidate_owner_review_comparison_path: Annotated[
+        Path, typer.Option("--source-candidate-owner-review-comparison")
+    ] = DEFAULT_SOURCE_CANDIDATE_OWNER_REVIEW_COMPARISON_PATH,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_SOURCE_SENSITIVITY_RESULT_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_SHADOW_OBSERVATION_DRY_RUN_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_research_only_shadow_observation_dry_run(
+        source_observation_protocol_path=source_observation_protocol_path,
+        source_observation_field_schema_path=source_observation_field_schema_path,
+        source_review_thresholds_path=source_review_thresholds_path,
+        source_owner_review_gate_path=source_owner_review_gate_path,
+        source_candidate_owner_review_comparison_path=(
+            source_candidate_owner_review_comparison_path
+        ),
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_event_retest_path=source_event_retest_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research-only shadow observation dry-run",
         payload,
     )
 
