@@ -1,5 +1,35 @@
 # Refactor Log
 
+## 2026-07-06 Daily Incremental Refactor
+
+- 检查时间：2026-07-06 08:18 Asia/Tokyo。
+- 起始 HEAD：`8a668cd969013425d0724d6aed8217d1f27b6188` (`TRADING-2388 add research filter threshold methodology review`)。
+- 最近一次合格重构基线提交：`2a4b9f222fb55e554e4efce8ff828a49c7f2621d` (`refactor: record AITradingSystem scheduler safety helper refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `00fe68e48834e3ce17cc7ed1512a4804d1e17c12`。
+- 评估范围：`2a4b9f222fb55e554e4efce8ff828a49c7f2621d..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2351～2363 high-intensity observe-only scheduler closure、TRADING-2364～2388 dynamic strategy research-only cadence / retest / optimization / threshold methodology 模块、CLI adapters、report registry、artifact catalog、system flow 和 task register。主要维护风险是 dynamic strategy research-only report modules 在 `_write_outputs` 中重复维护 JSON / Markdown artifact writer，后续若只改一处，可能导致 parent-directory creation、UTF-8 encoding、JSON sort order 或 Markdown write behavior 分叉。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/dynamic_strategy_report_common.py`
+  - `src/ai_trading_system/dynamic_strategy_research_filter_threshold_methodology_review.py`
+  - `tests/test_dynamic_strategy_report_common.py`
+- 重构理由：TRADING-2388 threshold methodology review 生成 5 个 JSON 和 5 个 Markdown artifacts，并延续了相邻 dynamic strategy 模块中本地 `_write_json` / `Path.write_text` 的重复模式。抽取 `dynamic_strategy_report_common.write_json_artifact()` / `write_markdown_artifact()` 可把 shared artifact writer 作为 dynamic strategy report 内部边界，同时保持 TRADING-2388 自己的 payload、schema、source validation、threshold inventory、gate taxonomy、candidate matrix 和 route 内容不变。
+- 行为影响：预期无外部行为变化；`aits research strategies dynamic-strategy-research-filter-threshold-methodology-review` 的命令名、参数、默认路径、artifact path、JSON keys、Markdown 文案、status、安全字段、source validation、FAIL/PASS 语义和 recommended route 保持兼容。Shared writer 保留现有 JSON `ensure_ascii=False`、`indent=2`、`sort_keys=True` 格式，并只增加统一 parent directory creation。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent technical features、scoring、backtest 或 daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 dynamic strategy research-only report writer 的内部 helper 边界，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output 契约、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_research_filter_threshold_methodology_review.py tests\test_dynamic_strategy_report_common.py tests\research_strategies\test_dynamic_strategy_research_filter_threshold_methodology_review.py`：PASS。初次运行发现 import ordering 问题，已用 `python -m ruff check --fix src\ai_trading_system\dynamic_strategy_research_filter_threshold_methodology_review.py` 机械修正后复验通过。
+  - `python -m compileall src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_research_filter_threshold_methodology_review.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\test_dynamic_strategy_report_common.py tests\research_strategies\test_dynamic_strategy_research_filter_threshold_methodology_review.py`：PASS，5 passed。
+  - `python -m ai_trading_system.cli research strategies dynamic-strategy-research-filter-threshold-methodology-review --help`：PASS，命令仍在原路径下可见，source path、output path 和 `--as-of` 参数可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，574 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，11 passed。
+  - `git diff --check`：PASS。命令输出 `docs/task_register.md` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
+- 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 TRADING-2364～2388 dynamic strategy modules 中 repeated `_write_outputs` / local `_write_json` 的分批迁移；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
+- 本轮重构实现提交 SHA：待回填。
+
 ## 2026-07-05 Daily Incremental Refactor
 
 - 检查时间：2026-07-05 08:07 Asia/Tokyo。

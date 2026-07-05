@@ -69,6 +69,10 @@ from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest impor
 from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
     READY_STATUS as SOURCE_2383_READY_STATUS,
 )
+from ai_trading_system.dynamic_strategy_report_common import (
+    write_json_artifact,
+    write_markdown_artifact,
+)
 from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
     BASE_CANDIDATE_ID,
     DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_OPTIMIZED_VARIANT_RETEST_OUTPUT_ROOT,
@@ -1053,8 +1057,8 @@ def _write_outputs(
         "next_route_markdown": str(docs_root / "dynamic_strategy_2389_route.md"),
     }
     payload["artifact_paths"] = paths
-    _write_json(Path(paths["json_path"]), payload)
-    _write_json(
+    write_json_artifact(Path(paths["json_path"]), payload)
+    write_json_artifact(
         Path(paths["threshold_inventory_json"]),
         {
             "report_type": "dynamic_strategy_threshold_inventory",
@@ -1071,7 +1075,7 @@ def _write_outputs(
             "broker_action": "none",
         },
     )
-    _write_json(
+    write_json_artifact(
         Path(paths["gate_taxonomy_json"]),
         {
             "report_type": "dynamic_strategy_gate_taxonomy",
@@ -1084,7 +1088,7 @@ def _write_outputs(
             "broker_action": "none",
         },
     )
-    _write_json(
+    write_json_artifact(
         Path(paths["candidate_threshold_outcome_matrix_json"]),
         {
             "report_type": "dynamic_strategy_candidate_threshold_outcome_matrix",
@@ -1100,7 +1104,7 @@ def _write_outputs(
             "broker_action": "none",
         },
     )
-    _write_json(
+    write_json_artifact(
         Path(paths["recommended_gate_policy_proposal_json"]),
         {
             "report_type": "dynamic_strategy_recommended_gate_policy_proposal",
@@ -1119,22 +1123,22 @@ def _write_outputs(
             "broker_action": "none",
         },
     )
-    Path(paths["markdown_path"]).write_text(_main_markdown(payload), encoding="utf-8")
-    Path(paths["threshold_inventory_markdown"]).write_text(
+    write_markdown_artifact(Path(paths["markdown_path"]), _main_markdown(payload))
+    write_markdown_artifact(
+        Path(paths["threshold_inventory_markdown"]),
         _threshold_inventory_markdown(payload),
-        encoding="utf-8",
     )
-    Path(paths["gate_taxonomy_markdown"]).write_text(
+    write_markdown_artifact(
+        Path(paths["gate_taxonomy_markdown"]),
         _gate_taxonomy_markdown(payload),
-        encoding="utf-8",
     )
-    Path(paths["candidate_threshold_outcome_matrix_markdown"]).write_text(
+    write_markdown_artifact(
+        Path(paths["candidate_threshold_outcome_matrix_markdown"]),
         _candidate_matrix_markdown(payload),
-        encoding="utf-8",
     )
-    Path(paths["next_route_markdown"]).write_text(
+    write_markdown_artifact(
+        Path(paths["next_route_markdown"]),
         _route_markdown(payload),
-        encoding="utf-8",
     )
 
 
@@ -1487,13 +1491,6 @@ def _side_effect_validation_errors(label: str, document: Mapping[str, Any]) -> l
     if document.get("production_effect") not in {None, "none"}:
         errors.append(f"{label}.production_effect must remain none")
     return errors
-
-
-def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
 
 
 def _load_json_document(path: Path) -> dict[str, Any]:
