@@ -131,6 +131,35 @@ from ai_trading_system.dynamic_strategy_research_only_shadow_observation_replay_
 from ai_trading_system.dynamic_strategy_research_only_shadow_observation_replay_validation import (
     DEFAULT_SOURCE_OWNER_REVIEW_GATE_PATH as DEFAULT_REPLAY_SOURCE_OWNER_REVIEW_GATE_PATH,
 )
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_OPTIMIZED_VARIANT_RETEST_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_OPTIMIZED_VARIANT_RETEST_OUTPUT_ROOT,
+    run_dynamic_strategy_slice_robustness_optimized_variant_retest,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_2379_SENS_DECISION,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH as DEFAULT_2379_SOURCE_SENSITIVITY_RESULT,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2375_DECISION_UPDATE_PATH as DEFAULT_2379_OPT_DECISION,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2375_OPTIMIZATION_REVIEW_PATH as DEFAULT_2379_SOURCE_OPTIMIZATION_REVIEW,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2376_DECISION_UPDATE_PATH as DEFAULT_2379_SOURCE_TARGETED_DECISION,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2376_TARGETED_RETEST_PATH as DEFAULT_2379_SOURCE_TARGETED_RETEST,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2378_OPTIMIZATION_PLAN_PATH as DEFAULT_2379_SOURCE_OPTIMIZATION_PLAN,
+)
+from ai_trading_system.dynamic_strategy_slice_robustness_optimized_variant_retest import (
+    DEFAULT_SOURCE_2378_VARIANT_EVALUATION_PLAN_PATH as DEFAULT_2379_SOURCE_VARIANT_EVALUATION_PLAN,
+)
 from ai_trading_system.dynamic_strategy_slice_robustness_return_gap_optimization_plan import (
     DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_RETURN_GAP_OPTIMIZATION_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_RETURN_GAP_OPTIMIZATION_OUTPUT_ROOT,
@@ -390,6 +419,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-slice-robustness-return-gap-optimization-plan"
     )(_dynamic_strategy_slice_robustness_return_gap_optimization_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-slice-robustness-optimized-variant-retest"
+    )(_dynamic_strategy_slice_robustness_optimized_variant_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1934,6 +1966,79 @@ def _dynamic_strategy_slice_robustness_return_gap_optimization_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy slice robustness return gap optimization plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_slice_robustness_optimized_variant_retest_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_2378_SOURCE_EVENT_RETEST,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_2378_SOURCE_CANDIDATE_RANKING,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_2379_SOURCE_SENSITIVITY_RESULT,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_2379_SENS_DECISION,
+    source_optimization_review_path: Annotated[
+        Path, typer.Option("--source-optimization-review")
+    ] = DEFAULT_2379_SOURCE_OPTIMIZATION_REVIEW,
+    source_optimization_decision_update_path: Annotated[
+        Path, typer.Option("--source-optimization-decision-update")
+    ] = DEFAULT_2379_OPT_DECISION,
+    source_targeted_retest_path: Annotated[
+        Path, typer.Option("--source-targeted-retest")
+    ] = DEFAULT_2379_SOURCE_TARGETED_RETEST,
+    source_targeted_decision_update_path: Annotated[
+        Path, typer.Option("--source-targeted-decision-update")
+    ] = DEFAULT_2379_SOURCE_TARGETED_DECISION,
+    source_optimization_plan_path: Annotated[
+        Path, typer.Option("--source-optimization-plan")
+    ] = DEFAULT_2379_SOURCE_OPTIMIZATION_PLAN,
+    source_variant_evaluation_plan_path: Annotated[
+        Path, typer.Option("--source-variant-evaluation-plan")
+    ] = DEFAULT_2379_SOURCE_VARIANT_EVALUATION_PLAN,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_OPTIMIZED_VARIANT_RETEST_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_SLICE_ROBUSTNESS_OPTIMIZED_VARIANT_RETEST_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_slice_robustness_optimized_variant_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        source_optimization_review_path=source_optimization_review_path,
+        source_optimization_decision_update_path=(
+            source_optimization_decision_update_path
+        ),
+        source_targeted_retest_path=source_targeted_retest_path,
+        source_targeted_decision_update_path=source_targeted_decision_update_path,
+        source_optimization_plan_path=source_optimization_plan_path,
+        source_variant_evaluation_plan_path=source_variant_evaluation_plan_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy slice robustness optimized variant retest",
         payload,
     )
 

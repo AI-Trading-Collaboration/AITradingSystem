@@ -18494,6 +18494,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_slice_robustness_optimized_variant_retest
+    title: Dynamic Strategy Slice Robustness Optimized Variant Retest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-slice-robustness-optimized-variant-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_optimized_variant_retest/variant_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_optimized_variant_retest/optimized_variant_ranking.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_optimized_variant_retest/time_regime_slice_matrix.json
+      - outputs/research_strategies/dynamic_strategy_slice_robustness_optimized_variant_retest/decision_update.json
+      - docs/research/dynamic_strategy_slice_robustness_optimized_variant_retest.md
+      - docs/research/dynamic_strategy_optimized_variant_ranking.md
+      - docs/research/dynamic_strategy_optimized_variant_slice_matrix.md
+      - docs/research/dynamic_strategy_2380_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2379 reruns cached-data-gated optimized variant retests from TRADING-2378 before TRADING-2380 owner review; it is research-only and does not generate daily reports or execution actions.
+    owner_action: review_dynamic_strategy_slice_robustness_optimized_variant_retest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
