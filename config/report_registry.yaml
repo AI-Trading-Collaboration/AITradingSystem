@@ -18589,6 +18589,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_ranking_top_guarded_variant_retest
+    title: Dynamic Strategy Ranking Top Guarded Variant Retest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-ranking-top-guarded-variant-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_ranking_top_guarded_variant_retest/guarded_variant_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_ranking_top_guarded_variant_retest/guarded_variant_ranking.json
+      - outputs/research_strategies/dynamic_strategy_ranking_top_guarded_variant_retest/time_regime_slice_matrix.json
+      - outputs/research_strategies/dynamic_strategy_ranking_top_guarded_variant_retest/decision_update.json
+      - docs/research/dynamic_strategy_ranking_top_guarded_variant_retest.md
+      - docs/research/dynamic_strategy_guarded_variant_ranking.md
+      - docs/research/dynamic_strategy_guarded_variant_slice_matrix.md
+      - docs/research/dynamic_strategy_2384_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2383 consumes TRADING-2382 guarded retest plan plus TRADING-2365/2366/2379 artifacts, executes cached-data gated guarded ranking-top variant retests, and routes owner review to TRADING-2384.
+    owner_action: review_dynamic_strategy_ranking_top_guarded_variant_retest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

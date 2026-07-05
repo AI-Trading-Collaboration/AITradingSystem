@@ -159,6 +159,35 @@ from ai_trading_system.dynamic_strategy_ranking_top_guarded_turnover_retest_plan
 from ai_trading_system.dynamic_strategy_ranking_top_guarded_turnover_retest_plan import (
     DEFAULT_SOURCE_2381_PLATEAU_DECISION_PATH as DEFAULT_2382_SOURCE_PLATEAU_DECISION,
 )
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_DYNAMIC_STRATEGY_RANKING_TOP_GUARDED_VARIANT_RETEST_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_RANKING_TOP_GUARDED_VARIANT_RETEST_OUTPUT_ROOT,
+    run_dynamic_strategy_ranking_top_guarded_variant_retest,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2365_CANDIDATE_RANKING_PATH as DEFAULT_2383_SOURCE_CANDIDATE_RANKING,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_2383_SOURCE_SENS_DECISION,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH as DEFAULT_2383_SOURCE_SENS_RESULT,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH as DEFAULT_2383_SOURCE_VARIANT_RANKING,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH as DEFAULT_2383_SOURCE_VARIANT_RETEST,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2382_GUARDED_VARIANT_PLAN_PATH as DEFAULT_2383_SOURCE_GUARDED_PLAN,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2382_RETEST_PLAN_PATH as DEFAULT_2383_SOURCE_RETEST_PLAN,
+)
+from ai_trading_system.dynamic_strategy_ranking_top_guarded_variant_retest import (
+    DEFAULT_SOURCE_2382_VARIANT_EVALUATION_PLAN_PATH as DEFAULT_2383_SOURCE_EVALUATION_PLAN,
+)
 from ai_trading_system.dynamic_strategy_research_only_observation_log_schema_plan import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_OUTPUT_ROOT,
@@ -518,6 +547,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-ranking-top-guarded-turnover-retest-plan"
     )(_dynamic_strategy_ranking_top_guarded_turnover_retest_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-ranking-top-guarded-variant-retest"
+    )(_dynamic_strategy_ranking_top_guarded_variant_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2291,6 +2323,79 @@ def _dynamic_strategy_ranking_top_guarded_turnover_retest_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy ranking top guarded turnover retest plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_ranking_top_guarded_variant_retest_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path,
+        typer.Option("--marketstack-prices-path"),
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_retest_plan_path: Annotated[
+        Path, typer.Option("--source-retest-plan")
+    ] = DEFAULT_2383_SOURCE_RETEST_PLAN,
+    source_guarded_variant_plan_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-plan")
+    ] = DEFAULT_2383_SOURCE_GUARDED_PLAN,
+    source_variant_evaluation_plan_path: Annotated[
+        Path, typer.Option("--source-variant-evaluation-plan")
+    ] = DEFAULT_2383_SOURCE_EVALUATION_PLAN,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_2383_SOURCE_CANDIDATE_RANKING,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_2383_SOURCE_SENS_RESULT,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_2383_SOURCE_SENS_DECISION,
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = DEFAULT_2383_SOURCE_VARIANT_RETEST,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = DEFAULT_2383_SOURCE_VARIANT_RANKING,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RANKING_TOP_GUARDED_VARIANT_RETEST_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_RANKING_TOP_GUARDED_VARIANT_RETEST_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_ranking_top_guarded_variant_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_retest_plan_path=source_retest_plan_path,
+        source_guarded_variant_plan_path=source_guarded_variant_plan_path,
+        source_variant_evaluation_plan_path=source_variant_evaluation_plan_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        source_variant_retest_path=source_variant_retest_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy ranking top guarded variant retest",
         payload,
     )
 
