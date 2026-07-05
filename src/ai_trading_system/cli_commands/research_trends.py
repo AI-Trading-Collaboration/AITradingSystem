@@ -749,6 +749,63 @@ from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import
 from ai_trading_system.high_intensity_risk_cap_actual_path_outcome_binder import (
     run_high_intensity_risk_cap_actual_path_outcome_binder,
 )
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_EVENT_APPEND_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_EVENT_APPEND_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_HARDENING_BACKLOG_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_HARDENING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_IDEMPOTENCY_REPLAY_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_IDEMPOTENCY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_KILL_SWITCH_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_KILL_SWITCH_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_OUTCOME_BINDING_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OUTCOME_BINDING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_PAPER_SHADOW_SCOPE_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_PAPER_SHADOW_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_PRODUCTION_BROKER_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_PROD_BROKER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    MODE as HIGH_INTENSITY_PROMOTION_BLOCKER_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_consolidated_promotion_blocker_matrix import (
+    run_high_intensity_risk_cap_observe_only_promotion_blocker_matrix,
+)
 from ai_trading_system.high_intensity_risk_cap_continue_forward_observe_decision import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_CONTINUE_OBSERVE_DOCS_ROOT,
 )
@@ -1019,6 +1076,66 @@ from ai_trading_system.high_intensity_risk_cap_outcome_binding_contract_plan imp
 from ai_trading_system.high_intensity_risk_cap_outcome_binding_contract_plan import (
     run_high_intensity_risk_cap_observe_only_outcome_binding_contract_plan,
 )
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_EVENT_APPEND_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_EVENT_APPEND_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_HARDENING_BACKLOG_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_HARDENING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_IDEMPOTENCY_REPLAY_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_IDEMPOTENCY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_KILL_SWITCH_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_KILL_SWITCH_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_OUTCOME_BINDING_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OUTCOME_BINDING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_PAPER_SHADOW_SCOPE_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PAPER_SHADOW_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_PRODUCTION_BROKER_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PRODUCTION_BROKER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_PROMOTION_BLOCKER_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PROMOTION_BLOCKER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    MODE as HIGH_INTENSITY_OWNER_PAUSE_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_owner_decision_pause_checkpoint import (
+    run_high_intensity_risk_cap_observe_only_owner_decision_pause_checkpoint,
+)
 from ai_trading_system.high_intensity_risk_cap_paper_shadow_scope_plan import (
     DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_PAPER_SHADOW_AUDIT_ROOT,
 )
@@ -1093,6 +1210,60 @@ from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review 
 )
 from ai_trading_system.high_intensity_risk_cap_partial_outcome_readiness_review import (
     run_high_intensity_risk_cap_partial_outcome_readiness_review,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_EVENT_APPEND_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_EVENT_APPEND_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_HARDENING_BACKLOG_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_HARDENING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_IDEMPOTENCY_REPLAY_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_IDEMPOTENCY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_KILL_SWITCH_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_KILL_SWITCH_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_OUTCOME_BINDING_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OUTCOME_BINDING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_PAPER_SHADOW_SCOPE_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_PAPER_SHADOW_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    MODE as HIGH_INTENSITY_PRODUCTION_BROKER_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_production_broker_hard_blocker_plan import (
+    run_high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan,
 )
 from ai_trading_system.high_intensity_risk_cap_scheduler_audit_package import (
     DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DISABLED_ROOT,
@@ -5322,6 +5493,257 @@ def high_intensity_risk_cap_observe_only_paper_shadow_scope_plan_command(
     )
     _print_payload(
         "High-intensity risk-cap observe-only paper-shadow scope plan",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan"
+)
+def high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_GAP_CLOSURE_ROOT,
+    hardening_backlog_dir: Annotated[
+        Path, typer.Option("--hardening-backlog-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_HARDENING_ROOT,
+    kill_switch_dir: Annotated[
+        Path, typer.Option("--kill-switch-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_KILL_SWITCH_ROOT,
+    idempotency_replay_dir: Annotated[
+        Path, typer.Option("--idempotency-replay-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_IDEMPOTENCY_ROOT,
+    event_append_dir: Annotated[
+        Path, typer.Option("--event-append-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_EVENT_APPEND_ROOT,
+    outcome_binding_dir: Annotated[
+        Path, typer.Option("--outcome-binding-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OUTCOME_BINDING_ROOT,
+    paper_shadow_scope_dir: Annotated[
+        Path, typer.Option("--paper-shadow-scope-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_PAPER_SHADOW_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_PRODUCTION_BROKER_MODE,
+) -> None:
+    payload = (
+        run_high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan(
+            disabled_wiring_dir=disabled_wiring_dir,
+            smoke_dry_run_dir=smoke_dry_run_dir,
+            manual_review_gate_dir=manual_review_gate_dir,
+            manual_run_dry_run_dir=manual_run_dry_run_dir,
+            replay_validation_dir=replay_validation_dir,
+            audit_package_dir=audit_package_dir,
+            owner_decision_dir=owner_decision_dir,
+            gap_closure_dir=gap_closure_dir,
+            hardening_backlog_dir=hardening_backlog_dir,
+            kill_switch_dir=kill_switch_dir,
+            idempotency_replay_dir=idempotency_replay_dir,
+            event_append_dir=event_append_dir,
+            outcome_binding_dir=outcome_binding_dir,
+            paper_shadow_scope_dir=paper_shadow_scope_dir,
+            output_dir=output_dir,
+            docs_root=docs_root,
+            mode=mode,
+        )
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only production broker hard-blocker plan",
+        payload,
+    )
+
+
+@trends_app.command("high-intensity-risk-cap-observe-only-promotion-blocker-matrix")
+def high_intensity_risk_cap_observe_only_promotion_blocker_matrix_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_GAP_CLOSURE_ROOT,
+    hardening_backlog_dir: Annotated[
+        Path, typer.Option("--hardening-backlog-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_HARDENING_ROOT,
+    kill_switch_dir: Annotated[
+        Path, typer.Option("--kill-switch-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_KILL_SWITCH_ROOT,
+    idempotency_replay_dir: Annotated[
+        Path, typer.Option("--idempotency-replay-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_IDEMPOTENCY_ROOT,
+    event_append_dir: Annotated[
+        Path, typer.Option("--event-append-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_EVENT_APPEND_ROOT,
+    outcome_binding_dir: Annotated[
+        Path, typer.Option("--outcome-binding-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OUTCOME_BINDING_ROOT,
+    paper_shadow_scope_dir: Annotated[
+        Path, typer.Option("--paper-shadow-scope-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_PAPER_SHADOW_ROOT,
+    production_broker_dir: Annotated[
+        Path, typer.Option("--production-broker-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_PROD_BROKER_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_PROMOTION_BLOCKER_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_PROMOTION_BLOCKER_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_promotion_blocker_matrix(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        kill_switch_dir=kill_switch_dir,
+        idempotency_replay_dir=idempotency_replay_dir,
+        event_append_dir=event_append_dir,
+        outcome_binding_dir=outcome_binding_dir,
+        paper_shadow_scope_dir=paper_shadow_scope_dir,
+        production_broker_dir=production_broker_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only promotion blocker matrix",
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint"
+)
+def high_intensity_risk_cap_observe_only_owner_decision_pause_checkpoint_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_GAP_CLOSURE_ROOT,
+    hardening_backlog_dir: Annotated[
+        Path, typer.Option("--hardening-backlog-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_HARDENING_ROOT,
+    kill_switch_dir: Annotated[
+        Path, typer.Option("--kill-switch-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_KILL_SWITCH_ROOT,
+    idempotency_replay_dir: Annotated[
+        Path, typer.Option("--idempotency-replay-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_IDEMPOTENCY_ROOT,
+    event_append_dir: Annotated[
+        Path, typer.Option("--event-append-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_EVENT_APPEND_ROOT,
+    outcome_binding_dir: Annotated[
+        Path, typer.Option("--outcome-binding-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OUTCOME_BINDING_ROOT,
+    paper_shadow_scope_dir: Annotated[
+        Path, typer.Option("--paper-shadow-scope-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PAPER_SHADOW_ROOT,
+    production_broker_dir: Annotated[
+        Path, typer.Option("--production-broker-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PRODUCTION_BROKER_ROOT,
+    promotion_blocker_dir: Annotated[
+        Path, typer.Option("--promotion-blocker-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_PROMOTION_BLOCKER_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_OWNER_PAUSE_DOCS_ROOT,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_OWNER_PAUSE_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_owner_decision_pause_checkpoint(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        kill_switch_dir=kill_switch_dir,
+        idempotency_replay_dir=idempotency_replay_dir,
+        event_append_dir=event_append_dir,
+        outcome_binding_dir=outcome_binding_dir,
+        paper_shadow_scope_dir=paper_shadow_scope_dir,
+        production_broker_dir=production_broker_dir,
+        promotion_blocker_dir=promotion_blocker_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only owner decision pause checkpoint",
         payload,
     )
 
