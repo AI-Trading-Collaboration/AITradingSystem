@@ -779,6 +779,51 @@ from ai_trading_system.high_intensity_risk_cap_continue_forward_observe_decision
 from ai_trading_system.high_intensity_risk_cap_continue_forward_observe_decision import (
     run_high_intensity_risk_cap_continue_forward_observe_decision,
 )
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_AUDIT_PACKAGE_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_AUDIT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_DISABLED_WIRING_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_DISABLED_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_DOCS_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_GAP_CLOSURE_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_GAP_CLOSURE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_HARDENING_BACKLOG_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_HARDENING_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_IDEMPOTENCY_REPLAY_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_IDEMPOTENCY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_KILL_SWITCH_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_KILL_SWITCH_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_MANUAL_REVIEW_GATE_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_GATE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_MANUAL_RUN_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_MANUAL_RUN_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_OUTPUT_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_OUTPUT_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_OWNER_DECISION_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_OWNER_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_REPLAY_VALIDATION_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_REPLAY_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    DEFAULT_SMOKE_DRY_RUN_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_APPEND_SMOKE_ROOT,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    MODE as HIGH_INTENSITY_EVENT_APPEND_MODE,
+)
+from ai_trading_system.high_intensity_risk_cap_event_append_contract_plan import (
+    run_high_intensity_risk_cap_observe_only_event_append_contract_plan,
+)
 from ai_trading_system.high_intensity_risk_cap_forward_observe_event_logger import (
     DEFAULT_DOCS_ROOT as DEFAULT_HIGH_INTENSITY_EVENT_LOGGER_DOCS_ROOT,
 )
@@ -4961,6 +5006,75 @@ def high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_p
             "High-intensity risk-cap observe-only scheduler idempotency "
             "replay contract plan"
         ),
+        payload,
+    )
+
+
+@trends_app.command(
+    "high-intensity-risk-cap-observe-only-event-append-contract-plan"
+)
+def high_intensity_risk_cap_observe_only_event_append_contract_plan_command(
+    disabled_wiring_dir: Annotated[
+        Path, typer.Option("--disabled-wiring-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_DISABLED_ROOT,
+    smoke_dry_run_dir: Annotated[
+        Path, typer.Option("--smoke-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_SMOKE_ROOT,
+    manual_review_gate_dir: Annotated[
+        Path, typer.Option("--manual-review-gate-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_GATE_ROOT,
+    manual_run_dry_run_dir: Annotated[
+        Path, typer.Option("--manual-run-dry-run-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_MANUAL_RUN_ROOT,
+    replay_validation_dir: Annotated[
+        Path, typer.Option("--replay-validation-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_REPLAY_ROOT,
+    audit_package_dir: Annotated[
+        Path, typer.Option("--audit-package-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_AUDIT_ROOT,
+    owner_decision_dir: Annotated[
+        Path, typer.Option("--owner-decision-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_OWNER_ROOT,
+    gap_closure_dir: Annotated[
+        Path, typer.Option("--gap-closure-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_GAP_CLOSURE_ROOT,
+    hardening_backlog_dir: Annotated[
+        Path, typer.Option("--hardening-backlog-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_HARDENING_ROOT,
+    kill_switch_dir: Annotated[
+        Path, typer.Option("--kill-switch-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_KILL_SWITCH_ROOT,
+    idempotency_replay_dir: Annotated[
+        Path, typer.Option("--idempotency-replay-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_IDEMPOTENCY_ROOT,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_DOCS_ROOT,
+    mode: Annotated[
+        str, typer.Option("--mode")
+    ] = HIGH_INTENSITY_EVENT_APPEND_MODE,
+) -> None:
+    payload = run_high_intensity_risk_cap_observe_only_event_append_contract_plan(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        kill_switch_dir=kill_switch_dir,
+        idempotency_replay_dir=idempotency_replay_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
+    )
+    _print_payload(
+        "High-intensity risk-cap observe-only event append contract plan",
         payload,
     )
 
