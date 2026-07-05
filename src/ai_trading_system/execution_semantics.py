@@ -487,6 +487,11 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "command": "aits research strategies implicit-monthly-rebalance-assumption-audit",
     },
     {
+        "report_id": "dynamic_strategy_execution_cadence_bias_audit",
+        "title": "Dynamic Strategy Execution Cadence Bias Audit",
+        "command": "aits research strategies dynamic-strategy-execution-cadence-bias-audit",
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",

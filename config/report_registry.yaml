@@ -18138,6 +18138,29 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_execution_cadence_bias_audit
+    title: Dynamic Strategy Execution Cadence Bias Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-execution-cadence-bias-audit
+    artifact_globs:
+      - outputs/research_trends/dynamic_strategy_execution_cadence_bias_audit/execution_cadence_bias_audit.json
+      - outputs/research_trends/dynamic_strategy_execution_cadence_bias_audit/execution_cadence_comparison_matrix.json
+      - outputs/research_trends/dynamic_strategy_execution_cadence_bias_audit/dynamic_strategy_retest_next_steps.json
+      - docs/research/dynamic_strategy_execution_cadence_bias_audit.md
+      - docs/research/dynamic_strategy_execution_cadence_comparison_matrix.md
+      - docs/research/dynamic_strategy_retest_next_steps.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2364 resumes strategy research after the observe-only scheduler pause and audits monthly or fixed execution-cadence bias before event-driven retesting.
+    owner_action: review_dynamic_strategy_execution_cadence_bias_audit
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
