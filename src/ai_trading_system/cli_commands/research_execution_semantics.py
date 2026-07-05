@@ -9,6 +9,12 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.dynamic_strategy_event_driven_retest import (
+    DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_OUTPUT_ROOT,
+    DEFAULT_SOURCE_CADENCE_AUDIT_PATH,
+    run_dynamic_strategy_event_driven_retest,
+)
 from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
@@ -161,6 +167,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("dynamic-strategy-execution-cadence-bias-audit")(
         _dynamic_strategy_execution_cadence_bias_audit_command
+    )
+    strategies_app.command("dynamic-strategy-event-driven-retest")(
+        _dynamic_strategy_event_driven_retest_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -970,6 +979,93 @@ def _dynamic_strategy_execution_cadence_bias_audit_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy execution cadence bias audit",
+        payload,
+    )
+
+
+def _dynamic_strategy_event_driven_retest_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_cadence_audit_path: Annotated[
+        Path, typer.Option("--source-cadence-audit")
+    ] = DEFAULT_SOURCE_CADENCE_AUDIT_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_EVENT_DRIVEN_RETEST_DOCS_ROOT,
+    strategy: Annotated[
+        list[str] | None,
+        typer.Option("--strategy", help="Dynamic strategy id; may be repeated."),
+    ] = None,
+    transaction_cost_bps: Annotated[
+        float | None,
+        typer.Option("--transaction-cost-bps"),
+    ] = None,
+    slippage_bps: Annotated[
+        float | None,
+        typer.Option("--slippage-bps"),
+    ] = None,
+    turnover_penalty: Annotated[
+        float,
+        typer.Option("--turnover-penalty"),
+    ] = 0.0,
+    max_turnover_per_month: Annotated[
+        float,
+        typer.Option("--max-turnover-per-month"),
+    ] = 1.0,
+    min_holding_days: Annotated[
+        int,
+        typer.Option("--min-holding-days"),
+    ] = 20,
+    cooldown_days: Annotated[
+        int,
+        typer.Option("--cooldown-days"),
+    ] = 20,
+    max_single_step_weight_delta: Annotated[
+        float,
+        typer.Option("--max-single-step-weight-delta"),
+    ] = 0.75,
+    risk_cap_enabled: Annotated[
+        bool,
+        typer.Option("--risk-cap-enabled/--risk-cap-disabled"),
+    ] = True,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_event_driven_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_cadence_audit_path=source_cadence_audit_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strategy_ids=strategy,
+        transaction_cost_bps=transaction_cost_bps,
+        slippage_bps=slippage_bps,
+        turnover_penalty=turnover_penalty,
+        max_turnover_per_month=max_turnover_per_month,
+        min_holding_days=min_holding_days,
+        cooldown_days=cooldown_days,
+        max_single_step_weight_delta=max_single_step_weight_delta,
+        risk_cap_enabled=risk_cap_enabled,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy event-driven retest",
         payload,
     )
 

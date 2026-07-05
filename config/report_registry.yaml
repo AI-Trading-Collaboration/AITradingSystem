@@ -18161,6 +18161,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_event_driven_retest
+    title: Dynamic Strategy Event-Driven Retest And Candidate Ranking
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-event-driven-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_event_driven_retest/event_driven_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_event_driven_retest/candidate_ranking.json
+      - outputs/research_strategies/dynamic_strategy_event_driven_retest/cadence_comparison_matrix.json
+      - docs/research/dynamic_strategy_event_driven_retest.md
+      - docs/research/dynamic_strategy_candidate_ranking.md
+      - docs/research/dynamic_strategy_retest_decision_summary.md
+      - docs/research/dynamic_strategy_2366_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2365 consumes TRADING-2364 cadence-bias evidence and ranks active dynamic strategy candidates under valid-until, event-driven, and cooldown-limited actual paths before TRADING-2366 sensitivity.
+    owner_action: review_dynamic_strategy_event_driven_retest_candidate_ranking
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

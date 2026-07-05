@@ -492,6 +492,11 @@ EXECUTION_SEMANTICS_REPORT_SPECS: tuple[dict[str, str], ...] = (
         "command": "aits research strategies dynamic-strategy-execution-cadence-bias-audit",
     },
     {
+        "report_id": "dynamic_strategy_event_driven_retest",
+        "title": "Dynamic Strategy Event-Driven Retest And Candidate Ranking",
+        "command": "aits research strategies dynamic-strategy-event-driven-retest",
+    },
+    {
         "report_id": "strategy_execution_policy_registry_review",
         "title": "Strategy Execution Policy Registry Review",
         "command": "aits research strategies strategy-execution-policy-registry-review",
