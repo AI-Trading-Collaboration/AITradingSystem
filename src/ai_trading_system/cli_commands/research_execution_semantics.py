@@ -49,6 +49,29 @@ from ai_trading_system.dynamic_strategy_execution_cadence_bias_audit import (
     DEFAULT_DYNAMIC_STRATEGY_EXECUTION_CADENCE_BIAS_AUDIT_OUTPUT_ROOT,
     run_dynamic_strategy_execution_cadence_bias_audit,
 )
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_OUTPUT_ROOT,
+    run_dynamic_strategy_optimized_candidate_targeted_retest,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2366_DECISION_UPDATE,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2366_MATRIX_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2366_MATRIX,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2366_RESULT_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2366_RESULT,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2375_DECISION_UPDATE_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2375_DECISION_UPDATE,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2375_OPTIMIZATION_MATRIX_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2375_MATRIX,
+)
+from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
+    DEFAULT_SOURCE_2375_RESULT_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2375_RESULT,
+)
 from ai_trading_system.dynamic_strategy_research_only_observation_log_schema_plan import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_OUTPUT_ROOT,
@@ -297,6 +320,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-candidate-optimization-divergence-review"
     )(_dynamic_strategy_candidate_optimization_divergence_review_command)
+    strategies_app.command(
+        "dynamic-strategy-optimized-candidate-targeted-retest"
+    )(_dynamic_strategy_optimized_candidate_targeted_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -1647,6 +1673,84 @@ def _dynamic_strategy_candidate_optimization_divergence_review_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy candidate optimization divergence review",
+        payload,
+    )
+
+
+def _dynamic_strategy_optimized_candidate_targeted_retest_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config")
+    ] = DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry")
+    ] = DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = DEFAULT_SOURCE_EVENT_DRIVEN_RETEST_PATH,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    source_cadence_matrix_path: Annotated[
+        Path, typer.Option("--source-cadence-matrix")
+    ] = DEFAULT_SOURCE_CADENCE_MATRIX_PATH,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2366_RESULT,
+    source_sensitivity_matrix_path: Annotated[
+        Path, typer.Option("--source-sensitivity-matrix")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2366_MATRIX,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2366_DECISION_UPDATE,
+    source_optimization_review_path: Annotated[
+        Path, typer.Option("--source-optimization-review")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2375_RESULT,
+    source_optimization_matrix_path: Annotated[
+        Path, typer.Option("--source-optimization-matrix")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2375_MATRIX,
+    source_optimization_decision_update_path: Annotated[
+        Path, typer.Option("--source-optimization-decision-update")
+    ] = DEFAULT_TARGETED_RETEST_SOURCE_2375_DECISION_UPDATE,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_CANDIDATE_TARGETED_RETEST_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = run_dynamic_strategy_optimized_candidate_targeted_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_cadence_matrix_path=source_cadence_matrix_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_matrix_path=source_sensitivity_matrix_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        source_optimization_review_path=source_optimization_review_path,
+        source_optimization_matrix_path=source_optimization_matrix_path,
+        source_optimization_decision_update_path=(
+            source_optimization_decision_update_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy optimized candidate targeted retest",
         payload,
     )
 

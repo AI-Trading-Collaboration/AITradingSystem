@@ -18422,6 +18422,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_optimized_candidate_targeted_retest
+    title: Dynamic Strategy Optimized Candidate Targeted Retest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-optimized-candidate-targeted-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_optimized_candidate_targeted_retest/targeted_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_optimized_candidate_targeted_retest/time_regime_slice_matrix.json
+      - outputs/research_strategies/dynamic_strategy_optimized_candidate_targeted_retest/ablation_test_report.json
+      - outputs/research_strategies/dynamic_strategy_optimized_candidate_targeted_retest/decision_update.json
+      - docs/research/dynamic_strategy_optimized_candidate_targeted_retest.md
+      - docs/research/dynamic_strategy_targeted_retest_slice_report.md
+      - docs/research/dynamic_strategy_targeted_retest_ablation_report.md
+      - docs/research/dynamic_strategy_2377_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2376 consumes TRADING-2365/2366/2375 artifacts and the cached-data quality gate to targeted-retest the optimized dynamic candidate before TRADING-2377 owner review.
+    owner_action: review_dynamic_strategy_optimized_candidate_targeted_retest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
