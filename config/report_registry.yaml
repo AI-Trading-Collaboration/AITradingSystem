@@ -18663,6 +18663,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_expanded_candidate_pool_retest
+    title: Dynamic Strategy Expanded Candidate Pool Retest And Screening
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-expanded-candidate-pool-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_expanded_candidate_pool_retest/expanded_candidate_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_expanded_candidate_pool_retest/expanded_candidate_ranking.json
+      - outputs/research_strategies/dynamic_strategy_expanded_candidate_pool_retest/signal_family_screening.json
+      - outputs/research_strategies/dynamic_strategy_expanded_candidate_pool_retest/time_regime_slice_matrix.json
+      - outputs/research_strategies/dynamic_strategy_expanded_candidate_pool_retest/decision_update.json
+      - docs/research/dynamic_strategy_expanded_candidate_pool_retest.md
+      - docs/research/dynamic_strategy_expanded_candidate_ranking.md
+      - docs/research/dynamic_strategy_signal_family_screening.md
+      - docs/research/dynamic_strategy_2387_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2386 consumes TRADING-2385 candidate pool expansion plus TRADING-2365/2366/2379/2383/2384 prior artifacts, executes cached-data gated expanded candidate retests, screens signal families, and routes owner review to TRADING-2387.
+    owner_action: review_dynamic_strategy_expanded_candidate_pool_retest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
