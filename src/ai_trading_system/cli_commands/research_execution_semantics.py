@@ -72,6 +72,32 @@ from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest impo
 from ai_trading_system.dynamic_strategy_optimized_candidate_targeted_retest import (
     DEFAULT_SOURCE_2375_RESULT_PATH as DEFAULT_TARGETED_RETEST_SOURCE_2375_RESULT,
 )
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    run_dynamic_strategy_optimized_variant_owner_review_decision,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2376_DECISION_UPDATE_PATH as DEFAULT_2380_SOURCE_TARGETED_DECISION,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2376_TARGETED_RETEST_PATH as DEFAULT_2380_SOURCE_TARGETED_RETEST,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2378_OPTIMIZATION_PLAN_PATH as DEFAULT_2380_SOURCE_OPTIMIZATION_PLAN,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2378_VARIANT_EVALUATION_PLAN_PATH as DEFAULT_2380_SOURCE_VARIANT_EVALUATION_PLAN,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2379_DECISION_UPDATE_PATH as DEFAULT_2380_SOURCE_VARIANT_DECISION,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH as DEFAULT_2380_SOURCE_VARIANT_RANKING,
+)
+from ai_trading_system.dynamic_strategy_optimized_variant_owner_review_decision import (
+    DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH as DEFAULT_2380_SOURCE_VARIANT_RETEST,
+)
 from ai_trading_system.dynamic_strategy_research_only_observation_log_schema_plan import (
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_RESEARCH_ONLY_OBSERVATION_LOG_SCHEMA_PLAN_OUTPUT_ROOT,
@@ -422,6 +448,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-slice-robustness-optimized-variant-retest"
     )(_dynamic_strategy_slice_robustness_optimized_variant_retest_command)
+    strategies_app.command(
+        "dynamic-strategy-optimized-variant-owner-review-decision"
+    )(_dynamic_strategy_optimized_variant_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2039,6 +2068,54 @@ def _dynamic_strategy_slice_robustness_optimized_variant_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy slice robustness optimized variant retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_optimized_variant_owner_review_decision_command(
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = DEFAULT_2380_SOURCE_VARIANT_RETEST,
+    source_variant_decision_update_path: Annotated[
+        Path, typer.Option("--source-variant-decision-update")
+    ] = DEFAULT_2380_SOURCE_VARIANT_DECISION,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = DEFAULT_2380_SOURCE_VARIANT_RANKING,
+    source_optimization_plan_path: Annotated[
+        Path, typer.Option("--source-optimization-plan")
+    ] = DEFAULT_2380_SOURCE_OPTIMIZATION_PLAN,
+    source_variant_evaluation_plan_path: Annotated[
+        Path, typer.Option("--source-variant-evaluation-plan")
+    ] = DEFAULT_2380_SOURCE_VARIANT_EVALUATION_PLAN,
+    source_targeted_retest_path: Annotated[
+        Path, typer.Option("--source-targeted-retest")
+    ] = DEFAULT_2380_SOURCE_TARGETED_RETEST,
+    source_targeted_decision_update_path: Annotated[
+        Path, typer.Option("--source-targeted-decision-update")
+    ] = DEFAULT_2380_SOURCE_TARGETED_DECISION,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = DEFAULT_DYNAMIC_STRATEGY_OPTIMIZED_VARIANT_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = run_dynamic_strategy_optimized_variant_owner_review_decision(
+        source_variant_retest_path=source_variant_retest_path,
+        source_variant_decision_update_path=source_variant_decision_update_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        source_optimization_plan_path=source_optimization_plan_path,
+        source_variant_evaluation_plan_path=source_variant_evaluation_plan_path,
+        source_targeted_retest_path=source_targeted_retest_path,
+        source_targeted_decision_update_path=source_targeted_decision_update_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy optimized variant owner review decision",
         payload,
     )
 
