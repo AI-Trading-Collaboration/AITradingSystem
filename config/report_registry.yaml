@@ -18714,6 +18714,33 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_research_filter_threshold_methodology_review
+    title: Dynamic Strategy Research Filter Threshold Methodology Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-research-filter-threshold-methodology-review
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_research_filter_threshold_methodology_review/threshold_methodology_review_result.json
+      - outputs/research_strategies/dynamic_strategy_research_filter_threshold_methodology_review/threshold_inventory.json
+      - outputs/research_strategies/dynamic_strategy_research_filter_threshold_methodology_review/gate_taxonomy.json
+      - outputs/research_strategies/dynamic_strategy_research_filter_threshold_methodology_review/candidate_threshold_outcome_matrix.json
+      - outputs/research_strategies/dynamic_strategy_research_filter_threshold_methodology_review/recommended_gate_policy_proposal.json
+      - docs/research/dynamic_strategy_research_filter_threshold_methodology_review.md
+      - docs/research/dynamic_strategy_threshold_inventory.md
+      - docs/research/dynamic_strategy_gate_taxonomy.md
+      - docs/research/dynamic_strategy_candidate_threshold_outcome_matrix.md
+      - docs/research/dynamic_strategy_2389_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2388 consumes prior validated TRADING-2364/2365/2366/2375/2376/2379/2383/2386/2387 research artifacts and existing rule constants to produce a no-side-effect threshold methodology review; it does not read fresh cached market data, rerun backtests, generate signals, mutate gates, or approve observation.
+    owner_action: review_dynamic_strategy_research_filter_threshold_methodology
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

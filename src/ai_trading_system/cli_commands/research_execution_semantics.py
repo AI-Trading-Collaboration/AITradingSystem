@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_OUTPUT_ROOT,
@@ -700,6 +701,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-observation-gate-threshold-calibration-review"
     )(_dynamic_strategy_observation_gate_threshold_calibration_review_command)
+    strategies_app.command(
+        "dynamic-strategy-research-filter-threshold-methodology-review"
+    )(_dynamic_strategy_research_filter_threshold_methodology_review_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2811,6 +2815,122 @@ def _dynamic_strategy_observation_gate_threshold_calibration_review_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy observation gate threshold calibration review",
+        payload,
+    )
+
+
+def _dynamic_strategy_research_filter_threshold_methodology_review_command(
+    source_cadence_audit_path: Annotated[
+        Path, typer.Option("--source-cadence-audit")
+    ] = m2388.DEFAULT_SOURCE_2364_CADENCE_AUDIT_PATH,
+    source_event_retest_path: Annotated[
+        Path, typer.Option("--source-event-retest")
+    ] = m2388.DEFAULT_SOURCE_2365_EVENT_RETEST_PATH,
+    source_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking")
+    ] = m2388.DEFAULT_SOURCE_2365_CANDIDATE_RANKING_PATH,
+    source_sensitivity_result_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result")
+    ] = m2388.DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH,
+    source_sensitivity_decision_update_path: Annotated[
+        Path, typer.Option("--source-sensitivity-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2366_DECISION_UPDATE_PATH,
+    source_divergence_review_path: Annotated[
+        Path, typer.Option("--source-divergence-review")
+    ] = m2388.DEFAULT_SOURCE_2375_DIVERGENCE_REVIEW_PATH,
+    source_divergence_decision_update_path: Annotated[
+        Path, typer.Option("--source-divergence-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2375_DECISION_UPDATE_PATH,
+    source_targeted_retest_path: Annotated[
+        Path, typer.Option("--source-targeted-retest")
+    ] = m2388.DEFAULT_SOURCE_2376_TARGETED_RETEST_PATH,
+    source_targeted_decision_update_path: Annotated[
+        Path, typer.Option("--source-targeted-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2376_DECISION_UPDATE_PATH,
+    source_variant_retest_path: Annotated[
+        Path, typer.Option("--source-variant-retest")
+    ] = m2388.DEFAULT_SOURCE_2379_VARIANT_RETEST_PATH,
+    source_optimized_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-optimized-variant-ranking")
+    ] = m2388.DEFAULT_SOURCE_2379_OPTIMIZED_VARIANT_RANKING_PATH,
+    source_variant_decision_update_path: Annotated[
+        Path, typer.Option("--source-variant-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2379_DECISION_UPDATE_PATH,
+    source_guarded_variant_retest_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-retest")
+    ] = m2388.DEFAULT_SOURCE_2383_GUARDED_VARIANT_RETEST_PATH,
+    source_guarded_variant_ranking_path: Annotated[
+        Path, typer.Option("--source-guarded-variant-ranking")
+    ] = m2388.DEFAULT_SOURCE_2383_GUARDED_VARIANT_RANKING_PATH,
+    source_guarded_decision_update_path: Annotated[
+        Path, typer.Option("--source-guarded-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2383_DECISION_UPDATE_PATH,
+    source_expanded_candidate_retest_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest")
+    ] = m2388.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking")
+    ] = m2388.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    source_expanded_decision_update_path: Annotated[
+        Path, typer.Option("--source-expanded-decision-update")
+    ] = m2388.DEFAULT_SOURCE_2386_DECISION_UPDATE_PATH,
+    source_gate_calibration_review_path: Annotated[
+        Path, typer.Option("--source-gate-calibration-review")
+    ] = m2388.DEFAULT_SOURCE_2387_GATE_CALIBRATION_REVIEW_PATH,
+    source_gate_policy_review_path: Annotated[
+        Path, typer.Option("--source-gate-policy-review")
+    ] = m2388.DEFAULT_SOURCE_2387_GATE_POLICY_REVIEW_PATH,
+    source_candidate_reclassification_preview_path: Annotated[
+        Path, typer.Option("--source-candidate-reclassification-preview")
+    ] = m2388.DEFAULT_SOURCE_2387_CANDIDATE_RECLASSIFICATION_PREVIEW_PATH,
+    source_recommended_policy_update_path: Annotated[
+        Path, typer.Option("--source-recommended-policy-update")
+    ] = m2388.DEFAULT_SOURCE_2387_RECOMMENDED_POLICY_UPDATE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2388.DEFAULT_DYNAMIC_STRATEGY_RESEARCH_FILTER_THRESHOLD_METHODOLOGY_REVIEW_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2388.DEFAULT_DYNAMIC_STRATEGY_RESEARCH_FILTER_THRESHOLD_METHODOLOGY_REVIEW_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2388.run_dynamic_strategy_research_filter_threshold_methodology_review(
+        source_cadence_audit_path=source_cadence_audit_path,
+        source_event_retest_path=source_event_retest_path,
+        source_candidate_ranking_path=source_candidate_ranking_path,
+        source_sensitivity_result_path=source_sensitivity_result_path,
+        source_sensitivity_decision_update_path=(
+            source_sensitivity_decision_update_path
+        ),
+        source_divergence_review_path=source_divergence_review_path,
+        source_divergence_decision_update_path=source_divergence_decision_update_path,
+        source_targeted_retest_path=source_targeted_retest_path,
+        source_targeted_decision_update_path=source_targeted_decision_update_path,
+        source_variant_retest_path=source_variant_retest_path,
+        source_optimized_variant_ranking_path=source_optimized_variant_ranking_path,
+        source_variant_decision_update_path=source_variant_decision_update_path,
+        source_guarded_variant_retest_path=source_guarded_variant_retest_path,
+        source_guarded_variant_ranking_path=source_guarded_variant_ranking_path,
+        source_guarded_decision_update_path=source_guarded_decision_update_path,
+        source_expanded_candidate_retest_path=source_expanded_candidate_retest_path,
+        source_expanded_candidate_ranking_path=source_expanded_candidate_ranking_path,
+        source_expanded_decision_update_path=source_expanded_decision_update_path,
+        source_gate_calibration_review_path=source_gate_calibration_review_path,
+        source_gate_policy_review_path=source_gate_policy_review_path,
+        source_candidate_reclassification_preview_path=(
+            source_candidate_reclassification_preview_path
+        ),
+        source_recommended_policy_update_path=source_recommended_policy_update_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy research filter threshold methodology review",
         payload,
     )
 
