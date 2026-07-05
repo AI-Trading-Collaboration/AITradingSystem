@@ -27207,6 +27207,191 @@ reports:
     portfolio_effect: none
     broker_action: none
     dynamic_promotion_status: BLOCKED
+  - report_id: high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan
+    title: High-Intensity Risk-Cap Observe-Only Scheduler Idempotency And Replay Contract Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research trends high-intensity-risk-cap-observe-only-scheduler-idempotency-replay-contract-plan
+    artifact_globs:
+      - docs/research/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan.md
+      - docs/research/high_intensity_2358_event_append_contract_route.md
+      - docs/requirements/TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan.md
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_replay_contract_plan_summary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_replay_contract_plan_source_artifact_review.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_stable_semantic_hash_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_volatile_field_exclusion_rule.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_duplicate_detection_plan.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_replay_no_side_effect_contract.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_replay_blocked_promotion_rationale.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_2358_event_append_contract_route.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_replay_interpretation_boundary.json
+      - outputs/research_trends/high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan/high_intensity_scheduler_idempotency_replay_safety_boundary.json
+    artifact_selection_policy: latest_available
+    artifact_role: high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan
+    data_quality_status: PASS_WITH_WARNINGS
+    validation_status: OBSERVE_ONLY_SCHEDULER_IDEMPOTENCY_AND_REPLAY_CONTRACT_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_task_id: TRADING-2356_OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN
+    source_status: OBSERVE_ONLY_SCHEDULER_KILL_SWITCH_AND_DISABLED_ENFORCEMENT_EVIDENCE_PLAN_READY_WITH_CAVEATS_PROMOTION_BLOCKED
+    source_readiness_status: READY_FOR_2357_WITH_CAVEATS
+    source_next_task: TRADING-2357_Observe_Only_Scheduler_Idempotency_And_Replay_Contract_Plan
+    data_validation_policy: NOT_APPLICABLE_PRIOR_VALIDATED_RESEARCH_ARTIFACTS_ONLY_NO_MARKET_DATA_READ_NO_OUTCOME_BINDING
+    data_quality_gate_required: false
+    data_quality_gate_executed: false
+    aits_validate_data_executed: false
+    source_validate_data_executed: true
+    source_validate_data_as_of: 2026-06-29
+    source_validate_data_status: PASS_WITH_WARNINGS
+    source_validate_data_error_count: 0
+    source_tasks:
+      - TRADING-2347
+      - TRADING-2348
+      - TRADING-2349
+      - TRADING-2350
+      - TRADING-2351
+      - TRADING-2352
+      - TRADING-2353
+      - TRADING-2354
+      - TRADING-2355
+      - TRADING-2356
+    evidence_chain_complete: true
+    owner_decision: KEEP_DISABLED_AND_PROMOTION_BLOCKED
+    idempotency_contract_ready: true
+    replay_contract_ready: true
+    stable_semantic_hash_contract_ready: true
+    volatile_field_exclusion_rule_ready: true
+    duplicate_detection_plan_ready: true
+    replay_no_side_effect_contract_ready: true
+    promotion_decision: BLOCKED
+    promotion_allowed: false
+    readiness: READY_FOR_2358_WITH_CAVEATS
+    next_task: TRADING-2358_Observe_Only_Event_Append_Contract_Plan
+    next_route: TRADING-2358_Observe_Only_Event_Append_Contract_Plan
+    stable_semantic_hash_algorithm: sha256
+    stable_semantic_hash_canonicalization: json_sorted_keys_without_volatile_fields
+    stable_semantic_fields:
+      - task_id
+      - status
+      - source_tasks
+      - evidence_chain_complete
+      - owner_decision
+      - promotion_decision
+      - promotion_allowed
+      - scheduler_enabled
+      - manual_run_only
+      - dry_run_only
+      - manual_run_executed
+      - guardrail_summary
+      - side_effect_summary
+      - next_route
+    volatile_field_exclusions:
+      - generated_at
+      - created_at
+      - updated_at
+      - runtime_id
+      - runtime_artifact
+      - runtime_artifact_path
+      - duration_ms
+      - elapsed_seconds
+      - local_path
+      - absolute_path
+      - host
+      - machine
+      - process_id
+      - git_dirty_state_when_generated
+    duplicate_key_candidates:
+      - task_id
+      - source_tasks
+      - stable_semantic_hash
+      - next_route
+    replay_count_minimum_future_validation: 3
+    duplicate_detection_side_effect_allowed: false
+    required_future_evidence:
+      - idempotency_contract_tests
+      - stable_semantic_hash_tests
+      - volatile_field_exclusion_tests
+      - duplicate_detection_tests
+      - replay_no_side_effect_tests
+      - owner_approval_required_assertions
+      - event_append_contract_plan
+    route_caveats:
+      - OWNER_DECISION_KEEP_DISABLED
+      - PROMOTION_BLOCKED
+      - OBSERVE_ONLY
+      - MANUAL_REVIEW_REQUIRED
+      - SCHEDULER_DISABLED
+      - MANUAL_RUN_ONLY
+      - DRY_RUN_ONLY
+      - IDEMPOTENCY_CONTRACT_PLAN_ONLY
+      - REPLAY_CONTRACT_PLAN_ONLY
+      - NO_REAL_REPLAY_VALIDATION
+      - NO_AUTOMATED_CADENCE
+      - NO_MANUAL_RUN_EXECUTION
+      - NO_EVENT_APPEND
+      - NO_OUTCOME_BINDING
+      - NO_PAPER_SHADOW
+      - NO_PRODUCTION
+      - NO_BROKER_ACTION
+      - EVENT_APPEND_CONTRACT_REQUIRED_NEXT
+    research_only: true
+    observe_only: true
+    idempotency_contract_plan_only: true
+    replay_contract_plan_only: true
+    prior_validated_artifacts_only: true
+    source_artifacts_only: true
+    scheduler_enabled: false
+    scheduler_default_enabled: false
+    automated_cadence_enabled: false
+    automated_cadence_created: false
+    manual_run_only: true
+    dry_run_only: true
+    manual_run_executed: false
+    real_replay_validation_executed: false
+    event_append_enabled: false
+    event_append_attempted: false
+    event_append_executed: false
+    outcome_binding_enabled: false
+    outcome_binding_attempted: false
+    outcome_binding_executed: false
+    paper_shadow_enabled: false
+    paper_shadow_attempted: false
+    paper_shadow_allowed: false
+    production_enabled: false
+    production_attempted: false
+    production_allowed: false
+    broker_action_enabled: false
+    broker_action_attempted: false
+    broker_action_allowed: false
+    real_scheduler_created: false
+    cron_created: false
+    cron_entry_created: false
+    windows_task_created: false
+    github_actions_schedule_created: false
+    github_action_schedule_created: false
+    event_log_mutated: false
+    outcome_store_mutated: false
+    fresh_market_data_read: false
+    new_signal_generated: false
+    backtest_run: false
+    daily_report_generated: false
+    daily_report_integration: none
+    weekly_report_integration: none
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Idempotency and replay contract plan should be rerun after TRADING-2356
+      kill-switch artifacts change, or after project owner explicitly changes
+      the scheduler decision.
+    owner_action: complete_2358_event_append_contract_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    portfolio_effect: none
+    broker_action: none
+    dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
     title: Signal Validity / Aging Runtime Design
     group: research
