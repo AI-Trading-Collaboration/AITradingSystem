@@ -18866,6 +18866,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_component_ablation_owner_review_decision
+    title: Dynamic Strategy Component Ablation Owner Review Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-component-ablation-owner-review-decision
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_component_ablation_owner_review_decision/owner_review_decision.json
+      - outputs/research_strategies/dynamic_strategy_component_ablation_owner_review_decision/component_recombination_decision.json
+      - outputs/research_strategies/dynamic_strategy_component_ablation_owner_review_decision/recombination_principles.json
+      - outputs/research_strategies/dynamic_strategy_component_ablation_owner_review_decision/next_route.json
+      - docs/research/dynamic_strategy_component_ablation_owner_review_decision.md
+      - docs/research/dynamic_strategy_component_recombination_decision.md
+      - docs/research/dynamic_strategy_recombination_principles.md
+      - docs/research/dynamic_strategy_2395_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2394 consumes prior validated TRADING-2391/2392/2393 artifacts to record component ablation owner review and recombination direction; it does not read fresh cached market data, run backtests, generate signals, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_component_ablation_owner_review_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

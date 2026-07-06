@@ -12,6 +12,7 @@ from rich.console import Console
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_owner_review_decision as m2391
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
+import ai_trading_system.dynamic_strategy_component_ablation_owner_review_decision as m2394
 import ai_trading_system.dynamic_strategy_component_attribution_gate_evidence_plan as m2392
 import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablation_retest as m2393
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
@@ -724,6 +725,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-component-attribution-targeted-ablation-retest"
     )(_dynamic_strategy_component_attribution_targeted_ablation_retest_command)
+    strategies_app.command(
+        "dynamic-strategy-component-ablation-owner-review-decision"
+    )(_dynamic_strategy_component_ablation_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3323,6 +3327,62 @@ def _dynamic_strategy_component_attribution_targeted_ablation_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy component attribution targeted ablation retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_component_ablation_owner_review_decision_command(
+    source_owner_review_decision_2391_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2391")
+    ] = m2394.DEFAULT_SOURCE_2391_OWNER_REVIEW_DECISION_PATH,
+    source_component_attribution_plan_2392_path: Annotated[
+        Path, typer.Option("--source-component-attribution-plan-2392")
+    ] = m2394.DEFAULT_SOURCE_2392_COMPONENT_ATTRIBUTION_PLAN_PATH,
+    source_ablation_retest_result_2393_path: Annotated[
+        Path, typer.Option("--source-ablation-retest-result-2393")
+    ] = m2394.DEFAULT_SOURCE_2393_ABLATION_RETEST_RESULT_PATH,
+    source_component_attribution_matrix_2393_path: Annotated[
+        Path, typer.Option("--source-component-attribution-matrix-2393")
+    ] = m2394.DEFAULT_SOURCE_2393_COMPONENT_ATTRIBUTION_MATRIX_PATH,
+    source_reusable_component_decision_2393_path: Annotated[
+        Path, typer.Option("--source-reusable-component-decision-2393")
+    ] = m2394.DEFAULT_SOURCE_2393_REUSABLE_COMPONENT_DECISION_PATH,
+    source_decision_update_2393_path: Annotated[
+        Path, typer.Option("--source-decision-update-2393")
+    ] = m2394.DEFAULT_SOURCE_2393_DECISION_UPDATE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2394.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_DECISION_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2394.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_DECISION_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2394.run_dynamic_strategy_component_ablation_owner_review_decision(
+        source_owner_review_decision_2391_path=source_owner_review_decision_2391_path,
+        source_component_attribution_plan_2392_path=(
+            source_component_attribution_plan_2392_path
+        ),
+        source_ablation_retest_result_2393_path=(
+            source_ablation_retest_result_2393_path
+        ),
+        source_component_attribution_matrix_2393_path=(
+            source_component_attribution_matrix_2393_path
+        ),
+        source_reusable_component_decision_2393_path=(
+            source_reusable_component_decision_2393_path
+        ),
+        source_decision_update_2393_path=source_decision_update_2393_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy component ablation owner review decision",
         payload,
     )
 
