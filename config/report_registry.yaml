@@ -18891,6 +18891,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_component_recombination_candidate_plan
+    title: Dynamic Strategy Component Recombination Candidate Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-component-recombination-candidate-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_component_recombination_candidate_plan/recombination_candidate_plan.json
+      - outputs/research_strategies/dynamic_strategy_component_recombination_candidate_plan/recombination_candidate_definitions.json
+      - outputs/research_strategies/dynamic_strategy_component_recombination_candidate_plan/retest_plan_2396.json
+      - outputs/research_strategies/dynamic_strategy_component_recombination_candidate_plan/recombination_acceptance_criteria.json
+      - docs/research/dynamic_strategy_component_recombination_candidate_plan.md
+      - docs/research/dynamic_strategy_recombination_candidate_definitions.md
+      - docs/research/dynamic_strategy_recombination_retest_plan.md
+      - docs/research/dynamic_strategy_2396_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2395 consumes prior validated TRADING-2390/2391/2392/2393/2394 artifacts to design component recombination candidates and the TRADING-2396 retest plan; it does not read fresh cached market data, run backtests, generate signals, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_component_recombination_candidate_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
