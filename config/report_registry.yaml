@@ -18816,6 +18816,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_component_attribution_gate_evidence_plan
+    title: Dynamic Strategy Component Attribution Gate Evidence Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-component-attribution-gate-evidence-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_component_attribution_gate_evidence_plan/component_attribution_plan.json
+      - outputs/research_strategies/dynamic_strategy_component_attribution_gate_evidence_plan/component_value_matrix.json
+      - outputs/research_strategies/dynamic_strategy_component_attribution_gate_evidence_plan/gate_evidence_plan.json
+      - outputs/research_strategies/dynamic_strategy_component_attribution_gate_evidence_plan/targeted_ablation_retest_plan.json
+      - docs/research/dynamic_strategy_component_attribution_gate_evidence_plan.md
+      - docs/research/dynamic_strategy_component_value_matrix.md
+      - docs/research/dynamic_strategy_gate_evidence_plan.md
+      - docs/research/dynamic_strategy_2393_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2392 consumes prior validated TRADING-2365/2366/2386/2390/2391 artifacts to produce component attribution, gate evidence and targeted ablation retest plans; it does not read fresh cached market data, rerun backtests, generate signals, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_component_attribution_gate_evidence_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

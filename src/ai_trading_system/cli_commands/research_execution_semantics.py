@@ -12,6 +12,7 @@ from rich.console import Console
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_owner_review_decision as m2391
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
+import ai_trading_system.dynamic_strategy_component_attribution_gate_evidence_plan as m2392
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
@@ -716,6 +717,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-calibrated-gate-candidate-owner-review-decision"
     )(_dynamic_strategy_calibrated_gate_candidate_owner_review_decision_command)
+    strategies_app.command(
+        "dynamic-strategy-component-attribution-gate-evidence-plan"
+    )(_dynamic_strategy_component_attribution_gate_evidence_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3159,6 +3163,80 @@ def _dynamic_strategy_calibrated_gate_candidate_owner_review_decision_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy calibrated gate candidate owner review decision",
+        payload,
+    )
+
+
+def _dynamic_strategy_component_attribution_gate_evidence_plan_command(
+    source_candidate_ranking_2365_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking-2365")
+    ] = m2392.DEFAULT_SOURCE_2365_CANDIDATE_RANKING_PATH,
+    source_sensitivity_result_2366_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result-2366")
+    ] = m2392.DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH,
+    source_expanded_candidate_retest_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest-2386")
+    ] = m2392.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking-2386")
+    ] = m2392.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    source_reclassification_result_2390_path: Annotated[
+        Path, typer.Option("--source-reclassification-result-2390")
+    ] = m2392.DEFAULT_SOURCE_2390_RECLASSIFICATION_RESULT_PATH,
+    source_component_attribution_review_2390_path: Annotated[
+        Path, typer.Option("--source-component-attribution-review-2390")
+    ] = m2392.DEFAULT_SOURCE_2390_COMPONENT_ATTRIBUTION_REVIEW_PATH,
+    source_candidate_reclassification_preview_2390_path: Annotated[
+        Path, typer.Option("--source-candidate-reclassification-preview-2390")
+    ] = m2392.DEFAULT_SOURCE_2390_CANDIDATE_RECLASSIFICATION_PREVIEW_PATH,
+    source_owner_review_decision_2391_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2391")
+    ] = m2392.DEFAULT_SOURCE_2391_OWNER_REVIEW_DECISION_PATH,
+    source_candidate_owner_review_record_2391_path: Annotated[
+        Path, typer.Option("--source-candidate-owner-review-record-2391")
+    ] = m2392.DEFAULT_SOURCE_2391_CANDIDATE_OWNER_REVIEW_RECORD_PATH,
+    source_observation_non_approval_record_2391_path: Annotated[
+        Path, typer.Option("--source-observation-non-approval-record-2391")
+    ] = m2392.DEFAULT_SOURCE_2391_OBSERVATION_NON_APPROVAL_RECORD_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2392.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_GATE_EVIDENCE_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2392.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_GATE_EVIDENCE_PLAN_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2392.run_dynamic_strategy_component_attribution_gate_evidence_plan(
+        source_candidate_ranking_2365_path=source_candidate_ranking_2365_path,
+        source_sensitivity_result_2366_path=source_sensitivity_result_2366_path,
+        source_expanded_candidate_retest_2386_path=(
+            source_expanded_candidate_retest_2386_path
+        ),
+        source_expanded_candidate_ranking_2386_path=(
+            source_expanded_candidate_ranking_2386_path
+        ),
+        source_reclassification_result_2390_path=(
+            source_reclassification_result_2390_path
+        ),
+        source_component_attribution_review_2390_path=(
+            source_component_attribution_review_2390_path
+        ),
+        source_candidate_reclassification_preview_2390_path=(
+            source_candidate_reclassification_preview_2390_path
+        ),
+        source_owner_review_decision_2391_path=source_owner_review_decision_2391_path,
+        source_candidate_owner_review_record_2391_path=(
+            source_candidate_owner_review_record_2391_path
+        ),
+        source_observation_non_approval_record_2391_path=(
+            source_observation_non_approval_record_2391_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy component attribution gate evidence plan",
         payload,
     )
 
