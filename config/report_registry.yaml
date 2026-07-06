@@ -18766,6 +18766,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_calibrated_gate_candidate_reclassification
+    title: Dynamic Strategy Calibrated Gate Candidate Reclassification
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-calibrated-gate-candidate-reclassification
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_calibrated_gate_candidate_reclassification/reclassification_result.json
+      - outputs/research_strategies/dynamic_strategy_calibrated_gate_candidate_reclassification/candidate_reclassification_preview.json
+      - outputs/research_strategies/dynamic_strategy_calibrated_gate_candidate_reclassification/component_attribution_review.json
+      - outputs/research_strategies/dynamic_strategy_calibrated_gate_candidate_reclassification/owner_review_recommendation.json
+      - docs/research/dynamic_strategy_calibrated_gate_candidate_reclassification.md
+      - docs/research/dynamic_strategy_calibrated_gate_candidate_reclassification_preview.md
+      - docs/research/dynamic_strategy_calibrated_gate_component_attribution_review.md
+      - docs/research/dynamic_strategy_2391_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2390 consumes prior validated TRADING-2365/2366/2386/2388/2389 artifacts to produce calibrated gate candidate reclassification and component attribution; it does not read fresh cached market data, rerun backtests, generate signals, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_calibrated_gate_candidate_reclassification
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

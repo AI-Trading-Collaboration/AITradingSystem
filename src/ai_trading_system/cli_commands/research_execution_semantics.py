@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
@@ -708,6 +709,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-calibrated-gate-owner-review-decision"
     )(_dynamic_strategy_calibrated_gate_owner_review_decision_command)
+    strategies_app.command(
+        "dynamic-strategy-calibrated-gate-candidate-reclassification"
+    )(_dynamic_strategy_calibrated_gate_candidate_reclassification_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3009,6 +3013,80 @@ def _dynamic_strategy_calibrated_gate_owner_review_decision_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy calibrated gate owner review decision",
+        payload,
+    )
+
+
+def _dynamic_strategy_calibrated_gate_candidate_reclassification_command(
+    source_candidate_ranking_2365_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking-2365")
+    ] = m2390.DEFAULT_SOURCE_2365_CANDIDATE_RANKING_PATH,
+    source_sensitivity_result_2366_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result-2366")
+    ] = m2390.DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH,
+    source_expanded_candidate_retest_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest")
+    ] = m2390.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking")
+    ] = m2390.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    source_expanded_decision_update_path: Annotated[
+        Path, typer.Option("--source-expanded-decision-update")
+    ] = m2390.DEFAULT_SOURCE_2386_DECISION_UPDATE_PATH,
+    source_threshold_methodology_review_path: Annotated[
+        Path, typer.Option("--source-threshold-methodology-review")
+    ] = m2390.DEFAULT_SOURCE_2388_THRESHOLD_METHODOLOGY_REVIEW_PATH,
+    source_candidate_threshold_outcome_matrix_path: Annotated[
+        Path, typer.Option("--source-candidate-threshold-outcome-matrix")
+    ] = m2390.DEFAULT_SOURCE_2388_CANDIDATE_THRESHOLD_OUTCOME_MATRIX_PATH,
+    source_recommended_gate_policy_proposal_path: Annotated[
+        Path, typer.Option("--source-recommended-gate-policy-proposal")
+    ] = m2390.DEFAULT_SOURCE_2388_RECOMMENDED_GATE_POLICY_PROPOSAL_PATH,
+    source_owner_review_decision_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision")
+    ] = m2390.DEFAULT_SOURCE_2389_OWNER_REVIEW_DECISION_PATH,
+    source_calibrated_gate_adoption_record_path: Annotated[
+        Path, typer.Option("--source-calibrated-gate-adoption-record")
+    ] = m2390.DEFAULT_SOURCE_2389_CALIBRATED_GATE_ADOPTION_RECORD_PATH,
+    source_non_approval_record_path: Annotated[
+        Path, typer.Option("--source-non-approval-record")
+    ] = m2390.DEFAULT_SOURCE_2389_NON_APPROVAL_RECORD_PATH,
+    source_next_reclassification_route_path: Annotated[
+        Path, typer.Option("--source-next-reclassification-route")
+    ] = m2390.DEFAULT_SOURCE_2389_NEXT_RECLASSIFICATION_ROUTE_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2390.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_CANDIDATE_RECLASSIFICATION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2390.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_CANDIDATE_RECLASSIFICATION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2390.run_dynamic_strategy_calibrated_gate_candidate_reclassification(
+        source_candidate_ranking_2365_path=source_candidate_ranking_2365_path,
+        source_sensitivity_result_2366_path=source_sensitivity_result_2366_path,
+        source_expanded_candidate_retest_path=source_expanded_candidate_retest_path,
+        source_expanded_candidate_ranking_path=source_expanded_candidate_ranking_path,
+        source_expanded_decision_update_path=source_expanded_decision_update_path,
+        source_threshold_methodology_review_path=source_threshold_methodology_review_path,
+        source_candidate_threshold_outcome_matrix_path=(
+            source_candidate_threshold_outcome_matrix_path
+        ),
+        source_recommended_gate_policy_proposal_path=(
+            source_recommended_gate_policy_proposal_path
+        ),
+        source_owner_review_decision_path=source_owner_review_decision_path,
+        source_calibrated_gate_adoption_record_path=(
+            source_calibrated_gate_adoption_record_path
+        ),
+        source_non_approval_record_path=source_non_approval_record_path,
+        source_next_reclassification_route_path=source_next_reclassification_route_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy calibrated gate candidate reclassification",
         payload,
     )
 
