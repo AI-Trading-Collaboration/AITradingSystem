@@ -17,6 +17,7 @@ import ai_trading_system.dynamic_strategy_component_attribution_gate_evidence_pl
 import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablation_retest as m2393
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
+import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
@@ -736,6 +737,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-component-recombination-candidate-retest"
     )(_dynamic_strategy_component_recombination_candidate_retest_command)
+    strategies_app.command(
+        "dynamic-strategy-recombination-candidate-owner-review-decision"
+    )(_dynamic_strategy_recombination_candidate_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3559,6 +3563,82 @@ def _dynamic_strategy_component_recombination_candidate_retest_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy component recombination candidate retest",
+        payload,
+    )
+
+
+def _dynamic_strategy_recombination_candidate_owner_review_decision_command(
+    source_recombination_retest_result_2396_path: Annotated[
+        Path, typer.Option("--source-recombination-retest-result-2396")
+    ] = m2397.DEFAULT_SOURCE_2396_RECOMBINATION_RETEST_RESULT_PATH,
+    source_recombination_candidate_ranking_2396_path: Annotated[
+        Path, typer.Option("--source-recombination-candidate-ranking-2396")
+    ] = m2397.DEFAULT_SOURCE_2396_RECOMBINATION_CANDIDATE_RANKING_PATH,
+    source_component_evidence_matrix_2396_path: Annotated[
+        Path, typer.Option("--source-component-evidence-matrix-2396")
+    ] = m2397.DEFAULT_SOURCE_2396_COMPONENT_EVIDENCE_MATRIX_PATH,
+    source_decision_update_2396_path: Annotated[
+        Path, typer.Option("--source-decision-update-2396")
+    ] = m2397.DEFAULT_SOURCE_2396_DECISION_UPDATE_PATH,
+    source_recombination_candidate_plan_2395_path: Annotated[
+        Path, typer.Option("--source-recombination-candidate-plan-2395")
+    ] = m2397.DEFAULT_SOURCE_2395_RECOMBINATION_CANDIDATE_PLAN_PATH,
+    source_candidate_definitions_2395_path: Annotated[
+        Path, typer.Option("--source-candidate-definitions-2395")
+    ] = m2397.DEFAULT_SOURCE_2395_CANDIDATE_DEFINITIONS_PATH,
+    source_owner_review_decision_2394_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2394")
+    ] = m2397.DEFAULT_SOURCE_2394_OWNER_REVIEW_DECISION_PATH,
+    source_component_recombination_decision_2394_path: Annotated[
+        Path, typer.Option("--source-component-recombination-decision-2394")
+    ] = m2397.DEFAULT_SOURCE_2394_COMPONENT_RECOMBINATION_DECISION_PATH,
+    source_ablation_retest_result_2393_path: Annotated[
+        Path, typer.Option("--source-ablation-retest-result-2393")
+    ] = m2397.DEFAULT_SOURCE_2393_ABLATION_RETEST_RESULT_PATH,
+    source_component_attribution_matrix_2393_path: Annotated[
+        Path, typer.Option("--source-component-attribution-matrix-2393")
+    ] = m2397.DEFAULT_SOURCE_2393_COMPONENT_ATTRIBUTION_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2397.DEFAULT_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_OWNER_REVIEW_DECISION_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2397.DEFAULT_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_OWNER_REVIEW_DECISION_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2397.run_dynamic_strategy_recombination_candidate_owner_review_decision(
+        source_recombination_retest_result_2396_path=(
+            source_recombination_retest_result_2396_path
+        ),
+        source_recombination_candidate_ranking_2396_path=(
+            source_recombination_candidate_ranking_2396_path
+        ),
+        source_component_evidence_matrix_2396_path=(
+            source_component_evidence_matrix_2396_path
+        ),
+        source_decision_update_2396_path=source_decision_update_2396_path,
+        source_recombination_candidate_plan_2395_path=(
+            source_recombination_candidate_plan_2395_path
+        ),
+        source_candidate_definitions_2395_path=source_candidate_definitions_2395_path,
+        source_owner_review_decision_2394_path=source_owner_review_decision_2394_path,
+        source_component_recombination_decision_2394_path=(
+            source_component_recombination_decision_2394_path
+        ),
+        source_ablation_retest_result_2393_path=source_ablation_retest_result_2393_path,
+        source_component_attribution_matrix_2393_path=(
+            source_component_attribution_matrix_2393_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy recombination candidate owner review decision",
         payload,
     )
 
