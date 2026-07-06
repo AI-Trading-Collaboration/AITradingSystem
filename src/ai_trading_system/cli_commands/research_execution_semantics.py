@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
@@ -704,6 +705,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-research-filter-threshold-methodology-review"
     )(_dynamic_strategy_research_filter_threshold_methodology_review_command)
+    strategies_app.command(
+        "dynamic-strategy-calibrated-gate-owner-review-decision"
+    )(_dynamic_strategy_calibrated_gate_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -2931,6 +2935,80 @@ def _dynamic_strategy_research_filter_threshold_methodology_review_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy research filter threshold methodology review",
+        payload,
+    )
+
+
+def _dynamic_strategy_calibrated_gate_owner_review_decision_command(
+    source_expanded_candidate_retest_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest")
+    ] = m2389.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking")
+    ] = m2389.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    source_expanded_decision_update_path: Annotated[
+        Path, typer.Option("--source-expanded-decision-update")
+    ] = m2389.DEFAULT_SOURCE_2386_DECISION_UPDATE_PATH,
+    source_gate_calibration_review_path: Annotated[
+        Path, typer.Option("--source-gate-calibration-review")
+    ] = m2389.DEFAULT_SOURCE_2387_GATE_CALIBRATION_REVIEW_PATH,
+    source_gate_policy_review_path: Annotated[
+        Path, typer.Option("--source-gate-policy-review")
+    ] = m2389.DEFAULT_SOURCE_2387_GATE_POLICY_REVIEW_PATH,
+    source_candidate_reclassification_preview_path: Annotated[
+        Path, typer.Option("--source-candidate-reclassification-preview")
+    ] = m2389.DEFAULT_SOURCE_2387_CANDIDATE_RECLASSIFICATION_PREVIEW_PATH,
+    source_recommended_policy_update_path: Annotated[
+        Path, typer.Option("--source-recommended-policy-update")
+    ] = m2389.DEFAULT_SOURCE_2387_RECOMMENDED_POLICY_UPDATE_PATH,
+    source_threshold_methodology_review_path: Annotated[
+        Path, typer.Option("--source-threshold-methodology-review")
+    ] = m2389.DEFAULT_SOURCE_2388_THRESHOLD_METHODOLOGY_REVIEW_PATH,
+    source_threshold_inventory_path: Annotated[
+        Path, typer.Option("--source-threshold-inventory")
+    ] = m2389.DEFAULT_SOURCE_2388_THRESHOLD_INVENTORY_PATH,
+    source_gate_taxonomy_path: Annotated[
+        Path, typer.Option("--source-gate-taxonomy")
+    ] = m2389.DEFAULT_SOURCE_2388_GATE_TAXONOMY_PATH,
+    source_candidate_threshold_outcome_matrix_path: Annotated[
+        Path, typer.Option("--source-candidate-threshold-outcome-matrix")
+    ] = m2389.DEFAULT_SOURCE_2388_CANDIDATE_THRESHOLD_OUTCOME_MATRIX_PATH,
+    source_recommended_gate_policy_proposal_path: Annotated[
+        Path, typer.Option("--source-recommended-gate-policy-proposal")
+    ] = m2389.DEFAULT_SOURCE_2388_RECOMMENDED_GATE_POLICY_PROPOSAL_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2389.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_OWNER_REVIEW_DECISION_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2389.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_OWNER_REVIEW_DECISION_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2389.run_dynamic_strategy_calibrated_gate_owner_review_decision(
+        source_expanded_candidate_retest_path=source_expanded_candidate_retest_path,
+        source_expanded_candidate_ranking_path=source_expanded_candidate_ranking_path,
+        source_expanded_decision_update_path=source_expanded_decision_update_path,
+        source_gate_calibration_review_path=source_gate_calibration_review_path,
+        source_gate_policy_review_path=source_gate_policy_review_path,
+        source_candidate_reclassification_preview_path=(
+            source_candidate_reclassification_preview_path
+        ),
+        source_recommended_policy_update_path=source_recommended_policy_update_path,
+        source_threshold_methodology_review_path=source_threshold_methodology_review_path,
+        source_threshold_inventory_path=source_threshold_inventory_path,
+        source_gate_taxonomy_path=source_gate_taxonomy_path,
+        source_candidate_threshold_outcome_matrix_path=(
+            source_candidate_threshold_outcome_matrix_path
+        ),
+        source_recommended_gate_policy_proposal_path=(
+            source_recommended_gate_policy_proposal_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_as_of_kwargs(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy calibrated gate owner review decision",
         payload,
     )
 
