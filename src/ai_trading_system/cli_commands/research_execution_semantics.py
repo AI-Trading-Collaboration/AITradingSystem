@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_owner_review_decision as m2391
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
@@ -712,6 +713,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-calibrated-gate-candidate-reclassification"
     )(_dynamic_strategy_calibrated_gate_candidate_reclassification_command)
+    strategies_app.command(
+        "dynamic-strategy-calibrated-gate-candidate-owner-review-decision"
+    )(_dynamic_strategy_calibrated_gate_candidate_owner_review_decision_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3087,6 +3091,74 @@ def _dynamic_strategy_calibrated_gate_candidate_reclassification_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy calibrated gate candidate reclassification",
+        payload,
+    )
+
+
+def _dynamic_strategy_calibrated_gate_candidate_owner_review_decision_command(
+    source_expanded_candidate_retest_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest-2386")
+    ] = m2391.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_threshold_methodology_review_2388_path: Annotated[
+        Path, typer.Option("--source-threshold-methodology-review-2388")
+    ] = m2391.DEFAULT_SOURCE_2388_THRESHOLD_METHODOLOGY_REVIEW_PATH,
+    source_owner_review_decision_2389_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2389")
+    ] = m2391.DEFAULT_SOURCE_2389_OWNER_REVIEW_DECISION_PATH,
+    source_reclassification_result_2390_path: Annotated[
+        Path, typer.Option("--source-reclassification-result-2390")
+    ] = m2391.DEFAULT_SOURCE_2390_RECLASSIFICATION_RESULT_PATH,
+    source_candidate_reclassification_preview_2390_path: Annotated[
+        Path, typer.Option("--source-candidate-reclassification-preview-2390")
+    ] = m2391.DEFAULT_SOURCE_2390_CANDIDATE_RECLASSIFICATION_PREVIEW_PATH,
+    source_component_attribution_review_2390_path: Annotated[
+        Path, typer.Option("--source-component-attribution-review-2390")
+    ] = m2391.DEFAULT_SOURCE_2390_COMPONENT_ATTRIBUTION_REVIEW_PATH,
+    source_owner_review_recommendation_2390_path: Annotated[
+        Path, typer.Option("--source-owner-review-recommendation-2390")
+    ] = m2391.DEFAULT_SOURCE_2390_OWNER_REVIEW_RECOMMENDATION_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2391.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_CANDIDATE_OWNER_REVIEW_DECISION_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2391.DEFAULT_DYNAMIC_STRATEGY_CALIBRATED_GATE_CANDIDATE_OWNER_REVIEW_DECISION_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2391.run_dynamic_strategy_calibrated_gate_candidate_owner_review_decision(
+            source_expanded_candidate_retest_2386_path=(
+                source_expanded_candidate_retest_2386_path
+            ),
+            source_threshold_methodology_review_2388_path=(
+                source_threshold_methodology_review_2388_path
+            ),
+            source_owner_review_decision_2389_path=(
+                source_owner_review_decision_2389_path
+            ),
+            source_reclassification_result_2390_path=(
+                source_reclassification_result_2390_path
+            ),
+            source_candidate_reclassification_preview_2390_path=(
+                source_candidate_reclassification_preview_2390_path
+            ),
+            source_component_attribution_review_2390_path=(
+                source_component_attribution_review_2390_path
+            ),
+            source_owner_review_recommendation_2390_path=(
+                source_owner_review_recommendation_2390_path
+            ),
+            output_root=output_root,
+            docs_root=docs_root,
+            **_as_of_kwargs(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy calibrated gate candidate owner review decision",
         payload,
     )
 
