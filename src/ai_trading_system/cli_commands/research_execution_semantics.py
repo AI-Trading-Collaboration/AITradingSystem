@@ -13,6 +13,7 @@ import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_owner_review
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
 import ai_trading_system.dynamic_strategy_component_attribution_gate_evidence_plan as m2392
+import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablation_retest as m2393
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
@@ -720,6 +721,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-component-attribution-gate-evidence-plan"
     )(_dynamic_strategy_component_attribution_gate_evidence_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-component-attribution-targeted-ablation-retest"
+    )(_dynamic_strategy_component_attribution_targeted_ablation_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3237,6 +3241,88 @@ def _dynamic_strategy_component_attribution_gate_evidence_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy component attribution gate evidence plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_component_attribution_targeted_ablation_retest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2393.DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = m2393.DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = m2393.DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config-path")
+    ] = m2393.DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry-path")
+    ] = m2393.DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_candidate_ranking_2365_path: Annotated[
+        Path, typer.Option("--source-candidate-ranking-2365")
+    ] = m2393.DEFAULT_SOURCE_CANDIDATE_RANKING_PATH,
+    source_sensitivity_result_2366_path: Annotated[
+        Path, typer.Option("--source-sensitivity-result-2366")
+    ] = m2393.DEFAULT_SOURCE_2366_SENSITIVITY_RESULT_PATH,
+    source_expanded_candidate_retest_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest-2386")
+    ] = m2393.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking-2386")
+    ] = m2393.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    source_reclassification_result_2390_path: Annotated[
+        Path, typer.Option("--source-reclassification-result-2390")
+    ] = m2393.DEFAULT_SOURCE_2390_RECLASSIFICATION_RESULT_PATH,
+    source_owner_review_decision_2391_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2391")
+    ] = m2393.DEFAULT_SOURCE_2391_OWNER_REVIEW_DECISION_PATH,
+    source_component_attribution_plan_2392_path: Annotated[
+        Path, typer.Option("--source-component-attribution-plan-2392")
+    ] = m2393.DEFAULT_SOURCE_2392_COMPONENT_ATTRIBUTION_PLAN_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2393.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2393.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_ATTRIBUTION_TARGETED_ABLATION_RETEST_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = m2393.run_dynamic_strategy_component_attribution_targeted_ablation_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_candidate_ranking_2365_path=source_candidate_ranking_2365_path,
+        source_sensitivity_result_2366_path=source_sensitivity_result_2366_path,
+        source_expanded_candidate_retest_2386_path=(
+            source_expanded_candidate_retest_2386_path
+        ),
+        source_expanded_candidate_ranking_2386_path=(
+            source_expanded_candidate_ranking_2386_path
+        ),
+        source_reclassification_result_2390_path=(
+            source_reclassification_result_2390_path
+        ),
+        source_owner_review_decision_2391_path=(
+            source_owner_review_decision_2391_path
+        ),
+        source_component_attribution_plan_2392_path=(
+            source_component_attribution_plan_2392_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy component attribution targeted ablation retest",
         payload,
     )
 
