@@ -1,5 +1,43 @@
 # Refactor Log
 
+## 2026-07-07 Daily Incremental Refactor
+
+- 检查时间：2026-07-07 08:11 Asia/Tokyo。
+- 起始 HEAD：`edda8d0703b919802fee801b5c9c158aa52d497b` (`TRADING-2397 add recombination candidate owner decision`)。
+- 最近一次合格重构基线提交：`96855c7e7ce0b628c47b3aacb160bf6efec11341` (`refactor: correct AITradingSystem dynamic strategy report writer SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `c55692f854ebb99ad64955260aab4d2e9aaf3d27`。
+- 评估范围：`96855c7e7ce0b628c47b3aacb160bf6efec11341..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2389～2397 dynamic strategy calibrated gate owner review、candidate reclassification、component attribution、component ablation、recombination candidate plan/retest 和 recombination owner decision 模块。主要维护风险是新增 report modules 在本地重复维护 `_json_block`、缺失源 artifact payload 和 JSON document loading helper，后续若只改一处，可能导致 JSON formatting、UTF-8 read behavior 或 missing-source fail-closed payload 分叉。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2399_Daily_Incremental_Refactor_Dynamic_Strategy_JSON_Helper_Boundary.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/dynamic_strategy_report_common.py`
+  - `src/ai_trading_system/dynamic_strategy_calibrated_gate_owner_review_decision.py`
+  - `src/ai_trading_system/dynamic_strategy_calibrated_gate_candidate_reclassification.py`
+  - `src/ai_trading_system/dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py`
+  - `src/ai_trading_system/dynamic_strategy_component_attribution_gate_evidence_plan.py`
+  - `src/ai_trading_system/dynamic_strategy_component_attribution_targeted_ablation_retest.py`
+  - `src/ai_trading_system/dynamic_strategy_component_ablation_owner_review_decision.py`
+  - `src/ai_trading_system/dynamic_strategy_component_recombination_candidate_plan.py`
+  - `src/ai_trading_system/dynamic_strategy_component_recombination_candidate_retest.py`
+  - `src/ai_trading_system/dynamic_strategy_recombination_candidate_owner_review_decision.py`
+- 重构理由：TRADING-2389～2397 dynamic strategy research-only modules 已复用 `write_json_artifact()` / `write_markdown_artifact()`，但仍在各模块底部重复维护 JSON block formatting 和 JSON source artifact loader。把这些 helper 收敛进 `dynamic_strategy_report_common.py` 可让同一报告族的 serialization/read boundary 集中维护，同时保留每个 task module 自己的 payload、source validation、status、route 和 safety field 逻辑。
+- 行为影响：预期无外部行为变化；9 个 `aits research strategies dynamic-strategy-*` 命令的命令名、参数、默认路径、artifact path、JSON keys、Markdown section、status enum、安全字段、source validation、FAIL/PASS 语义和 recommended route 保持兼容。共享 helper 保留既有 JSON `ensure_ascii=False`、`indent=2`、`sort_keys=True` 格式，并保留三类既有 missing-source payload：`{}`、`{"status": "MISSING", "missing_path"|"path": ...}` 和 `{"_missing": true, "_path": ...}`；严格 JSON object loader 继续对缺失文件和非 object JSON fail closed。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent technical features、scoring、backtest 或 daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 dynamic strategy research-only JSON helper 的内部边界，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output 契约、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py src\ai_trading_system\dynamic_strategy_calibrated_gate_candidate_reclassification.py src\ai_trading_system\dynamic_strategy_calibrated_gate_owner_review_decision.py src\ai_trading_system\dynamic_strategy_component_attribution_gate_evidence_plan.py src\ai_trading_system\dynamic_strategy_component_attribution_targeted_ablation_retest.py src\ai_trading_system\dynamic_strategy_component_ablation_owner_review_decision.py src\ai_trading_system\dynamic_strategy_component_recombination_candidate_plan.py src\ai_trading_system\dynamic_strategy_component_recombination_candidate_retest.py src\ai_trading_system\dynamic_strategy_recombination_candidate_owner_review_decision.py`：PASS。初次运行发现 import ordering 问题，已用 `python -m ruff check --fix ...` 机械修正后复验通过。
+  - `python -m compileall -q src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py src\ai_trading_system\dynamic_strategy_calibrated_gate_candidate_reclassification.py src\ai_trading_system\dynamic_strategy_calibrated_gate_owner_review_decision.py src\ai_trading_system\dynamic_strategy_component_attribution_gate_evidence_plan.py src\ai_trading_system\dynamic_strategy_component_attribution_targeted_ablation_retest.py src\ai_trading_system\dynamic_strategy_component_ablation_owner_review_decision.py src\ai_trading_system\dynamic_strategy_component_recombination_candidate_plan.py src\ai_trading_system\dynamic_strategy_component_recombination_candidate_retest.py src\ai_trading_system\dynamic_strategy_recombination_candidate_owner_review_decision.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\research_strategies\test_dynamic_strategy_calibrated_gate_owner_review_decision.py tests\research_strategies\test_dynamic_strategy_calibrated_gate_candidate_reclassification.py tests\research_strategies\test_dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py tests\research_strategies\test_dynamic_strategy_component_attribution_gate_evidence_plan.py tests\research_strategies\test_dynamic_strategy_component_attribution_targeted_ablation_retest.py tests\research_strategies\test_dynamic_strategy_component_ablation_owner_review_decision.py tests\research_strategies\test_dynamic_strategy_component_recombination_candidate_plan.py tests\research_strategies\test_dynamic_strategy_component_recombination_candidate_retest.py tests\research_strategies\test_dynamic_strategy_recombination_candidate_owner_review_decision.py`：PASS，27 passed。
+  - 9 个 CLI help smoke：PASS，`dynamic-strategy-calibrated-gate-owner-review-decision`、`dynamic-strategy-calibrated-gate-candidate-reclassification`、`dynamic-strategy-calibrated-gate-candidate-owner-review-decision`、`dynamic-strategy-component-attribution-gate-evidence-plan`、`dynamic-strategy-component-attribution-targeted-ablation-retest`、`dynamic-strategy-component-ablation-owner-review-decision`、`dynamic-strategy-component-recombination-candidate-plan`、`dynamic-strategy-component-recombination-candidate-retest` 和 `dynamic-strategy-recombination-candidate-owner-review-decision` 均仍在原路径下可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，584 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，11 passed。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。命令输出 `docs/task_register.md` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
+- 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估剩余 dynamic strategy modules 中 repeated `_load_json_document` 的分批迁移，或继续收敛 repeated Markdown table helper；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
+- 本轮重构实现提交 SHA：待回填。
+
 ## 2026-07-06 Daily Incremental Refactor
 
 - 检查时间：2026-07-06 08:18 Asia/Tokyo。

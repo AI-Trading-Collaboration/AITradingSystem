@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
@@ -15,6 +14,12 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
 from ai_trading_system.dynamic_strategy_expanded_candidate_pool_retest import (
     RANKING_TOP_CANDIDATE,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_document_or_missing_status as _load_json_document,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
@@ -1212,12 +1217,6 @@ def _component_decisions_from_sources(sources: Mapping[str, Any]) -> dict[str, s
     }
 
 
-def _load_json_document(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {"status": "MISSING", "missing_path": str(path)}
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def _source_document_names() -> tuple[str, ...]:
     return (
         "reclassification_result_2390",
@@ -1240,7 +1239,3 @@ def _as_list_of_mappings(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
-
-
-def _json_block(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)

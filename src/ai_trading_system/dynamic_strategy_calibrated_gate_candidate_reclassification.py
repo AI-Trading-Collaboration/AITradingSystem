@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
@@ -39,6 +38,12 @@ from ai_trading_system.dynamic_strategy_expanded_candidate_pool_retest import (
 )
 from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_review import (
     REFERENCE_CANDIDATE_POLICY_RECOMMENDATION,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_document_or_empty as _load_json_document,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
@@ -1320,10 +1325,6 @@ def _component_table(rows: Any) -> str:
     return "\n".join(lines)
 
 
-def _json_block(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
-
-
 def _source_document_names() -> tuple[str, ...]:
     return (
         "candidate_ranking_2365",
@@ -1339,12 +1340,6 @@ def _source_document_names() -> tuple[str, ...]:
         "non_approval_record",
         "next_reclassification_route",
     )
-
-
-def _load_json_document(path: Path) -> Any:
-    if not path.exists():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _as_mapping(value: Any) -> dict[str, Any]:

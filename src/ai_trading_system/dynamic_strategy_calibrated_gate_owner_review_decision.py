@@ -23,6 +23,9 @@ from ai_trading_system.dynamic_strategy_observation_gate_threshold_calibration_r
     READY_STATUS as SOURCE_2387_READY_STATUS,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_mapping as _load_json_document,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
     write_markdown_artifact,
 )
@@ -1005,15 +1008,6 @@ def _side_effect_validation_errors(label: str, document: Mapping[str, Any]) -> l
     if document.get("production_effect") not in {None, "none"}:
         errors.append(f"{label}.production_effect must remain none")
     return errors
-
-
-def _load_json_document(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        raise FileNotFoundError(f"Required source artifact not found: {path}")
-    document = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(document, dict):
-        raise ValueError(f"Source artifact must be a JSON object: {path}")
-    return document
 
 
 def _as_mapping(value: Any) -> dict[str, Any]:

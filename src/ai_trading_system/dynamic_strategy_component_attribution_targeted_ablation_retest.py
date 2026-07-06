@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from datetime import date
 from pathlib import Path
@@ -58,6 +57,12 @@ from ai_trading_system.dynamic_strategy_expanded_candidate_pool_retest import (
 )
 from ai_trading_system.dynamic_strategy_expanded_candidate_pool_retest import (
     READY_STATUS as SOURCE_2386_READY_STATUS,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_document_or_missing_path as _load_json_document,
 )
 from ai_trading_system.execution_semantics import (
     AI_REGIME_SUMMARY,
@@ -1857,18 +1862,8 @@ def _component_table(rows: Any) -> str:
     return "\n".join(lines)
 
 
-def _json_block(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
-
-
 def _write_markdown(path: Path, content: str) -> None:
     path.write_text(content + "\n", encoding="utf-8")
-
-
-def _load_json_document(path: Path) -> Any:
-    if not path.exists():
-        return {"status": "MISSING", "path": str(path)}
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _as_mapping(value: Any) -> dict[str, Any]:

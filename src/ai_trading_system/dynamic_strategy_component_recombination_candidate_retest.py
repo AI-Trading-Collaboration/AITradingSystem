@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from datetime import date
 from pathlib import Path
@@ -17,6 +16,12 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
 from ai_trading_system.dynamic_strategy_cost_turnover_cooldown_sensitivity import (
     PRIMARY_EXECUTION_CADENCE,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_document_or_missing_path as _load_json_document,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
@@ -1739,16 +1744,6 @@ def _ranking_table(rows: Any) -> str:
             + "|"
         )
     return "\n".join(lines)
-
-
-def _json_block(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
-
-
-def _load_json_document(path: Path) -> Any:
-    if not path.exists():
-        return {"status": "MISSING", "path": str(path)}
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _as_mapping(value: Any) -> dict[str, Any]:

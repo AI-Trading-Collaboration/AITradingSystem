@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
@@ -12,6 +11,9 @@ import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
+from ai_trading_system.dynamic_strategy_report_common import (
+    load_json_document_or_missing_flag as _load_json_document,
+)
 from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
     write_markdown_artifact,
@@ -1139,13 +1141,6 @@ def _source_document_names() -> tuple[str, ...]:
         "ablation_retest_result_2393",
         "component_attribution_matrix_2393",
     )
-
-
-def _load_json_document(path: Path) -> Any:
-    if not path.exists():
-        return {"_missing": True, "_path": str(path)}
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
 
 
 def _as_mapping(value: Any) -> dict[str, Any]:
