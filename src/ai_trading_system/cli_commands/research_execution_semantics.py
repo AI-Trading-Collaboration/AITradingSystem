@@ -16,6 +16,7 @@ import ai_trading_system.dynamic_strategy_component_ablation_owner_review_decisi
 import ai_trading_system.dynamic_strategy_component_attribution_gate_evidence_plan as m2392
 import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablation_retest as m2393
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
+import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
@@ -732,6 +733,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-component-recombination-candidate-plan"
     )(_dynamic_strategy_component_recombination_candidate_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-component-recombination-candidate-retest"
+    )(_dynamic_strategy_component_recombination_candidate_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3461,6 +3465,100 @@ def _dynamic_strategy_component_recombination_candidate_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy component recombination candidate plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_component_recombination_candidate_retest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2396.DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = m2396.DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = m2396.DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config-path")
+    ] = m2396.DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry-path")
+    ] = m2396.DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_recombination_candidate_plan_2395_path: Annotated[
+        Path, typer.Option("--source-recombination-candidate-plan-2395")
+    ] = m2396.DEFAULT_SOURCE_2395_RECOMBINATION_CANDIDATE_PLAN_PATH,
+    source_candidate_definitions_2395_path: Annotated[
+        Path, typer.Option("--source-candidate-definitions-2395")
+    ] = m2396.DEFAULT_SOURCE_2395_CANDIDATE_DEFINITIONS_PATH,
+    source_retest_plan_2396_path: Annotated[
+        Path, typer.Option("--source-retest-plan-2396")
+    ] = m2396.DEFAULT_SOURCE_2395_RETEST_PLAN_PATH,
+    source_acceptance_criteria_2395_path: Annotated[
+        Path, typer.Option("--source-acceptance-criteria-2395")
+    ] = m2396.DEFAULT_SOURCE_2395_ACCEPTANCE_CRITERIA_PATH,
+    source_owner_review_decision_2394_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2394")
+    ] = m2396.DEFAULT_SOURCE_2394_OWNER_REVIEW_DECISION_PATH,
+    source_component_recombination_decision_2394_path: Annotated[
+        Path, typer.Option("--source-component-recombination-decision-2394")
+    ] = m2396.DEFAULT_SOURCE_2394_COMPONENT_RECOMBINATION_DECISION_PATH,
+    source_ablation_retest_result_2393_path: Annotated[
+        Path, typer.Option("--source-ablation-retest-result-2393")
+    ] = m2396.DEFAULT_SOURCE_2393_ABLATION_RETEST_RESULT_PATH,
+    source_component_attribution_matrix_2393_path: Annotated[
+        Path, typer.Option("--source-component-attribution-matrix-2393")
+    ] = m2396.DEFAULT_SOURCE_2393_COMPONENT_ATTRIBUTION_MATRIX_PATH,
+    source_expanded_candidate_retest_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-retest-2386")
+    ] = m2396.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RETEST_PATH,
+    source_expanded_candidate_ranking_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-candidate-ranking-2386")
+    ] = m2396.DEFAULT_SOURCE_2386_EXPANDED_CANDIDATE_RANKING_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2396.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_RETEST_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2396.DEFAULT_DYNAMIC_STRATEGY_COMPONENT_RECOMBINATION_CANDIDATE_RETEST_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = m2396.run_dynamic_strategy_component_recombination_candidate_retest(
+        prices_path=prices_path,
+        marketstack_prices_path=marketstack_prices_path,
+        rates_path=rates_path,
+        simple_config_path=simple_config_path,
+        policy_registry_path=policy_registry_path,
+        source_recombination_candidate_plan_2395_path=(
+            source_recombination_candidate_plan_2395_path
+        ),
+        source_candidate_definitions_2395_path=source_candidate_definitions_2395_path,
+        source_retest_plan_2396_path=source_retest_plan_2396_path,
+        source_acceptance_criteria_2395_path=source_acceptance_criteria_2395_path,
+        source_owner_review_decision_2394_path=source_owner_review_decision_2394_path,
+        source_component_recombination_decision_2394_path=(
+            source_component_recombination_decision_2394_path
+        ),
+        source_ablation_retest_result_2393_path=source_ablation_retest_result_2393_path,
+        source_component_attribution_matrix_2393_path=(
+            source_component_attribution_matrix_2393_path
+        ),
+        source_expanded_candidate_retest_2386_path=(
+            source_expanded_candidate_retest_2386_path
+        ),
+        source_expanded_candidate_ranking_2386_path=(
+            source_expanded_candidate_ranking_2386_path
+        ),
+        output_root=output_root,
+        docs_root=docs_root,
+        **_date_range_kwargs(as_of, start_date, end_date),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy component recombination candidate retest",
         payload,
     )
 
