@@ -36,7 +36,7 @@
   - `git diff --check`：PASS。命令输出 `docs/task_register.md` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
 - 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估剩余 dynamic strategy modules 中 repeated `_load_json_document` 的分批迁移，或继续收敛 repeated Markdown table helper；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
-- 本轮重构实现提交 SHA：待回填。
+- 本轮重构实现提交 SHA：`81efc874337d7aef47c812a1a457cae23ef738f9`。
 
 ## 2026-07-06 Daily Incremental Refactor
 
