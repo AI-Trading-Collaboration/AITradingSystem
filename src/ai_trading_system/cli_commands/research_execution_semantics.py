@@ -18,6 +18,7 @@ import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablatio
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_data_pit_signal_quality_gap_review as m2402
+import ai_trading_system.dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan as m2406
 import ai_trading_system.dynamic_strategy_pit_coverage_matrix_implementation_plan as m2404
 import ai_trading_system.dynamic_strategy_pit_coverage_matrix_reusable_implementation as m2405
 import ai_trading_system.dynamic_strategy_pit_coverage_signal_construction_review as m2403
@@ -774,6 +775,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-pit-coverage-matrix-generate"
     )(_dynamic_strategy_pit_coverage_matrix_generate_command)
+    strategies_app.command(
+        "dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan"
+    )(_dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4319,6 +4323,82 @@ def _dynamic_strategy_pit_coverage_matrix_generate_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy PIT coverage matrix reusable implementation",
+        payload,
+    )
+
+
+def _dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan_command(
+    source_2405_implementation_path: Annotated[
+        Path, typer.Option("--source-2405-implementation")
+    ] = m2406.DEFAULT_SOURCE_2405_IMPLEMENTATION_PATH,
+    source_2405_registry_snapshot_path: Annotated[
+        Path, typer.Option("--source-2405-registry-snapshot")
+    ] = m2406.DEFAULT_SOURCE_2405_REGISTRY_SNAPSHOT_PATH,
+    source_2405_pit_coverage_matrix_path: Annotated[
+        Path, typer.Option("--source-2405-pit-matrix")
+    ] = m2406.DEFAULT_SOURCE_2405_PIT_COVERAGE_MATRIX_PATH,
+    source_2405_pit_gate_result_path: Annotated[
+        Path, typer.Option("--source-2405-pit-gate-result")
+    ] = m2406.DEFAULT_SOURCE_2405_PIT_GATE_RESULT_PATH,
+    source_2405_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2405-blocker-summary")
+    ] = m2406.DEFAULT_SOURCE_2405_BLOCKER_SUMMARY_PATH,
+    source_2405_remediation_routes_path: Annotated[
+        Path, typer.Option("--source-2405-remediation-routes")
+    ] = m2406.DEFAULT_SOURCE_2405_REMEDIATION_ROUTES_PATH,
+    source_2403_pit_matrix_path: Annotated[
+        Path, typer.Option("--source-2403-pit-matrix")
+    ] = m2406.DEFAULT_SOURCE_2403_PIT_MATRIX_PATH,
+    source_2403_signal_construction_review_path: Annotated[
+        Path, typer.Option("--source-2403-signal-construction-review")
+    ] = m2406.DEFAULT_SOURCE_2403_SIGNAL_CONSTRUCTION_REVIEW_PATH,
+    source_2403_remediation_matrix_path: Annotated[
+        Path, typer.Option("--source-2403-remediation-matrix")
+    ] = m2406.DEFAULT_SOURCE_2403_REMEDIATION_MATRIX_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2406.DEFAULT_DYNAMIC_STRATEGY_PIT_INPUT_REGISTRY_PATH,
+    growth_tilt_config_path: Annotated[
+        Path, typer.Option("--growth-tilt-config")
+    ] = m2406.DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    execution_policy_registry_path: Annotated[
+        Path, typer.Option("--execution-policy-registry")
+    ] = m2406.DEFAULT_STRATEGY_EXECUTION_POLICY_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2406.DEFAULT_DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_SIGNAL_REMEDIATION_PLAN_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2406.DEFAULT_DYNAMIC_STRATEGY_GROWTH_TILT_ENGINE_PIT_SIGNAL_REMEDIATION_PLAN_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2406.run_dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan(
+            source_2405_implementation_path=source_2405_implementation_path,
+            source_2405_registry_snapshot_path=source_2405_registry_snapshot_path,
+            source_2405_pit_coverage_matrix_path=source_2405_pit_coverage_matrix_path,
+            source_2405_pit_gate_result_path=source_2405_pit_gate_result_path,
+            source_2405_blocker_summary_path=source_2405_blocker_summary_path,
+            source_2405_remediation_routes_path=source_2405_remediation_routes_path,
+            source_2403_pit_matrix_path=source_2403_pit_matrix_path,
+            source_2403_signal_construction_review_path=(
+                source_2403_signal_construction_review_path
+            ),
+            source_2403_remediation_matrix_path=source_2403_remediation_matrix_path,
+            pit_input_registry_path=pit_input_registry_path,
+            growth_tilt_config_path=growth_tilt_config_path,
+            execution_policy_registry_path=execution_policy_registry_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy growth tilt engine PIT remediation plan",
         payload,
     )
 

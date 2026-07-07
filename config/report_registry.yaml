@@ -19183,6 +19183,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan
+    title: Dynamic Strategy Growth Tilt Engine PIT And Signal Construction Remediation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-growth-tilt-engine-pit-signal-remediation-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/remediation_plan_result.json
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/source_feature_inventory.json
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/pit_risk_audit.json
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/signal_construction_gap_analysis.json
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/severity_downgrade_conditions.json
+      - outputs/research_strategies/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan/validation_plan.json
+      - docs/research/dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan.md
+      - docs/research/dynamic_strategy_growth_tilt_engine_source_feature_inventory.md
+      - docs/research/dynamic_strategy_growth_tilt_engine_pit_risk_audit.md
+      - docs/research/dynamic_strategy_growth_tilt_engine_remediation_plan.md
+      - docs/research/dynamic_strategy_2407_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2406 consumes prior validated TRADING-2405/2403 research artifacts plus governed PIT input registry, growth tilt config, and execution policy config to build the growth_tilt_engine source feature inventory, PIT risk audit, signal construction gap analysis, remediation plan, downgrade conditions, validation plan, and TRADING-2407 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no new signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_pit_signal_remediation_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
