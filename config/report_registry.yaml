@@ -19042,6 +19042,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_recombination_line_plateau_decision
+    title: Dynamic Strategy Recombination Line Plateau Decision
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-recombination-line-plateau-decision
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_recombination_line_plateau_decision/plateau_decision_result.json
+      - outputs/research_strategies/dynamic_strategy_recombination_line_plateau_decision/recombination_plateau_review.json
+      - outputs/research_strategies/dynamic_strategy_recombination_line_plateau_decision/next_research_direction_decision.json
+      - outputs/research_strategies/dynamic_strategy_recombination_line_plateau_decision/data_signal_quality_review_route.json
+      - docs/research/dynamic_strategy_recombination_line_plateau_decision.md
+      - docs/research/dynamic_strategy_recombination_plateau_review.md
+      - docs/research/dynamic_strategy_data_signal_quality_next_direction.md
+      - docs/research/dynamic_strategy_2402_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2401 consumes prior validated TRADING-2396/2397/2398/2399/2400 artifacts to record the recombination line plateau decision, data/PIT/signal quality review direction, threshold meta-dataset direction, and TRADING-2402 route; it does not read fresh cached market data, run new backtests, generate signals or scoring, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_recombination_line_plateau_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
