@@ -19239,6 +19239,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_blocking_gap_remediation_implementation_plan
+    title: Dynamic Strategy Blocking Gap Remediation Implementation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-blocking-gap-remediation-implementation-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/implementation_plan_result.json
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/unified_remediation_architecture.json
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/contract_schema_plan.json
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/implementation_sequence.json
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/blocker_downgrade_workflow.json
+      - outputs/research_strategies/dynamic_strategy_blocking_gap_remediation_implementation_plan/candidate_search_gate_policy.json
+      - docs/research/dynamic_strategy_blocking_gap_remediation_implementation_plan.md
+      - docs/research/dynamic_strategy_signal_as_of_and_validity_contract_schema_plan.md
+      - docs/research/dynamic_strategy_blocker_downgrade_workflow.md
+      - docs/research/dynamic_strategy_blocking_gap_implementation_sequence.md
+      - docs/research/dynamic_strategy_2409_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2408 consumes prior validated TRADING-2405/2406/2407 research artifacts plus governed PIT input registry to merge the growth_tilt_engine and valid_until_window remediation plans into a unified implementation sequence, contract schema plan, blocker downgrade workflow, candidate search gate policy, and TRADING-2409 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no new signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_dynamic_strategy_blocking_gap_remediation_implementation_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+import ai_trading_system.dynamic_strategy_blocking_gap_remediation_implementation_plan as m2408
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_owner_review_decision as m2391
 import ai_trading_system.dynamic_strategy_calibrated_gate_candidate_reclassification as m2390
 import ai_trading_system.dynamic_strategy_calibrated_gate_owner_review_decision as m2389
@@ -782,6 +783,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-valid-until-window-stale-signal-remediation-plan"
     )(_dynamic_strategy_valid_until_window_stale_signal_remediation_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-blocking-gap-remediation-implementation-plan"
+    )(_dynamic_strategy_blocking_gap_remediation_implementation_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4509,6 +4513,120 @@ def _dynamic_strategy_valid_until_window_stale_signal_remediation_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy valid-until window stale signal remediation plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_blocking_gap_remediation_implementation_plan_command(
+    source_2405_implementation_path: Annotated[
+        Path, typer.Option("--source-2405-implementation")
+    ] = m2408.DEFAULT_SOURCE_2405_IMPLEMENTATION_PATH,
+    source_2405_registry_snapshot_path: Annotated[
+        Path, typer.Option("--source-2405-registry-snapshot")
+    ] = m2408.DEFAULT_SOURCE_2405_REGISTRY_SNAPSHOT_PATH,
+    source_2405_pit_coverage_matrix_path: Annotated[
+        Path, typer.Option("--source-2405-pit-matrix")
+    ] = m2408.DEFAULT_SOURCE_2405_PIT_COVERAGE_MATRIX_PATH,
+    source_2405_pit_gate_result_path: Annotated[
+        Path, typer.Option("--source-2405-pit-gate-result")
+    ] = m2408.DEFAULT_SOURCE_2405_PIT_GATE_RESULT_PATH,
+    source_2405_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2405-blocker-summary")
+    ] = m2408.DEFAULT_SOURCE_2405_BLOCKER_SUMMARY_PATH,
+    source_2405_remediation_routes_path: Annotated[
+        Path, typer.Option("--source-2405-remediation-routes")
+    ] = m2408.DEFAULT_SOURCE_2405_REMEDIATION_ROUTES_PATH,
+    source_2406_remediation_plan_path: Annotated[
+        Path, typer.Option("--source-2406-remediation-plan")
+    ] = m2408.DEFAULT_SOURCE_2406_REMEDIATION_PLAN_PATH,
+    source_2406_source_feature_inventory_path: Annotated[
+        Path, typer.Option("--source-2406-source-feature-inventory")
+    ] = m2408.DEFAULT_SOURCE_2406_SOURCE_FEATURE_INVENTORY_PATH,
+    source_2406_pit_risk_audit_path: Annotated[
+        Path, typer.Option("--source-2406-pit-risk-audit")
+    ] = m2408.DEFAULT_SOURCE_2406_PIT_RISK_AUDIT_PATH,
+    source_2406_signal_construction_gap_analysis_path: Annotated[
+        Path, typer.Option("--source-2406-signal-construction-gap-analysis")
+    ] = m2408.DEFAULT_SOURCE_2406_SIGNAL_CONSTRUCTION_GAP_ANALYSIS_PATH,
+    source_2406_severity_downgrade_conditions_path: Annotated[
+        Path, typer.Option("--source-2406-severity-downgrade-conditions")
+    ] = m2408.DEFAULT_SOURCE_2406_SEVERITY_DOWNGRADE_CONDITIONS_PATH,
+    source_2406_validation_plan_path: Annotated[
+        Path, typer.Option("--source-2406-validation-plan")
+    ] = m2408.DEFAULT_SOURCE_2406_VALIDATION_PLAN_PATH,
+    source_2407_remediation_plan_path: Annotated[
+        Path, typer.Option("--source-2407-remediation-plan")
+    ] = m2408.DEFAULT_SOURCE_2407_REMEDIATION_PLAN_PATH,
+    source_2407_valid_until_semantics_review_path: Annotated[
+        Path, typer.Option("--source-2407-valid-until-semantics-review")
+    ] = m2408.DEFAULT_SOURCE_2407_VALID_UNTIL_SEMANTICS_REVIEW_PATH,
+    source_2407_stale_signal_risk_audit_path: Annotated[
+        Path, typer.Option("--source-2407-stale-signal-risk-audit")
+    ] = m2408.DEFAULT_SOURCE_2407_STALE_SIGNAL_RISK_AUDIT_PATH,
+    source_2407_signal_validity_contract_plan_path: Annotated[
+        Path, typer.Option("--source-2407-signal-validity-contract-plan")
+    ] = m2408.DEFAULT_SOURCE_2407_SIGNAL_VALIDITY_CONTRACT_PLAN_PATH,
+    source_2407_severity_downgrade_conditions_path: Annotated[
+        Path, typer.Option("--source-2407-severity-downgrade-conditions")
+    ] = m2408.DEFAULT_SOURCE_2407_SEVERITY_DOWNGRADE_CONDITIONS_PATH,
+    source_2407_validation_plan_path: Annotated[
+        Path, typer.Option("--source-2407-validation-plan")
+    ] = m2408.DEFAULT_SOURCE_2407_VALIDATION_PLAN_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2408.DEFAULT_DYNAMIC_STRATEGY_PIT_INPUT_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2408.DEFAULT_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2408.DEFAULT_DYNAMIC_STRATEGY_BLOCKING_GAP_REMEDIATION_IMPLEMENTATION_PLAN_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2408.run_dynamic_strategy_blocking_gap_remediation_implementation_plan(
+        source_2405_implementation_path=source_2405_implementation_path,
+        source_2405_registry_snapshot_path=source_2405_registry_snapshot_path,
+        source_2405_pit_coverage_matrix_path=source_2405_pit_coverage_matrix_path,
+        source_2405_pit_gate_result_path=source_2405_pit_gate_result_path,
+        source_2405_blocker_summary_path=source_2405_blocker_summary_path,
+        source_2405_remediation_routes_path=source_2405_remediation_routes_path,
+        source_2406_remediation_plan_path=source_2406_remediation_plan_path,
+        source_2406_source_feature_inventory_path=(
+            source_2406_source_feature_inventory_path
+        ),
+        source_2406_pit_risk_audit_path=source_2406_pit_risk_audit_path,
+        source_2406_signal_construction_gap_analysis_path=(
+            source_2406_signal_construction_gap_analysis_path
+        ),
+        source_2406_severity_downgrade_conditions_path=(
+            source_2406_severity_downgrade_conditions_path
+        ),
+        source_2406_validation_plan_path=source_2406_validation_plan_path,
+        source_2407_remediation_plan_path=source_2407_remediation_plan_path,
+        source_2407_valid_until_semantics_review_path=(
+            source_2407_valid_until_semantics_review_path
+        ),
+        source_2407_stale_signal_risk_audit_path=(
+            source_2407_stale_signal_risk_audit_path
+        ),
+        source_2407_signal_validity_contract_plan_path=(
+            source_2407_signal_validity_contract_plan_path
+        ),
+        source_2407_severity_downgrade_conditions_path=(
+            source_2407_severity_downgrade_conditions_path
+        ),
+        source_2407_validation_plan_path=source_2407_validation_plan_path,
+        pit_input_registry_path=pit_input_registry_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy blocking gap remediation implementation plan",
         payload,
     )
 
