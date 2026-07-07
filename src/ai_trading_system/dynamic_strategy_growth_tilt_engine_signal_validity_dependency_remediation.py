@@ -16,13 +16,19 @@ from ai_trading_system import (
 )
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
-from ai_trading_system.dynamic_strategy_report_common import json_block as _json_block
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
 from ai_trading_system.dynamic_strategy_report_common import (
     load_json_document_or_missing_flag as _load_json_document,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
+    load_text_document_or_missing_flag as _load_text_document,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
     write_markdown_artifact,
+    write_section_json_artifact,
 )
 from ai_trading_system.execution_semantics import AI_REGIME_SUMMARY
 from ai_trading_system.research_quality import (
@@ -700,33 +706,37 @@ def _write_outputs(payload: dict[str, Any], *, output_root: Path, docs_root: Pat
     }
     payload["artifact_paths"] = paths
     write_json_artifact(Path(paths["json_path"]), payload)
-    _write_section_json(
+    write_section_json_artifact(
         paths["signal_validity_dependency_contract_metadata_json"],
         "growth_tilt_engine_signal_validity_dependency_contract_metadata",
         "growth_tilt_engine_signal_validity_dependency_contract_metadata.v1",
         payload,
         "signal_validity_dependency_contract_metadata",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["before_after_signal_validity_dependency_remediation_json"],
         "growth_tilt_engine_signal_validity_dependency_before_after_remediation",
         "growth_tilt_engine_signal_validity_dependency_before_after_remediation.v1",
         payload,
         "before_after_signal_validity_dependency_remediation",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["updated_source_feature_mapping_json"],
         "growth_tilt_engine_source_feature_mapping_after_signal_validity_dependency",
         "growth_tilt_engine_source_feature_mapping_after_signal_validity_dependency.v1",
         payload,
         "updated_source_feature_mapping",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["remaining_blocker_summary_json"],
         "growth_tilt_engine_signal_validity_dependency_remaining_blocker_summary",
         "growth_tilt_engine_signal_validity_dependency_remaining_blocker_summary.v1",
         payload,
         "remaining_blocker_summary",
+        task_id=TASK_ID,
     )
     write_markdown_artifact(Path(paths["markdown_path"]), _main_markdown(payload))
     write_markdown_artifact(
@@ -734,27 +744,6 @@ def _write_outputs(payload: dict[str, Any], *, output_root: Path, docs_root: Pat
         _signal_validity_dependency_contract_markdown(payload),
     )
     write_markdown_artifact(Path(paths["next_route_markdown"]), _route_markdown(payload))
-
-
-def _write_section_json(
-    path: str,
-    report_type: str,
-    schema_version: str,
-    payload: Mapping[str, Any],
-    payload_key: str,
-) -> None:
-    write_json_artifact(
-        Path(path),
-        {
-            "task_id": TASK_ID,
-            "status": payload.get("status"),
-            "report_type": report_type,
-            "schema_version": schema_version,
-            payload_key: payload.get(payload_key, {}),
-            "production_effect": "none",
-            "broker_action": "none",
-        },
-    )
 
 
 def _main_markdown(payload: Mapping[str, Any]) -> str:
@@ -890,12 +879,6 @@ def _registry_has_report_id(report_registry: Mapping[str, Any], report_id: str) 
         if row.get("report_id") == report_id:
             return row.get("production_effect") == "none" and row.get("broker_action") == "none"
     return False
-
-
-def _load_text_document(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {"_missing": True, "_path": str(path), "text": ""}
-    return {"_path": str(path), "text": path.read_text(encoding="utf-8")}
 
 
 def _as_mapping(value: Any) -> Mapping[str, Any]:

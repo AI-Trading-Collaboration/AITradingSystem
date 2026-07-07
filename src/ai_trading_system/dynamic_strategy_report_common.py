@@ -31,12 +31,43 @@ def write_markdown_artifact(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_section_json_artifact(
+    path: Path | str,
+    report_type: str,
+    schema_version: str,
+    payload: Mapping[str, Any],
+    payload_key: str,
+    *,
+    task_id: str,
+    production_effect: str = "none",
+    broker_action: str = "none",
+) -> None:
+    write_json_artifact(
+        Path(path),
+        {
+            "task_id": task_id,
+            "status": payload.get("status"),
+            "report_type": report_type,
+            "schema_version": schema_version,
+            payload_key: payload.get(payload_key, {}),
+            "production_effect": production_effect,
+            "broker_action": broker_action,
+        },
+    )
+
+
 def json_block(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def load_json_document(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_text_document_or_missing_flag(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"_missing": True, "_path": str(path), "text": ""}
+    return {"_path": str(path), "text": path.read_text(encoding="utf-8")}
 
 
 def load_json_document_or_empty(path: Path) -> Any:

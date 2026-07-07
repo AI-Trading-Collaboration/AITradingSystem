@@ -1,5 +1,39 @@
 # Refactor Log
 
+## 2026-07-08 Daily Incremental Refactor
+
+- 检查时间：2026-07-08 08:08 Asia/Tokyo。
+- 起始 HEAD：`534cdb7befe61e02f62a8b75339e51990979e223` (`Implement TRADING-2414 signal validity dependency remediation`)。
+- 最近一次合格重构基线提交：`3b2081561a74112442e9ae43cd949b8fd85290de` (`refactor: record AITradingSystem dynamic strategy JSON helper refactor SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `81efc874337d7aef47c812a1a457cae23ef738f9`。
+- 评估范围：`3b2081561a74112442e9ae43cd949b8fd85290de..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2398～2414 dynamic strategy / growth tilt remediation research-only 链路、`research_quality` helpers、CLI adapters、report registry、artifact catalog、system flow 和 task register。主要维护风险是 TRADING-2411～2414 wrappers 在本地重复维护 section JSON artifact envelope 和 missing-aware text source loader，后续若只改一处，可能导致 section JSON `production_effect` / `broker_action` safety fields、payload key 或 missing source document payload 分叉。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2416_Daily_Incremental_Refactor_Growth_Tilt_Remediation_Report_Helpers.md`
+  - `docs/refactor_log.md`
+  - `src/ai_trading_system/dynamic_strategy_report_common.py`
+  - `src/ai_trading_system/dynamic_strategy_growth_tilt_engine_contract_gap_remediation_plan.py`
+  - `src/ai_trading_system/dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation.py`
+  - `src/ai_trading_system/dynamic_strategy_growth_tilt_engine_source_traceability_remediation.py`
+  - `src/ai_trading_system/dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation.py`
+  - `tests/test_dynamic_strategy_report_common.py`
+- 重构理由：TRADING-2411～2414 growth tilt remediation wrappers 都要写主 JSON、多个 section JSON、Markdown 和 route doc，并读取 prior research docs / artifact catalog。主 JSON / Markdown writer 已集中，但 section JSON envelope 和 text source missing payload 仍重复。把这两个 helper 收敛进 `dynamic_strategy_report_common.py` 可让同一 research-only report family 的 serialization/source boundary 集中维护，同时保留每个 task module 自己的 payload、source validation、status、route 和 safety field 逻辑。
+- 行为影响：预期无外部行为变化；`growth-tilt-engine-contract-gap-remediation-plan`、`growth-tilt-engine-as-of-semantics-remediation`、`growth-tilt-engine-source-traceability-remediation` 和 `growth-tilt-engine-signal-validity-dependency-remediation` 的命令名、参数、默认路径、artifact path、JSON keys、Markdown section、status enum、source validation、FAIL/PASS 语义、recommended route、section JSON `production_effect=none` / `broker_action=none` 和 missing text source payload 形状保持兼容。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent technical features、scoring、backtest 或 daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：不适用。本轮只整理 growth tilt remediation research-only wrappers 的内部 helper 边界，不新增、删除、重命名或迁移外部 CLI command，不改变关键配置、cache schema、report output 契约、data quality gate、scoring、backtest behavior、market-regime interpretation 或主要数据流。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_contract_gap_remediation_plan.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_source_traceability_remediation.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation.py tests\test_dynamic_strategy_report_common.py`：PASS。初次运行发现 import ordering 问题，已用 `python -m ruff check --fix ...` 机械修正后复验通过。
+  - `python -m compileall -q src\ai_trading_system\dynamic_strategy_report_common.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_contract_gap_remediation_plan.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_source_traceability_remediation.py src\ai_trading_system\dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile tests\test_dynamic_strategy_report_common.py tests\research_strategies\test_growth_tilt_engine_contract_gap_remediation_plan.py tests\research_strategies\test_growth_tilt_engine_as_of_semantics_remediation.py tests\research_strategies\test_growth_tilt_engine_source_traceability_strategy_remediation.py tests\research_strategies\test_growth_tilt_engine_signal_validity_dependency_strategy.py`：PASS，20 passed。
+  - 4 个 CLI help smoke：PASS，`growth-tilt-engine-contract-gap-remediation-plan`、`growth-tilt-engine-as-of-semantics-remediation`、`growth-tilt-engine-source-traceability-remediation` 和 `growth-tilt-engine-signal-validity-dependency-remediation` 均仍在原路径下可见。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，602 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，11 passed。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。命令输出 `docs/task_register.md` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
+- 遇到的 blocker：无。Ruff 初次检查发现 import ordering 问题，属于机械格式问题，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 TRADING-2410～2414 wrappers 中 report registry loader / registry report-id safety check / safety false fields 的分批收敛，或继续评估剩余 dynamic strategy modules 中 repeated `_write_outputs`；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
+- 本轮重构实现提交 SHA：`待回填`。
+
 ## 2026-07-07 Daily Incremental Refactor
 
 - 检查时间：2026-07-07 08:11 Asia/Tokyo。

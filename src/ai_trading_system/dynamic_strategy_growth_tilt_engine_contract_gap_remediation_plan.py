@@ -10,13 +10,19 @@ from ai_trading_system import (
 )
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import utc_now_iso
-from ai_trading_system.dynamic_strategy_report_common import json_block as _json_block
+from ai_trading_system.dynamic_strategy_report_common import (
+    json_block as _json_block,
+)
 from ai_trading_system.dynamic_strategy_report_common import (
     load_json_document_or_missing_flag as _load_json_document,
 )
 from ai_trading_system.dynamic_strategy_report_common import (
+    load_text_document_or_missing_flag as _load_text_document,
+)
+from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
     write_markdown_artifact,
+    write_section_json_artifact,
 )
 from ai_trading_system.execution_semantics import AI_REGIME_SUMMARY
 from ai_trading_system.research_quality.growth_tilt_engine_gap_remediation import (
@@ -449,33 +455,37 @@ def _write_outputs(payload: dict[str, Any], *, output_root: Path, docs_root: Pat
     }
     payload["artifact_paths"] = paths
     write_json_artifact(Path(paths["json_path"]), payload)
-    _write_section_json(
+    write_section_json_artifact(
         paths["contract_gap_remediation_plan_json"],
         "growth_tilt_engine_contract_gap_remediation_plan",
         "growth_tilt_engine_contract_gap_remediation_plan.v1",
         payload,
         "contract_gap_remediation_plan",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["ordered_remediation_items_json"],
         "growth_tilt_engine_ordered_remediation_items",
         "growth_tilt_engine_ordered_remediation_items.v1",
         payload,
         "ordered_remediation_items",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["validation_design_json"],
         "growth_tilt_engine_contract_gap_validation_design",
         "growth_tilt_engine_contract_gap_validation_design.v1",
         payload,
         "validation_design",
+        task_id=TASK_ID,
     )
-    _write_section_json(
+    write_section_json_artifact(
         paths["unresolved_blocker_summary_json"],
         "growth_tilt_engine_unresolved_blocker_summary",
         "growth_tilt_engine_unresolved_blocker_summary.v1",
         payload,
         "unresolved_blocker_summary",
+        task_id=TASK_ID,
     )
     write_markdown_artifact(Path(paths["markdown_path"]), _main_markdown(payload))
     write_markdown_artifact(
@@ -483,27 +493,6 @@ def _write_outputs(payload: dict[str, Any], *, output_root: Path, docs_root: Pat
         _validation_design_markdown(payload),
     )
     write_markdown_artifact(Path(paths["next_route_markdown"]), _route_markdown(payload))
-
-
-def _write_section_json(
-    path: str,
-    report_type: str,
-    schema_version: str,
-    payload: Mapping[str, Any],
-    payload_key: str,
-) -> None:
-    write_json_artifact(
-        Path(path),
-        {
-            "task_id": TASK_ID,
-            "status": payload.get("status"),
-            "report_type": report_type,
-            "schema_version": schema_version,
-            payload_key: payload.get(payload_key, {}),
-            "production_effect": "none",
-            "broker_action": "none",
-        },
-    )
 
 
 def _main_markdown(payload: Mapping[str, Any]) -> str:
@@ -617,12 +606,6 @@ def _registry_has_2410_entry(report_registry: Mapping[str, Any]) -> bool:
         if row.get("report_id") == "growth_tilt_engine_source_feature_contract_mapping":
             return row.get("production_effect") == "none" and row.get("broker_action") == "none"
     return False
-
-
-def _load_text_document(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {"_missing": True, "_path": str(path), "text": ""}
-    return {"_path": str(path), "text": path.read_text(encoding="utf-8")}
 
 
 def _as_mapping(value: Any) -> Mapping[str, Any]:
