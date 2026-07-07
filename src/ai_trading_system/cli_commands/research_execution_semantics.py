@@ -18,6 +18,7 @@ import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablatio
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_data_pit_signal_quality_gap_review as m2402
+import ai_trading_system.dynamic_strategy_pit_coverage_signal_construction_review as m2403
 import ai_trading_system.dynamic_strategy_recombination_candidate_gate_evidence_plan as m2398
 import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
 import ai_trading_system.dynamic_strategy_recombination_line_plateau_decision as m2401
@@ -762,6 +763,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-data-pit-signal-quality-gap-review"
     )(_dynamic_strategy_data_pit_signal_quality_gap_review_command)
+    strategies_app.command(
+        "dynamic-strategy-pit-coverage-signal-construction-review"
+    )(_dynamic_strategy_pit_coverage_signal_construction_review_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4080,6 +4084,95 @@ def _dynamic_strategy_data_pit_signal_quality_gap_review_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy data / PIT / signal quality gap review",
+        payload,
+    )
+
+
+def _dynamic_strategy_pit_coverage_signal_construction_review_command(
+    source_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-gap-review-2402")
+    ] = m2403.DEFAULT_SOURCE_2402_GAP_REVIEW_PATH,
+    source_pit_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-pit-gap-review-2402")
+    ] = m2403.DEFAULT_SOURCE_2402_PIT_GAP_REVIEW_PATH,
+    source_signal_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-signal-gap-review-2402")
+    ] = m2403.DEFAULT_SOURCE_2402_SIGNAL_GAP_REVIEW_PATH,
+    source_regime_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-regime-gap-review-2402")
+    ] = m2403.DEFAULT_SOURCE_2402_REGIME_GAP_REVIEW_PATH,
+    source_threshold_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-threshold-gap-review-2402")
+    ] = m2403.DEFAULT_SOURCE_2402_THRESHOLD_GAP_REVIEW_PATH,
+    source_plateau_decision_2401_path: Annotated[
+        Path, typer.Option("--source-plateau-decision-2401")
+    ] = m2403.DEFAULT_SOURCE_2401_PLATEAU_DECISION_PATH,
+    source_targeted_retest_2399_path: Annotated[
+        Path, typer.Option("--source-targeted-retest-2399")
+    ] = m2403.DEFAULT_SOURCE_2399_TARGETED_RETEST_PATH,
+    source_gate_evidence_matrix_2399_path: Annotated[
+        Path, typer.Option("--source-gate-evidence-matrix-2399")
+    ] = m2403.DEFAULT_SOURCE_2399_GATE_EVIDENCE_MATRIX_PATH,
+    source_decision_update_2399_path: Annotated[
+        Path, typer.Option("--source-decision-update-2399")
+    ] = m2403.DEFAULT_SOURCE_2399_DECISION_UPDATE_PATH,
+    source_expanded_retest_2386_path: Annotated[
+        Path, typer.Option("--source-expanded-retest-2386")
+    ] = m2403.DEFAULT_SOURCE_2386_EXPANDED_RETEST_PATH,
+    source_signal_family_screening_2386_path: Annotated[
+        Path, typer.Option("--source-signal-family-screening-2386")
+    ] = m2403.DEFAULT_SOURCE_2386_SIGNAL_FAMILY_SCREENING_PATH,
+    source_cadence_bias_audit_2364_path: Annotated[
+        Path, typer.Option("--source-cadence-bias-audit-2364")
+    ] = m2403.DEFAULT_SOURCE_2364_CADENCE_BIAS_AUDIT_PATH,
+    source_validate_data_audit_path: Annotated[
+        Path | None, typer.Option("--source-validate-data-audit")
+    ] = None,
+    source_validate_data_report_path: Annotated[
+        Path | None, typer.Option("--source-validate-data-report")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2403.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_SIGNAL_CONSTRUCTION_REVIEW_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2403.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_SIGNAL_CONSTRUCTION_REVIEW_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    validate_data_as_of: Annotated[str, typer.Option("--validate-data-as-of")] = (
+        m2403.DEFAULT_DATA_QUALITY_AS_OF.isoformat()
+    ),
+) -> None:
+    payload = m2403.run_dynamic_strategy_pit_coverage_signal_construction_review(
+        source_gap_review_2402_path=source_gap_review_2402_path,
+        source_pit_gap_review_2402_path=source_pit_gap_review_2402_path,
+        source_signal_gap_review_2402_path=source_signal_gap_review_2402_path,
+        source_regime_gap_review_2402_path=source_regime_gap_review_2402_path,
+        source_threshold_gap_review_2402_path=source_threshold_gap_review_2402_path,
+        source_plateau_decision_2401_path=source_plateau_decision_2401_path,
+        source_targeted_retest_2399_path=source_targeted_retest_2399_path,
+        source_gate_evidence_matrix_2399_path=source_gate_evidence_matrix_2399_path,
+        source_decision_update_2399_path=source_decision_update_2399_path,
+        source_expanded_retest_2386_path=source_expanded_retest_2386_path,
+        source_signal_family_screening_2386_path=(
+            source_signal_family_screening_2386_path
+        ),
+        source_cadence_bias_audit_2364_path=source_cadence_bias_audit_2364_path,
+        source_validate_data_audit_path=source_validate_data_audit_path,
+        source_validate_data_report_path=source_validate_data_report_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+        validate_data_as_of=(
+            _parse_optional_date(validate_data_as_of)
+            or m2403.DEFAULT_DATA_QUALITY_AS_OF
+        ),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy PIT coverage / signal construction review",
         payload,
     )
 

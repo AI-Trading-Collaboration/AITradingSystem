@@ -19095,6 +19095,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_pit_coverage_signal_construction_review
+    title: Dynamic Strategy PIT Coverage Signal Construction Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-pit-coverage-signal-construction-review
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/pit_signal_review_result.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/pit_coverage_matrix.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/signal_construction_review.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/regime_labeling_review.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/remediation_matrix.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_signal_construction_review/threshold_meta_dataset_gap.json
+      - docs/research/dynamic_strategy_pit_coverage_signal_construction_review.md
+      - docs/research/dynamic_strategy_pit_coverage_matrix.md
+      - docs/research/dynamic_strategy_signal_construction_review.md
+      - docs/research/dynamic_strategy_regime_labeling_review.md
+      - docs/research/dynamic_strategy_2404_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2403 consumes TRADING-2402/2401/2399/2386/2364 research artifacts plus the latest validate-data quality gate to build a PIT coverage matrix, signal construction review, valid-until / stale-signal review, regime labeling review, threshold meta-dataset gap, remediation matrix, and TRADING-2404 route; it does not run new strategy backtests, generate new signals/scoring, resume candidate search, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_pit_coverage_signal_construction_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
