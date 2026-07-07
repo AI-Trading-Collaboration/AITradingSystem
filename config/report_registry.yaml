@@ -19267,6 +19267,38 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_signal_as_of_validity_contract_schema
+    title: Dynamic Strategy Signal As-Of And Validity Contract Schema
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-signal-as-of-validity-contract-schema
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/contract_schema_result.json
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/signal_as_of_contract_schema.json
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/source_feature_traceability_contract_schema.json
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/signal_validity_contract_schema.json
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/contract_schema_snapshot.json
+      - outputs/research_strategies/dynamic_strategy_signal_as_of_validity_contract_schema/pit_gate_integration_plan.json
+      - outputs/research_quality/signal_contracts/signal_as_of_contract_schema.json
+      - outputs/research_quality/signal_contracts/source_feature_traceability_contract_schema.json
+      - outputs/research_quality/signal_contracts/signal_validity_contract_schema.json
+      - outputs/research_quality/signal_contracts/contract_schema_snapshot.json
+      - docs/research/dynamic_strategy_signal_as_of_validity_contract_schema.md
+      - docs/research/dynamic_strategy_signal_as_of_contract_schema.md
+      - docs/research/dynamic_strategy_source_feature_traceability_contract_schema.md
+      - docs/research/dynamic_strategy_signal_validity_contract_schema.md
+      - docs/research/dynamic_strategy_2410_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2409 consumes prior validated TRADING-2408 blocking gap implementation artifacts, prior TRADING-2405 PIT gate artifacts, and governed PIT input registry to implement reusable signal as-of, source feature traceability, and signal validity contract schemas plus validation helpers, contract snapshot, PIT gate integration plan, and TRADING-2410 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no trading signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_dynamic_strategy_signal_as_of_validity_contract_schema
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

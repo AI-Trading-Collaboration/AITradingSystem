@@ -27,6 +27,7 @@ import ai_trading_system.dynamic_strategy_recombination_candidate_gate_evidence_
 import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
 import ai_trading_system.dynamic_strategy_recombination_line_plateau_decision as m2401
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
+import ai_trading_system.dynamic_strategy_signal_as_of_validity_contract_schema as m2409
 import ai_trading_system.dynamic_strategy_targeted_gate_evidence_owner_review_decision as m2400
 import ai_trading_system.dynamic_strategy_valid_until_window_stale_signal_remediation_plan as m2407
 from ai_trading_system import (
@@ -786,6 +787,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-blocking-gap-remediation-implementation-plan"
     )(_dynamic_strategy_blocking_gap_remediation_implementation_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-signal-as-of-validity-contract-schema"
+    )(_dynamic_strategy_signal_as_of_validity_contract_schema_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4627,6 +4631,60 @@ def _dynamic_strategy_blocking_gap_remediation_implementation_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy blocking gap remediation implementation plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_signal_as_of_validity_contract_schema_command(
+    source_2408_implementation_plan_path: Annotated[
+        Path, typer.Option("--source-2408-implementation-plan")
+    ] = m2409.DEFAULT_SOURCE_2408_IMPLEMENTATION_PLAN_PATH,
+    source_2408_contract_schema_plan_path: Annotated[
+        Path, typer.Option("--source-2408-contract-schema-plan")
+    ] = m2409.DEFAULT_SOURCE_2408_CONTRACT_SCHEMA_PLAN_PATH,
+    source_2408_candidate_search_gate_policy_path: Annotated[
+        Path, typer.Option("--source-2408-candidate-search-gate-policy")
+    ] = m2409.DEFAULT_SOURCE_2408_CANDIDATE_SEARCH_GATE_POLICY_PATH,
+    source_2405_registry_snapshot_path: Annotated[
+        Path, typer.Option("--source-2405-registry-snapshot")
+    ] = m2409.DEFAULT_SOURCE_2405_REGISTRY_SNAPSHOT_PATH,
+    source_2405_pit_gate_result_path: Annotated[
+        Path, typer.Option("--source-2405-pit-gate-result")
+    ] = m2409.DEFAULT_SOURCE_2405_PIT_GATE_RESULT_PATH,
+    source_2405_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2405-blocker-summary")
+    ] = m2409.DEFAULT_SOURCE_2405_BLOCKER_SUMMARY_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2409.DEFAULT_DYNAMIC_STRATEGY_PIT_INPUT_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2409.DEFAULT_DYNAMIC_STRATEGY_SIGNAL_AS_OF_VALIDITY_CONTRACT_SCHEMA_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2409.DEFAULT_DYNAMIC_STRATEGY_SIGNAL_AS_OF_VALIDITY_CONTRACT_SCHEMA_DOCS_ROOT,
+    research_quality_output_root: Annotated[
+        Path, typer.Option("--research-quality-output-root")
+    ] = m2409.DEFAULT_SIGNAL_CONTRACT_RESEARCH_QUALITY_OUTPUT_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2409.run_dynamic_strategy_signal_as_of_validity_contract_schema(
+        source_2408_implementation_plan_path=source_2408_implementation_plan_path,
+        source_2408_contract_schema_plan_path=source_2408_contract_schema_plan_path,
+        source_2408_candidate_search_gate_policy_path=(
+            source_2408_candidate_search_gate_policy_path
+        ),
+        source_2405_registry_snapshot_path=source_2405_registry_snapshot_path,
+        source_2405_pit_gate_result_path=source_2405_pit_gate_result_path,
+        source_2405_blocker_summary_path=source_2405_blocker_summary_path,
+        pit_input_registry_path=pit_input_registry_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        research_quality_output_root=research_quality_output_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy signal as-of and validity contract schema",
         payload,
     )
 
