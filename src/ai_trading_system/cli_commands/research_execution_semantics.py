@@ -19,6 +19,7 @@ import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_data_pit_signal_quality_gap_review as m2402
 import ai_trading_system.dynamic_strategy_pit_coverage_matrix_implementation_plan as m2404
+import ai_trading_system.dynamic_strategy_pit_coverage_matrix_reusable_implementation as m2405
 import ai_trading_system.dynamic_strategy_pit_coverage_signal_construction_review as m2403
 import ai_trading_system.dynamic_strategy_recombination_candidate_gate_evidence_plan as m2398
 import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
@@ -770,6 +771,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-pit-coverage-matrix-implementation-plan"
     )(_dynamic_strategy_pit_coverage_matrix_implementation_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-pit-coverage-matrix-generate"
+    )(_dynamic_strategy_pit_coverage_matrix_generate_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4259,6 +4263,62 @@ def _dynamic_strategy_pit_coverage_matrix_implementation_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy PIT coverage matrix implementation plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_pit_coverage_matrix_generate_command(
+    registry_path: Annotated[
+        Path, typer.Option("--registry")
+    ] = m2405.DEFAULT_DYNAMIC_STRATEGY_PIT_INPUT_REGISTRY_PATH,
+    source_2404_implementation_path: Annotated[
+        Path, typer.Option("--source-2404-implementation")
+    ] = m2405.DEFAULT_SOURCE_2404_IMPLEMENTATION_PATH,
+    source_2404_registry_schema_path: Annotated[
+        Path, typer.Option("--source-2404-registry-schema")
+    ] = m2405.DEFAULT_SOURCE_2404_REGISTRY_SCHEMA_PATH,
+    source_2404_gate_policy_path: Annotated[
+        Path, typer.Option("--source-2404-gate-policy")
+    ] = m2405.DEFAULT_SOURCE_2404_GATE_POLICY_PATH,
+    source_2404_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2404-blocker-summary")
+    ] = m2405.DEFAULT_SOURCE_2404_BLOCKER_SUMMARY_PATH,
+    source_2403_pit_matrix_path: Annotated[
+        Path, typer.Option("--source-2403-pit-matrix")
+    ] = m2405.DEFAULT_SOURCE_2403_PIT_MATRIX_PATH,
+    source_2403_remediation_matrix_path: Annotated[
+        Path, typer.Option("--source-2403-remediation-matrix")
+    ] = m2405.DEFAULT_SOURCE_2403_REMEDIATION_MATRIX_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2405.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_MATRIX_REUSABLE_IMPLEMENTATION_OUTPUT_ROOT
+    ),
+    research_quality_output_root: Annotated[
+        Path, typer.Option("--research-quality-output-root")
+    ] = m2405.DEFAULT_RESEARCH_QUALITY_PIT_COVERAGE_MATRIX_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2405.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_MATRIX_REUSABLE_IMPLEMENTATION_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2405.run_dynamic_strategy_pit_coverage_matrix_reusable_implementation(
+        registry_path=registry_path,
+        source_2404_implementation_path=source_2404_implementation_path,
+        source_2404_registry_schema_path=source_2404_registry_schema_path,
+        source_2404_gate_policy_path=source_2404_gate_policy_path,
+        source_2404_blocker_summary_path=source_2404_blocker_summary_path,
+        source_2403_pit_matrix_path=source_2403_pit_matrix_path,
+        source_2403_remediation_matrix_path=source_2403_remediation_matrix_path,
+        output_root=output_root,
+        research_quality_output_root=research_quality_output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy PIT coverage matrix reusable implementation",
         payload,
     )
 

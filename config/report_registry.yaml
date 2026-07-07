@@ -19150,6 +19150,39 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_pit_coverage_matrix_reusable_implementation
+    title: Dynamic Strategy PIT Coverage Matrix Reusable Implementation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-pit-coverage-matrix-generate
+    artifact_globs:
+      - config/research/dynamic_strategy_pit_input_registry.yaml
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/implementation_result.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/pit_input_registry_snapshot.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/pit_coverage_matrix.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/pit_gate_result.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/pit_blocker_summary.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_reusable_implementation/pit_remediation_routes.json
+      - outputs/research_quality/pit_coverage_matrix/dynamic_strategy_pit_coverage_matrix.json
+      - outputs/research_quality/pit_coverage_matrix/dynamic_strategy_pit_gate_result.json
+      - outputs/research_quality/pit_coverage_matrix/dynamic_strategy_pit_blocker_summary.json
+      - outputs/research_quality/pit_coverage_matrix/dynamic_strategy_pit_remediation_matrix.json
+      - docs/research/dynamic_strategy_pit_coverage_matrix_reusable_implementation.md
+      - docs/research/dynamic_strategy_pit_input_registry.md
+      - docs/research/dynamic_strategy_pit_gate_result.md
+      - docs/research/dynamic_strategy_pit_remediation_routes.md
+      - docs/research/dynamic_strategy_2406_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2405 consumes prior validated TRADING-2404/2403 research artifacts and the governed dynamic_strategy PIT input registry to generate reusable PIT coverage matrix, gate result, blocker summary, remediation matrix, and TRADING-2406 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no new signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_dynamic_strategy_pit_coverage_matrix_reusable_implementation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
