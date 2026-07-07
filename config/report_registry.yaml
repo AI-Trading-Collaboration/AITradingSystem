@@ -19211,6 +19211,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_valid_until_window_stale_signal_remediation_plan
+    title: Dynamic Strategy Valid-Until Window Semantics And Stale Signal Remediation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-valid-until-window-stale-signal-remediation-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/remediation_plan_result.json
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/valid_until_semantics_review.json
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/stale_signal_risk_audit.json
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/signal_validity_contract_plan.json
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/severity_downgrade_conditions.json
+      - outputs/research_strategies/dynamic_strategy_valid_until_window_stale_signal_remediation_plan/validation_plan.json
+      - docs/research/dynamic_strategy_valid_until_window_stale_signal_remediation_plan.md
+      - docs/research/dynamic_strategy_valid_until_semantics_review.md
+      - docs/research/dynamic_strategy_stale_signal_risk_audit.md
+      - docs/research/dynamic_strategy_signal_validity_contract.md
+      - docs/research/dynamic_strategy_2408_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2407 consumes prior validated TRADING-2405/2406/2403 research artifacts plus governed PIT input registry, strategy execution policy registry, and signal validity taxonomy to build the valid_until_window semantics review, stale signal risk audit, signal validity contract plan, growth tilt alignment review, remediation plan, downgrade conditions, validation plan, and TRADING-2408 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no new signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_valid_until_window_stale_signal_remediation_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
