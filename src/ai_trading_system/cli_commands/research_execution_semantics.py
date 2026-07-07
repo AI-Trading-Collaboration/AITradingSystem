@@ -18,6 +18,7 @@ import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablatio
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_data_pit_signal_quality_gap_review as m2402
+import ai_trading_system.dynamic_strategy_pit_coverage_matrix_implementation_plan as m2404
 import ai_trading_system.dynamic_strategy_pit_coverage_signal_construction_review as m2403
 import ai_trading_system.dynamic_strategy_recombination_candidate_gate_evidence_plan as m2398
 import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
@@ -766,6 +767,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-pit-coverage-signal-construction-review"
     )(_dynamic_strategy_pit_coverage_signal_construction_review_command)
+    strategies_app.command(
+        "dynamic-strategy-pit-coverage-matrix-implementation-plan"
+    )(_dynamic_strategy_pit_coverage_matrix_implementation_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4173,6 +4177,88 @@ def _dynamic_strategy_pit_coverage_signal_construction_review_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy PIT coverage / signal construction review",
+        payload,
+    )
+
+
+def _dynamic_strategy_pit_coverage_matrix_implementation_plan_command(
+    source_review_2403_path: Annotated[
+        Path, typer.Option("--source-review-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_REVIEW_PATH,
+    source_pit_matrix_2403_path: Annotated[
+        Path, typer.Option("--source-pit-matrix-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_PIT_MATRIX_PATH,
+    source_signal_review_2403_path: Annotated[
+        Path, typer.Option("--source-signal-review-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_SIGNAL_REVIEW_PATH,
+    source_regime_review_2403_path: Annotated[
+        Path, typer.Option("--source-regime-review-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_REGIME_REVIEW_PATH,
+    source_remediation_matrix_2403_path: Annotated[
+        Path, typer.Option("--source-remediation-matrix-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_REMEDIATION_MATRIX_PATH,
+    source_threshold_gap_2403_path: Annotated[
+        Path, typer.Option("--source-threshold-gap-2403")
+    ] = m2404.DEFAULT_SOURCE_2403_THRESHOLD_GAP_PATH,
+    source_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-gap-review-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_GAP_REVIEW_PATH,
+    source_data_quality_gap_matrix_2402_path: Annotated[
+        Path, typer.Option("--source-data-quality-gap-matrix-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_DATA_QUALITY_GAP_MATRIX_PATH,
+    source_pit_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-pit-gap-review-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_PIT_GAP_REVIEW_PATH,
+    source_signal_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-signal-gap-review-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_SIGNAL_GAP_REVIEW_PATH,
+    source_regime_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-regime-gap-review-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_REGIME_GAP_REVIEW_PATH,
+    source_threshold_gap_review_2402_path: Annotated[
+        Path, typer.Option("--source-threshold-gap-review-2402")
+    ] = m2404.DEFAULT_SOURCE_2402_THRESHOLD_GAP_REVIEW_PATH,
+    source_plateau_decision_2401_path: Annotated[
+        Path, typer.Option("--source-plateau-decision-2401")
+    ] = m2404.DEFAULT_SOURCE_2401_PLATEAU_DECISION_PATH,
+    source_next_direction_2401_path: Annotated[
+        Path, typer.Option("--source-next-direction-2401")
+    ] = m2404.DEFAULT_SOURCE_2401_NEXT_DIRECTION_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2404.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_MATRIX_IMPLEMENTATION_PLAN_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2404.DEFAULT_DYNAMIC_STRATEGY_PIT_COVERAGE_MATRIX_IMPLEMENTATION_PLAN_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2404.run_dynamic_strategy_pit_coverage_matrix_implementation_plan(
+        source_review_2403_path=source_review_2403_path,
+        source_pit_matrix_2403_path=source_pit_matrix_2403_path,
+        source_signal_review_2403_path=source_signal_review_2403_path,
+        source_regime_review_2403_path=source_regime_review_2403_path,
+        source_remediation_matrix_2403_path=source_remediation_matrix_2403_path,
+        source_threshold_gap_2403_path=source_threshold_gap_2403_path,
+        source_gap_review_2402_path=source_gap_review_2402_path,
+        source_data_quality_gap_matrix_2402_path=(
+            source_data_quality_gap_matrix_2402_path
+        ),
+        source_pit_gap_review_2402_path=source_pit_gap_review_2402_path,
+        source_signal_gap_review_2402_path=source_signal_gap_review_2402_path,
+        source_regime_gap_review_2402_path=source_regime_gap_review_2402_path,
+        source_threshold_gap_review_2402_path=source_threshold_gap_review_2402_path,
+        source_plateau_decision_2401_path=source_plateau_decision_2401_path,
+        source_next_direction_2401_path=source_next_direction_2401_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy PIT coverage matrix implementation plan",
         payload,
     )
 

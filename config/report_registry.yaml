@@ -19123,6 +19123,33 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_pit_coverage_matrix_implementation_plan
+    title: Dynamic Strategy PIT Coverage Matrix Implementation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-pit-coverage-matrix-implementation-plan
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_implementation_plan/implementation_plan_result.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_implementation_plan/pit_input_registry_schema.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_implementation_plan/pit_gate_policy.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_implementation_plan/remediation_routes.json
+      - outputs/research_strategies/dynamic_strategy_pit_coverage_matrix_implementation_plan/current_blocker_summary.json
+      - docs/research/dynamic_strategy_pit_coverage_matrix_implementation_plan.md
+      - docs/research/dynamic_strategy_pit_input_registry_schema.md
+      - docs/research/dynamic_strategy_pit_gate_policy.md
+      - docs/research/dynamic_strategy_pit_remediation_routes.md
+      - docs/research/dynamic_strategy_2405_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2404 consumes prior validated TRADING-2403/2402/2401 research artifacts to design a PIT input registry schema, reusable PIT matrix generator contract, severity gate policy, current blocker summary, remediation routes, and TRADING-2405 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no new signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_dynamic_strategy_pit_coverage_matrix_implementation_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
