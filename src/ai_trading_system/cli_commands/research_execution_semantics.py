@@ -19,6 +19,7 @@ import ai_trading_system.dynamic_strategy_component_attribution_targeted_ablatio
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_plan as m2395
 import ai_trading_system.dynamic_strategy_component_recombination_candidate_retest as m2396
 import ai_trading_system.dynamic_strategy_data_pit_signal_quality_gap_review as m2402
+import ai_trading_system.dynamic_strategy_growth_tilt_engine_contract_gap_remediation_plan as m2411
 import ai_trading_system.dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan as m2406
 import ai_trading_system.dynamic_strategy_pit_coverage_matrix_implementation_plan as m2404
 import ai_trading_system.dynamic_strategy_pit_coverage_matrix_reusable_implementation as m2405
@@ -795,6 +796,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )(_dynamic_strategy_signal_as_of_validity_contract_schema_command)
     strategies_app.command("growth-tilt-engine-source-feature-contract-mapping")(
         _growth_tilt_engine_source_feature_contract_mapping_command
+    )
+    strategies_app.command("growth-tilt-engine-contract-gap-remediation-plan")(
+        _growth_tilt_engine_contract_gap_remediation_plan_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -4780,6 +4784,73 @@ def _growth_tilt_engine_source_feature_contract_mapping_command(
     for field in (
         "blockers_resolved",
         "blockers_downgraded",
+        "candidate_search_enabled",
+        "observation_enabled",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+    ):
+        console.print(f"{field}={payload.get(field)}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_contract_gap_remediation_plan_command(
+    source_2410_mapping_result_path: Annotated[
+        Path, typer.Option("--source-2410-mapping-result")
+    ] = m2411.DEFAULT_SOURCE_2410_MAPPING_RESULT_PATH,
+    source_2410_source_feature_contract_mapping_path: Annotated[
+        Path, typer.Option("--source-2410-source-feature-contract-mapping")
+    ] = m2411.DEFAULT_SOURCE_2410_SOURCE_FEATURE_CONTRACT_MAPPING_PATH,
+    source_2410_contract_mapping_validation_path: Annotated[
+        Path, typer.Option("--source-2410-contract-mapping-validation")
+    ] = m2411.DEFAULT_SOURCE_2410_CONTRACT_MAPPING_VALIDATION_PATH,
+    source_2410_unresolved_gap_summary_path: Annotated[
+        Path, typer.Option("--source-2410-unresolved-gap-summary")
+    ] = m2411.DEFAULT_SOURCE_2410_UNRESOLVED_GAP_SUMMARY_PATH,
+    source_2410_research_doc_path: Annotated[
+        Path, typer.Option("--source-2410-research-doc")
+    ] = m2411.DEFAULT_SOURCE_2410_RESEARCH_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2411.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2411.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2411.DEFAULT_GROWTH_TILT_ENGINE_CONTRACT_GAP_REMEDIATION_PLAN_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2411.DEFAULT_GROWTH_TILT_ENGINE_CONTRACT_GAP_REMEDIATION_PLAN_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2411.run_growth_tilt_engine_contract_gap_remediation_plan(
+        source_2410_mapping_result_path=source_2410_mapping_result_path,
+        source_2410_source_feature_contract_mapping_path=(
+            source_2410_source_feature_contract_mapping_path
+        ),
+        source_2410_contract_mapping_validation_path=(
+            source_2410_contract_mapping_validation_path
+        ),
+        source_2410_unresolved_gap_summary_path=(
+            source_2410_unresolved_gap_summary_path
+        ),
+        source_2410_research_doc_path=source_2410_research_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine contract gap remediation plan",
+        payload,
+    )
+    for field in (
+        "growth_tilt_engine_blocker_resolved",
+        "growth_tilt_engine_blocker_downgraded",
+        "valid_until_window_blocker_resolved",
+        "valid_until_window_blocker_downgraded",
         "candidate_search_enabled",
         "observation_enabled",
         "paper_shadow_enabled",

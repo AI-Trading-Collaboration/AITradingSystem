@@ -19323,6 +19323,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_contract_gap_remediation_plan
+    title: Growth Tilt Engine Contract Gap Remediation Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-contract-gap-remediation-plan
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_contract_gap_remediation_plan/remediation_plan_result.json
+      - outputs/research_strategies/growth_tilt_engine_contract_gap_remediation_plan/contract_gap_remediation_plan.json
+      - outputs/research_strategies/growth_tilt_engine_contract_gap_remediation_plan/ordered_remediation_items.json
+      - outputs/research_strategies/growth_tilt_engine_contract_gap_remediation_plan/validation_design.json
+      - outputs/research_strategies/growth_tilt_engine_contract_gap_remediation_plan/unresolved_blocker_summary.json
+      - docs/research/growth_tilt_engine_contract_gap_remediation_plan.md
+      - docs/research/growth_tilt_engine_contract_gap_validation_design.md
+      - docs/research/dynamic_strategy_2412_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2411 consumes TRADING-2410 growth tilt source feature contract mapping artifacts, validation, unresolved gap summary, research doc, report registry, and artifact catalog to turn 7 blocked/gap source features into a remediation plan, deterministic implementation ordering, validation design, and TRADING-2412 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_contract_gap_remediation_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
