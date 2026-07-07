@@ -31,6 +31,9 @@ import ai_trading_system.dynamic_strategy_signal_as_of_validity_contract_schema 
 import ai_trading_system.dynamic_strategy_targeted_gate_evidence_owner_review_decision as m2400
 import ai_trading_system.dynamic_strategy_valid_until_window_stale_signal_remediation_plan as m2407
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_source_feature_contract_mapping as m2410,
+)
+from ai_trading_system import (
     dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest as m2399,
 )
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
@@ -790,6 +793,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-signal-as-of-validity-contract-schema"
     )(_dynamic_strategy_signal_as_of_validity_contract_schema_command)
+    strategies_app.command("growth-tilt-engine-source-feature-contract-mapping")(
+        _growth_tilt_engine_source_feature_contract_mapping_command
+    )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -4687,6 +4693,101 @@ def _dynamic_strategy_signal_as_of_validity_contract_schema_command(
         "Dynamic strategy signal as-of and validity contract schema",
         payload,
     )
+
+
+def _growth_tilt_engine_source_feature_contract_mapping_command(
+    source_2409_contract_schema_result_path: Annotated[
+        Path, typer.Option("--source-2409-contract-schema-result")
+    ] = m2410.DEFAULT_SOURCE_2409_CONTRACT_SCHEMA_RESULT_PATH,
+    source_2409_source_feature_contract_schema_path: Annotated[
+        Path, typer.Option("--source-2409-source-feature-contract-schema")
+    ] = m2410.DEFAULT_SOURCE_2409_SOURCE_FEATURE_CONTRACT_SCHEMA_PATH,
+    source_2409_signal_as_of_contract_schema_path: Annotated[
+        Path, typer.Option("--source-2409-signal-as-of-contract-schema")
+    ] = m2410.DEFAULT_SOURCE_2409_SIGNAL_AS_OF_CONTRACT_SCHEMA_PATH,
+    source_2409_signal_validity_contract_schema_path: Annotated[
+        Path, typer.Option("--source-2409-signal-validity-contract-schema")
+    ] = m2410.DEFAULT_SOURCE_2409_SIGNAL_VALIDITY_CONTRACT_SCHEMA_PATH,
+    source_2409_contract_schema_snapshot_path: Annotated[
+        Path, typer.Option("--source-2409-contract-schema-snapshot")
+    ] = m2410.DEFAULT_SOURCE_2409_CONTRACT_SCHEMA_SNAPSHOT_PATH,
+    source_2406_source_feature_inventory_path: Annotated[
+        Path, typer.Option("--source-2406-source-feature-inventory")
+    ] = m2410.DEFAULT_SOURCE_2406_SOURCE_FEATURE_INVENTORY_PATH,
+    source_2406_pit_risk_audit_path: Annotated[
+        Path, typer.Option("--source-2406-pit-risk-audit")
+    ] = m2410.DEFAULT_SOURCE_2406_PIT_RISK_AUDIT_PATH,
+    source_2406_signal_construction_gap_analysis_path: Annotated[
+        Path, typer.Option("--source-2406-signal-construction-gap-analysis")
+    ] = m2410.DEFAULT_SOURCE_2406_SIGNAL_CONSTRUCTION_GAP_ANALYSIS_PATH,
+    source_2406_remediation_plan_path: Annotated[
+        Path, typer.Option("--source-2406-remediation-plan")
+    ] = m2410.DEFAULT_SOURCE_2406_REMEDIATION_PLAN_PATH,
+    source_2405_pit_gate_result_path: Annotated[
+        Path, typer.Option("--source-2405-pit-gate-result")
+    ] = m2410.DEFAULT_SOURCE_2405_PIT_GATE_RESULT_PATH,
+    source_2405_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2405-blocker-summary")
+    ] = m2410.DEFAULT_SOURCE_2405_BLOCKER_SUMMARY_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2410.DEFAULT_DYNAMIC_STRATEGY_PIT_INPUT_REGISTRY_PATH,
+    growth_tilt_candidate_registry_path: Annotated[
+        Path, typer.Option("--growth-tilt-candidate-registry")
+    ] = m2410.DEFAULT_EQUAL_RISK_GROWTH_TILT_CANDIDATE_REGISTRY_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2410.DEFAULT_GROWTH_TILT_ENGINE_SOURCE_FEATURE_CONTRACT_MAPPING_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2410.DEFAULT_GROWTH_TILT_ENGINE_SOURCE_FEATURE_CONTRACT_MAPPING_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2410.run_growth_tilt_engine_source_feature_contract_mapping(
+        source_2409_contract_schema_result_path=source_2409_contract_schema_result_path,
+        source_2409_source_feature_contract_schema_path=(
+            source_2409_source_feature_contract_schema_path
+        ),
+        source_2409_signal_as_of_contract_schema_path=(
+            source_2409_signal_as_of_contract_schema_path
+        ),
+        source_2409_signal_validity_contract_schema_path=(
+            source_2409_signal_validity_contract_schema_path
+        ),
+        source_2409_contract_schema_snapshot_path=(
+            source_2409_contract_schema_snapshot_path
+        ),
+        source_2406_source_feature_inventory_path=(
+            source_2406_source_feature_inventory_path
+        ),
+        source_2406_pit_risk_audit_path=source_2406_pit_risk_audit_path,
+        source_2406_signal_construction_gap_analysis_path=(
+            source_2406_signal_construction_gap_analysis_path
+        ),
+        source_2406_remediation_plan_path=source_2406_remediation_plan_path,
+        source_2405_pit_gate_result_path=source_2405_pit_gate_result_path,
+        source_2405_blocker_summary_path=source_2405_blocker_summary_path,
+        pit_input_registry_path=pit_input_registry_path,
+        growth_tilt_candidate_registry_path=growth_tilt_candidate_registry_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine source feature contract mapping",
+        payload,
+    )
+    for field in (
+        "blockers_resolved",
+        "blockers_downgraded",
+        "candidate_search_enabled",
+        "observation_enabled",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+    ):
+        console.print(f"{field}={payload.get(field)}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 
 def _call_builder(

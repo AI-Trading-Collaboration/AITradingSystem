@@ -19299,6 +19299,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_source_feature_contract_mapping
+    title: Growth Tilt Engine Source Feature Contract Mapping
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-source-feature-contract-mapping
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_source_feature_contract_mapping/mapping_result.json
+      - outputs/research_strategies/growth_tilt_engine_source_feature_contract_mapping/source_feature_contract_mapping.json
+      - outputs/research_strategies/growth_tilt_engine_source_feature_contract_mapping/contract_mapping_validation.json
+      - outputs/research_strategies/growth_tilt_engine_source_feature_contract_mapping/unresolved_gap_summary.json
+      - docs/research/growth_tilt_engine_source_feature_contract_mapping.md
+      - docs/research/growth_tilt_engine_contract_mapping_validation.md
+      - docs/research/dynamic_strategy_2411_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2410 consumes prior validated TRADING-2409 reusable signal/source-feature/validity contract schema artifacts, prior TRADING-2406 growth tilt source feature inventory and remediation artifacts, prior TRADING-2405 PIT gate artifacts, and governed PIT / growth tilt configs to map growth_tilt_engine source features to contract requirements and unresolved gaps; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no signal/scoring, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_source_feature_contract_mapping
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
