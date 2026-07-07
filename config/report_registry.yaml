@@ -18992,6 +18992,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest
+    title: Dynamic Strategy Recombination Candidate Targeted Gate Evidence Retest
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest/targeted_gate_evidence_retest_result.json
+      - outputs/research_strategies/dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest/targeted_variant_ranking.json
+      - outputs/research_strategies/dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest/gate_evidence_matrix.json
+      - outputs/research_strategies/dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest/decision_update.json
+      - docs/research/dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest.md
+      - docs/research/dynamic_strategy_targeted_gate_evidence_variant_ranking.md
+      - docs/research/dynamic_strategy_targeted_gate_evidence_matrix.md
+      - docs/research/dynamic_strategy_2400_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2399 consumes TRADING-2398 targeted gate evidence plan plus prior validated TRADING-2395/2396/2397 artifacts, runs the cached-data quality gate and actual targeted retest, then produces a TRADING-2400 owner-decision package without approving observation, scheduler, event/outcome paths, paper-shadow, production, broker, or daily-report actions.
+    owner_action: review_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

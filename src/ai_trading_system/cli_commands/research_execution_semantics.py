@@ -20,6 +20,9 @@ import ai_trading_system.dynamic_strategy_component_recombination_candidate_rete
 import ai_trading_system.dynamic_strategy_recombination_candidate_gate_evidence_plan as m2398
 import ai_trading_system.dynamic_strategy_recombination_candidate_owner_review_decision as m2397
 import ai_trading_system.dynamic_strategy_research_filter_threshold_methodology_review as m2388
+from ai_trading_system import (
+    dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest as m2399,
+)
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_DOCS_ROOT,
     DEFAULT_DYNAMIC_STRATEGY_CANDIDATE_OPTIMIZATION_DIVERGENCE_REVIEW_OUTPUT_ROOT,
@@ -744,6 +747,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "dynamic-strategy-recombination-candidate-gate-evidence-plan"
     )(_dynamic_strategy_recombination_candidate_gate_evidence_plan_command)
+    strategies_app.command(
+        "dynamic-strategy-recombination-candidate-targeted-gate-evidence-retest"
+    )(_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -3729,6 +3735,116 @@ def _dynamic_strategy_recombination_candidate_gate_evidence_plan_command(
     )
     _print_execution_semantics_payload(
         "Dynamic strategy recombination candidate gate evidence plan",
+        payload,
+    )
+
+
+def _dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest_command(
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2399.DEFAULT_PRICES_PATH,
+    marketstack_prices_path: Annotated[
+        Path, typer.Option("--marketstack-prices-path")
+    ] = m2399.DEFAULT_MARKETSTACK_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = m2399.DEFAULT_RATES_PATH,
+    simple_config_path: Annotated[
+        Path, typer.Option("--simple-config-path")
+    ] = m2399.DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH,
+    policy_registry_path: Annotated[
+        Path, typer.Option("--policy-registry-path")
+    ] = m2399.DEFAULT_EXECUTION_POLICY_REGISTRY_PATH,
+    source_gate_evidence_plan_result_2398_path: Annotated[
+        Path, typer.Option("--source-gate-evidence-plan-result-2398")
+    ] = m2399.DEFAULT_SOURCE_2398_GATE_EVIDENCE_PLAN_RESULT_PATH,
+    source_gate_evidence_gap_summary_2398_path: Annotated[
+        Path, typer.Option("--source-gate-evidence-gap-summary-2398")
+    ] = m2399.DEFAULT_SOURCE_2398_GATE_EVIDENCE_GAP_SUMMARY_PATH,
+    source_targeted_improvement_plan_2398_path: Annotated[
+        Path, typer.Option("--source-targeted-improvement-plan-2398")
+    ] = m2399.DEFAULT_SOURCE_2398_TARGETED_IMPROVEMENT_PLAN_PATH,
+    source_retest_plan_2399_2398_path: Annotated[
+        Path, typer.Option("--source-retest-plan-2399-2398")
+    ] = m2399.DEFAULT_SOURCE_2398_RETEST_PLAN_2399_PATH,
+    source_next_route_2398_path: Annotated[
+        Path, typer.Option("--source-next-route-2398")
+    ] = m2399.DEFAULT_SOURCE_2398_NEXT_ROUTE_PATH,
+    source_owner_review_decision_2397_path: Annotated[
+        Path, typer.Option("--source-owner-review-decision-2397")
+    ] = m2399.DEFAULT_SOURCE_2397_OWNER_REVIEW_DECISION_PATH,
+    source_recombination_retest_result_2396_path: Annotated[
+        Path, typer.Option("--source-recombination-retest-result-2396")
+    ] = m2399.DEFAULT_SOURCE_2396_RECOMBINATION_RETEST_RESULT_PATH,
+    source_recombination_candidate_ranking_2396_path: Annotated[
+        Path, typer.Option("--source-recombination-candidate-ranking-2396")
+    ] = m2399.DEFAULT_SOURCE_2396_RECOMBINATION_CANDIDATE_RANKING_PATH,
+    source_component_evidence_matrix_2396_path: Annotated[
+        Path, typer.Option("--source-component-evidence-matrix-2396")
+    ] = m2399.DEFAULT_SOURCE_2396_COMPONENT_EVIDENCE_MATRIX_PATH,
+    source_decision_update_2396_path: Annotated[
+        Path, typer.Option("--source-decision-update-2396")
+    ] = m2399.DEFAULT_SOURCE_2396_DECISION_UPDATE_PATH,
+    source_recombination_candidate_plan_2395_path: Annotated[
+        Path, typer.Option("--source-recombination-candidate-plan-2395")
+    ] = m2399.DEFAULT_SOURCE_2395_RECOMBINATION_CANDIDATE_PLAN_PATH,
+    source_candidate_definitions_2395_path: Annotated[
+        Path, typer.Option("--source-candidate-definitions-2395")
+    ] = m2399.DEFAULT_SOURCE_2395_CANDIDATE_DEFINITIONS_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2399.DEFAULT_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2399.DEFAULT_DYNAMIC_STRATEGY_RECOMBINATION_CANDIDATE_TARGETED_GATE_EVIDENCE_RETEST_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date")] = None,
+    end_date: Annotated[str | None, typer.Option("--end-date")] = None,
+) -> None:
+    payload = (
+        m2399.run_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest(
+            prices_path=prices_path,
+            marketstack_prices_path=marketstack_prices_path,
+            rates_path=rates_path,
+            simple_config_path=simple_config_path,
+            policy_registry_path=policy_registry_path,
+            source_gate_evidence_plan_result_2398_path=(
+                source_gate_evidence_plan_result_2398_path
+            ),
+            source_gate_evidence_gap_summary_2398_path=(
+                source_gate_evidence_gap_summary_2398_path
+            ),
+            source_targeted_improvement_plan_2398_path=(
+                source_targeted_improvement_plan_2398_path
+            ),
+            source_retest_plan_2399_2398_path=source_retest_plan_2399_2398_path,
+            source_next_route_2398_path=source_next_route_2398_path,
+            source_owner_review_decision_2397_path=(
+                source_owner_review_decision_2397_path
+            ),
+            source_recombination_retest_result_2396_path=(
+                source_recombination_retest_result_2396_path
+            ),
+            source_recombination_candidate_ranking_2396_path=(
+                source_recombination_candidate_ranking_2396_path
+            ),
+            source_component_evidence_matrix_2396_path=(
+                source_component_evidence_matrix_2396_path
+            ),
+            source_decision_update_2396_path=source_decision_update_2396_path,
+            source_recombination_candidate_plan_2395_path=(
+                source_recombination_candidate_plan_2395_path
+            ),
+            source_candidate_definitions_2395_path=source_candidate_definitions_2395_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            **_date_range_kwargs(as_of, start_date, end_date),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Dynamic strategy recombination candidate targeted gate evidence retest",
         payload,
     )
 
