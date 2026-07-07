@@ -19067,6 +19067,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dynamic_strategy_data_pit_signal_quality_gap_review
+    title: Dynamic Strategy Data PIT Signal Quality Gap Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies dynamic-strategy-data-pit-signal-quality-gap-review
+    artifact_globs:
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/gap_review_result.json
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/data_quality_gap_matrix.json
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/pit_coverage_gap_review.json
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/signal_quality_gap_review.json
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/regime_labeling_gap_review.json
+      - outputs/research_strategies/dynamic_strategy_data_pit_signal_quality_gap_review/threshold_meta_dataset_gap_review.json
+      - docs/research/dynamic_strategy_data_pit_signal_quality_gap_review.md
+      - docs/research/dynamic_strategy_data_quality_gap_matrix.md
+      - docs/research/dynamic_strategy_pit_coverage_gap_review.md
+      - docs/research/dynamic_strategy_signal_quality_gap_review.md
+      - docs/research/dynamic_strategy_2403_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2402 consumes TRADING-2401/2400/2399/2386/2364 research artifacts plus the latest validate-data quality gate to review data quality, PIT coverage, signal quality, regime labeling, threshold meta-dataset gaps, and TRADING-2403 routing; it does not run new strategy backtests, generate new signals/scoring, resume candidate search, approve observation, enable scheduler/event/outcome paths, or enter paper-shadow/production/broker.
+    owner_action: review_dynamic_strategy_data_pit_signal_quality_gap_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
