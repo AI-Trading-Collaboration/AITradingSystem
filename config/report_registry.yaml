@@ -19348,6 +19348,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_as_of_semantics_remediation
+    title: Growth Tilt Engine As-Of Semantics Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-as-of-semantics-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_as_of_semantics_remediation/as_of_remediation_result.json
+      - outputs/research_strategies/growth_tilt_engine_as_of_semantics_remediation/as_of_contract_metadata.json
+      - outputs/research_strategies/growth_tilt_engine_as_of_semantics_remediation/before_after_remediation.json
+      - outputs/research_strategies/growth_tilt_engine_as_of_semantics_remediation/updated_source_feature_mapping.json
+      - outputs/research_strategies/growth_tilt_engine_as_of_semantics_remediation/remaining_blocker_summary.json
+      - docs/research/growth_tilt_engine_as_of_semantics_remediation.md
+      - docs/research/growth_tilt_engine_as_of_contract_metadata.md
+      - docs/research/dynamic_strategy_2413_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2412 consumes TRADING-2411 growth tilt contract gap remediation plan artifacts and TRADING-2410 source feature mapping artifacts to remediate only the as-of semantics dimension for missing-as-of source features; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_as_of_semantics_remediation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
