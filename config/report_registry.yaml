@@ -19654,6 +19654,35 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_paper_shadow_enablement_plan
+    title: Growth Tilt Engine Paper Shadow Enablement Plan
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-paper-shadow-enablement-plan
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/enablement_plan_result.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/paper_shadow_enablement_plan.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/runtime_boundary_checklist.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/schedule_boundary_plan.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/manual_review_checklist.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_enablement_plan/rollback_stop_condition_summary.json
+      - docs/research/growth_tilt_engine_paper_shadow_enablement_plan.md
+      - docs/research/growth_tilt_engine_paper_shadow_runtime_boundary_checklist.md
+      - docs/research/growth_tilt_engine_paper_shadow_schedule_boundary_plan.md
+      - docs/research/growth_tilt_engine_paper_shadow_manual_review_checklist.md
+      - docs/research/growth_tilt_engine_paper_shadow_rollback_stop_condition_summary.md
+      - docs/research/dynamic_strategy_2425_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2424 consumes TRADING-2423 paper-shadow preflight artifacts, TRADING-2422 contract readiness snapshot artifacts, TRADING-2421 PIT gate readiness recheck after source traceability remediation artifacts, TRADING-2420 signal artifact source traceability remediation artifacts, report registry, artifact catalog, system flow and research docs to produce only a paper-shadow enablement plan and TRADING-2425 dry-run wiring route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, starts no paper-shadow runtime schedule, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_paper_shadow_enablement_plan
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
