@@ -104,6 +104,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_false_risk_off_missed_upside_batch_screen as m2433,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_regime_slice_attribution_review as m2437,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_turnover_cooldown_parameter_plateau_study as m2436,
 )
 from ai_trading_system import (
@@ -952,6 +955,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-turnover-cooldown-parameter-plateau-study")(
         _growth_tilt_turnover_cooldown_parameter_plateau_study_command
+    )
+    strategies_app.command("growth-tilt-regime-slice-attribution-review")(
+        _growth_tilt_regime_slice_attribution_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -8310,6 +8316,122 @@ def _growth_tilt_turnover_cooldown_parameter_plateau_study_command(
         "computed_new_metrics",
         "parameter_sweep_run",
         "market_data_parameter_plateau_run",
+        "evidence_gap_count",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "outcome_store_mutated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "fresh_outcome_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_regime_slice_attribution_review_command(
+    source_2436_parameter_plateau_study_path: Annotated[
+        Path, typer.Option("--source-2436-parameter-plateau-study")
+    ] = m2437.DEFAULT_SOURCE_2436_PARAMETER_PLATEAU_STUDY_PATH,
+    source_2432_candidate_gauntlet_path: Annotated[
+        Path, typer.Option("--source-2432-candidate-gauntlet")
+    ] = m2437.DEFAULT_SOURCE_2432_CANDIDATE_GAUNTLET_PATH,
+    candidate_set_2432_path: Annotated[
+        Path, typer.Option("--candidate-set-2432")
+    ] = m2437.DEFAULT_CANDIDATE_SET_2432_PATH,
+    parameter_plateau_study_doc_path: Annotated[
+        Path, typer.Option("--parameter-plateau-study-doc")
+    ] = m2437.DEFAULT_PARAMETER_PLATEAU_STUDY_DOC_PATH,
+    route_2437_doc_path: Annotated[
+        Path, typer.Option("--route-2437-doc")
+    ] = m2437.DEFAULT_2437_ROUTE_DOC_PATH,
+    candidate_gauntlet_doc_path: Annotated[
+        Path, typer.Option("--candidate-gauntlet-doc")
+    ] = m2437.DEFAULT_CANDIDATE_GAUNTLET_DOC_PATH,
+    candidate_set_2432_doc_path: Annotated[
+        Path, typer.Option("--candidate-set-2432-doc")
+    ] = m2437.DEFAULT_CANDIDATE_SET_2432_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2437.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2437.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2437.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2437.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2437.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2437.run_growth_tilt_regime_slice_attribution_review(
+        source_2436_parameter_plateau_study_path=source_2436_parameter_plateau_study_path,
+        source_2432_candidate_gauntlet_path=source_2432_candidate_gauntlet_path,
+        candidate_set_2432_path=candidate_set_2432_path,
+        parameter_plateau_study_doc_path=parameter_plateau_study_doc_path,
+        route_2437_doc_path=route_2437_doc_path,
+        candidate_gauntlet_doc_path=candidate_gauntlet_doc_path,
+        candidate_set_2432_doc_path=candidate_set_2432_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt regime slice attribution review",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2436_ready",
+        "source_2432_gauntlet_ready",
+        "candidate_set_regime_slice_contract_ready",
+        "candidate_set_required_metrics_ready",
+        "regime_slice_attribution_review_ready",
+        "regime_slice_attribution_matrix_ready",
+        "candidate_status_by_regime_ready",
+        "no_effect_boundary_ready",
+        "recommended_regime_slice_count",
+        "candidate_set_regime_slice_count",
+        "regime_robustness_score",
+        "single_regime_dependency_detected",
+        "single_regime_dependency_assessed",
+        "regime_pass_count",
+        "regime_fail_count",
+        "regime_inconclusive_count",
+        "all_recommended_regime_status_inconclusive",
+        "component_value_found",
+        "candidate_status",
+        "computed_new_metrics",
+        "regime_attribution_run",
+        "market_data_regime_attribution_run",
         "evidence_gap_count",
         "historical_screen_run",
         "pit_replay_run",
