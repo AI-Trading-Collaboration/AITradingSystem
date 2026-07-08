@@ -107,6 +107,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_forward_aging_candidate_pack as m2439,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_paper_shadow_candidate_promotion_review as m2440,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_regime_slice_attribution_review as m2437,
 )
 from ai_trading_system import (
@@ -970,6 +973,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
+    )
+    strategies_app.command("growth-tilt-paper-shadow-candidate-promotion-review")(
+        _growth_tilt_paper_shadow_candidate_promotion_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -8738,6 +8744,156 @@ def _growth_tilt_forward_aging_candidate_pack_command(
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"observation_horizons={payload.get('observation_horizons')}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_paper_shadow_candidate_promotion_review_command(
+    source_2431_existing_candidate_evidence_path: Annotated[
+        Path, typer.Option("--source-2431-existing-candidate-evidence")
+    ] = m2440.DEFAULT_SOURCE_2431_PATH,
+    source_2432_candidate_gauntlet_path: Annotated[
+        Path, typer.Option("--source-2432-candidate-gauntlet")
+    ] = m2440.DEFAULT_SOURCE_2432_PATH,
+    source_2434_component_validation_path: Annotated[
+        Path, typer.Option("--source-2434-component-validation")
+    ] = m2440.DEFAULT_SOURCE_2434_PATH,
+    source_2437_regime_review_path: Annotated[
+        Path, typer.Option("--source-2437-regime-review")
+    ] = m2440.DEFAULT_SOURCE_2437_PATH,
+    source_2438_pit_replay_path: Annotated[
+        Path, typer.Option("--source-2438-pit-replay")
+    ] = m2440.DEFAULT_SOURCE_2438_PATH,
+    source_2439_forward_pack_path: Annotated[
+        Path, typer.Option("--source-2439-forward-pack")
+    ] = m2440.DEFAULT_SOURCE_2439_PATH,
+    source_2431_doc_path: Annotated[
+        Path, typer.Option("--source-2431-doc")
+    ] = m2440.DEFAULT_SOURCE_2431_DOC_PATH,
+    source_2432_doc_path: Annotated[
+        Path, typer.Option("--source-2432-doc")
+    ] = m2440.DEFAULT_SOURCE_2432_DOC_PATH,
+    source_2434_doc_path: Annotated[
+        Path, typer.Option("--source-2434-doc")
+    ] = m2440.DEFAULT_SOURCE_2434_DOC_PATH,
+    source_2437_doc_path: Annotated[
+        Path, typer.Option("--source-2437-doc")
+    ] = m2440.DEFAULT_SOURCE_2437_DOC_PATH,
+    source_2438_doc_path: Annotated[
+        Path, typer.Option("--source-2438-doc")
+    ] = m2440.DEFAULT_SOURCE_2438_DOC_PATH,
+    source_2439_doc_path: Annotated[
+        Path, typer.Option("--source-2439-doc")
+    ] = m2440.DEFAULT_SOURCE_2439_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2440.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2440.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2440.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = m2440.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = m2440.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2440.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2440.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2440.run_growth_tilt_paper_shadow_candidate_promotion_review(
+        source_2431_existing_candidate_evidence_path=(
+            source_2431_existing_candidate_evidence_path
+        ),
+        source_2432_candidate_gauntlet_path=source_2432_candidate_gauntlet_path,
+        source_2434_component_validation_path=source_2434_component_validation_path,
+        source_2437_regime_review_path=source_2437_regime_review_path,
+        source_2438_pit_replay_path=source_2438_pit_replay_path,
+        source_2439_forward_pack_path=source_2439_forward_pack_path,
+        source_2431_doc_path=source_2431_doc_path,
+        source_2432_doc_path=source_2432_doc_path,
+        source_2434_doc_path=source_2434_doc_path,
+        source_2437_doc_path=source_2437_doc_path,
+        source_2438_doc_path=source_2438_doc_path,
+        source_2439_doc_path=source_2439_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_summary_path=data_quality_summary_path,
+        data_quality_output_path=data_quality_output_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt paper-shadow candidate promotion review",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2431_ready",
+        "source_2432_ready",
+        "source_2434_ready",
+        "source_2437_ready",
+        "source_2438_ready",
+        "source_2439_forward_aging_ready",
+        "forward_aging_source_status",
+        "pit_replay_source_status",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "promotion_review_ready",
+        "evidence_summary_ready",
+        "candidate_decision_matrix_ready",
+        "blocked_promotion_route_ready",
+        "no_effect_boundary_ready",
+        "forward_aging_candidate_count",
+        "review_candidate_count",
+        "paper_shadow_candidate_found",
+        "paper_shadow_candidate_count",
+        "evidence_gap_count",
+        "forward_aging_observation_started",
+        "forward_aging_observation_written",
+        "candidate_tracking_started",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "fresh_outcome_data_read",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "outcome_store_mutated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 

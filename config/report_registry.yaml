@@ -20109,6 +20109,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_paper_shadow_candidate_promotion_review
+    title: Growth Tilt Paper-Shadow Candidate Promotion Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-paper-shadow-candidate-promotion-review
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_paper_shadow_candidate_promotion_review/promotion_review_result.json
+      - outputs/research_strategies/growth_tilt_paper_shadow_candidate_promotion_review/evidence_summary.json
+      - outputs/research_strategies/growth_tilt_paper_shadow_candidate_promotion_review/candidate_decision_matrix.json
+      - outputs/research_strategies/growth_tilt_paper_shadow_candidate_promotion_review/blocked_promotion_route.json
+      - outputs/research_strategies/growth_tilt_paper_shadow_candidate_promotion_review/no_effect_boundary.json
+      - docs/research/growth_tilt_paper_shadow_candidate_promotion_review.md
+      - docs/research/growth_tilt_paper_shadow_candidate_evidence_summary.md
+      - docs/research/growth_tilt_paper_shadow_candidate_decision_matrix.md
+      - docs/research/growth_tilt_paper_shadow_candidate_blocked_route.md
+      - docs/research/growth_tilt_paper_shadow_candidate_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2440_blocked_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2440 consumes TRADING-2431 through TRADING-2439 evidence and data-quality gate status to decide whether any specific Growth Tilt candidate may enter a candidate-specific paper-shadow gate. Current authoritative 2439 output is blocked by the upstream PIT replay gate, so this report fails closed instead of emitting a no-candidate strategy conclusion. It generates no signal or outcome, writes no forward observation, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_paper_shadow_candidate_promotion_blocked_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
