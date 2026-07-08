@@ -38,6 +38,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_readiness_recheck as m2419,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation as m2421,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_readiness_snapshot as m2415,
 )
 from ai_trading_system import (
@@ -854,6 +857,12 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "growth-tilt-engine-signal-artifact-source-traceability-remediation"
     )(_growth_tilt_engine_signal_artifact_source_traceability_remediation_command)
+    strategies_app.command(
+        "growth-tilt-engine-pit-gate-readiness-recheck-after-source-traceability-"
+        "remediation"
+    )(
+        _growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation_command
+    )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -6036,6 +6045,118 @@ def _growth_tilt_engine_signal_artifact_source_traceability_remediation_command(
         console.print(f"missing_field_count={missing.get('missing_field_count')}")
         console.print(f"incomplete_field_count={missing.get('incomplete_field_count')}")
         console.print(f"unresolved_blocker_count={missing.get('unresolved_blocker_count')}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation_command(
+    source_2420_remediation_result_path: Annotated[
+        Path, typer.Option("--source-2420-remediation-result")
+    ] = m2421.DEFAULT_SOURCE_2420_REMEDIATION_RESULT_PATH,
+    source_2420_source_traceability_manifest_path: Annotated[
+        Path, typer.Option("--source-2420-source-traceability-manifest")
+    ] = m2421.DEFAULT_SOURCE_2420_SOURCE_TRACEABILITY_MANIFEST_PATH,
+    source_2420_source_lineage_map_path: Annotated[
+        Path, typer.Option("--source-2420-source-lineage-map")
+    ] = m2421.DEFAULT_SOURCE_2420_SOURCE_LINEAGE_MAP_PATH,
+    source_2420_missing_source_evidence_summary_path: Annotated[
+        Path, typer.Option("--source-2420-missing-source-evidence-summary")
+    ] = m2421.DEFAULT_SOURCE_2420_MISSING_SOURCE_EVIDENCE_SUMMARY_PATH,
+    source_2420_research_doc_path: Annotated[
+        Path, typer.Option("--source-2420-research-doc")
+    ] = m2421.DEFAULT_SOURCE_2420_RESEARCH_DOC_PATH,
+    source_2420_manifest_doc_path: Annotated[
+        Path, typer.Option("--source-2420-manifest-doc")
+    ] = m2421.DEFAULT_SOURCE_2420_MANIFEST_DOC_PATH,
+    source_2420_lineage_doc_path: Annotated[
+        Path, typer.Option("--source-2420-lineage-doc")
+    ] = m2421.DEFAULT_SOURCE_2420_LINEAGE_DOC_PATH,
+    source_2420_route_doc_path: Annotated[
+        Path, typer.Option("--source-2420-route-doc")
+    ] = m2421.DEFAULT_SOURCE_2420_ROUTE_DOC_PATH,
+    source_2419_recheck_result_path: Annotated[
+        Path, typer.Option("--source-2419-recheck-result")
+    ] = m2421.DEFAULT_SOURCE_2419_RECHECK_RESULT_PATH,
+    source_2419_research_doc_path: Annotated[
+        Path, typer.Option("--source-2419-research-doc")
+    ] = m2421.DEFAULT_SOURCE_2419_RESEARCH_DOC_PATH,
+    source_2419_blocker_doc_path: Annotated[
+        Path, typer.Option("--source-2419-blocker-doc")
+    ] = m2421.DEFAULT_SOURCE_2419_BLOCKER_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2421.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2421.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2421.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2421.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2421.run_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation(
+            source_2420_remediation_result_path=source_2420_remediation_result_path,
+            source_2420_source_traceability_manifest_path=(
+                source_2420_source_traceability_manifest_path
+            ),
+            source_2420_source_lineage_map_path=source_2420_source_lineage_map_path,
+            source_2420_missing_source_evidence_summary_path=(
+                source_2420_missing_source_evidence_summary_path
+            ),
+            source_2420_research_doc_path=source_2420_research_doc_path,
+            source_2420_manifest_doc_path=source_2420_manifest_doc_path,
+            source_2420_lineage_doc_path=source_2420_lineage_doc_path,
+            source_2420_route_doc_path=source_2420_route_doc_path,
+            source_2419_recheck_result_path=source_2419_recheck_result_path,
+            source_2419_research_doc_path=source_2419_research_doc_path,
+            source_2419_blocker_doc_path=source_2419_blocker_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine PIT gate readiness recheck after source traceability remediation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_traceability_remediation_status",
+        "source_traceability_recheck_status",
+        "source_traceability_evidence_complete_after_2420",
+        "source_traceability_blocker_resolved",
+        "signal_artifact_source_traceability_blocker_resolved",
+        "blockers_resolved",
+        "blockers_downgraded",
+        "resolved_blockers",
+        "remaining_blockers",
+        "remaining_blocker_count",
+        "pit_gate_ready",
+        "pit_gate_ready_count",
+        "pit_gate_blocked_count",
+        "contract_ready",
+        "contract_ready_count",
+        "contract_readiness_snapshot_required",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "scheduler_enabled",
+        "event_append_enabled",
+        "outcome_binding_enabled",
+        "daily_report_generated",
+        "new_signal_generated",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+        "blocker_resolution_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 

@@ -19580,6 +19580,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation
+    title: Growth Tilt Engine PIT Gate Readiness Recheck After Source Traceability Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-pit-gate-readiness-recheck-after-source-traceability-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation/readiness_recheck_after_remediation_result.json
+      - outputs/research_strategies/growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation/pit_gate_recheck_after_remediation_matrix.json
+      - outputs/research_strategies/growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation/blocker_resolution_summary.json
+      - outputs/research_strategies/growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation/contract_readiness_snapshot_gate.json
+      - docs/research/growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation.md
+      - docs/research/growth_tilt_engine_pit_gate_recheck_after_source_traceability_remediation_matrix.md
+      - docs/research/growth_tilt_engine_source_traceability_blocker_resolution_summary.md
+      - docs/research/dynamic_strategy_2422_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2421 consumes TRADING-2420 signal artifact source traceability remediation artifacts, TRADING-2419 PIT gate readiness recheck artifacts, report registry, artifact catalog and research docs to produce only an after-remediation readiness recheck and TRADING-2422 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
