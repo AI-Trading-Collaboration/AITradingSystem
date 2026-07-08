@@ -19502,6 +19502,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_valid_until_dependency_evidence_closure
+    title: Growth Tilt Engine Valid Until Dependency Evidence Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-valid-until-dependency-evidence-closure
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/closure_result.json
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/valid_until_dependency_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/signal_validity_contract_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/stale_signal_policy_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/growth_tilt_valid_until_alignment_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_valid_until_dependency_evidence_closure/remaining_blocker_summary.json
+      - docs/research/growth_tilt_engine_valid_until_dependency_evidence_closure.md
+      - docs/research/growth_tilt_engine_signal_validity_contract_evidence.md
+      - docs/research/growth_tilt_engine_stale_signal_policy_evidence.md
+      - docs/research/growth_tilt_engine_valid_until_alignment_evidence.md
+      - docs/research/dynamic_strategy_2419_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2418 consumes TRADING-2417 source traceability closure artifacts, TRADING-2416 remaining blocker closure plan artifacts, TRADING-2415 PIT gate readiness artifacts, TRADING-2414 signal validity dependency remediation artifacts, TRADING-2411 contract gap remediation artifacts, TRADING-2407 valid-until semantics artifacts, PIT input registry, strategy execution policy registry, report registry and artifact catalog to produce only valid-until dependency evidence and a TRADING-2419 route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_valid_until_dependency_evidence_closure
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
