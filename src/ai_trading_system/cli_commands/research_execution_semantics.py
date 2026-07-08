@@ -38,6 +38,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_contract_readiness_snapshot as m2422,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_paper_shadow_dry_run_wiring as m2425,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_paper_shadow_enablement_plan as m2424,
 )
 from ai_trading_system import (
@@ -880,6 +883,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-paper-shadow-enablement-plan")(
         _growth_tilt_engine_paper_shadow_enablement_plan_command
+    )
+    strategies_app.command("growth-tilt-engine-paper-shadow-dry-run-wiring")(
+        _growth_tilt_engine_paper_shadow_dry_run_wiring_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -6651,6 +6657,222 @@ def _growth_tilt_engine_paper_shadow_enablement_plan_command(
         "paper_shadow_daily_job_run",
         "production_enabled",
         "broker_enabled",
+        "generated_signal",
+        "generated_trading_advice",
+        "daily_report_generated",
+        "daily_report_run",
+        "new_signal_generated",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_paper_shadow_dry_run_wiring_command(
+    source_2424_enablement_plan_result_path: Annotated[
+        Path, typer.Option("--source-2424-enablement-plan-result")
+    ] = m2425.DEFAULT_SOURCE_2424_ENABLEMENT_PLAN_RESULT_PATH,
+    source_2424_enablement_plan_path: Annotated[
+        Path, typer.Option("--source-2424-enablement-plan")
+    ] = m2425.DEFAULT_SOURCE_2424_ENABLEMENT_PLAN_PATH,
+    source_2424_runtime_boundary_checklist_path: Annotated[
+        Path, typer.Option("--source-2424-runtime-boundary-checklist")
+    ] = m2425.DEFAULT_SOURCE_2424_RUNTIME_BOUNDARY_CHECKLIST_PATH,
+    source_2424_schedule_boundary_plan_path: Annotated[
+        Path, typer.Option("--source-2424-schedule-boundary-plan")
+    ] = m2425.DEFAULT_SOURCE_2424_SCHEDULE_BOUNDARY_PLAN_PATH,
+    source_2424_manual_review_checklist_path: Annotated[
+        Path, typer.Option("--source-2424-manual-review-checklist")
+    ] = m2425.DEFAULT_SOURCE_2424_MANUAL_REVIEW_CHECKLIST_PATH,
+    source_2424_rollback_stop_condition_summary_path: Annotated[
+        Path, typer.Option("--source-2424-rollback-stop-condition-summary")
+    ] = m2425.DEFAULT_SOURCE_2424_ROLLBACK_STOP_CONDITION_SUMMARY_PATH,
+    source_2424_research_doc_path: Annotated[
+        Path, typer.Option("--source-2424-research-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_RESEARCH_DOC_PATH,
+    source_2424_runtime_boundary_doc_path: Annotated[
+        Path, typer.Option("--source-2424-runtime-boundary-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_RUNTIME_BOUNDARY_DOC_PATH,
+    source_2424_schedule_boundary_doc_path: Annotated[
+        Path, typer.Option("--source-2424-schedule-boundary-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_SCHEDULE_BOUNDARY_DOC_PATH,
+    source_2424_manual_review_doc_path: Annotated[
+        Path, typer.Option("--source-2424-manual-review-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_MANUAL_REVIEW_DOC_PATH,
+    source_2424_rollback_doc_path: Annotated[
+        Path, typer.Option("--source-2424-rollback-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_ROLLBACK_DOC_PATH,
+    source_2424_route_doc_path: Annotated[
+        Path, typer.Option("--source-2424-route-doc")
+    ] = m2425.DEFAULT_SOURCE_2424_ROUTE_DOC_PATH,
+    source_2423_preflight_result_path: Annotated[
+        Path, typer.Option("--source-2423-preflight-result")
+    ] = m2425.DEFAULT_SOURCE_2423_PREFLIGHT_RESULT_PATH,
+    source_2423_research_doc_path: Annotated[
+        Path, typer.Option("--source-2423-research-doc")
+    ] = m2425.DEFAULT_SOURCE_2423_RESEARCH_DOC_PATH,
+    source_2423_route_doc_path: Annotated[
+        Path, typer.Option("--source-2423-route-doc")
+    ] = m2425.DEFAULT_SOURCE_2423_ROUTE_DOC_PATH,
+    source_2422_contract_readiness_snapshot_path: Annotated[
+        Path, typer.Option("--source-2422-contract-readiness-snapshot")
+    ] = m2425.DEFAULT_SOURCE_2422_CONTRACT_READINESS_SNAPSHOT_PATH,
+    source_2422_research_doc_path: Annotated[
+        Path, typer.Option("--source-2422-research-doc")
+    ] = m2425.DEFAULT_SOURCE_2422_RESEARCH_DOC_PATH,
+    source_2422_route_doc_path: Annotated[
+        Path, typer.Option("--source-2422-route-doc")
+    ] = m2425.DEFAULT_SOURCE_2422_ROUTE_DOC_PATH,
+    source_2421_readiness_recheck_result_path: Annotated[
+        Path, typer.Option("--source-2421-readiness-recheck-result")
+    ] = m2425.DEFAULT_SOURCE_2421_READINESS_RECHECK_RESULT_PATH,
+    source_2421_research_doc_path: Annotated[
+        Path, typer.Option("--source-2421-research-doc")
+    ] = m2425.DEFAULT_SOURCE_2421_RESEARCH_DOC_PATH,
+    source_2421_route_doc_path: Annotated[
+        Path, typer.Option("--source-2421-route-doc")
+    ] = m2425.DEFAULT_SOURCE_2421_ROUTE_DOC_PATH,
+    source_2420_remediation_result_path: Annotated[
+        Path, typer.Option("--source-2420-remediation-result")
+    ] = m2425.DEFAULT_SOURCE_2420_REMEDIATION_RESULT_PATH,
+    source_2420_source_traceability_manifest_path: Annotated[
+        Path, typer.Option("--source-2420-source-traceability-manifest")
+    ] = m2425.DEFAULT_SOURCE_2420_SOURCE_TRACEABILITY_MANIFEST_PATH,
+    source_2420_source_lineage_map_path: Annotated[
+        Path, typer.Option("--source-2420-source-lineage-map")
+    ] = m2425.DEFAULT_SOURCE_2420_SOURCE_LINEAGE_MAP_PATH,
+    source_2420_missing_source_evidence_summary_path: Annotated[
+        Path, typer.Option("--source-2420-missing-source-evidence-summary")
+    ] = m2425.DEFAULT_SOURCE_2420_MISSING_SOURCE_EVIDENCE_SUMMARY_PATH,
+    source_2420_research_doc_path: Annotated[
+        Path, typer.Option("--source-2420-research-doc")
+    ] = m2425.DEFAULT_SOURCE_2420_RESEARCH_DOC_PATH,
+    source_2420_manifest_doc_path: Annotated[
+        Path, typer.Option("--source-2420-manifest-doc")
+    ] = m2425.DEFAULT_SOURCE_2420_MANIFEST_DOC_PATH,
+    source_2420_lineage_doc_path: Annotated[
+        Path, typer.Option("--source-2420-lineage-doc")
+    ] = m2425.DEFAULT_SOURCE_2420_LINEAGE_DOC_PATH,
+    source_2420_route_doc_path: Annotated[
+        Path, typer.Option("--source-2420-route-doc")
+    ] = m2425.DEFAULT_SOURCE_2420_ROUTE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2425.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2425.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2425.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2425.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2425.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2425.run_growth_tilt_engine_paper_shadow_dry_run_wiring(
+        source_2424_enablement_plan_result_path=(
+            source_2424_enablement_plan_result_path
+        ),
+        source_2424_enablement_plan_path=source_2424_enablement_plan_path,
+        source_2424_runtime_boundary_checklist_path=(
+            source_2424_runtime_boundary_checklist_path
+        ),
+        source_2424_schedule_boundary_plan_path=(
+            source_2424_schedule_boundary_plan_path
+        ),
+        source_2424_manual_review_checklist_path=(
+            source_2424_manual_review_checklist_path
+        ),
+        source_2424_rollback_stop_condition_summary_path=(
+            source_2424_rollback_stop_condition_summary_path
+        ),
+        source_2424_research_doc_path=source_2424_research_doc_path,
+        source_2424_runtime_boundary_doc_path=source_2424_runtime_boundary_doc_path,
+        source_2424_schedule_boundary_doc_path=source_2424_schedule_boundary_doc_path,
+        source_2424_manual_review_doc_path=source_2424_manual_review_doc_path,
+        source_2424_rollback_doc_path=source_2424_rollback_doc_path,
+        source_2424_route_doc_path=source_2424_route_doc_path,
+        source_2423_preflight_result_path=source_2423_preflight_result_path,
+        source_2423_research_doc_path=source_2423_research_doc_path,
+        source_2423_route_doc_path=source_2423_route_doc_path,
+        source_2422_contract_readiness_snapshot_path=(
+            source_2422_contract_readiness_snapshot_path
+        ),
+        source_2422_research_doc_path=source_2422_research_doc_path,
+        source_2422_route_doc_path=source_2422_route_doc_path,
+        source_2421_readiness_recheck_result_path=(
+            source_2421_readiness_recheck_result_path
+        ),
+        source_2421_research_doc_path=source_2421_research_doc_path,
+        source_2421_route_doc_path=source_2421_route_doc_path,
+        source_2420_remediation_result_path=source_2420_remediation_result_path,
+        source_2420_source_traceability_manifest_path=(
+            source_2420_source_traceability_manifest_path
+        ),
+        source_2420_source_lineage_map_path=source_2420_source_lineage_map_path,
+        source_2420_missing_source_evidence_summary_path=(
+            source_2420_missing_source_evidence_summary_path
+        ),
+        source_2420_research_doc_path=source_2420_research_doc_path,
+        source_2420_manifest_doc_path=source_2420_manifest_doc_path,
+        source_2420_lineage_doc_path=source_2420_lineage_doc_path,
+        source_2420_route_doc_path=source_2420_route_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine paper-shadow dry-run wiring",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "pit_gate_ready",
+        "pit_gate_ready_count",
+        "remaining_pit_blockers",
+        "remaining_pit_blocker_count",
+        "contract_readiness_status",
+        "contract_ready",
+        "contract_ready_count",
+        "contract_gap_count",
+        "source_traceability_remediation_status",
+        "source_traceability_recheck_status",
+        "source_traceability_accepted",
+        "paper_shadow_preflight_ready",
+        "enablement_plan_ready",
+        "enablement_gap_count",
+        "paper_shadow_dry_run_wiring_started",
+        "paper_shadow_dry_run_wiring_completed",
+        "dry_run_wiring_ready",
+        "dry_run_wiring_gap_count",
+        "missing_dry_run_evidence_count",
+        "safety_boundary_gap_count",
+        "wiring_contract_gap_count",
+        "precondition_gap_count",
+        "input_contract_map_ready",
+        "output_artifact_contract_map_ready",
+        "manual_review_handoff_wired",
+        "schedule_hook_verified_disabled",
+        "no_effect_audit_ready",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
         "generated_signal",
         "generated_trading_advice",
         "daily_report_generated",
