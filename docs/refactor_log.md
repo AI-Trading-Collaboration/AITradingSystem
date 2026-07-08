@@ -31,7 +31,7 @@
   - `git diff --check`：PASS。命令输出 `docs/task_register.md` 和 `src/ai_trading_system/cli_commands/research_execution_semantics.py` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
 - 遇到的 blocker：无。Ruff 初次检查发现拆分后的静态 import/helper 问题，focused pytest 初次运行发现 shared output helper 未完全复刻原 CLI 输出契约；二者都属于实现收敛范围内的机械修正，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
 - 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `research_execution_semantics.py` 其余 command family 的分批模块边界，或继续收敛 report registry loader / command registration helper；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
-- 本轮重构实现提交 SHA：`PENDING`。
+- 本轮重构实现提交 SHA：`98c976f0af8259623282ec0168a62b39a9a66607`。
 
 ## 2026-07-08 Daily Incremental Refactor
 
