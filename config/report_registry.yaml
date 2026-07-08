@@ -19475,6 +19475,33 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_source_traceability_upstream_artifact_closure
+    title: Growth Tilt Engine Source Traceability Upstream Artifact Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-source-traceability-upstream-artifact-closure
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_source_traceability_upstream_artifact_closure/closure_result.json
+      - outputs/research_strategies/growth_tilt_engine_source_traceability_upstream_artifact_closure/source_traceability_closure_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_source_traceability_upstream_artifact_closure/upstream_artifact_closure_evidence.json
+      - outputs/research_strategies/growth_tilt_engine_source_traceability_upstream_artifact_closure/updated_source_feature_mapping.json
+      - outputs/research_strategies/growth_tilt_engine_source_traceability_upstream_artifact_closure/remaining_blocker_summary.json
+      - docs/research/growth_tilt_engine_source_traceability_upstream_artifact_closure.md
+      - docs/research/growth_tilt_engine_source_traceability_closure_evidence.md
+      - docs/research/growth_tilt_engine_upstream_artifact_closure_evidence.md
+      - docs/research/growth_tilt_engine_updated_source_feature_mapping.md
+      - docs/research/dynamic_strategy_2418_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2417 consumes TRADING-2416 remaining blocker closure artifacts, TRADING-2415 PIT gate readiness artifacts, TRADING-2413 source traceability remediation artifacts, TRADING-2412 as-of mapping, TRADING-2410 source feature contract mapping, PIT input registry, report registry and artifact catalog to produce only pre-recheck source traceability and upstream artifact closure evidence; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_source_traceability_upstream_artifact_closure
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
