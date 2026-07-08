@@ -19829,6 +19829,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_candidate_promotion_evidence_review
+    title: Growth Tilt Engine Candidate Promotion Evidence Review
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-candidate-promotion-evidence-review
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_candidate_promotion_evidence_review/promotion_evidence_review_result.json
+      - outputs/research_strategies/growth_tilt_engine_candidate_promotion_evidence_review/candidate_evidence_matrix.json
+      - outputs/research_strategies/growth_tilt_engine_candidate_promotion_evidence_review/candidate_decision_summary.json
+      - outputs/research_strategies/growth_tilt_engine_candidate_promotion_evidence_review/no_promotion_rationale.json
+      - outputs/research_strategies/growth_tilt_engine_candidate_promotion_evidence_review/no_effect_boundary.json
+      - docs/research/growth_tilt_engine_candidate_promotion_evidence_review.md
+      - docs/research/growth_tilt_engine_candidate_evidence_matrix.md
+      - docs/research/growth_tilt_engine_candidate_decision_summary.md
+      - docs/research/growth_tilt_engine_no_promotion_rationale.md
+      - docs/research/growth_tilt_engine_candidate_promotion_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2431_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2430 consumes TRADING-2426 through TRADING-2429 artifacts, the equal-risk growth-tilt candidate registry, prior candidate owner-review evidence, report registry, artifact catalog, system flow and research docs to decide only whether a paper-shadow promotion candidate exists; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, runs no scoring, generates no daily report, generates no new signal, backfills no real outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_engine_candidate_promotion_evidence_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

@@ -35,6 +35,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation as m2412,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_candidate_promotion_evidence_review as m2430,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_contract_readiness_snapshot as m2422,
 )
 from ai_trading_system import (
@@ -910,6 +913,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-forward-outcome-binding-boundary")(
         _growth_tilt_engine_forward_outcome_binding_boundary_command
+    )
+    strategies_app.command("growth-tilt-engine-candidate-promotion-evidence-review")(
+        _growth_tilt_engine_candidate_promotion_evidence_review_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7472,6 +7478,147 @@ def _growth_tilt_engine_forward_outcome_binding_boundary_command(
         "outcome_backfilled",
         "outcome_binding_executed",
         "outcome_store_mutated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_candidate_promotion_evidence_review_command(
+    source_2426_schedule_dry_run_result_path: Annotated[
+        Path, typer.Option("--source-2426-schedule-dry-run-result")
+    ] = m2430.DEFAULT_SOURCE_2426_SCHEDULE_DRY_RUN_RESULT_PATH,
+    source_2427_manual_review_packet_dry_run_result_path: Annotated[
+        Path, typer.Option("--source-2427-manual-review-packet-dry-run-result")
+    ] = m2430.DEFAULT_SOURCE_2427_MANUAL_REVIEW_PACKET_DRY_RUN_RESULT_PATH,
+    source_2428_observe_only_boundary_result_path: Annotated[
+        Path, typer.Option("--source-2428-observe-only-boundary-result")
+    ] = m2430.DEFAULT_SOURCE_2428_OBSERVE_ONLY_BOUNDARY_RESULT_PATH,
+    source_2429_forward_outcome_boundary_result_path: Annotated[
+        Path, typer.Option("--source-2429-forward-outcome-boundary-result")
+    ] = m2430.DEFAULT_SOURCE_2429_FORWARD_OUTCOME_BOUNDARY_RESULT_PATH,
+    candidate_registry_path: Annotated[
+        Path, typer.Option("--candidate-registry")
+    ] = m2430.DEFAULT_CANDIDATE_REGISTRY_PATH,
+    prior_candidate_evidence_path: Annotated[
+        Path, typer.Option("--prior-candidate-evidence")
+    ] = m2430.DEFAULT_PRIOR_CANDIDATE_EVIDENCE_PATH,
+    source_2426_research_doc_path: Annotated[
+        Path, typer.Option("--source-2426-research-doc")
+    ] = m2430.DEFAULT_SOURCE_2426_RESEARCH_DOC_PATH,
+    source_2427_research_doc_path: Annotated[
+        Path, typer.Option("--source-2427-research-doc")
+    ] = m2430.DEFAULT_SOURCE_2427_RESEARCH_DOC_PATH,
+    source_2428_research_doc_path: Annotated[
+        Path, typer.Option("--source-2428-research-doc")
+    ] = m2430.DEFAULT_SOURCE_2428_RESEARCH_DOC_PATH,
+    source_2429_research_doc_path: Annotated[
+        Path, typer.Option("--source-2429-research-doc")
+    ] = m2430.DEFAULT_SOURCE_2429_RESEARCH_DOC_PATH,
+    source_2429_route_doc_path: Annotated[
+        Path, typer.Option("--source-2429-route-doc")
+    ] = m2430.DEFAULT_SOURCE_2429_ROUTE_DOC_PATH,
+    prior_candidate_evidence_doc_path: Annotated[
+        Path, typer.Option("--prior-candidate-evidence-doc")
+    ] = m2430.DEFAULT_PRIOR_CANDIDATE_EVIDENCE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2430.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2430.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2430.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2430.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2430.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2430.run_growth_tilt_engine_candidate_promotion_evidence_review(
+        source_2426_schedule_dry_run_result_path=(
+            source_2426_schedule_dry_run_result_path
+        ),
+        source_2427_manual_review_packet_dry_run_result_path=(
+            source_2427_manual_review_packet_dry_run_result_path
+        ),
+        source_2428_observe_only_boundary_result_path=(
+            source_2428_observe_only_boundary_result_path
+        ),
+        source_2429_forward_outcome_boundary_result_path=(
+            source_2429_forward_outcome_boundary_result_path
+        ),
+        candidate_registry_path=candidate_registry_path,
+        prior_candidate_evidence_path=prior_candidate_evidence_path,
+        source_2426_research_doc_path=source_2426_research_doc_path,
+        source_2427_research_doc_path=source_2427_research_doc_path,
+        source_2428_research_doc_path=source_2428_research_doc_path,
+        source_2429_research_doc_path=source_2429_research_doc_path,
+        source_2429_route_doc_path=source_2429_route_doc_path,
+        prior_candidate_evidence_doc_path=prior_candidate_evidence_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine candidate promotion evidence review",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "schedule_dry_run_ready",
+        "manual_review_packet_dry_run_ready",
+        "observe_only_signal_artifact_boundary_ready",
+        "forward_outcome_binding_boundary_ready",
+        "candidate_registry_ready",
+        "prior_candidate_evidence_ready",
+        "promotion_evidence_review_started",
+        "promotion_evidence_review_completed",
+        "promotion_evidence_review_ready",
+        "promotion_candidate_found",
+        "promotion_candidate_count",
+        "candidate_count",
+        "candidate_evidence_matrix_ready",
+        "candidate_decision_summary_ready",
+        "no_promotion_rationale_ready",
+        "engineering_readiness_is_alpha_evidence",
+        "paper_shadow_promotion_allowed_by_registry",
+        "prior_owner_approved_paper_shadow",
+        "prior_owner_approved_observation",
+        "promotion_evidence_review_gap_count",
+        "missing_promotion_review_evidence_count",
+        "safety_boundary_gap_count",
+        "candidate_evidence_gap_count",
+        "precondition_gap_count",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
         "paper_shadow_enabled",
         "paper_shadow_schedule_enabled",
         "paper_shadow_daily_job_run",
