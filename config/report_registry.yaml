@@ -19973,6 +19973,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_valid_until_outcome_hit_rate_study
+    title: Growth Tilt Valid-Until Outcome Hit-Rate Study
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-valid-until-outcome-hit-rate-study
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_valid_until_outcome_hit_rate_study/hit_rate_study_result.json
+      - outputs/research_strategies/growth_tilt_valid_until_outcome_hit_rate_study/valid_until_hit_rate_matrix.json
+      - outputs/research_strategies/growth_tilt_valid_until_outcome_hit_rate_study/stale_signal_reduction_summary.json
+      - outputs/research_strategies/growth_tilt_valid_until_outcome_hit_rate_study/expiry_failure_audit.json
+      - outputs/research_strategies/growth_tilt_valid_until_outcome_hit_rate_study/no_effect_boundary.json
+      - docs/research/growth_tilt_valid_until_outcome_hit_rate_study.md
+      - docs/research/growth_tilt_valid_until_hit_rate_matrix.md
+      - docs/research/growth_tilt_valid_until_stale_signal_reduction_summary.md
+      - docs/research/growth_tilt_valid_until_expiry_failure_audit.md
+      - docs/research/growth_tilt_valid_until_outcome_hit_rate_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2436_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2435 consumes TRADING-2434 component validation, TRADING-2418 valid-until alignment and stale-signal policy evidence, TRADING-2429 forward outcome binding boundary, the TRADING-2432 candidate-set config, report registry, artifact catalog, system flow and research docs to study valid-until component value and outcome hit-rate readiness only; it does not rerun validate-data because it reads no fresh cached market or outcome data, runs no historical screen, runs no PIT replay, runs no backtest, runs no scoring, generates no daily report, generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_valid_until_outcome_hit_rate_study
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

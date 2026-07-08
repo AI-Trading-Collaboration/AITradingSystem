@@ -104,6 +104,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_false_risk_off_missed_upside_batch_screen as m2433,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_valid_until_outcome_hit_rate_study as m2435,
+)
+from ai_trading_system import (
     dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest as m2399,
 )
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
@@ -941,6 +944,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "growth-tilt-defensive-limited-adjustment-component-validation"
     )(_growth_tilt_defensive_limited_adjustment_component_validation_command)
+    strategies_app.command("growth-tilt-valid-until-outcome-hit-rate-study")(
+        _growth_tilt_valid_until_outcome_hit_rate_study_command
+    )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -8096,6 +8102,126 @@ def _growth_tilt_defensive_limited_adjustment_component_validation_command(
     if not isinstance(primary_value, list):
         primary_value = []
     console.print(f"primary_value={','.join(str(value) for value in primary_value)}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_valid_until_outcome_hit_rate_study_command(
+    source_2434_component_validation_path: Annotated[
+        Path, typer.Option("--source-2434-component-validation")
+    ] = m2435.DEFAULT_SOURCE_2434_COMPONENT_VALIDATION_PATH,
+    source_2418_valid_until_alignment_path: Annotated[
+        Path, typer.Option("--source-2418-valid-until-alignment")
+    ] = m2435.DEFAULT_SOURCE_2418_VALID_UNTIL_ALIGNMENT_PATH,
+    source_2418_stale_signal_policy_path: Annotated[
+        Path, typer.Option("--source-2418-stale-signal-policy")
+    ] = m2435.DEFAULT_SOURCE_2418_STALE_SIGNAL_POLICY_PATH,
+    source_2429_forward_outcome_boundary_path: Annotated[
+        Path, typer.Option("--source-2429-forward-outcome-boundary")
+    ] = m2435.DEFAULT_SOURCE_2429_FORWARD_OUTCOME_BOUNDARY_PATH,
+    candidate_set_2432_path: Annotated[
+        Path, typer.Option("--candidate-set-2432")
+    ] = m2435.DEFAULT_CANDIDATE_SET_2432_PATH,
+    component_validation_doc_path: Annotated[
+        Path, typer.Option("--component-validation-doc")
+    ] = m2435.DEFAULT_COMPONENT_VALIDATION_DOC_PATH,
+    valid_until_alignment_doc_path: Annotated[
+        Path, typer.Option("--valid-until-alignment-doc")
+    ] = m2435.DEFAULT_VALID_UNTIL_ALIGNMENT_DOC_PATH,
+    forward_outcome_boundary_doc_path: Annotated[
+        Path, typer.Option("--forward-outcome-boundary-doc")
+    ] = m2435.DEFAULT_FORWARD_OUTCOME_BOUNDARY_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2435.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2435.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2435.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2435.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2435.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2435.run_growth_tilt_valid_until_outcome_hit_rate_study(
+        source_2434_component_validation_path=source_2434_component_validation_path,
+        source_2418_valid_until_alignment_path=source_2418_valid_until_alignment_path,
+        source_2418_stale_signal_policy_path=source_2418_stale_signal_policy_path,
+        source_2429_forward_outcome_boundary_path=(
+            source_2429_forward_outcome_boundary_path
+        ),
+        candidate_set_2432_path=candidate_set_2432_path,
+        component_validation_doc_path=component_validation_doc_path,
+        valid_until_alignment_doc_path=valid_until_alignment_doc_path,
+        forward_outcome_boundary_doc_path=forward_outcome_boundary_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt valid-until outcome hit-rate study",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2434_ready",
+        "source_2418_valid_until_evidence_ready",
+        "source_2429_forward_outcome_boundary_ready",
+        "candidate_set_valid_until_metric_ready",
+        "candidate_set_valid_until_candidate_group_ready",
+        "hit_rate_study_ready",
+        "valid_until_hit_rate_matrix_ready",
+        "stale_signal_reduction_summary_ready",
+        "expiry_failure_audit_ready",
+        "no_effect_boundary_ready",
+        "valid_until_component_value_found",
+        "valid_until_hit_rate_delta",
+        "stale_signal_reduction",
+        "expiry_failure_count",
+        "candidate_status",
+        "outcome_sample_count",
+        "observed_outcome_hit_rate_available",
+        "computed_new_metrics",
+        "market_data_hit_rate_study_run",
+        "real_outcome_binding_run",
+        "evidence_gap_count",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "outcome_store_mutated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "fresh_outcome_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 
