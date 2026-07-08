@@ -107,6 +107,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_regime_slice_attribution_review as m2437,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay as m2438,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_turnover_cooldown_parameter_plateau_study as m2436,
 )
 from ai_trading_system import (
@@ -958,6 +961,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-regime-slice-attribution-review")(
         _growth_tilt_regime_slice_attribution_review_command
+    )
+    strategies_app.command("growth-tilt-top3-candidate-pit-replay")(
+        _growth_tilt_top3_candidate_pit_replay_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -8435,6 +8441,147 @@ def _growth_tilt_regime_slice_attribution_review_command(
         "evidence_gap_count",
         "historical_screen_run",
         "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "outcome_store_mutated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "fresh_outcome_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_pit_replay_command(
+    source_2437_regime_review_path: Annotated[
+        Path, typer.Option("--source-2437-regime-review")
+    ] = m2438.DEFAULT_SOURCE_2437_REGIME_REVIEW_PATH,
+    source_2433_batch_screen_path: Annotated[
+        Path, typer.Option("--source-2433-batch-screen")
+    ] = m2438.DEFAULT_SOURCE_2433_BATCH_SCREEN_PATH,
+    source_2431_existing_candidate_evidence_path: Annotated[
+        Path, typer.Option("--source-2431-existing-candidate-evidence")
+    ] = m2438.DEFAULT_SOURCE_2431_EXISTING_CANDIDATE_EVIDENCE_PATH,
+    candidate_set_2433_path: Annotated[
+        Path, typer.Option("--candidate-set-2433")
+    ] = m2438.DEFAULT_CANDIDATE_SET_2433_PATH,
+    regime_review_doc_path: Annotated[
+        Path, typer.Option("--regime-review-doc")
+    ] = m2438.DEFAULT_REGIME_REVIEW_DOC_PATH,
+    batch_screen_doc_path: Annotated[
+        Path, typer.Option("--batch-screen-doc")
+    ] = m2438.DEFAULT_BATCH_SCREEN_DOC_PATH,
+    existing_candidate_doc_path: Annotated[
+        Path, typer.Option("--existing-candidate-doc")
+    ] = m2438.DEFAULT_EXISTING_CANDIDATE_DOC_PATH,
+    candidate_set_2433_doc_path: Annotated[
+        Path, typer.Option("--candidate-set-2433-doc")
+    ] = m2438.DEFAULT_CANDIDATE_SET_2433_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[Path, typer.Option("--prices-path")] = m2438.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[Path, typer.Option("--rates-path")] = m2438.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438.run_growth_tilt_top3_candidate_pit_replay(
+        source_2437_regime_review_path=source_2437_regime_review_path,
+        source_2433_batch_screen_path=source_2433_batch_screen_path,
+        source_2431_existing_candidate_evidence_path=(
+            source_2431_existing_candidate_evidence_path
+        ),
+        candidate_set_2433_path=candidate_set_2433_path,
+        regime_review_doc_path=regime_review_doc_path,
+        batch_screen_doc_path=batch_screen_doc_path,
+        existing_candidate_doc_path=existing_candidate_doc_path,
+        candidate_set_2433_doc_path=candidate_set_2433_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_summary_path=data_quality_summary_path,
+        data_quality_output_path=data_quality_output_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate PIT replay",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2437_ready",
+        "source_2433_batch_screen_ready",
+        "source_2431_existing_candidate_evidence_ready",
+        "candidate_set_2433_ready",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "top3_candidate_selection_ready",
+        "pit_replay_evidence_artifact_ready",
+        "pit_replay_blocker_summary_ready",
+        "no_effect_boundary_ready",
+        "pit_candidates_selected",
+        "pit_candidates_tested",
+        "pit_replay_pass_count",
+        "pit_replay_fail_count",
+        "pit_replay_blocked_count",
+        "promotion_review_candidate_count",
+        "candidate_pit_replay_engine_available",
+        "candidate_replay_input_specs_ready",
+        "candidate_source_traceability_manifests_ready",
+        "candidate_as_of_boundary_specs_ready",
+        "candidate_valid_until_boundary_specs_ready",
+        "candidate_outcome_linkage_specs_ready",
+        "source_traceability_verified_count",
+        "as_of_boundary_verified_count",
+        "valid_until_boundary_verified_count",
+        "outcome_linkage_ready_count",
+        "pit_replay_run",
+        "pit_replay_executed",
+        "computed_new_metrics",
+        "evidence_gap_count",
+        "historical_screen_run",
         "backtest_run",
         "scoring_run",
         "manual_review_required",

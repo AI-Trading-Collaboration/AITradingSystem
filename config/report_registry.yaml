@@ -20053,6 +20053,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_top3_candidate_pit_replay
+    title: Growth Tilt Top-3 Candidate PIT Replay
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-top3-candidate-pit-replay
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay/top3_candidate_pit_replay_result.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay/top3_candidate_selection.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay/pit_replay_evidence.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay/pit_replay_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay/no_effect_boundary.json
+      - docs/research/growth_tilt_top3_candidate_pit_replay.md
+      - docs/research/growth_tilt_top3_candidate_selection.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_evidence.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_blocker_summary.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438A_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438 consumes TRADING-2437 regime slice attribution review, TRADING-2433 false risk-off / missed-upside batch screen, TRADING-2431 existing candidate evidence matrix, the TRADING-2433 candidate-set config, data-quality gate output, report registry, artifact catalog, system flow and research docs to attempt top-3 candidate PIT replay; it runs validate-data or the same data-quality code path because PIT replay is a market-data validation boundary, but it must fail closed when the Growth Tilt candidate-specific PIT replay engine or replay input specs are missing. It generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_top3_candidate_pit_replay_blocker_summary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
