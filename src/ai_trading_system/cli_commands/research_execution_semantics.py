@@ -38,6 +38,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_readiness_snapshot as m2415,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan as m2416,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation as m2414,
 )
 from ai_trading_system import (
@@ -824,6 +827,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command("growth-tilt-engine-pit-gate-readiness-snapshot")(
         _growth_tilt_engine_pit_gate_readiness_snapshot_command
     )
+    strategies_app.command(
+        "growth-tilt-engine-pit-gate-remaining-blocker-closure-plan"
+    )(_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -5287,6 +5293,92 @@ def _growth_tilt_engine_pit_gate_readiness_snapshot_command(
         "as_of_ready_count",
         "source_traceability_ready_count",
         "validity_dependency_ready_count",
+        "pit_gate_ready_count",
+        "contract_ready_count",
+        "pit_gate_blocked_count",
+        "blocked_by_source_traceability_count",
+        "blocked_by_valid_until_window_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_pit_gate_remaining_blocker_closure_plan_command(
+    source_2415_readiness_snapshot_result_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-snapshot-result")
+    ] = m2416.DEFAULT_SOURCE_2415_READINESS_SNAPSHOT_RESULT_PATH,
+    source_2415_readiness_matrix_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-matrix")
+    ] = m2416.DEFAULT_SOURCE_2415_READINESS_MATRIX_PATH,
+    source_2415_readiness_validation_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-validation")
+    ] = m2416.DEFAULT_SOURCE_2415_READINESS_VALIDATION_PATH,
+    source_2415_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2415-remaining-blocker-summary")
+    ] = m2416.DEFAULT_SOURCE_2415_REMAINING_BLOCKER_SUMMARY_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2416.DEFAULT_PIT_INPUT_REGISTRY_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2416.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2416.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = (
+        m2416.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_OUTPUT_ROOT
+    ),
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = (
+        m2416.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_REMAINING_BLOCKER_CLOSURE_PLAN_DOCS_ROOT
+    ),
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2416.run_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan(
+        source_2415_readiness_snapshot_result_path=(
+            source_2415_readiness_snapshot_result_path
+        ),
+        source_2415_readiness_matrix_path=source_2415_readiness_matrix_path,
+        source_2415_readiness_validation_path=source_2415_readiness_validation_path,
+        source_2415_remaining_blocker_summary_path=(
+            source_2415_remaining_blocker_summary_path
+        ),
+        pit_input_registry_path=pit_input_registry_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine PIT gate remaining blocker closure plan",
+        payload,
+    )
+    for field in (
+        "remaining_blocker_matrix_ready",
+        "source_traceability_closure_plan_ready",
+        "as_of_evidence_closure_plan_ready",
+        "valid_until_dependency_closure_plan_ready",
+        "pit_gate_evidence_requirements_ready",
+        "growth_tilt_engine_blocking_gap_resolved",
+        "growth_tilt_engine_severity_downgraded",
+        "valid_until_window_blocking_gap_resolved",
+        "valid_until_window_severity_downgraded",
+        "candidate_search_allowed",
+        "candidate_search_resumed",
+        "research_only_observation_allowed",
+        "research_only_observation_approved",
+        "paper_shadow_enabled",
+        "event_append_enabled",
+        "outcome_binding_enabled",
+        "scheduler_enabled",
+        "production_enabled",
+        "broker_action_enabled",
+        "daily_report_generated",
+        "source_feature_count",
         "pit_gate_ready_count",
         "contract_ready_count",
         "pit_gate_blocked_count",
