@@ -41,6 +41,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_manual_review_packet_dry_run as m2427,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_observe_only_signal_artifact_boundary as m2428,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_paper_shadow_dry_run_wiring as m2425,
 )
 from ai_trading_system import (
@@ -898,6 +901,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-manual-review-packet-dry-run")(
         _growth_tilt_engine_manual_review_packet_dry_run_command
+    )
+    strategies_app.command("growth-tilt-engine-observe-only-signal-artifact-boundary")(
+        _growth_tilt_engine_observe_only_signal_artifact_boundary_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7179,6 +7185,147 @@ def _growth_tilt_engine_manual_review_packet_dry_run_command(
         "generated_trading_advice",
         "trading_advice_generated",
         "actionable_allocation_generated",
+        "daily_report_generated",
+        "daily_report_run",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_observe_only_signal_artifact_boundary_command(
+    source_2427_manual_review_packet_dry_run_result_path: Annotated[
+        Path, typer.Option("--source-2427-manual-review-packet-dry-run-result")
+    ] = m2428.DEFAULT_SOURCE_2427_MANUAL_REVIEW_PACKET_DRY_RUN_RESULT_PATH,
+    source_2427_manual_review_packet_path: Annotated[
+        Path, typer.Option("--source-2427-manual-review-packet")
+    ] = m2428.DEFAULT_SOURCE_2427_MANUAL_REVIEW_PACKET_PATH,
+    source_2427_manual_review_checklist_path: Annotated[
+        Path, typer.Option("--source-2427-manual-review-checklist")
+    ] = m2428.DEFAULT_SOURCE_2427_MANUAL_REVIEW_CHECKLIST_PATH,
+    source_2427_no_advice_boundary_summary_path: Annotated[
+        Path, typer.Option("--source-2427-no-advice-boundary-summary")
+    ] = m2428.DEFAULT_SOURCE_2427_NO_ADVICE_BOUNDARY_SUMMARY_PATH,
+    source_2427_reviewer_handoff_manifest_path: Annotated[
+        Path, typer.Option("--source-2427-reviewer-handoff-manifest")
+    ] = m2428.DEFAULT_SOURCE_2427_REVIEWER_HANDOFF_MANIFEST_PATH,
+    source_2427_research_doc_path: Annotated[
+        Path, typer.Option("--source-2427-research-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_RESEARCH_DOC_PATH,
+    source_2427_packet_doc_path: Annotated[
+        Path, typer.Option("--source-2427-packet-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_PACKET_DOC_PATH,
+    source_2427_checklist_doc_path: Annotated[
+        Path, typer.Option("--source-2427-checklist-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_CHECKLIST_DOC_PATH,
+    source_2427_no_advice_doc_path: Annotated[
+        Path, typer.Option("--source-2427-no-advice-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_NO_ADVICE_DOC_PATH,
+    source_2427_handoff_doc_path: Annotated[
+        Path, typer.Option("--source-2427-handoff-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_HANDOFF_DOC_PATH,
+    source_2427_route_doc_path: Annotated[
+        Path, typer.Option("--source-2427-route-doc")
+    ] = m2428.DEFAULT_SOURCE_2427_ROUTE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2428.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2428.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2428.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2428.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2428.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2428.run_growth_tilt_engine_observe_only_signal_artifact_boundary(
+        source_2427_manual_review_packet_dry_run_result_path=(
+            source_2427_manual_review_packet_dry_run_result_path
+        ),
+        source_2427_manual_review_packet_path=(
+            source_2427_manual_review_packet_path
+        ),
+        source_2427_manual_review_checklist_path=(
+            source_2427_manual_review_checklist_path
+        ),
+        source_2427_no_advice_boundary_summary_path=(
+            source_2427_no_advice_boundary_summary_path
+        ),
+        source_2427_reviewer_handoff_manifest_path=(
+            source_2427_reviewer_handoff_manifest_path
+        ),
+        source_2427_research_doc_path=source_2427_research_doc_path,
+        source_2427_packet_doc_path=source_2427_packet_doc_path,
+        source_2427_checklist_doc_path=source_2427_checklist_doc_path,
+        source_2427_no_advice_doc_path=source_2427_no_advice_doc_path,
+        source_2427_handoff_doc_path=source_2427_handoff_doc_path,
+        source_2427_route_doc_path=source_2427_route_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine observe-only signal artifact boundary",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "pit_gate_ready",
+        "pit_gate_ready_count",
+        "contract_ready",
+        "contract_ready_count",
+        "contract_gap_count",
+        "manual_review_packet_dry_run_status",
+        "manual_review_packet_dry_run_ready",
+        "manual_review_packet_gap_count",
+        "manual_review_packet_ready",
+        "manual_review_checklist_ready",
+        "prior_no_advice_boundary_ready",
+        "reviewer_handoff_manifest_ready",
+        "observe_only_signal_artifact_boundary_started",
+        "observe_only_signal_artifact_boundary_completed",
+        "observe_only_signal_artifact_boundary_ready",
+        "signal_artifact_schema_ready",
+        "valid_until_required",
+        "valid_until_requirements_ready",
+        "source_traceability_required",
+        "source_traceability_requirements_ready",
+        "pit_contract_manual_review_requirements_ready",
+        "no_trading_advice_boundary_ready",
+        "observe_only_signal_artifact_boundary_gap_count",
+        "missing_observe_only_boundary_evidence_count",
+        "safety_boundary_gap_count",
+        "signal_artifact_contract_gap_count",
+        "precondition_gap_count",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "signal_artifact_instance_generated",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
         "daily_report_generated",
         "daily_report_run",
         "backtest_run",

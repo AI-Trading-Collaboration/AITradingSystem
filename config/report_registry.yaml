@@ -19765,6 +19765,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_observe_only_signal_artifact_boundary
+    title: Growth Tilt Engine Observe-Only Signal Artifact Boundary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-observe-only-signal-artifact-boundary
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/observe_only_signal_artifact_boundary_result.json
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/signal_artifact_schema.json
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/valid_until_requirements.json
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/source_traceability_requirements.json
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/pit_contract_manual_review_requirements.json
+      - outputs/research_strategies/growth_tilt_engine_observe_only_signal_artifact_boundary/no_trading_advice_boundary.json
+      - docs/research/growth_tilt_engine_observe_only_signal_artifact_boundary.md
+      - docs/research/growth_tilt_engine_observe_only_signal_artifact_schema.md
+      - docs/research/growth_tilt_engine_observe_only_signal_valid_until_requirements.md
+      - docs/research/growth_tilt_engine_observe_only_signal_source_traceability_requirements.md
+      - docs/research/growth_tilt_engine_observe_only_signal_pit_contract_manual_review_requirements.md
+      - docs/research/growth_tilt_engine_observe_only_signal_no_trading_advice_boundary.md
+      - docs/research/dynamic_strategy_2429_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2428 consumes TRADING-2427 manual review packet dry-run artifacts, report registry, artifact catalog, system flow and research docs to define only the observe-only signal artifact contract, valid-until requirements, source traceability requirements, PIT/contract/manual-review fields, no-trading-advice boundary and TRADING-2429 forward outcome binding boundary route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, runs no scoring, generates no daily report, generates no real signal or trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_engine_observe_only_signal_artifact_boundary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
