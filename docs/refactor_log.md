@@ -1,5 +1,38 @@
 # Refactor Log
 
+## 2026-07-09 Daily Incremental Refactor
+
+- 检查时间：2026-07-09 08:10 Asia/Tokyo。
+- 起始 HEAD：`0bf7ce6639d4244907999e7e8adcdb6293416932` (`Add growth tilt paper-shadow promotion gate`)。
+- 最近一次合格重构基线提交：`f16f7b02b0ddf41c8abe2442f8c3414402216ef5` (`refactor: record AITradingSystem growth tilt report helper SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `4b656aa69f1c6c679d9e873eea5345935ea73581`。
+- 评估范围：`f16f7b02b0ddf41c8abe2442f8c3414402216ef5..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2415～2440 growth tilt / paper-shadow gate research-only 链路、CLI adapters、report registry、artifact catalog、system flow 和 task register。主要维护风险是 `src/ai_trading_system/cli_commands/research_execution_semantics.py` 已同时承载旧 execution-semantics 命令和 TRADING-2406 至 TRADING-2440 growth tilt / paper-shadow gate 命令，文件接近 9k 行，后续继续新增 growth tilt adapter 时容易出现导入冲突、注册遗漏和共享 CLI helper 分叉。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2441_Daily_Incremental_Refactor_Growth_Tilt_Execution_CLI_Boundary.md`
+  - `docs/refactor_log.md`
+  - `docs/system_flow.md`
+  - `src/ai_trading_system/cli_commands/research_execution_common.py`
+  - `src/ai_trading_system/cli_commands/research_execution_growth_tilt.py`
+  - `src/ai_trading_system/cli_commands/research_execution_semantics.py`
+- 重构理由：growth tilt / paper-shadow gate CLI adapters 已形成独立命令族，但仍内联在通用 execution semantics CLI module 中。将该命令族迁移到 `research_execution_growth_tilt.py`，并把日期解析、默认 `ai_after_chatgpt` backtest start 和 Rich payload 输出收敛到 `research_execution_common.py`，可以让 command ownership 与 growth tilt research 链路一致，同时保留 `research_execution_semantics.py` 作为统一注册入口。
+- 行为影响：预期无外部行为变化；TRADING-2406 至 TRADING-2440 相关 `aits research strategies ...` 命令名、参数、默认路径、artifact path、JSON/Markdown report output contract、status enum、source validation、recommended route、research-only / no-effect production boundary 和 CLI help surface 保持兼容。`research_execution_semantics.py` 不再直接导入 growth tilt implementation modules，而是委托 `register_growth_tilt_execution_strategy_commands(strategies_app)`。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent technical features、scoring、backtest 或 daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。
+- `docs/system_flow.md` 更新判定：适用。本轮迁移 major CLI adapter module boundary，但不改变外部 data flow；已在 system flow 顶部记录 `research_execution_semantics.py`、`research_execution_growth_tilt.py` 和 `research_execution_common.py` 的职责边界，以及外部 command/report/data-quality/production boundary 不变。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\cli_commands\research_execution_semantics.py src\ai_trading_system\cli_commands\research_execution_growth_tilt.py src\ai_trading_system\cli_commands\research_execution_common.py`：PASS。初次运行发现 shared helper 一行过长、new module import ordering / missing `console`、old module unused import，已用小 patch 和 `python -m ruff check --fix ...` 机械修正后复验通过。
+  - `python -m compileall -q src\ai_trading_system\cli_commands\research_execution_semantics.py src\ai_trading_system\cli_commands\research_execution_growth_tilt.py src\ai_trading_system\cli_commands\research_execution_common.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile` 覆盖 35 个 TRADING-2406～2440 growth tilt / paper-shadow CLI focused test files：PASS，236 passed。初次运行 31 个 CLI deterministic tests 失败，根因是抽出的 shared `_cli_scalar` 把布尔值输出从原小写 `true/false` 变成 Python `True/False`，且 shared payload printer 未保留原默认 safety field 打印；已按原 helper 契约修正并复验通过。
+  - 35 个迁移命令的 `python -m ai_trading_system.cli research strategies <command> --help` smoke：PASS。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，629 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，11 passed。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `python scripts\run_validation_tier.py contract-validation --write-runtime-artifact`：PASS，197 passed；runtime artifact=`outputs\validation_runtime\contract-validation_20260708T231617Z\test_runtime_summary.json`，reader brief=`outputs\validation_runtime\contract-validation_20260708T231617Z\test_runtime_reader_brief.md`。
+  - `git diff --check`：PASS。命令输出 `docs/task_register.md` 和 `src/ai_trading_system/cli_commands/research_execution_semantics.py` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
+- 遇到的 blocker：无。Ruff 初次检查发现拆分后的静态 import/helper 问题，focused pytest 初次运行发现 shared output helper 未完全复刻原 CLI 输出契约；二者都属于实现收敛范围内的机械修正，已修正并复验；未降低任何 validation gate，未创建 temporary workaround。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `research_execution_semantics.py` 其余 command family 的分批模块边界，或继续收敛 report registry loader / command registration helper；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
+- 本轮重构实现提交 SHA：`PENDING`。
+
 ## 2026-07-08 Daily Incremental Refactor
 
 - 检查时间：2026-07-08 08:08 Asia/Tokyo。
