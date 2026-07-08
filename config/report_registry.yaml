@@ -19885,6 +19885,39 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_candidate_gauntlet_harness
+    title: Growth Tilt Candidate Gauntlet Harness
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-candidate-gauntlet
+    artifact_globs:
+      - research/configs/growth_tilt/candidate_set_2432.yaml
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/candidate_gauntlet_result.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/candidate_set_snapshot.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/gauntlet_baseline_contract.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/gauntlet_metric_contract.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/gauntlet_criteria_contract.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/regime_plateau_ablation_contract.json
+      - outputs/research_strategies/growth_tilt_candidate_gauntlet_harness/no_effect_boundary.json
+      - docs/research/growth_tilt_candidate_gauntlet_harness.md
+      - docs/research/growth_tilt_candidate_set_2432.md
+      - docs/research/growth_tilt_candidate_gauntlet_baseline_contract.md
+      - docs/research/growth_tilt_candidate_gauntlet_metric_contract.md
+      - docs/research/growth_tilt_candidate_gauntlet_criteria_contract.md
+      - docs/research/growth_tilt_candidate_gauntlet_regime_plateau_ablation_contract.md
+      - docs/research/growth_tilt_candidate_gauntlet_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2433_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2432 consumes the TRADING-2431 existing candidate evidence matrix, the research/configs/growth_tilt/candidate_set_2432.yaml candidate-set contract, report registry, artifact catalog, system flow and research docs to build the batch gauntlet harness only; it does not rerun validate-data because it reads no fresh cached market data, runs no candidate batch screen, runs no historical screen, runs no PIT replay, runs no backtest, runs no scoring, generates no daily report, generates no signal or outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_candidate_gauntlet_harness
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

@@ -32,6 +32,9 @@ import ai_trading_system.dynamic_strategy_signal_as_of_validity_contract_schema 
 import ai_trading_system.dynamic_strategy_targeted_gate_evidence_owner_review_decision as m2400
 import ai_trading_system.dynamic_strategy_valid_until_window_stale_signal_remediation_plan as m2407
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_candidate_gauntlet_harness as m2432,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation as m2412,
 )
 from ai_trading_system import (
@@ -922,6 +925,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-existing-candidate-evidence-matrix")(
         _growth_tilt_existing_candidate_evidence_matrix_command
+    )
+    strategies_app.command("growth-tilt-candidate-gauntlet")(
+        _growth_tilt_candidate_gauntlet_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7761,6 +7767,118 @@ def _growth_tilt_existing_candidate_evidence_matrix_command(
         "daily_report_run",
         "backtest_run",
         "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_candidate_gauntlet_command(
+    source_2431_existing_candidate_evidence_matrix_path: Annotated[
+        Path, typer.Option("--source-2431-existing-candidate-evidence-matrix")
+    ] = m2432.DEFAULT_SOURCE_2431_EXISTING_CANDIDATE_EVIDENCE_MATRIX_PATH,
+    candidate_set_path: Annotated[
+        Path, typer.Option("--candidate-set")
+    ] = m2432.DEFAULT_CANDIDATE_SET_PATH,
+    existing_candidate_evidence_matrix_doc_path: Annotated[
+        Path, typer.Option("--existing-candidate-evidence-matrix-doc")
+    ] = m2432.DEFAULT_EXISTING_CANDIDATE_EVIDENCE_MATRIX_DOC_PATH,
+    existing_candidate_evidence_matrix_table_doc_path: Annotated[
+        Path, typer.Option("--existing-candidate-evidence-matrix-table-doc")
+    ] = m2432.DEFAULT_EXISTING_CANDIDATE_EVIDENCE_MATRIX_TABLE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2432.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2432.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2432.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2432.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2432.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2432.run_growth_tilt_candidate_gauntlet_harness(
+        source_2431_existing_candidate_evidence_matrix_path=(
+            source_2431_existing_candidate_evidence_matrix_path
+        ),
+        candidate_set_path=candidate_set_path,
+        existing_candidate_evidence_matrix_doc_path=(
+            existing_candidate_evidence_matrix_doc_path
+        ),
+        existing_candidate_evidence_matrix_table_doc_path=(
+            existing_candidate_evidence_matrix_table_doc_path
+        ),
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt candidate gauntlet harness",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2431_ready",
+        "candidate_set_ready",
+        "candidate_set_id",
+        "harness_ready",
+        "baseline_ready",
+        "metrics_ready",
+        "kill_criteria_ready",
+        "promotion_criteria_ready",
+        "regime_slices_ready",
+        "parameter_plateau_check_ready",
+        "ablation_output_ready",
+        "candidate_group_count",
+        "candidates_tested",
+        "required_metric_count",
+        "configured_metric_count",
+        "kill_criteria_count",
+        "promotion_criteria_count",
+        "regime_slice_count",
+        "parameter_plateau_dimension_count",
+        "ablation_output_count",
+        "new_investment_threshold_values_set",
+        "threshold_policy_required_for_execution",
+        "criteria_threshold_values_all_null",
+        "contract_gap_count",
+        "candidate_gauntlet_run",
+        "candidate_batch_screen_run",
+        "market_data_experiment_run",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
         "fresh_market_data_read",
         "source_validation_error_count",
     ):

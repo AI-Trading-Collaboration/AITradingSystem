@@ -1,0 +1,183 @@
+schema_version: growth_tilt_candidate_set.v1
+candidate_set_id: growth_tilt_batch_2432
+status: ready
+task_id: TRADING-2432
+source_task_id: TRADING-2431
+next_route: TRADING-2433_Growth_Tilt_False_Risk_Off_Missed_Upside_Batch_Screen
+
+safety_boundary:
+  research_only: true
+  observe_only: true
+  candidate_execution_allowed: false
+  candidate_gauntlet_run_allowed_in_2432: false
+  paper_shadow_allowed: false
+  paper_shadow_schedule_allowed: false
+  production_allowed: false
+  broker_action: none
+  trading_advice_allowed: false
+
+batch_runner:
+  runner_id: growth_tilt_batch_gauntlet_runner_v1
+  mode: contract_only_no_execution
+  candidates_tested_in_2432: 0
+  required_inputs:
+    - candidate_set_config
+    - prior_candidate_evidence_matrix
+    - governed_metric_policy
+    - governed_threshold_policy_for_execution
+  required_outputs:
+    - candidate_level_metric_rows
+    - kill_decision_rows
+    - promotion_decision_rows
+    - parameter_plateau_rows
+    - regime_slice_rows
+    - ablation_rows
+
+unified_baseline:
+  baseline_id: growth_tilt_prior_best_and_static_baseline_contract
+  baseline_source: TRADING-2431_existing_candidate_evidence_matrix
+  comparison_mode: research_only_contract
+  threshold_source: future_screen_policy_required
+  threshold_value: null
+  owner_review_required: true
+
+unified_metrics:
+  metrics:
+    - metric_id: return_delta_vs_baseline
+      direction: higher_is_better
+      computed_in_2432: false
+    - metric_id: sharpe_delta_vs_baseline
+      direction: higher_is_better
+      computed_in_2432: false
+    - metric_id: max_drawdown_delta_vs_baseline
+      direction: lower_is_better
+      computed_in_2432: false
+    - metric_id: turnover_delta_vs_baseline
+      direction: lower_is_better
+      computed_in_2432: false
+    - metric_id: false_risk_off_delta
+      direction: lower_is_better
+      computed_in_2432: false
+    - metric_id: missed_upside_delta
+      direction: lower_is_better
+      computed_in_2432: false
+    - metric_id: whipsaw_delta
+      direction: lower_is_better
+      computed_in_2432: false
+    - metric_id: valid_until_hit_rate
+      direction: higher_is_better
+      computed_in_2432: false
+    - metric_id: parameter_robustness_score
+      direction: higher_is_better
+      computed_in_2432: false
+    - metric_id: regime_robustness_score
+      direction: higher_is_better
+      computed_in_2432: false
+    - metric_id: forward_aging_score
+      direction: higher_is_better
+      computed_in_2432: false
+
+kill_criteria:
+  - criterion_id: missing_pit_traceability_kill
+    criterion_type: hard_fail
+    threshold_source: contract_boolean
+    threshold_value: null
+    rationale: Candidate cannot pass if PIT/source traceability evidence is missing.
+  - criterion_id: stale_signal_valid_until_kill
+    criterion_type: hard_fail
+    threshold_source: contract_boolean
+    threshold_value: null
+    rationale: Candidate cannot pass if valid-until semantics are missing or stale.
+  - criterion_id: net_cost_and_turnover_policy_required
+    criterion_type: governed_threshold_required
+    threshold_source: future_screen_policy_required
+    threshold_value: null
+    rationale: Candidate execution screen must define reviewed cost and turnover policy.
+
+promotion_criteria:
+  - criterion_id: positive_net_of_cost_edge_required
+    criterion_type: governed_threshold_required
+    threshold_source: future_screen_policy_required
+    threshold_value: null
+    rationale: Promotion needs a reviewed positive net-of-cost edge threshold.
+  - criterion_id: drawdown_not_materially_worse_required
+    criterion_type: governed_threshold_required
+    threshold_source: future_screen_policy_required
+    threshold_value: null
+    rationale: Promotion needs a reviewed drawdown tolerance policy.
+  - criterion_id: regime_and_parameter_robustness_required
+    criterion_type: governed_threshold_required
+    threshold_source: future_screen_policy_required
+    threshold_value: null
+    rationale: Promotion needs reviewed regime and parameter robustness thresholds.
+
+parameter_plateau_check:
+  ready: true
+  threshold_source: future_screen_policy_required
+  threshold_value: null
+  dimensions:
+    - trend_window
+    - risk_off_threshold
+    - re_risk_speed
+    - turnover_cooldown
+    - valid_until_days
+
+regime_slice_check:
+  ready: true
+  slices:
+    - ai_after_chatgpt_full_window
+    - risk_off_drawdown_windows
+    - growth_recovery_windows
+    - sideways_whipsaw_windows
+
+ablation_output:
+  ready: true
+  outputs:
+    - full_candidate
+    - without_false_risk_off_filter
+    - without_missed_upside_reentry
+    - without_turnover_cooldown
+    - without_valid_until_guard
+
+candidate_groups:
+  - candidate_group_id: defensive_limited_adjustment
+    candidate_family: defensive_limited_adjustment
+    source_candidate_ids:
+      - defensive_limited_adjustment
+    default_2431_status: component_value
+    included_in_2432_harness: true
+  - candidate_group_id: lower_turnover_variants
+    candidate_family: lower_turnover_guardrail
+    source_candidate_ids:
+      - dynamic_regime_overlay_v0_4_lower_turnover
+      - dynamic_regime_growth_tilt_lower_turnover_fusion_v1
+      - equal_risk_growth_tilt_lower_turnover_guarded_v1
+      - growth_tilt_lower_turnover_guarded_transfer_v1
+    default_2431_status: component_value
+    included_in_2432_harness: true
+  - candidate_group_id: dynamic_valid_until_expiry_strict_v1
+    candidate_family: valid_until_strictness
+    source_candidate_ids:
+      - dynamic_valid_until_expiry_strict_v1
+    default_2431_status: component_value
+    included_in_2432_harness: true
+  - candidate_group_id: dynamic_turnover_budgeted_growth_tilt_v1
+    candidate_family: turnover_budgeting
+    source_candidate_ids:
+      - dynamic_turnover_budgeted_growth_tilt_v1
+    default_2431_status: component_value
+    included_in_2432_harness: true
+  - candidate_group_id: equal_risk_growth_tilt_vol_target_variants
+    candidate_family: vol_target_growth_tilt
+    source_candidate_ids:
+      - equal_risk_growth_tilt_vol_target_v1
+      - equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1
+    default_2431_status: needs_pit
+    included_in_2432_harness: true
+  - candidate_group_id: growth_tilt_engine_signal_variants
+    candidate_family: growth_tilt_engine_signal
+    source_candidate_ids:
+      - growth_tilt_engine_signal
+      - growth_tilt_engine_signal_artifact
+    default_2431_status: needs_pit
+    included_in_2432_harness: true
