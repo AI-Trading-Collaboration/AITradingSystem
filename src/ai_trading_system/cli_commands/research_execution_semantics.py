@@ -35,6 +35,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation as m2412,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_pit_gate_readiness_snapshot as m2415,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation as m2414,
 )
 from ai_trading_system import (
@@ -817,6 +820,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-signal-validity-dependency-remediation")(
         _growth_tilt_engine_signal_validity_dependency_remediation_command
+    )
+    strategies_app.command("growth-tilt-engine-pit-gate-readiness-snapshot")(
+        _growth_tilt_engine_pit_gate_readiness_snapshot_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -5160,6 +5166,141 @@ def _growth_tilt_engine_signal_validity_dependency_remediation_command(
     ):
         console.print(f"{field}={payload.get(field)}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_pit_gate_readiness_snapshot_command(
+    source_2410_mapping_result_path: Annotated[
+        Path, typer.Option("--source-2410-mapping-result")
+    ] = m2415.DEFAULT_SOURCE_2410_MAPPING_RESULT_PATH,
+    source_2410_source_feature_contract_mapping_path: Annotated[
+        Path, typer.Option("--source-2410-source-feature-contract-mapping")
+    ] = m2415.DEFAULT_SOURCE_2410_SOURCE_FEATURE_CONTRACT_MAPPING_PATH,
+    source_2411_remediation_plan_result_path: Annotated[
+        Path, typer.Option("--source-2411-remediation-plan-result")
+    ] = m2415.DEFAULT_SOURCE_2411_REMEDIATION_PLAN_RESULT_PATH,
+    source_2411_ordered_remediation_items_path: Annotated[
+        Path, typer.Option("--source-2411-ordered-remediation-items")
+    ] = m2415.DEFAULT_SOURCE_2411_ORDERED_REMEDIATION_ITEMS_PATH,
+    source_2411_unresolved_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2411-unresolved-blocker-summary")
+    ] = m2415.DEFAULT_SOURCE_2411_UNRESOLVED_BLOCKER_SUMMARY_PATH,
+    source_2412_as_of_remediation_result_path: Annotated[
+        Path, typer.Option("--source-2412-as-of-remediation-result")
+    ] = m2415.DEFAULT_SOURCE_2412_AS_OF_REMEDIATION_RESULT_PATH,
+    source_2412_updated_source_feature_mapping_path: Annotated[
+        Path, typer.Option("--source-2412-updated-source-feature-mapping")
+    ] = m2415.DEFAULT_SOURCE_2412_UPDATED_SOURCE_FEATURE_MAPPING_PATH,
+    source_2412_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2412-remaining-blocker-summary")
+    ] = m2415.DEFAULT_SOURCE_2412_REMAINING_BLOCKER_SUMMARY_PATH,
+    source_2413_source_traceability_remediation_result_path: Annotated[
+        Path, typer.Option("--source-2413-source-traceability-remediation-result")
+    ] = m2415.DEFAULT_SOURCE_2413_SOURCE_TRACEABILITY_REMEDIATION_RESULT_PATH,
+    source_2413_updated_source_feature_mapping_path: Annotated[
+        Path, typer.Option("--source-2413-updated-source-feature-mapping")
+    ] = m2415.DEFAULT_SOURCE_2413_UPDATED_SOURCE_FEATURE_MAPPING_PATH,
+    source_2413_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2413-remaining-blocker-summary")
+    ] = m2415.DEFAULT_SOURCE_2413_REMAINING_BLOCKER_SUMMARY_PATH,
+    source_2414_signal_validity_dependency_remediation_result_path: Annotated[
+        Path, typer.Option("--source-2414-signal-validity-dependency-remediation-result")
+    ] = m2415.DEFAULT_SOURCE_2414_SIGNAL_VALIDITY_DEPENDENCY_REMEDIATION_RESULT_PATH,
+    source_2414_updated_source_feature_mapping_path: Annotated[
+        Path, typer.Option("--source-2414-updated-source-feature-mapping")
+    ] = m2415.DEFAULT_SOURCE_2414_UPDATED_SOURCE_FEATURE_MAPPING_PATH,
+    source_2414_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2414-remaining-blocker-summary")
+    ] = m2415.DEFAULT_SOURCE_2414_REMAINING_BLOCKER_SUMMARY_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2415.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2415.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2415.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_SNAPSHOT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2415.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_SNAPSHOT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2415.run_growth_tilt_engine_pit_gate_readiness_snapshot(
+        source_2410_mapping_result_path=source_2410_mapping_result_path,
+        source_2410_source_feature_contract_mapping_path=(
+            source_2410_source_feature_contract_mapping_path
+        ),
+        source_2411_remediation_plan_result_path=source_2411_remediation_plan_result_path,
+        source_2411_ordered_remediation_items_path=source_2411_ordered_remediation_items_path,
+        source_2411_unresolved_blocker_summary_path=(
+            source_2411_unresolved_blocker_summary_path
+        ),
+        source_2412_as_of_remediation_result_path=(
+            source_2412_as_of_remediation_result_path
+        ),
+        source_2412_updated_source_feature_mapping_path=(
+            source_2412_updated_source_feature_mapping_path
+        ),
+        source_2412_remaining_blocker_summary_path=(
+            source_2412_remaining_blocker_summary_path
+        ),
+        source_2413_source_traceability_remediation_result_path=(
+            source_2413_source_traceability_remediation_result_path
+        ),
+        source_2413_updated_source_feature_mapping_path=(
+            source_2413_updated_source_feature_mapping_path
+        ),
+        source_2413_remaining_blocker_summary_path=(
+            source_2413_remaining_blocker_summary_path
+        ),
+        source_2414_signal_validity_dependency_remediation_result_path=(
+            source_2414_signal_validity_dependency_remediation_result_path
+        ),
+        source_2414_updated_source_feature_mapping_path=(
+            source_2414_updated_source_feature_mapping_path
+        ),
+        source_2414_remaining_blocker_summary_path=(
+            source_2414_remaining_blocker_summary_path
+        ),
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine PIT gate readiness snapshot",
+        payload,
+    )
+    for field in (
+        "pit_gate_readiness_snapshot_completed",
+        "growth_tilt_engine_blocker_resolved",
+        "growth_tilt_engine_blocker_downgraded",
+        "valid_until_window_blocker_resolved",
+        "valid_until_window_blocker_downgraded",
+        "candidate_search_enabled",
+        "observation_enabled",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "source_feature_count",
+        "as_of_ready_count",
+        "source_traceability_ready_count",
+        "validity_dependency_ready_count",
+        "pit_gate_ready_count",
+        "contract_ready_count",
+        "pit_gate_blocked_count",
+        "blocked_by_source_traceability_count",
+        "blocked_by_valid_until_window_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _cli_scalar(value: object) -> object:
+    if isinstance(value, bool):
+        return str(value).lower()
+    return value
 
 
 def _call_builder(
