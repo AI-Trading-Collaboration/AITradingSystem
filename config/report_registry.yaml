@@ -19857,6 +19857,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_existing_candidate_evidence_matrix
+    title: Growth Tilt Existing Candidate Evidence Matrix
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-existing-candidate-evidence-matrix
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_existing_candidate_evidence_matrix/existing_candidate_evidence_matrix_result.json
+      - outputs/research_strategies/growth_tilt_existing_candidate_evidence_matrix/candidate_evidence_matrix.json
+      - outputs/research_strategies/growth_tilt_existing_candidate_evidence_matrix/candidate_status_summary.json
+      - outputs/research_strategies/growth_tilt_existing_candidate_evidence_matrix/candidate_metric_coverage.json
+      - outputs/research_strategies/growth_tilt_existing_candidate_evidence_matrix/no_effect_boundary.json
+      - docs/research/growth_tilt_existing_candidate_evidence_matrix.md
+      - docs/research/growth_tilt_existing_candidate_evidence_matrix_table.md
+      - docs/research/growth_tilt_existing_candidate_status_summary.md
+      - docs/research/growth_tilt_existing_candidate_metric_coverage.md
+      - docs/research/growth_tilt_existing_candidate_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2432_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2431 consumes the TRADING-2430 candidate promotion evidence review, the equal-risk growth-tilt candidate registry, prior candidate owner-review evidence, prior component value evidence, report registry, artifact catalog, system flow and research docs to organize existing candidate evidence only; it does not rerun validate-data because it reads no fresh cached market data, runs no historical screen, runs no PIT replay, runs no candidate gauntlet, runs no backtest, runs no scoring, generates no daily report, generates no signal, backfills no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_existing_candidate_evidence_matrix
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

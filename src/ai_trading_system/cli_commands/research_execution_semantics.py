@@ -92,6 +92,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_valid_until_dependency_evidence_closure as m2418,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_existing_candidate_evidence_matrix as m2431,
+)
+from ai_trading_system import (
     dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest as m2399,
 )
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
@@ -916,6 +919,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-candidate-promotion-evidence-review")(
         _growth_tilt_engine_candidate_promotion_evidence_review_command
+    )
+    strategies_app.command("growth-tilt-existing-candidate-evidence-matrix")(
+        _growth_tilt_existing_candidate_evidence_matrix_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7610,6 +7616,129 @@ def _growth_tilt_engine_candidate_promotion_evidence_review_command(
         "safety_boundary_gap_count",
         "candidate_evidence_gap_count",
         "precondition_gap_count",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_existing_candidate_evidence_matrix_command(
+    source_2430_promotion_review_result_path: Annotated[
+        Path, typer.Option("--source-2430-promotion-review-result")
+    ] = m2431.DEFAULT_SOURCE_2430_PROMOTION_REVIEW_RESULT_PATH,
+    candidate_registry_path: Annotated[
+        Path, typer.Option("--candidate-registry")
+    ] = m2431.DEFAULT_CANDIDATE_REGISTRY_PATH,
+    prior_candidate_evidence_path: Annotated[
+        Path, typer.Option("--prior-candidate-evidence")
+    ] = m2431.DEFAULT_PRIOR_CANDIDATE_EVIDENCE_PATH,
+    prior_component_value_matrix_path: Annotated[
+        Path, typer.Option("--prior-component-value-matrix")
+    ] = m2431.DEFAULT_PRIOR_COMPONENT_VALUE_MATRIX_PATH,
+    component_value_doc_path: Annotated[
+        Path, typer.Option("--component-value-doc")
+    ] = m2431.DEFAULT_COMPONENT_VALUE_DOC_PATH,
+    prior_candidate_evidence_doc_path: Annotated[
+        Path, typer.Option("--prior-candidate-evidence-doc")
+    ] = m2431.DEFAULT_PRIOR_CANDIDATE_EVIDENCE_DOC_PATH,
+    candidate_reclassification_doc_path: Annotated[
+        Path, typer.Option("--candidate-reclassification-doc")
+    ] = m2431.DEFAULT_CANDIDATE_RECLASSIFICATION_DOC_PATH,
+    execution_semantics_review_doc_path: Annotated[
+        Path, typer.Option("--execution-semantics-review-doc")
+    ] = m2431.DEFAULT_EXECUTION_SEMANTICS_REVIEW_DOC_PATH,
+    growth_tilt_signal_doc_path: Annotated[
+        Path, typer.Option("--growth-tilt-signal-doc")
+    ] = m2431.DEFAULT_GROWTH_TILT_SIGNAL_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2431.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2431.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2431.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2431.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2431.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2431.run_growth_tilt_existing_candidate_evidence_matrix(
+        source_2430_promotion_review_result_path=(
+            source_2430_promotion_review_result_path
+        ),
+        candidate_registry_path=candidate_registry_path,
+        prior_candidate_evidence_path=prior_candidate_evidence_path,
+        prior_component_value_matrix_path=prior_component_value_matrix_path,
+        component_value_doc_path=component_value_doc_path,
+        prior_candidate_evidence_doc_path=prior_candidate_evidence_doc_path,
+        candidate_reclassification_doc_path=candidate_reclassification_doc_path,
+        execution_semantics_review_doc_path=execution_semantics_review_doc_path,
+        growth_tilt_signal_doc_path=growth_tilt_signal_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt existing candidate evidence matrix",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2430_ready",
+        "candidate_registry_ready",
+        "prior_candidate_evidence_ready",
+        "component_value_evidence_ready",
+        "existing_candidate_evidence_matrix_ready",
+        "candidate_status_summary_ready",
+        "candidate_metric_coverage_ready",
+        "no_effect_boundary_ready",
+        "candidate_count",
+        "required_candidate_group_count",
+        "rejected_count",
+        "component_value_count",
+        "needs_pit_count",
+        "promotion_candidate_count",
+        "promotion_candidate_found",
+        "metric_coverage_available_count",
+        "metric_coverage_partial_count",
+        "metric_coverage_missing_count",
+        "evidence_gap_count",
+        "engineering_readiness_is_alpha_evidence",
+        "market_data_experiment_run",
+        "historical_screen_run",
+        "pit_replay_run",
+        "candidate_gauntlet_run",
         "manual_review_required",
         "automatic_execution_allowed",
         "generated_signal",
