@@ -35,6 +35,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_candidate_gauntlet_harness as m2432,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_defensive_limited_adjustment_component_validation as m2434,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation as m2412,
 )
 from ai_trading_system import (
@@ -935,6 +938,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command("growth-tilt-false-risk-off-missed-upside-batch-screen")(
         _growth_tilt_false_risk_off_missed_upside_batch_screen_command
     )
+    strategies_app.command(
+        "growth-tilt-defensive-limited-adjustment-component-validation"
+    )(_growth_tilt_defensive_limited_adjustment_component_validation_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -7995,6 +8001,101 @@ def _growth_tilt_false_risk_off_missed_upside_batch_screen_command(
         "source_validation_error_count",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_defensive_limited_adjustment_component_validation_command(
+    source_2433_batch_screen_path: Annotated[
+        Path, typer.Option("--source-2433-batch-screen")
+    ] = m2434.DEFAULT_SOURCE_2433_BATCH_SCREEN_PATH,
+    batch_screen_doc_path: Annotated[
+        Path, typer.Option("--batch-screen-doc")
+    ] = m2434.DEFAULT_BATCH_SCREEN_DOC_PATH,
+    candidate_screen_matrix_doc_path: Annotated[
+        Path, typer.Option("--candidate-screen-matrix-doc")
+    ] = m2434.DEFAULT_CANDIDATE_SCREEN_MATRIX_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2434.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2434.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2434.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2434.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2434.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2434.run_growth_tilt_defensive_limited_adjustment_component_validation(
+            source_2433_batch_screen_path=source_2433_batch_screen_path,
+            batch_screen_doc_path=batch_screen_doc_path,
+            candidate_screen_matrix_doc_path=candidate_screen_matrix_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt defensive limited adjustment component validation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2433_ready",
+        "source_candidate_found",
+        "component_validation_ready",
+        "component_value_assessment_ready",
+        "primary_value_matrix_ready",
+        "validation_boundary_ready",
+        "component_value_found",
+        "candidate_status",
+        "promotion_candidate_found",
+        "promotion_candidate_count",
+        "computed_new_metrics",
+        "market_data_component_validation_run",
+        "evidence_gap_count",
+        "market_data_experiment_run",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    primary_value = payload.get("primary_value")
+    if not isinstance(primary_value, list):
+        primary_value = []
+    console.print(f"primary_value={','.join(str(value) for value in primary_value)}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 

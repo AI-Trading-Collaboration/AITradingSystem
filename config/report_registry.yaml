@@ -19947,6 +19947,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_defensive_limited_adjustment_component_validation
+    title: Growth Tilt Defensive Limited Adjustment Component Validation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-defensive-limited-adjustment-component-validation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_defensive_limited_adjustment_component_validation/component_validation_result.json
+      - outputs/research_strategies/growth_tilt_defensive_limited_adjustment_component_validation/component_value_assessment.json
+      - outputs/research_strategies/growth_tilt_defensive_limited_adjustment_component_validation/primary_value_matrix.json
+      - outputs/research_strategies/growth_tilt_defensive_limited_adjustment_component_validation/validation_boundary.json
+      - docs/research/growth_tilt_defensive_limited_adjustment_component_validation.md
+      - docs/research/growth_tilt_defensive_limited_adjustment_component_value_assessment.md
+      - docs/research/growth_tilt_defensive_limited_adjustment_primary_value_matrix.md
+      - docs/research/growth_tilt_defensive_limited_adjustment_validation_boundary.md
+      - docs/research/dynamic_strategy_2435_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2434 consumes the TRADING-2433 false risk-off / missed-upside batch screen, report registry, artifact catalog, system flow and research docs to validate defensive_limited_adjustment component value only; it does not rerun validate-data because it reads no fresh cached market data, runs no historical screen, runs no PIT replay, runs no backtest, runs no scoring, generates no daily report, generates no signal or outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_defensive_limited_adjustment_component_validation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
