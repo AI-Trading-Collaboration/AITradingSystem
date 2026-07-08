@@ -98,6 +98,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_existing_candidate_evidence_matrix as m2431,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_false_risk_off_missed_upside_batch_screen as m2433,
+)
+from ai_trading_system import (
     dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest as m2399,
 )
 from ai_trading_system.dynamic_strategy_candidate_optimization_divergence_review import (
@@ -928,6 +931,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-candidate-gauntlet")(
         _growth_tilt_candidate_gauntlet_command
+    )
+    strategies_app.command("growth-tilt-false-risk-off-missed-upside-batch-screen")(
+        _growth_tilt_false_risk_off_missed_upside_batch_screen_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7854,6 +7860,112 @@ def _growth_tilt_candidate_gauntlet_command(
         "contract_gap_count",
         "candidate_gauntlet_run",
         "candidate_batch_screen_run",
+        "market_data_experiment_run",
+        "historical_screen_run",
+        "pit_replay_run",
+        "backtest_run",
+        "scoring_run",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_false_risk_off_missed_upside_batch_screen_command(
+    source_2432_candidate_gauntlet_harness_path: Annotated[
+        Path, typer.Option("--source-2432-candidate-gauntlet-harness")
+    ] = m2433.DEFAULT_SOURCE_2432_CANDIDATE_GAUNTLET_HARNESS_PATH,
+    candidate_set_path: Annotated[
+        Path, typer.Option("--candidate-set")
+    ] = m2433.DEFAULT_CANDIDATE_SET_PATH,
+    candidate_gauntlet_harness_doc_path: Annotated[
+        Path, typer.Option("--candidate-gauntlet-harness-doc")
+    ] = m2433.DEFAULT_CANDIDATE_GAUNTLET_HARNESS_DOC_PATH,
+    candidate_set_2432_doc_path: Annotated[
+        Path, typer.Option("--candidate-set-2432-doc")
+    ] = m2433.DEFAULT_CANDIDATE_SET_2432_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2433.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2433.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2433.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2433.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2433.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2433.run_growth_tilt_false_risk_off_missed_upside_batch_screen(
+        source_2432_candidate_gauntlet_harness_path=(
+            source_2432_candidate_gauntlet_harness_path
+        ),
+        candidate_set_path=candidate_set_path,
+        candidate_gauntlet_harness_doc_path=candidate_gauntlet_harness_doc_path,
+        candidate_set_2432_doc_path=candidate_set_2432_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt false risk-off missed upside batch screen",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_2432_ready",
+        "candidate_set_ready",
+        "candidate_set_id",
+        "batch_screen_ready",
+        "candidate_screen_matrix_ready",
+        "batch_decision_summary_ready",
+        "research_question_coverage_ready",
+        "no_effect_boundary_ready",
+        "candidate_count",
+        "candidates_screened",
+        "rejected_count",
+        "component_value_count",
+        "pit_candidate_count",
+        "promotion_candidate_count",
+        "promotion_candidate_found",
+        "research_question_count",
+        "research_question_covered_count",
+        "new_investment_threshold_values_set",
+        "threshold_policy_required_for_pit_or_promotion",
+        "criteria_threshold_values_all_null",
+        "computed_new_metrics",
+        "screen_contract_gap_count",
+        "candidate_batch_screen_run",
+        "market_data_candidate_screen_run",
         "market_data_experiment_run",
         "historical_screen_run",
         "pit_replay_run",

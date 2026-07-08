@@ -1,0 +1,97 @@
+schema_version: growth_tilt_false_risk_off_missed_upside_candidate_set.v1
+candidate_set_id: false_risk_off_missed_upside_2433
+status: ready
+task_id: TRADING-2433
+source_task_id: TRADING-2432
+next_route: TRADING-2434_Defensive_Limited_Adjustment_Component_Validation
+
+safety_boundary:
+  research_only: true
+  observe_only: true
+  market_data_screen_allowed_in_2433: false
+  paper_shadow_allowed: false
+  paper_shadow_schedule_allowed: false
+  production_allowed: false
+  broker_action: none
+  trading_advice_allowed: false
+
+research_questions:
+  - research_question_id: over_defensive_entry
+    question: Does the system enter defensive too early?
+  - research_question_id: slow_growth_recovery_reentry
+    question: Does the system recover too slowly during growth recovery?
+  - research_question_id: false_defensive_day_reduction
+    question: Can false defensive days be reduced?
+  - research_question_id: missed_upside_without_drawdown_damage
+    question: Can missed upside be reduced without materially increasing drawdown?
+
+decision_policy:
+  mode: prior_evidence_and_harness_triage_only
+  promotion_allowed_in_2433: false
+  metrics_computed_in_2433: false
+  threshold_source: future_pit_or_component_validation_policy_required
+  threshold_value: null
+  owner_review_required: true
+
+candidates:
+  - candidate_id: defensive_limited_adjustment_false_risk_off_reducer
+    candidate_family: defensive_limited_adjustment
+    research_questions:
+      - over_defensive_entry
+      - false_defensive_day_reduction
+      - missed_upside_without_drawdown_damage
+    default_batch_decision: component_value
+    decision_rationale: Prior evidence suggests defensive limited adjustment may reduce over-defensive behavior, but it still needs component validation.
+    next_validation_route: TRADING-2434_Defensive_Limited_Adjustment_Component_Validation
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
+  - candidate_id: recovery_reentry_speedup_guard
+    candidate_family: recovery_reentry
+    research_questions:
+      - slow_growth_recovery_reentry
+      - missed_upside_without_drawdown_damage
+    default_batch_decision: pit_candidate
+    decision_rationale: Re-entry speed directly targets missed upside and needs PIT replay before any owner decision.
+    next_validation_route: TRADING-2438_Growth_Tilt_Top-3_Candidate_PIT_Replay
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
+  - candidate_id: false_risk_off_confirmation_relaxation
+    candidate_family: false_risk_off_filter
+    research_questions:
+      - over_defensive_entry
+      - false_defensive_day_reduction
+    default_batch_decision: pit_candidate
+    decision_rationale: Relaxing confirmation may reduce false risk-off but must prove drawdown protection is preserved.
+    next_validation_route: TRADING-2438_Growth_Tilt_Top-3_Candidate_PIT_Replay
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
+  - candidate_id: missed_upside_reentry_accelerator
+    candidate_family: missed_upside_reentry
+    research_questions:
+      - slow_growth_recovery_reentry
+      - missed_upside_without_drawdown_damage
+    default_batch_decision: pit_candidate
+    decision_rationale: Accelerator hypothesis is directly aligned with missed upside but lacks PIT evidence.
+    next_validation_route: TRADING-2438_Growth_Tilt_Top-3_Candidate_PIT_Replay
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
+  - candidate_id: turnover_cooldown_false_risk_off_balancer
+    candidate_family: turnover_cooldown
+    research_questions:
+      - false_defensive_day_reduction
+      - missed_upside_without_drawdown_damage
+    default_batch_decision: component_value
+    decision_rationale: Existing lower-turnover evidence supports component-level value, not paper-shadow promotion.
+    next_validation_route: TRADING-2436_Growth_Tilt_Turnover_Cooldown_Parameter_Plateau_Study
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
+  - candidate_id: stale_defensive_valid_until_tightener
+    candidate_family: valid_until_strictness
+    research_questions:
+      - over_defensive_entry
+      - false_defensive_day_reduction
+    default_batch_decision: component_value
+    decision_rationale: Existing valid-until strictness evidence supports stale defensive signal reduction as component value.
+    next_validation_route: TRADING-2435_Growth_Tilt_Valid_Until_Outcome_Hit_Rate_Study
+    threshold_source: future_pit_or_component_validation_policy_required
+    threshold_value: null
