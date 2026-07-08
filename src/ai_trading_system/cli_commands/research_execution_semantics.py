@@ -35,6 +35,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_as_of_semantics_remediation as m2412,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_pit_gate_readiness_recheck as m2419,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_readiness_snapshot as m2415,
 )
 from ai_trading_system import (
@@ -842,6 +845,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command(
         "growth-tilt-engine-valid-until-dependency-evidence-closure"
     )(_growth_tilt_engine_valid_until_dependency_evidence_closure_command)
+    strategies_app.command("growth-tilt-engine-pit-gate-readiness-recheck")(
+        _growth_tilt_engine_pit_gate_readiness_recheck_command
+    )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -5739,6 +5745,160 @@ def _growth_tilt_engine_valid_until_dependency_evidence_closure_command(
         "valid_until_dependency_pre_recheck_evidence_ready_count",
         "valid_until_dependency_still_blocked_count",
         "source_traceability_still_blocked",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_pit_gate_readiness_recheck_command(
+    source_2418_closure_result_path: Annotated[
+        Path, typer.Option("--source-2418-closure-result")
+    ] = m2419.DEFAULT_SOURCE_2418_CLOSURE_RESULT_PATH,
+    source_2418_valid_until_dependency_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-valid-until-dependency-evidence")
+    ] = m2419.DEFAULT_SOURCE_2418_VALID_UNTIL_DEPENDENCY_EVIDENCE_PATH,
+    source_2418_signal_validity_contract_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-signal-validity-contract-evidence")
+    ] = m2419.DEFAULT_SOURCE_2418_SIGNAL_VALIDITY_CONTRACT_EVIDENCE_PATH,
+    source_2418_stale_signal_policy_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-stale-signal-policy-evidence")
+    ] = m2419.DEFAULT_SOURCE_2418_STALE_SIGNAL_POLICY_EVIDENCE_PATH,
+    source_2418_growth_tilt_valid_until_alignment_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-growth-tilt-valid-until-alignment-evidence")
+    ] = m2419.DEFAULT_SOURCE_2418_GROWTH_TILT_VALID_UNTIL_ALIGNMENT_EVIDENCE_PATH,
+    source_2418_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2418-remaining-blocker-summary")
+    ] = m2419.DEFAULT_SOURCE_2418_REMAINING_BLOCKER_SUMMARY_PATH,
+    source_2418_research_doc_path: Annotated[
+        Path, typer.Option("--source-2418-research-doc")
+    ] = m2419.DEFAULT_SOURCE_2418_RESEARCH_DOC_PATH,
+    source_2418_route_doc_path: Annotated[
+        Path, typer.Option("--source-2418-route-doc")
+    ] = m2419.DEFAULT_SOURCE_2418_ROUTE_DOC_PATH,
+    source_2417_closure_result_path: Annotated[
+        Path, typer.Option("--source-2417-closure-result")
+    ] = m2419.DEFAULT_SOURCE_2417_CLOSURE_RESULT_PATH,
+    source_2417_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2417-remaining-blocker-summary")
+    ] = m2419.DEFAULT_SOURCE_2417_REMAINING_BLOCKER_SUMMARY_PATH,
+    source_2416_closure_result_path: Annotated[
+        Path, typer.Option("--source-2416-closure-result")
+    ] = m2419.DEFAULT_SOURCE_2416_CLOSURE_RESULT_PATH,
+    source_2416_remaining_blocker_matrix_path: Annotated[
+        Path, typer.Option("--source-2416-remaining-blocker-matrix")
+    ] = m2419.DEFAULT_SOURCE_2416_REMAINING_BLOCKER_MATRIX_PATH,
+    source_2416_pit_gate_evidence_requirements_path: Annotated[
+        Path, typer.Option("--source-2416-pit-gate-evidence-requirements")
+    ] = m2419.DEFAULT_SOURCE_2416_PIT_GATE_EVIDENCE_REQUIREMENTS_PATH,
+    source_2415_readiness_snapshot_result_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-snapshot-result")
+    ] = m2419.DEFAULT_SOURCE_2415_READINESS_SNAPSHOT_RESULT_PATH,
+    source_2415_readiness_matrix_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-matrix")
+    ] = m2419.DEFAULT_SOURCE_2415_READINESS_MATRIX_PATH,
+    source_2415_readiness_validation_path: Annotated[
+        Path, typer.Option("--source-2415-readiness-validation")
+    ] = m2419.DEFAULT_SOURCE_2415_READINESS_VALIDATION_PATH,
+    source_2415_remaining_blocker_summary_path: Annotated[
+        Path, typer.Option("--source-2415-remaining-blocker-summary")
+    ] = m2419.DEFAULT_SOURCE_2415_REMAINING_BLOCKER_SUMMARY_PATH,
+    pit_input_registry_path: Annotated[
+        Path, typer.Option("--pit-input-registry")
+    ] = m2419.DEFAULT_PIT_INPUT_REGISTRY_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2419.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2419.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2419.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2419.DEFAULT_GROWTH_TILT_ENGINE_PIT_GATE_READINESS_RECHECK_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2419.run_growth_tilt_engine_pit_gate_readiness_recheck(
+        source_2418_closure_result_path=source_2418_closure_result_path,
+        source_2418_valid_until_dependency_evidence_path=(
+            source_2418_valid_until_dependency_evidence_path
+        ),
+        source_2418_signal_validity_contract_evidence_path=(
+            source_2418_signal_validity_contract_evidence_path
+        ),
+        source_2418_stale_signal_policy_evidence_path=(
+            source_2418_stale_signal_policy_evidence_path
+        ),
+        source_2418_growth_tilt_valid_until_alignment_evidence_path=(
+            source_2418_growth_tilt_valid_until_alignment_evidence_path
+        ),
+        source_2418_remaining_blocker_summary_path=(
+            source_2418_remaining_blocker_summary_path
+        ),
+        source_2418_research_doc_path=source_2418_research_doc_path,
+        source_2418_route_doc_path=source_2418_route_doc_path,
+        source_2417_closure_result_path=source_2417_closure_result_path,
+        source_2417_remaining_blocker_summary_path=(
+            source_2417_remaining_blocker_summary_path
+        ),
+        source_2416_closure_result_path=source_2416_closure_result_path,
+        source_2416_remaining_blocker_matrix_path=(
+            source_2416_remaining_blocker_matrix_path
+        ),
+        source_2416_pit_gate_evidence_requirements_path=(
+            source_2416_pit_gate_evidence_requirements_path
+        ),
+        source_2415_readiness_snapshot_result_path=(
+            source_2415_readiness_snapshot_result_path
+        ),
+        source_2415_readiness_matrix_path=source_2415_readiness_matrix_path,
+        source_2415_readiness_validation_path=(
+            source_2415_readiness_validation_path
+        ),
+        source_2415_remaining_blocker_summary_path=(
+            source_2415_remaining_blocker_summary_path
+        ),
+        pit_input_registry_path=pit_input_registry_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine PIT gate readiness recheck",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "pit_gate_ready_count",
+        "contract_ready_count",
+        "pit_gate_blocked_count",
+        "remaining_blocker_count",
+        "remaining_blockers",
+        "blocker_classification",
+        "valid_until_dependency_evidence_ready_from_2418",
+        "valid_until_dependency_still_blocked_count_after_recheck",
+        "auto_mark_pit_gate_ready",
+        "auto_mark_contract_ready",
+        "auto_downgrade_blocker",
+        "blockers_resolved",
+        "blockers_downgraded",
+        "signal_artifact_source_traceability_blocker_resolved",
+        "signal_artifact_source_traceability_blocker_downgraded",
+        "candidate_search_allowed",
+        "candidate_search_resumed",
+        "research_only_observation_allowed",
+        "research_only_observation_approved",
+        "paper_shadow_enabled",
+        "event_append_enabled",
+        "outcome_binding_enabled",
+        "scheduler_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "broker_action_enabled",
+        "daily_report_generated",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
