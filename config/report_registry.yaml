@@ -20001,6 +20001,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_turnover_cooldown_parameter_plateau_study
+    title: Growth Tilt Turnover Cooldown Parameter Plateau Study
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-turnover-cooldown-parameter-plateau-study
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_turnover_cooldown_parameter_plateau_study/parameter_plateau_study_result.json
+      - outputs/research_strategies/growth_tilt_turnover_cooldown_parameter_plateau_study/parameter_plateau_matrix.json
+      - outputs/research_strategies/growth_tilt_turnover_cooldown_parameter_plateau_study/turnover_cooldown_check_summary.json
+      - outputs/research_strategies/growth_tilt_turnover_cooldown_parameter_plateau_study/no_effect_boundary.json
+      - docs/research/growth_tilt_turnover_cooldown_parameter_plateau_study.md
+      - docs/research/growth_tilt_turnover_cooldown_parameter_plateau_matrix.md
+      - docs/research/growth_tilt_turnover_cooldown_check_summary.md
+      - docs/research/growth_tilt_turnover_cooldown_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2437_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2436 consumes TRADING-2435 valid-until outcome hit-rate study, TRADING-2432 candidate gauntlet harness, the TRADING-2432 candidate-set config, report registry, artifact catalog, system flow and research docs to study turnover/cooldown parameter plateau readiness only; it does not rerun validate-data because it reads no fresh cached market or outcome data, runs no parameter sweep, runs no historical screen, runs no PIT replay, runs no backtest, runs no scoring, generates no daily report, generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_turnover_cooldown_parameter_plateau_study
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
