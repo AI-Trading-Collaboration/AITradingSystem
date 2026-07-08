@@ -20081,6 +20081,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_forward_aging_candidate_pack
+    title: Growth Tilt Forward Aging Candidate Pack
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-forward-aging-candidate-pack
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_forward_aging_candidate_pack/forward_aging_candidate_pack_result.json
+      - outputs/research_strategies/growth_tilt_forward_aging_candidate_pack/forward_aging_candidate_pack.json
+      - outputs/research_strategies/growth_tilt_forward_aging_candidate_pack/candidate_tracking_artifact.json
+      - outputs/research_strategies/growth_tilt_forward_aging_candidate_pack/forward_observation_contract.json
+      - outputs/research_strategies/growth_tilt_forward_aging_candidate_pack/no_effect_boundary.json
+      - docs/research/growth_tilt_forward_aging_candidate_pack.md
+      - docs/research/growth_tilt_forward_aging_candidate_pack_details.md
+      - docs/research/growth_tilt_forward_aging_candidate_tracking.md
+      - docs/research/growth_tilt_forward_observation_contract.md
+      - docs/research/growth_tilt_forward_aging_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2439_blocked_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2439 consumes TRADING-2438 top-3 candidate PIT replay outputs and data-quality gate status to create a forward aging candidate pack only when PIT replay produced pass candidates. Current authoritative 2438 output is blocked by missing candidate-specific replay engine/input specs, so this report fails closed with zero forward-aging candidates and routes back to TRADING-2438A. It generates no signal or outcome, writes no forward observation, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_forward_aging_candidate_pack_blocked_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
