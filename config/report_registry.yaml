@@ -19555,6 +19555,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_signal_artifact_source_traceability_remediation
+    title: Growth Tilt Engine Signal Artifact Source Traceability Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-signal-artifact-source-traceability-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_signal_artifact_source_traceability_remediation/remediation_result.json
+      - outputs/research_strategies/growth_tilt_engine_signal_artifact_source_traceability_remediation/source_traceability_manifest.json
+      - outputs/research_strategies/growth_tilt_engine_signal_artifact_source_traceability_remediation/source_lineage_map.json
+      - outputs/research_strategies/growth_tilt_engine_signal_artifact_source_traceability_remediation/missing_source_evidence_summary.json
+      - docs/research/growth_tilt_engine_signal_artifact_source_traceability_remediation.md
+      - docs/research/growth_tilt_engine_signal_artifact_source_traceability_manifest.md
+      - docs/research/growth_tilt_engine_signal_artifact_source_lineage_map.md
+      - docs/research/dynamic_strategy_2421_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2420 consumes TRADING-2419 PIT gate readiness recheck artifacts, TRADING-2418 valid-until dependency evidence closure artifacts, TRADING-2417 source traceability and upstream artifact closure artifacts, report registry, artifact catalog and research docs to produce only a source traceability remediation manifest for growth_tilt_engine_signal_artifact; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, resumes no candidate search, approves no observation, enables no scheduler/event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_signal_artifact_source_traceability_remediation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research

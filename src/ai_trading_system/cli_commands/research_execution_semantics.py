@@ -44,6 +44,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan as m2416,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_signal_artifact_source_traceability_remediation as m2420,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_signal_validity_dependency_remediation as m2414,
 )
 from ai_trading_system import (
@@ -848,6 +851,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     strategies_app.command("growth-tilt-engine-pit-gate-readiness-recheck")(
         _growth_tilt_engine_pit_gate_readiness_recheck_command
     )
+    strategies_app.command(
+        "growth-tilt-engine-signal-artifact-source-traceability-remediation"
+    )(_growth_tilt_engine_signal_artifact_source_traceability_remediation_command)
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
 
@@ -5901,6 +5907,135 @@ def _growth_tilt_engine_pit_gate_readiness_recheck_command(
         "daily_report_generated",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_signal_artifact_source_traceability_remediation_command(
+    source_2419_recheck_result_path: Annotated[
+        Path, typer.Option("--source-2419-recheck-result")
+    ] = m2420.DEFAULT_SOURCE_2419_RECHECK_RESULT_PATH,
+    source_2419_blocker_classification_path: Annotated[
+        Path, typer.Option("--source-2419-blocker-classification")
+    ] = m2420.DEFAULT_SOURCE_2419_BLOCKER_CLASSIFICATION_PATH,
+    source_2419_research_doc_path: Annotated[
+        Path, typer.Option("--source-2419-research-doc")
+    ] = m2420.DEFAULT_SOURCE_2419_RESEARCH_DOC_PATH,
+    source_2419_blocker_doc_path: Annotated[
+        Path, typer.Option("--source-2419-blocker-doc")
+    ] = m2420.DEFAULT_SOURCE_2419_BLOCKER_DOC_PATH,
+    source_2418_valid_until_dependency_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-valid-until-dependency-evidence")
+    ] = m2420.DEFAULT_SOURCE_2418_VALID_UNTIL_DEPENDENCY_EVIDENCE_PATH,
+    source_2418_signal_validity_contract_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-signal-validity-contract-evidence")
+    ] = m2420.DEFAULT_SOURCE_2418_SIGNAL_VALIDITY_CONTRACT_EVIDENCE_PATH,
+    source_2418_stale_signal_policy_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-stale-signal-policy-evidence")
+    ] = m2420.DEFAULT_SOURCE_2418_STALE_SIGNAL_POLICY_EVIDENCE_PATH,
+    source_2418_growth_tilt_valid_until_alignment_evidence_path: Annotated[
+        Path, typer.Option("--source-2418-growth-tilt-valid-until-alignment-evidence")
+    ] = m2420.DEFAULT_SOURCE_2418_GROWTH_TILT_VALID_UNTIL_ALIGNMENT_EVIDENCE_PATH,
+    source_2418_research_doc_path: Annotated[
+        Path, typer.Option("--source-2418-research-doc")
+    ] = m2420.DEFAULT_SOURCE_2418_RESEARCH_DOC_PATH,
+    source_2417_source_traceability_closure_evidence_path: Annotated[
+        Path, typer.Option("--source-2417-source-traceability-closure-evidence")
+    ] = m2420.DEFAULT_SOURCE_2417_SOURCE_TRACEABILITY_CLOSURE_EVIDENCE_PATH,
+    source_2417_upstream_artifact_closure_evidence_path: Annotated[
+        Path, typer.Option("--source-2417-upstream-artifact-closure-evidence")
+    ] = m2420.DEFAULT_SOURCE_2417_UPSTREAM_ARTIFACT_CLOSURE_EVIDENCE_PATH,
+    source_2417_source_traceability_doc_path: Annotated[
+        Path, typer.Option("--source-2417-source-traceability-doc")
+    ] = m2420.DEFAULT_SOURCE_2417_SOURCE_TRACEABILITY_DOC_PATH,
+    source_2417_upstream_artifact_doc_path: Annotated[
+        Path, typer.Option("--source-2417-upstream-artifact-doc")
+    ] = m2420.DEFAULT_SOURCE_2417_UPSTREAM_ARTIFACT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2420.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2420.DEFAULT_ARTIFACT_CATALOG_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2420.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2420.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2420.run_growth_tilt_engine_signal_artifact_source_traceability_remediation(
+        source_2419_recheck_result_path=source_2419_recheck_result_path,
+        source_2419_blocker_classification_path=(
+            source_2419_blocker_classification_path
+        ),
+        source_2419_research_doc_path=source_2419_research_doc_path,
+        source_2419_blocker_doc_path=source_2419_blocker_doc_path,
+        source_2418_valid_until_dependency_evidence_path=(
+            source_2418_valid_until_dependency_evidence_path
+        ),
+        source_2418_signal_validity_contract_evidence_path=(
+            source_2418_signal_validity_contract_evidence_path
+        ),
+        source_2418_stale_signal_policy_evidence_path=(
+            source_2418_stale_signal_policy_evidence_path
+        ),
+        source_2418_growth_tilt_valid_until_alignment_evidence_path=(
+            source_2418_growth_tilt_valid_until_alignment_evidence_path
+        ),
+        source_2418_research_doc_path=source_2418_research_doc_path,
+        source_2417_source_traceability_closure_evidence_path=(
+            source_2417_source_traceability_closure_evidence_path
+        ),
+        source_2417_upstream_artifact_closure_evidence_path=(
+            source_2417_upstream_artifact_closure_evidence_path
+        ),
+        source_2417_source_traceability_doc_path=(
+            source_2417_source_traceability_doc_path
+        ),
+        source_2417_upstream_artifact_doc_path=(
+            source_2417_upstream_artifact_doc_path
+        ),
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine signal artifact source traceability remediation",
+        payload,
+    )
+    for field in (
+        "remediation_status",
+        "artifact_id",
+        "source_traceability_evidence_complete",
+        "source_traceability_blocker_resolved",
+        "blocker_resolved",
+        "blocker_downgraded",
+        "pit_gate_ready",
+        "contract_ready",
+        "pit_gate_ready_count",
+        "contract_ready_count",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "scheduler_enabled",
+        "event_append_enabled",
+        "outcome_binding_enabled",
+        "daily_report_generated",
+        "new_signal_generated",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    missing = payload.get("missing_source_evidence_summary") or {}
+    if isinstance(missing, dict):
+        console.print(f"missing_field_count={missing.get('missing_field_count')}")
+        console.print(f"incomplete_field_count={missing.get('incomplete_field_count')}")
+        console.print(f"unresolved_blocker_count={missing.get('unresolved_blocker_count')}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
 
 
