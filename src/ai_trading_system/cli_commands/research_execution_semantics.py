@@ -47,6 +47,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_paper_shadow_preflight as m2423,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_paper_shadow_schedule_dry_run as m2426,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_pit_gate_readiness_recheck as m2419,
 )
 from ai_trading_system import (
@@ -886,6 +889,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-paper-shadow-dry-run-wiring")(
         _growth_tilt_engine_paper_shadow_dry_run_wiring_command
+    )
+    strategies_app.command("growth-tilt-engine-paper-shadow-schedule-dry-run")(
+        _growth_tilt_engine_paper_shadow_schedule_dry_run_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -6869,6 +6875,142 @@ def _growth_tilt_engine_paper_shadow_dry_run_wiring_command(
         "paper_shadow_enabled",
         "paper_shadow_schedule_enabled",
         "paper_shadow_daily_job_run",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "generated_signal",
+        "generated_trading_advice",
+        "daily_report_generated",
+        "daily_report_run",
+        "new_signal_generated",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_paper_shadow_schedule_dry_run_command(
+    source_2425_dry_run_wiring_result_path: Annotated[
+        Path, typer.Option("--source-2425-dry-run-wiring-result")
+    ] = m2426.DEFAULT_SOURCE_2425_DRY_RUN_WIRING_RESULT_PATH,
+    source_2425_schedule_hook_disabled_verification_path: Annotated[
+        Path, typer.Option("--source-2425-schedule-hook-disabled-verification")
+    ] = m2426.DEFAULT_SOURCE_2425_SCHEDULE_HOOK_DISABLED_VERIFICATION_PATH,
+    source_2425_runtime_boundary_manifest_path: Annotated[
+        Path, typer.Option("--source-2425-runtime-boundary-manifest")
+    ] = m2426.DEFAULT_SOURCE_2425_RUNTIME_BOUNDARY_MANIFEST_PATH,
+    source_2425_manual_review_handoff_wiring_plan_path: Annotated[
+        Path, typer.Option("--source-2425-manual-review-handoff-wiring-plan")
+    ] = m2426.DEFAULT_SOURCE_2425_MANUAL_REVIEW_HANDOFF_WIRING_PLAN_PATH,
+    source_2425_dry_run_no_effect_audit_summary_path: Annotated[
+        Path, typer.Option("--source-2425-dry-run-no-effect-audit-summary")
+    ] = m2426.DEFAULT_SOURCE_2425_DRY_RUN_NO_EFFECT_AUDIT_SUMMARY_PATH,
+    source_2425_research_doc_path: Annotated[
+        Path, typer.Option("--source-2425-research-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_RESEARCH_DOC_PATH,
+    source_2425_schedule_hook_doc_path: Annotated[
+        Path, typer.Option("--source-2425-schedule-hook-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_SCHEDULE_HOOK_DOC_PATH,
+    source_2425_runtime_boundary_doc_path: Annotated[
+        Path, typer.Option("--source-2425-runtime-boundary-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_RUNTIME_BOUNDARY_DOC_PATH,
+    source_2425_manual_review_doc_path: Annotated[
+        Path, typer.Option("--source-2425-manual-review-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_MANUAL_REVIEW_DOC_PATH,
+    source_2425_no_effect_audit_doc_path: Annotated[
+        Path, typer.Option("--source-2425-no-effect-audit-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_NO_EFFECT_AUDIT_DOC_PATH,
+    source_2425_route_doc_path: Annotated[
+        Path, typer.Option("--source-2425-route-doc")
+    ] = m2426.DEFAULT_SOURCE_2425_ROUTE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2426.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2426.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2426.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2426.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2426.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2426.run_growth_tilt_engine_paper_shadow_schedule_dry_run(
+        source_2425_dry_run_wiring_result_path=(
+            source_2425_dry_run_wiring_result_path
+        ),
+        source_2425_schedule_hook_disabled_verification_path=(
+            source_2425_schedule_hook_disabled_verification_path
+        ),
+        source_2425_runtime_boundary_manifest_path=(
+            source_2425_runtime_boundary_manifest_path
+        ),
+        source_2425_manual_review_handoff_wiring_plan_path=(
+            source_2425_manual_review_handoff_wiring_plan_path
+        ),
+        source_2425_dry_run_no_effect_audit_summary_path=(
+            source_2425_dry_run_no_effect_audit_summary_path
+        ),
+        source_2425_research_doc_path=source_2425_research_doc_path,
+        source_2425_schedule_hook_doc_path=source_2425_schedule_hook_doc_path,
+        source_2425_runtime_boundary_doc_path=source_2425_runtime_boundary_doc_path,
+        source_2425_manual_review_doc_path=source_2425_manual_review_doc_path,
+        source_2425_no_effect_audit_doc_path=source_2425_no_effect_audit_doc_path,
+        source_2425_route_doc_path=source_2425_route_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine paper-shadow schedule dry-run",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "pit_gate_ready",
+        "pit_gate_ready_count",
+        "contract_ready",
+        "contract_ready_count",
+        "contract_gap_count",
+        "paper_shadow_dry_run_wiring_status",
+        "paper_shadow_dry_run_wiring_ready",
+        "dry_run_wiring_gap_count",
+        "schedule_hook_verified_disabled",
+        "runtime_boundary_verified",
+        "manual_review_handoff_wired",
+        "prior_no_effect_audit_ready",
+        "paper_shadow_schedule_dry_run_started",
+        "paper_shadow_schedule_dry_run_completed",
+        "paper_shadow_schedule_dry_run_ready",
+        "schedule_dry_run_plan_ready",
+        "schedule_boundary_checklist_ready",
+        "schedule_no_effect_audit_ready",
+        "schedule_dry_run_gap_count",
+        "missing_schedule_evidence_count",
+        "safety_boundary_gap_count",
+        "schedule_contract_gap_count",
+        "precondition_gap_count",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "schedule_hook_invoked",
+        "schedule_state_mutated",
         "production_enabled",
         "broker_enabled",
         "broker_order_generated",

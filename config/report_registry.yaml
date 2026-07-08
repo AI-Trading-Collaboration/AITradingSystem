@@ -19713,6 +19713,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_paper_shadow_schedule_dry_run
+    title: Growth Tilt Engine Paper Shadow Schedule Dry-Run
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-paper-shadow-schedule-dry-run
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_schedule_dry_run/schedule_dry_run_result.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_schedule_dry_run/schedule_boundary_checklist.json
+      - outputs/research_strategies/growth_tilt_engine_paper_shadow_schedule_dry_run/schedule_no_effect_audit_summary.json
+      - docs/research/growth_tilt_engine_paper_shadow_schedule_dry_run.md
+      - docs/research/growth_tilt_engine_paper_shadow_schedule_boundary_checklist.md
+      - docs/research/growth_tilt_engine_paper_shadow_schedule_no_effect_audit_summary.md
+      - docs/research/dynamic_strategy_2427_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2426 consumes TRADING-2425 paper-shadow dry-run wiring artifacts, schedule hook disabled verification, runtime boundary manifest, manual review handoff wiring plan, no-effect audit summary, report registry, artifact catalog, system flow and research docs to produce only a paper-shadow schedule dry-run verification and TRADING-2427 manual review packet dry-run route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, generates no feature/signal/scoring/daily report, starts no paper-shadow runtime schedule, creates no scheduler task, enables no event/outcome paths, and enters no paper-shadow/production/broker path.
+    owner_action: review_growth_tilt_engine_paper_shadow_schedule_dry_run
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
