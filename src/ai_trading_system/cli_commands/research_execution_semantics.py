@@ -38,6 +38,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_contract_readiness_snapshot as m2422,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_engine_forward_outcome_binding_boundary as m2429,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_engine_manual_review_packet_dry_run as m2427,
 )
 from ai_trading_system import (
@@ -904,6 +907,9 @@ def register_execution_semantics_strategy_commands(strategies_app: typer.Typer) 
     )
     strategies_app.command("growth-tilt-engine-observe-only-signal-artifact-boundary")(
         _growth_tilt_engine_observe_only_signal_artifact_boundary_command
+    )
+    strategies_app.command("growth-tilt-engine-forward-outcome-binding-boundary")(
+        _growth_tilt_engine_forward_outcome_binding_boundary_command
     )
     for command_name, builder, label in _EXECUTION_SEMANTICS_COMMANDS:
         strategies_app.command(command_name)(_make_execution_semantics_command(builder, label))
@@ -7317,6 +7323,155 @@ def _growth_tilt_engine_observe_only_signal_artifact_boundary_command(
         "generated_trading_advice",
         "trading_advice_generated",
         "actionable_allocation_generated",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "paper_shadow_daily_job_run",
+        "scheduler_enabled",
+        "scheduled_task_created",
+        "production_enabled",
+        "broker_enabled",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "daily_report_generated",
+        "daily_report_run",
+        "backtest_run",
+        "scoring_run",
+        "fresh_market_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_engine_forward_outcome_binding_boundary_command(
+    source_2428_observe_only_boundary_result_path: Annotated[
+        Path, typer.Option("--source-2428-observe-only-boundary-result")
+    ] = m2429.DEFAULT_SOURCE_2428_OBSERVE_ONLY_BOUNDARY_RESULT_PATH,
+    source_2428_signal_artifact_schema_path: Annotated[
+        Path, typer.Option("--source-2428-signal-artifact-schema")
+    ] = m2429.DEFAULT_SOURCE_2428_SIGNAL_ARTIFACT_SCHEMA_PATH,
+    source_2428_valid_until_requirements_path: Annotated[
+        Path, typer.Option("--source-2428-valid-until-requirements")
+    ] = m2429.DEFAULT_SOURCE_2428_VALID_UNTIL_REQUIREMENTS_PATH,
+    source_2428_source_traceability_requirements_path: Annotated[
+        Path, typer.Option("--source-2428-source-traceability-requirements")
+    ] = m2429.DEFAULT_SOURCE_2428_SOURCE_TRACEABILITY_REQUIREMENTS_PATH,
+    source_2428_pit_contract_manual_review_requirements_path: Annotated[
+        Path, typer.Option("--source-2428-pit-contract-manual-review-requirements")
+    ] = m2429.DEFAULT_SOURCE_2428_PIT_CONTRACT_MANUAL_REVIEW_REQUIREMENTS_PATH,
+    source_2428_no_trading_advice_boundary_path: Annotated[
+        Path, typer.Option("--source-2428-no-trading-advice-boundary")
+    ] = m2429.DEFAULT_SOURCE_2428_NO_TRADING_ADVICE_BOUNDARY_PATH,
+    source_2428_research_doc_path: Annotated[
+        Path, typer.Option("--source-2428-research-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_RESEARCH_DOC_PATH,
+    source_2428_schema_doc_path: Annotated[
+        Path, typer.Option("--source-2428-schema-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_SCHEMA_DOC_PATH,
+    source_2428_valid_until_doc_path: Annotated[
+        Path, typer.Option("--source-2428-valid-until-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_VALID_UNTIL_DOC_PATH,
+    source_2428_traceability_doc_path: Annotated[
+        Path, typer.Option("--source-2428-traceability-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_TRACEABILITY_DOC_PATH,
+    source_2428_no_advice_doc_path: Annotated[
+        Path, typer.Option("--source-2428-no-advice-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_NO_ADVICE_DOC_PATH,
+    source_2428_route_doc_path: Annotated[
+        Path, typer.Option("--source-2428-route-doc")
+    ] = m2429.DEFAULT_SOURCE_2428_ROUTE_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2429.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2429.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2429.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2429.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2429.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2429.run_growth_tilt_engine_forward_outcome_binding_boundary(
+        source_2428_observe_only_boundary_result_path=(
+            source_2428_observe_only_boundary_result_path
+        ),
+        source_2428_signal_artifact_schema_path=(
+            source_2428_signal_artifact_schema_path
+        ),
+        source_2428_valid_until_requirements_path=(
+            source_2428_valid_until_requirements_path
+        ),
+        source_2428_source_traceability_requirements_path=(
+            source_2428_source_traceability_requirements_path
+        ),
+        source_2428_pit_contract_manual_review_requirements_path=(
+            source_2428_pit_contract_manual_review_requirements_path
+        ),
+        source_2428_no_trading_advice_boundary_path=(
+            source_2428_no_trading_advice_boundary_path
+        ),
+        source_2428_research_doc_path=source_2428_research_doc_path,
+        source_2428_schema_doc_path=source_2428_schema_doc_path,
+        source_2428_valid_until_doc_path=source_2428_valid_until_doc_path,
+        source_2428_traceability_doc_path=source_2428_traceability_doc_path,
+        source_2428_no_advice_doc_path=source_2428_no_advice_doc_path,
+        source_2428_route_doc_path=source_2428_route_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt engine forward outcome binding boundary",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "pit_gate_ready",
+        "pit_gate_ready_count",
+        "contract_ready",
+        "contract_ready_count",
+        "observe_only_signal_artifact_boundary_status",
+        "observe_only_signal_artifact_boundary_ready",
+        "prior_signal_artifact_schema_ready",
+        "prior_valid_until_requirements_ready",
+        "prior_source_traceability_requirements_ready",
+        "prior_pit_contract_manual_review_requirements_ready",
+        "prior_no_trading_advice_boundary_ready",
+        "forward_outcome_binding_boundary_started",
+        "forward_outcome_binding_boundary_completed",
+        "forward_outcome_binding_boundary_ready",
+        "outcome_horizons",
+        "outcome_horizon_rules_ready",
+        "outcome_schema_ready",
+        "valid_until_binding_ready",
+        "outcome_decision_rules_ready",
+        "baseline_comparison_ready",
+        "signal_to_outcome_linkage_ready",
+        "no_effect_boundary_ready",
+        "forward_outcome_binding_boundary_gap_count",
+        "missing_binding_boundary_evidence_count",
+        "safety_boundary_gap_count",
+        "outcome_contract_gap_count",
+        "precondition_gap_count",
+        "manual_review_required",
+        "automatic_execution_allowed",
+        "generated_signal",
+        "new_signal_generated",
+        "generated_trading_advice",
+        "trading_advice_generated",
+        "actionable_allocation_generated",
+        "outcome_backfilled",
+        "outcome_binding_executed",
+        "outcome_store_mutated",
         "paper_shadow_enabled",
         "paper_shadow_schedule_enabled",
         "paper_shadow_daily_job_run",

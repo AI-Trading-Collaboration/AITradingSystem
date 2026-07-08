@@ -19795,6 +19795,40 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_engine_forward_outcome_binding_boundary
+    title: Growth Tilt Engine Forward Outcome Binding Boundary
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-engine-forward-outcome-binding-boundary
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/forward_outcome_binding_boundary_result.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/outcome_horizon_rules.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/valid_until_binding_rules.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/outcome_decision_rules.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/baseline_comparison_rules.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/outcome_artifact_schema.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/signal_to_outcome_linkage.json
+      - outputs/research_strategies/growth_tilt_engine_forward_outcome_binding_boundary/no_effect_boundary.json
+      - docs/research/growth_tilt_engine_forward_outcome_binding_boundary.md
+      - docs/research/growth_tilt_engine_forward_outcome_horizon_rules.md
+      - docs/research/growth_tilt_engine_forward_outcome_valid_until_binding_rules.md
+      - docs/research/growth_tilt_engine_forward_outcome_decision_rules.md
+      - docs/research/growth_tilt_engine_forward_outcome_baseline_comparison_rules.md
+      - docs/research/growth_tilt_engine_forward_outcome_artifact_schema.md
+      - docs/research/growth_tilt_engine_signal_to_outcome_linkage.md
+      - docs/research/growth_tilt_engine_forward_outcome_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2430_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2429 consumes TRADING-2428 observe-only signal artifact boundary artifacts, report registry, artifact catalog, system flow and research docs to define only future forward outcome binding boundary, outcome horizons, valid-until binding rules, decision rules, baseline comparison rules, outcome schema, signal-to-outcome linkage and TRADING-2430 candidate promotion evidence review route; it does not rerun validate-data because it reads no fresh cached market data, runs no backtest, runs no scoring, generates no daily report, generates no real signal, backfills no real outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_engine_forward_outcome_binding_boundary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: strategy_execution_policy_registry_review
     title: Strategy Execution Policy Registry Review
     group: research
