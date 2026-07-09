@@ -92,6 +92,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation as m2438j,  # noqa: E501
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation as m2438k,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure as m2438b,
 )
 from ai_trading_system import (
@@ -281,6 +284,11 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     strategies_app.command(
         "growth-tilt-persistent-candidate-pit-replay-blocker-escalation"
     )(_growth_tilt_persistent_candidate_pit_replay_blocker_escalation_command)
+    strategies_app.command(
+        "growth-tilt-persistent-candidate-pit-replay-blocker-root-cause-remediation"
+    )(
+        _growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation_command
+    )
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -5666,6 +5674,174 @@ def _growth_tilt_persistent_candidate_pit_replay_blocker_escalation_command(
         "production_enabled",
         "broker_enabled",
         "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+        "evidence_gap_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation_command(
+    source_2438j_escalation_path: Annotated[
+        Path, typer.Option("--source-2438j-escalation")
+    ] = m2438k.DEFAULT_SOURCE_2438J_ESCALATION_PATH,
+    root_cause_matrix_path: Annotated[
+        Path, typer.Option("--root-cause-matrix")
+    ] = m2438k.DEFAULT_ROOT_CAUSE_MATRIX_PATH,
+    source_2438i_blocked_recheck_path: Annotated[
+        Path, typer.Option("--source-2438i-blocked-recheck")
+    ] = m2438k.DEFAULT_SOURCE_2438I_BLOCKED_RECHECK_PATH,
+    source_2438h_remaining_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438h-remaining-blocker-closure")
+    ] = m2438k.DEFAULT_SOURCE_2438H_REMAINING_BLOCKER_CLOSURE_PATH,
+    source_2438f_candidate_level_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438f-candidate-level-blocker-closure")
+    ] = m2438k.DEFAULT_SOURCE_2438F_CANDIDATE_LEVEL_BLOCKER_CLOSURE_PATH,
+    source_2438d_output_closure_path: Annotated[
+        Path, typer.Option("--source-2438d-output-closure")
+    ] = m2438k.DEFAULT_SOURCE_2438D_OUTPUT_CLOSURE_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438k.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    source_2438b_engine_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438b-engine-blocker-closure")
+    ] = m2438k.DEFAULT_SOURCE_2438B_ENGINE_BLOCKER_CLOSURE_PATH,
+    source_2438j_doc_path: Annotated[
+        Path, typer.Option("--source-2438j-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438J_DOC_PATH,
+    root_cause_matrix_doc_path: Annotated[
+        Path, typer.Option("--root-cause-matrix-doc")
+    ] = m2438k.DEFAULT_ROOT_CAUSE_MATRIX_DOC_PATH,
+    source_2438i_doc_path: Annotated[
+        Path, typer.Option("--source-2438i-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438I_DOC_PATH,
+    source_2438h_doc_path: Annotated[
+        Path, typer.Option("--source-2438h-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438H_DOC_PATH,
+    source_2438f_doc_path: Annotated[
+        Path, typer.Option("--source-2438f-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438F_DOC_PATH,
+    source_2438d_doc_path: Annotated[
+        Path, typer.Option("--source-2438d-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438D_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438k.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    source_2438b_doc_path: Annotated[
+        Path, typer.Option("--source-2438b-doc")
+    ] = m2438k.DEFAULT_SOURCE_2438B_DOC_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438k.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438k.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438k.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438k.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438k.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438k.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438k.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438k.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438k.run_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation(
+        source_2438j_escalation_path=source_2438j_escalation_path,
+        root_cause_matrix_path=root_cause_matrix_path,
+        source_2438i_blocked_recheck_path=source_2438i_blocked_recheck_path,
+        source_2438h_remaining_blocker_closure_path=(
+            source_2438h_remaining_blocker_closure_path
+        ),
+        source_2438f_candidate_level_blocker_closure_path=(
+            source_2438f_candidate_level_blocker_closure_path
+        ),
+        source_2438d_output_closure_path=source_2438d_output_closure_path,
+        candidate_replay_output_records_path=candidate_replay_output_records_path,
+        source_2438b_engine_blocker_closure_path=(
+            source_2438b_engine_blocker_closure_path
+        ),
+        source_2438j_doc_path=source_2438j_doc_path,
+        root_cause_matrix_doc_path=root_cause_matrix_doc_path,
+        source_2438i_doc_path=source_2438i_doc_path,
+        source_2438h_doc_path=source_2438h_doc_path,
+        source_2438f_doc_path=source_2438f_doc_path,
+        source_2438d_doc_path=source_2438d_doc_path,
+        candidate_output_records_doc_path=candidate_output_records_doc_path,
+        source_2438b_doc_path=source_2438b_doc_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_summary_path=data_quality_summary_path,
+        data_quality_output_path=data_quality_output_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt persistent candidate PIT replay blocker root-cause remediation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438j_escalation_ready",
+        "prior_root_cause_matched",
+        "root_cause_remediation_ready",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "runtime_blocker_count_before",
+        "runtime_blocker_count_after",
+        "replay_runtime_materialization_ready",
+        "candidate_replay_runtime_executable",
+        "candidate_replay_runtime_executable_count",
+        "candidate_spec_to_runtime_input_adapter_ready",
+        "replay_runtime_entrypoint_ready",
+        "replay_window_materialization_ready",
+        "baseline_comparison_runtime_ready",
+        "metric_materialization_runtime_ready",
+        "pass_fail_threshold_evaluator_ready",
+        "source_traceability_runtime_bindings_ready",
+        "as_of_boundary_enforced_at_runtime",
+        "valid_until_policy_bound_at_runtime",
+        "outcome_linkage_key_runtime_bound",
+        "forward_aging_handoff_key_runtime_bound",
+        "execution_audit_trail_ready",
+        "deterministic_runtime_output_supported",
+        "candidate_replay_outcome_rechecked",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "forward_aging_handoff_ready",
+        "forward_aging_candidate_count",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
         "generated_trading_advice",
         "broker_order_generated",
         "portfolio_weight_mutated",

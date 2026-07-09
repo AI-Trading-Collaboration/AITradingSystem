@@ -20373,6 +20373,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation
+    title: Growth Tilt Persistent Candidate PIT Replay Blocker Root Cause Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-persistent-candidate-pit-replay-blocker-root-cause-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/root_cause_remediation_result.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/runtime_materialization_remediation.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/runtime_before_after_matrix.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/executable_replay_readiness_handoff.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/remaining_runtime_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation/runtime_execution_audit_trail.json
+      - docs/research/growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation.md
+      - docs/research/growth_tilt_candidate_replay_runtime_materialization.md
+      - docs/research/growth_tilt_runtime_before_after_matrix.md
+      - docs/research/growth_tilt_executable_replay_readiness_handoff.md
+      - docs/research/growth_tilt_remaining_replay_runtime_blockers.md
+      - docs/research/growth_tilt_runtime_execution_audit_trail.md
+      - docs/research/dynamic_strategy_2438L_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438K consumes TRADING-2438J escalation result and root-cause matrix, TRADING-2438I blocked recheck output, TRADING-2438H, TRADING-2438F, TRADING-2438D, and TRADING-2438B closure artifacts, candidate replay output records, data-quality gate output, report registry, artifact catalog, system flow and research docs to remediate replay runtime materialization for persistent candidate PIT replay blockers. READY only means the runtime shell is executable for TRADING-2438L; replay outcomes remain NOT_RECHECKED, pass/fail/blocked remains 0/0/3, forward-aging remains disabled, and no paper-shadow/production/broker path is enabled.
+    owner_action: review_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

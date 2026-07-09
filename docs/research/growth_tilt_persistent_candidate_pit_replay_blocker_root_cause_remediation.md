@@ -1,0 +1,431 @@
+# Growth Tilt Persistent Candidate PIT Replay Blocker Root Cause Remediation
+
+- task_id: `TRADING-2438K`
+- status: `GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY`
+- data quality status: `PASS_WITH_WARNINGS`
+- source 2438J escalation ready: `True`
+- prior root cause matched: `True`
+- replay runtime materialization ready: `True`
+- candidate replay runtime executable count: `3`
+- replay outcome rechecked: `False`
+- pass / fail / blocked: `0` / `0` / `3`
+- forward-aging handoff ready: `False`
+- next route: `TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation`
+
+TRADING-2438K 只修复 candidate PIT replay runtime materialization 层，把 2438J 定位的 `replay_engine_contract_ready_but_runtime_not_executable` 绑定到 可执行 runtime shell 和 deterministic smoke check。`ROOT_CAUSE_REMEDIATION_READY` 不表示 replay PASS/FAIL，也不表示 forward-aging、paper-shadow、production 或 broker ready。
+
+```json
+{
+  "candidate_replay_outcome_rechecked": false,
+  "candidate_replay_runtime_executable_count": 3,
+  "data_quality_status": "PASS_WITH_WARNINGS",
+  "expected_prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+  "forward_aging_handoff_ready": false,
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "pass_fail_blocked": [
+    0,
+    0,
+    3
+  ],
+  "prior_root_cause_matched": true,
+  "prior_status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ESCALATION_READY",
+  "replay_runtime_materialization_ready": true,
+  "source_2438j_escalation_ready": true,
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
+
+## Runtime Materialization
+
+```json
+{
+  "broker_action": "none",
+  "candidate_replay_outcome_rechecked": false,
+  "candidate_replay_runtime_executable_count": 3,
+  "candidate_runtime_remediation_records": [
+    {
+      "as_of": "2026-07-08",
+      "as_of_boundary_enforced": true,
+      "as_of_boundary_enforced_at_runtime": true,
+      "baseline_comparison_materialized": true,
+      "baseline_comparison_ref": "growth_tilt_current_policy_baseline",
+      "baseline_comparison_runtime_ready": true,
+      "broker_action": "none",
+      "broker_order_generated": false,
+      "candidate_id": "recovery_reentry_speedup_guard",
+      "candidate_spec_to_runtime_input_adapter_ready": true,
+      "deterministic_runtime_output_supported": true,
+      "eligible_for_forward_aging": false,
+      "execution_audit_trail_ready": true,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:recovery_reentry_speedup_guard",
+      "forward_aging_handoff_key_bound": true,
+      "forward_aging_handoff_key_runtime_bound": true,
+      "metric_materialization_ready": true,
+      "metric_materialization_ref": "TRADING-2438K:metric_materialization:recovery_reentry_speedup_guard",
+      "metric_materialization_runtime_ready": true,
+      "metric_summary": {
+        "false_risk_off_delta": null,
+        "max_drawdown_delta_vs_baseline": null,
+        "missed_upside_delta": null,
+        "return_delta_vs_baseline": null,
+        "turnover_delta_vs_baseline": null,
+        "whipsaw_delta": null
+      },
+      "outcome_linkage_key": "growth_tilt_pit_replay:recovery_reentry_speedup_guard:1d,5d,10d,20d",
+      "outcome_linkage_key_bound": true,
+      "outcome_linkage_key_runtime_bound": true,
+      "paper_shadow_candidate_found": false,
+      "pass_fail_threshold_evaluator_ready": true,
+      "portfolio_weight_mutated": false,
+      "prior_replay_status": "BLOCKED",
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "prior_root_cause_categories": [
+        "candidate_metric_materialization_missing",
+        "candidate_evidence_chain_incomplete_despite_closure",
+        "candidate_replay_window_unresolvable",
+        "candidate_input_spec_semantically_incomplete",
+        "outcome_linkage_not_materialized",
+        "replay_engine_contract_ready_but_runtime_not_executable"
+      ],
+      "production_effect": "none",
+      "remaining_runtime_blocker_ids": [],
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "replay_runtime_entrypoint_ready": true,
+      "replay_window_materialization_ready": true,
+      "replay_window_materialized": true,
+      "replay_window_ref": "ai_after_chatgpt_pit_replay_window",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:recovery_reentry_speedup_guard",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_materialized": true,
+      "runtime_input_ref": "TRADING-2438K:runtime_input:recovery_reentry_speedup_guard",
+      "runtime_remediation_ready": true,
+      "source_traceability_runtime_binding_ready": true,
+      "source_traceability_runtime_bindings_ready": true,
+      "source_traceability_runtime_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\source_traceability_manifest.json#recovery_reentry_speedup_guard",
+      "threshold_evaluator_ref": "TRADING-2438K:pass_fail_threshold_evaluator_shell",
+      "trading_advice_generated": false,
+      "valid_until_policy_bound": true,
+      "valid_until_policy_bound_at_runtime": true,
+      "valid_until_policy_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\valid_until_boundary_manifest.json#recovery_reentry_speedup_guard"
+    },
+    {
+      "as_of": "2026-07-08",
+      "as_of_boundary_enforced": true,
+      "as_of_boundary_enforced_at_runtime": true,
+      "baseline_comparison_materialized": true,
+      "baseline_comparison_ref": "growth_tilt_current_policy_baseline",
+      "baseline_comparison_runtime_ready": true,
+      "broker_action": "none",
+      "broker_order_generated": false,
+      "candidate_id": "false_risk_off_confirmation_relaxation",
+      "candidate_spec_to_runtime_input_adapter_ready": true,
+      "deterministic_runtime_output_supported": true,
+      "eligible_for_forward_aging": false,
+      "execution_audit_trail_ready": true,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:false_risk_off_confirmation_relaxation",
+      "forward_aging_handoff_key_bound": true,
+      "forward_aging_handoff_key_runtime_bound": true,
+      "metric_materialization_ready": true,
+      "metric_materialization_ref": "TRADING-2438K:metric_materialization:false_risk_off_confirmation_relaxation",
+      "metric_materialization_runtime_ready": true,
+      "metric_summary": {
+        "false_risk_off_delta": null,
+        "max_drawdown_delta_vs_baseline": null,
+        "missed_upside_delta": null,
+        "return_delta_vs_baseline": null,
+        "turnover_delta_vs_baseline": null,
+        "whipsaw_delta": null
+      },
+      "outcome_linkage_key": "growth_tilt_pit_replay:false_risk_off_confirmation_relaxation:1d,5d,10d,20d",
+      "outcome_linkage_key_bound": true,
+      "outcome_linkage_key_runtime_bound": true,
+      "paper_shadow_candidate_found": false,
+      "pass_fail_threshold_evaluator_ready": true,
+      "portfolio_weight_mutated": false,
+      "prior_replay_status": "BLOCKED",
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "prior_root_cause_categories": [
+        "candidate_metric_materialization_missing",
+        "candidate_evidence_chain_incomplete_despite_closure",
+        "candidate_replay_window_unresolvable",
+        "candidate_input_spec_semantically_incomplete",
+        "outcome_linkage_not_materialized",
+        "replay_engine_contract_ready_but_runtime_not_executable"
+      ],
+      "production_effect": "none",
+      "remaining_runtime_blocker_ids": [],
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "replay_runtime_entrypoint_ready": true,
+      "replay_window_materialization_ready": true,
+      "replay_window_materialized": true,
+      "replay_window_ref": "ai_after_chatgpt_pit_replay_window",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:false_risk_off_confirmation_relaxation",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_materialized": true,
+      "runtime_input_ref": "TRADING-2438K:runtime_input:false_risk_off_confirmation_relaxation",
+      "runtime_remediation_ready": true,
+      "source_traceability_runtime_binding_ready": true,
+      "source_traceability_runtime_bindings_ready": true,
+      "source_traceability_runtime_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\source_traceability_manifest.json#false_risk_off_confirmation_relaxation",
+      "threshold_evaluator_ref": "TRADING-2438K:pass_fail_threshold_evaluator_shell",
+      "trading_advice_generated": false,
+      "valid_until_policy_bound": true,
+      "valid_until_policy_bound_at_runtime": true,
+      "valid_until_policy_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\valid_until_boundary_manifest.json#false_risk_off_confirmation_relaxation"
+    },
+    {
+      "as_of": "2026-07-08",
+      "as_of_boundary_enforced": true,
+      "as_of_boundary_enforced_at_runtime": true,
+      "baseline_comparison_materialized": true,
+      "baseline_comparison_ref": "growth_tilt_current_policy_baseline",
+      "baseline_comparison_runtime_ready": true,
+      "broker_action": "none",
+      "broker_order_generated": false,
+      "candidate_id": "missed_upside_reentry_accelerator",
+      "candidate_spec_to_runtime_input_adapter_ready": true,
+      "deterministic_runtime_output_supported": true,
+      "eligible_for_forward_aging": false,
+      "execution_audit_trail_ready": true,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:missed_upside_reentry_accelerator",
+      "forward_aging_handoff_key_bound": true,
+      "forward_aging_handoff_key_runtime_bound": true,
+      "metric_materialization_ready": true,
+      "metric_materialization_ref": "TRADING-2438K:metric_materialization:missed_upside_reentry_accelerator",
+      "metric_materialization_runtime_ready": true,
+      "metric_summary": {
+        "false_risk_off_delta": null,
+        "max_drawdown_delta_vs_baseline": null,
+        "missed_upside_delta": null,
+        "return_delta_vs_baseline": null,
+        "turnover_delta_vs_baseline": null,
+        "whipsaw_delta": null
+      },
+      "outcome_linkage_key": "growth_tilt_pit_replay:missed_upside_reentry_accelerator:1d,5d,10d,20d",
+      "outcome_linkage_key_bound": true,
+      "outcome_linkage_key_runtime_bound": true,
+      "paper_shadow_candidate_found": false,
+      "pass_fail_threshold_evaluator_ready": true,
+      "portfolio_weight_mutated": false,
+      "prior_replay_status": "BLOCKED",
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "prior_root_cause_categories": [
+        "candidate_metric_materialization_missing",
+        "candidate_evidence_chain_incomplete_despite_closure",
+        "candidate_replay_window_unresolvable",
+        "candidate_input_spec_semantically_incomplete",
+        "outcome_linkage_not_materialized",
+        "replay_engine_contract_ready_but_runtime_not_executable"
+      ],
+      "production_effect": "none",
+      "remaining_runtime_blocker_ids": [],
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "replay_runtime_entrypoint_ready": true,
+      "replay_window_materialization_ready": true,
+      "replay_window_materialized": true,
+      "replay_window_ref": "ai_after_chatgpt_pit_replay_window",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:missed_upside_reentry_accelerator",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_materialized": true,
+      "runtime_input_ref": "TRADING-2438K:runtime_input:missed_upside_reentry_accelerator",
+      "runtime_remediation_ready": true,
+      "source_traceability_runtime_binding_ready": true,
+      "source_traceability_runtime_bindings_ready": true,
+      "source_traceability_runtime_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\source_traceability_manifest.json#missed_upside_reentry_accelerator",
+      "threshold_evaluator_ref": "TRADING-2438K:pass_fail_threshold_evaluator_shell",
+      "trading_advice_generated": false,
+      "valid_until_policy_bound": true,
+      "valid_until_policy_bound_at_runtime": true,
+      "valid_until_policy_ref": "D:\\Work\\AITradingSystem\\outputs\\research_strategies\\growth_tilt_pit_replay_engine_blocker_closure\\valid_until_boundary_manifest.json#missed_upside_reentry_accelerator"
+    }
+  ],
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "production_effect": "none",
+  "replay_outcome_after_remediation": "NOT_RECHECKED",
+  "replay_runtime_materialization_ready": true,
+  "runtime_materialization_remediation_ready": true,
+  "runtime_requirement_status": {
+    "as_of_boundary_enforced_at_runtime": true,
+    "baseline_comparison_runtime_ready": true,
+    "candidate_spec_to_runtime_input_adapter_ready": true,
+    "deterministic_runtime_output_supported": true,
+    "execution_audit_trail_ready": true,
+    "forward_aging_handoff_key_runtime_bound": true,
+    "metric_materialization_runtime_ready": true,
+    "outcome_linkage_key_runtime_bound": true,
+    "pass_fail_threshold_evaluator_ready": true,
+    "replay_runtime_entrypoint_ready": true,
+    "replay_window_materialization_ready": true,
+    "source_traceability_runtime_bindings_ready": true,
+    "valid_until_policy_bound_at_runtime": true
+  },
+  "schema_version": "growth_tilt_candidate_replay_runtime_materialization_remediation.v1",
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
+
+## Before After Matrix
+
+```json
+{
+  "broker_action": "none",
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "production_effect": "none",
+  "rows": [
+    {
+      "after_runtime_executable": true,
+      "before_runtime_executable": false,
+      "broker_action": "none",
+      "candidate_id": "recovery_reentry_speedup_guard",
+      "eligible_for_forward_aging": false,
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "production_effect": "none",
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_status": "PASS"
+    },
+    {
+      "after_runtime_executable": true,
+      "before_runtime_executable": false,
+      "broker_action": "none",
+      "candidate_id": "false_risk_off_confirmation_relaxation",
+      "eligible_for_forward_aging": false,
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "production_effect": "none",
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_status": "PASS"
+    },
+    {
+      "after_runtime_executable": true,
+      "before_runtime_executable": false,
+      "broker_action": "none",
+      "candidate_id": "missed_upside_reentry_accelerator",
+      "eligible_for_forward_aging": false,
+      "prior_root_cause": "replay_engine_contract_ready_but_runtime_not_executable",
+      "production_effect": "none",
+      "remaining_runtime_blocker_reason": null,
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_status": "PASS"
+    }
+  ],
+  "runtime_before_after_matrix_ready": true,
+  "runtime_blocker_count_after": 0,
+  "runtime_blocker_count_before": 3,
+  "schema_version": "growth_tilt_replay_runtime_before_after_matrix.v1",
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
+
+## Executable Replay Handoff
+
+```json
+{
+  "broker_action": "none",
+  "candidate_replay_outcome_rechecked": false,
+  "executable_replay_readiness_handoff_ready": true,
+  "forward_aging_handoff_ready": false,
+  "handoff_candidate_count": 3,
+  "handoff_candidates": [
+    {
+      "candidate_id": "recovery_reentry_speedup_guard",
+      "eligible_for_forward_aging": false,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:recovery_reentry_speedup_guard",
+      "outcome_linkage_key": "growth_tilt_pit_replay:recovery_reentry_speedup_guard:1d,5d,10d,20d",
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:recovery_reentry_speedup_guard"
+    },
+    {
+      "candidate_id": "false_risk_off_confirmation_relaxation",
+      "eligible_for_forward_aging": false,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:false_risk_off_confirmation_relaxation",
+      "outcome_linkage_key": "growth_tilt_pit_replay:false_risk_off_confirmation_relaxation:1d,5d,10d,20d",
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:false_risk_off_confirmation_relaxation"
+    },
+    {
+      "candidate_id": "missed_upside_reentry_accelerator",
+      "eligible_for_forward_aging": false,
+      "forward_aging_handoff_key": "TRADING-2439:forward_aging_candidate_pack:missed_upside_reentry_accelerator",
+      "outcome_linkage_key": "growth_tilt_pit_replay:missed_upside_reentry_accelerator:1d,5d,10d,20d",
+      "replay_outcome_after_remediation": "NOT_RECHECKED",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:missed_upside_reentry_accelerator"
+    }
+  ],
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "production_effect": "none",
+  "ready_for_2438l_recheck": true,
+  "schema_version": "growth_tilt_executable_replay_readiness_handoff.v1",
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
+
+## Remaining Runtime Blockers
+
+```json
+{
+  "broker_action": "none",
+  "forward_aging_handoff_ready": false,
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "production_effect": "none",
+  "remaining_runtime_blocker_count": 0,
+  "remaining_runtime_blocker_summary_ready": true,
+  "remaining_runtime_blockers": [],
+  "schema_version": "growth_tilt_remaining_replay_runtime_blocker_summary.v1",
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
+
+## Runtime Execution Audit Trail
+
+```json
+{
+  "audit_records": [
+    {
+      "broker_action": "none",
+      "candidate_id": "recovery_reentry_speedup_guard",
+      "candidate_replay_outcome_rechecked": false,
+      "deterministic_runtime_output_supported": true,
+      "production_effect": "none",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:recovery_reentry_speedup_guard",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_ref": "TRADING-2438K:runtime_input:recovery_reentry_speedup_guard"
+    },
+    {
+      "broker_action": "none",
+      "candidate_id": "false_risk_off_confirmation_relaxation",
+      "candidate_replay_outcome_rechecked": false,
+      "deterministic_runtime_output_supported": true,
+      "production_effect": "none",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:false_risk_off_confirmation_relaxation",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_ref": "TRADING-2438K:runtime_input:false_risk_off_confirmation_relaxation"
+    },
+    {
+      "broker_action": "none",
+      "candidate_id": "missed_upside_reentry_accelerator",
+      "candidate_replay_outcome_rechecked": false,
+      "deterministic_runtime_output_supported": true,
+      "production_effect": "none",
+      "runtime_entrypoint_ref": "TRADING-2438K:replay_runtime_entrypoint_shell",
+      "runtime_execution_smoke_check_ref": "TRADING-2438K:runtime_smoke_check:missed_upside_reentry_accelerator",
+      "runtime_execution_smoke_check_status": "PASS",
+      "runtime_input_ref": "TRADING-2438K:runtime_input:missed_upside_reentry_accelerator"
+    }
+  ],
+  "broker_action": "none",
+  "next_route": "TRADING-2438L_Growth_Tilt_Top3_Candidate_PIT_Replay_Recheck_After_Runtime_Remediation",
+  "production_effect": "none",
+  "runtime_execution_audit_trail_ready": true,
+  "schema_version": "growth_tilt_runtime_execution_audit_trail.v1",
+  "status": "GROWTH_TILT_PERSISTENT_CANDIDATE_PIT_REPLAY_BLOCKER_ROOT_CAUSE_REMEDIATION_READY"
+}
+```
