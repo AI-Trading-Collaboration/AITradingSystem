@@ -20201,6 +20201,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure
+    title: Growth Tilt Top-3 Candidate PIT Replay Recheck After Output Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-output-closure
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure/recheck_after_output_closure_result.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure/candidate_level_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure/pass_fail_blocked_decision_matrix.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure/forward_aging_handoff_gate.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure/no_effect_boundary.json
+      - docs/research/growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.md
+      - docs/research/growth_tilt_candidate_level_replay_blocker_summary.md
+      - docs/research/growth_tilt_candidate_pass_fail_blocked_decision_matrix.md
+      - docs/research/growth_tilt_candidate_forward_aging_handoff_gate.md
+      - docs/research/growth_tilt_candidate_recheck_after_output_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438F_or_2439A_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438E consumes TRADING-2438D output closure result and candidate replay output records, TRADING-2438C recheck blocked output, TRADING-2438B blocker closure, data-quality gate output, report registry, artifact catalog, system flow and research docs to recheck PASS/FAIL/BLOCKED after output completeness closure. It fails closed to candidate-level blocker closure when any candidate remains BLOCKED, routes to forward-aging rebuild only when at least one PASS exists and no BLOCKED candidates remain, and routes to no-passing evidence review only when all three candidates are FAIL. It generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

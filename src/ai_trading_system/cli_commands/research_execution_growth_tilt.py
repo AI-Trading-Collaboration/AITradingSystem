@@ -104,6 +104,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck as m2438c,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure as m2438e,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure as m2438d,
 )
 from ai_trading_system import (
@@ -241,6 +244,9 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     strategies_app.command(
         "growth-tilt-top3-candidate-pit-replay-recheck-blocker-closure"
     )(_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure_command)
+    strategies_app.command(
+        "growth-tilt-top3-candidate-pit-replay-recheck-after-output-closure"
+    )(_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure_command)
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -4835,6 +4841,127 @@ def _growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure_command(
         "candidate_replay_pass_count",
         "candidate_replay_fail_count",
         "candidate_replay_blocked_count",
+        "registry_catalog_docs_alignment",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure_command(
+    source_2438d_output_closure_path: Annotated[
+        Path, typer.Option("--source-2438d-output-closure")
+    ] = m2438e.DEFAULT_SOURCE_2438D_OUTPUT_CLOSURE_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438e.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    source_2438c_recheck_path: Annotated[
+        Path, typer.Option("--source-2438c-recheck")
+    ] = m2438e.DEFAULT_SOURCE_2438C_RECHECK_PATH,
+    source_2438b_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438b-blocker-closure")
+    ] = m2438e.DEFAULT_SOURCE_2438B_BLOCKER_CLOSURE_PATH,
+    source_2438d_doc_path: Annotated[
+        Path, typer.Option("--source-2438d-doc")
+    ] = m2438e.DEFAULT_SOURCE_2438D_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438e.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    source_2438c_doc_path: Annotated[
+        Path, typer.Option("--source-2438c-doc")
+    ] = m2438e.DEFAULT_SOURCE_2438C_DOC_PATH,
+    source_2438b_doc_path: Annotated[
+        Path, typer.Option("--source-2438b-doc")
+    ] = m2438e.DEFAULT_SOURCE_2438B_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438e.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438e.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438e.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438e.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438e.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438e.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438e.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438e.run_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure(
+            source_2438d_output_closure_path=source_2438d_output_closure_path,
+            candidate_replay_output_records_path=candidate_replay_output_records_path,
+            source_2438c_recheck_path=source_2438c_recheck_path,
+            source_2438b_blocker_closure_path=source_2438b_blocker_closure_path,
+            source_2438d_doc_path=source_2438d_doc_path,
+            candidate_output_records_doc_path=candidate_output_records_doc_path,
+            source_2438c_doc_path=source_2438c_doc_path,
+            source_2438b_doc_path=source_2438b_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate PIT replay recheck after output closure",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438d_output_closure_ready",
+        "source_2438c_recheck_blocked",
+        "source_2438b_blocker_closure_ready",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "candidate_replay_outputs_complete",
+        "candidate_replay_output_record_count",
+        "candidate_output_records_recheckable",
+        "pit_replay_recheck_after_output_closure_ready",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "candidate_level_blocker_count",
+        "forward_aging_handoff_ready",
+        "forward_aging_candidate_count",
+        "top3_candidate_count",
+        "each_candidate_has_replay_status",
+        "each_candidate_has_status_reason",
+        "pass_fail_blocked_counts_consistent",
+        "blocked_candidates_have_blocker_reason",
+        "forward_aging_handoff_pass_only",
         "registry_catalog_docs_alignment",
         "paper_shadow_candidate_found",
         "paper_shadow_enabled",
