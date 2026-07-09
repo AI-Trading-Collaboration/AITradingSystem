@@ -125,6 +125,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure as m2438i,  # noqa: E501
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation as m2438l,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure as m2438d,
 )
 from ai_trading_system import (
@@ -289,6 +292,9 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     )(
         _growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation_command
     )
+    strategies_app.command(
+        "growth-tilt-top3-candidate-pit-replay-recheck-after-runtime-remediation"
+    )(_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation_command)
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -5845,6 +5851,143 @@ def _growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation_
         "generated_trading_advice",
         "broker_order_generated",
         "portfolio_weight_mutated",
+        "source_validation_error_count",
+        "evidence_gap_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation_command(
+    source_2438k_runtime_remediation_path: Annotated[
+        Path, typer.Option("--source-2438k-runtime-remediation")
+    ] = m2438l.DEFAULT_SOURCE_2438K_RUNTIME_REMEDIATION_PATH,
+    executable_replay_readiness_handoff_path: Annotated[
+        Path, typer.Option("--executable-replay-readiness-handoff")
+    ] = m2438l.DEFAULT_EXECUTABLE_REPLAY_READINESS_HANDOFF_PATH,
+    runtime_materialization_remediation_path: Annotated[
+        Path, typer.Option("--runtime-materialization-remediation")
+    ] = m2438l.DEFAULT_RUNTIME_MATERIALIZATION_REMEDIATION_PATH,
+    runtime_execution_audit_trail_path: Annotated[
+        Path, typer.Option("--runtime-execution-audit-trail")
+    ] = m2438l.DEFAULT_RUNTIME_EXECUTION_AUDIT_TRAIL_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438l.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    source_2438k_doc_path: Annotated[
+        Path, typer.Option("--source-2438k-doc")
+    ] = m2438l.DEFAULT_SOURCE_2438K_DOC_PATH,
+    executable_handoff_doc_path: Annotated[
+        Path, typer.Option("--executable-handoff-doc")
+    ] = m2438l.DEFAULT_EXECUTABLE_HANDOFF_DOC_PATH,
+    runtime_materialization_doc_path: Annotated[
+        Path, typer.Option("--runtime-materialization-doc")
+    ] = m2438l.DEFAULT_RUNTIME_MATERIALIZATION_DOC_PATH,
+    runtime_audit_doc_path: Annotated[
+        Path, typer.Option("--runtime-audit-doc")
+    ] = m2438l.DEFAULT_RUNTIME_AUDIT_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438l.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438l.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438l.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438l.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438l.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438l.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438l.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438l.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438l.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438l.run_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation(
+            source_2438k_runtime_remediation_path=(
+                source_2438k_runtime_remediation_path
+            ),
+            executable_replay_readiness_handoff_path=(
+                executable_replay_readiness_handoff_path
+            ),
+            runtime_materialization_remediation_path=(
+                runtime_materialization_remediation_path
+            ),
+            runtime_execution_audit_trail_path=runtime_execution_audit_trail_path,
+            candidate_replay_output_records_path=candidate_replay_output_records_path,
+            source_2438k_doc_path=source_2438k_doc_path,
+            executable_handoff_doc_path=executable_handoff_doc_path,
+            runtime_materialization_doc_path=runtime_materialization_doc_path,
+            runtime_audit_doc_path=runtime_audit_doc_path,
+            candidate_output_records_doc_path=candidate_output_records_doc_path,
+            requirement_doc_path=requirement_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate PIT replay recheck after runtime remediation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438k_runtime_remediation_ready",
+        "runtime_remediation_ready",
+        "runtime_blocker_count_after",
+        "candidate_replay_runtime_executable_count",
+        "executable_replay_readiness_handoff_ready",
+        "runtime_remediation_record_count",
+        "candidate_replay_outputs_complete",
+        "candidate_replay_output_record_count",
+        "runtime_metric_materialization_output_ready",
+        "baseline_comparison_runtime_output_ready",
+        "threshold_evaluator_runtime_output_ready",
+        "candidate_replay_outcome_rechecked",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "post_runtime_candidate_replay_blocker_count",
+        "forward_aging_handoff_ready",
+        "forward_aging_candidate_count",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
         "source_validation_error_count",
         "evidence_gap_count",
     ):

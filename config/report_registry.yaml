@@ -20403,6 +20403,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation
+    title: Growth Tilt Top-3 Candidate PIT Replay Recheck After Runtime Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-top3-candidate-pit-replay-recheck-after-runtime-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/recheck_after_runtime_remediation_result.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/runtime_remediation_after_recheck.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/candidate_pass_fail_blocked_decision_matrix.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/forward_aging_handoff_readiness_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/post_runtime_candidate_replay_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation/no_effect_boundary.json
+      - docs/research/growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.md
+      - docs/research/growth_tilt_runtime_remediation_after_recheck.md
+      - docs/research/growth_tilt_candidate_runtime_recheck_decision_matrix.md
+      - docs/research/growth_tilt_candidate_forward_aging_after_runtime_remediation_handoff_summary.md
+      - docs/research/growth_tilt_post_runtime_candidate_replay_blocker_summary.md
+      - docs/research/growth_tilt_candidate_recheck_after_runtime_remediation_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438M_or_2439A_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438L consumes TRADING-2438K runtime remediation result, executable replay readiness handoff, runtime materialization remediation, runtime execution audit trail, candidate replay output records, data-quality gate output, report registry, artifact catalog, system flow and research docs to independently recheck top-3 candidate PIT replay outcomes after runtime remediation. READY only means at least one candidate passed PIT replay and no candidates remain blocked; NO_PASSING_CANDIDATE only means 0/3/0; BLOCKED means at least one candidate or source still lacks post-runtime replay evidence. It generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
