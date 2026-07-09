@@ -20287,6 +20287,36 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_remaining_candidate_pit_replay_blocker_closure
+    title: Growth Tilt Remaining Candidate PIT Replay Blocker Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-remaining-candidate-pit-replay-blocker-closure
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/blocker_closure_result.json
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/remaining_candidate_blocker_closure_records.json
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/remaining_candidate_blocker_before_after_matrix.json
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/replay_recheck_readiness_handoff.json
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/unresolved_remaining_candidate_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_remaining_candidate_pit_replay_blocker_closure/no_effect_boundary.json
+      - docs/research/growth_tilt_remaining_candidate_pit_replay_blocker_closure.md
+      - docs/research/growth_tilt_remaining_candidate_replay_blocker_closure_records.md
+      - docs/research/growth_tilt_remaining_candidate_replay_blocker_before_after.md
+      - docs/research/growth_tilt_replay_recheck_readiness_handoff.md
+      - docs/research/growth_tilt_unresolved_remaining_candidate_replay_blockers.md
+      - docs/research/growth_tilt_remaining_candidate_pit_replay_blocker_closure_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438I_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438H consumes TRADING-2438G blocked recheck output, TRADING-2438G remaining blocker summary, TRADING-2438F candidate-level blocker closure output, TRADING-2438D candidate replay output records, data-quality gate output, report registry, artifact catalog, system flow and research docs to close remaining candidate replay blockers before the 2438I independent recheck. READY only means the candidates are recheckable by the next gate; replay outcomes remain NOT_RECHECKED, pass/fail/blocked remains 0/0/3, forward-aging remains disabled, and no paper-shadow/production/broker path is enabled.
+    owner_action: review_growth_tilt_remaining_candidate_pit_replay_blocker_closure
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
