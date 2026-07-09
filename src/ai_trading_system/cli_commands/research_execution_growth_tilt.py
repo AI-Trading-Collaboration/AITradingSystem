@@ -95,6 +95,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_regime_slice_attribution_review as m2437,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure as m2438f,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay as m2438,
 )
 from ai_trading_system import (
@@ -247,6 +250,9 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     strategies_app.command(
         "growth-tilt-top3-candidate-pit-replay-recheck-after-output-closure"
     )(_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure_command)
+    strategies_app.command(
+        "growth-tilt-top3-candidate-level-pit-replay-blocker-closure"
+    )(_growth_tilt_top3_candidate_level_pit_replay_blocker_closure_command)
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -4962,6 +4968,119 @@ def _growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure_command(
         "pass_fail_blocked_counts_consistent",
         "blocked_candidates_have_blocker_reason",
         "forward_aging_handoff_pass_only",
+        "registry_catalog_docs_alignment",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_level_pit_replay_blocker_closure_command(
+    source_2438e_recheck_path: Annotated[
+        Path, typer.Option("--source-2438e-recheck")
+    ] = m2438f.DEFAULT_SOURCE_2438E_RECHECK_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438f.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    candidate_level_blocker_summary_path: Annotated[
+        Path, typer.Option("--candidate-level-blocker-summary")
+    ] = m2438f.DEFAULT_CANDIDATE_LEVEL_BLOCKER_SUMMARY_PATH,
+    source_2438e_doc_path: Annotated[
+        Path, typer.Option("--source-2438e-doc")
+    ] = m2438f.DEFAULT_SOURCE_2438E_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438f.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    candidate_level_blocker_doc_path: Annotated[
+        Path, typer.Option("--candidate-level-blocker-doc")
+    ] = m2438f.DEFAULT_CANDIDATE_LEVEL_BLOCKER_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438f.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438f.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438f.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438f.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438f.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438f.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438f.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438f.run_growth_tilt_top3_candidate_level_pit_replay_blocker_closure(
+            source_2438e_recheck_path=source_2438e_recheck_path,
+            candidate_replay_output_records_path=candidate_replay_output_records_path,
+            candidate_level_blocker_summary_path=candidate_level_blocker_summary_path,
+            source_2438e_doc_path=source_2438e_doc_path,
+            candidate_output_records_doc_path=candidate_output_records_doc_path,
+            candidate_level_blocker_doc_path=candidate_level_blocker_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate-level PIT replay blocker closure",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438e_candidate_level_blocked",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "candidate_replay_outputs_complete",
+        "candidate_replay_output_record_count",
+        "candidate_level_blocker_closure_records_complete",
+        "candidate_level_blocker_closure_ready",
+        "candidate_level_blocker_count_before",
+        "candidate_level_blocker_count_after",
+        "candidate_replayable_after_closure_count",
+        "replayability_handoff_ready",
+        "forward_aging_handoff_ready",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "top3_candidate_count",
+        "each_candidate_has_prior_blocker_reason",
+        "each_candidate_has_closure_action",
+        "each_candidate_has_closure_evidence_ref",
+        "each_candidate_has_after_state",
+        "all_candidate_blockers_closed",
         "registry_catalog_docs_alignment",
         "paper_shadow_candidate_found",
         "paper_shadow_enabled",
