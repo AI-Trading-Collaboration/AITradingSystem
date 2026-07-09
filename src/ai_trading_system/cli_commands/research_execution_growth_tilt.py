@@ -95,6 +95,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay as m2438,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation as m2438a,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_turnover_cooldown_parameter_plateau_study as m2436,
 )
 from ai_trading_system import (
@@ -216,6 +219,9 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     )
     strategies_app.command("growth-tilt-top3-candidate-pit-replay")(
         _growth_tilt_top3_candidate_pit_replay_command
+    )
+    strategies_app.command("growth-tilt-top3-candidate-pit-replay-engine-remediation")(
+        _growth_tilt_top3_candidate_pit_replay_engine_remediation_command
     )
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
@@ -4318,6 +4324,133 @@ def _growth_tilt_top3_candidate_pit_replay_command(
         "daily_report_run",
         "fresh_market_data_read",
         "fresh_outcome_data_read",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_pit_replay_engine_remediation_command(
+    source_2440_promotion_review_path: Annotated[
+        Path, typer.Option("--source-2440-promotion-review")
+    ] = m2438a.DEFAULT_SOURCE_2440_PROMOTION_REVIEW_PATH,
+    source_2439_forward_pack_path: Annotated[
+        Path, typer.Option("--source-2439-forward-pack")
+    ] = m2438a.DEFAULT_SOURCE_2439_FORWARD_PACK_PATH,
+    source_2438_pit_replay_path: Annotated[
+        Path, typer.Option("--source-2438-pit-replay")
+    ] = m2438a.DEFAULT_SOURCE_2438_PIT_REPLAY_PATH,
+    pit_replay_evidence_path: Annotated[
+        Path, typer.Option("--pit-replay-evidence")
+    ] = m2438a.DEFAULT_PIT_REPLAY_EVIDENCE_PATH,
+    pit_replay_blocker_summary_path: Annotated[
+        Path, typer.Option("--pit-replay-blocker-summary")
+    ] = m2438a.DEFAULT_PIT_REPLAY_BLOCKER_SUMMARY_PATH,
+    source_2440_doc_path: Annotated[
+        Path, typer.Option("--source-2440-doc")
+    ] = m2438a.DEFAULT_SOURCE_2440_DOC_PATH,
+    source_2439_doc_path: Annotated[
+        Path, typer.Option("--source-2439-doc")
+    ] = m2438a.DEFAULT_SOURCE_2439_DOC_PATH,
+    source_2438_doc_path: Annotated[
+        Path, typer.Option("--source-2438-doc")
+    ] = m2438a.DEFAULT_SOURCE_2438_DOC_PATH,
+    pit_replay_evidence_doc_path: Annotated[
+        Path, typer.Option("--pit-replay-evidence-doc")
+    ] = m2438a.DEFAULT_PIT_REPLAY_EVIDENCE_DOC_PATH,
+    pit_replay_blocker_doc_path: Annotated[
+        Path, typer.Option("--pit-replay-blocker-doc")
+    ] = m2438a.DEFAULT_PIT_REPLAY_BLOCKER_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438a.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438a.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438a.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438a.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438a.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438a.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438a.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438a.run_growth_tilt_top3_candidate_pit_replay_engine_remediation(
+        source_2440_promotion_review_path=source_2440_promotion_review_path,
+        source_2439_forward_pack_path=source_2439_forward_pack_path,
+        source_2438_pit_replay_path=source_2438_pit_replay_path,
+        pit_replay_evidence_path=pit_replay_evidence_path,
+        pit_replay_blocker_summary_path=pit_replay_blocker_summary_path,
+        source_2440_doc_path=source_2440_doc_path,
+        source_2439_doc_path=source_2439_doc_path,
+        source_2438_doc_path=source_2438_doc_path,
+        pit_replay_evidence_doc_path=pit_replay_evidence_doc_path,
+        pit_replay_blocker_doc_path=pit_replay_blocker_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_summary_path=data_quality_summary_path,
+        data_quality_output_path=data_quality_output_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate PIT replay engine remediation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_promotion_review_status",
+        "prior_forward_aging_status",
+        "prior_pit_replay_status",
+        "blocked_by_forward_aging_gate",
+        "not_no_candidate_status",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "candidate_selection_resolves",
+        "top3_candidate_ids_present",
+        "pit_replay_artifacts_present",
+        "pit_replay_engine_ready",
+        "candidate_pit_replay_engine_available",
+        "candidate_replay_input_specs_ready",
+        "pit_replay_evidence_ready",
+        "pit_replay_evidence_complete",
+        "source_traceability_complete",
+        "as_of_boundary_explicit",
+        "valid_until_boundary_explicit",
+        "outcome_linkage_complete",
+        "forward_aging_handoff_ready",
+        "registry_catalog_docs_alignment",
+        "remediation_ready",
+        "remediation_gap_count",
+        "unresolved_engine_blocker_count",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
         "source_validation_error_count",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")

@@ -20081,6 +20081,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_top3_candidate_pit_replay_engine_remediation
+    title: Growth Tilt Top-3 Candidate PIT Replay Engine Remediation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-top3-candidate-pit-replay-engine-remediation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_engine_remediation/remediation_result.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_engine_remediation/remediation_evidence.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_engine_remediation/before_after_comparison.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_engine_remediation/remaining_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_engine_remediation/no_effect_boundary.json
+      - docs/research/growth_tilt_top3_candidate_pit_replay_engine_remediation.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_engine_remediation_evidence.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_engine_remediation_before_after.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_engine_remediation_remaining_blockers.md
+      - docs/research/growth_tilt_top3_candidate_pit_replay_engine_remediation_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438B_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438A consumes TRADING-2440 promotion review, TRADING-2439 forward aging candidate pack, TRADING-2438 top-3 candidate PIT replay, PIT replay evidence/blocker summary, data-quality gate output, report registry, artifact catalog, system flow and research docs to identify whether the replay engine/input/boundary/handoff remediation evidence is complete. It must fail closed when the candidate-specific replay engine, input specs, source traceability, as-of boundary, valid-until boundary, outcome linkage or forward-aging handoff evidence is incomplete. It generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_top3_candidate_pit_replay_engine_remediation_blockers
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
