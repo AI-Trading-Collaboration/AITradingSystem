@@ -20143,6 +20143,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_top3_candidate_pit_replay_recheck
+    title: Growth Tilt Top-3 Candidate PIT Replay Recheck
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-top3-candidate-pit-replay-recheck
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck/pit_replay_recheck_result.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck/candidate_replay_evidence.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck/candidate_replay_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck/remaining_recheck_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_top3_candidate_pit_replay_recheck/no_effect_boundary.json
+      - docs/research/growth_tilt_top3_candidate_pit_replay_recheck.md
+      - docs/research/growth_tilt_top3_candidate_replay_evidence.md
+      - docs/research/growth_tilt_top3_candidate_replay_summary.md
+      - docs/research/growth_tilt_top3_candidate_recheck_remaining_blockers.md
+      - docs/research/growth_tilt_top3_candidate_recheck_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2439A_or_2438D_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438C consumes TRADING-2438B blocker closure, TRADING-2438A remediation, TRADING-2438 top-3 candidate PIT replay artifacts, PIT replay evidence/blocker summary, data-quality gate output, report registry, artifact catalog, system flow and research docs to independently recheck candidate replay pass/fail/blocked evidence before any forward-aging handoff. It must fail closed when the blocker closure is ready but candidate replay outputs remain incomplete. It generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_top3_candidate_pit_replay_recheck_result
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
