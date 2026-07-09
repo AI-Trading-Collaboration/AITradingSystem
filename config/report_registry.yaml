@@ -20345,6 +20345,34 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_persistent_candidate_pit_replay_blocker_escalation
+    title: Growth Tilt Persistent Candidate PIT Replay Blocker Escalation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-persistent-candidate-pit-replay-blocker-escalation
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_escalation/escalation_result.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_escalation/candidate_persistent_blocker_root_cause_matrix.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_escalation/repeated_closure_failure_summary.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_escalation/recommended_remediation_route.json
+      - outputs/research_strategies/growth_tilt_persistent_candidate_pit_replay_blocker_escalation/no_forward_aging_safety_decision.json
+      - docs/research/growth_tilt_persistent_candidate_pit_replay_blocker_escalation.md
+      - docs/research/growth_tilt_candidate_persistent_blocker_root_cause_matrix.md
+      - docs/research/growth_tilt_repeated_closure_failure_summary.md
+      - docs/research/growth_tilt_persistent_blocker_recommended_remediation_route.md
+      - docs/research/growth_tilt_no_forward_aging_safety_decision.md
+      - docs/research/dynamic_strategy_2438K_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438J consumes TRADING-2438I blocked recheck output and persistent blocker summary, plus TRADING-2438H, TRADING-2438F, TRADING-2438D, and TRADING-2438B closure artifacts, data-quality gate output, report registry, artifact catalog, system flow and research docs to escalate persistent candidate PIT replay blockers after repeated closure gates. READY only means root-cause classification is complete; replay outcomes remain NOT_RECHECKED, pass/fail/blocked remains 0/0/3, forward-aging remains disabled, and no paper-shadow/production/broker path is enabled.
+    owner_action: review_growth_tilt_persistent_candidate_pit_replay_blocker_escalation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

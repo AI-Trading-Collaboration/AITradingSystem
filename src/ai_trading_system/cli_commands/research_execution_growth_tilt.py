@@ -89,6 +89,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_paper_shadow_candidate_promotion_review as m2440,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation as m2438j,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure as m2438b,
 )
 from ai_trading_system import (
@@ -275,6 +278,9 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     )(
         _growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure_command
     )
+    strategies_app.command(
+        "growth-tilt-persistent-candidate-pit-replay-blocker-escalation"
+    )(_growth_tilt_persistent_candidate_pit_replay_blocker_escalation_command)
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -5505,6 +5511,166 @@ def _growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closu
         "broker_order_generated",
         "portfolio_weight_mutated",
         "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_persistent_candidate_pit_replay_blocker_escalation_command(
+    source_2438i_blocked_recheck_path: Annotated[
+        Path, typer.Option("--source-2438i-blocked-recheck")
+    ] = m2438j.DEFAULT_SOURCE_2438I_BLOCKED_RECHECK_PATH,
+    persistent_candidate_replay_blocker_summary_path: Annotated[
+        Path, typer.Option("--persistent-candidate-replay-blocker-summary")
+    ] = m2438j.DEFAULT_PERSISTENT_CANDIDATE_REPLAY_BLOCKER_SUMMARY_PATH,
+    source_2438h_remaining_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438h-remaining-blocker-closure")
+    ] = m2438j.DEFAULT_SOURCE_2438H_REMAINING_BLOCKER_CLOSURE_PATH,
+    source_2438f_candidate_level_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438f-candidate-level-blocker-closure")
+    ] = m2438j.DEFAULT_SOURCE_2438F_CANDIDATE_LEVEL_BLOCKER_CLOSURE_PATH,
+    source_2438d_output_closure_path: Annotated[
+        Path, typer.Option("--source-2438d-output-closure")
+    ] = m2438j.DEFAULT_SOURCE_2438D_OUTPUT_CLOSURE_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438j.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    source_2438b_engine_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438b-engine-blocker-closure")
+    ] = m2438j.DEFAULT_SOURCE_2438B_ENGINE_BLOCKER_CLOSURE_PATH,
+    source_2438i_doc_path: Annotated[
+        Path, typer.Option("--source-2438i-doc")
+    ] = m2438j.DEFAULT_SOURCE_2438I_DOC_PATH,
+    persistent_blocker_summary_doc_path: Annotated[
+        Path, typer.Option("--persistent-blocker-summary-doc")
+    ] = m2438j.DEFAULT_PERSISTENT_BLOCKER_SUMMARY_DOC_PATH,
+    source_2438h_doc_path: Annotated[
+        Path, typer.Option("--source-2438h-doc")
+    ] = m2438j.DEFAULT_SOURCE_2438H_DOC_PATH,
+    source_2438f_doc_path: Annotated[
+        Path, typer.Option("--source-2438f-doc")
+    ] = m2438j.DEFAULT_SOURCE_2438F_DOC_PATH,
+    source_2438d_doc_path: Annotated[
+        Path, typer.Option("--source-2438d-doc")
+    ] = m2438j.DEFAULT_SOURCE_2438D_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438j.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    source_2438b_doc_path: Annotated[
+        Path, typer.Option("--source-2438b-doc")
+    ] = m2438j.DEFAULT_SOURCE_2438B_DOC_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438j.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438j.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438j.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438j.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438j.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438j.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438j.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438j.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438j.run_growth_tilt_persistent_candidate_pit_replay_blocker_escalation(
+            source_2438i_blocked_recheck_path=source_2438i_blocked_recheck_path,
+            persistent_candidate_replay_blocker_summary_path=(
+                persistent_candidate_replay_blocker_summary_path
+            ),
+            source_2438h_remaining_blocker_closure_path=(
+                source_2438h_remaining_blocker_closure_path
+            ),
+            source_2438f_candidate_level_blocker_closure_path=(
+                source_2438f_candidate_level_blocker_closure_path
+            ),
+            source_2438d_output_closure_path=source_2438d_output_closure_path,
+            candidate_replay_output_records_path=candidate_replay_output_records_path,
+            source_2438b_engine_blocker_closure_path=(
+                source_2438b_engine_blocker_closure_path
+            ),
+            source_2438i_doc_path=source_2438i_doc_path,
+            persistent_blocker_summary_doc_path=persistent_blocker_summary_doc_path,
+            source_2438h_doc_path=source_2438h_doc_path,
+            source_2438f_doc_path=source_2438f_doc_path,
+            source_2438d_doc_path=source_2438d_doc_path,
+            candidate_output_records_doc_path=candidate_output_records_doc_path,
+            source_2438b_doc_path=source_2438b_doc_path,
+            requirement_doc_path=requirement_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt persistent candidate PIT replay blocker escalation",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438i_blocked_recheck_ready",
+        "persistent_blocker_escalation_required",
+        "persistent_blocker_escalation_ready",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "candidate_replay_outputs_complete",
+        "candidate_replay_output_record_count",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "persistent_blocked_candidate_count",
+        "persistent_candidate_replay_blocker_count",
+        "closure_history_confirmed",
+        "pit_replay_engine_blocker_closure_ready",
+        "output_completeness_closure_ready",
+        "candidate_level_blocker_closure_ready",
+        "remaining_blocker_closure_ready",
+        "all_escalation_records_have_root_cause_category",
+        "all_escalation_records_have_root_cause_layer",
+        "all_escalation_records_have_recommended_next_action",
+        "all_escalation_records_have_blocker_reason",
+        "registry_catalog_docs_alignment",
+        "forward_aging_handoff_ready",
+        "forward_aging_candidate_count",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+        "evidence_gap_count",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
