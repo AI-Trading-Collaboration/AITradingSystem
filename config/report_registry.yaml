@@ -20109,6 +20109,40 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_pit_replay_engine_blocker_closure
+    title: Growth Tilt PIT Replay Engine Blocker Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-pit-replay-engine-blocker-closure
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/blocker_closure_result.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/pit_replay_engine_contract.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/input_specs.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/evidence_completeness_contract.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/source_traceability_manifest.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/as_of_boundary_manifest.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/valid_until_boundary_manifest.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/outcome_linkage_map.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/forward_aging_handoff_contract.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/blocker_before_after_matrix.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/unresolved_blocker_summary.json
+      - outputs/research_strategies/growth_tilt_pit_replay_engine_blocker_closure/no_effect_boundary.json
+      - docs/research/growth_tilt_pit_replay_engine_blocker_closure.md
+      - docs/research/growth_tilt_pit_replay_engine_blocker_before_after.md
+      - docs/research/growth_tilt_pit_replay_engine_unresolved_blockers.md
+      - docs/research/growth_tilt_pit_replay_engine_no_effect_boundary.md
+      - docs/research/dynamic_strategy_2438C_route.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438B consumes TRADING-2438A remediation result, TRADING-2438 top-3 candidate PIT replay artifacts, PIT replay evidence/blocker summary, data-quality gate output, report registry, artifact catalog, system flow and research docs to close the PIT replay engine/input/evidence/traceability/boundary/outcome/handoff blocker layer before TRADING-2438C recheck. It generates no signal or outcome, binds no outcome, generates no trading advice, enables no paper-shadow schedule, and enters no production/broker path.
+    owner_action: review_growth_tilt_pit_replay_engine_blocker_closure_contracts
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
