@@ -116,6 +116,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure as m2438e,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure as m2438i,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure as m2438d,
 )
 from ai_trading_system import (
@@ -267,6 +270,11 @@ def register_growth_tilt_execution_strategy_commands(strategies_app: typer.Typer
     strategies_app.command(
         "growth-tilt-remaining-candidate-pit-replay-blocker-closure"
     )(_growth_tilt_remaining_candidate_pit_replay_blocker_closure_command)
+    strategies_app.command(
+        "growth-tilt-top3-candidate-pit-replay-recheck-after-remaining-blocker-closure"
+    )(
+        _growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure_command
+    )
     strategies_app.command("growth-tilt-forward-aging-candidate-pack")(
         _growth_tilt_forward_aging_candidate_pack_command
     )
@@ -5351,6 +5359,141 @@ def _growth_tilt_remaining_candidate_pit_replay_blocker_closure_command(
         "each_blocked_candidate_has_closure_action",
         "each_closure_action_has_evidence_ref",
         "each_candidate_has_after_state",
+        "registry_catalog_docs_alignment",
+        "paper_shadow_candidate_found",
+        "paper_shadow_enabled",
+        "paper_shadow_schedule_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "automatic_execution_allowed",
+        "generated_trading_advice",
+        "broker_order_generated",
+        "portfolio_weight_mutated",
+        "source_validation_error_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure_command(
+    source_2438h_remaining_blocker_closure_path: Annotated[
+        Path, typer.Option("--source-2438h-remaining-blocker-closure")
+    ] = m2438i.DEFAULT_SOURCE_2438H_REMAINING_BLOCKER_CLOSURE_PATH,
+    replay_recheck_readiness_handoff_path: Annotated[
+        Path, typer.Option("--replay-recheck-readiness-handoff")
+    ] = m2438i.DEFAULT_REPLAY_RECHECK_READINESS_HANDOFF_PATH,
+    candidate_replay_output_records_path: Annotated[
+        Path, typer.Option("--candidate-replay-output-records")
+    ] = m2438i.DEFAULT_CANDIDATE_REPLAY_OUTPUT_RECORDS_PATH,
+    remaining_blocker_before_after_matrix_path: Annotated[
+        Path, typer.Option("--remaining-blocker-before-after-matrix")
+    ] = m2438i.DEFAULT_REMAINING_BLOCKER_BEFORE_AFTER_MATRIX_PATH,
+    source_2438h_doc_path: Annotated[
+        Path, typer.Option("--source-2438h-doc")
+    ] = m2438i.DEFAULT_SOURCE_2438H_DOC_PATH,
+    replay_recheck_handoff_doc_path: Annotated[
+        Path, typer.Option("--replay-recheck-handoff-doc")
+    ] = m2438i.DEFAULT_REPLAY_RECHECK_HANDOFF_DOC_PATH,
+    candidate_output_records_doc_path: Annotated[
+        Path, typer.Option("--candidate-output-records-doc")
+    ] = m2438i.DEFAULT_CANDIDATE_OUTPUT_RECORDS_DOC_PATH,
+    remaining_blocker_before_after_doc_path: Annotated[
+        Path, typer.Option("--remaining-blocker-before-after-doc")
+    ] = m2438i.DEFAULT_REMAINING_BLOCKER_BEFORE_AFTER_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438i.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438i.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438i.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438i.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438i.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438i.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438i.DEFAULT_DOCS_ROOT,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438i.run_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure(
+            source_2438h_remaining_blocker_closure_path=(
+                source_2438h_remaining_blocker_closure_path
+            ),
+            replay_recheck_readiness_handoff_path=(
+                replay_recheck_readiness_handoff_path
+            ),
+            candidate_replay_output_records_path=candidate_replay_output_records_path,
+            remaining_blocker_before_after_matrix_path=(
+                remaining_blocker_before_after_matrix_path
+            ),
+            source_2438h_doc_path=source_2438h_doc_path,
+            replay_recheck_handoff_doc_path=replay_recheck_handoff_doc_path,
+            candidate_output_records_doc_path=candidate_output_records_doc_path,
+            remaining_blocker_before_after_doc_path=(
+                remaining_blocker_before_after_doc_path
+            ),
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt top-3 candidate PIT replay recheck after remaining blocker closure",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "prior_status",
+        "source_2438h_remaining_blocker_closure_ready",
+        "remaining_candidate_blocker_closure_ready",
+        "remaining_candidate_blocker_count_before",
+        "remaining_candidate_blocker_count_after",
+        "replay_recheck_handoff_ready",
+        "candidate_recheckable_after_closure_count",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "candidate_replay_outputs_complete",
+        "candidate_replay_output_record_count",
+        "candidate_records_recheckable_after_remaining_blocker_closure",
+        "pit_replay_recheck_after_remaining_blocker_closure_complete",
+        "candidate_replay_pass_count",
+        "candidate_replay_fail_count",
+        "candidate_replay_blocked_count",
+        "persistent_candidate_replay_blocker_count",
+        "forward_aging_handoff_ready",
+        "forward_aging_candidate_count",
+        "top3_candidate_count",
+        "handoff_candidate_count",
+        "before_after_row_count",
+        "each_candidate_has_replay_status",
+        "each_candidate_has_status_reason",
+        "pass_fail_blocked_counts_consistent",
+        "blocked_candidates_have_persistent_blocker_reason",
+        "pass_candidates_have_forward_aging_handoff_key",
+        "forward_aging_handoff_pass_only",
         "registry_catalog_docs_alignment",
         "paper_shadow_candidate_found",
         "paper_shadow_enabled",
