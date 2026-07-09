@@ -1,5 +1,37 @@
 # Refactor Log
 
+## 2026-07-10 Daily Incremental Refactor
+
+- 检查时间：2026-07-10 08:10 Asia/Tokyo。
+- 起始 HEAD：`ebbf99d312234a0a5b27f5177da886f3da82ad17` (`Complete TRADING-2438L runtime replay recheck`)。
+- 最近一次合格重构基线提交：`e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9` (`refactor: record AITradingSystem growth tilt execution CLI boundary SHA`)。判定依据：提交信息明确标识 refactor，变更范围为重构记录维护，并更新专门的 `docs/refactor_log.md`；前序实现提交为 `98c976f0af8259623282ec0168a62b39a9a66607`。
+- 评估范围：`e6028e05dd0c2aa62d5ff0a8de96f08e08184bb9..HEAD` 的代码、配置、测试、文档和报告登记变更；重点检查 TRADING-2438A-L growth tilt top-3 candidate PIT replay、blocker closure、persistent blocker escalation、runtime remediation、CLI adapters、report registry、artifact catalog、system flow 和 task register。主要维护风险是昨日拆出的 `src/ai_trading_system/cli_commands/research_execution_growth_tilt.py` 在 TRADING-2438A-L 后重新增长到 6000 行以上，并同时承载 engine readiness、paper-shadow gate 和 PIT replay command adapters。
+- 本轮变更文件：
+  - `docs/task_register.md`
+  - `docs/task_register_completed.md`
+  - `docs/requirements/TRADING-2442_Daily_Incremental_Refactor_Growth_Tilt_PIT_Replay_CLI_Boundary.md`
+  - `docs/refactor_log.md`
+  - `docs/system_flow.md`
+  - `src/ai_trading_system/cli_commands/research_execution_growth_tilt.py`
+  - `src/ai_trading_system/cli_commands/research_execution_growth_tilt_pit_replay.py`
+- 重构理由：TRADING-2438 至 TRADING-2438L PIT replay / blocker remediation command family 已形成清晰 Typer adapter 边界，均委托同名 research-only implementation modules 执行。继续把这些 adapters 放在 growth tilt 聚合模块中会增加导入冲突、注册遗漏和 code review 成本。拆出 `research_execution_growth_tilt_pit_replay.py` 可让 PIT replay command ownership 独立，同时保留 `research_execution_growth_tilt.py` 作为 growth tilt execution command 聚合入口。
+- 行为影响：预期无外部行为变化；TRADING-2438 至 TRADING-2438L 相关 `aits research strategies ...` 命令名、参数、默认路径、artifact path、JSON/Markdown report output contract、status enum、source validation、recommended route、research-only / no-effect production boundary 和 CLI help surface 保持兼容。`research_execution_growth_tilt.py` 不再直接导入 PIT replay / blocker remediation implementation modules，而是委托 `register_growth_tilt_pit_replay_strategy_commands(strategies_app)`。
+- 数据/投资解释影响：无。该改动不改变 cached market/macro data、technical features、scoring、backtest engine behavior、daily report、threshold、score band、confidence cutoff、promotion gate、position cap、data quality gate、market-regime interpretation、official weights、active shadow weights、paper-shadow state、broker 或 order path；本轮未生成 cached-data dependent technical features、scoring、backtest 或 daily report 输出，因此未运行 `aits validate-data` 或生成新的 data quality sidecar。既有 data-dependent PIT replay commands 仍按原路径调用同源 cached-data validation gate 并在输出中披露 data quality。
+- `docs/system_flow.md` 更新判定：适用。本轮迁移 major CLI adapter module boundary，但不改变外部 data flow；已在 system flow 顶部记录 `research_execution_growth_tilt.py` 继续聚合注册 growth tilt / paper-shadow gate 命令，TRADING-2438 至 TRADING-2438L PIT replay command adapters 由 `research_execution_growth_tilt_pit_replay.py` 承载，外部 command/report/data-quality/production boundary 不变。
+- 验证命令与结果：
+  - `python -m ruff check src\ai_trading_system\cli_commands\research_execution_growth_tilt.py src\ai_trading_system\cli_commands\research_execution_growth_tilt_pit_replay.py`：PASS。
+  - `python -m compileall src\ai_trading_system\cli_commands\research_execution_growth_tilt.py src\ai_trading_system\cli_commands\research_execution_growth_tilt_pit_replay.py`：PASS。
+  - `python -m pytest -n 16 --dist loadfile` 覆盖 13 个 TRADING-2438 至 TRADING-2438L PIT replay focused test files：PASS，215 passed。
+  - 16 个 CLI help smoke：PASS，覆盖 13 个迁移命令和 3 个相邻 growth tilt commands。
+  - `python -m ai_trading_system.cli docs validate-freshness`：PASS，642 docs checked，0 issues。
+  - `python -m pytest -n 16 --dist loadfile tests\test_documentation_contract.py tests\test_task_register_consistency.py`：PASS，11 passed。
+  - `python scripts\run_validation_tier.py contract-validation --write-runtime-artifact`：PASS，197 passed；runtime artifact=`outputs\validation_runtime\contract-validation_20260709T231222Z\test_runtime_summary.json`，reader brief=`outputs\validation_runtime\contract-validation_20260709T231222Z\test_runtime_reader_brief.md`。
+  - `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs\task_register.md`：PASS，无 terminal active task rows。
+  - `git diff --check`：PASS。命令输出 `docs/task_register.md` 和 `src/ai_trading_system/cli_commands/research_execution_growth_tilt.py` 下一次 Git touch 时 CRLF 将被替换为 LF 的 warning，退出码为 0，未发现 whitespace error。
+- 遇到的 blocker：无。该轮未采用 temporary workaround，未降低任何 validation gate，未改变投资解释或生产边界。
+- 后续增量重构参考点：本轮完成后以最终 refactor log 回填提交 SHA 为下一次基线候选。后续可继续评估 `research_execution_growth_tilt.py` 中 forward aging / paper-shadow promotion / regime-slice command adapter family 是否需要进一步拆分，或评估 PIT replay implementation modules 中 report writer/helper 重复；不得在同一低风险切片中改变 threshold、score band、promotion gate、data quality gate、backtest acceptance、market-regime interpretation、paper-shadow、production 或 broker/order path。
+- 本轮重构实现提交 SHA：待回填。
+
 ## 2026-07-09 Daily Incremental Refactor
 
 - 检查时间：2026-07-09 08:10 Asia/Tokyo。
