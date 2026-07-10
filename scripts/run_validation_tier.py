@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 DEFAULT_WORKERS = "16"
 DEFAULT_DIST = "loadfile"
 DEFAULT_ARTIFACT_ROOT = Path("outputs/validation_runtime")
@@ -42,6 +44,7 @@ class TierSpec:
     slow_suite_allowed: bool
     paths: tuple[str, ...] = ()
     match_terms: tuple[str, ...] = ()
+    manifest_categories: tuple[str, ...] = ()
     pytest_args: tuple[str, ...] = ("-q", "--durations=20", "--durations-min=1")
 
 
@@ -174,6 +177,16 @@ TIER_SPECS: dict[str, TierSpec] = {
         ),
         pytest_args=("-q", "--durations=25", "--durations-min=1"),
     ),
+    "architecture-fitness": TierSpec(
+        description=(
+            "Generated ownership/test manifests, dependency ratchets, aggregate reproducibility, "
+            "and architecture control-plane tests."
+        ),
+        suite_family="architecture_fitness",
+        promotion_blocking=True,
+        slow_suite_allowed=False,
+        manifest_categories=("architecture",),
+    ),
     "slow-research-regression": TierSpec(
         description="ETF dynamic-v3 rescue, historical replay, simulation, and advisory tests.",
         suite_family="slow_research_regression",
@@ -218,6 +231,26 @@ def _discover_matching_tests(repo_root: Path, match_terms: Sequence[str]) -> lis
     return discovered
 
 
+def _discover_manifest_tests(repo_root: Path, manifest_categories: Sequence[str]) -> list[str]:
+    manifest_path = repo_root / "inputs/architecture/arch_004e_test_manifest.yaml"
+    if not manifest_path.is_file():
+        raise ValueError(f"generated test manifest not found: {manifest_path}")
+    payload = safe_load_yaml_path(manifest_path)
+    if not isinstance(payload, dict) or not isinstance(payload.get("tests"), list):
+        raise ValueError("generated test manifest must contain a tests list")
+    categories = set(manifest_categories)
+    paths = []
+    for row in payload["tests"]:
+        if not isinstance(row, dict):
+            continue
+        if row.get("file_role") != "test" or str(row.get("category")) not in categories:
+            continue
+        path = str(row.get("path") or "")
+        if path:
+            paths.append(path)
+    return sorted(set(paths))
+
+
 def resolve_tier(tier: str) -> str:
     return TIER_ALIASES.get(tier, tier)
 
@@ -253,6 +286,8 @@ def build_command(
     paths = list(spec.paths)
     if spec.match_terms:
         paths.extend(_discover_matching_tests(repo_root, spec.match_terms))
+    if spec.manifest_categories:
+        paths.extend(_discover_manifest_tests(repo_root, spec.manifest_categories))
     paths = _unique(paths)
     if not paths:
         raise ValueError(f"tier {tier!r} did not resolve any pytest paths")
@@ -669,10 +704,7 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
             if not isinstance(row, dict):
                 continue
             lines.append(
-                "|"
-                f"`{row.get('seconds')}`|"
-                f"`{row.get('phase')}`|"
-                f"`{row.get('nodeid')}`|"
+                "|" f"`{row.get('seconds')}`|" f"`{row.get('phase')}`|" f"`{row.get('nodeid')}`|"
             )
         lines.append("")
     if payload.get("pytest_output_log_path"):
@@ -928,8 +960,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         benchmark_runs: list[dict[str, object]] = []
         for variant in benchmark_variants:
             print(
-                "Running benchmark variant "
-                f"workers={variant['workers']} dist={variant['dist']}",
+                "Running benchmark variant " f"workers={variant['workers']} dist={variant['dist']}",
                 flush=True,
             )
             result = _run_command(variant["command"], cwd=repo_root)  # type: ignore[arg-type]
@@ -974,9 +1005,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "benchmark_mode": True,
                 "benchmark_runs": benchmark_runs,
                 "benchmark_summary_path": (
-                    str(artifact_dir / BENCHMARK_SUMMARY_NAME)
-                    if artifact_dir is not None
-                    else None
+                    str(artifact_dir / BENCHMARK_SUMMARY_NAME) if artifact_dir is not None else None
                 ),
                 "can_support_promotion_evidence": False,
                 "promotion_evidence_limitation": (

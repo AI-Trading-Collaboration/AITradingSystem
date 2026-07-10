@@ -303,8 +303,14 @@ phase_d_reference_vertical_slice:
       sha256: 6a701b5d58ab1d1a147b5bd598b4e720669889661b3a0d6dc0810a525d58126b
     - path: docs/artifact_catalog.md
       sha256: 9c0fbe6cc8844c8f877ea80dc7b4cf9fc9ac15f38eecbcb6afe9847ff7061cd4
+      historical_phase_d_hash: true
+      superseded_by_phase: ARCH-004E
+      current_hash_tracked_in: phase_e_devex_ownership_generated_indexes.sources
     - path: docs/system_flow.md
       sha256: 243b98aba2a5007d3d481bbc9cbaa0409365a175bfc4d3c3617c50db0a69e948
+      historical_phase_d_hash: true
+      superseded_by_phase: ARCH-004E
+      current_hash_tracked_in: phase_e_devex_ownership_generated_indexes.sources
   validation:
     focused:
       status: PASS
@@ -329,3 +335,85 @@ phase_d_reference_vertical_slice:
       warnings: 643
       elapsed_seconds: 812.2
       runtime_artifact: outputs/validation_runtime/full_20260710T185928Z/test_runtime_summary.json
+
+phase_e_devex_ownership_generated_indexes:
+  status: COMPLETE_PHASE_F_READY
+  as_of: 2026-07-11
+  repository_inventory:
+    python_module_count_including_ignored: 777
+    python_test_and_support_file_count: 1107
+  ownership:
+    owner_roles:
+      - code_owner
+      - policy_owner
+      - data_owner
+      - artifact_owner
+      - runtime_owner
+    module_orphan_count: 0
+    module_specific_overlap_count: 0
+    test_orphan_count: 0
+    test_specific_overlap_count: 0
+  aggregate_shadow:
+    target_count: 3
+    fragment_count: 4
+    existing_source_of_truth_changed: false
+    deterministic: PASS
+  impact_selection:
+    replaces_full_validation: false
+    shared_path_requires_coordinator_and_full: true
+    unknown_path_fail_closed: true
+  architecture_fitness:
+    status: PASS
+    direct_writer_baseline: 894
+    direct_writer_current: 893
+    violation_count: 0
+  sources:
+    - path: config/architecture/devex_ownership_policy.yaml
+      sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
+    - path: src/ai_trading_system/platform/architecture/devex.py
+      sha256: f536638dcdb7c0315fc10d12e0b2d702bc738ff508fbfe086ffd34d7d37d74db
+    - path: src/ai_trading_system/platform/architecture/scaffold.py
+      sha256: f6df60d5fac025ec7224d3048c9e2887bc610bde7ca7249ecb532efb9d723d03
+    - path: scripts/architecture_devex.py
+      sha256: 4d2a1d3d67d3375ce95f90ffe441cc8e4229fe3b4e2f7b777b2b775614ee9fde
+    - path: scripts/run_validation_tier.py
+      sha256: 884e3af9de99264baa7d66fc0a6f91a93ba3a24f7fc251da33b9244126716e4e
+    - path: src/ai_trading_system/reports/engineering_closeout.py
+      sha256: 405617b9b723f66f57332dda013ad8a0b16a63c82726d93125fc560bedad9c41
+    - path: tests/test_arch_004e_devex.py
+      sha256: 677a82b8b62797390afc673144eee9e30a6d4d6cd841c525a7a1bc14722032d9
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: 2993d1179eddc3a18987ecabdeefeb40ec7f2a08c2f9dfd49231f99292f0d3c7
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: e49a46917df4a9463edf4457ba7a906f61061fe31e6d937d3198c52bca1bbbd0
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: 448dd8817e30a781b1b9e7360da7221d62d98ab652959b2bd4c32ddba87e4e72
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: 0a0dcb3ccfbb37c05cdea96278268f036101742ec030558b345e24ea1cf7b460
+    - path: docs/artifact_catalog.md
+      sha256: 39c1710b1bb20763bf94dad98204fec16eddfcd0ee4251a8164f6b85b10e21e8
+    - path: docs/system_flow.md
+      sha256: 07c5f5058d90226af0e761b0768901786fdd6be62738a0baba227ee483e86026
+  validation:
+    focused:
+      status: PASS
+      passed: 31
+    scoped_mypy:
+      status: PASS
+    architecture_tier:
+      status: PASS
+      passed: 78
+      elapsed_seconds: 39.37
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260710T195631Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 35.88
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T193919Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5420
+      failed: 0
+      warnings: 643
+      elapsed_seconds: 839.21
+      runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json

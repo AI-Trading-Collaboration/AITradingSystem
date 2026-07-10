@@ -105,6 +105,16 @@ def build_engineering_surface_inventory_payload(
     classification_counts = Counter(_text(surface.get("classification")) for surface in surfaces)
     warnings = _inventory_warnings(surfaces=surfaces, type_counts=type_counts)
     status = INVENTORY_READY_WITH_LIMITATIONS if warnings else INVENTORY_READY
+    devex_paths = {
+        "module_manifest": project_root / "inputs/architecture/arch_004e_module_manifest.yaml",
+        "test_manifest": project_root / "inputs/architecture/arch_004e_test_manifest.yaml",
+        "architecture_fitness": (
+            project_root / "inputs/architecture/arch_004e_architecture_fitness.yaml"
+        ),
+    }
+    devex_control = {
+        artifact_id: _generated_devex_summary(path) for artifact_id, path in devex_paths.items()
+    }
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
@@ -127,6 +137,7 @@ def build_engineering_surface_inventory_payload(
                 project_root / "docs" / "operations" / "operations_runbook.md"
             ),
             "task_register": str(project_root / "docs" / "task_register.md"),
+            **{artifact_id: str(path) for artifact_id, path in devex_paths.items()},
         },
         "classification_policy": {
             "allowed_values": sorted(VALID_CLASSIFICATIONS),
@@ -162,6 +173,11 @@ def build_engineering_surface_inventory_payload(
                 ]
             ),
             "warning_count": len(warnings),
+            "owned_module_count": devex_control["module_manifest"].get("module_count", 0),
+            "classified_test_file_count": devex_control["test_manifest"].get("test_file_count", 0),
+            "architecture_fitness_status": devex_control["architecture_fitness"].get(
+                "status", "NOT_GENERATED"
+            ),
         },
         "surface_type_coverage": [
             {
@@ -186,7 +202,12 @@ def build_engineering_surface_inventory_payload(
                 project_root / "docs" / "operations" / "operations_runbook.md",
             ),
             _source_artifact("task_register", project_root / "docs" / "task_register.md"),
+            *(
+                _source_artifact(artifact_id, path, required=False)
+                for artifact_id, path in devex_paths.items()
+            ),
         ],
+        "generated_devex_control_plane": devex_control,
         "reader_brief": {
             "summary": f"工程表面盘点状态为 {status}，公开 surface={len(surfaces)}。",
             "key_result": status,
@@ -207,6 +228,7 @@ def build_engineering_surface_inventory_payload(
             "does_not_modify_strategy_logic": True,
             "does_not_modify_production": True,
             "production_effect": PRODUCTION_EFFECT,
+            "generated_manifests_linked_when_available": True,
         },
     }
 
@@ -531,9 +553,7 @@ def _collect_cli_surfaces(project_root: Path) -> list[dict[str, Any]]:
                 continue
             name = match.group(1)
             classification = (
-                "REMOVE_AFTER_COMPATIBILITY_WINDOW"
-                if name in LEGACY_TOP_LEVEL_COMMANDS
-                else "KEEP"
+                "REMOVE_AFTER_COMPATIBILITY_WINDOW" if name in LEGACY_TOP_LEVEL_COMMANDS else "KEEP"
             )
             surfaces.append(
                 _surface(
@@ -1026,6 +1046,22 @@ def _source_artifact(artifact_id: str, path: Path, *, required: bool = True) -> 
         "exists": path.exists(),
         "required": required,
         "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _generated_devex_summary(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {"path": str(path), "status": "NOT_GENERATED", "exists": False}
+    raw = safe_load_yaml_path(path)
+    payload = dict(raw) if isinstance(raw, Mapping) else {}
+    return {
+        "path": str(path),
+        "exists": True,
+        "schema_version": payload.get("schema_version"),
+        "status": payload.get("status"),
+        "module_count": payload.get("module_count"),
+        "test_file_count": payload.get("test_file_count"),
+        "violation_count": payload.get("violation_count"),
     }
 
 

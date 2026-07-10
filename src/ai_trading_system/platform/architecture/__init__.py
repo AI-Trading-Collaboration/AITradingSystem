@@ -4,10 +4,36 @@ from ai_trading_system.platform.architecture.dependency_gate import (
     capture_direct_writer_baseline,
     validate_architecture_dependencies,
 )
+from ai_trading_system.platform.architecture.devex import (
+    DevExArchitectureError,
+    ImpactSelection,
+    build_aggregate_shadow_index,
+    build_architecture_fitness,
+    build_module_manifest,
+    build_test_manifest,
+    select_impacted_tests,
+    write_generated_architecture_artifact,
+)
+from ai_trading_system.platform.architecture.scaffold import (
+    ScaffoldKind,
+    ScaffoldResult,
+    create_scaffold,
+)
 
 __all__ = [
     "ArchitectureGateReport",
     "ArchitectureViolation",
+    "DevExArchitectureError",
+    "ImpactSelection",
+    "ScaffoldKind",
+    "ScaffoldResult",
+    "build_aggregate_shadow_index",
+    "build_architecture_fitness",
+    "build_module_manifest",
+    "build_test_manifest",
     "capture_direct_writer_baseline",
+    "create_scaffold",
+    "select_impacted_tests",
     "validate_architecture_dependencies",
+    "write_generated_architecture_artifact",
 ]

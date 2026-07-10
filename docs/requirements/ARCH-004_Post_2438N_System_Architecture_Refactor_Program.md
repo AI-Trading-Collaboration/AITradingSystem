@@ -6,7 +6,7 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS_PHASE_A`
+- 当前状态：`IN_PROGRESS_PHASE_E_VALIDATING`
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
@@ -612,3 +612,4 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
 - 2026-07-11：ARCH-004C 完成并归档。新增 `artifact_envelope.v1`、`data_quality_evidence.v1`、`workflow_spec.v1`、`run_ledger.v1`、`report_spec.v1`、canonical atomic writer、typed config resolver/market-regime 实体拆责、scheduled/report/DQ adapters 与 dependency/direct-writer ratchet；四个 legacy writer/reference paths 保持 bytes/path/schema parity。Architecture gate=770 files、baseline/current writer calls=`894/893`、0 violation；验证通过 focused 120、scoped mypy、contract-validation 197、full parallel `5404 passed / 0 failed / 642 warnings`。ARCH-004D entry gate 解锁，历史 IO 债务与 control-plane findings 未被 waiver 或虚假清零。
 - 2026-07-11：登记 `ARCH-004D_REFERENCE_VERTICAL_SLICE` 并进入 D1。选择已关闭的 `TRADING-2438N1 growth_tilt_candidate_family_closure`，按 `ExperimentSpec -> Application Runner -> Evidence/Decision Artifact -> Report Plugin` 迁移；新增 envelope/run-ledger 仅作 additive sidecar，旧 CLI/options/exit、primary/ledger/Markdown path/schema/status/safety 必须 parity。详细 D1～D5 与 sunset 见 `docs/requirements/ARCH-004D_Reference_Vertical_Slice.md`；ARCH-004E 暂不解锁。
 - 2026-07-11：ARCH-004D 完成并归档。N1 reference slice 现在由 governed/deterministic ExperimentSpec、generic runner、versioned calculator/report plugins、canonical writer、ArtifactEnvelope 与 RunLedger 组成；旧 task wrapper 仅为有 sunset 的 CLI façade，原 primary/section/Markdown path/schema/status/bytes 和 strict semantics parity。Second same-plugin variant 只改 spec，不新增 Python module、CLI 或 report family。验证通过 focused 77、scoped mypy、architecture 775 files/0 violations、contract-validation 197、full parallel `5411 passed / 0 failed / 643 warnings`；ARCH-004E entry gate 解锁。
+- 2026-07-11：登记 `ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` 并进入 E1。现有 engineering surface inventory、validation tier 与 dependency gate继续复用；新增 file-level module/test ownership manifests、changed-file impact selection、combined architecture fitness、module/experiment/report scaffold 和 fragment-based aggregate shadow index。Phase E 不切换现有 registry/catalog/flow source-of-truth，也不允许 worker直接改 shared aggregates；详细 E1～E5 见 `docs/requirements/ARCH-004E_DevEx_Ownership_Generated_Indexes.md`。

@@ -1,0 +1,9 @@
+schema_version: arch_004e_report_fragment.v1
+fragment_id: report.growth_tilt_candidate_family_closure
+fragment_kind: report
+owner: reporting_governance
+target_id: report_registry
+report_id: growth_tilt_candidate_family_closure
+spec_path: config/research/experiments/growth_tilt_candidate_family_closure.yaml
+compatibility_registry_entry_required: true
+generated_source_of_truth_active: false

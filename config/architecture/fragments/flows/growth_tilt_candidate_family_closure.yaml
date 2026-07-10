@@ -1,0 +1,14 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.growth_tilt_candidate_family_closure
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: ExperimentSpec
+stages:
+  - generic_runner
+  - calculator_plugin
+  - canonical_artifacts
+  - report_plugin
+  - envelope_and_run_ledger
+compatibility_flow_entry_required: true
+generated_source_of_truth_active: false

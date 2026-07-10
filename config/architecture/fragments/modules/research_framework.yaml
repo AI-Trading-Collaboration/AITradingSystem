@@ -1,0 +1,12 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.research_framework
+fragment_kind: module
+owner: research_platform
+module_prefix: src/ai_trading_system/research_framework/
+public_contracts:
+  - ExperimentSpec
+  - PluginRegistry
+  - run_experiment
+compatibility_facades:
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_candidate_family_closure.py
+deprecation_status: active_reference_architecture
