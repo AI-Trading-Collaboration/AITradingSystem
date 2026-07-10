@@ -161,7 +161,12 @@ reporting_contract:
 implementation_boundary:
   phase_a_role: frozen_vocabulary_and_characterization
   runtime_enforcement_phase: ARCH-004B
-  runtime_enforcement_implemented: false
+  runtime_enforcement_implemented: true
+  runtime_enforcement_scope:
+    - new_investment_facing_artifacts
+    - first_layer_v2_effective_coverage_audit_reference_consumer
+  existing_artifact_migration_status: GOVERNED_WAVES_PENDING
+  context_schema_version: research_evaluation_context.v1
   strategy_logic_changed: false
   threshold_changed: false
   production_effect: none

@@ -12,13 +12,14 @@ COMPATIBILITY_BASELINE_PATH = Path("inputs/architecture/arch_004_compatibility_b
 ATTRIBUTION_PATH = Path("inputs/architecture/arch_004_worktree_attribution.yaml")
 
 
-def test_arch_004_phase_a_policy_freezes_growth_and_preserves_safety() -> None:
+def test_arch_004_phase_b_complete_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_a_complete_phase_b_ready"
-    assert policy["program"]["current_phase"] == "ARCH-004A"
+    assert policy["status"] == "phase_b_complete_phase_c_ready"
+    assert policy["program"]["current_phase"] == "ARCH-004B"
     assert policy["program"]["current_phase_status"] == "COMPLETE"
+    assert policy["program"]["next_phase"] == "ARCH-004C"
     assert policy["program"]["next_phase_unblocked"] is True
     assert policy["feature_freeze"]["active"] is True
     assert "NEW_TASK_SHAPED_RESEARCH_MODULE" in policy["feature_freeze"]["forbidden_change_classes"]
@@ -28,6 +29,15 @@ def test_arch_004_phase_a_policy_freezes_growth_and_preserves_safety() -> None:
     )
     assert policy["behavior_preservation"]["strategy_logic_changed"] is False
     assert policy["behavior_preservation"]["threshold_changed"] is False
+    enforcement = policy["semantic_kernel_enforcement"]
+    assert enforcement["active_for_new_investment_facing_artifacts"] is True
+    assert enforcement["schema_version"] == "research_evaluation_context.v1"
+    assert enforcement["requested_range_may_substitute_actual_or_effective_range"] is False
+    assert enforcement["legacy_flat_fields_require_exact_parity"] is True
+    assert enforcement["reference_consumer"] == "first_layer_v2_effective_coverage_audit"
+    assert enforcement["next_phase_unblocked"] is True
+    assert policy["phase_b_completion"]["full_parallel_validation"]["passed"] == 5375
+    assert policy["phase_b_completion"]["full_parallel_validation"]["failed"] == 0
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -91,7 +101,10 @@ def test_arch_004_semantic_glossary_separates_regime_and_research_window() -> No
         glossary["reporting_contract"]["market_regime_start_may_substitute_research_window_start"]
         is False
     )
-    assert glossary["implementation_boundary"]["runtime_enforcement_implemented"] is False
+    implementation = glossary["implementation_boundary"]
+    assert implementation["runtime_enforcement_implemented"] is True
+    assert implementation["context_schema_version"] == "research_evaluation_context.v1"
+    assert implementation["existing_artifact_migration_status"] == "GOVERNED_WAVES_PENDING"
 
 
 def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> None:
@@ -123,12 +136,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in baseline["frozen_sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["contract_id"]
+    phase_b = baseline["phase_b_semantic_kernel"]
+    assert phase_b["status"] == "COMPLETE_PHASE_C_READY"
+    assert phase_b["contract_schema"] == "research_evaluation_context.v1"
+    assert phase_b["repository_inventory"] == {
+        "python_module_count": 757,
+        "python_test_file_count": 1100,
+    }
+    assert phase_b["validation"]["focused"]["passed"] == 74
+    assert phase_b["validation"]["contract_validation"]["passed"] == 197
+    assert phase_b["validation"]["full_parallel"]["status"] == "PASS"
+    assert phase_b["validation"]["full_parallel"]["passed"] == 5375
+    assert phase_b["validation"]["full_parallel"]["failed"] == 0
+    for source in phase_b["sources"]:
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
 
 
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN"
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_B"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

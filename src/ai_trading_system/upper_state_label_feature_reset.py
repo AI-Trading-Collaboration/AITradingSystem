@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Mapping, Sequence
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,12 @@ import pandas as pd
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts import (
+    CoverageInterval,
+    DateRange,
+    EffectiveCoverage,
+    ResearchEvaluationContext,
+)
 from ai_trading_system.data_foundation import utc_now_iso
 from ai_trading_system.expanded_allocation_universe import (
     DEFAULT_EXPANDED_UNIVERSE_CONFIG_PATH,
@@ -30,6 +37,10 @@ from ai_trading_system.first_layer_policy_calibration import (
     _confidence_from_margin,
     _load_rates,
     _normalize_weights,
+)
+from ai_trading_system.legacy.research_context_adapter import (
+    attach_research_context,
+    resolve_legacy_research_context,
 )
 from ai_trading_system.research_window_extension import (
     DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
@@ -121,13 +132,9 @@ DEFAULT_TAXONOMY_RESET_DOC_PATH = (
 DEFAULT_LABEL_REGEN_PLAN_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "window_aware_upper_state_label_regeneration_plan.md"
 )
-DEFAULT_ACTION_VALUE_V2_ROOT = (
-    DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "action_value_matrix_v2"
-)
+DEFAULT_ACTION_VALUE_V2_ROOT = DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "action_value_matrix_v2"
 DEFAULT_ACTION_VALUE_V2_CSV_PATH = DEFAULT_ACTION_VALUE_V2_ROOT / "action_value_matrix_v2.csv"
-DEFAULT_ACTION_VALUE_V2_SUMMARY_PATH = (
-    DEFAULT_ACTION_VALUE_V2_ROOT / "action_value_summary_v2.json"
-)
+DEFAULT_ACTION_VALUE_V2_SUMMARY_PATH = DEFAULT_ACTION_VALUE_V2_ROOT / "action_value_summary_v2.json"
 DEFAULT_LABELS_V2_CSV_PATH = (
     DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "trend_labels" / "upper_state_labels_v2.csv"
 )
@@ -150,9 +157,7 @@ DEFAULT_PIT_FEATURE_V3_CSV_PATH = (
     DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "pit_feature_matrix" / "pit_feature_matrix_v3.csv"
 )
 DEFAULT_PIT_FEATURE_V3_REPORT_PATH = (
-    DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT
-    / "pit_feature_matrix"
-    / "pit_feature_matrix_v3_report.json"
+    DEFAULT_RESEARCH_TRENDS_OUTPUT_ROOT / "pit_feature_matrix" / "pit_feature_matrix_v3_report.json"
 )
 DEFAULT_FEATURE_PIT_AUDIT_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "first_layer_feature_pit_audit_v3.md"
@@ -231,10 +236,7 @@ DEFAULT_FIRST_LAYER_V2_COVERAGE_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "first_layer_v2_effective_coverage_audit.md"
 )
 DEFAULT_FIRST_LAYER_V2_COVERAGE_YAML_PATH = (
-    PROJECT_ROOT
-    / "inputs"
-    / "research_reviews"
-    / "first_layer_v2_effective_coverage_audit.yaml"
+    PROJECT_ROOT / "inputs" / "research_reviews" / "first_layer_v2_effective_coverage_audit.yaml"
 )
 DEFAULT_FIRST_LAYER_V2_OWNER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "first_layer_v2_owner_review_pack.md"
@@ -438,6 +440,15 @@ def run_upper_state_label_feature_reset_pack(
             feature_matrix=feature_matrix,
             composer_predictions=composer_predictions,
             actual_path=actual_path,
+            research_context=_build_first_layer_v2_effective_coverage_context(
+                primary_window=primary_window,
+                labels=labels_v2,
+                feature_matrix=feature_matrix,
+                composer_predictions=composer_predictions,
+                actual_path=actual_path,
+                data_gate=data_gate,
+                registry_path=registry_path,
+            ),
         )
         if first_layer_v2_closeout
         else None
@@ -583,10 +594,7 @@ def validate_alternating_two_layer_protocol(protocol: Mapping[str, Any]) -> dict
             issues.append(_issue(f"{round_id}_validation_does_not_freeze_both_layers"))
         if allowed & forbidden:
             issues.append(_issue(f"{round_id}_allowed_and_forbidden_overlap"))
-        if (
-            modified == "first_layer"
-            and "second_layer_probe_weight_change" not in forbidden
-        ):
+        if modified == "first_layer" and "second_layer_probe_weight_change" not in forbidden:
             issues.append(_issue(f"{round_id}_can_modify_second_layer_weights"))
         if modified == "second_layer" and "first_layer_model_change" not in forbidden:
             issues.append(_issue(f"{round_id}_can_modify_first_layer_model"))
@@ -675,9 +683,11 @@ def build_first_layer_v2_frozen_probe_contract(
     return _payload(
         report_type="first_layer_v2_frozen_probe_contract",
         title="First-Layer V2 Frozen Probe Contract",
-        status="FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_READY_PROMOTION_BLOCKED"
-        if registry_frozen
-        else "FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_INVALID",
+        status=(
+            "FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_READY_PROMOTION_BLOCKED"
+            if registry_frozen
+            else "FIRST_LAYER_V2_FROZEN_PROBE_CONTRACT_INVALID"
+        ),
         summary={
             **window_metadata(primary_window),
             "modified_layer": "first_layer",
@@ -713,6 +723,7 @@ def build_first_layer_v2_effective_coverage_audit(
     feature_matrix: pd.DataFrame,
     composer_predictions: pd.DataFrame,
     actual_path: Mapping[str, Any],
+    research_context: ResearchEvaluationContext,
 ) -> dict[str, Any]:
     requested_start = str(window_metadata(primary_window).get("requested_start"))
     label_start = _min_iso_date(
@@ -760,7 +771,7 @@ def build_first_layer_v2_effective_coverage_audit(
             "covers_2022": bool(portfolio_start and portfolio_start <= "2022-12-31"),
         },
     ]
-    return _payload(
+    payload = _payload(
         report_type="first_layer_v2_effective_coverage_audit",
         title="First-Layer V2 Effective Coverage Audit",
         status=status,
@@ -775,11 +786,99 @@ def build_first_layer_v2_effective_coverage_audit(
             "primary_window_coverage_incomplete": prediction_late,
             "covers_2021_predictions": _covers_year(prediction_start, composer_predictions, 2021),
             "covers_2022_predictions": _covers_year(prediction_start, composer_predictions, 2022),
-            "late_prediction_reason": "walk_forward_train_window_and_label_horizon_delay"
-            if prediction_late
-            else "prediction_coverage_reaches_required_cutoff",
+            "late_prediction_reason": (
+                "walk_forward_train_window_and_label_horizon_delay"
+                if prediction_late
+                else "prediction_coverage_reaches_required_cutoff"
+            ),
         },
         coverage_rows=coverage_rows,
+    )
+    return attach_research_context(payload, research_context)
+
+
+def _build_first_layer_v2_effective_coverage_context(
+    *,
+    primary_window: Mapping[str, Any],
+    labels: pd.DataFrame,
+    feature_matrix: pd.DataFrame,
+    composer_predictions: pd.DataFrame,
+    actual_path: Mapping[str, Any],
+    data_gate: Mapping[str, Any],
+    registry_path: Path = DEFAULT_RESEARCH_WINDOW_REGISTRY_PATH,
+) -> ResearchEvaluationContext:
+    as_of = _required_context_date(data_gate.get("as_of"), "data_quality.as_of")
+    requested_start = _required_context_date(
+        primary_window.get("requested_start", primary_window.get("start")),
+        "research_window.requested_start",
+    )
+    requested_range = DateRange(requested_start, as_of)
+    source_ranges = {
+        "labels:upper_state_v2": _frame_date_range(labels),
+        "features:pit_matrix_v3": _frame_date_range(feature_matrix),
+        "predictions:first_layer_composer_v2": _frame_date_range(composer_predictions),
+        "portfolio:frozen_probe_actual_path": _actual_path_date_range(actual_path),
+    }
+    missing_sources = sorted(
+        source_id for source_id, date_range in source_ranges.items() if date_range is None
+    )
+    coverage = EffectiveCoverage(
+        tuple(
+            CoverageInterval(source_id=source_id, date_range=date_range)
+            for source_id, date_range in source_ranges.items()
+            if date_range is not None
+        )
+    )
+    available_ranges = [item.date_range for item in coverage.intervals]
+    actual_data_range = (
+        DateRange(
+            min(item.start for item in available_ranges),
+            max(item.end for item in available_ranges),
+        )
+        if available_ranges
+        else None
+    )
+    feature_range = source_ranges["features:pit_matrix_v3"]
+    prediction_range = source_ranges["predictions:first_layer_composer_v2"]
+    portfolio_range = source_ranges["portfolio:frozen_probe_actual_path"]
+    effective_ranges = [feature_range, prediction_range, portfolio_range]
+    blocking_issues = [f"EFFECTIVE_COVERAGE_MISSING:{source_id}" for source_id in missing_sources]
+    evaluation_range: DateRange | None = None
+    if all(item is not None for item in effective_ranges):
+        complete_ranges = [item for item in effective_ranges if item is not None]
+        evaluation_start = max(item.start for item in complete_ranges)
+        evaluation_end = min(item.end for item in complete_ranges)
+        if evaluation_start <= evaluation_end:
+            evaluation_range = DateRange(evaluation_start, evaluation_end)
+        else:
+            blocking_issues.append("NO_COMMON_EFFECTIVE_EVALUATION_RANGE")
+    if not bool(data_gate.get("passed")):
+        blocking_issues.append("DATA_QUALITY_FAILED")
+
+    common: dict[str, Any] = {
+        "market_regime_id": "ai_after_chatgpt",
+        "research_window_id": str(primary_window.get("research_window_id")),
+        "requested_range": requested_range,
+        "as_of": as_of,
+        "data_quality_status": str(data_gate.get("status", "UNKNOWN")),
+        "data_quality_passed": bool(data_gate.get("passed")),
+        "data_quality_contract_id": str(primary_window.get("data_quality_contract")),
+        "actual_data_range": actual_data_range,
+        "effective_feature_start": None if feature_range is None else feature_range.start,
+        "effective_prediction_start": (
+            None if prediction_range is None else prediction_range.start
+        ),
+        "actual_portfolio_start": None if portfolio_range is None else portfolio_range.start,
+        "evaluation_range": evaluation_range,
+        "effective_coverage": coverage if coverage.intervals else None,
+        "declared_research_window_start": _required_context_date(
+            primary_window.get("start"), "research_window.start"
+        ),
+        "research_window_registry_path": registry_path,
+    }
+    return resolve_legacy_research_context(
+        **common,
+        blocking_issues=tuple(blocking_issues),
     )
 
 
@@ -1041,18 +1140,16 @@ def build_action_value_summary(
     for window in windows:
         window_id = str(window.get("research_window_id"))
         frame = (
-            labels.loc[labels["research_window_id"] == window_id]
-            if not labels.empty
-            else labels
+            labels.loc[labels["research_window_id"] == window_id] if not labels.empty else labels
         )
         summary_rows.append(
             {
                 **window_metadata(window),
-                "action_value_row_count": int(
-                    len(action_value.loc[action_value["research_window_id"] == window_id])
-                )
-                if not action_value.empty
-                else 0,
+                "action_value_row_count": (
+                    int(len(action_value.loc[action_value["research_window_id"] == window_id]))
+                    if not action_value.empty
+                    else 0
+                ),
                 "label_row_count": int(len(frame)) if not frame.empty else 0,
                 "do_not_de_risk_positive_count": _label_sum(frame, "do_not_de_risk_label"),
                 "stay_constructive_positive_count": _label_sum(frame, "stay_constructive_label"),
@@ -1109,9 +1206,7 @@ def build_label_quality_summary(
                 "research_only": True,
             }
         )
-    high_conf = next(
-        row for row in rows if row["label_id"] == "high_confidence_risk_on"
-    )
+    high_conf = next(row for row in rows if row["label_id"] == "high_confidence_risk_on")
     status = "UPPER_STATE_LABELS_V2_READY_PROMOTION_BLOCKED"
     if high_conf["sample_status"] == "SAMPLE_INSUFFICIENT":
         status = "UPPER_STATE_LABELS_V2_READY_RISK_ON_SAMPLE_INSUFFICIENT_PROMOTION_BLOCKED"
@@ -1222,9 +1317,9 @@ def build_pit_feature_matrix_v3(
             "row_count": len(matrix),
             "approved_feature_count": len(V3_FEATURE_COLUMNS),
             "blocked_feature_count": 0,
-            "feature_cutoff_passed": bool(matrix["feature_cutoff_passed"].all())
-            if not matrix.empty
-            else False,
+            "feature_cutoff_passed": (
+                bool(matrix["feature_cutoff_passed"].all()) if not matrix.empty else False
+            ),
         },
         features=[
             {
@@ -1252,9 +1347,11 @@ def build_feature_pit_audit_v3(
     return _payload(
         report_type="first_layer_feature_pit_audit_v3",
         title="First-Layer Feature PIT Audit V3",
-        status="FIRST_LAYER_FEATURE_PIT_AUDIT_V3_PASS_PROMOTION_BLOCKED"
-        if not leakage_columns
-        else "FIRST_LAYER_FEATURE_PIT_AUDIT_V3_FAIL_PROMOTION_BLOCKED",
+        status=(
+            "FIRST_LAYER_FEATURE_PIT_AUDIT_V3_PASS_PROMOTION_BLOCKED"
+            if not leakage_columns
+            else "FIRST_LAYER_FEATURE_PIT_AUDIT_V3_FAIL_PROMOTION_BLOCKED"
+        ),
         summary={
             **window_metadata(primary_window),
             "row_count": len(feature_matrix),
@@ -1262,9 +1359,11 @@ def build_feature_pit_audit_v3(
                 "approved_feature_count"
             ),
             "future_leakage_column_count": len(leakage_columns),
-            "feature_cutoff_passed": bool(feature_matrix["feature_cutoff_passed"].all())
-            if not feature_matrix.empty
-            else False,
+            "feature_cutoff_passed": (
+                bool(feature_matrix["feature_cutoff_passed"].all())
+                if not feature_matrix.empty
+                else False
+            ),
         },
         leakage_columns=leakage_columns,
         feature_report_summary=_mapping(feature_report.get("summary")),
@@ -1363,9 +1462,7 @@ def build_first_layer_composer_v2_predictions(
             "do_not_de_risk_pred": bool(row.get("do_not_de_risk_pred", False)),
             "stay_constructive_pred": bool(row.get("stay_constructive_pred", False)),
             "add_risk_pred": bool(row.get("add_risk_pred", False)),
-            "high_confidence_risk_on_pred": bool(
-                row.get("high_confidence_risk_on_pred", False)
-            ),
+            "high_confidence_risk_on_pred": bool(row.get("high_confidence_risk_on_pred", False)),
             "target_path_metrics_used_for_pass": False,
             **SAFETY_BOUNDARY,
         }
@@ -1386,9 +1483,7 @@ def build_first_layer_v2_frozen_probe_actual_path_matrix(
 ) -> dict[str, Any]:
     rows = []
     prior = _load_yaml_mapping(prior_actual_path_path) if prior_actual_path_path.exists() else {}
-    prior_rows = {
-        str(row.get("probe_id")): row for row in _records(prior.get("probe_rows"))
-    }
+    prior_rows = {str(row.get("probe_id")): row for row in _records(prior.get("probe_rows"))}
     for probe in _records(probe_registry.get("probes")):
         raw = _backtest_probe_predictions(
             prices=prices,
@@ -1430,8 +1525,7 @@ def build_first_layer_v2_frozen_probe_actual_path_matrix(
                 "actual_path_improved_vs_flat_reference": bool(
                     _float(raw["actual_path_annual_return"])
                     > _float(prior_row.get("flat_annual_return"))
-                    and _float(raw["calmar_daily_equity_dd"])
-                    > _float(prior_row.get("flat_calmar"))
+                    and _float(raw["calmar_daily_equity_dd"]) > _float(prior_row.get("flat_calmar"))
                 ),
                 "comparison_window_compatibility": "PRIOR_ROWS_LEGACY_REFERENCE_ONLY",
                 "target_path_metrics_used_for_pass": False,
@@ -1465,9 +1559,7 @@ def build_first_layer_walk_forward_review_v3(
 ) -> dict[str, Any]:
     model_rows = [_mapping(result.get("metrics")) for result in model_results.values()]
     distribution = (
-        _state_counts(composer_predictions["trend_state"])
-        if not composer_predictions.empty
-        else {}
+        _state_counts(composer_predictions["trend_state"]) if not composer_predictions.empty else {}
     )
     primary_labels = labels.loc[
         (labels["research_window_id"] == PRIMARY_WINDOW_ID)
@@ -1914,16 +2006,15 @@ def _action_scores_from_state_rows(
     keep_dd_gap = abs(_float(keep.get("future_max_drawdown"))) - abs(
         _float(defensive.get("future_max_drawdown"))
     )
-    do_not_de_risk = keep_score - defensive_score - max(0.0, keep_dd_gap) * _float(
-        weights_cfg.get("drawdown_delta"), default=0.70
+    do_not_de_risk = (
+        keep_score
+        - defensive_score
+        - max(0.0, keep_dd_gap) * _float(weights_cfg.get("drawdown_delta"), default=0.70)
     )
     stay_constructive = (
         constructive_score
         - neutral_score
-        + (
-            _float(constructive.get("future_return"))
-            - _float(neutral.get("future_return"))
-        )
+        + (_float(constructive.get("future_return")) - _float(neutral.get("future_return")))
         * _float(weights_cfg.get("return_delta"), default=1.0)
     )
     add_risk_base = max(constructive_score, risk_on_score) - neutral_score
@@ -1934,10 +2025,7 @@ def _action_scores_from_state_rows(
     risk_on_diag = (
         risk_on_score
         - constructive_score
-        + (
-            _float(risk_on.get("future_return"))
-            - _float(neutral.get("future_return"))
-        )
+        + (_float(risk_on.get("future_return")) - _float(neutral.get("future_return")))
         - _float(_mapping(risk_on.get("weights")).get("TQQQ"))
         * _float(_mapping(score_policy.get("tqqq")).get("penalty_per_weight"), default=0.20)
     )
@@ -1957,12 +2045,16 @@ def _action_scores_from_state_rows(
         "risk_on_diagnostic_score": round(risk_on_diag, GRID_ROUND_DIGITS),
         "best_state_by_full_score": best_state,
         "best_state_score": round(state_scores[best_state], GRID_ROUND_DIGITS),
-        "second_best_state_score": round(sorted_scores[1], GRID_ROUND_DIGITS)
-        if len(sorted_scores) > 1
-        else round(sorted_scores[0], GRID_ROUND_DIGITS),
-        "state_score_margin": round(sorted_scores[0] - sorted_scores[1], GRID_ROUND_DIGITS)
-        if len(sorted_scores) > 1
-        else 0.0,
+        "second_best_state_score": (
+            round(sorted_scores[1], GRID_ROUND_DIGITS)
+            if len(sorted_scores) > 1
+            else round(sorted_scores[0], GRID_ROUND_DIGITS)
+        ),
+        "state_score_margin": (
+            round(sorted_scores[0] - sorted_scores[1], GRID_ROUND_DIGITS)
+            if len(sorted_scores) > 1
+            else 0.0
+        ),
         "neutral_future_return": round(_float(neutral.get("future_return")), GRID_ROUND_DIGITS),
         "constructive_future_return": round(
             _float(constructive.get("future_return")), GRID_ROUND_DIGITS
@@ -2016,8 +2108,7 @@ def _base_action_score(row: Mapping[str, Any], score_policy: Mapping[str, Any]) 
         * abs(_float(row.get("future_max_drawdown")))
         - _float(weights.get("stress_penalty"), default=0.45)
         * abs(min(0.0, _float(row.get("worst_5d_return"))))
-        - _float(tqqq.get("penalty_per_weight"), default=0.20)
-        * _float(row_weights.get("TQQQ"))
+        - _float(tqqq.get("penalty_per_weight"), default=0.20) * _float(row_weights.get("TQQQ"))
     )
 
 
@@ -2091,9 +2182,8 @@ def _apply_risk_on_sample_floor(
     quality = _mapping(taxonomy.get("label_quality"))
     floors = _mapping(quality.get("minimum_positive_samples"))
     floor = _int(floors.get("high_confidence_risk_on"), default=60)
-    primary_mask = (
-        (labels["research_window_id"] == PRIMARY_WINDOW_ID)
-        & (labels["horizon_days"].astype(int) == 20)
+    primary_mask = (labels["research_window_id"] == PRIMARY_WINDOW_ID) & (
+        labels["horizon_days"].astype(int) == 20
     )
     positives = int(labels.loc[primary_mask, "high_confidence_risk_on_label"].sum())
     labels = labels.copy()
@@ -2128,9 +2218,7 @@ def _compute_feature_frame(prices: pd.DataFrame, rates: pd.DataFrame) -> pd.Data
     low20 = qqq.rolling(20, min_periods=5).min()
     low60 = qqq.rolling(60, min_periods=10).min()
     rate_frame = (
-        rates.reindex(prices.index).ffill()
-        if not rates.empty
-        else pd.DataFrame(index=prices.index)
+        rates.reindex(prices.index).ffill() if not rates.empty else pd.DataFrame(index=prices.index)
     )
     dgs10 = rate_frame.get("DGS10", pd.Series(0.0, index=prices.index))
     dgs2 = rate_frame.get("DGS2", pd.Series(0.0, index=prices.index))
@@ -2162,12 +2250,12 @@ def _compute_feature_frame(prices: pd.DataFrame, rates: pd.DataFrame) -> pd.Data
     ).astype(float)
     features["qqq_reclaim_recent_high_20d"] = (qqq >= high20.shift(1)).astype(float)
     features["qqq_recovery_speed_20d"] = (qqq / low20 - 1.0) / 20.0
-    features["qqq_vs_sgov_momentum_60d"] = returns.rolling(
-        60, min_periods=10
-    ).sum() - sgov_returns.rolling(60, min_periods=10).sum()
+    features["qqq_vs_sgov_momentum_60d"] = (
+        returns.rolling(60, min_periods=10).sum() - sgov_returns.rolling(60, min_periods=10).sum()
+    )
     features["qqq_vs_tqqq_consistency_20d"] = (
-        np.sign(returns).eq(np.sign(tqqq_returns))
-    ).rolling(20, min_periods=5).mean()
+        (np.sign(returns).eq(np.sign(tqqq_returns))).rolling(20, min_periods=5).mean()
+    )
     features["yield_curve_10y2y"] = dgs10 - dgs2
     features["usd_trend_20d"] = usd.pct_change(20)
     return features.replace([np.inf, -np.inf], np.nan).fillna(0.0)
@@ -2333,10 +2421,9 @@ def _binary_metrics(
 
 
 def _model_status(model_id: str, metrics: Mapping[str, Any]) -> str:
-    if (
-        model_id == "high_confidence_risk_on_model_v1"
-        and _int(metrics.get("positive_count")) < _int(metrics.get("positive_sample_floor"))
-    ):
+    if model_id == "high_confidence_risk_on_model_v1" and _int(
+        metrics.get("positive_count")
+    ) < _int(metrics.get("positive_sample_floor")):
         return "RISK_ON_SAMPLE_INSUFFICIENT"
     if _int(metrics.get("prediction_count")) <= 0:
         return "NO_WALK_FORWARD_PREDICTIONS"
@@ -2745,6 +2832,50 @@ def _min_iso_date(frame: pd.DataFrame) -> str:
     if values.empty:
         return ""
     return values.min().date().isoformat()
+
+
+def _frame_date_range(frame: pd.DataFrame) -> DateRange | None:
+    if frame.empty or "date" not in frame.columns:
+        return None
+    values = pd.to_datetime(frame["date"], errors="coerce").dropna()
+    if values.empty:
+        return None
+    return DateRange(values.min().date(), values.max().date())
+
+
+def _actual_path_date_range(actual_path: Mapping[str, Any]) -> DateRange | None:
+    rows = _records(actual_path.get("probe_rows"))
+    starts = [
+        parsed
+        for row in rows
+        if (parsed := _optional_context_date(row.get("date_start"))) is not None
+    ]
+    ends = [
+        parsed
+        for row in rows
+        if (parsed := _optional_context_date(row.get("date_end"))) is not None
+    ]
+    if not starts or not ends:
+        return None
+    return DateRange(min(starts), max(ends))
+
+
+def _required_context_date(value: object, field: str) -> date:
+    parsed = _optional_context_date(value)
+    if parsed is None:
+        raise ValueError(f"{field} must be an ISO date")
+    return parsed
+
+
+def _optional_context_date(value: object) -> date | None:
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
 
 
 def _covers_year(start: str, frame: pd.DataFrame, year: int) -> bool:

@@ -131,3 +131,48 @@ safety_boundary:
   paper_shadow_allowed: false
   production_allowed: false
   broker_action: none
+
+phase_b_semantic_kernel:
+  status: COMPLETE_PHASE_C_READY
+  as_of: 2026-07-11
+  repository_inventory:
+    python_module_count: 757
+    python_test_file_count: 1100
+  contract_schema: research_evaluation_context.v1
+  enforcement_scope:
+    - new_investment_facing_artifacts
+    - first_layer_v2_effective_coverage_audit_reference_consumer
+  sources:
+    - path: src/ai_trading_system/contracts/status.py
+      sha256: c3c460550c13c0335b21d6e6a9304daf4297fa9d11026efeb184534346787a54
+    - path: src/ai_trading_system/contracts/research_context.py
+      sha256: 23bd2480505bad6b9e7098e1b8aac17b0233093d09dde4adb44df37446f1df8e
+    - path: src/ai_trading_system/legacy/research_context_adapter.py
+      sha256: e8bf24f4edd274a97802e28a74acd7eb050ee178c2a58b540b64dec327a5d17c
+    - path: src/ai_trading_system/upper_state_label_feature_reset.py
+      sha256: 264717c5554bfa2eef37bb9cd178be79e2c3801561879882a01a003f512fc4ef
+    - path: tests/test_research_evaluation_context.py
+      sha256: 52eddea298ec5b30ebca8bc1c00c85ff3ab90157975118942eec2b61a79d4759
+  reference_consumer:
+    report_type: first_layer_v2_effective_coverage_audit
+    migration_type: ADDITIVE_NESTED_CONTEXT_WITH_FLAT_FIELD_PARITY
+    calculation_changed: false
+    status_changed: false
+    safety_boundary_changed: false
+  validation:
+    focused:
+      status: PASS
+      passed: 74
+    scoped_mypy:
+      status: PASS
+    contract_validation:
+      status: PASS
+      passed: 197
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T170548Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5375
+      failed: 0
+      warnings: 642
+      elapsed_seconds: 819.99
+      runtime_artifact: outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json
