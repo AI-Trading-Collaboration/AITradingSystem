@@ -20596,6 +20596,56 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_candidate_family_closure
+    title: Growth Tilt Candidate Family Closure
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-candidate-family-close
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_candidate_family_closure/growth_tilt_candidate_family_closure.json
+      - outputs/research_strategies/growth_tilt_candidate_family_closure/growth_tilt_candidate_negative_result_ledger.json
+      - docs/research/growth_tilt_candidate_family_closure.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438N1 formally closes the A/B/C/replacement-A family as completed negative research evidence. It preserves the exact M1E 2 PASS / 8 BLOCKED prerequisite matrix, records A/C redefined, B withdrawn, replacement A blocked, and disables the closed-family M2 route. Reopen requires candidate-independent baseline evidence plus owner reapproval and screening-policy refreeze. No candidate failure is inferred from null metrics, and no replay, baseline behavior, candidate behavior, promotion, paper-shadow, production weight, or broker state is created.
+    owner_action: review_closed_family_negative_evidence_and_n2_route
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_baseline_capability_graph
+    title: Growth Tilt Baseline Capability Graph
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-baseline-capability-graph
+    artifact_globs:
+      - config/research/growth_tilt_baseline_capability_graph.yaml
+      - outputs/research_strategies/growth_tilt_baseline_capability_graph/growth_tilt_baseline_capability_graph.json
+      - docs/research/growth_tilt_baseline_capability_graph.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >-
+      TRADING-2438N2 is a read-only graph of actual growth-tilt baseline signals,
+      decision requests, persistence, hard vetoes, transitions, exposure semantics,
+      caps, ramp/cooldown/expiry rules, metrics, executor and replay capabilities.
+      Capability READY is distinct from mutation-ready; the latter also requires
+      baseline consumption, valid PIT lineage, approved semantics, explicit missing
+      policy, replay binding, an approved mutable dimension, and ready hard-veto,
+      transition, and exposure dependencies. The current graph has zero
+      mutation-ready capabilities, so N3/N4 remain not started. No baseline
+      behavior, threshold, candidate, replay, metric, promotion, paper-shadow,
+      production weight, or broker state is created.
+    owner_action: review_zero_mutation_ready_capabilities_and_keep_n3_n4_not_started
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

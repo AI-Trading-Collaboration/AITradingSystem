@@ -6,10 +6,16 @@ from typing import Annotated
 import typer
 
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_baseline_capability_graph as m2438n2,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_baseline_contract_adapters_readiness as m2438m1d2,
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_baseline_contract_decision_pack as m2438m1d1,
+)
+from ai_trading_system import (
+    dynamic_strategy_growth_tilt_candidate_family_closure as m2438n1,
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_candidate_runtime_spec_threshold_policy_approval as m2438m1,  # noqa: E501
@@ -145,6 +151,12 @@ def register_growth_tilt_pit_replay_strategy_commands(strategies_app: typer.Type
     )
     strategies_app.command("growth-tilt-replacement-candidate-contract")(
         _growth_tilt_replacement_candidate_contract_command
+    )
+    strategies_app.command("growth-tilt-candidate-family-close")(
+        _growth_tilt_candidate_family_close_command
+    )
+    strategies_app.command("growth-tilt-baseline-capability-graph")(
+        _growth_tilt_baseline_capability_graph_command
     )
 
 
@@ -2523,6 +2535,191 @@ def _growth_tilt_replacement_candidate_contract_command(
         "replay_run",
         "runtime_metrics_generated",
         "policy_approval_fabricated",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_candidate_family_close_command(
+    m1e_path: Annotated[
+        Path, typer.Option("--source-m1e")
+    ] = m2438n1.DEFAULT_M1E_PATH,
+    adapters_path: Annotated[
+        Path, typer.Option("--source-adapters")
+    ] = m2438n1.DEFAULT_ADAPTERS_PATH,
+    owner_resolution_path: Annotated[
+        Path, typer.Option("--owner-resolution")
+    ] = m2438n1.DEFAULT_OWNER_RESOLUTION_PATH,
+    candidate_set_path: Annotated[
+        Path, typer.Option("--candidate-set")
+    ] = m2438n1.DEFAULT_CANDIDATE_SET_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438n1.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438n1.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438n1.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438n1.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438n1.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438n1.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438n1.run_growth_tilt_candidate_family_closure(
+        m1e_path=m1e_path,
+        adapters_path=adapters_path,
+        owner_resolution_path=owner_resolution_path,
+        candidate_set_path=candidate_set_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload("Growth tilt candidate family closure", payload)
+    for field in (
+        "status",
+        "family_id",
+        "closure_status",
+        "closure_reason_codes",
+        "prerequisite_pass_count",
+        "prerequisite_blocked_count",
+        "baseline_adapter_ready_count",
+        "baseline_adapter_blocked_count",
+        "pit_candidates_tested",
+        "runtime_metrics_materialized",
+        "approved_candidate_count",
+        "m2_eligible_candidate_count",
+        "family_route_enabled",
+        "closed_family_m2_route_disabled",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "replay_run",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_baseline_capability_graph_command(
+    graph_config_path: Annotated[
+        Path, typer.Option("--graph-config")
+    ] = m2438n2.DEFAULT_GRAPH_CONFIG_PATH,
+    closure_path: Annotated[
+        Path, typer.Option("--source-closure")
+    ] = m2438n2.DEFAULT_CLOSURE_PATH,
+    adapters_path: Annotated[
+        Path, typer.Option("--source-adapters")
+    ] = m2438n2.DEFAULT_ADAPTERS_PATH,
+    signal_inventory_path: Annotated[
+        Path, typer.Option("--signal-inventory")
+    ] = m2438n2.DEFAULT_SIGNAL_INVENTORY_PATH,
+    base_policy_path: Annotated[
+        Path, typer.Option("--base-policy")
+    ] = m2438n2.DEFAULT_BASE_POLICY_PATH,
+    risk_veto_policy_path: Annotated[
+        Path, typer.Option("--risk-veto-policy")
+    ] = m2438n2.DEFAULT_RISK_VETO_POLICY_PATH,
+    metric_contract_path: Annotated[
+        Path, typer.Option("--metric-contract")
+    ] = m2438n2.DEFAULT_METRIC_CONTRACT_PATH,
+    screening_policy_path: Annotated[
+        Path, typer.Option("--screening-policy")
+    ] = m2438n2.DEFAULT_SCREENING_POLICY_PATH,
+    compiler_code_path: Annotated[
+        Path, typer.Option("--compiler-code")
+    ] = m2438n2.DEFAULT_COMPILER_CODE_PATH,
+    executor_code_path: Annotated[
+        Path, typer.Option("--executor-code")
+    ] = m2438n2.DEFAULT_EXECUTOR_CODE_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438n2.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438n2.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438n2.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438n2.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438n2.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438n2.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438n2.run_growth_tilt_baseline_capability_graph(
+        graph_config_path=graph_config_path,
+        closure_path=closure_path,
+        adapters_path=adapters_path,
+        signal_inventory_path=signal_inventory_path,
+        base_policy_path=base_policy_path,
+        risk_veto_policy_path=risk_veto_policy_path,
+        metric_contract_path=metric_contract_path,
+        screening_policy_path=screening_policy_path,
+        compiler_code_path=compiler_code_path,
+        executor_code_path=executor_code_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload("Growth tilt baseline capability graph", payload)
+    for field in (
+        "status",
+        "graph_id",
+        "node_count",
+        "edge_count",
+        "readiness_status_counts",
+        "ready_capability_count",
+        "blocked_capability_count",
+        "diagnostic_only_capability_count",
+        "not_applicable_capability_count",
+        "mutation_ready_capability_count",
+        "mutation_ready_capability_ids",
+        "callable_but_unconsumed_capability_ids",
+        "n3_candidate_generation_allowed",
+        "n3_status",
+        "n4_status",
+        "artifact_reload_verified",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "runtime_code_invoked",
+        "replay_run",
+        "candidate_generation_run",
+        "candidate_count",
         "paper_shadow_enabled",
         "production_enabled",
         "broker_enabled",

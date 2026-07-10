@@ -1,0 +1,873 @@
+schema_version: growth_tilt_baseline_capability_graph_config.v1
+graph_id: growth_tilt_baseline_capability_graph_v1
+status: REVIEWED_READ_ONLY_INVENTORY
+owner: research_governance
+as_of: '2026-07-10'
+market_regime: ai_after_chatgpt
+source_task_id: TRADING-2438N2
+
+policy_metadata:
+  rationale: >
+    Inventory only the runtime and governed capabilities that the current
+    growth-tilt baseline actually exposes. Candidate discovery must not create
+    a missing baseline capability in order to make a candidate name executable.
+  intended_effect: >
+    Separate capability readiness from candidate-mutation readiness and route
+    N3 only when at least one capability passes every contract-first gate.
+  validation_evidence:
+    - docs/research/growth_tilt_owner_mapping_inventory.md
+    - docs/research/growth_tilt_baseline_contract_adapters_readiness.md
+    - docs/research/growth_tilt_replacement_candidate_contract.md
+  review_condition: >
+    Review after an independent baseline change alters a producer, consumption
+    path, PIT lineage, hard-veto aggregate, transition, exposure scalar,
+    replay binding, metric contract or mutable-dimension approval.
+
+allowed_capability_types:
+  - SIGNAL
+  - DECISION_REQUEST
+  - PERSISTENCE_RULE
+  - HARD_VETO
+  - REGIME_TRANSITION
+  - EXPOSURE_SCALAR
+  - EXPOSURE_CAP
+  - RAMP_RULE
+  - COOLDOWN_RULE
+  - EXPIRY_RULE
+  - METRIC
+  - REPLAY_RUNNER
+
+allowed_readiness_statuses:
+  - READY
+  - BLOCKED
+  - DIAGNOSTIC_ONLY
+  - NOT_APPLICABLE
+
+allowed_edge_relations:
+  - PRODUCES
+  - CONSUMED_BY
+  - GUARDED_BY
+  - REQUESTS
+  - APPLIES
+  - CAPS
+  - MEASURED_BY
+  - REPLAYED_BY
+  - SUPERSEDES
+
+mutation_ready_gate:
+  callable: true
+  consumed_by_baseline: true
+  pit_lineage_status: VALID
+  semantics_approved: true
+  explicit_missing_policy_required: true
+  runner_binding_required: true
+  mutable_dimension_count_minimum: 1
+  required_dependency_status: READY
+  callable_but_unconsumed_allowed: false
+  diagnostic_only_allowed: false
+  not_applicable_allowed: false
+
+nodes:
+  - capability_id: signal_re_risk_allowed_probability
+    capability_type: SIGNAL
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._compose_channel_predictions
+      output_path: outputs/research_trends/channel_specific_v3/channel_composer_v3_predictions.csv:re_risk_allowed_probability
+      callable: true
+      consumed_by_baseline: false
+      deterministic: true
+      schema_version: channel_specific_first_layer_v3_config.v1
+    pit:
+      lineage_status: BLOCKED_MISSING_PER_SIGNAL_AS_OF_AND_SOURCE_CUTOFF
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_signal_inventory.json
+        - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_recovery_permission_adapter.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D03
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [semantic_type, no_probability_interpretation]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: BLOCKED
+      blocker_codes:
+        - RECOVERY_PIT_LINEAGE_INVALID_OR_MISSING
+        - BASELINE_DOES_NOT_CONSUME_RECOVERY_PERMISSION
+
+  - capability_id: signal_growth_allowed
+    capability_type: SIGNAL
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._compose_channel_predictions
+      output_path: outputs/research_trends/channel_specific_v3/channel_composer_v3_predictions.csv:growth_allowed
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: channel_specific_first_layer_v3_config.v1
+    pit:
+      lineage_status: VALID
+      as_of_supported: true
+      source_refs:
+        - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_signal_inventory.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: config/research/channel_specific_first_layer_v3.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [boolean_semantics, hard_veto_precedence]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: signal_first_layer_trend_state
+    capability_type: SIGNAL
+    runtime:
+      producer_entrypoint: ai_trading_system.first_layer_composer_v2
+      output_path: outputs/research_trends/models/first_layer_composer_v2_predictions.csv:trend_state
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: first_layer_composer_v2.v1
+    pit:
+      lineage_status: VALID
+      as_of_supported: true
+      source_refs:
+        - inputs/research_reviews/growth_tilt_baseline_transition_trace_source.csv
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: config/research/first_layer_composer_v2.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [state_identity, declaration_order]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: []
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: hard_veto_risk_off
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._policy_compiler_dry_run
+      output_path: signal_state.risk_off_veto
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: risk_on_veto_policy.v1
+    pit:
+      lineage_status: BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_hard_veto_aggregate_adapter.json
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D11
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_remove, priority_before_candidate]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes: [BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS]
+
+  - capability_id: hard_veto_volatility
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._policy_compiler_dry_run
+      output_path: signal_state.volatility_veto
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: risk_on_veto_policy.v1
+    pit:
+      lineage_status: VALID
+      as_of_supported: true
+      source_refs: [config/research/channel_specific_first_layer_v3.yaml]
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: config/research/risk_on_veto_policy.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_remove, priority_before_candidate]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: hard_veto_event_risk
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: null
+      output_path: signal_state.event_risk_veto
+      callable: false
+      consumed_by_baseline: true
+      deterministic: null
+      schema_version: risk_on_veto_policy.v1
+    pit:
+      lineage_status: BLOCKED_NO_PIT_CONTRACT
+      as_of_supported: false
+      source_refs: [config/research/risk_on_veto_policy.yaml]
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D13
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_create, candidate_cannot_remove]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes: [BLOCKED_NO_PIT_CONTRACT]
+
+  - capability_id: hard_veto_trend_break
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: null
+      output_path: signal_state.trend_break_veto
+      callable: false
+      consumed_by_baseline: true
+      deterministic: null
+      schema_version: risk_on_veto_policy.v1
+    pit:
+      lineage_status: BLOCKED_NO_CALLABLE_PRODUCER
+      as_of_supported: false
+      source_refs: [config/research/risk_on_veto_policy.yaml]
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D12
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_create, candidate_cannot_remove]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes: [BLOCKED_NO_CALLABLE_PRODUCER]
+
+  - capability_id: hard_veto_tqqq
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._policy_compiler_dry_run
+      output_path: signal_state.tqqq_veto
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: base_overlay_veto_policy_schema.v1
+    pit:
+      lineage_status: VALID
+      as_of_supported: true
+      source_refs: [config/research/base_overlay_veto_policy_schema.yaml]
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: config/research/risk_on_veto_policy.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_remove, tqqq_increase_prohibited]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: hard_veto_aggregate
+    capability_type: HARD_VETO
+    runtime:
+      producer_entrypoint: ai_trading_system.research_quality.growth_tilt_baseline_contract_adapters.materialize_hard_veto_aggregate
+      output_path: growth_tilt_hard_veto_aggregate_trace.v1
+      callable: false
+      consumed_by_baseline: false
+      deterministic: true
+      schema_version: growth_tilt_hard_veto_aggregate_adapter.v1
+    pit:
+      lineage_status: BLOCKED_PARTIAL_COMPONENT_SET
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_hard_veto_aggregate_adapter.json
+      missing_policy: BLOCKED_NOT_FALSE
+    governance:
+      owner: research_governance
+      contract_ref: config/research/risk_on_veto_policy.yaml
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [component_identity, component_priority, candidate_cannot_remove]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids:
+        - hard_veto_risk_off
+        - hard_veto_volatility
+        - hard_veto_event_risk
+        - hard_veto_trend_break
+        - hard_veto_tqqq
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes:
+        - BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS
+        - BLOCKED_NO_PIT_CONTRACT
+        - BLOCKED_NO_CALLABLE_PRODUCER
+
+  - capability_id: decision_request_non_hard_defensive
+    capability_type: DECISION_REQUEST
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: null
+    pit:
+      lineage_status: NOT_APPLICABLE_CAPABILITY_ABSENT
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_confirmation_inventory.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D09
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_create]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: NOT_APPLICABLE
+      blocker_codes: [NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST]
+
+  - capability_id: persistence_recovery
+    capability_type: PERSISTENCE_RULE
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: null
+    pit:
+      lineage_status: NOT_APPLICABLE_CAPABILITY_ABSENT
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_signal_inventory.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D05
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_create_baseline_persistence]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: NOT_APPLICABLE
+      blocker_codes: [NO_GOVERNED_BASELINE_RECOVERY_PERSISTENCE_RULE]
+
+  - capability_id: transition_regime_current_requested_applied
+    capability_type: REGIME_TRANSITION
+    runtime:
+      producer_entrypoint: ai_trading_system.first_layer_composer_v2
+      output_path: first_layer_composer_v2_predictions.csv:trend_state
+      callable: false
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: growth_tilt_regime_transition_trace_adapter.v1
+    pit:
+      lineage_status: BLOCKED_CURRENT_ONLY_NO_REQUESTED_APPLIED_FIELDS
+      as_of_supported: true
+      source_refs:
+        - inputs/research_reviews/growth_tilt_baseline_transition_trace_source.csv
+        - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_regime_transition_trace_adapter.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D15-D17
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [current_requested_applied_identity, next_step_timing, priority]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: []
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: BLOCKED
+      blocker_codes:
+        - REQUESTED_TARGET_STATE_MISSING
+        - APPLIED_TARGET_STATE_MISSING
+
+  - capability_id: exposure_scalar_native
+    capability_type: EXPOSURE_SCALAR
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: growth_tilt_native_exposure_scalar_adapter.v1
+    pit:
+      lineage_status: BLOCKED_NO_GOVERNED_NATIVE_SCALAR
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_native_exposure_scalar_adapter.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D18
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [no_qqq_substitution, no_tqqq_multiplier_inference]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes: [BLOCKED_NO_GOVERNED_NATIVE_SCALAR]
+
+  - capability_id: exposure_cap_qqq_equivalent
+    capability_type: EXPOSURE_CAP
+    runtime:
+      producer_entrypoint: ai_trading_system.two_layer_policy_compiler._apply_caps
+      output_path: compiled_weights
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: base_overlay_veto_policy_schema.v1
+    pit:
+      lineage_status: VALID_CONFIG_BOUND
+      as_of_supported: true
+      source_refs: [config/research/base_overlay_veto_policy_schema.yaml:caps.QQQ_equivalent_exposure_max]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: config/research/base_overlay_veto_policy_schema.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [qqq_plus_3x_tqqq_cap_only, candidate_delta_prohibited]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: exposure_cap_turnover
+    capability_type: EXPOSURE_CAP
+    runtime:
+      producer_entrypoint: ai_trading_system.two_layer_policy_compiler.compile_two_layer_policy
+      output_path: compiled_weights
+      callable: true
+      consumed_by_baseline: true
+      deterministic: true
+      schema_version: base_overlay_veto_policy_schema.v1
+    pit:
+      lineage_status: VALID_CONFIG_BOUND
+      as_of_supported: true
+      source_refs: [config/research/base_overlay_veto_policy_schema.yaml:caps.turnover_max]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: config/research/base_overlay_veto_policy_schema.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [cap_value_until_separate_owner_review]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: []
+    readiness:
+      status: READY
+      blocker_codes: []
+
+  - capability_id: ramp_rule_recovery
+    capability_type: RAMP_RULE
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: null
+    pit:
+      lineage_status: NOT_APPLICABLE_CAPABILITY_ABSENT
+      as_of_supported: false
+      source_refs:
+        - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_exposure_unit_inventory.json
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml:D10
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_invent_ramp_rule]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: NOT_APPLICABLE
+      blocker_codes: [NO_GOVERNED_BASELINE_RECOVERY_RAMP_RULE]
+
+  - capability_id: cooldown_rule_transition
+    capability_type: COOLDOWN_RULE
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: null
+    pit:
+      lineage_status: NOT_APPLICABLE_CAPABILITY_ABSENT
+      as_of_supported: false
+      source_refs: [config/research/base_overlay_veto_policy_schema.yaml]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: null
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [candidate_cannot_invent_cooldown]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: NOT_APPLICABLE
+      blocker_codes: [NO_GOVERNED_BASELINE_TRANSITION_COOLDOWN_RULE]
+
+  - capability_id: expiry_rule_signal_validity
+    capability_type: EXPIRY_RULE
+    runtime:
+      producer_entrypoint: ai_trading_system.channel_specific_first_layer_v3._compose_channel_predictions
+      output_path: channel_composer_v3_predictions.csv:validity_days
+      callable: true
+      consumed_by_baseline: false
+      deterministic: true
+      schema_version: channel_specific_first_layer_v3_config.v1
+    pit:
+      lineage_status: BLOCKED_NO_BASELINE_EXPIRY_ACTION_TRACE
+      as_of_supported: false
+      source_refs: [config/research/channel_specific_first_layer_v3.yaml]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: config/research/channel_specific_first_layer_v3.yaml
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [diagnostic_validity_output_only]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: []
+    readiness:
+      status: DIAGNOSTIC_ONLY
+      blocker_codes:
+        - VALIDITY_DAYS_NOT_CONSUMED_AS_BASELINE_EXPIRY_ACTION
+        - BASELINE_EXPIRY_TRACE_MISSING
+
+  - capability_id: metric_contract_six_runtime_metrics
+    capability_type: METRIC
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: growth_tilt_candidate_replay_metric_contract.v1
+    pit:
+      lineage_status: BLOCKED_NO_CURRENT_RUN_VALUES
+      as_of_supported: false
+      source_refs: [config/research/growth_tilt_candidate_replay_metric_contract.yaml]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: growth_tilt_candidate_replay_metric_contract_v1
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [six_metric_identity, null_not_zero, empty_event_fail_closed]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: true
+      metric_refs:
+        - return_delta_vs_baseline
+        - max_drawdown_delta_vs_baseline
+        - turnover_delta_vs_baseline
+        - false_risk_off_delta
+        - missed_upside_delta
+        - whipsaw_delta
+    mutation_dependencies:
+      hard_veto_ids: []
+      transition_ids: []
+      exposure_ids: []
+    readiness:
+      status: BLOCKED
+      blocker_codes:
+        - METRIC_CONTRACT_PENDING_OWNER_PREREGISTRATION
+        - RUNTIME_METRIC_CALCULATORS_NOT_BOUND
+        - CURRENT_RUN_METRIC_VALUES_MISSING
+
+  - capability_id: replay_runner_candidate_overlay_executor
+    capability_type: REPLAY_RUNNER
+    runtime:
+      producer_entrypoint: ai_trading_system.research_quality.growth_tilt_candidate_overlay_executor.GrowthTiltCandidateOverlayExecutor.execute
+      output_path: growth_tilt_candidate_overlay_output.v1
+      callable: true
+      consumed_by_baseline: false
+      deterministic: true
+      schema_version: growth_tilt_candidate_overlay_input.v1
+    pit:
+      lineage_status: INPUT_CONTRACT_REQUIRES_PIT_SNAPSHOT
+      as_of_supported: true
+      source_refs: [src/ai_trading_system/research_quality/growth_tilt_candidate_overlay_executor.py]
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: GrowthTiltCandidateOverlayExecutor:v1
+      semantics_approved: true
+      mutable_dimensions: []
+      immutable_dimensions: [operation_dispatch_by_contract_not_candidate_name]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: DIAGNOSTIC_ONLY
+      blocker_codes:
+        - EXECUTOR_IS_NOT_A_PIT_REPLAY_RUNNER
+        - NO_APPROVED_CANDIDATE_RUNTIME_BINDING
+
+  - capability_id: replay_runner_growth_tilt_pit
+    capability_type: REPLAY_RUNNER
+    runtime:
+      producer_entrypoint: null
+      output_path: null
+      callable: false
+      consumed_by_baseline: false
+      deterministic: null
+      schema_version: growth_tilt_candidate_replay_runner.v1
+    pit:
+      lineage_status: BLOCKED_NO_CALLABLE_COMPUTE_PLANE
+      as_of_supported: false
+      source_refs:
+        - docs/research/growth_tilt_candidate_runtime_spec_threshold_policy_approval.md
+      missing_policy: BLOCKED
+    governance:
+      owner: research_governance
+      contract_ref: growth_tilt_candidate_replay_runner.v1
+      semantics_approved: false
+      mutable_dimensions: []
+      immutable_dimensions: [no_control_plane_as_compute_plane]
+    replay:
+      runner_binding: null
+      baseline_comparison_supported: false
+      metric_refs: []
+    mutation_dependencies:
+      hard_veto_ids: [hard_veto_aggregate]
+      transition_ids: [transition_regime_current_requested_applied]
+      exposure_ids: [exposure_scalar_native]
+    readiness:
+      status: BLOCKED
+      blocker_codes:
+        - CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED
+        - CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED
+
+edges:
+  - from_capability: signal_growth_allowed
+    to_capability: hard_veto_risk_off
+    relation: PRODUCES
+    runtime_resolvable: true
+    pit_valid: false
+  - from_capability: hard_veto_risk_off
+    to_capability: hard_veto_aggregate
+    relation: PRODUCES
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: hard_veto_volatility
+    to_capability: hard_veto_aggregate
+    relation: PRODUCES
+    runtime_resolvable: true
+    pit_valid: true
+  - from_capability: hard_veto_event_risk
+    to_capability: hard_veto_aggregate
+    relation: PRODUCES
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: hard_veto_trend_break
+    to_capability: hard_veto_aggregate
+    relation: PRODUCES
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: hard_veto_tqqq
+    to_capability: hard_veto_aggregate
+    relation: PRODUCES
+    runtime_resolvable: true
+    pit_valid: true
+  - from_capability: signal_re_risk_allowed_probability
+    to_capability: persistence_recovery
+    relation: REQUESTS
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: signal_first_layer_trend_state
+    to_capability: transition_regime_current_requested_applied
+    relation: REQUESTS
+    runtime_resolvable: false
+    pit_valid: true
+  - from_capability: hard_veto_aggregate
+    to_capability: transition_regime_current_requested_applied
+    relation: GUARDED_BY
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: transition_regime_current_requested_applied
+    to_capability: exposure_scalar_native
+    relation: APPLIES
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: exposure_cap_qqq_equivalent
+    to_capability: exposure_scalar_native
+    relation: CAPS
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: exposure_cap_turnover
+    to_capability: transition_regime_current_requested_applied
+    relation: CAPS
+    runtime_resolvable: true
+    pit_valid: true
+  - from_capability: transition_regime_current_requested_applied
+    to_capability: replay_runner_candidate_overlay_executor
+    relation: REPLAYED_BY
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: replay_runner_candidate_overlay_executor
+    to_capability: replay_runner_growth_tilt_pit
+    relation: CONSUMED_BY
+    runtime_resolvable: false
+    pit_valid: false
+  - from_capability: replay_runner_growth_tilt_pit
+    to_capability: metric_contract_six_runtime_metrics
+    relation: MEASURED_BY
+    runtime_resolvable: false
+    pit_valid: false
+
+safety_boundary:
+  read_only: true
+  baseline_behavior_change_allowed: false
+  candidate_generation_allowed: false
+  new_signal_integration_allowed: false
+  threshold_change_allowed: false
+  replay_allowed: false
+  runtime_metrics_allowed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  portfolio_weight_change_allowed: false
+  broker_action: none
+  production_effect: none
