@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_c_complete_phase_d_ready
+status: phase_d_complete_phase_e_ready
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,9 +30,9 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004C
+  current_phase: ARCH-004D
   current_phase_status: COMPLETE
-  next_phase: ARCH-004D
+  next_phase: ARCH-004E
   next_phase_unblocked: true
   predecessor_task_ids:
     - ARCH-001
@@ -230,6 +230,53 @@ phase_c_execution:
       warnings: 642
       elapsed_seconds: 817.35
       runtime_artifact: outputs/validation_runtime/full_20260710T181121Z/test_runtime_summary.json
+
+phase_d_execution:
+  task_id: ARCH-004D_REFERENCE_VERTICAL_SLICE
+  status: COMPLETE
+  requirement_path: docs/requirements/ARCH-004D_Reference_Vertical_Slice.md
+  reference_slice: growth_tilt_candidate_family_closure
+  source_task_id: TRADING-2438N1
+  selection_basis:
+    terminal_closed: true
+    read_only: true
+    production_effect: none
+    replay_run: false
+    characterization_complete: true
+  stages:
+    D1_characterization_and_typed_spec: COMPLETE
+    D2_generic_runner_and_plugin_interfaces: COMPLETE
+    D3_reference_plugin_and_legacy_facade: COMPLETE
+    D4_envelope_ledger_report_integration: COMPLETE
+    D5_parity_proof_and_closeout: COMPLETE
+  old_cli_and_artifact_parity_required: true
+  new_task_id_python_module_allowed: false
+  strategy_or_research_conclusion_change_allowed: false
+  next_phase_unblocked: true
+  completion_validation:
+    focused:
+      status: PASS
+      passed: 77
+    scoped_mypy:
+      status: PASS
+    architecture_gate:
+      status: PASS
+      scanned_python_files: 775
+      frozen_direct_writer_calls: 894
+      current_direct_writer_calls: 893
+      violations: 0
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 34.92
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T185847Z/test_runtime_summary.json
+    full_parallel_validation:
+      status: PASS
+      passed: 5411
+      failed: 0
+      warnings: 643
+      elapsed_seconds: 812.2
+      runtime_artifact: outputs/validation_runtime/full_20260710T185928Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

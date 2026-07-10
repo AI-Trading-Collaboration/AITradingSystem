@@ -37,6 +37,9 @@ frozen_sources:
   - contract_id: artifact_catalog
     path: docs/artifact_catalog.md
     sha256: 063f90949f73c1836c6479b4926f82964a33f7eb841bec4c1a196f5ce0dcf61a
+    historical_phase_a_hash: true
+    superseded_by_phase: ARCH-004D
+    current_hash_tracked_in: phase_d_reference_vertical_slice.sources
   - contract_id: scheduled_tasks
     path: config/scheduled_tasks.yaml
     sha256: 8b5729f3f19f734581d3761cab50c0eaf4aa1dc2d9bc5f803d7359b05a40676a
@@ -253,3 +256,76 @@ phase_c_platform_contracts:
       warnings: 642
       elapsed_seconds: 817.35
       runtime_artifact: outputs/validation_runtime/full_20260710T181121Z/test_runtime_summary.json
+
+phase_d_reference_vertical_slice:
+  status: COMPLETE_PHASE_E_READY
+  as_of: 2026-07-11
+  reference_slice: growth_tilt_candidate_family_closure
+  source_task_id: TRADING-2438N1
+  repository_inventory:
+    python_module_count_including_ignored: 775
+    python_test_file_count: 1106
+  architecture:
+    experiment_spec_schema: experiment_spec.v1
+    application_runner: ai_trading_system.research_framework.runner:run_experiment
+    calculator_plugin: growth_tilt_candidate_family_closure_calculator:v1
+    report_plugin: growth_tilt_candidate_family_closure_report:v1
+    legacy_facade: ai_trading_system.dynamic_strategy_growth_tilt_candidate_family_closure
+    second_same_plugin_spec_without_python_module: PASS
+  parity:
+    cli_name_options_exit: PASS
+    primary_json_path_schema_status_bytes: PASS
+    negative_ledger_path_schema_status_bytes: PASS
+    markdown_path_bytes_and_interpretation: PASS
+    strict_missing_source_error: PASS
+    production_and_broker_boundary: PASS
+  additive_sidecars:
+    artifact_envelope: artifact_envelope.v1
+    run_ledger: run_ledger.v1
+    data_quality_required: false
+    data_quality_pass_fabricated: false
+  sources:
+    - path: src/ai_trading_system/research_framework/__init__.py
+      sha256: 38dc6ee085dcc579da4d9740b87bed023960d442a63cd818092e97c12dc20fa1
+    - path: src/ai_trading_system/research_framework/spec.py
+      sha256: dd669c4aa61ce473178269ecc6e6e547f77ad14a5776bc2c9fab33c6d1728d1f
+    - path: src/ai_trading_system/research_framework/runner.py
+      sha256: 84118a7baa1e3973a81918546638e798d332f7a919851a1affe81a4c45b14c24
+    - path: src/ai_trading_system/research_framework/plugins/__init__.py
+      sha256: d26d66a02145dfd74279a9e379ab9d60e2e46efdaa39aeb6ba3844a759dd3fc2
+    - path: src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
+      sha256: 1c8f7e9652d3463b2b9fc1b2652e8efc64c8fb6f45e492781161dcb4040232a2
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_candidate_family_closure.py
+      sha256: 912c3398be88617e749819b383f50a52213ebcf0ba52d36026c90b30d3cfbb43
+    - path: config/research/experiments/growth_tilt_candidate_family_closure.yaml
+      sha256: 52e64cc96b1c4775b434021f31a683032d0452b4a513fc3d11286bedd4208404
+    - path: tests/test_arch_004d_reference_vertical_slice.py
+      sha256: 6a701b5d58ab1d1a147b5bd598b4e720669889661b3a0d6dc0810a525d58126b
+    - path: docs/artifact_catalog.md
+      sha256: 9c0fbe6cc8844c8f877ea80dc7b4cf9fc9ac15f38eecbcb6afe9847ff7061cd4
+    - path: docs/system_flow.md
+      sha256: 243b98aba2a5007d3d481bbc9cbaa0409365a175bfc4d3c3617c50db0a69e948
+  validation:
+    focused:
+      status: PASS
+      passed: 77
+    scoped_mypy:
+      status: PASS
+    architecture_gate:
+      status: PASS
+      scanned_python_files: 775
+      direct_writer_baseline: 894
+      direct_writer_current: 893
+      violations: 0
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 34.92
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T185847Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5411
+      failed: 0
+      warnings: 643
+      elapsed_seconds: 812.2
+      runtime_artifact: outputs/validation_runtime/full_20260710T185928Z/test_runtime_summary.json

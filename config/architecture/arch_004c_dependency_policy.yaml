@@ -45,6 +45,14 @@ layer_rules:
       - ai_trading_system.scheduled_tasks
       - ai_trading_system.backtest
     remediation: Depend on contracts/core/utilities; move compatibility logic to legacy adapters.
+  - rule_id: GENERIC_RESEARCH_RUNNER_REFERENCE_DEPENDENCY_FORBIDDEN
+    path_prefix: src/ai_trading_system/research_framework/runner.py
+    owner: research_platform
+    forbidden_import_prefixes:
+      - ai_trading_system.dynamic_strategy_growth_tilt_candidate_family_closure
+      - ai_trading_system.research_quality.growth_tilt_candidate_family_closure
+      - ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure
+    remediation: Keep reference-specific calculation and rendering behind the plugin registry.
 direct_writer_ratchet:
   rule_id: NEW_DIRECT_ARTIFACT_WRITER_FORBIDDEN
   owner: platform_io

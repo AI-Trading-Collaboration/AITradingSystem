@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_C_COMPLETE
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_D_COMPLETE
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -16,6 +16,8 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004C_Platform_Contracts.md
   - docs/architecture/arch_004_phase_b_semantic_kernel.md
   - docs/architecture/arch_004_phase_c_platform_contracts.md
+  - docs/architecture/arch_004_phase_d_reference_vertical_slice.md
+  - docs/requirements/ARCH-004D_Reference_Vertical_Slice.md
   - docs/system_flow.md
   - inputs/architecture/arch_004_compatibility_baseline.yaml
   - inputs/architecture/arch_004_predecessor_reconciliation.yaml
@@ -44,6 +46,13 @@ arch_004_owned_paths:
   - src/ai_trading_system/research_governance.py
   - src/ai_trading_system/run_artifacts.py
   - src/ai_trading_system/data/quality.py
+  - src/ai_trading_system/research_framework/__init__.py
+  - src/ai_trading_system/research_framework/spec.py
+  - src/ai_trading_system/research_framework/runner.py
+  - src/ai_trading_system/research_framework/plugins/__init__.py
+  - src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_candidate_family_closure.py
+  - config/research/experiments/growth_tilt_candidate_family_closure.yaml
   - config/architecture/arch_004c_dependency_policy.yaml
   - inputs/architecture/arch_004c_direct_writer_baseline.yaml
   - scripts/validate_architecture_dependencies.py
@@ -56,6 +65,7 @@ arch_004_owned_paths:
   - tests/test_arch_004c_config_resolver.py
   - tests/test_arch_004c_platform_adapters.py
   - tests/test_arch_004c_dependency_gate.py
+  - tests/test_arch_004d_reference_vertical_slice.py
 
 shared_but_attributable_paths:
   - path: docs/task_register.md
@@ -65,6 +75,7 @@ shared_but_attributable_paths:
       - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
       - ARCH-004B_SEMANTIC_KERNEL
       - ARCH-004C_PLATFORM_CONTRACTS
+      - ARCH-004D_REFERENCE_VERTICAL_SLICE
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW

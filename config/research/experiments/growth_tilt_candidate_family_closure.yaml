@@ -1,0 +1,108 @@
+schema_version: experiment_spec.v1
+experiment_id: growth_tilt_candidate_family_closure
+spec_version: growth_tilt_candidate_family_closure.experiment.v1
+status: active_reference_slice
+owner: research_governance
+task_register_id: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+calculator_plugin:
+  plugin_id: growth_tilt_candidate_family_closure_calculator
+  version: v1
+report_plugin:
+  plugin_id: growth_tilt_candidate_family_closure_report
+  version: v1
+inputs:
+  - input_id: m1e
+    document_kind: structured
+    role: prior_replacement_candidate_contract
+    required: true
+    default_path: outputs/research_strategies/growth_tilt_replacement_candidate_contract/growth_tilt_replacement_candidate_contract.json
+  - input_id: adapters
+    document_kind: structured
+    role: prior_baseline_adapter_readiness
+    required: true
+    default_path: outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_baseline_contract_adapters_readiness.json
+  - input_id: owner_resolution
+    document_kind: structured
+    role: owner_decision_provenance
+    required: true
+    default_path: inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml
+  - input_id: candidate_set
+    document_kind: structured
+    role: governed_candidate_set
+    required: true
+    default_path: research/configs/growth_tilt/false_risk_off_missed_upside_2433.yaml
+  - input_id: report_registry
+    document_kind: structured
+    role: report_registration_contract
+    required: true
+    default_path: config/report_registry.yaml
+  - input_id: requirement_text
+    document_kind: text
+    role: requirement_contract
+    required: true
+    default_path: docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md
+  - input_id: artifact_catalog_text
+    document_kind: text
+    role: artifact_catalog_contract
+    required: true
+    default_path: docs/artifact_catalog.md
+  - input_id: system_flow_text
+    document_kind: text
+    role: system_flow_contract
+    required: true
+    default_path: docs/system_flow.md
+outputs:
+  - output_id: primary
+    artifact_kind: primary_json
+    root: output
+    filename: growth_tilt_candidate_family_closure.json
+    artifact_path_key: json_path
+  - output_id: negative_result_ledger
+    artifact_kind: section_json
+    root: output
+    filename: growth_tilt_candidate_negative_result_ledger.json
+    artifact_path_key: negative_result_ledger_path
+    payload_key: negative_result_ledger
+    section_report_type: negative_result_ledger
+  - output_id: reader_markdown
+    artifact_kind: markdown
+    root: docs
+    filename: growth_tilt_candidate_family_closure.md
+    artifact_path_key: markdown_path
+  - output_id: envelope
+    artifact_kind: envelope_json
+    root: output
+    filename: growth_tilt_candidate_family_closure.envelope.json
+  - output_id: run_ledger
+    artifact_kind: run_ledger_json
+    root: output
+    filename: growth_tilt_candidate_family_closure.run_ledger.json
+legacy_status_mappings:
+  - legacy_status: GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE
+    canonical_status: PASS
+  - legacy_status: GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_BLOCKED_SOURCE_CONTRACT
+    canonical_status: BLOCKED
+report:
+  report_id: growth_tilt_candidate_family_closure
+  title: Growth Tilt Candidate Family Closure
+  audience: researcher
+  reader_tier: research_review_pack
+  cadence: manual
+  canonical_source: ai_trading_system.research_quality.growth_tilt_candidate_family_closure:build_growth_tilt_candidate_family_closure
+  section_provider: ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure:negative_result_ledger_section
+  view_model: ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure:growth_tilt_family_closure_view_model
+  renderer: ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure:render_growth_tilt_family_closure_markdown
+  artifact_globs:
+    - outputs/research_strategies/growth_tilt_candidate_family_closure/growth_tilt_candidate_family_closure.json
+    - outputs/research_strategies/growth_tilt_candidate_family_closure/growth_tilt_candidate_negative_result_ledger.json
+    - docs/research/growth_tilt_candidate_family_closure.md
+  freshness_sla_days: 0
+  owner_action: reopen_only_after_independent_baseline_evidence_and_owner_reapproval
+  actionable: false
+  lifecycle: CURRENT
+strict_default: false
+data_quality_required: false
+investment_facing_envelope: false
+manual_review_required: true
+production_effect: none
+broker_action: none
