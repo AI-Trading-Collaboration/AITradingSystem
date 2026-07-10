@@ -1,4 +1,5 @@
 # TRADING-2438M1D Growth Tilt Baseline Contract Decision Pack and Implementation Plan
+最后更新：2026-07-10
 
 **Document date:** 2026-07-10  
 **Base commit:** `407720dc38832ecaa685388170caede10756646f`  

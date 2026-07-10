@@ -1,16 +1,16 @@
 # Growth Tilt Candidate Research Contract Approval
 
 - task_id: `TRADING-2438M1`
-- status: `GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_BLOCKED`
+- status: `GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVED`
 - requested date: `2026-07-08`
 - market regime: `ai_after_chatgpt`
-- next route: `TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL`
+- next route: `TRADING-2438N_GROWTH_TILT_NO_APPROVED_CANDIDATE_DISPOSITION`
 
 M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不修改 candidate parameters 或 threshold values。selection order 来自 config declaration order，不代表业绩排名。M2 只接收 contract 完整的 APPROVE 候选；REDEFINE/WITHDRAW 不阻断其他候选，但自身不得进入 replay。
 
 ```json
 {
-  "approved_candidate_count": 1,
+  "approved_candidate_count": 0,
   "as_of": "2026-07-08",
   "candidate_count": 3,
   "data_quality_status": "NOT_APPLICABLE_PRIOR_VALIDATED_ARTIFACTS_CONFIG_OWNER_REVIEW_ONLY",
@@ -18,23 +18,19 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
   "m2_eligible_candidate_ids": [],
   "market_regime": "ai_after_chatgpt",
   "metric_contract_ready_count": 0,
-  "next_route": "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL",
+  "next_route": "TRADING-2438N_GROWTH_TILT_NO_APPROVED_CANDIDATE_DISPOSITION",
   "owner_decision_complete_count": 3,
-  "owner_input_gap_count": 3,
-  "owner_input_gaps_by_code": {
-    "OWNER_RUNTIME_SPEC_INCOMPLETE": 1,
-    "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE": 1,
-    "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE": 1
-  },
+  "owner_input_gap_count": 0,
+  "owner_input_gaps_by_code": {},
   "pending_candidate_count": 0,
   "performance_ranked": false,
   "redefine_candidate_count": 2,
   "runtime_spec_ready_count": 0,
   "selection_basis": "CONFIG_DECLARATION_ORDER",
   "source_status": "GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION_BLOCKED",
-  "status": "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_BLOCKED",
+  "status": "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVED",
   "threshold_policy_ready_count": 0,
-  "withdraw_candidate_count": 0
+  "withdraw_candidate_count": 1
 }
 ```
 
@@ -44,16 +40,12 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
 [
   {
     "candidate_id": "recovery_reentry_speedup_guard",
-    "decision": "APPROVE",
-    "gap_codes": [
-      "OWNER_RUNTIME_SPEC_INCOMPLETE",
-      "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE",
-      "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE"
-    ],
+    "decision": "REDEFINE",
+    "gap_codes": [],
     "m2_eligible": false,
     "metric_contract_ready": false,
     "performance_ranked": false,
-    "review_status": "APPROVAL_CONTRACT_BLOCKED",
+    "review_status": "REDEFINED_SECOND_OWNER_APPROVAL_REQUIRED",
     "runtime_spec_ready": false,
     "selection_basis": "CONFIG_DECLARATION_ORDER",
     "selection_order": 1,
@@ -61,12 +53,12 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
   },
   {
     "candidate_id": "false_risk_off_confirmation_relaxation",
-    "decision": "REDEFINE",
+    "decision": "WITHDRAW",
     "gap_codes": [],
     "m2_eligible": false,
     "metric_contract_ready": false,
     "performance_ranked": false,
-    "review_status": "REDEFINED_SECOND_OWNER_APPROVAL_REQUIRED",
+    "review_status": "WITHDRAWN",
     "runtime_spec_ready": false,
     "selection_basis": "CONFIG_DECLARATION_ORDER",
     "selection_order": 2,
@@ -92,35 +84,10 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
 
 ```json
 {
-  "actions": [
-    {
-      "broker_action": "none",
-      "candidate_id": "recovery_reentry_speedup_guard",
-      "field_path": "runtime_spec",
-      "gap_code": "OWNER_RUNTIME_SPEC_INCOMPLETE",
-      "production_effect": "none",
-      "recommended_action": "Resolve runtime fields/placeholders: applicable_regime_ids[0], baseline_mapping_status, governed_transition_scope_inventory_status, hard_veto_ids[0], hard_veto_ids_complete_callable_pit_set, hard_veto_set_inventory_status, parameters.lagging_soft_confirmation_id, parameters.recovery_persistence_contract_id, parameters.recovery_persistence_inventory_status_invariant, parameters.recovery_signal_inventory_status_invariant, qqq_equivalent_binding_inventory_status."
-    },
-    {
-      "broker_action": "none",
-      "candidate_id": "recovery_reentry_speedup_guard",
-      "field_path": "metric_contract_ref",
-      "gap_code": "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE",
-      "production_effect": "none",
-      "recommended_action": "Approve the shared metric contract: empty_event_policy_unresolved, metric_contract_not_owner_approved, relative_delta_epsilon_policy_unresolved."
-    },
-    {
-      "broker_action": "none",
-      "candidate_id": "recovery_reentry_speedup_guard",
-      "field_path": "threshold_policy_ref",
-      "gap_code": "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE",
-      "production_effect": "none",
-      "recommended_action": "Preregister the candidate screening policy: candidate_thresholds_not_owner_preregistered, threshold_policy_approved_at_missing, threshold_policy_approved_commit_missing, threshold_policy_not_owner_approved, threshold_policy_source_hash_missing."
-    }
-  ],
-  "open_action_count": 3,
+  "actions": [],
+  "open_action_count": 0,
   "schema_version": "growth_tilt_runtime_spec_owner_action_checklist.v2",
-  "status": "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_BLOCKED"
+  "status": "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVED"
 }
 ```
 

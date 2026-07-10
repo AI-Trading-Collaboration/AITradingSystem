@@ -38,27 +38,29 @@ THRESHOLD_POLICY_PATH = Path(
 )
 
 
-def test_tracked_owner_review_records_mixed_decisions_but_remains_blocked() -> None:
+def test_tracked_owner_review_records_resolved_zero_approval_disposition() -> None:
     payload = _build(_owner_review(), _metric_contract(), _threshold_policy())
 
-    assert payload["status"] == approval.BLOCKED_STATUS
+    assert payload["status"] == approval.READY_STATUS
     assert payload["candidate_ids"] == CANDIDATE_IDS
     assert payload["selection_basis"] == "CONFIG_DECLARATION_ORDER"
     assert payload["performance_ranked"] is False
     assert payload["owner_decision_complete_count"] == 3
-    assert payload["approved_candidate_count"] == 1
+    assert payload["approved_candidate_count"] == 0
     assert payload["redefine_candidate_count"] == 2
+    assert payload["withdraw_candidate_count"] == 1
     assert payload["pending_candidate_count"] == 0
     assert payload["runtime_spec_ready_count"] == 0
     assert payload["metric_contract_ready_count"] == 0
     assert payload["threshold_policy_ready_count"] == 0
     assert payload["m2_eligible_candidate_count"] == 0
-    assert payload["owner_input_gap_count"] == 3
-    assert payload["recommended_next_research_task"] == approval.NEXT_ROUTE_BLOCKED
+    assert payload["owner_input_gap_count"] == 0
+    assert payload["recommended_next_research_task"] == approval.NEXT_ROUTE_NO_APPROVED
     assert payload["strict_validation_errors"] == []
-    assert payload["candidate_reviews"][1]["review_status"] == (
+    assert payload["candidate_reviews"][0]["review_status"] == (
         "REDEFINED_SECOND_OWNER_APPROVAL_REQUIRED"
     )
+    assert payload["candidate_reviews"][1]["review_status"] == "WITHDRAWN"
 
 
 def test_complete_a_b_contracts_are_ready_while_c_redefine_is_excluded() -> None:
@@ -128,18 +130,19 @@ def test_redefinition_requires_orthogonal_post_confirmation_contract() -> None:
     assert payload["recommended_next_research_task"] == approval.NEXT_ROUTE_DECISION
 
 
-def test_tracked_candidate_b_redefinition_is_orthogonal_but_not_m2_eligible() -> None:
+def test_tracked_candidate_b_is_withdrawn_and_not_m2_eligible() -> None:
     payload = _build(_owner_review(), _metric_contract(), _threshold_policy())
     row = payload["candidate_reviews"][1]
 
-    assert row["decision"] == "REDEFINE"
+    assert row["decision"] == "WITHDRAW"
     assert row["redefinition_ready"] is True
-    assert row["review_status"] == "REDEFINED_SECOND_OWNER_APPROVAL_REQUIRED"
+    assert row["review_status"] == "WITHDRAWN"
     assert row["m2_eligible"] is False
 
 
 def test_candidate_b_redefinition_cannot_add_more_than_one_persistence_step() -> None:
     review = _owner_review()
+    review["candidate_reviews"][1] = _redefined_b_review_fixture()
     review["candidate_reviews"][1]["redefinition"]["proposed_parameters"][
         "maximum_added_steps"
     ] = 2
@@ -147,6 +150,19 @@ def test_candidate_b_redefinition_cannot_add_more_than_one_persistence_step() ->
 
     assert payload["candidate_reviews"][1]["redefinition_ready"] is False
     assert approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][1][
+        "gap_codes"
+    ]
+
+
+def test_candidate_a_redefinition_cannot_extend_beyond_one_active_step() -> None:
+    review = _owner_review()
+    review["candidate_reviews"][0]["redefinition"]["proposed_parameters"][
+        "maximum_active_steps"
+    ] = 2
+    payload = _build(review, _metric_contract(), _threshold_policy())
+
+    assert payload["candidate_reviews"][0]["redefinition_ready"] is False
+    assert approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][0][
         "gap_codes"
     ]
 
@@ -454,7 +470,7 @@ def test_dynamic_runner_writes_mixed_decision_artifacts(tmp_path: Path) -> None:
         strict=True,
     )
 
-    assert payload["status"] == approval.BLOCKED_STATUS
+    assert payload["status"] == approval.READY_STATUS
     for filename in (
         "approval_readiness_result.json",
         "candidate_runtime_spec_review_matrix.json",
@@ -528,9 +544,10 @@ def test_cli_realistic_mixed_decision_run(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
-    assert approval.BLOCKED_STATUS in result.output
-    assert "approved_candidate_count=1" in result.output
+    assert approval.READY_STATUS in result.output
+    assert "approved_candidate_count=0" in result.output
     assert "redefine_candidate_count=2" in result.output
+    assert "withdraw_candidate_count=1" in result.output
     assert "m2_eligible_candidate_count=0" in result.output
     assert "performance_ranked=false" in result.output
 
@@ -609,6 +626,7 @@ def _threshold_policy() -> dict[str, Any]:
 
 def _complete_inputs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     review = _owner_review()
+    review["candidate_reviews"][0] = _approved_a_review_fixture()
     review["candidate_reviews"][1] = _approved_b_review_fixture()
     a_spec = review["candidate_reviews"][0]["runtime_spec"]
     a_spec["parameters"].update(
@@ -662,6 +680,68 @@ def _complete_inputs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     for candidate in policy["candidate_thresholds"]:
         candidate["approval_dependency"] = "APPROVED"
     return review, metric, policy
+
+
+def _approved_a_review_fixture() -> dict[str, Any]:
+    return {
+        "candidate_id": "recovery_reentry_speedup_guard",
+        "selection_order": 1,
+        "selection_basis": "CONFIG_DECLARATION_ORDER",
+        "decision": "APPROVE",
+        "decision_owner": "fixture_owner",
+        "decision_version": "fixture.v1",
+        "decision_timestamp": "2026-07-10T00:00:00+09:00",
+        "decision_rationale": "Fixture for validator coverage of the historical A operation.",
+        "review_condition": "Fixture review condition.",
+        "expiry_condition": "Fixture expiry condition.",
+        "next_route": approval.NEXT_ROUTE_BLOCKED,
+        "runtime_spec": {
+            "candidate_role": "RECOVERY_REENTRY_TIMING_ACCELERATOR",
+            "baseline_config_ref": (
+                "config/research/equal_risk_growth_tilt_candidate_registry.yaml"
+            ),
+            "baseline_mapping_status": "BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING",
+            "operation_type": "EARLY_REENTRY_PROVISIONAL_EXPOSURE",
+            "parameters": {
+                "recovery_signal_id": "OWNER_MUST_MAP_TO_EXISTING_SIGNAL",
+                "recovery_signal_inventory_status": "UNRESOLVED",
+                "recovery_persistence_contract_id": "OWNER_MUST_MAP_TO_GOVERNED_RULE",
+                "recovery_persistence_inventory_status": "UNRESOLVED",
+                "lagging_soft_confirmation_id": "OWNER_MUST_SELECT_EXACTLY_ONE",
+                "lead_steps": 1,
+                "baseline_transition_state": "defensive",
+                "provisional_target_state": "neutral",
+                "excluded_source_state": "risk_off",
+                "provisional_exposure_fraction_of_remaining_gap": 0.25,
+                "provisional_exposure_absolute_cap": 0.05,
+                "provisional_exposure_unit": "QQQ_EQUIVALENT_WEIGHT",
+                "max_active_steps": 2,
+                "confirmed_state_ramp_multiplier": 1.0,
+                "target_exposure_override_allowed": False,
+                "hard_veto_bypass_allowed": False,
+            },
+            "hard_veto_ids": ["OWNER_MUST_MAP_ALL_BASELINE_HARD_VETOES"],
+            "hard_veto_set_inventory_status": "INCOMPLETE_CALLABLE_PIT_VALID_SET",
+            "applicable_regime_ids": ["OWNER_MUST_SET_NON_WILDCARD_SCOPE"],
+            "governed_transition_scope_inventory_status": "UNRESOLVED",
+            "qqq_equivalent_binding_inventory_status": "UNRESOLVED",
+            "expiry_conditions": ["maximum_active_steps_reached"],
+            "rollback_conditions": ["return_to_baseline_path"],
+        },
+        "executor_mapping": {
+            "executor_family": "GrowthTiltCandidateOverlayExecutor",
+            "operation_type": "EARLY_REENTRY_PROVISIONAL_EXPOSURE",
+            "planned_entrypoint": (
+                "ai_trading_system.research_quality."
+                "growth_tilt_candidate_overlay_executor."
+                "GrowthTiltCandidateOverlayExecutor"
+            ),
+            "input_contract_version": "growth_tilt_candidate_overlay_input.v1",
+            "output_contract_version": "growth_tilt_candidate_overlay_output.v1",
+        },
+        "metric_contract_ref": "growth_tilt_candidate_replay_metric_contract_v1",
+        "threshold_policy_ref": "growth_tilt_candidate_pit_screening_policy_v1",
+    }
 
 
 def _approved_b_review_fixture() -> dict[str, Any]:
@@ -718,6 +798,55 @@ def _approved_b_review_fixture() -> dict[str, Any]:
         },
         "metric_contract_ref": "growth_tilt_candidate_replay_metric_contract_v1",
         "threshold_policy_ref": "growth_tilt_candidate_pit_screening_policy_v1",
+    }
+
+
+def _redefined_b_review_fixture() -> dict[str, Any]:
+    return {
+        "candidate_id": "false_risk_off_confirmation_relaxation",
+        "selection_order": 2,
+        "selection_basis": "CONFIG_DECLARATION_ORDER",
+        "decision": "REDEFINE",
+        "decision_owner": "fixture_owner",
+        "decision_version": "fixture.v1",
+        "decision_timestamp": "2026-07-10T00:00:00+09:00",
+        "decision_rationale": "Fixture for the superseded B redefinition validator.",
+        "review_condition": "Fixture review condition.",
+        "expiry_condition": "Fixture expiry condition.",
+        "next_route": approval.NEXT_ROUTE_DECISION,
+        "redefinition": {
+            "old_candidate_id": "false_risk_off_confirmation_relaxation",
+            "proposed_candidate_id": "non_hard_defensive_entry_persistence_guard",
+            "overlap_with": "BASELINE_NON_HARD_DEFENSIVE_ENTRY_REQUEST",
+            "old_semantics_rejected_reason": (
+                "NO_EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION"
+            ),
+            "new_candidate_role": "NON_HARD_DEFENSIVE_ENTRY_PERSISTENCE_GUARD",
+            "changes_trigger_timing": True,
+            "changes_ramp_speed": False,
+            "changes_soft_component": False,
+            "changes_aggregate_non_hard_request_persistence": True,
+            "rationale": "Test only the aggregate non-hard request persistence axis.",
+            "proposed_parameters": {
+                "trigger_source": (
+                    "EXACT_BASELINE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST"
+                ),
+                "candidate_required_steps_expression": (
+                    "baseline_required_steps_plus_one"
+                ),
+                "maximum_added_steps": 1,
+                "changes_soft_component": False,
+                "changes_aggregate_non_hard_request_persistence": True,
+                "hard_veto_bypass_allowed": False,
+                "auto_extension_allowed": False,
+                "exposure_above_pre_request_baseline_allowed": False,
+                "aggregate_request_contract_status": (
+                    "BLOCKED_NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST"
+                ),
+            },
+            "second_owner_approval_required": True,
+            "future_reopen_condition": "Only after the baseline contract exists.",
+        },
     }
 
 

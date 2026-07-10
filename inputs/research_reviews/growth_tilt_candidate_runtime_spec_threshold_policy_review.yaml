@@ -1,8 +1,8 @@
 schema_version: growth_tilt_candidate_runtime_spec_threshold_policy_review.v2
 task_id: TRADING-2438M1
-last_updated_by_task_id: TRADING-2438M1C
-status: BLOCKED_OWNER_INPUT
-owner_review_status: DECISIONS_RECORDED_CONTRACT_MAPPINGS_PENDING
+last_updated_by_task_id: TRADING-2438M1D1A
+status: DECISIONS_RESOLVED_NO_APPROVED_CANDIDATES
+owner_review_status: A_REDEFINED_B_WITHDRAWN_C_REDEFINED_M2_EMPTY
 source_task_id: TRADING-2438M
 as_of: '2026-07-08'
 market_regime: ai_after_chatgpt
@@ -23,98 +23,59 @@ candidate_reviews:
   - candidate_id: recovery_reentry_speedup_guard
     selection_order: 1
     selection_basis: CONFIG_DECLARATION_ORDER
-    decision: APPROVE
+    decision: REDEFINE
     decision_owner: project_owner_via_codex_task
-    decision_version: 1.0.0
+    decision_version: 2.0.0
     decision_timestamp: '2026-07-10T00:00:00+09:00'
-    decision_rationale: Approve a bounded experiment that begins re-entry one evaluation step early without changing the confirmed-state ramp speed.
-    review_condition: Review after the first complete PIT replay or any contract dependency change.
-    expiry_condition: Expires after one completed PIT replay round or any candidate semantic change.
-    next_route: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
-    runtime_spec:
-      candidate_role: RECOVERY_REENTRY_TIMING_ACCELERATOR
-      baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
-      baseline_mapping_status: BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING
-      operation_type: EARLY_REENTRY_PROVISIONAL_EXPOSURE
-      parameters:
-        recovery_signal_id: re_risk_allowed_probability
-        recovery_signal_inventory_status: PRODUCER_CALLABLE_SEMANTICS_REGISTERED_PIT_LINEAGE_AND_BASELINE_BINDING_UNRESOLVED
-        recovery_persistence_contract_id: OWNER_MUST_MAP_TO_GOVERNED_BASELINE_RULE
-        recovery_persistence_inventory_status: UNRESOLVED
-        lagging_soft_confirmation_id: OWNER_MUST_SELECT_EXACTLY_ONE
-        lead_steps: 1
-        baseline_transition_state: defensive
-        provisional_target_state: neutral
-        excluded_source_state: risk_off
-        provisional_exposure_fraction_of_remaining_gap: 0.25
-        provisional_exposure_absolute_cap: 0.05
-        provisional_exposure_unit: QQQ_EQUIVALENT_WEIGHT
-        max_active_steps: 2
-        confirmed_state_ramp_multiplier: 1.0
-        target_exposure_override_allowed: false
-        hard_veto_bypass_allowed: false
-      hard_veto_ids:
-        - OWNER_MUST_MAP_ALL_BASELINE_HARD_VETOES
-      hard_veto_set_inventory_status: INCOMPLETE_CALLABLE_PIT_VALID_SET
-      hard_veto_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-veto-inventory
-      applicable_regime_ids:
-        - OWNER_MUST_SET_NON_WILDCARD_SCOPE
-      governed_transition_scope_inventory_status: UNRESOLVED
-      regime_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-regime-inventory
-      qqq_equivalent_binding_inventory_status: UNRESOLVED
-      expiry_conditions:
-        - baseline_recovery_fully_confirmed
-        - core_recovery_signal_false
-        - any_hard_veto_active
-        - max_active_steps_reached
-        - owner_approved_expiry_reached
-        - input_provenance_or_pit_validity_failed
-      rollback_conditions:
-        - return_to_baseline_prescribed_exposure_path
-        - emit_rollback_reason_code
-    executor_mapping:
-      executor_family: GrowthTiltCandidateOverlayExecutor
-      operation_type: EARLY_REENTRY_PROVISIONAL_EXPOSURE
-      planned_entrypoint: ai_trading_system.research_quality.growth_tilt_candidate_overlay_executor.GrowthTiltCandidateOverlayExecutor
-      input_contract_version: growth_tilt_candidate_overlay_input.v1
-      output_contract_version: growth_tilt_candidate_overlay_output.v1
-    metric_contract_ref: growth_tilt_candidate_replay_metric_contract_v1
-    threshold_policy_ref: growth_tilt_candidate_pit_screening_policy_v1
+    decision_rationale: The baseline does not consume recovery permission and has no governed recovery persistence rule; redefine the hypothesis as a capped overlay against the unchanged baseline.
+    review_condition: M1E may approve the replacement only after M1D2 proves PIT lineage, veto, transition, native-scalar, and threshold prerequisites.
+    expiry_condition: Withdraw if those prerequisites cannot be proven without introducing new baseline behavior.
+    next_route: TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+    redefinition:
+      old_candidate_id: recovery_reentry_speedup_guard
+      proposed_candidate_id: capped_recovery_permission_overlay
+      overlap_with: NO_EXISTING_BASELINE_RECOVERY_CONSUMPTION
+      old_semantics_rejected_reason: BASELINE_DOES_NOT_CONSUME_RECOVERY_PERMISSION
+      new_candidate_role: CAPPED_RECOVERY_PERMISSION_OVERLAY
+      changes_trigger_timing: true
+      changes_ramp_speed: false
+      changes_baseline_recovery_persistence: false
+      introduces_candidate_overlay: true
+      rationale: Test a one-step capped recovery-permission overlay against the unchanged baseline without claiming to speed up a nonexistent baseline rule.
+      proposed_parameters:
+        signal_id: re_risk_allowed_probability
+        semantic_type: UNSCALED_SCORE
+        threshold_contract_status: BLOCKED_UNCALIBRATED_SCORE
+        candidate_required_consecutive_steps: 1
+        baseline_required_consecutive_steps: null
+        interpretation: CANDIDATE_TRIGGER_RULE_NOT_BASELINE_SPEEDUP
+        reset_on_signal_false: true
+        reset_on_missing: BLOCKED
+        reset_on_any_hard_veto: true
+        reset_on_invalid_pit_lineage: BLOCKED
+        effective_time: next_executable_evaluation_step
+        same_step_application_allowed: false
+        maximum_active_steps: 1
+        auto_extension_allowed: false
+        changes_baseline_recovery_persistence: false
+        introduces_candidate_overlay: true
+        changes_hard_veto_behavior: false
+        tqqq_increase_allowed: false
+        native_scalar_status: BLOCKED_NO_GOVERNED_NATIVE_SCALAR
+      second_owner_approval_required: true
+      future_reopen_condition: M1D2 proves all prerequisites and M1E freezes the replacement contract before result visibility.
 
   - candidate_id: false_risk_off_confirmation_relaxation
     selection_order: 2
     selection_basis: CONFIG_DECLARATION_ORDER
-    decision: REDEFINE
+    decision: WITHDRAW
     decision_owner: project_owner_via_codex_task
-    decision_version: 1.1.0
+    decision_version: 2.0.0
     decision_timestamp: '2026-07-10T00:00:00+09:00'
-    decision_rationale: No exactly-one callable PIT soft confirmation exists. Redefine the hypothesis around aggregate non-hard defensive-entry persistence, but do not implement it unless an existing callable aggregate request is proven.
-    review_condition: A second owner review is required after a callable aggregate non-hard defensive request and its baseline persistence contract are proven.
-    expiry_condition: Withdraw if no callable aggregate request exists and no separately approved baseline behavior is introduced.
-    next_route: TRADING-2438M1E_GROWTH_TILT_CANDIDATE_OWNER_REAPPROVAL_AND_SCREENING_POLICY_FREEZE
-    redefinition:
-      old_candidate_id: false_risk_off_confirmation_relaxation
-      proposed_candidate_id: non_hard_defensive_entry_persistence_guard
-      overlap_with: BASELINE_NON_HARD_DEFENSIVE_ENTRY_REQUEST
-      old_semantics_rejected_reason: NO_EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION
-      new_candidate_role: NON_HARD_DEFENSIVE_ENTRY_PERSISTENCE_GUARD
-      changes_trigger_timing: true
-      changes_ramp_speed: false
-      changes_soft_component: false
-      changes_aggregate_non_hard_request_persistence: true
-      rationale: Require one additional consecutive evaluation step for an existing aggregate non-hard defensive request while preserving immediate hard-veto application.
-      proposed_parameters:
-        trigger_source: EXACT_BASELINE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST
-        candidate_required_steps_expression: baseline_required_steps_plus_one
-        maximum_added_steps: 1
-        changes_soft_component: false
-        changes_aggregate_non_hard_request_persistence: true
-        hard_veto_bypass_allowed: false
-        auto_extension_allowed: false
-        exposure_above_pre_request_baseline_allowed: false
-        aggregate_request_contract_status: BLOCKED_NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST
-      second_owner_approval_required: true
-      future_reopen_condition: Existing callable PIT-governed aggregate request and baseline persistence contract are proven before result visibility.
+    decision_rationale: Withdraw because neither an exactly-one callable PIT soft confirmation nor a callable aggregate non-hard defensive request exists.
+    review_condition: Reopen only after a future baseline independently introduces a governed callable PIT-valid soft confirmation or aggregate request.
+    expiry_condition: Withdrawn from the current route.
+    next_route: TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
 
   - candidate_id: missed_upside_reentry_accelerator
     selection_order: 3

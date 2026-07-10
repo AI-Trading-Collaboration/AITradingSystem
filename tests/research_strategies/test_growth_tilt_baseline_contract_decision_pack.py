@@ -297,9 +297,17 @@ def test_registry_catalog_flow_and_task_register_are_aligned() -> None:
         ref in impl.DEFAULT_SYSTEM_FLOW_PATH.read_text(encoding="utf-8")
         for ref in decision_pack.REQUIRED_FLOW_REFERENCES
     )
-    task_register = Path("docs/task_register.md").read_text(encoding="utf-8")
-    assert "TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK" in task_register
-    assert "TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS" in task_register
+    completed_register = Path("docs/task_register_completed.md").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK"
+        in completed_register
+    )
+    assert (
+        "TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS"
+        in completed_register
+    )
 
 
 def _build(*, sources: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -1,4 +1,6 @@
 # TRADING-2438M1 / M2 Growth Tilt Candidate Research Contract and PIT Replay Development Plan
+最后更新：2026-07-10
+
 ## 候选研究合同审批、计算面绑定与真实 PIT Replay 开发文档（修订版）
 
 **文档日期：** 2026-07-10

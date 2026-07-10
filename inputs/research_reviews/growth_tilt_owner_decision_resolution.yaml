@@ -1,0 +1,204 @@
+schema_version: growth_tilt_owner_decision_resolution.v1
+task_id: TRADING-2438M1D1A
+status: OWNER_DECISIONS_RESOLVED_WITH_EXPLICIT_BLOCKERS
+owner: project_owner_via_codex_task
+as_of: '2026-07-10'
+base_commit: a576ab87f03dc4fba6f5570c83bdca7451f04078
+market_regime: ai_after_chatgpt
+decision_count: 18
+resolved_decision_count: 18
+
+candidate_disposition:
+  approved_candidate_count: 0
+  redefine_candidate_count: 2
+  withdraw_candidate_count: 1
+  m2_eligible_candidate_count: 0
+  candidates:
+    - candidate_id: recovery_reentry_speedup_guard
+      decision: REDEFINE
+      replacement_candidate_id: capped_recovery_permission_overlay
+      reason: BASELINE_DOES_NOT_CONSUME_RECOVERY_PERMISSION
+      current_route_enabled: true
+      second_owner_approval_required: true
+    - candidate_id: false_risk_off_confirmation_relaxation
+      decision: WITHDRAW
+      reason_codes:
+        - NO_CALLABLE_PIT_SOFT_CONFIRMATION
+        - NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST
+      current_route_enabled: false
+      reopen_condition: A future baseline independently introduces a governed callable PIT-valid non-hard defensive request or soft confirmation.
+    - candidate_id: missed_upside_reentry_accelerator
+      decision: REDEFINE
+      replacement_candidate_id: post_confirmation_reentry_ramp_accelerator
+      current_route_enabled: false
+      second_owner_approval_required: true
+
+decisions:
+  - decision_id: D01
+    area: candidate_a
+    status: RESOLVED
+    decision: REDEFINE
+    replacement_candidate_id: capped_recovery_permission_overlay
+    reason: BASELINE_DOES_NOT_CONSUME_RECOVERY_PERMISSION
+  - decision_id: D02
+    area: recovery_pit_lineage
+    status: RESOLVED_BLOCKED
+    required: true
+    producer: re_risk_allowed_probability
+    current_resolution: BLOCKED_MISSING_PER_SIGNAL_AS_OF_AND_SOURCE_CUTOFF
+    approval_conditions:
+      - source_inputs_have_as_of_timestamps
+      - producer_version_recorded
+      - reproducible_from_pit_valid_inputs
+      - no_future_outcome_consumed
+    failure_action: KEEP_REDEFINED_OR_WITHDRAW
+  - decision_id: D03
+    area: recovery_semantics
+    status: RESOLVED
+    semantic_type: UNSCALED_SCORE
+    evidence: re_risk_allowed_probability is a clipped drawdown_recovery_score with no calibration contract
+  - decision_id: D04
+    area: recovery_threshold
+    status: RESOLVED_BLOCKED
+    threshold_status: BLOCKED_UNCALIBRATED_SCORE
+    threshold_source: EXISTING_VERSIONED_PRODUCER_CONTRACT_OR_PRE_REGISTERED_CALIBRATION
+    default_0_5_allowed: false
+    existing_pilot_0_55_approved_for_replacement: false
+    post_replay_tuning_allowed: false
+  - decision_id: D05
+    area: candidate_trigger
+    status: RESOLVED
+    candidate_required_consecutive_steps: 1
+    baseline_required_consecutive_steps: null
+    interpretation: CANDIDATE_TRIGGER_RULE_NOT_BASELINE_SPEEDUP
+  - decision_id: D06
+    area: reset_invalidation
+    status: RESOLVED
+    reset_on_signal_false: true
+    reset_on_missing: BLOCKED
+    reset_on_any_hard_veto: true
+    reset_on_invalid_pit_lineage: BLOCKED
+  - decision_id: D07
+    area: candidate_timing
+    status: RESOLVED
+    decision_time: evaluation_step_t
+    effective_time: next_executable_evaluation_step
+    same_step_application_allowed: false
+  - decision_id: D08
+    area: overlay_expiry
+    status: RESOLVED
+    maximum_active_steps: 1
+    expire_when_signal_false: true
+    expire_when_hard_veto_active: true
+    expire_when_baseline_reaches_or_exceeds_overlay_target: true
+    auto_extension_allowed: false
+  - decision_id: D09
+    area: candidate_b
+    status: RESOLVED
+    decision: WITHDRAW
+    reason_codes:
+      - NO_CALLABLE_PIT_SOFT_CONFIRMATION
+      - NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST
+  - decision_id: D10
+    area: candidate_c
+    status: RESOLVED
+    decision: REDEFINE
+    current_route_enabled: false
+  - decision_id: D11
+    area: risk_off_veto
+    status: RESOLVED_BLOCKED
+    required_for_recovery_overlay: true
+    required_resolution: RESOLVED_CALLABLE
+    current_resolution: BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS
+    missing_policy: BLOCKED
+  - decision_id: D12
+    area: trend_break_veto
+    status: RESOLVED_BLOCKED
+    baseline_role: DECLARED_CONTROL_LOGIC
+    current_resolution: BLOCKED_NO_CALLABLE_PRODUCER
+    allowed_future_resolution:
+      - RESOLVED_CALLABLE
+      - EXPLICITLY_NOT_APPLICABLE_TO_BASELINE_WITH_TRACE_EVIDENCE
+  - decision_id: D13
+    area: event_risk_veto
+    status: RESOLVED_BLOCKED
+    do_not_create_for_this_candidate: true
+    current_resolution: BLOCKED_NO_PIT_CONTRACT
+    allowed_future_resolution:
+      - RESOLVED_CALLABLE
+      - EXPLICITLY_NOT_APPLICABLE_TO_BASELINE_WITH_TRACE_EVIDENCE
+      - BLOCKED_NO_PIT_CONTRACT
+  - decision_id: D14
+    area: hard_veto_missing_policy
+    status: RESOLVED
+    unresolved_component: BLOCKED
+    missing_runtime_value: BLOCKED
+    candidate_specific_removal_allowed: false
+    candidate_specific_priority_change_allowed: false
+  - decision_id: D15
+    area: canonical_transition_source
+    status: RESOLVED_BLOCKED
+    current_state_field: first_layer_composer_v2_predictions.csv:trend_state
+    requested_target_state_field: null
+    applied_target_state_field: null
+    current_resolution: BLOCKED_NO_GOVERNED_REQUESTED_APPLIED_FIELDS
+    implementation_requirement: MATERIALIZE_TRACE_WITHOUT_CHANGING_BASELINE_DECISIONS
+  - decision_id: D16
+    area: transition_timing
+    status: RESOLVED
+    candidate_request_created_at: evaluation_step_t
+    candidate_request_applied_at: next_executable_evaluation_step
+    same_step_application_allowed: false
+  - decision_id: D17
+    area: transition_priority
+    status: RESOLVED
+    ordered_priority:
+      - INVALID_PIT_OR_DATA_CONTRACT_BLOCKED
+      - HARD_VETO_OR_EMERGENCY_RISK_REQUEST
+      - BASELINE_MANDATORY_DEFENSIVE_TRANSITION
+      - BASELINE_ORDINARY_TRANSITION_REQUEST
+      - APPROVED_RECOVERY_OVERLAY_REQUEST
+      - EXPOSURE_OR_RISK_CAP_CLAMP
+    candidate_may_supersede_baseline_defensive_request: false
+  - decision_id: D18
+    area: native_scalar_and_cap
+    status: RESOLVED_BLOCKED
+    native_scalar_resolution: BLOCKED_NO_GOVERNED_NATIVE_SCALAR
+    native_scalar_id: null
+    current_scalar_field: null
+    requested_target_scalar_field: null
+    applied_target_scalar_field: null
+    minimum_value: null
+    maximum_value: null
+    minimum_increment: null
+    candidate_delta_cap_formula: MIN(0.25 * positive_remaining_gap_to_baseline_neutral_target, one_native_transition_increment)
+    qqq_equivalent_unit_allowed: false
+    tqqq_increase_allowed: false
+
+m1d2_scope:
+  implement:
+    - hard_veto_aggregate_adapter
+    - current_requested_applied_regime_transition_trace
+    - baseline_native_exposure_scalar_trace
+    - recovery_producer_pit_lineage_report
+  implement_conditionally:
+    - recovery_permission_semantic_adapter_without_baseline_transition
+  prohibited:
+    - new_baseline_recovery_persistence
+    - new_baseline_recovery_transition
+    - new_soft_confirmation
+    - new_aggregate_non_hard_defensive_request
+    - new_event_risk_veto
+    - new_qqq_equivalent_candidate_delta_conversion
+    - real_pit_replay
+
+safety_boundary:
+  owner_decision_only: true
+  runtime_code_allowed: false
+  replay_allowed: false
+  runtime_metrics_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  portfolio_weight_change_allowed: false
+  broker_action: none
+  production_effect: none

@@ -616,7 +616,38 @@ def _redefinition_status(
 ) -> tuple[bool, list[str]]:
     missing = _missing_required_fields(redefinition, REQUIRED_REDEFINITION_FIELDS)
     missing.extend(_owner_placeholder_paths(redefinition))
-    if candidate_id == "false_risk_off_confirmation_relaxation":
+    if candidate_id == "recovery_reentry_speedup_guard":
+        expected = {
+            "old_candidate_id": candidate_id,
+            "proposed_candidate_id": "capped_recovery_permission_overlay",
+            "overlap_with": "NO_EXISTING_BASELINE_RECOVERY_CONSUMPTION",
+            "new_candidate_role": "CAPPED_RECOVERY_PERMISSION_OVERLAY",
+            "changes_trigger_timing": True,
+            "changes_ramp_speed": False,
+            "second_owner_approval_required": True,
+        }
+        parameter_invariants = {
+            "signal_id": "re_risk_allowed_probability",
+            "semantic_type": "UNSCALED_SCORE",
+            "threshold_contract_status": "BLOCKED_UNCALIBRATED_SCORE",
+            "candidate_required_consecutive_steps": 1,
+            "baseline_required_consecutive_steps": None,
+            "interpretation": "CANDIDATE_TRIGGER_RULE_NOT_BASELINE_SPEEDUP",
+            "reset_on_signal_false": True,
+            "reset_on_missing": "BLOCKED",
+            "reset_on_any_hard_veto": True,
+            "reset_on_invalid_pit_lineage": "BLOCKED",
+            "effective_time": "next_executable_evaluation_step",
+            "same_step_application_allowed": False,
+            "maximum_active_steps": 1,
+            "auto_extension_allowed": False,
+            "changes_baseline_recovery_persistence": False,
+            "introduces_candidate_overlay": True,
+            "changes_hard_veto_behavior": False,
+            "tqqq_increase_allowed": False,
+            "native_scalar_status": "BLOCKED_NO_GOVERNED_NATIVE_SCALAR",
+        }
+    elif candidate_id == "false_risk_off_confirmation_relaxation":
         expected = {
             "old_candidate_id": candidate_id,
             "proposed_candidate_id": "non_hard_defensive_entry_persistence_guard",

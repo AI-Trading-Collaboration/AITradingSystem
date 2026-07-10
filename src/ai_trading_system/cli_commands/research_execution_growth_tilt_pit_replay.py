@@ -6,10 +6,16 @@ from typing import Annotated
 import typer
 
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_baseline_contract_adapters_readiness as m2438m1d2,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_baseline_contract_decision_pack as m2438m1d1,
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_candidate_runtime_spec_threshold_policy_approval as m2438m1,  # noqa: E501
+)
+from ai_trading_system import (
+    dynamic_strategy_growth_tilt_owner_decision_resolution as m2438m1d1a,
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_owner_mapping_inventory as m2438m1c,
@@ -28,6 +34,9 @@ from ai_trading_system import (
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure as m2438h,  # noqa: E501
+)
+from ai_trading_system import (
+    dynamic_strategy_growth_tilt_replacement_candidate_contract as m2438m1e,
 )
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure as m2438f,
@@ -127,6 +136,15 @@ def register_growth_tilt_pit_replay_strategy_commands(strategies_app: typer.Type
     )
     strategies_app.command("growth-tilt-baseline-contract-decision-pack")(
         _growth_tilt_baseline_contract_decision_pack_command
+    )
+    strategies_app.command("growth-tilt-owner-decision-resolution")(
+        _growth_tilt_owner_decision_resolution_command
+    )
+    strategies_app.command("growth-tilt-baseline-contract-adapters-readiness")(
+        _growth_tilt_baseline_contract_adapters_readiness_command
+    )
+    strategies_app.command("growth-tilt-replacement-candidate-contract")(
+        _growth_tilt_replacement_candidate_contract_command
     )
 
 
@@ -2258,6 +2276,253 @@ def _growth_tilt_baseline_contract_decision_pack_command(
         "replay_run",
         "runtime_metrics_generated",
         "candidate_behavior_implemented",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_owner_decision_resolution_command(
+    owner_resolution_path: Annotated[
+        Path, typer.Option("--owner-resolution")
+    ] = m2438m1d1a.DEFAULT_OWNER_RESOLUTION_PATH,
+    channel_code_path: Annotated[
+        Path, typer.Option("--channel-code")
+    ] = m2438m1d1a.DEFAULT_CHANNEL_CODE_PATH,
+    compiler_code_path: Annotated[
+        Path, typer.Option("--compiler-code")
+    ] = m2438m1d1a.DEFAULT_COMPILER_CODE_PATH,
+    channel_predictions_path: Annotated[
+        Path, typer.Option("--channel-predictions")
+    ] = m2438m1d1a.DEFAULT_CHANNEL_PREDICTIONS_PATH,
+    threshold_policy_path: Annotated[
+        Path, typer.Option("--threshold-policy")
+    ] = m2438m1d1a.DEFAULT_THRESHOLD_POLICY_PATH,
+    m1d1_report_path: Annotated[
+        Path, typer.Option("--m1d1-report")
+    ] = m2438m1d1a.DEFAULT_M1D1_REPORT_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m1d1a.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m1d1a.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m1d1a.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m1d1a.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m1d1a.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m1d1a.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438m1d1a.run_growth_tilt_owner_decision_resolution(
+        owner_resolution_path=owner_resolution_path,
+        channel_code_path=channel_code_path,
+        compiler_code_path=compiler_code_path,
+        channel_predictions_path=channel_predictions_path,
+        threshold_policy_path=threshold_policy_path,
+        m1d1_report_path=m1d1_report_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt owner decision resolution", payload
+    )
+    for field in (
+        "status",
+        "decision_count",
+        "resolved_decision_count",
+        "blocking_decision_count",
+        "blocking_decision_ids",
+        "owner_decisions_complete",
+        "m1d2_adapter_implementation_allowed",
+        "candidate_behavior_implementation_allowed",
+        "approved_candidate_count",
+        "redefine_candidate_count",
+        "withdraw_candidate_count",
+        "m2_eligible_candidate_count",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "replay_run",
+        "runtime_metrics_generated",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_baseline_contract_adapters_readiness_command(
+    owner_resolution_path: Annotated[
+        Path, typer.Option("--owner-resolution")
+    ] = m2438m1d2.DEFAULT_OWNER_RESOLUTION_PATH,
+    hard_veto_matrix_path: Annotated[
+        Path, typer.Option("--hard-veto-matrix")
+    ] = m2438m1d2.DEFAULT_HARD_VETO_MATRIX_PATH,
+    signal_inventory_path: Annotated[
+        Path, typer.Option("--signal-inventory")
+    ] = m2438m1d2.DEFAULT_SIGNAL_INVENTORY_PATH,
+    exposure_inventory_path: Annotated[
+        Path, typer.Option("--exposure-inventory")
+    ] = m2438m1d2.DEFAULT_EXPOSURE_INVENTORY_PATH,
+    transition_source_path: Annotated[
+        Path, typer.Option("--transition-source")
+    ] = m2438m1d2.DEFAULT_TRANSITION_SOURCE_PATH,
+    channel_predictions_path: Annotated[
+        Path, typer.Option("--channel-predictions")
+    ] = m2438m1d2.DEFAULT_CHANNEL_PREDICTIONS_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m1d2.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m1d2.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m1d2.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m1d2.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m1d2.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m1d2.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438m1d2.run_growth_tilt_baseline_contract_adapters_readiness(
+        owner_resolution_path=owner_resolution_path,
+        hard_veto_matrix_path=hard_veto_matrix_path,
+        signal_inventory_path=signal_inventory_path,
+        exposure_inventory_path=exposure_inventory_path,
+        transition_source_path=transition_source_path,
+        channel_predictions_path=channel_predictions_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt baseline contract adapters readiness", payload
+    )
+    for field in (
+        "status",
+        "adapter_implementation_count",
+        "adapter_contract_ready_count",
+        "adapter_contract_blocked_count",
+        "blocker_count",
+        "existing_baseline_behavior_exposed",
+        "new_baseline_behavior_introduced",
+        "candidate_behavior_implemented",
+        "replacement_a_ready_for_m1e_approval",
+        "approved_candidate_count",
+        "m2_eligible_candidate_count",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "runtime_code_invoked",
+        "replay_run",
+        "runtime_metrics_generated",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_replacement_candidate_contract_command(
+    owner_resolution_path: Annotated[
+        Path, typer.Option("--owner-resolution")
+    ] = m2438m1e.DEFAULT_OWNER_RESOLUTION_PATH,
+    adapter_readiness_path: Annotated[
+        Path, typer.Option("--adapter-readiness")
+    ] = m2438m1e.DEFAULT_ADAPTER_READINESS_PATH,
+    screening_policy_path: Annotated[
+        Path, typer.Option("--screening-policy")
+    ] = m2438m1e.DEFAULT_SCREENING_POLICY_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m1e.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m1e.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m1e.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m1e.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m1e.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m1e.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438m1e.run_growth_tilt_replacement_candidate_contract(
+        owner_resolution_path=owner_resolution_path,
+        adapter_readiness_path=adapter_readiness_path,
+        screening_policy_path=screening_policy_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt replacement candidate contract", payload
+    )
+    for field in (
+        "status",
+        "replacement_candidate_id",
+        "disposition",
+        "approval_prerequisites_ready",
+        "approved_candidate_count",
+        "m2_eligible_candidate_count",
+        "screening_policy_status",
+        "screening_policy_approval_metadata_complete",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "runtime_code_invoked",
+        "replay_run",
+        "runtime_metrics_generated",
+        "policy_approval_fabricated",
         "paper_shadow_enabled",
         "production_enabled",
         "broker_enabled",

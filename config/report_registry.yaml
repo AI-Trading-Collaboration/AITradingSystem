@@ -20530,6 +20530,72 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_owner_decision_resolution
+    title: Growth Tilt Owner Decision Resolution
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-owner-decision-resolution
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_owner_decision_resolution/growth_tilt_owner_decision_resolution.json
+      - outputs/research_strategies/growth_tilt_owner_decision_resolution/growth_tilt_candidate_disposition_after_owner_resolution.json
+      - outputs/research_strategies/growth_tilt_owner_decision_resolution/growth_tilt_m1d2_adapter_scope.json
+      - outputs/research_strategies/growth_tilt_owner_decision_resolution/growth_tilt_replacement_a_readiness.json
+      - docs/research/growth_tilt_owner_decision_resolution.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438M1D1A freezes D01-D18 as resolved decisions, including explicit blocked outcomes. A is redefined as capped_recovery_permission_overlay, B is withdrawn, and C remains redefined/out-of-route; approved/redefine/withdraw is 0/2/1 and M2 eligible remains zero. Recovery PIT lineage, calibration threshold, three hard-veto components, requested/applied transition fields, and the native scalar remain blocked. Only baseline-observation adapters may proceed to M1D2; candidate behavior and replay remain prohibited.
+    owner_action: implement_m1d2_existing_behavior_adapters_without_candidate_behavior
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_baseline_contract_adapters_readiness
+    title: Growth Tilt Baseline Contract Adapters Readiness
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-baseline-contract-adapters-readiness
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_baseline_contract_adapters_readiness.json
+      - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_hard_veto_aggregate_adapter.json
+      - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_regime_transition_trace_adapter.json
+      - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_native_exposure_scalar_adapter.json
+      - outputs/research_strategies/growth_tilt_baseline_contract_adapters_readiness/growth_tilt_recovery_permission_adapter.json
+      - docs/research/growth_tilt_baseline_contract_adapters_readiness.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438M1D2 exposes only existing baseline contract facts through fail-closed adapters. Unresolved hard-veto components are BLOCKED-not-false, current/requested/applied transition fields stay distinct without adjacent-row inference, absent native scalar binding cannot be replaced by QQQ/TQQQ conversions, and the recovery output remains an unscaled score with missing PIT lineage and unapproved threshold. No baseline or candidate behavior, replay, runtime metrics, paper-shadow, production weight, or broker state is created.
+    owner_action: review_exact_adapter_blockers_before_any_replacement_a_approval
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: growth_tilt_replacement_candidate_contract
+    title: Growth Tilt Replacement Candidate Contract
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-replacement-candidate-contract
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_replacement_candidate_contract/growth_tilt_replacement_candidate_contract.json
+      - outputs/research_strategies/growth_tilt_replacement_candidate_contract/growth_tilt_replacement_candidate_prerequisite_matrix.json
+      - outputs/research_strategies/growth_tilt_replacement_candidate_contract/growth_tilt_replacement_candidate_decision.json
+      - docs/research/growth_tilt_replacement_candidate_contract.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438M1E consumes M1D1A owner outcomes and M1D2 adapter readiness. It keeps capped_recovery_permission_overlay redefined and blocked unless every PIT, threshold, hard-veto, transition, native-scalar/native-cap, screening-policy, and second-owner prerequisite is proven. The current gate emits no approved runtime spec, executor binding, policy approval metadata, M2 invocation, replay, production weight, or broker state.
+    owner_action: resolve_governed_contract_blockers_before_second_owner_approval
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research
