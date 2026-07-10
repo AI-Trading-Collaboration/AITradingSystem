@@ -1,9 +1,9 @@
 schema_version: growth_tilt_candidate_replay_metric_contract.v1
 contract_id: growth_tilt_candidate_replay_metric_contract_v1
 contract_version: 1.0.0
-status: BLOCKED_OWNER_INPUT
+status: PENDING_OWNER_PREREGISTRATION
 policy_class: PIT_REPLAY_RESEARCH_METRIC_CONTRACT
-owner: OWNER_MUST_SET
+owner: research_governance
 effective_from: '2026-07-10'
 market_regime: ai_after_chatgpt
 requested_start_date: '2022-12-01'
@@ -17,17 +17,25 @@ comparability_requirements:
   same_missing_data_policy: true
   same_baseline_configuration: true
 relative_delta_epsilon_policy:
-  status: BLOCKED_OWNER_INPUT
-  epsilon: null
+  status: PENDING_OWNER_PREREGISTRATION
+  numerical_epsilon: 1.0e-12
+  minimum_semantic_denominator: 1.0e-8
+  denominator_below_minimum: BLOCKED_BASELINE_MEASURE_TOO_SMALL
+  use_epsilon_as_substitute_value: false
   unit: absolute_measure_unit
-  owner: OWNER_MUST_SET
-  rationale: Prevent division by zero without silently converting a missing denominator.
+  owner: research_governance
+  rationale: Numerical epsilon is only a floating-point guard; a baseline below the semantic minimum remains BLOCKED and is never replaced by epsilon.
 empty_event_policy:
+  status: PENDING_OWNER_PREREGISTRATION
+  owner: research_governance
+  minimum_primary_event_count: 5
   allowed_statuses:
-    - BLOCKED_INSUFFICIENT_EVENTS
-    - COMPUTED_NOT_APPLICABLE
-  selected_status: OWNER_MUST_SELECT
-  zero_improvement_allowed: false
+    - BLOCKED_NO_ELIGIBLE_EVENTS
+    - BLOCKED_INSUFFICIENT_PRIMARY_EVENTS
+  no_eligible_events: BLOCKED_NO_ELIGIBLE_EVENTS
+  eligible_but_fewer_than_minimum: BLOCKED_INSUFFICIENT_PRIMARY_EVENTS
+  both_candidate_and_baseline_zero_events: BLOCKED_NO_ELIGIBLE_EVENTS
+  empty_events_equal_zero_improvement: false
 common_runtime_provenance_fields:
   - metric_id
   - value
@@ -70,7 +78,7 @@ metrics:
       - baseline_max_drawdown
     missing_policy: BLOCKED
   - metric_id: turnover_delta_vs_baseline
-    definition: (candidate_turnover - baseline_turnover) / max(abs(baseline_turnover), epsilon)
+    definition: (candidate_turnover - baseline_turnover) / abs(baseline_turnover), only when abs(baseline_turnover) >= minimum_semantic_denominator
     unit: relative_fraction
     direction: LOWER_IS_BETTER
     calculator_id: growth_tilt_relative_turnover_delta_calculator
@@ -78,10 +86,10 @@ metrics:
     required_inputs:
       - candidate_turnover
       - baseline_turnover
-      - owner_approved_epsilon
+      - preregistered_relative_delta_policy
     missing_policy: BLOCKED
   - metric_id: false_risk_off_delta
-    definition: (candidate_false_risk_off_measure - baseline_false_risk_off_measure) / max(abs(baseline_false_risk_off_measure), epsilon)
+    definition: (candidate_false_risk_off_measure - baseline_false_risk_off_measure) / abs(baseline_false_risk_off_measure), only when abs(baseline_false_risk_off_measure) >= minimum_semantic_denominator
     unit: relative_fraction
     direction: LOWER_IS_BETTER
     calculator_id: growth_tilt_relative_false_risk_off_delta_calculator
@@ -89,16 +97,18 @@ metrics:
     required_inputs:
       - candidate_false_risk_off_measure
       - baseline_false_risk_off_measure
-      - owner_approved_epsilon
+      - preregistered_relative_delta_policy
     owner_fields:
-      false_risk_off_definition_id: OWNER_MUST_SET
-      evaluation_horizon_steps: null
-      reference_asset_or_benchmark: OWNER_MUST_SET
-      false_risk_off_outcome_rule: OWNER_MUST_SET
-      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_DEFENSIVE_DAYS_OR_OPPORTUNITY_COST
+      false_risk_off_definition_id: FALSE_RISK_OFF_OPPORTUNITY_COST_V1
+      event_anchor: defensive exposure reduction while no hard risk-off veto is active
+      evaluation_horizon_steps: 5
+      reference_asset_or_benchmark: FROZEN_GROWTH_REFERENCE_BASKET
+      false_risk_off_outcome_rule: underexposure multiplied by the positive part of the growth-reference forward net return over 5 evaluation steps
+      event_or_cost_measure: OPPORTUNITY_COST
+      overlap_policy: NON_OVERLAPPING_EVENT_STARTS
     missing_policy: BLOCKED
   - metric_id: missed_upside_delta
-    definition: (candidate_missed_upside_measure - baseline_missed_upside_measure) / max(abs(baseline_missed_upside_measure), epsilon)
+    definition: (candidate_missed_upside_measure - baseline_missed_upside_measure) / abs(baseline_missed_upside_measure), only when abs(baseline_missed_upside_measure) >= minimum_semantic_denominator
     unit: relative_fraction
     direction: LOWER_IS_BETTER
     calculator_id: growth_tilt_relative_missed_upside_delta_calculator
@@ -106,16 +116,18 @@ metrics:
     required_inputs:
       - candidate_missed_upside_measure
       - baseline_missed_upside_measure
-      - owner_approved_epsilon
+      - preregistered_relative_delta_policy
     owner_fields:
-      missed_upside_definition_id: OWNER_MUST_SET
-      evaluation_horizon_steps: null
-      reference_exposure_path: OWNER_MUST_SET
-      upside_outcome_rule: OWNER_MUST_SET
-      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_DEFENSIVE_DAYS_OR_OPPORTUNITY_COST
+      missed_upside_definition_id: RECOVERY_MISSED_UPSIDE_OPPORTUNITY_COST_V1
+      event_anchor: approved recovery signal first becomes eligible after a defensive state
+      evaluation_horizon_steps: 10
+      reference_exposure_path: FROZEN_BASELINE_RECOVERY_TARGET_PATH
+      upside_outcome_rule: recovery exposure gap multiplied by the positive part of the growth-reference forward net return over 10 evaluation steps
+      event_or_cost_measure: OPPORTUNITY_COST
+      overlap_policy: ONE_EVENT_PER_RECOVERY_EPISODE
     missing_policy: BLOCKED
   - metric_id: whipsaw_delta
-    definition: (candidate_whipsaw_measure - baseline_whipsaw_measure) / max(abs(baseline_whipsaw_measure), epsilon)
+    definition: (candidate_whipsaw_measure - baseline_whipsaw_measure) / abs(baseline_whipsaw_measure), only when abs(baseline_whipsaw_measure) >= minimum_semantic_denominator
     unit: relative_fraction
     direction: LOWER_IS_BETTER
     calculator_id: growth_tilt_relative_whipsaw_delta_calculator
@@ -123,12 +135,13 @@ metrics:
     required_inputs:
       - candidate_whipsaw_measure
       - baseline_whipsaw_measure
-      - owner_approved_epsilon
+      - preregistered_relative_delta_policy
     owner_fields:
-      whipsaw_definition_id: OWNER_MUST_SET
-      reversal_window_steps: null
-      minimum_exposure_change: null
-      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_OR_OPPORTUNITY_COST
+      whipsaw_definition_id: EXPOSURE_DIRECTION_REVERSAL_V1
+      reversal_window_steps: 5
+      minimum_initial_change_qqq_equivalent: 0.05
+      minimum_reversal_fraction: 0.50
+      event_or_cost_measure: REVERSED_EXPOSURE_PLUS_COST
     missing_policy: BLOCKED
 review_required_when:
   - metric_definition_changes
@@ -139,6 +152,7 @@ review_required_when:
 prohibited:
   - null_to_zero
   - missing_denominator_to_unapproved_epsilon
+  - epsilon_as_semantic_denominator_substitute
   - empty_event_set_to_zero_improvement
   - static_config_value_as_runtime_metric
   - reuse_as_promotion_gate

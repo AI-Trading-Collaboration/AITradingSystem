@@ -1,5 +1,6 @@
 schema_version: growth_tilt_candidate_runtime_spec_threshold_policy_review.v2
 task_id: TRADING-2438M1
+last_updated_by_task_id: TRADING-2438M1C
 status: BLOCKED_OWNER_INPUT
 owner_review_status: DECISIONS_RECORDED_CONTRACT_MAPPINGS_PENDING
 source_task_id: TRADING-2438M
@@ -16,6 +17,7 @@ candidate_ids:
   - missed_upside_reentry_accelerator
 shared_metric_contract_ref: growth_tilt_candidate_replay_metric_contract_v1
 shared_threshold_policy_ref: growth_tilt_candidate_pit_screening_policy_v1
+baseline_runtime_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md
 
 candidate_reviews:
   - candidate_id: recovery_reentry_speedup_guard
@@ -32,21 +34,34 @@ candidate_reviews:
     runtime_spec:
       candidate_role: RECOVERY_REENTRY_TIMING_ACCELERATOR
       baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
+      baseline_mapping_status: BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING
       operation_type: EARLY_REENTRY_PROVISIONAL_EXPOSURE
       parameters:
-        recovery_signal_id: OWNER_MUST_MAP_TO_EXISTING_SIGNAL
+        recovery_signal_id: re_risk_allowed_probability
+        recovery_signal_inventory_status: FAILED_CHANNEL_SELECTION_NOT_PIT_APPROVED
+        recovery_persistence_contract_id: OWNER_MUST_MAP_TO_GOVERNED_BASELINE_RULE
+        recovery_persistence_inventory_status: UNRESOLVED
         lagging_soft_confirmation_id: OWNER_MUST_SELECT_EXACTLY_ONE
         lead_steps: 1
+        baseline_transition_state: defensive
+        provisional_target_state: neutral
+        excluded_source_state: risk_off
         provisional_exposure_fraction_of_remaining_gap: 0.25
-        provisional_exposure_absolute_cap: OWNER_MUST_SET_IN_BASELINE_EXPOSURE_UNIT
-        max_active_steps: 3
+        provisional_exposure_absolute_cap: 0.05
+        provisional_exposure_unit: QQQ_EQUIVALENT_WEIGHT
+        max_active_steps: 2
         confirmed_state_ramp_multiplier: 1.0
         target_exposure_override_allowed: false
         hard_veto_bypass_allowed: false
       hard_veto_ids:
         - OWNER_MUST_MAP_ALL_BASELINE_HARD_VETOES
+      hard_veto_set_inventory_status: INCOMPLETE_CALLABLE_PIT_VALID_SET
+      hard_veto_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-veto-inventory
       applicable_regime_ids:
         - OWNER_MUST_SET_NON_WILDCARD_SCOPE
+      governed_transition_scope_inventory_status: UNRESOLVED
+      regime_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-regime-inventory
+      qqq_equivalent_binding_inventory_status: UNRESOLVED
       expiry_conditions:
         - baseline_recovery_fully_confirmed
         - core_recovery_signal_false
@@ -80,10 +95,12 @@ candidate_reviews:
     runtime_spec:
       candidate_role: DEFENSIVE_ENTRY_SOFT_CONFIRMATION_GRACE
       baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
+      baseline_mapping_status: BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING
       operation_type: DEFENSIVE_SOFT_CONFIRMATION_GRACE
       parameters:
         relaxed_soft_confirmation_id: OWNER_MUST_SELECT_EXACTLY_ONE
-        baseline_required_state: OWNER_MUST_MAP
+        soft_confirmation_inventory_status: UNRESOLVED_NO_ELIGIBLE_BASELINE_CONFIRMATION
+        baseline_required_state: neutral_or_constructive
         relaxation_mode: ONE_STEP_GRACE
         grace_steps: 1
         remove_confirmation_entirely: false
@@ -92,8 +109,13 @@ candidate_reviews:
         max_active_steps: 1
       hard_veto_ids:
         - OWNER_MUST_MAP_ALL_NON_BYPASSABLE_VETOES
+      hard_veto_set_inventory_status: INCOMPLETE_CALLABLE_PIT_VALID_SET
+      hard_veto_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-veto-inventory
       applicable_regime_ids:
         - OWNER_MUST_SET_NON_WILDCARD_SCOPE
+      governed_transition_scope_inventory_status: UNRESOLVED
+      regime_inventory_ref: docs/research/growth_tilt_owner_mapping_inventory.md#baseline-regime-inventory
+      qqq_equivalent_binding_inventory_status: UNRESOLVED
       expiry_conditions:
         - selected_confirmation_persists_next_step
         - any_hard_veto_active

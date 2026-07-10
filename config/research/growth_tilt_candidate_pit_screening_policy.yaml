@@ -3,7 +3,12 @@ policy_id: growth_tilt_candidate_pit_screening_policy_v1
 policy_version: 1.0.0
 policy_status: PENDING_OWNER_PREREGISTRATION
 policy_class: PIT_REPLAY_SCREENING_ONLY
-owner: OWNER_MUST_SET
+owner: research_governance
+approved_at: null
+approved_commit: null
+source_hash: null
+source_hash_scope: CANONICAL_POLICY_EXCLUDING_APPROVAL_METADATA_AND_SOURCE_HASH
+result_visibility_at_approval: NONE
 effective_from: '2026-07-10'
 expires_after_completed_replay_rounds: 1
 market_regime: ai_after_chatgpt
@@ -11,6 +16,7 @@ requested_start_date: '2022-12-01'
 rationale: Recommended first-wave screening boundaries supplied by the owner plan; not historical validation, promotion criteria, production limits, or approved values until owner preregistration is complete.
 validation_evidence:
   - docs/requirements/TRADING-2438M1_M2_Growth_Tilt_Candidate_Research_Contract_And_PIT_Replay_Development_Plan.md
+  - docs/requirements/TRADING-2438M1C_Growth_Tilt_Owner_Mapping_Resolution_And_PIT_Replay_Pre_Registration_Plan.md
 readiness_gate:
   required_metric_count: 6
   computed_metric_count: 6

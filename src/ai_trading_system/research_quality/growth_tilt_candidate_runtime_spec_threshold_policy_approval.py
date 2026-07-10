@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ai_trading_system.research_quality import (
+    growth_tilt_owner_mapping_inventory as mapping_inventory,
+)
 from ai_trading_system.research_quality import (
     growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution as resolution,
 )
@@ -555,13 +559,23 @@ def _runtime_spec_status(
     parameters = _mapping(spec.get("parameters"))
     if candidate_id == "recovery_reentry_speedup_guard":
         invariants = {
+            "recovery_signal_inventory_status": "PIT_APPROVED_CALLABLE",
+            "recovery_persistence_inventory_status": "GOVERNED_BASELINE_RULE_RESOLVED",
             "lead_steps": 1,
+            "baseline_transition_state": "defensive",
+            "provisional_target_state": "neutral",
+            "excluded_source_state": "risk_off",
+            "provisional_exposure_fraction_of_remaining_gap": 0.25,
+            "provisional_exposure_absolute_cap": 0.05,
+            "provisional_exposure_unit": "QQQ_EQUIVALENT_WEIGHT",
+            "max_active_steps": 2,
             "confirmed_state_ramp_multiplier": 1.0,
             "target_exposure_override_allowed": False,
             "hard_veto_bypass_allowed": False,
         }
     else:
         invariants = {
+            "soft_confirmation_inventory_status": "EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION",
             "relaxation_mode": "ONE_STEP_GRACE",
             "grace_steps": 1,
             "remove_confirmation_entirely": False,
@@ -572,6 +586,16 @@ def _runtime_spec_status(
     for field, expected in invariants.items():
         if parameters.get(field) != expected:
             missing.append(f"parameters.{field}_invariant")
+    if spec.get("baseline_mapping_status") != mapping_inventory.M2_READY_STATUS:
+        missing.append("baseline_mapping_status")
+    if tuple(spec.get("hard_veto_ids") or ()) != mapping_inventory.EXPECTED_VETO_IDS:
+        missing.append("hard_veto_ids_complete_callable_pit_set")
+    if spec.get("hard_veto_set_inventory_status") != "COMPLETE_CALLABLE_PIT_VALID_SET":
+        missing.append("hard_veto_set_inventory_status")
+    if spec.get("governed_transition_scope_inventory_status") != "RESOLVED":
+        missing.append("governed_transition_scope_inventory_status")
+    if spec.get("qqq_equivalent_binding_inventory_status") != "RESOLVED":
+        missing.append("qqq_equivalent_binding_inventory_status")
     return not missing, sorted(set(missing))
 
 
@@ -628,15 +652,32 @@ def _metric_contract_status(
     if not _governed_text(contract.get("owner")):
         blockers.append("metric_contract_owner_unresolved")
     epsilon = _mapping(contract.get("relative_delta_epsilon_policy"))
-    if epsilon.get("status") != "APPROVED" or not _positive_finite(epsilon.get("epsilon")):
+    expected_relative_delta_policy = {
+        "numerical_epsilon": 1.0e-12,
+        "minimum_semantic_denominator": 1.0e-8,
+        "denominator_below_minimum": "BLOCKED_BASELINE_MEASURE_TOO_SMALL",
+        "use_epsilon_as_substitute_value": False,
+    }
+    if epsilon.get("status") != "APPROVED" or any(
+        epsilon.get(field) != expected
+        for field, expected in expected_relative_delta_policy.items()
+    ):
         blockers.append("relative_delta_epsilon_policy_unresolved")
     if not _governed_text(epsilon.get("owner")):
         blockers.append("relative_delta_epsilon_owner_unresolved")
     empty_policy = _mapping(contract.get("empty_event_policy"))
-    if empty_policy.get("selected_status") not in {
-        "BLOCKED_INSUFFICIENT_EVENTS",
-        "COMPUTED_NOT_APPLICABLE",
-    }:
+    expected_empty_event_policy = {
+        "status": "APPROVED",
+        "minimum_primary_event_count": 5,
+        "no_eligible_events": "BLOCKED_NO_ELIGIBLE_EVENTS",
+        "eligible_but_fewer_than_minimum": "BLOCKED_INSUFFICIENT_PRIMARY_EVENTS",
+        "both_candidate_and_baseline_zero_events": "BLOCKED_NO_ELIGIBLE_EVENTS",
+        "empty_events_equal_zero_improvement": False,
+    }
+    if any(
+        empty_policy.get(field) != expected
+        for field, expected in expected_empty_event_policy.items()
+    ) or not _governed_text(empty_policy.get("owner")):
         blockers.append("empty_event_policy_unresolved")
 
     metrics = _sequence(contract.get("metrics"))
@@ -724,6 +765,14 @@ def _threshold_policy_status(
         global_blockers.append("threshold_policy_owner_unresolved")
     if not _sequence(policy.get("validation_evidence")):
         global_blockers.append("threshold_policy_validation_evidence_missing")
+    if not _governed_text(policy.get("approved_at")):
+        global_blockers.append("threshold_policy_approved_at_missing")
+    if not _commit_identifier(policy.get("approved_commit")):
+        global_blockers.append("threshold_policy_approved_commit_missing")
+    if not _sha256_identifier(policy.get("source_hash")):
+        global_blockers.append("threshold_policy_source_hash_missing")
+    if policy.get("result_visibility_at_approval") != "NONE":
+        global_blockers.append("threshold_policy_result_visibility_not_none")
     for field in ("rationale", "review_condition", "expiry_condition"):
         if not policy.get(field):
             global_blockers.append(f"threshold_policy_{field}_missing")
@@ -1127,6 +1176,14 @@ def _governed_text(value: object) -> bool:
         and value.strip()
         and not value.startswith("OWNER_MUST_")
     )
+
+
+def _commit_identifier(value: object) -> bool:
+    return bool(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value))
+
+
+def _sha256_identifier(value: object) -> bool:
+    return bool(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value))
 
 
 def _positive_finite(value: object) -> bool:

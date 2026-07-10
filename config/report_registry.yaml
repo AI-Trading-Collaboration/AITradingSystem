@@ -20483,6 +20483,31 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_owner_mapping_inventory
+    title: Growth Tilt Owner Mapping Inventory
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-owner-mapping-inventory
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/owner_mapping_inventory_result.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_signal_inventory.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_confirmation_inventory.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_veto_inventory.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_regime_inventory.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_exposure_unit_inventory.json
+      - outputs/research_strategies/growth_tilt_owner_mapping_inventory/baseline_transition_trace_sample.json
+      - docs/research/growth_tilt_owner_mapping_inventory.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438M1C performs a read-only inventory of the actual channel-v3 signal outputs, usage contract, final selection result, first-layer composer states, a tracked transition snapshot retaining its original prediction-artifact SHA-256, base overlay/veto compiler, hard-veto policy, and exposure caps. It records exact source paths, hashes, schemas, callable/PIT/diagnostic status, and unresolved semantic bindings. Existing re_risk_allowed_probability is not approved because do_not_de_risk_pass=false and no growth-tilt persistence contract exists; no eligible single soft defensive confirmation exists. The report keeps M2 blocked and does not run replay, backtest, scoring, paper-shadow, production, weights, or broker actions.
+    owner_action: review_growth_tilt_inventory_and_supply_or_approve_missing_baseline_runtime_contracts
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

@@ -103,7 +103,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "runtime_spec",
       "gap_code": "OWNER_RUNTIME_SPEC_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Resolve runtime fields/placeholders: applicable_regime_ids[0], hard_veto_ids[0], parameters.lagging_soft_confirmation_id, parameters.provisional_exposure_absolute_cap, parameters.recovery_signal_id."
+      "recommended_action": "Resolve runtime fields/placeholders: applicable_regime_ids[0], baseline_mapping_status, governed_transition_scope_inventory_status, hard_veto_ids[0], hard_veto_ids_complete_callable_pit_set, hard_veto_set_inventory_status, parameters.lagging_soft_confirmation_id, parameters.recovery_persistence_contract_id, parameters.recovery_persistence_inventory_status_invariant, parameters.recovery_signal_inventory_status_invariant, qqq_equivalent_binding_inventory_status."
     },
     {
       "broker_action": "none",
@@ -111,7 +111,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "metric_contract_ref",
       "gap_code": "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Approve the shared metric contract: empty_event_policy_unresolved, metric_contract_not_owner_approved, metric_contract_owner_unresolved, metric_definition_incomplete:false_risk_off_delta, metric_definition_incomplete:missed_upside_delta, metric_definition_incomplete:whipsaw_delta, relative_delta_epsilon_owner_unresolved, relative_delta_epsilon_policy_unresolved."
+      "recommended_action": "Approve the shared metric contract: empty_event_policy_unresolved, metric_contract_not_owner_approved, relative_delta_epsilon_policy_unresolved."
     },
     {
       "broker_action": "none",
@@ -119,7 +119,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "threshold_policy_ref",
       "gap_code": "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Preregister the candidate screening policy: candidate_thresholds_not_owner_preregistered, threshold_policy_not_owner_approved, threshold_policy_owner_unresolved."
+      "recommended_action": "Preregister the candidate screening policy: candidate_thresholds_not_owner_preregistered, threshold_policy_approved_at_missing, threshold_policy_approved_commit_missing, threshold_policy_not_owner_approved, threshold_policy_source_hash_missing."
     },
     {
       "broker_action": "none",
@@ -127,7 +127,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "runtime_spec",
       "gap_code": "OWNER_RUNTIME_SPEC_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Resolve runtime fields/placeholders: applicable_regime_ids[0], hard_veto_ids[0], parameters.baseline_required_state, parameters.relaxed_soft_confirmation_id."
+      "recommended_action": "Resolve runtime fields/placeholders: applicable_regime_ids[0], baseline_mapping_status, governed_transition_scope_inventory_status, hard_veto_ids[0], hard_veto_ids_complete_callable_pit_set, hard_veto_set_inventory_status, parameters.relaxed_soft_confirmation_id, parameters.soft_confirmation_inventory_status_invariant, qqq_equivalent_binding_inventory_status."
     },
     {
       "broker_action": "none",
@@ -135,7 +135,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "metric_contract_ref",
       "gap_code": "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Approve the shared metric contract: empty_event_policy_unresolved, metric_contract_not_owner_approved, metric_contract_owner_unresolved, metric_definition_incomplete:false_risk_off_delta, metric_definition_incomplete:missed_upside_delta, metric_definition_incomplete:whipsaw_delta, relative_delta_epsilon_owner_unresolved, relative_delta_epsilon_policy_unresolved."
+      "recommended_action": "Approve the shared metric contract: empty_event_policy_unresolved, metric_contract_not_owner_approved, relative_delta_epsilon_policy_unresolved."
     },
     {
       "broker_action": "none",
@@ -143,7 +143,7 @@ M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不
       "field_path": "threshold_policy_ref",
       "gap_code": "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE",
       "production_effect": "none",
-      "recommended_action": "Preregister the candidate screening policy: candidate_thresholds_not_owner_preregistered, threshold_policy_not_owner_approved, threshold_policy_owner_unresolved."
+      "recommended_action": "Preregister the candidate screening policy: candidate_thresholds_not_owner_preregistered, threshold_policy_approved_at_missing, threshold_policy_approved_commit_missing, threshold_policy_not_owner_approved, threshold_policy_source_hash_missing."
     }
   ],
   "open_action_count": 6,

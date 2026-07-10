@@ -192,6 +192,27 @@ def test_executor_mapping_operation_must_match_runtime_operation() -> None:
     ]
 
 
+def test_runtime_spec_requires_inventory_ready_mapping_status() -> None:
+    review, metric, policy = _complete_inputs()
+    review["candidate_reviews"][0]["runtime_spec"]["baseline_mapping_status"] = (
+        "BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING"
+    )
+    payload = _build(review, metric, policy)
+
+    assert payload["candidate_reviews"][0]["runtime_spec_ready"] is False
+    assert approval.RUNTIME_SPEC_INCOMPLETE in payload["candidate_reviews"][0][
+        "gap_codes"
+    ]
+
+
+def test_runtime_spec_requires_exact_complete_hard_veto_set() -> None:
+    review, metric, policy = _complete_inputs()
+    review["candidate_reviews"][1]["runtime_spec"]["hard_veto_ids"].pop()
+    payload = _build(review, metric, policy)
+
+    assert payload["candidate_reviews"][1]["runtime_spec_ready"] is False
+
+
 def test_shared_metric_contract_requires_all_six_metrics_in_order() -> None:
     review, metric, policy = _complete_inputs()
     metric["metrics"].pop()
@@ -203,9 +224,9 @@ def test_shared_metric_contract_requires_all_six_metrics_in_order() -> None:
     assert payload["status"] == approval.BLOCKED_STATUS
 
 
-def test_shared_metric_contract_requires_owner_approved_positive_epsilon() -> None:
+def test_shared_metric_contract_requires_preregistered_relative_delta_policy() -> None:
     review, metric, policy = _complete_inputs()
-    metric["relative_delta_epsilon_policy"]["epsilon"] = None
+    metric["relative_delta_epsilon_policy"]["use_epsilon_as_substitute_value"] = True
     payload = _build(review, metric, policy)
 
     assert "relative_delta_epsilon_policy_unresolved" in payload[
@@ -215,7 +236,7 @@ def test_shared_metric_contract_requires_owner_approved_positive_epsilon() -> No
 
 def test_empty_event_policy_must_be_explicit() -> None:
     review, metric, policy = _complete_inputs()
-    metric["empty_event_policy"]["selected_status"] = "ZERO_IMPROVEMENT"
+    metric["empty_event_policy"]["no_eligible_events"] = "ZERO_IMPROVEMENT"
     payload = _build(review, metric, policy)
 
     assert "empty_event_policy_unresolved" in payload[
@@ -257,6 +278,32 @@ def test_screening_policy_requires_owner_preregistration() -> None:
     ]
     assert "threshold_policy_not_owner_approved" in blockers
     assert "threshold_policy_owner_unresolved" in blockers
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_blocker"),
+    [
+        ("approved_at", None, "threshold_policy_approved_at_missing"),
+        ("approved_commit", None, "threshold_policy_approved_commit_missing"),
+        ("source_hash", None, "threshold_policy_source_hash_missing"),
+        (
+            "result_visibility_at_approval",
+            "RESULTS_VISIBLE",
+            "threshold_policy_result_visibility_not_none",
+        ),
+    ],
+)
+def test_screening_policy_requires_frozen_approval_provenance(
+    field: str, value: Any, expected_blocker: str
+) -> None:
+    review, metric, policy = _complete_inputs()
+    policy[field] = value
+    payload = _build(review, metric, policy)
+
+    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][
+        CANDIDATE_IDS[0]
+    ]
+    assert expected_blocker in blockers
 
 
 def test_screening_policy_requires_six_threshold_evaluations() -> None:
@@ -540,44 +587,51 @@ def _complete_inputs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     a_spec["parameters"].update(
         {
             "recovery_signal_id": "fixture_recovery_signal",
+            "recovery_signal_inventory_status": "PIT_APPROVED_CALLABLE",
+            "recovery_persistence_contract_id": "fixture_recovery_persistence",
+            "recovery_persistence_inventory_status": "GOVERNED_BASELINE_RULE_RESOLVED",
             "lagging_soft_confirmation_id": "fixture_soft_confirmation",
-            "provisional_exposure_absolute_cap": 0.10,
+            "provisional_exposure_absolute_cap": 0.05,
         }
     )
-    a_spec["hard_veto_ids"] = ["fixture_hard_veto"]
+    a_spec["baseline_mapping_status"] = "READY_FOR_OWNER_PREREGISTRATION"
+    a_spec["hard_veto_ids"] = list(approval.mapping_inventory.EXPECTED_VETO_IDS)
+    a_spec["hard_veto_set_inventory_status"] = "COMPLETE_CALLABLE_PIT_VALID_SET"
+    a_spec["governed_transition_scope_inventory_status"] = "RESOLVED"
+    a_spec["qqq_equivalent_binding_inventory_status"] = "RESOLVED"
     a_spec["applicable_regime_ids"] = ["ai_after_chatgpt_full_window"]
     b_spec = review["candidate_reviews"][1]["runtime_spec"]
     b_spec["parameters"].update(
         {
             "relaxed_soft_confirmation_id": "fixture_soft_confirmation",
+            "soft_confirmation_inventory_status": "EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION",
             "baseline_required_state": "fixture_baseline_state",
         }
     )
-    b_spec["hard_veto_ids"] = ["fixture_hard_veto"]
+    b_spec["baseline_mapping_status"] = "READY_FOR_OWNER_PREREGISTRATION"
+    b_spec["hard_veto_ids"] = list(approval.mapping_inventory.EXPECTED_VETO_IDS)
+    b_spec["hard_veto_set_inventory_status"] = "COMPLETE_CALLABLE_PIT_VALID_SET"
+    b_spec["governed_transition_scope_inventory_status"] = "RESOLVED"
+    b_spec["qqq_equivalent_binding_inventory_status"] = "RESOLVED"
     b_spec["applicable_regime_ids"] = ["ai_after_chatgpt_full_window"]
 
     metric = _metric_contract()
     metric["status"] = "APPROVED"
     metric["owner"] = "fixture_policy_owner"
     metric["relative_delta_epsilon_policy"].update(
-        {"status": "APPROVED", "epsilon": 1e-9, "owner": "fixture_policy_owner"}
+        {"status": "APPROVED", "owner": "fixture_policy_owner"}
     )
-    metric["empty_event_policy"]["selected_status"] = "BLOCKED_INSUFFICIENT_EVENTS"
-    for item in metric["metrics"]:
-        owner_fields = item.get("owner_fields", {})
-        for key in list(owner_fields):
-            if key in {"evaluation_horizon_steps", "reversal_window_steps"}:
-                owner_fields[key] = 5
-            elif key == "minimum_exposure_change":
-                owner_fields[key] = 0.05
-            elif key == "event_or_cost_measure":
-                owner_fields[key] = "opportunity_cost"
-            else:
-                owner_fields[key] = f"fixture_{key}"
+    metric["empty_event_policy"].update(
+        {"status": "APPROVED", "owner": "fixture_policy_owner"}
+    )
 
     policy = _threshold_policy()
     policy["policy_status"] = "APPROVED"
     policy["owner"] = "fixture_policy_owner"
+    policy["approved_at"] = "2026-07-10T00:00:00+09:00"
+    policy["approved_commit"] = "a" * 40
+    policy["source_hash"] = "b" * 64
+    policy["result_visibility_at_approval"] = "NONE"
     for candidate in policy["candidate_thresholds"]:
         candidate["approval_dependency"] = "APPROVED"
     return review, metric, policy

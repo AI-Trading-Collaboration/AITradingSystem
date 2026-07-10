@@ -9,6 +9,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_candidate_runtime_spec_threshold_policy_approval as m2438m1,  # noqa: E501
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_owner_mapping_inventory as m2438m1c,
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation as m2438j,  # noqa: E501
 )
 from ai_trading_system import (
@@ -116,6 +119,9 @@ def register_growth_tilt_pit_replay_strategy_commands(strategies_app: typer.Type
     strategies_app.command(
         "growth-tilt-candidate-runtime-spec-threshold-policy-approval"
     )(_growth_tilt_candidate_runtime_spec_threshold_policy_approval_command)
+    strategies_app.command("growth-tilt-owner-mapping-inventory")(
+        _growth_tilt_owner_mapping_inventory_command
+    )
 
 
 def _growth_tilt_top3_candidate_pit_replay_command(
@@ -2038,6 +2044,116 @@ def _growth_tilt_candidate_runtime_spec_threshold_policy_approval_command(
         "evidence_gap_count",
         "threshold_values_changed",
         "candidate_parameters_changed",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_owner_mapping_inventory_command(
+    channel_config_path: Annotated[
+        Path, typer.Option("--channel-config")
+    ] = m2438m1c.DEFAULT_CHANNEL_CONFIG_PATH,
+    signal_usage_matrix_path: Annotated[
+        Path, typer.Option("--signal-usage-matrix")
+    ] = m2438m1c.DEFAULT_SIGNAL_USAGE_MATRIX_PATH,
+    final_matrix_path: Annotated[
+        Path, typer.Option("--final-matrix")
+    ] = m2438m1c.DEFAULT_FINAL_MATRIX_PATH,
+    composer_config_path: Annotated[
+        Path, typer.Option("--composer-config")
+    ] = m2438m1c.DEFAULT_COMPOSER_CONFIG_PATH,
+    base_policy_path: Annotated[
+        Path, typer.Option("--base-policy")
+    ] = m2438m1c.DEFAULT_BASE_POLICY_PATH,
+    risk_veto_policy_path: Annotated[
+        Path, typer.Option("--risk-veto-policy")
+    ] = m2438m1c.DEFAULT_RISK_VETO_POLICY_PATH,
+    probe_registry_path: Annotated[
+        Path, typer.Option("--probe-registry")
+    ] = m2438m1c.DEFAULT_PROBE_REGISTRY_PATH,
+    dynamic_allocation_policy_path: Annotated[
+        Path, typer.Option("--dynamic-allocation-policy")
+    ] = m2438m1c.DEFAULT_DYNAMIC_ALLOCATION_POLICY_PATH,
+    channel_code_path: Annotated[
+        Path, typer.Option("--channel-code")
+    ] = m2438m1c.DEFAULT_CHANNEL_CODE_PATH,
+    compiler_code_path: Annotated[
+        Path, typer.Option("--compiler-code")
+    ] = m2438m1c.DEFAULT_COMPILER_CODE_PATH,
+    baseline_predictions_path: Annotated[
+        Path, typer.Option("--baseline-predictions")
+    ] = m2438m1c.DEFAULT_BASELINE_PREDICTIONS_PATH,
+    channel_predictions_path: Annotated[
+        Path, typer.Option("--channel-predictions")
+    ] = m2438m1c.DEFAULT_CHANNEL_PREDICTIONS_PATH,
+    compiler_trace_path: Annotated[
+        Path, typer.Option("--compiler-trace")
+    ] = m2438m1c.DEFAULT_COMPILER_TRACE_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m1c.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m1c.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m1c.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m1c.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m1c.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m1c.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = m2438m1c.run_growth_tilt_owner_mapping_inventory(
+        channel_config_path=channel_config_path,
+        signal_usage_matrix_path=signal_usage_matrix_path,
+        final_matrix_path=final_matrix_path,
+        composer_config_path=composer_config_path,
+        base_policy_path=base_policy_path,
+        risk_veto_policy_path=risk_veto_policy_path,
+        probe_registry_path=probe_registry_path,
+        dynamic_allocation_policy_path=dynamic_allocation_policy_path,
+        channel_code_path=channel_code_path,
+        compiler_code_path=compiler_code_path,
+        baseline_predictions_path=baseline_predictions_path,
+        channel_predictions_path=channel_predictions_path,
+        compiler_trace_path=compiler_trace_path,
+        requirement_doc_path=requirement_doc_path,
+        report_registry_path=report_registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+        system_flow_path=system_flow_path,
+        output_root=output_root,
+        docs_root=docs_root,
+        strict=strict,
+        as_of_date=_parse_optional_date(as_of),
+    )
+    _print_execution_semantics_payload("Growth tilt owner mapping inventory", payload)
+    for field in (
+        "status",
+        "m2_mapping_status",
+        "owner_mapping_ready_count",
+        "owner_mapping_required_count",
+        "m2_eligible_candidate_count",
+        "do_not_de_risk_pass",
+        "risk_on_veto_pass",
+        "mapping_blocker_count",
+        "unresolved_hard_veto_ids",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "replay_run",
+        "owner_preregistration_completed",
         "paper_shadow_enabled",
         "production_enabled",
         "broker_enabled",
