@@ -6,6 +6,9 @@ from typing import Annotated
 import typer
 
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_candidate_runtime_spec_threshold_policy_approval as m2438m1,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation as m2438j,  # noqa: E501
 )
 from ai_trading_system import (
@@ -110,6 +113,9 @@ def register_growth_tilt_pit_replay_strategy_commands(strategies_app: typer.Type
     strategies_app.command(
         "growth-tilt-post-runtime-candidate-pit-replay-blocker-resolution"
     )(_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution_command)
+    strategies_app.command(
+        "growth-tilt-candidate-runtime-spec-threshold-policy-approval"
+    )(_growth_tilt_candidate_runtime_spec_threshold_policy_approval_command)
 
 
 def _growth_tilt_top3_candidate_pit_replay_command(
@@ -1945,6 +1951,81 @@ def _growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution_command(
         "source_validation_error_count",
         "strict_validation_error_count",
         "evidence_gap_count",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_candidate_runtime_spec_threshold_policy_approval_command(
+    source_2438m_path: Annotated[
+        Path, typer.Option("--source-2438m")
+    ] = m2438m1.DEFAULT_SOURCE_2438M_PATH,
+    owner_review_path: Annotated[
+        Path, typer.Option("--owner-review")
+    ] = m2438m1.DEFAULT_OWNER_REVIEW_PATH,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m1.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m1.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m1.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m1.DEFAULT_SYSTEM_FLOW_PATH,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m1.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m1.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438m1.run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
+            source_2438m_path=source_2438m_path,
+            owner_review_path=owner_review_path,
+            requirement_doc_path=requirement_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            output_root=output_root,
+            docs_root=docs_root,
+            strict=strict,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt candidate runtime spec and threshold policy approval",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "source_status",
+        "source_2438m_ready_for_owner_review",
+        "candidate_count",
+        "approved_candidate_count",
+        "pending_candidate_count",
+        "redefine_candidate_count",
+        "withdraw_candidate_count",
+        "runtime_spec_ready_count",
+        "metric_contract_ready_count",
+        "threshold_policy_ready_count",
+        "owner_input_gap_count",
+        "data_quality_gate_executed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "evidence_gap_count",
+        "threshold_values_changed",
+        "candidate_parameters_changed",
         "paper_shadow_enabled",
         "production_enabled",
         "broker_enabled",

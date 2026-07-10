@@ -20457,6 +20457,30 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: growth_tilt_candidate_runtime_spec_threshold_policy_approval
+    title: Growth Tilt Candidate Runtime Spec And Threshold Policy Approval
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: aits research strategies growth-tilt-candidate-runtime-spec-threshold-policy-approval
+    artifact_globs:
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/approval_readiness_result.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/candidate_runtime_spec_review_matrix.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/metric_contract_review_matrix.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/threshold_policy_review_matrix.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/owner_action_checklist.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/no_effect_boundary.json
+      - docs/research/growth_tilt_candidate_runtime_spec_threshold_policy_approval.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-2438M1 consumes the TRADING-2438M blocked runtime diagnosis and a tracked owner-review input to validate explicit APPROVE, REDEFINE, WITHDRAW, or PENDING decisions for the same top-3 candidates. APPROVE requires a parameterized executable spec, six metric contracts with calculator provenance, and at least one finite owner-approved threshold policy record with evaluator and governance metadata. The default tracked template contains no parameter or threshold values and must remain BLOCKED_OWNER_INPUT until the project owner, strategy owner, and policy owner complete it. The report does not run replay, backtest, scoring, paper-shadow, production, weights, or broker actions.
+    owner_action: complete_growth_tilt_candidate_runtime_spec_and_threshold_policy_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_forward_aging_candidate_pack
     title: Growth Tilt Forward Aging Candidate Pack
     group: research

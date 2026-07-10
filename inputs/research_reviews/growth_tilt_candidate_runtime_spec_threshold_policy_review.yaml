@@ -1,0 +1,189 @@
+schema_version: growth_tilt_candidate_runtime_spec_threshold_policy_review.v1
+task_id: TRADING-2438M1
+status: BLOCKED_OWNER_INPUT
+owner_review_status: OWNER_REVIEW_REQUIRED
+source_task_id: TRADING-2438M
+as_of: '2026-07-08'
+market_regime: ai_after_chatgpt
+candidate_ids:
+  - recovery_reentry_speedup_guard
+  - false_risk_off_confirmation_relaxation
+  - missed_upside_reentry_accelerator
+
+candidate_reviews:
+  - candidate_id: recovery_reentry_speedup_guard
+    decision: PENDING
+    decision_rationale: null
+    review_owner: null
+    reviewed_at: null
+    review_condition: null
+    expiry_condition: null
+    next_route: null
+    runtime_spec:
+      approved: null
+      executor_id: null
+      executor_version: null
+      input_contract_version: null
+      source_policy_ref: null
+      parameters: {}
+    metric_specs:
+      - metric_id: return_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: max_drawdown_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: turnover_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: false_risk_off_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: missed_upside_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: whipsaw_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+    threshold_specs: []
+
+  - candidate_id: false_risk_off_confirmation_relaxation
+    decision: PENDING
+    decision_rationale: null
+    review_owner: null
+    reviewed_at: null
+    review_condition: null
+    expiry_condition: null
+    next_route: null
+    runtime_spec:
+      approved: null
+      executor_id: null
+      executor_version: null
+      input_contract_version: null
+      source_policy_ref: null
+      parameters: {}
+    metric_specs:
+      - metric_id: return_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: max_drawdown_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: turnover_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: false_risk_off_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: missed_upside_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: whipsaw_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+    threshold_specs: []
+
+  - candidate_id: missed_upside_reentry_accelerator
+    decision: PENDING
+    decision_rationale: null
+    review_owner: null
+    reviewed_at: null
+    review_condition: null
+    expiry_condition: null
+    next_route: null
+    runtime_spec:
+      approved: null
+      executor_id: null
+      executor_version: null
+      input_contract_version: null
+      source_policy_ref: null
+      parameters: {}
+    metric_specs:
+      - metric_id: return_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: max_drawdown_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: turnover_delta_vs_baseline
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: false_risk_off_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: missed_upside_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+      - metric_id: whipsaw_delta
+        source_field: null
+        unit: null
+        normalization_rule_id: null
+        calculator_id: null
+        calculator_version: null
+    threshold_specs: []
+
+safety_boundary:
+  validation_only: true
+  owner_review_only: true
+  candidate_only: true
+  observe_only: true
+  replay_allowed: false
+  backtest_allowed: false
+  scoring_allowed: false
+  market_data_experiment_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  production_weight_change_allowed: false
+  broker_action: none
+  trading_advice_allowed: false
