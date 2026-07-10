@@ -20,7 +20,7 @@ CANDIDATE_IDS = [
 ]
 
 
-def test_real_baseline_is_precisely_blocked_at_input_hydration() -> None:
+def test_missing_runtime_inputs_are_precisely_blocked_at_executor_binding() -> None:
     payload = _build({})
 
     assert payload["status"] == resolution.BLOCKED_STATUS
@@ -34,19 +34,85 @@ def test_real_baseline_is_precisely_blocked_at_input_hydration() -> None:
     assert payload["missing_threshold_evaluation_count"] == 3
     assert {
         item["first_failed_stage"] for item in payload["candidate_results"]
-    } == {"RUNTIME_INPUT_HYDRATED"}
+    } == {"RUNTIME_CONTRACT_RESOLVED"}
+    assert resolution.EXECUTOR_MAPPING_MISSING in payload["blockers_by_code"]
     assert resolution.INPUT_CONTRACT_MISSING in payload["blockers_by_code"]
     assert resolution.THRESHOLD_SPEC_MISSING in payload["blockers_by_code"]
+    assert all(payload["documentation_alignment"].values())
 
 
-def test_runtime_executable_does_not_imply_metric_computed() -> None:
+def test_source_runtime_executable_claim_does_not_imply_executor_binding() -> None:
     payload = _build({})
 
     assert all(
-        item["runtime_contract"]["executable"] is True
+        item["runtime_contract"]["source_runtime_executable_claim"] is True
+        for item in payload["candidate_results"]
+    )
+    assert all(
+        item["runtime_contract"]["executable"] is False
+        and item["runtime_contract"]["engine_contract_ready"] is True
+        and item["runtime_contract"]["executor_binding_ready"] is False
         for item in payload["candidate_results"]
     )
     assert payload["computed_runtime_metric_count"] == 0
+
+
+def test_candidate_specific_executor_mapping_is_required() -> None:
+    inputs = _runtime_inputs()
+    del inputs["candidate_specs"][0]["executor_id"]
+    payload = _build(inputs)
+
+    first = payload["candidate_results"][0]
+    assert first["first_failed_stage"] == "RUNTIME_CONTRACT_RESOLVED"
+    assert first["runtime_contract"]["executor_binding_ready"] is False
+    assert resolution.EXECUTOR_MAPPING_MISSING in first["candidate_replay_outcome"][
+        "blocker_codes"
+    ]
+
+
+def test_parameter_gap_remains_input_hydration_after_executor_binding() -> None:
+    inputs = _runtime_inputs()
+    del inputs["candidate_specs"][0]["parameters"]
+    payload = _build(inputs)
+
+    first = payload["candidate_results"][0]
+    assert first["runtime_contract"]["executor_binding_ready"] is True
+    assert first["first_failed_stage"] == "RUNTIME_INPUT_HYDRATED"
+    assert resolution.EXECUTOR_MAPPING_MISSING not in first[
+        "candidate_replay_outcome"
+    ]["blocker_codes"]
+    assert resolution.INPUT_CONTRACT_MISSING in first["candidate_replay_outcome"][
+        "blocker_codes"
+    ]
+
+
+def test_engine_readiness_shell_is_required_but_not_sufficient() -> None:
+    engine = _engine_contract()
+    del engine["pit_replay_engine_contract"]["engine_role"]
+    del engine["pit_replay_engine_contract"]["runner_interface_version"]
+    del engine["pit_replay_engine_contract"]["runtime_execution_supported"]
+    del engine["pit_replay_engine_contract"]["runtime_output_schema_version"]
+    payload = _build(_runtime_inputs(), engine_contract=engine)
+
+    assert payload["blocked_count"] == 3
+    assert all(
+        item["first_failed_stage"] == "RUNTIME_CONTRACT_RESOLVED"
+        for item in payload["candidate_results"]
+    )
+    assert resolution.ENGINE_CONTRACT_UNRESOLVED in payload["blockers_by_code"]
+    assert resolution.EXECUTOR_MAPPING_MISSING not in payload["blockers_by_code"]
+
+
+def test_executor_only_blocker_routes_to_compute_plane_binding() -> None:
+    inputs = _runtime_inputs()
+    for spec in inputs["candidate_specs"]:
+        spec["executor_id"] = "unregistered_executor"
+    payload = _build(inputs)
+
+    assert payload["blocked_count"] == 3
+    assert payload["recommended_next_research_task"] == (
+        resolution.NEXT_ROUTE_COMPUTE_PLANE
+    )
 
 
 def test_recheck_true_does_not_imply_threshold_evaluated() -> None:
@@ -265,7 +331,7 @@ def test_stage_trace_is_complete_and_preserves_first_failed_stage() -> None:
     assert [item["stage_id"] for item in result["stage_trace"]] == list(
         resolution.STAGE_IDS
     )
-    assert result["first_failed_stage"] == "RUNTIME_INPUT_HYDRATED"
+    assert result["first_failed_stage"] == "RUNTIME_CONTRACT_RESOLVED"
 
 
 def test_lineage_hashes_and_safety_boundary_are_preserved() -> None:
@@ -327,12 +393,13 @@ def _build(
     runtime_inputs: dict[str, object],
     *,
     source: dict[str, object] | None = None,
+    engine_contract: dict[str, object] | None = None,
     source_artifacts: list[dict[str, str]] | None = None,
 ) -> dict[str, object]:
     return resolution.build_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution(
         source or _source(),
         _candidate_config(),
-        _engine_contract(),
+        engine_contract or _engine_contract(),
         runtime_inputs,
         _data_quality(),
         source_artifacts=source_artifacts or [],
@@ -340,7 +407,9 @@ def _build(
         artifact_catalog_text="\n".join(resolution.REQUIRED_CATALOG_REFERENCES),
         system_flow_text="\n".join(resolution.REQUIRED_FLOW_REFERENCES),
         requirement_text=(
-            f"TRADING-2438M {resolution.INPUT_CONTRACT_MISSING}"
+            f"TRADING-2438M {resolution.INPUT_CONTRACT_MISSING} "
+            f"{resolution.ENGINE_CONTRACT_UNRESOLVED} "
+            f"{resolution.EXECUTOR_MAPPING_MISSING}"
         ),
         as_of="2026-07-08",
     )
@@ -389,7 +458,13 @@ def _engine_contract() -> dict[str, object]:
         "schema_version": "growth_tilt_pit_replay_engine_closure_contract.v1",
         "pit_replay_engine_contract": {
             "status": "READY",
+            "engine_id": "fixture_executor",
+            "engine_entrypoint": "fixture.module.run",
             "engine_entrypoint_exists": True,
+            "engine_role": resolution.EXPECTED_ENGINE_ROLE,
+            "runner_interface_version": resolution.EXPECTED_RUNNER_INTERFACE_VERSION,
+            "runtime_execution_supported": True,
+            "runtime_output_schema_version": "fixture_runtime_output.v1",
         },
     }
 
@@ -508,7 +583,12 @@ def _runner_sources(tmp_path: Path) -> dict[str, Path]:
         json.dumps(_runtime_inputs()), encoding="utf-8"
     )
     paths["requirement"].write_text(
-        f"TRADING-2438M {resolution.INPUT_CONTRACT_MISSING}", encoding="utf-8"
+        (
+            f"TRADING-2438M {resolution.INPUT_CONTRACT_MISSING} "
+            f"{resolution.ENGINE_CONTRACT_UNRESOLVED} "
+            f"{resolution.EXECUTOR_MAPPING_MISSING}"
+        ),
+        encoding="utf-8",
     )
     paths["registry"].write_text(
         json.dumps({"reports": [{"report_id": resolution.REPORT_TYPE}]}),

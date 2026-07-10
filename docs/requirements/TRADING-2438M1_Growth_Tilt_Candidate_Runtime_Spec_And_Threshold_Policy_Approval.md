@@ -11,10 +11,12 @@
 - status: `BLOCKED_OWNER_INPUT`
 - production boundary: validation-only / owner-review-only / candidate-only
 
-TRADING-2438M 已用真实 strict CLI 证明三个 top-3 candidate 的第一个失败阶段均为
-`RUNTIME_INPUT_HYDRATED`。当前 candidate config 只有 id、family、research question 和
-rationale，没有参数化 executable spec；现有 2438B entrypoint 是 contract builder，
-不是 compute-plane replay runner；2432/2433 threshold values 全部为 null。
+TRADING-2438M completion audit 已用真实 strict CLI 证明三个 top-3 candidate 的第一个
+失败阶段均为 `RUNTIME_CONTRACT_RESOLVED`：2438K 的 `runtime_executable=true` 只是
+source readiness claim，而 candidate-specific executor id/version/input contract version
+全部为 null。当前 candidate config 也只有 id、family、research question 和 rationale，
+没有参数化 executable spec；现有 2438B entrypoint 是 contract builder，不是
+compute-plane replay runner；2432/2433 threshold values 全部为 null。
 
 M1 不负责替 owner 发明参数或阈值。它负责把 owner 决策所需字段固化为可审计输入
 契约，校验每个 candidate 的 APPROVE / REDEFINE / WITHDRAW 决策，并在 owner 输入

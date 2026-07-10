@@ -35,6 +35,9 @@ NEXT_ROUTE_ALL_FAIL = (
 NEXT_ROUTE_RUNTIME_SPEC = (
     "TRADING-2438M1_Growth_Tilt_Candidate_Runtime_Spec_And_Threshold_Policy_Approval"
 )
+NEXT_ROUTE_COMPUTE_PLANE = (
+    "TRADING-2438M2_Growth_Tilt_Candidate_Runtime_Compute_Plane_Binding"
+)
 NEXT_ROUTE_SCOPED_REMEDIATION = (
     "TRADING-2438M1_Growth_Tilt_Post_Runtime_Candidate_PIT_Replay_Scoped_Remediation"
 )
@@ -66,7 +69,14 @@ STAGE_IDS: tuple[str, ...] = (
 )
 SUPPORTED_OPERATORS = {"GT", "GTE", "LT", "LTE", "EQ", "BETWEEN", "OUTSIDE"}
 
+# These are protocol invariants for a callable candidate replay compute plane.
+# A control-plane readiness/builder entrypoint must not satisfy this contract.
+EXPECTED_ENGINE_ROLE = "candidate_runtime_compute_plane"
+EXPECTED_RUNNER_INTERFACE_VERSION = "growth_tilt_candidate_replay_runner.v1"
+
 INPUT_CONTRACT_MISSING = "CANDIDATE_RUNTIME_INPUT_CONTRACT_MISSING"
+ENGINE_CONTRACT_UNRESOLVED = "CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED"
+EXECUTOR_MAPPING_MISSING = "CANDIDATE_RUNTIME_EXECUTOR_MAPPING_MISSING"
 RUNNER_NOT_INVOKED = "CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED"
 RUNNER_FAILED = "CANDIDATE_RUNTIME_REPLAY_RUNNER_FAILED"
 REPLAY_RESULT_EMPTY = "CANDIDATE_RUNTIME_REPLAY_RESULT_EMPTY"
@@ -111,6 +121,7 @@ REQUIRED_FLOW_REFERENCES: tuple[str, ...] = (
     PARTIAL_STATUS,
     BLOCKED_STATUS,
     NEXT_ROUTE_RUNTIME_SPEC,
+    NEXT_ROUTE_COMPUTE_PLANE,
 )
 
 
@@ -367,7 +378,11 @@ def _evaluate_candidate(
 ) -> dict[str, Any]:
     blockers: list[dict[str, Any]] = []
     selected = configured_candidate.get("candidate_id") == candidate_id
-    contract_ready = _runtime_contract_ready(prior_decision, engine_contract)
+    engine_contract_ready = _engine_contract_ready(engine_contract)
+    executor_binding_ready = _executor_binding_ready(candidate_spec, engine_contract)
+    contract_ready = _runtime_contract_ready(
+        prior_decision, engine_contract, candidate_spec
+    )
     input_ready = _candidate_spec_ready(candidate_spec)
     runtime_invoked = raw_runtime_output.get("producer_invoked") is True
     raw_output_present = _raw_output_present(raw_runtime_output)
@@ -379,6 +394,70 @@ def _evaluate_candidate(
     }
     metric_dependencies_ready = set(REQUIRED_METRIC_IDS).issubset(metric_spec_ids)
 
+    if prior_decision.get("runtime_executable") is not True or not engine_contract_ready:
+        engine = _mapping(engine_contract.get("pit_replay_engine_contract"))
+        blockers.append(
+            _blocker(
+                ENGINE_CONTRACT_UNRESOLVED,
+                candidate_id,
+                "RUNTIME_CONTRACT_RESOLVED",
+                "runtime_contract.engine_contract",
+                "source runtime-executable claim and READY callable engine contract",
+                {
+                    "source_runtime_executable_claim": prior_decision.get(
+                        "runtime_executable"
+                    ),
+                    "engine_id": engine.get("engine_id"),
+                    "engine_entrypoint": engine.get("engine_entrypoint"),
+                    "engine_entrypoint_exists": engine.get(
+                        "engine_entrypoint_exists"
+                    ),
+                    "engine_status": engine.get("status"),
+                    "engine_role": engine.get("engine_role"),
+                    "runner_interface_version": engine.get(
+                        "runner_interface_version"
+                    ),
+                    "runtime_execution_supported": engine.get(
+                        "runtime_execution_supported"
+                    ),
+                    "runtime_output_schema_version": engine.get(
+                        "runtime_output_schema_version"
+                    ),
+                    "engine_contract_ready": engine_contract_ready,
+                },
+                "2438K/2438B engine readiness evidence",
+                "Repair the callable compute-plane engine contract before candidate binding; "
+                "do not treat a readiness label as execution evidence.",
+            )
+        )
+    if not executor_binding_ready:
+        engine = _mapping(engine_contract.get("pit_replay_engine_contract"))
+        blockers.append(
+            _blocker(
+                EXECUTOR_MAPPING_MISSING,
+                candidate_id,
+                "RUNTIME_CONTRACT_RESOLVED",
+                "runtime_contract.executor_binding",
+                (
+                    "candidate-specific executor_id matching engine_id, "
+                    "executor_version, and input_contract_version"
+                ),
+                {
+                    "engine_id": engine.get("engine_id"),
+                    "engine_entrypoint": engine.get("engine_entrypoint"),
+                    "candidate_executor_id": candidate_spec.get("executor_id"),
+                    "candidate_executor_version": candidate_spec.get(
+                        "executor_version"
+                    ),
+                    "candidate_input_contract_version": candidate_spec.get(
+                        "input_contract_version"
+                    ),
+                },
+                "runtime evaluation input plus 2438B engine id",
+                "Provide an approved candidate executor mapping and bind it through "
+                "TRADING-2438M2; an engine readiness shell is not an executable binding.",
+            )
+        )
     if not input_ready:
         blockers.append(
             _blocker(
@@ -386,7 +465,7 @@ def _evaluate_candidate(
                 candidate_id,
                 "RUNTIME_INPUT_HYDRATED",
                 "runtime_contract.parameters",
-                "owner-approved executable candidate parameters and engine mapping",
+                "owner-approved executable candidate parameters and source policy",
                 candidate_spec or configured_candidate,
                 "candidate config / runtime evaluation input",
                 "Define and approve a parameterized candidate spec; do not infer "
@@ -554,6 +633,26 @@ def _evaluate_candidate(
         "as_of_date": as_of,
         "runtime_contract": {
             "executable": contract_ready,
+            "source_runtime_executable_claim": (
+                prior_decision.get("runtime_executable") is True
+            ),
+            "engine_contract_ready": engine_contract_ready,
+            "executor_binding_ready": executor_binding_ready,
+            "engine_id": _mapping(
+                engine_contract.get("pit_replay_engine_contract")
+            ).get("engine_id"),
+            "engine_role": _mapping(
+                engine_contract.get("pit_replay_engine_contract")
+            ).get("engine_role"),
+            "runner_interface_version": _mapping(
+                engine_contract.get("pit_replay_engine_contract")
+            ).get("runner_interface_version"),
+            "runtime_execution_supported": _mapping(
+                engine_contract.get("pit_replay_engine_contract")
+            ).get("runtime_execution_supported"),
+            "runtime_output_schema_version": _mapping(
+                engine_contract.get("pit_replay_engine_contract")
+            ).get("runtime_output_schema_version"),
             "executor_id": candidate_spec.get("executor_id"),
             "executor_version": candidate_spec.get("executor_version"),
             "input_contract_version": candidate_spec.get("input_contract_version"),
@@ -865,7 +964,9 @@ def _stage_trace(
         "RUNTIME_CONTRACT_RESOLVED": "PASS" if contract_ready else "BLOCKED",
         "RUNTIME_INPUT_HYDRATED": "PASS" if input_ready else "BLOCKED",
         "REPLAY_RUNNER_INVOKED": (
-            "PASS" if runtime_invoked else ("BLOCKED" if input_ready else "NOT_STARTED")
+            "PASS"
+            if runtime_invoked
+            else ("BLOCKED" if contract_ready and input_ready else "NOT_STARTED")
         ),
         "RAW_REPLAY_OUTPUT_EMITTED": (
             "PASS" if raw_output_present else ("BLOCKED" if runtime_invoked else "NOT_STARTED")
@@ -993,9 +1094,6 @@ def _candidate_spec_ready(spec: Mapping[str, Any]) -> bool:
     return bool(
         spec.get("candidate_id")
         and spec.get("approved") is True
-        and spec.get("executor_id")
-        and spec.get("executor_version")
-        and spec.get("input_contract_version")
         and spec.get("source_policy_ref")
         and isinstance(parameters, Mapping)
         and parameters
@@ -1014,13 +1112,41 @@ def _raw_output_present(output: Mapping[str, Any]) -> bool:
 
 
 def _runtime_contract_ready(
-    prior_decision: Mapping[str, Any], engine_contract: Mapping[str, Any]
+    prior_decision: Mapping[str, Any],
+    engine_contract: Mapping[str, Any],
+    candidate_spec: Mapping[str, Any],
+) -> bool:
+    return bool(
+        prior_decision.get("runtime_executable") is True
+        and _engine_contract_ready(engine_contract)
+        and _executor_binding_ready(candidate_spec, engine_contract)
+    )
+
+
+def _engine_contract_ready(engine_contract: Mapping[str, Any]) -> bool:
+    contract = _mapping(engine_contract.get("pit_replay_engine_contract"))
+    return bool(
+        contract.get("engine_id")
+        and contract.get("engine_entrypoint")
+        and contract.get("engine_entrypoint_exists") is True
+        and contract.get("status") == "READY"
+        and contract.get("engine_role") == EXPECTED_ENGINE_ROLE
+        and contract.get("runner_interface_version")
+        == EXPECTED_RUNNER_INTERFACE_VERSION
+        and contract.get("runtime_execution_supported") is True
+        and contract.get("runtime_output_schema_version")
+    )
+
+
+def _executor_binding_ready(
+    candidate_spec: Mapping[str, Any], engine_contract: Mapping[str, Any]
 ) -> bool:
     contract = _mapping(engine_contract.get("pit_replay_engine_contract"))
     return bool(
-        prior_decision.get("runtime_executable") is True
-        and contract.get("engine_entrypoint_exists") is True
-        and contract.get("status") == "READY"
+        candidate_spec.get("executor_id")
+        and candidate_spec.get("executor_id") == contract.get("engine_id")
+        and candidate_spec.get("executor_version")
+        and candidate_spec.get("input_contract_version")
     )
 
 
@@ -1130,6 +1256,8 @@ def _next_route(
     codes = {str(item.get("blocker_code")) for item in blockers}
     if INPUT_CONTRACT_MISSING in codes or THRESHOLD_SPEC_MISSING in codes:
         return NEXT_ROUTE_RUNTIME_SPEC
+    if EXECUTOR_MAPPING_MISSING in codes or ENGINE_CONTRACT_UNRESOLVED in codes:
+        return NEXT_ROUTE_COMPUTE_PLANE
     return NEXT_ROUTE_SCOPED_REMEDIATION
 
 
@@ -1151,7 +1279,9 @@ def _documentation_alignment(
         ),
         "system_flow": all(item in system_flow_text for item in REQUIRED_FLOW_REFERENCES),
         "requirement_doc": "TRADING-2438M" in requirement_text
-        and INPUT_CONTRACT_MISSING in requirement_text,
+        and INPUT_CONTRACT_MISSING in requirement_text
+        and ENGINE_CONTRACT_UNRESOLVED in requirement_text
+        and EXECUTOR_MAPPING_MISSING in requirement_text,
     }
 
 

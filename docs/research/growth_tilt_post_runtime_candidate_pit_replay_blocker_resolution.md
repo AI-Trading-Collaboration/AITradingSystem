@@ -28,7 +28,7 @@
   ],
   "runtime_invoked_candidate_count": 0,
   "status": "GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION_BLOCKED",
-  "unresolved_blocker_count": 33
+  "unresolved_blocker_count": 39
 }
 ```
 
@@ -38,6 +38,8 @@
 [
   {
     "blocker_codes": [
+      "CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED",
+      "CANDIDATE_RUNTIME_EXECUTOR_MAPPING_MISSING",
       "CANDIDATE_RUNTIME_INPUT_CONTRACT_MISSING",
       "CANDIDATE_RUNTIME_METRIC_DEPENDENCY_UNRESOLVED",
       "CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED",
@@ -45,13 +47,15 @@
       "CANDIDATE_RUNTIME_THRESHOLD_SPEC_MISSING"
     ],
     "candidate_id": "recovery_reentry_speedup_guard",
-    "first_failed_stage": "RUNTIME_INPUT_HYDRATED",
+    "first_failed_stage": "RUNTIME_CONTRACT_RESOLVED",
     "outcome_status": "BLOCKED",
-    "runtime_executable": true,
+    "runtime_executable": false,
     "source_rank": 1
   },
   {
     "blocker_codes": [
+      "CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED",
+      "CANDIDATE_RUNTIME_EXECUTOR_MAPPING_MISSING",
       "CANDIDATE_RUNTIME_INPUT_CONTRACT_MISSING",
       "CANDIDATE_RUNTIME_METRIC_DEPENDENCY_UNRESOLVED",
       "CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED",
@@ -59,13 +63,15 @@
       "CANDIDATE_RUNTIME_THRESHOLD_SPEC_MISSING"
     ],
     "candidate_id": "false_risk_off_confirmation_relaxation",
-    "first_failed_stage": "RUNTIME_INPUT_HYDRATED",
+    "first_failed_stage": "RUNTIME_CONTRACT_RESOLVED",
     "outcome_status": "BLOCKED",
-    "runtime_executable": true,
+    "runtime_executable": false,
     "source_rank": 2
   },
   {
     "blocker_codes": [
+      "CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED",
+      "CANDIDATE_RUNTIME_EXECUTOR_MAPPING_MISSING",
       "CANDIDATE_RUNTIME_INPUT_CONTRACT_MISSING",
       "CANDIDATE_RUNTIME_METRIC_DEPENDENCY_UNRESOLVED",
       "CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED",
@@ -73,9 +79,9 @@
       "CANDIDATE_RUNTIME_THRESHOLD_SPEC_MISSING"
     ],
     "candidate_id": "missed_upside_reentry_accelerator",
-    "first_failed_stage": "RUNTIME_INPUT_HYDRATED",
+    "first_failed_stage": "RUNTIME_CONTRACT_RESOLVED",
     "outcome_status": "BLOCKED",
-    "runtime_executable": true,
+    "runtime_executable": false,
     "source_rank": 3
   }
 ]
@@ -85,6 +91,8 @@
 
 ```json
 {
+  "CANDIDATE_RUNTIME_ENGINE_CONTRACT_UNRESOLVED": 3,
+  "CANDIDATE_RUNTIME_EXECUTOR_MAPPING_MISSING": 3,
   "CANDIDATE_RUNTIME_INPUT_CONTRACT_MISSING": 3,
   "CANDIDATE_RUNTIME_METRIC_DEPENDENCY_UNRESOLVED": 21,
   "CANDIDATE_RUNTIME_REPLAY_RUNNER_NOT_INVOKED": 3,
