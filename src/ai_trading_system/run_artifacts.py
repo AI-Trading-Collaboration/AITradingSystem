@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import platform
 import re
 import shutil
@@ -13,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.core.artifacts import ArtifactRef
+from ai_trading_system.platform.artifacts import write_json_atomic
 
 SCHEMA_VERSION = 1
 LEGACY_OUTPUT_MODES = {"mirror", "off"}
@@ -233,10 +233,11 @@ def write_run_manifest(
         warnings=warnings,
         generated_at=generated_at,
     )
-    paths.manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    paths.manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+    write_json_atomic(
+        paths.manifest_path,
+        manifest,
+        sort_keys=False,
+        trailing_newline=False,
     )
     return paths.manifest_path
 

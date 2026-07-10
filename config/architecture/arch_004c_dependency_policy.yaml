@@ -1,0 +1,53 @@
+schema_version: arch_004c_dependency_policy.v1
+policy_id: arch_004c_platform_dependency_policy
+status: active_phase_c
+owner: architecture_governance
+policy_metadata:
+  rationale: >
+    Prevent the platform contracts from becoming another parallel architecture
+    by enforcing dependency direction and freezing existing direct artifact IO
+    debt as a ratchet rather than silently accepting new writers.
+  intended_effect: >
+    Keep contracts pure, keep platform independent from legacy/CLI/reporting,
+    require the canonical atomic writer for new code, and expose remaining
+    migration debt without adding a waiver.
+  validation_evidence: >
+    ARCH-004C focused architecture-gate tests, repository self-scan, contract
+    validation, and full parallel pytest.
+  review_condition: >
+    Review before changing a layer rule, canonical writer, frozen baseline,
+    legacy façade, or ARCH-004G migration/removal wave.
+canonical_writer_path: src/ai_trading_system/platform/artifacts/writer.py
+direct_writer_baseline_path: inputs/architecture/arch_004c_direct_writer_baseline.yaml
+layer_rules:
+  - rule_id: CONTRACTS_REVERSE_DEPENDENCY_FORBIDDEN
+    path_prefix: src/ai_trading_system/contracts/
+    owner: architecture_governance
+    forbidden_import_prefixes:
+      - ai_trading_system.config
+      - ai_trading_system.platform
+      - ai_trading_system.legacy
+      - ai_trading_system.cli
+      - ai_trading_system.cli_commands
+      - ai_trading_system.reports
+      - ai_trading_system.scheduled_tasks
+      - ai_trading_system.data
+      - ai_trading_system.backtest
+    remediation: Move IO/config/domain resolution to platform or a time-bounded legacy adapter.
+  - rule_id: PLATFORM_REVERSE_DEPENDENCY_FORBIDDEN
+    path_prefix: src/ai_trading_system/platform/
+    owner: architecture_governance
+    forbidden_import_prefixes:
+      - ai_trading_system.legacy
+      - ai_trading_system.cli
+      - ai_trading_system.cli_commands
+      - ai_trading_system.reports
+      - ai_trading_system.scheduled_tasks
+      - ai_trading_system.backtest
+    remediation: Depend on contracts/core/utilities; move compatibility logic to legacy adapters.
+direct_writer_ratchet:
+  rule_id: NEW_DIRECT_ARTIFACT_WRITER_FORBIDDEN
+  owner: platform_io
+  baseline_status: FROZEN_ARCH_004C_C2
+  new_calls_allowed: false
+  remediation: Use ai_trading_system.platform.artifacts canonical atomic writer and retain legacy byte parity.

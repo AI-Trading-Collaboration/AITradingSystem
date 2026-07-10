@@ -149,6 +149,9 @@ phase_b_semantic_kernel:
       sha256: 23bd2480505bad6b9e7098e1b8aac17b0233093d09dde4adb44df37446f1df8e
     - path: src/ai_trading_system/legacy/research_context_adapter.py
       sha256: e8bf24f4edd274a97802e28a74acd7eb050ee178c2a58b540b64dec327a5d17c
+      historical_phase_b_hash: true
+      superseded_by_phase: ARCH-004C
+      current_hash_tracked_in: phase_c_platform_contracts.sources
     - path: src/ai_trading_system/upper_state_label_feature_reset.py
       sha256: 264717c5554bfa2eef37bb9cd178be79e2c3801561879882a01a003f512fc4ef
     - path: tests/test_research_evaluation_context.py
@@ -176,3 +179,77 @@ phase_b_semantic_kernel:
       warnings: 642
       elapsed_seconds: 819.99
       runtime_artifact: outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json
+
+phase_c_platform_contracts:
+  status: COMPLETE_PHASE_D_READY
+  as_of: 2026-07-11
+  repository_inventory:
+    python_module_count_including_ignored: 770
+    python_test_file_count: 1105
+  contract_schemas:
+    - artifact_envelope.v1
+    - data_quality_evidence.v1
+    - workflow_spec.v1
+    - run_ledger.v1
+    - report_spec.v1
+  direct_writer_ratchet:
+    baseline_path: inputs/architecture/arch_004c_direct_writer_baseline.yaml
+    baseline_call_count: 894
+    current_call_count: 893
+    violation_count: 0
+  sources:
+    - path: src/ai_trading_system/contracts/artifact_envelope.py
+      sha256: 5dfb7b6ac051b63b4ea9f253aa2a7d64c8385d1e3f29530c11d47cf1c8116464
+    - path: src/ai_trading_system/contracts/data_quality.py
+      sha256: 86022574a4f6ffc707c3dbcbd73bfcac926a02564c53270cf309ed5dd3db2112
+    - path: src/ai_trading_system/contracts/workflow.py
+      sha256: 6245abf14ecbdd2d9989f20283fab12211791b31c5aa170ac58dfe0817232f3b
+    - path: src/ai_trading_system/contracts/report_spec.py
+      sha256: 4b658eb0f770bb4cf569372617331c3ede492e57c7bd403df0bf9506f1f3f63f
+    - path: src/ai_trading_system/platform/artifacts/writer.py
+      sha256: 8b8f3cb65ceef164ea7cc3add479737e8a27449a46de24c34074cdfbe0ad6461
+    - path: src/ai_trading_system/platform/config/resolver.py
+      sha256: e3d138aec5dc7556e41a15b893537ff4d948c02f696ee9b5e4c902e839475169
+    - path: src/ai_trading_system/platform/config/market_regimes.py
+      sha256: d27e73cfd917e9a601860bc18ba2c1085e97c47b12a0e8c740158822d9fdf3ec
+    - path: src/ai_trading_system/platform/architecture/dependency_gate.py
+      sha256: a06a13cb25038fb009e736249887577f8f234794856cf355268d82ab9e489a97
+    - path: src/ai_trading_system/legacy/platform_contract_adapters.py
+      sha256: c58d7a46ea0a69644b47ba9b62947d696014b102bf4fa568cb65479b987701dc
+    - path: src/ai_trading_system/legacy/research_context_adapter.py
+      sha256: 9d54684bfa79e4bcf3fc307d33466068cd3a787508fa3b0ec5a694fce45e616e
+    - path: src/ai_trading_system/config.py
+      sha256: 33522d62a1cad4337d1aa11ce7c877b18af906b9d9caf7f8b5c5fbca96e6a062
+    - path: src/ai_trading_system/run_artifacts.py
+      sha256: de75dc16f262ca62f0bbbfc99a3c8b0a566d1fb5832a0799be092251b1e7193e
+    - path: src/ai_trading_system/data/quality.py
+      sha256: a28689602c7a2ff2542484557c11c5f317bd64a9888b3e0c163122e43b08cd7e
+  parity:
+    shared_dynamic_writer_bytes: PASS
+    research_artifact_pair_bytes: PASS
+    daily_run_manifest_path_schema_bytes: PASS
+    data_quality_report_render_bytes: PASS
+    market_regime_legacy_import: PASS
+    scheduled_task_adapter: PASS
+    report_registry_adapter: PASS
+    research_context_adapter: PASS
+  validation:
+    focused:
+      status: PASS
+      passed: 120
+    scoped_mypy:
+      status: PASS
+    architecture_gate:
+      status: PASS
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 35.62
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T181035Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5404
+      failed: 0
+      warnings: 642
+      elapsed_seconds: 817.35
+      runtime_artifact: outputs/validation_runtime/full_20260710T181121Z/test_runtime_summary.json

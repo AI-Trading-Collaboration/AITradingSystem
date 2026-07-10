@@ -16,6 +16,7 @@ from ai_trading_system.config import (
     PriceQualityConfig,
     RateQualityConfig,
 )
+from ai_trading_system.platform.artifacts import write_markdown_atomic
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
@@ -276,8 +277,7 @@ def render_data_quality_report(report: DataQualityReport) -> str:
 
 
 def write_data_quality_report(report: DataQualityReport, output_path: Path) -> Path:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_data_quality_report(report), encoding="utf-8")
+    write_markdown_atomic(output_path, render_data_quality_report(report))
     if report.marketstack_reconciliation_records:
         write_marketstack_reconciliation_csv(
             report,

@@ -10,16 +10,18 @@ RECONCILIATION_PATH = Path("inputs/architecture/arch_004_predecessor_reconciliat
 GLOSSARY_PATH = Path("config/architecture/research_semantic_glossary.yaml")
 COMPATIBILITY_BASELINE_PATH = Path("inputs/architecture/arch_004_compatibility_baseline.yaml")
 ATTRIBUTION_PATH = Path("inputs/architecture/arch_004_worktree_attribution.yaml")
+DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.yaml")
+DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def test_arch_004_phase_b_complete_policy_keeps_freeze_and_preserves_safety() -> None:
+def test_arch_004_phase_c_complete_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_b_complete_phase_c_ready"
-    assert policy["program"]["current_phase"] == "ARCH-004B"
+    assert policy["status"] == "phase_c_complete_phase_d_ready"
+    assert policy["program"]["current_phase"] == "ARCH-004C"
     assert policy["program"]["current_phase_status"] == "COMPLETE"
-    assert policy["program"]["next_phase"] == "ARCH-004C"
+    assert policy["program"]["next_phase"] == "ARCH-004D"
     assert policy["program"]["next_phase_unblocked"] is True
     assert policy["feature_freeze"]["active"] is True
     assert "NEW_TASK_SHAPED_RESEARCH_MODULE" in policy["feature_freeze"]["forbidden_change_classes"]
@@ -38,6 +40,29 @@ def test_arch_004_phase_b_complete_policy_keeps_freeze_and_preserves_safety() ->
     assert enforcement["next_phase_unblocked"] is True
     assert policy["phase_b_completion"]["full_parallel_validation"]["passed"] == 5375
     assert policy["phase_b_completion"]["full_parallel_validation"]["failed"] == 0
+    phase_c = policy["phase_c_execution"]
+    assert phase_c["status"] == "COMPLETE"
+    assert phase_c["stages"] == {
+        "C1_pure_contracts": "COMPLETE",
+        "C2_canonical_io_and_facades": "COMPLETE",
+        "C3_typed_config_resolver_and_split": "COMPLETE",
+        "C4_workflow_and_report_adapters": "COMPLETE",
+        "C5_architecture_dependency_gate": "COMPLETE",
+        "C6_reference_integration_and_closeout": "COMPLETE",
+    }
+    assert phase_c["new_direct_artifact_writer_allowed"] is False
+    assert phase_c["domain_wide_migration_allowed"] is False
+    assert phase_c["completion_validation"]["focused"]["passed"] == 120
+    assert phase_c["completion_validation"]["architecture_gate"] == {
+        "status": "PASS",
+        "scanned_python_files": 770,
+        "frozen_direct_writer_calls": 894,
+        "current_direct_writer_calls": 893,
+        "violations": 0,
+    }
+    assert phase_c["completion_validation"]["contract_validation"]["passed"] == 197
+    assert phase_c["completion_validation"]["full_parallel_validation"]["passed"] == 5404
+    assert phase_c["completion_validation"]["full_parallel_validation"]["failed"] == 0
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -149,14 +174,55 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_b["validation"]["full_parallel"]["passed"] == 5375
     assert phase_b["validation"]["full_parallel"]["failed"] == 0
     for source in phase_b["sources"]:
+        if source.get("historical_phase_b_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004C"
+            assert source["current_hash_tracked_in"] == "phase_c_platform_contracts.sources"
+            continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
+    phase_c = baseline["phase_c_platform_contracts"]
+    assert phase_c["status"] == "COMPLETE_PHASE_D_READY"
+    assert phase_c["contract_schemas"] == [
+        "artifact_envelope.v1",
+        "data_quality_evidence.v1",
+        "workflow_spec.v1",
+        "run_ledger.v1",
+        "report_spec.v1",
+    ]
+    assert phase_c["direct_writer_ratchet"] == {
+        "baseline_path": "inputs/architecture/arch_004c_direct_writer_baseline.yaml",
+        "baseline_call_count": 894,
+        "current_call_count": 893,
+        "violation_count": 0,
+    }
+    assert set(phase_c["parity"].values()) == {"PASS"}
+    assert phase_c["validation"]["focused"]["passed"] == 120
+    assert phase_c["validation"]["contract_validation"]["passed"] == 197
+    assert phase_c["validation"]["full_parallel"]["passed"] == 5404
+    assert phase_c["validation"]["full_parallel"]["failed"] == 0
+    for source in phase_c["sources"]:
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+
+
+def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None:
+    policy = safe_load_yaml_path(DEPENDENCY_POLICY_PATH)
+    direct = policy["direct_writer_ratchet"]
+    baseline = safe_load_yaml_path(DIRECT_WRITER_BASELINE_PATH)
+
+    assert policy["status"] == "active_phase_c"
+    assert policy["canonical_writer_path"] == ("src/ai_trading_system/platform/artifacts/writer.py")
+    assert direct["new_calls_allowed"] is False
+    assert direct["baseline_status"] == "FROZEN_ARCH_004C_C2"
+    assert baseline["status"] == "FROZEN_ARCH_004C_C2"
+    assert baseline["direct_writer_call_count"] == 894
+    assert baseline["entries"]
 
 
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_B"
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_C_COMPLETE"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

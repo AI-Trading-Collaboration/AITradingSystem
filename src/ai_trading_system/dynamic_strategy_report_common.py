@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+
+from ai_trading_system.platform.artifacts import write_json_atomic, write_markdown_atomic
 
 
 def write_json_artifact(
@@ -13,22 +15,17 @@ def write_json_artifact(
     sort_keys: bool = True,
     default: Callable[[Any], Any] | None = None,
 ) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
-            payload,
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=sort_keys,
-            default=default,
-        ),
-        encoding="utf-8",
+    write_json_atomic(
+        path,
+        payload,
+        sort_keys=sort_keys,
+        default=default,
+        trailing_newline=False,
     )
 
 
 def write_markdown_artifact(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+    write_markdown_atomic(path, content)
 
 
 def write_section_json_artifact(
@@ -83,7 +80,7 @@ def load_json_document_or_missing_status(
 ) -> dict[str, Any]:
     if not path.exists():
         return {"status": "MISSING", path_key: str(path)}
-    return load_json_document(path)
+    return cast(dict[str, Any], load_json_document(path))
 
 
 def load_json_document_or_missing_path(path: Path) -> dict[str, Any]:

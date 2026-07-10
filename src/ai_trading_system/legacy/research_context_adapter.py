@@ -8,10 +8,7 @@ from typing import Any
 
 from ai_trading_system.config import (
     DEFAULT_DATA_QUALITY_CONFIG_PATH,
-    DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     PROJECT_ROOT,
-    load_market_regimes,
-    market_regime_by_id,
 )
 from ai_trading_system.contracts.research_context import (
     DataQualityContractRef,
@@ -27,6 +24,12 @@ from ai_trading_system.contracts.research_context import (
     resolve_complete_research_context,
 )
 from ai_trading_system.contracts.status import EvidenceRole, PolicyRole, ResearchWindowRole
+from ai_trading_system.platform.config import (
+    DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+    ConfigRef,
+    market_regime_by_id,
+    resolve_market_regimes,
+)
 from ai_trading_system.research_audit_metadata import (
     DEFAULT_PRIMARY_RESEARCH_WINDOW_POLICY_PATH,
 )
@@ -73,7 +76,8 @@ def resolve_legacy_research_context(
     primary_window_policy_path: Path = DEFAULT_PRIMARY_RESEARCH_WINDOW_POLICY_PATH,
     data_quality_policy_path: Path = DEFAULT_DATA_QUALITY_CONFIG_PATH,
 ) -> ResearchEvaluationContext:
-    regime_config = market_regime_by_id(load_market_regimes(market_regimes_path), market_regime_id)
+    resolved_regimes = resolve_market_regimes(market_regimes_path)
+    regime_config = market_regime_by_id(resolved_regimes.value, market_regime_id)
     registry = load_research_window_registry(research_window_registry_path)
     raw_window = registry["windows"].get(research_window_id)
     if not isinstance(raw_window, Mapping):
@@ -95,11 +99,7 @@ def resolve_legacy_research_context(
         start_date=regime_config.start_date,
     )
     policy_refs = (
-        _policy_ref(
-            market_regimes_path,
-            fallback_id="market_regimes",
-            role=PolicyRole.MARKET_REGIME,
-        ),
+        _config_policy_ref(resolved_regimes.reference, role=PolicyRole.MARKET_REGIME),
         _policy_ref(
             research_window_registry_path,
             fallback_id="research_window_registry",
@@ -275,6 +275,17 @@ def _policy_ref(path: Path, *, fallback_id: str, role: PolicyRole) -> PolicyRef:
         status=str(payload.get("status") or "active-legacy"),
         path=_portable_path(path),
         sha256=_sha256(path),
+    )
+
+
+def _config_policy_ref(reference: ConfigRef, *, role: PolicyRole) -> PolicyRef:
+    return PolicyRef(
+        policy_id=reference.policy_id,
+        role=role,
+        version=reference.version,
+        status=reference.status,
+        path=_portable_path(Path(reference.path)),
+        sha256=reference.sha256,
     )
 
 

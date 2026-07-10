@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_B
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_C_COMPLETE
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -13,7 +13,9 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
+  - docs/requirements/ARCH-004C_Platform_Contracts.md
   - docs/architecture/arch_004_phase_b_semantic_kernel.md
+  - docs/architecture/arch_004_phase_c_platform_contracts.md
   - docs/system_flow.md
   - inputs/architecture/arch_004_compatibility_baseline.yaml
   - inputs/architecture/arch_004_predecessor_reconciliation.yaml
@@ -22,12 +24,38 @@ arch_004_owned_paths:
   - src/ai_trading_system/contracts/__init__.py
   - src/ai_trading_system/contracts/status.py
   - src/ai_trading_system/contracts/research_context.py
+  - src/ai_trading_system/contracts/artifact_envelope.py
+  - src/ai_trading_system/contracts/data_quality.py
+  - src/ai_trading_system/contracts/workflow.py
+  - src/ai_trading_system/contracts/report_spec.py
   - src/ai_trading_system/legacy/__init__.py
   - src/ai_trading_system/legacy/research_context_adapter.py
+  - src/ai_trading_system/legacy/platform_contract_adapters.py
+  - src/ai_trading_system/platform/__init__.py
+  - src/ai_trading_system/platform/artifacts/__init__.py
+  - src/ai_trading_system/platform/artifacts/writer.py
+  - src/ai_trading_system/platform/config/__init__.py
+  - src/ai_trading_system/platform/config/resolver.py
+  - src/ai_trading_system/platform/config/market_regimes.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/dependency_gate.py
+  - src/ai_trading_system/config.py
+  - src/ai_trading_system/dynamic_strategy_report_common.py
+  - src/ai_trading_system/research_governance.py
+  - src/ai_trading_system/run_artifacts.py
+  - src/ai_trading_system/data/quality.py
+  - config/architecture/arch_004c_dependency_policy.yaml
+  - inputs/architecture/arch_004c_direct_writer_baseline.yaml
+  - scripts/validate_architecture_dependencies.py
   - src/ai_trading_system/upper_state_label_feature_reset.py
   - tests/test_arch_004_refactor_policy.py
   - tests/test_research_execution_common.py
   - tests/test_research_evaluation_context.py
+  - tests/test_arch_004c_platform_contracts.py
+  - tests/test_arch_004c_artifact_writer.py
+  - tests/test_arch_004c_config_resolver.py
+  - tests/test_arch_004c_platform_adapters.py
+  - tests/test_arch_004c_dependency_gate.py
 
 shared_but_attributable_paths:
   - path: docs/task_register.md
@@ -36,6 +64,7 @@ shared_but_attributable_paths:
       - ARCH-004
       - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
       - ARCH-004B_SEMANTIC_KERNEL
+      - ARCH-004C_PLATFORM_CONTRACTS
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW

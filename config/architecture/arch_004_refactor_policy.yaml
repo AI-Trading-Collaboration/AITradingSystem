@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_b_complete_phase_c_ready
+status: phase_c_complete_phase_d_ready
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,9 +30,9 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004B
+  current_phase: ARCH-004C
   current_phase_status: COMPLETE
-  next_phase: ARCH-004C
+  next_phase: ARCH-004D
   next_phase_unblocked: true
   predecessor_task_ids:
     - ARCH-001
@@ -184,6 +184,52 @@ phase_b_completion:
     warnings: 642
     elapsed_seconds: 819.99
     runtime_artifact: outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json
+
+phase_c_execution:
+  task_id: ARCH-004C_PLATFORM_CONTRACTS
+  status: COMPLETE
+  requirement_path: docs/requirements/ARCH-004C_Platform_Contracts.md
+  stages:
+    C1_pure_contracts: COMPLETE
+    C2_canonical_io_and_facades: COMPLETE
+    C3_typed_config_resolver_and_split: COMPLETE
+    C4_workflow_and_report_adapters: COMPLETE
+    C5_architecture_dependency_gate: COMPLETE
+    C6_reference_integration_and_closeout: COMPLETE
+  required_contracts:
+    - ArtifactEnvelope
+    - DataQualityEvidence
+    - WorkflowSpec
+    - RunLedger
+    - ReportSpec
+  legacy_rule: TIME_BOUNDED_FACADE_WITH_OWNER_SUNSET_AND_PARITY
+  new_direct_artifact_writer_allowed: false
+  domain_wide_migration_allowed: false
+  next_phase_unblocked: true
+  completion_validation:
+    focused:
+      status: PASS
+      passed: 120
+    scoped_mypy:
+      status: PASS
+    architecture_gate:
+      status: PASS
+      scanned_python_files: 770
+      frozen_direct_writer_calls: 894
+      current_direct_writer_calls: 893
+      violations: 0
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 35.62
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T181035Z/test_runtime_summary.json
+    full_parallel_validation:
+      status: PASS
+      passed: 5404
+      failed: 0
+      warnings: 642
+      elapsed_seconds: 817.35
+      runtime_artifact: outputs/validation_runtime/full_20260710T181121Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

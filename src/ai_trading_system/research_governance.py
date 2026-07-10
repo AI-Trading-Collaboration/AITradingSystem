@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.artifacts import write_json_atomic, write_markdown_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "1.0"
@@ -83,14 +84,10 @@ def write_research_artifact_pair(
     output_root: Path,
     artifact_id: str,
 ) -> dict[str, str]:
-    output_root.mkdir(parents=True, exist_ok=True)
     json_path = output_root / f"{artifact_id}.json"
     markdown_path = output_root / f"{artifact_id}.md"
-    json_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    markdown_path.write_text(render_research_markdown(payload), encoding="utf-8")
+    write_json_atomic(json_path, payload)
+    write_markdown_atomic(markdown_path, render_research_markdown(payload))
     return {"json_path": str(json_path), "markdown_path": str(markdown_path)}
 
 
