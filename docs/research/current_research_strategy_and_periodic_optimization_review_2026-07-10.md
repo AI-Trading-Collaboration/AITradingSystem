@@ -1,8 +1,11 @@
 # 当前研究策略与定期优化复核说明
 
-最后更新：2026-07-11  
-项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`  
-当前 QQQ/SGOV/TQQQ primary validated research window：`2021-02-22` 至最近完整且通过数据质量门禁的美股交易日  
+最后更新：2026-07-11
+
+项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
+
+当前 QQQ/SGOV/TQQQ primary validated research window：`2021-02-22` 至最近完整且通过数据质量门禁的美股交易日
+
 文档性质：研究治理与现状说明，不构成投资建议、策略晋升或交易授权
 
 ## 执行结论

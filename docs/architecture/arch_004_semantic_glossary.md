@@ -1,6 +1,7 @@
 # ARCH-004 研究语义词典
 
-最后更新：2026-07-11  
+最后更新：2026-07-11
+
 机器源：`config/architecture/research_semantic_glossary.yaml`
 
 ## 结论
