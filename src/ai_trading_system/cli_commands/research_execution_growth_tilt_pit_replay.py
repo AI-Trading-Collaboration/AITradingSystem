@@ -15,6 +15,9 @@ from ai_trading_system import (
     dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure as m2438b,
 )
 from ai_trading_system import (
+    dynamic_strategy_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution as m2438m,  # noqa: E501
+)
+from ai_trading_system import (
     dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure as m2438h,  # noqa: E501
 )
 from ai_trading_system import (
@@ -104,6 +107,9 @@ def register_growth_tilt_pit_replay_strategy_commands(strategies_app: typer.Type
     strategies_app.command(
         "growth-tilt-top3-candidate-pit-replay-recheck-after-runtime-remediation"
     )(_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation_command)
+    strategies_app.command(
+        "growth-tilt-post-runtime-candidate-pit-replay-blocker-resolution"
+    )(_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution_command)
 
 
 def _growth_tilt_top3_candidate_pit_replay_command(
@@ -1835,6 +1841,114 @@ def _growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation_com
         "data_quality_status",
         "source_validation_error_count",
         "evidence_gap_count",
+    ):
+        console.print(f"{field}={_cli_scalar(payload.get(field))}")
+    console.print(f"next_route={payload.get('recommended_next_research_task')}")
+
+
+def _growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution_command(
+    source_2438l_path: Annotated[
+        Path, typer.Option("--source-artifact", "--source-2438l")
+    ] = m2438m.DEFAULT_SOURCE_2438L_PATH,
+    candidate_config_path: Annotated[
+        Path, typer.Option("--candidate-config")
+    ] = m2438m.DEFAULT_CANDIDATE_CONFIG_PATH,
+    engine_contract_path: Annotated[
+        Path, typer.Option("--engine-contract")
+    ] = m2438m.DEFAULT_ENGINE_CONTRACT_PATH,
+    runtime_evaluation_input_path: Annotated[
+        Path | None, typer.Option("--runtime-evaluation-input")
+    ] = None,
+    requirement_doc_path: Annotated[
+        Path, typer.Option("--requirement-doc")
+    ] = m2438m.DEFAULT_REQUIREMENT_DOC_PATH,
+    report_registry_path: Annotated[
+        Path, typer.Option("--report-registry")
+    ] = m2438m.DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path, typer.Option("--artifact-catalog")
+    ] = m2438m.DEFAULT_ARTIFACT_CATALOG_PATH,
+    system_flow_path: Annotated[
+        Path, typer.Option("--system-flow")
+    ] = m2438m.DEFAULT_SYSTEM_FLOW_PATH,
+    prices_path: Annotated[
+        Path, typer.Option("--prices-path")
+    ] = m2438m.DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path, typer.Option("--rates-path")
+    ] = m2438m.DEFAULT_RATES_PATH,
+    data_quality_summary_path: Annotated[
+        Path | None, typer.Option("--data-quality-summary")
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None, typer.Option("--data-quality-output")
+    ] = None,
+    source_run_id: Annotated[
+        str | None, typer.Option("--source-run-id")
+    ] = None,
+    candidate_limit: Annotated[int, typer.Option("--candidate-limit")] = 3,
+    output_root: Annotated[
+        Path, typer.Option("--output-root")
+    ] = m2438m.DEFAULT_OUTPUT_ROOT,
+    docs_root: Annotated[
+        Path, typer.Option("--docs-root")
+    ] = m2438m.DEFAULT_DOCS_ROOT,
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of")] = None,
+) -> None:
+    payload = (
+        m2438m.run_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution(
+            source_2438l_path=source_2438l_path,
+            candidate_config_path=candidate_config_path,
+            engine_contract_path=engine_contract_path,
+            runtime_evaluation_input_path=runtime_evaluation_input_path,
+            requirement_doc_path=requirement_doc_path,
+            report_registry_path=report_registry_path,
+            artifact_catalog_path=artifact_catalog_path,
+            system_flow_path=system_flow_path,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_summary_path=data_quality_summary_path,
+            data_quality_output_path=data_quality_output_path,
+            source_run_id=source_run_id,
+            candidate_limit=candidate_limit,
+            output_root=output_root,
+            docs_root=docs_root,
+            strict=strict,
+            as_of_date=_parse_optional_date(as_of),
+        )
+    )
+    _print_execution_semantics_payload(
+        "Growth tilt post-runtime candidate PIT replay blocker resolution",
+        payload,
+    )
+    for field in (
+        "readiness_status",
+        "candidate_count",
+        "runtime_invoked_candidate_count",
+        "raw_runtime_output_present_count",
+        "required_runtime_metric_count",
+        "computed_runtime_metric_count",
+        "null_runtime_metric_count",
+        "invalid_runtime_metric_count",
+        "required_threshold_evaluation_count",
+        "completed_threshold_evaluation_count",
+        "missing_threshold_evaluation_count",
+        "pass_count",
+        "fail_count",
+        "blocked_count",
+        "resolved_blocker_count",
+        "unresolved_blocker_count",
+        "data_quality_gate_executed",
+        "data_quality_gate_passed",
+        "data_quality_status",
+        "source_validation_error_count",
+        "strict_validation_error_count",
+        "evidence_gap_count",
+        "paper_shadow_enabled",
+        "production_enabled",
+        "broker_enabled",
+        "portfolio_weight_mutated",
     ):
         console.print(f"{field}={_cli_scalar(payload.get(field))}")
     console.print(f"next_route={payload.get('recommended_next_research_task')}")
