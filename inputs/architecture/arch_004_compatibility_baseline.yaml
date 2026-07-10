@@ -386,14 +386,29 @@ phase_e_devex_ownership_generated_indexes:
       sha256: 2993d1179eddc3a18987ecabdeefeb40ec7f2a08c2f9dfd49231f99292f0d3c7
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: e49a46917df4a9463edf4457ba7a906f61061fe31e6d937d3198c52bca1bbbd0
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-004F2
+      current_hash_tracked_in: phase_f2_research_lifecycle_and_execution_chain.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: 448dd8817e30a781b1b9e7360da7221d62d98ab652959b2bd4c32ddba87e4e72
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-004F2
+      current_hash_tracked_in: phase_f2_research_lifecycle_and_execution_chain.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: 0a0dcb3ccfbb37c05cdea96278268f036101742ec030558b345e24ea1cf7b460
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-004F2
+      current_hash_tracked_in: phase_f2_research_lifecycle_and_execution_chain.sources
     - path: docs/artifact_catalog.md
       sha256: 39c1710b1bb20763bf94dad98204fec16eddfcd0ee4251a8164f6b85b10e21e8
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-004F2
+      current_hash_tracked_in: phase_f2_research_lifecycle_and_execution_chain.sources
     - path: docs/system_flow.md
       sha256: 07c5f5058d90226af0e761b0768901786fdd6be62738a0baba227ee483e86026
+      historical_phase_e_hash: true
+      superseded_by_phase: ARCH-004F2
+      current_hash_tracked_in: phase_f2_research_lifecycle_and_execution_chain.sources
   validation:
     focused:
       status: PASS
@@ -416,4 +431,59 @@ phase_e_devex_ownership_generated_indexes:
       failed: 0
       warnings: 643
       elapsed_seconds: 839.21
+      runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json
+
+phase_f2_research_lifecycle_and_execution_chain:
+  status: BASELINE_DONE_RUNTIME_MIGRATION_PENDING
+  as_of: 2026-07-11
+  deliverable: docs/research/current_research_strategy_execution_chain.md
+  execution_chain:
+    state_classes:
+      - CANONICAL
+      - REFERENCE
+      - LEGACY
+      - BLOCKED
+      - PLANNED
+    reference_trace: growth_tilt_candidate_family_closure
+    documented_weight_layers: [B0, B1, B2, B3, B4, B5_BLOCKED, B6_BLOCKED]
+    market_regime_start: 2022-12-01
+    primary_research_window_start: 2021-02-22
+    periodic_review_auto_tuning_allowed: false
+    strategy_or_threshold_changed: false
+  repository_inventory:
+    python_module_count_including_ignored: 777
+    python_test_and_support_file_count: 1108
+  sources:
+    - path: docs/research/current_research_strategy_execution_chain.md
+      sha256: 36e8ce53ff677ececcc823a7054247add7c1988bd88eda9e00b24025f32b28de
+    - path: tests/test_arch_004f2_research_execution_chain.py
+      sha256: bd291f2bf690a44e4339e2f214d0e98d18f2b631a065fe1f6e9be5a811df0649
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: 3fa359223d403f109ed4c57fe2acbcd9725c942af11dc2314e09e12f9dc2dad8
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: 06f3c2a3348670a417b465b63407d098861c8cd58eb779d954618f241c586d27
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: e29994deb8dcc9f50cf18dea0667995af6a626be94907334fd5756bc6aca6fdb
+    - path: docs/artifact_catalog.md
+      sha256: 2020c546fdd70640ecc6888564aae331e29e2ebdce593ead64b5cace77155584
+    - path: docs/system_flow.md
+      sha256: 657541e5d27e296e8bd11c7c9b34958fec115c440b561e6920618a1b496b6332
+  validation:
+    focused_document_contract:
+      status: PASS
+      passed: 23
+    architecture_fitness:
+      status: PASS
+      passed: 80
+      elapsed_seconds: 40.27
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260710T201622Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 35.94
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T201228Z/test_runtime_summary.json
+    full_parallel_baseline:
+      status: PASS
+      passed: 5420
+      failed: 0
       runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json

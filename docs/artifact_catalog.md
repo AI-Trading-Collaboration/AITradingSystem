@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## ARCH-004F2 Research Lifecycle and Execution Chain
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`docs/research/current_research_strategy_execution_chain.md`|architecture coordinator 基于 tracked config/source/artifact 更新；无 runtime 执行命令|market-regime/window/governance policies、ResearchEvaluationContext、ExperimentSpec/runner、weight research B0～B6、backtest/robustness/promotion code、latest tracked research artifacts|逐环节固定 purpose/why/owner/inputs/provenance/calculation/outputs/schema/status/failure/DQ-PIT-context/consumer/current evidence/optimization boundary；明确 `CANONICAL|REFERENCE|LEGACY|BLOCKED|PLANNED`；`production_effect=none`|解释当前研究为何如此设计、每步如何计算、结果支持什么以及何时可优化；作为 ARCH-004F2/G migration 输入|否，文档只读、`production_effect=none`、不执行 DQ/backtest/replay、不写 weights、不触发 broker|文档中的目标链路不表示全域已经迁移；generic experiment runner 目前是 reference，历史 task-shaped research 仍是 legacy；周期复核不等于自动调优；workflow PASS 不等于投资有效性 PASS。|
+
 ## ENG-VAL-001 Validation Runtime Profiling and Xdist Benchmark
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

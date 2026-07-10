@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_e_complete
+status: phase_f2_in_progress
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,9 +30,9 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004E
-  current_phase_status: COMPLETE
-  next_phase: ARCH-004F
+  current_phase: ARCH-004F2
+  current_phase_status: IN_PROGRESS
+  next_phase: ARCH-004F1_OR_F3
   next_phase_unblocked: true
   predecessor_task_ids:
     - ARCH-001
@@ -331,6 +331,65 @@ phase_e_execution:
       failed: 0
       warnings: 643
       elapsed_seconds: 839.21
+      runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json
+
+phase_f2_execution:
+  task_id: ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
+  status: BASELINE_DONE_RUNTIME_MIGRATION_PENDING
+  requirement_path: docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
+  deliverable_path: docs/research/current_research_strategy_execution_chain.md
+  stages:
+    F2_1_current_state_inventory_and_trace: COMPLETE
+    F2_2_authoritative_execution_chain_document: COMPLETE
+    F2_3_lifecycle_contract_and_review_boundary: DOCUMENTED_BASELINE_COMPLETE
+    F2_4_reference_integration_and_validation: COMPLETE
+    F2_5_generic_lifecycle_runtime_migration: NOT_STARTED
+  document_must_cover:
+    - design_rationale
+    - per_stage_inputs_and_provenance
+    - per_stage_outputs_and_schemas
+    - calculation_and_status_propagation
+    - data_quality_pit_regime_window_and_as_of
+    - failure_and_blocking_contracts
+    - report_and_decision_consumers
+    - current_results_and_evidence_limits
+    - optimization_space_trigger_and_validation
+  periodic_review_may_auto_tune: false
+  result_visible_before_preregistration_freeze_allowed: false
+  strategy_or_threshold_change_allowed_in_documentation_slice: false
+  next_phase_unblocked: true
+  interim_evidence:
+    canonical_reference_legacy_blocked_planned_separated: true
+    reference_trace: growth_tilt_candidate_family_closure
+    weight_research_calculation_layers_documented:
+      - B0_static_baseline
+      - B1_execution_control
+      - B2_fast_risk_scaler
+      - B3_slow_relative_tilt
+      - B4_interaction
+      - B5_B6_blocked_boundary
+    market_regime_and_research_window_separated: true
+    periodic_review_auto_tuning_prohibited: true
+    production_effect: none
+  documentation_validation:
+    focused_docs_and_policy:
+      status: PASS
+      passed: 23
+    architecture_fitness:
+      status: PASS
+      passed: 80
+      elapsed_seconds: 40.27
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260710T201622Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 35.94
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260710T201228Z/test_runtime_summary.json
+    full_parallel_required_for_documentation_only_slice: false
+    last_full_parallel_baseline:
+      status: PASS
+      passed: 5420
+      failed: 0
       runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json
 
 safety_boundary:

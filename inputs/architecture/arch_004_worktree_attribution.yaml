@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_E_COMPLETE
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_DOCUMENTATION_BASELINE
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -84,6 +84,9 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/architecture/scaffold.py
   - src/ai_trading_system/reports/engineering_closeout.py
   - tests/test_arch_004e_devex.py
+  - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
+  - docs/research/current_research_strategy_execution_chain.md
+  - tests/test_arch_004f2_research_execution_chain.py
 
 shared_but_attributable_paths:
   - path: docs/task_register.md
@@ -95,6 +98,7 @@ shared_but_attributable_paths:
       - ARCH-004C_PLATFORM_CONTRACTS
       - ARCH-004D_REFERENCE_VERTICAL_SLICE
       - ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES
+      - ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
