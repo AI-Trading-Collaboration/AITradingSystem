@@ -1,0 +1,101 @@
+schema_version: growth_tilt_candidate_pit_screening_policy.v1
+policy_id: growth_tilt_candidate_pit_screening_policy_v1
+policy_version: 1.0.0
+policy_status: PENDING_OWNER_PREREGISTRATION
+policy_class: PIT_REPLAY_SCREENING_ONLY
+owner: OWNER_MUST_SET
+effective_from: '2026-07-10'
+expires_after_completed_replay_rounds: 1
+market_regime: ai_after_chatgpt
+requested_start_date: '2022-12-01'
+rationale: Recommended first-wave screening boundaries supplied by the owner plan; not historical validation, promotion criteria, production limits, or approved values until owner preregistration is complete.
+validation_evidence:
+  - docs/requirements/TRADING-2438M1_M2_Growth_Tilt_Candidate_Research_Contract_And_PIT_Replay_Development_Plan.md
+readiness_gate:
+  required_metric_count: 6
+  computed_metric_count: 6
+  finite_metric_count: 6
+  threshold_evaluation_count: 6
+  pit_valid: true
+  baseline_and_candidate_comparable: true
+  minimum_primary_event_count: 5
+  unmet_status: BLOCKED
+common_thresholds:
+  - threshold_id: return_non_degradation
+    metric_id: return_delta_vs_baseline
+    comparator: GTE
+    value: 0.0
+    unit: percentage_point
+  - threshold_id: max_drawdown_tolerance
+    metric_id: max_drawdown_delta_vs_baseline
+    comparator: LTE
+    value: 0.50
+    unit: percentage_point
+  - threshold_id: turnover_tolerance
+    metric_id: turnover_delta_vs_baseline
+    comparator: LTE
+    value: 0.10
+    unit: relative_fraction
+  - threshold_id: whipsaw_tolerance
+    metric_id: whipsaw_delta
+    comparator: LTE
+    value: 0.10
+    unit: relative_fraction
+candidate_thresholds:
+  - candidate_id: recovery_reentry_speedup_guard
+    approval_dependency: OWNER_PREREGISTRATION_REQUIRED
+    primary_metric: missed_upside_delta
+    thresholds:
+      - threshold_id: missed_upside_primary_improvement
+        metric_id: missed_upside_delta
+        comparator: LTE
+        value: -0.05
+        unit: relative_fraction
+      - threshold_id: false_risk_off_secondary_tolerance
+        metric_id: false_risk_off_delta
+        comparator: LTE
+        value: 0.05
+        unit: relative_fraction
+  - candidate_id: false_risk_off_confirmation_relaxation
+    approval_dependency: OWNER_PREREGISTRATION_REQUIRED
+    primary_metric: false_risk_off_delta
+    thresholds:
+      - threshold_id: false_risk_off_primary_improvement
+        metric_id: false_risk_off_delta
+        comparator: LTE
+        value: -0.05
+        unit: relative_fraction
+      - threshold_id: missed_upside_secondary_non_degradation
+        metric_id: missed_upside_delta
+        comparator: LTE
+        value: 0.0
+        unit: relative_fraction
+  - candidate_id: post_confirmation_reentry_ramp_accelerator
+    approval_dependency: SECOND_OWNER_APPROVAL_REQUIRED
+    primary_metric: missed_upside_delta
+    thresholds:
+      - threshold_id: missed_upside_primary_improvement
+        metric_id: missed_upside_delta
+        comparator: LTE
+        value: -0.05
+        unit: relative_fraction
+      - threshold_id: false_risk_off_secondary_non_degradation
+        metric_id: false_risk_off_delta
+        comparator: LTE
+        value: 0.0
+        unit: relative_fraction
+review_condition: Review before result visibility and after any listed dependency changes.
+expiry_condition: Expires after one completed PIT replay round or any contract dependency change.
+review_required_when:
+  - metric_contract_changes
+  - candidate_semantics_change
+  - baseline_config_changes
+  - transaction_cost_model_changes
+  - replay_window_set_changes
+  - primary_event_count_is_insufficient
+  - owner_requests_redesign
+prohibited:
+  - threshold_change_after_result_visibility
+  - automatic_threshold_relaxation
+  - reuse_as_promotion_gate
+  - reuse_as_production_risk_limit

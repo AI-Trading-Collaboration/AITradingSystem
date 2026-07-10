@@ -52,12 +52,24 @@ DEFAULT_OWNER_REVIEW_PATH = (
     / "research_reviews"
     / "growth_tilt_candidate_runtime_spec_threshold_policy_review.yaml"
 )
+DEFAULT_METRIC_CONTRACT_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "research"
+    / "growth_tilt_candidate_replay_metric_contract.yaml"
+)
+DEFAULT_THRESHOLD_POLICY_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "research"
+    / "growth_tilt_candidate_pit_screening_policy.yaml"
+)
 DEFAULT_REQUIREMENT_DOC_PATH = (
     PROJECT_ROOT
     / "docs"
     / "requirements"
-    / "TRADING-2438M1_Growth_Tilt_Candidate_Runtime_Spec_And_Threshold_"
-    "Policy_Approval.md"
+    / "TRADING-2438M1_M2_Growth_Tilt_Candidate_Research_Contract_And_"
+    "PIT_Replay_Development_Plan.md"
 )
 DEFAULT_REPORT_REGISTRY_PATH = PROJECT_ROOT / "config" / "report_registry.yaml"
 DEFAULT_ARTIFACT_CATALOG_PATH = PROJECT_ROOT / "docs" / "artifact_catalog.md"
@@ -68,6 +80,8 @@ def run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     *,
     source_2438m_path: Path = DEFAULT_SOURCE_2438M_PATH,
     owner_review_path: Path = DEFAULT_OWNER_REVIEW_PATH,
+    metric_contract_path: Path = DEFAULT_METRIC_CONTRACT_PATH,
+    threshold_policy_path: Path = DEFAULT_THRESHOLD_POLICY_PATH,
     requirement_doc_path: Path = DEFAULT_REQUIREMENT_DOC_PATH,
     report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
     artifact_catalog_path: Path = DEFAULT_ARTIFACT_CATALOG_PATH,
@@ -80,6 +94,8 @@ def run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     sources: dict[str, Any] = {
         "source_2438m": _load_json_document(source_2438m_path),
         "owner_review": _load_yaml_document(owner_review_path),
+        "metric_contract": _load_yaml_document(metric_contract_path),
+        "threshold_policy": _load_yaml_document(threshold_policy_path),
         "requirement_doc": _load_text_document(requirement_doc_path),
         "report_registry": _load_yaml_document(report_registry_path),
         "artifact_catalog": _load_text_document(artifact_catalog_path),
@@ -89,6 +105,8 @@ def run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     source_documents = [
         (source_2438m_path, sources["source_2438m"]),
         (owner_review_path, sources["owner_review"]),
+        (metric_contract_path, sources["metric_contract"]),
+        (threshold_policy_path, sources["threshold_policy"]),
         (requirement_doc_path, sources["requirement_doc"]),
         (report_registry_path, sources["report_registry"]),
         (artifact_catalog_path, sources["artifact_catalog"]),
@@ -98,6 +116,8 @@ def run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     payload = approval.build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
         _as_mapping(sources["source_2438m"]),
         _as_mapping(sources["owner_review"]),
+        metric_contract=_as_mapping(sources["metric_contract"]),
+        threshold_policy=_as_mapping(sources["threshold_policy"]),
         source_artifacts=_source_artifact_records(source_documents),
         report_registry=_as_mapping(sources["report_registry"]),
         artifact_catalog_text=str(
@@ -200,6 +220,8 @@ def _write_outputs(payload: dict[str, Any], *, output_root: Path, docs_root: Pat
         ),
         "metric_contract_review_matrix": "metric_contract_review_matrix.json",
         "threshold_policy_review_matrix": "threshold_policy_review_matrix.json",
+        "owner_review_validation": "owner_review_validation.json",
+        "approved_candidate_runtime_specs": "approved_candidate_runtime_specs.json",
         "owner_action_checklist": "owner_action_checklist.json",
         "no_effect_boundary": "no_effect_boundary.json",
     }
@@ -235,12 +257,17 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
         "source_status": payload.get("source_status"),
         "candidate_count": payload.get("candidate_count"),
         "approved_candidate_count": payload.get("approved_candidate_count"),
+        "owner_decision_complete_count": payload.get("owner_decision_complete_count"),
         "pending_candidate_count": payload.get("pending_candidate_count"),
         "redefine_candidate_count": payload.get("redefine_candidate_count"),
         "withdraw_candidate_count": payload.get("withdraw_candidate_count"),
         "runtime_spec_ready_count": payload.get("runtime_spec_ready_count"),
         "metric_contract_ready_count": payload.get("metric_contract_ready_count"),
         "threshold_policy_ready_count": payload.get("threshold_policy_ready_count"),
+        "m2_eligible_candidate_count": payload.get("m2_eligible_candidate_count"),
+        "m2_eligible_candidate_ids": payload.get("m2_eligible_candidate_ids"),
+        "selection_basis": payload.get("selection_basis"),
+        "performance_ranked": payload.get("performance_ranked"),
         "owner_input_gap_count": payload.get("owner_input_gap_count"),
         "owner_input_gaps_by_code": payload.get("owner_input_gaps_by_code"),
         "next_route": payload.get("recommended_next_research_task"),
@@ -249,12 +276,15 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     candidate_summary = [
         {
             "candidate_id": item.get("candidate_id"),
-            "source_rank": item.get("source_rank"),
+            "selection_order": item.get("selection_order"),
+            "selection_basis": item.get("selection_basis"),
+            "performance_ranked": item.get("performance_ranked"),
             "decision": item.get("decision"),
             "review_status": item.get("review_status"),
             "runtime_spec_ready": item.get("runtime_spec_ready"),
             "metric_contract_ready": item.get("metric_contract_ready"),
             "threshold_policy_ready": item.get("threshold_policy_ready"),
+            "m2_eligible": item.get("m2_eligible"),
             "gap_codes": item.get("gap_codes"),
         }
         for item in payload.get("candidate_reviews", [])
@@ -262,7 +292,7 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     ]
     return "\n".join(
         [
-            "# Growth Tilt Candidate Runtime Spec And Threshold Policy Approval",
+            "# Growth Tilt Candidate Research Contract Approval",
             "",
             f"- task_id: `{TASK_ID}`",
             f"- status: `{payload.get('status')}`",
@@ -271,8 +301,9 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
             f"- next route: `{payload.get('recommended_next_research_task')}`",
             "",
             "M1 只验证 owner-review 输入契约，不运行 replay/backtest/scoring，不修改 "
-            "candidate parameters 或 threshold values。PENDING、REDEFINE、WITHDRAW 和 "
-            "incomplete APPROVE 均保持 fail-closed。",
+            "candidate parameters 或 threshold values。selection order 来自 config "
+            "declaration order，不代表业绩排名。M2 只接收 contract 完整的 APPROVE "
+            "候选；REDEFINE/WITHDRAW 不阻断其他候选，但自身不得进入 replay。",
             "",
             "```json",
             _json_block(summary),

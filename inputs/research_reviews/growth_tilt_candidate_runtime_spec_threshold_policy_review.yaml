@@ -1,177 +1,150 @@
-schema_version: growth_tilt_candidate_runtime_spec_threshold_policy_review.v1
+schema_version: growth_tilt_candidate_runtime_spec_threshold_policy_review.v2
 task_id: TRADING-2438M1
 status: BLOCKED_OWNER_INPUT
-owner_review_status: OWNER_REVIEW_REQUIRED
+owner_review_status: DECISIONS_RECORDED_CONTRACT_MAPPINGS_PENDING
 source_task_id: TRADING-2438M
 as_of: '2026-07-08'
 market_regime: ai_after_chatgpt
+candidate_selection:
+  selected_candidate_count: 3
+  selection_basis: CONFIG_DECLARATION_ORDER
+  performance_ranked: false
+  pit_evidence_available: false
 candidate_ids:
   - recovery_reentry_speedup_guard
   - false_risk_off_confirmation_relaxation
   - missed_upside_reentry_accelerator
+shared_metric_contract_ref: growth_tilt_candidate_replay_metric_contract_v1
+shared_threshold_policy_ref: growth_tilt_candidate_pit_screening_policy_v1
 
 candidate_reviews:
   - candidate_id: recovery_reentry_speedup_guard
-    decision: PENDING
-    decision_rationale: null
-    review_owner: null
-    reviewed_at: null
-    review_condition: null
-    expiry_condition: null
-    next_route: null
+    selection_order: 1
+    selection_basis: CONFIG_DECLARATION_ORDER
+    decision: APPROVE
+    decision_owner: project_owner_via_codex_task
+    decision_version: 1.0.0
+    decision_timestamp: '2026-07-10T00:00:00+09:00'
+    decision_rationale: Approve a bounded experiment that begins re-entry one evaluation step early without changing the confirmed-state ramp speed.
+    review_condition: Review after the first complete PIT replay or any contract dependency change.
+    expiry_condition: Expires after one completed PIT replay round or any candidate semantic change.
+    next_route: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
     runtime_spec:
-      approved: null
-      executor_id: null
-      executor_version: null
-      input_contract_version: null
-      source_policy_ref: null
-      parameters: {}
-    metric_specs:
-      - metric_id: return_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: max_drawdown_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: turnover_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: false_risk_off_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: missed_upside_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: whipsaw_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-    threshold_specs: []
+      candidate_role: RECOVERY_REENTRY_TIMING_ACCELERATOR
+      baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
+      operation_type: EARLY_REENTRY_PROVISIONAL_EXPOSURE
+      parameters:
+        recovery_signal_id: OWNER_MUST_MAP_TO_EXISTING_SIGNAL
+        lagging_soft_confirmation_id: OWNER_MUST_SELECT_EXACTLY_ONE
+        lead_steps: 1
+        provisional_exposure_fraction_of_remaining_gap: 0.25
+        provisional_exposure_absolute_cap: OWNER_MUST_SET_IN_BASELINE_EXPOSURE_UNIT
+        max_active_steps: 3
+        confirmed_state_ramp_multiplier: 1.0
+        target_exposure_override_allowed: false
+        hard_veto_bypass_allowed: false
+      hard_veto_ids:
+        - OWNER_MUST_MAP_ALL_BASELINE_HARD_VETOES
+      applicable_regime_ids:
+        - OWNER_MUST_SET_NON_WILDCARD_SCOPE
+      expiry_conditions:
+        - baseline_recovery_fully_confirmed
+        - core_recovery_signal_false
+        - any_hard_veto_active
+        - max_active_steps_reached
+        - owner_approved_expiry_reached
+        - input_provenance_or_pit_validity_failed
+      rollback_conditions:
+        - return_to_baseline_prescribed_exposure_path
+        - emit_rollback_reason_code
+    executor_mapping:
+      executor_family: GrowthTiltCandidateOverlayExecutor
+      operation_type: EARLY_REENTRY_PROVISIONAL_EXPOSURE
+      planned_entrypoint: ai_trading_system.research_quality.growth_tilt_candidate_overlay_executor.GrowthTiltCandidateOverlayExecutor
+      input_contract_version: growth_tilt_candidate_overlay_input.v1
+      output_contract_version: growth_tilt_candidate_overlay_output.v1
+    metric_contract_ref: growth_tilt_candidate_replay_metric_contract_v1
+    threshold_policy_ref: growth_tilt_candidate_pit_screening_policy_v1
 
   - candidate_id: false_risk_off_confirmation_relaxation
-    decision: PENDING
-    decision_rationale: null
-    review_owner: null
-    reviewed_at: null
-    review_condition: null
-    expiry_condition: null
-    next_route: null
+    selection_order: 2
+    selection_basis: CONFIG_DECLARATION_ORDER
+    decision: APPROVE
+    decision_owner: project_owner_via_codex_task
+    decision_version: 1.0.0
+    decision_timestamp: '2026-07-10T00:00:00+09:00'
+    decision_rationale: Approve one bounded grace step for exactly one named soft confirmation while preserving every hard veto and exposure cap.
+    review_condition: Review after the first complete PIT replay or any contract dependency change.
+    expiry_condition: Expires after one completed PIT replay round or any candidate semantic change.
+    next_route: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
     runtime_spec:
-      approved: null
-      executor_id: null
-      executor_version: null
-      input_contract_version: null
-      source_policy_ref: null
-      parameters: {}
-    metric_specs:
-      - metric_id: return_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: max_drawdown_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: turnover_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: false_risk_off_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: missed_upside_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: whipsaw_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-    threshold_specs: []
+      candidate_role: DEFENSIVE_ENTRY_SOFT_CONFIRMATION_GRACE
+      baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
+      operation_type: DEFENSIVE_SOFT_CONFIRMATION_GRACE
+      parameters:
+        relaxed_soft_confirmation_id: OWNER_MUST_SELECT_EXACTLY_ONE
+        baseline_required_state: OWNER_MUST_MAP
+        relaxation_mode: ONE_STEP_GRACE
+        grace_steps: 1
+        remove_confirmation_entirely: false
+        defensive_exposure_override_allowed: false
+        hard_veto_bypass_allowed: false
+        max_active_steps: 1
+      hard_veto_ids:
+        - OWNER_MUST_MAP_ALL_NON_BYPASSABLE_VETOES
+      applicable_regime_ids:
+        - OWNER_MUST_SET_NON_WILDCARD_SCOPE
+      expiry_conditions:
+        - selected_confirmation_persists_next_step
+        - any_hard_veto_active
+        - regime_scope_ends
+        - input_invalid_or_missing
+        - grace_steps_exhausted
+      rollback_conditions:
+        - resume_baseline_defensive_rule
+        - prohibit_automatic_grace_extension
+        - emit_rollback_reason_code
+    executor_mapping:
+      executor_family: GrowthTiltCandidateOverlayExecutor
+      operation_type: DEFENSIVE_SOFT_CONFIRMATION_GRACE
+      planned_entrypoint: ai_trading_system.research_quality.growth_tilt_candidate_overlay_executor.GrowthTiltCandidateOverlayExecutor
+      input_contract_version: growth_tilt_candidate_overlay_input.v1
+      output_contract_version: growth_tilt_candidate_overlay_output.v1
+    metric_contract_ref: growth_tilt_candidate_replay_metric_contract_v1
+    threshold_policy_ref: growth_tilt_candidate_pit_screening_policy_v1
 
   - candidate_id: missed_upside_reentry_accelerator
-    decision: PENDING
-    decision_rationale: null
-    review_owner: null
-    reviewed_at: null
-    review_condition: null
-    expiry_condition: null
-    next_route: null
-    runtime_spec:
-      approved: null
-      executor_id: null
-      executor_version: null
-      input_contract_version: null
-      source_policy_ref: null
-      parameters: {}
-    metric_specs:
-      - metric_id: return_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: max_drawdown_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: turnover_delta_vs_baseline
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: false_risk_off_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: missed_upside_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-      - metric_id: whipsaw_delta
-        source_field: null
-        unit: null
-        normalization_rule_id: null
-        calculator_id: null
-        calculator_version: null
-    threshold_specs: []
+    selection_order: 3
+    selection_basis: CONFIG_DECLARATION_ORDER
+    decision: REDEFINE
+    decision_owner: project_owner_via_codex_task
+    decision_version: 1.0.0
+    decision_timestamp: '2026-07-10T00:00:00+09:00'
+    decision_rationale: The original hypothesis overlaps Candidate A; retain it only as a post-confirmation ramp-speed experiment that never advances the trigger.
+    review_condition: A second owner review is required before any replay eligibility.
+    expiry_condition: Withdraw if the owner does not intend to research post-confirmation ramp mechanics.
+    next_route: TRADING-2438M1A_GROWTH_TILT_CANDIDATE_C_SECOND_OWNER_REVIEW
+    redefinition:
+      old_candidate_id: missed_upside_reentry_accelerator
+      proposed_candidate_id: post_confirmation_reentry_ramp_accelerator
+      overlap_with: recovery_reentry_speedup_guard
+      old_semantics_rejected_reason: CURRENTLY_SEMANTICALLY_OVERLAPS_WITH_RECOVERY_REENTRY_SPEEDUP_GUARD
+      new_candidate_role: POST_CONFIRMATION_EXPOSURE_RAMP_ACCELERATOR
+      changes_trigger_timing: false
+      changes_ramp_speed: true
+      changes_defensive_entry: false
+      rationale: Trigger exactly at baseline recovery confirmation and change only the remaining exposure ramp step size.
+      proposed_parameters:
+        trigger_source: EXACT_BASELINE_RECOVERY_CONFIRMATION
+        trigger_lead_steps: 0
+        ramp_step_multiplier: 1.5
+        max_fraction_of_remaining_gap_per_step: 0.50
+        acceleration_steps: 2
+        target_exposure_override_allowed: false
+        hard_veto_bypass_allowed: false
+        reset_to_baseline_ramp_on_veto: true
+      second_owner_approval_required: true
+      future_reopen_condition: All orthogonality checks pass and a second owner approval is recorded before replay.
 
 safety_boundary:
   validation_only: true

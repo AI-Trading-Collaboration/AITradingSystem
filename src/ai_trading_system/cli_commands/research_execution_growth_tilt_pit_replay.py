@@ -1967,6 +1967,12 @@ def _growth_tilt_candidate_runtime_spec_threshold_policy_approval_command(
     owner_review_path: Annotated[
         Path, typer.Option("--owner-review")
     ] = m2438m1.DEFAULT_OWNER_REVIEW_PATH,
+    metric_contract_path: Annotated[
+        Path, typer.Option("--metric-contract")
+    ] = m2438m1.DEFAULT_METRIC_CONTRACT_PATH,
+    threshold_policy_path: Annotated[
+        Path, typer.Option("--threshold-policy")
+    ] = m2438m1.DEFAULT_THRESHOLD_POLICY_PATH,
     requirement_doc_path: Annotated[
         Path, typer.Option("--requirement-doc")
     ] = m2438m1.DEFAULT_REQUIREMENT_DOC_PATH,
@@ -1992,6 +1998,8 @@ def _growth_tilt_candidate_runtime_spec_threshold_policy_approval_command(
         m2438m1.run_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
             source_2438m_path=source_2438m_path,
             owner_review_path=owner_review_path,
+            metric_contract_path=metric_contract_path,
+            threshold_policy_path=threshold_policy_path,
             requirement_doc_path=requirement_doc_path,
             report_registry_path=report_registry_path,
             artifact_catalog_path=artifact_catalog_path,
@@ -2012,12 +2020,16 @@ def _growth_tilt_candidate_runtime_spec_threshold_policy_approval_command(
         "source_2438m_ready_for_owner_review",
         "candidate_count",
         "approved_candidate_count",
+        "owner_decision_complete_count",
         "pending_candidate_count",
         "redefine_candidate_count",
         "withdraw_candidate_count",
         "runtime_spec_ready_count",
         "metric_contract_ready_count",
         "threshold_policy_ready_count",
+        "m2_eligible_candidate_count",
+        "selection_basis",
+        "performance_ranked",
         "owner_input_gap_count",
         "data_quality_gate_executed",
         "data_quality_status",

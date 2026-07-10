@@ -1,0 +1,145 @@
+schema_version: growth_tilt_candidate_replay_metric_contract.v1
+contract_id: growth_tilt_candidate_replay_metric_contract_v1
+contract_version: 1.0.0
+status: BLOCKED_OWNER_INPUT
+policy_class: PIT_REPLAY_RESEARCH_METRIC_CONTRACT
+owner: OWNER_MUST_SET
+effective_from: '2026-07-10'
+market_regime: ai_after_chatgpt
+requested_start_date: '2022-12-01'
+baseline_config_ref: config/research/equal_risk_growth_tilt_candidate_registry.yaml
+comparability_requirements:
+  same_pit_input_snapshot: true
+  same_replay_date_range: true
+  same_calendar: true
+  same_benchmark: true
+  same_transaction_cost_model: true
+  same_missing_data_policy: true
+  same_baseline_configuration: true
+relative_delta_epsilon_policy:
+  status: BLOCKED_OWNER_INPUT
+  epsilon: null
+  unit: absolute_measure_unit
+  owner: OWNER_MUST_SET
+  rationale: Prevent division by zero without silently converting a missing denominator.
+empty_event_policy:
+  allowed_statuses:
+    - BLOCKED_INSUFFICIENT_EVENTS
+    - COMPUTED_NOT_APPLICABLE
+  selected_status: OWNER_MUST_SELECT
+  zero_improvement_allowed: false
+common_runtime_provenance_fields:
+  - metric_id
+  - value
+  - unit
+  - finite
+  - numerator
+  - denominator
+  - baseline_value
+  - candidate_value
+  - sample_count
+  - event_count
+  - window_start
+  - window_end
+  - as_of
+  - source_artifact_refs
+  - contract_version
+  - calculator_version
+  - status
+  - blocker_codes
+metrics:
+  - metric_id: return_delta_vs_baseline
+    definition: candidate_net_return - baseline_net_return
+    unit: percentage_point
+    direction: HIGHER_IS_BETTER
+    cost_adjusted: true
+    calculator_id: growth_tilt_return_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_net_return
+      - baseline_net_return
+    missing_policy: BLOCKED
+  - metric_id: max_drawdown_delta_vs_baseline
+    definition: abs(candidate_max_drawdown) - abs(baseline_max_drawdown)
+    unit: percentage_point
+    direction: LOWER_IS_BETTER
+    calculator_id: growth_tilt_max_drawdown_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_max_drawdown
+      - baseline_max_drawdown
+    missing_policy: BLOCKED
+  - metric_id: turnover_delta_vs_baseline
+    definition: (candidate_turnover - baseline_turnover) / max(abs(baseline_turnover), epsilon)
+    unit: relative_fraction
+    direction: LOWER_IS_BETTER
+    calculator_id: growth_tilt_relative_turnover_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_turnover
+      - baseline_turnover
+      - owner_approved_epsilon
+    missing_policy: BLOCKED
+  - metric_id: false_risk_off_delta
+    definition: (candidate_false_risk_off_measure - baseline_false_risk_off_measure) / max(abs(baseline_false_risk_off_measure), epsilon)
+    unit: relative_fraction
+    direction: LOWER_IS_BETTER
+    calculator_id: growth_tilt_relative_false_risk_off_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_false_risk_off_measure
+      - baseline_false_risk_off_measure
+      - owner_approved_epsilon
+    owner_fields:
+      false_risk_off_definition_id: OWNER_MUST_SET
+      evaluation_horizon_steps: null
+      reference_asset_or_benchmark: OWNER_MUST_SET
+      false_risk_off_outcome_rule: OWNER_MUST_SET
+      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_DEFENSIVE_DAYS_OR_OPPORTUNITY_COST
+    missing_policy: BLOCKED
+  - metric_id: missed_upside_delta
+    definition: (candidate_missed_upside_measure - baseline_missed_upside_measure) / max(abs(baseline_missed_upside_measure), epsilon)
+    unit: relative_fraction
+    direction: LOWER_IS_BETTER
+    calculator_id: growth_tilt_relative_missed_upside_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_missed_upside_measure
+      - baseline_missed_upside_measure
+      - owner_approved_epsilon
+    owner_fields:
+      missed_upside_definition_id: OWNER_MUST_SET
+      evaluation_horizon_steps: null
+      reference_exposure_path: OWNER_MUST_SET
+      upside_outcome_rule: OWNER_MUST_SET
+      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_DEFENSIVE_DAYS_OR_OPPORTUNITY_COST
+    missing_policy: BLOCKED
+  - metric_id: whipsaw_delta
+    definition: (candidate_whipsaw_measure - baseline_whipsaw_measure) / max(abs(baseline_whipsaw_measure), epsilon)
+    unit: relative_fraction
+    direction: LOWER_IS_BETTER
+    calculator_id: growth_tilt_relative_whipsaw_delta_calculator
+    calculator_version: v1
+    required_inputs:
+      - candidate_whipsaw_measure
+      - baseline_whipsaw_measure
+      - owner_approved_epsilon
+    owner_fields:
+      whipsaw_definition_id: OWNER_MUST_SET
+      reversal_window_steps: null
+      minimum_exposure_change: null
+      event_or_cost_measure: OWNER_MUST_SELECT_EVENT_COUNT_OR_OPPORTUNITY_COST
+    missing_policy: BLOCKED
+review_required_when:
+  - metric_definition_changes
+  - baseline_config_changes
+  - benchmark_or_cost_model_changes
+  - replay_window_changes
+  - owner_requests_redesign
+prohibited:
+  - null_to_zero
+  - missing_denominator_to_unapproved_epsilon
+  - empty_event_set_to_zero_improvement
+  - static_config_value_as_runtime_metric
+  - reuse_as_promotion_gate
+  - reuse_as_production_policy

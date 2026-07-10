@@ -16,20 +16,27 @@ EXPECTED_CANDIDATE_IDS = (
     "false_risk_off_confirmation_relaxation",
     "missed_upside_reentry_accelerator",
 )
+EXPECTED_M2_OPERATION_TYPES = {
+    "recovery_reentry_speedup_guard": "EARLY_REENTRY_PROVISIONAL_EXPOSURE",
+    "false_risk_off_confirmation_relaxation": "DEFENSIVE_SOFT_CONFIRMATION_GRACE",
+}
+EXPECTED_METRIC_CONTRACT_ID = "growth_tilt_candidate_replay_metric_contract_v1"
+EXPECTED_THRESHOLD_POLICY_ID = "growth_tilt_candidate_pit_screening_policy_v1"
 
-SCHEMA_VERSION = "growth_tilt_candidate_runtime_spec_threshold_policy_approval.v1"
-CANDIDATE_MATRIX_SCHEMA_VERSION = "growth_tilt_candidate_runtime_spec_review_matrix.v1"
-METRIC_MATRIX_SCHEMA_VERSION = "growth_tilt_metric_contract_review_matrix.v1"
-THRESHOLD_MATRIX_SCHEMA_VERSION = "growth_tilt_threshold_policy_review_matrix.v1"
-OWNER_CHECKLIST_SCHEMA_VERSION = "growth_tilt_runtime_spec_owner_action_checklist.v1"
-NO_EFFECT_SCHEMA_VERSION = "growth_tilt_runtime_spec_threshold_approval_no_effect.v1"
+SCHEMA_VERSION = "growth_tilt_candidate_runtime_spec_threshold_policy_approval.v2"
+CANDIDATE_MATRIX_SCHEMA_VERSION = "growth_tilt_candidate_runtime_spec_review_matrix.v2"
+METRIC_MATRIX_SCHEMA_VERSION = "growth_tilt_metric_contract_review_matrix.v2"
+THRESHOLD_MATRIX_SCHEMA_VERSION = "growth_tilt_threshold_policy_review_matrix.v2"
+OWNER_CHECKLIST_SCHEMA_VERSION = "growth_tilt_runtime_spec_owner_action_checklist.v2"
+OWNER_VALIDATION_SCHEMA_VERSION = "growth_tilt_owner_review_validation.v1"
+APPROVED_SPECS_SCHEMA_VERSION = "growth_tilt_approved_candidate_runtime_specs.v1"
+NO_EFFECT_SCHEMA_VERSION = "growth_tilt_runtime_spec_threshold_approval_no_effect.v2"
 
 REPORT_TYPE = "growth_tilt_candidate_runtime_spec_threshold_policy_approval"
-READY_STATUS = "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVAL_READY"
-BLOCKED_STATUS = (
-    "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVAL_"
-    "BLOCKED_OWNER_INPUT"
-)
+READY_STATUS = "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVED"
+BLOCKED_STATUS = "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_BLOCKED"
+# Kept as import-compatible historical constants. Mixed decisions no longer make the
+# whole candidate set take either status.
 REDEFINE_STATUS = (
     "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_"
     "CANDIDATE_REDEFINITION_REQUIRED"
@@ -38,6 +45,7 @@ WITHDRAW_STATUS = (
     "GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_"
     "WITHDRAWAL_RESELECTION_REQUIRED"
 )
+
 EXPECTED_SOURCE_STATUS = (
     "GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION_BLOCKED"
 )
@@ -46,77 +54,88 @@ EXPECTED_SOURCE_ROUTE = (
 )
 EXPECTED_SOURCE_SCHEMA = "growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution.v1"
 EXPECTED_OWNER_REVIEW_SCHEMA = (
-    "growth_tilt_candidate_runtime_spec_threshold_policy_review.v1"
+    "growth_tilt_candidate_runtime_spec_threshold_policy_review.v2"
 )
+EXPECTED_METRIC_CONTRACT_SCHEMA = "growth_tilt_candidate_replay_metric_contract.v1"
+EXPECTED_THRESHOLD_POLICY_SCHEMA = "growth_tilt_candidate_pit_screening_policy.v1"
 
-NEXT_ROUTE_READY = "TRADING-2438M2_Growth_Tilt_Candidate_Runtime_Compute_Plane_Binding"
-NEXT_ROUTE_BLOCKED = EXPECTED_SOURCE_ROUTE
-NEXT_ROUTE_REDEFINE = "TRADING-2438M1A_Growth_Tilt_Candidate_Definition_Design"
-NEXT_ROUTE_WITHDRAW = "TRADING-2438M1A_Growth_Tilt_Top3_Candidate_Reselection"
+NEXT_ROUTE_READY = "TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR"
+NEXT_ROUTE_BLOCKED = (
+    "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL"
+)
+NEXT_ROUTE_DECISION = "TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION"
+NEXT_ROUTE_REDEFINE = "TRADING-2438M1A_GROWTH_TILT_CANDIDATE_C_SECOND_OWNER_REVIEW"
+NEXT_ROUTE_WITHDRAW = NEXT_ROUTE_DECISION
+NEXT_ROUTE_NO_APPROVED = "TRADING-2438N_GROWTH_TILT_NO_APPROVED_CANDIDATE_DISPOSITION"
 
 ALLOWED_DECISIONS = {"PENDING", "APPROVE", "REDEFINE", "WITHDRAW"}
-REQUIRED_REVIEW_FIELDS = (
+REQUIRED_DECISION_FIELDS = (
+    "decision_owner",
+    "decision_version",
+    "decision_timestamp",
     "decision_rationale",
-    "review_owner",
-    "reviewed_at",
     "review_condition",
     "expiry_condition",
+    "next_route",
 )
 REQUIRED_RUNTIME_SPEC_FIELDS = (
-    "executor_id",
-    "executor_version",
+    "candidate_role",
+    "baseline_config_ref",
+    "operation_type",
+    "parameters",
+    "hard_veto_ids",
+    "applicable_regime_ids",
+    "expiry_conditions",
+    "rollback_conditions",
+)
+REQUIRED_EXECUTOR_MAPPING_FIELDS = (
+    "executor_family",
+    "operation_type",
+    "planned_entrypoint",
     "input_contract_version",
-    "source_policy_ref",
+    "output_contract_version",
 )
-REQUIRED_METRIC_SPEC_FIELDS = (
-    "source_field",
-    "unit",
-    "normalization_rule_id",
-    "calculator_id",
-    "calculator_version",
-)
-REQUIRED_THRESHOLD_FIELDS = (
-    "threshold_id",
-    "metric_id",
-    "operator",
-    "policy_owner",
-    "policy_version",
-    "policy_status",
+REQUIRED_REDEFINITION_FIELDS = (
+    "old_candidate_id",
+    "proposed_candidate_id",
+    "overlap_with",
+    "old_semantics_rejected_reason",
+    "new_candidate_role",
+    "changes_trigger_timing",
+    "changes_ramp_speed",
     "rationale",
-    "evaluator_id",
-    "evaluator_version",
-    "review_condition",
-    "expiry_condition",
+    "second_owner_approval_required",
 )
 
 DECISION_PENDING = "OWNER_CANDIDATE_DECISION_PENDING"
 DECISION_INVALID = "OWNER_CANDIDATE_DECISION_INVALID"
 REVIEW_METADATA_INCOMPLETE = "OWNER_CANDIDATE_REVIEW_METADATA_INCOMPLETE"
 RUNTIME_SPEC_INCOMPLETE = "OWNER_RUNTIME_SPEC_INCOMPLETE"
-METRIC_CONTRACT_INCOMPLETE = "OWNER_REQUIRED_METRIC_CONTRACT_INCOMPLETE"
-THRESHOLD_POLICY_INCOMPLETE = "OWNER_THRESHOLD_POLICY_INCOMPLETE"
+EXECUTOR_MAPPING_INCOMPLETE = "OWNER_EXECUTOR_MAPPING_INCOMPLETE"
+METRIC_CONTRACT_INCOMPLETE = "OWNER_SHARED_METRIC_CONTRACT_INCOMPLETE"
+THRESHOLD_POLICY_INCOMPLETE = "OWNER_SCREENING_THRESHOLD_POLICY_INCOMPLETE"
+CANDIDATE_REDEFINITION_INCOMPLETE = "OWNER_CANDIDATE_REDEFINITION_INCOMPLETE"
 THRESHOLD_VALUE_INVALID = "OWNER_THRESHOLD_VALUE_INVALID"
 THRESHOLD_OPERATOR_UNSUPPORTED = "OWNER_THRESHOLD_OPERATOR_UNSUPPORTED"
 THRESHOLD_METRIC_BINDING_INVALID = "OWNER_THRESHOLD_METRIC_BINDING_INVALID"
-CANDIDATE_REDEFINITION_REQUIRED = "OWNER_CANDIDATE_REDEFINITION_REQUIRED"
-CANDIDATE_WITHDRAWAL_REQUIRED = "OWNER_CANDIDATE_WITHDRAWAL_RESELECTION_REQUIRED"
+CANDIDATE_REDEFINITION_REQUIRED = "OWNER_CANDIDATE_REDEFINITION_SECOND_REVIEW_REQUIRED"
+CANDIDATE_WITHDRAWAL_REQUIRED = "OWNER_CANDIDATE_WITHDRAWAL_RECORDED"
 SAFETY_BOUNDARY_INVALID = "OWNER_REVIEW_SAFETY_BOUNDARY_INVALID"
 
 REQUIRED_CATALOG_REFERENCES: tuple[str, ...] = (
     "growth-tilt-candidate-runtime-spec-threshold-policy-approval",
-    "approval_readiness_result.json",
-    "candidate_runtime_spec_review_matrix.json",
-    "metric_contract_review_matrix.json",
-    "threshold_policy_review_matrix.json",
-    "owner_action_checklist.json",
-    "no_effect_boundary.json",
+    "growth_tilt_candidate_replay_metric_contract.yaml",
+    "growth_tilt_candidate_pit_screening_policy.yaml",
+    "owner_review_validation.json",
+    "approved_candidate_runtime_specs.json",
 )
 REQUIRED_FLOW_REFERENCES: tuple[str, ...] = (
-    "TRADING-2438M1",
+    "TRADING-2438M1A",
+    "TRADING-2438M1B",
+    "CONFIG_DECLARATION_ORDER",
+    "performance_ranked=false",
     READY_STATUS,
     BLOCKED_STATUS,
-    REDEFINE_STATUS,
-    WITHDRAW_STATUS,
     NEXT_ROUTE_READY,
 )
 
@@ -125,6 +144,8 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     source_2438m: Mapping[str, Any],
     owner_review: Mapping[str, Any],
     *,
+    metric_contract: Mapping[str, Any] | None = None,
+    threshold_policy: Mapping[str, Any] | None = None,
     source_artifacts: Sequence[Mapping[str, Any]] = (),
     report_registry: Mapping[str, Any] | None = None,
     artifact_catalog_text: str = "",
@@ -132,6 +153,8 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     requirement_text: str = "",
     as_of: str,
 ) -> dict[str, Any]:
+    metric_contract = metric_contract or {}
+    threshold_policy = threshold_policy or {}
     source_candidate_ids = _candidate_ids(source_2438m)
     review_candidate_ids = [
         str(item) for item in _sequence(owner_review.get("candidate_ids")) if item
@@ -144,9 +167,17 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
         system_flow_text,
         requirement_text,
     )
+    metric_rows, shared_metric_ready, metric_blockers = _metric_contract_status(
+        metric_contract
+    )
+    threshold_rows, threshold_ready_by_candidate, threshold_blockers = (
+        _threshold_policy_status(threshold_policy, metric_contract)
+    )
     strict_errors = _strict_validation_errors(
         source_2438m,
         owner_review,
+        metric_contract,
+        threshold_policy,
         source_candidate_ids,
         review_candidate_ids,
         review_rows,
@@ -155,27 +186,29 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
     )
 
     candidate_results: list[dict[str, Any]] = []
-    metric_matrix: list[dict[str, Any]] = []
-    threshold_matrix: list[dict[str, Any]] = []
     owner_actions: list[dict[str, Any]] = []
-    for source_rank, candidate_id in enumerate(source_candidate_ids, start=1):
-        result, metric_rows, threshold_rows, actions = _review_candidate(
+    approved_specs: list[dict[str, Any]] = []
+    for selection_order, candidate_id in enumerate(source_candidate_ids, start=1):
+        result, actions, approved_spec = _review_candidate(
             candidate_id,
-            source_rank,
+            selection_order,
             reviews_by_id.get(candidate_id, {}),
+            shared_metric_ready=shared_metric_ready,
+            metric_blockers=metric_blockers,
+            threshold_policy_ready=threshold_ready_by_candidate.get(candidate_id, False),
+            threshold_blockers=threshold_blockers.get(candidate_id, []),
         )
         candidate_results.append(result)
-        metric_matrix.extend(metric_rows)
-        threshold_matrix.extend(threshold_rows)
         owner_actions.extend(actions)
+        if approved_spec:
+            approved_specs.append(approved_spec)
 
     status = _overall_status(candidate_results, strict_errors)
-    next_route = _next_route(status)
-    decision_counts = Counter(
-        str(item.get("decision")) for item in candidate_results if item.get("decision")
-    )
+    next_route = _next_route(status, candidate_results)
+    decision_counts = Counter(str(item.get("decision")) for item in candidate_results)
     gap_counts = Counter(str(item.get("gap_code")) for item in owner_actions)
     source_ready = _source_ready(source_2438m, source_candidate_ids)
+    candidate_selection = _mapping(owner_review.get("candidate_selection"))
     requirements = _requirements(
         source_ready=source_ready,
         candidate_identity_ready=(
@@ -183,11 +216,17 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
             and tuple(source_candidate_ids) == EXPECTED_CANDIDATE_IDS
             and len(source_candidate_ids) == len(reviews_by_id) == 3
         ),
+        selection_semantics_ready=_selection_semantics_ready(candidate_selection),
         safety_ready=_safety_boundary_ready(owner_review),
         documentation_ready=all(documentation_alignment.values()),
     )
     gaps = [item for item in requirements if item["status"] != "PASS"]
     safety = _safety()
+    m2_ids = [
+        str(item["candidate_id"])
+        for item in candidate_results
+        if item.get("m2_eligible") is True
+    ]
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -197,30 +236,45 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
         "readiness_status": status,
         "as_of": as_of,
         "market_regime": "ai_after_chatgpt",
+        "requested_start_date": "2022-12-01",
         "source_status": source_2438m.get("status"),
         "source_run_id": source_2438m.get("run_id"),
         "source_artifacts": [dict(item) for item in source_artifacts],
         "source_2438m_ready_for_owner_review": source_ready,
+        "candidate_selection": dict(candidate_selection),
         "candidate_count": len(candidate_results),
         "candidate_ids": source_candidate_ids,
+        "selection_basis": candidate_selection.get("selection_basis"),
+        "performance_ranked": candidate_selection.get("performance_ranked"),
         "owner_review_status": owner_review.get("owner_review_status"),
         "owner_decision_counts": dict(sorted(decision_counts.items())),
-        "approved_candidate_count": _review_status_count(candidate_results, "APPROVED"),
+        "owner_decision_complete_count": sum(
+            item.get("decision_complete") is True for item in candidate_results
+        ),
+        "approved_candidate_count": _decision_count(candidate_results, "APPROVE"),
         "pending_candidate_count": _decision_count(candidate_results, "PENDING"),
         "redefine_candidate_count": _decision_count(candidate_results, "REDEFINE"),
         "withdraw_candidate_count": _decision_count(candidate_results, "WITHDRAW"),
         "runtime_spec_ready_count": sum(
             item.get("runtime_spec_ready") is True for item in candidate_results
         ),
+        "approved_metric_contract_count": (
+            len(REQUIRED_METRIC_IDS) if shared_metric_ready else 0
+        ),
         "metric_contract_ready_count": sum(
             item.get("metric_contract_ready") is True for item in candidate_results
+        ),
+        "approved_threshold_policy_count": sum(
+            item.get("threshold_policy_ready") is True for item in candidate_results
         ),
         "threshold_policy_ready_count": sum(
             item.get("threshold_policy_ready") is True for item in candidate_results
         ),
+        "m2_eligible_candidate_count": len(m2_ids),
+        "m2_eligible_candidate_ids": m2_ids,
+        "candidate_reviews": candidate_results,
         "owner_input_gap_count": len(owner_actions),
         "owner_input_gaps_by_code": dict(sorted(gap_counts.items())),
-        "candidate_reviews": candidate_results,
         "recommended_next_research_task": next_route,
         "next_route": next_route,
         "strict_validation_errors": strict_errors,
@@ -237,14 +291,36 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
         "metric_contract_review_matrix": {
             "schema_version": METRIC_MATRIX_SCHEMA_VERSION,
             "status": status,
+            "contract_id": metric_contract.get("contract_id"),
+            "contract_status": metric_contract.get("status"),
+            "contract_ready": shared_metric_ready,
             "required_metric_ids": list(REQUIRED_METRIC_IDS),
-            "rows": metric_matrix,
+            "rows": metric_rows,
+            "blocker_codes": metric_blockers,
         },
         "threshold_policy_review_matrix": {
             "schema_version": THRESHOLD_MATRIX_SCHEMA_VERSION,
             "status": status,
+            "policy_id": threshold_policy.get("policy_id"),
+            "policy_status": threshold_policy.get("policy_status"),
             "supported_operators": sorted(SUPPORTED_OPERATORS),
-            "rows": threshold_matrix,
+            "rows": threshold_rows,
+            "ready_by_candidate": threshold_ready_by_candidate,
+            "blockers_by_candidate": threshold_blockers,
+        },
+        "owner_review_validation": {
+            "schema_version": OWNER_VALIDATION_SCHEMA_VERSION,
+            "status": status,
+            "strict_validation_errors": strict_errors,
+            "owner_input_gap_count": len(owner_actions),
+            "actions": owner_actions,
+        },
+        "approved_candidate_runtime_specs": {
+            "schema_version": APPROVED_SPECS_SCHEMA_VERSION,
+            "status": status,
+            "candidate_count": len(approved_specs),
+            "candidate_ids": m2_ids,
+            "candidate_specs": approved_specs,
         },
         "owner_action_checklist": {
             "schema_version": OWNER_CHECKLIST_SCHEMA_VERSION,
@@ -263,8 +339,8 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
             "NOT_APPLICABLE_PRIOR_VALIDATED_ARTIFACTS_CONFIG_OWNER_REVIEW_ONLY"
         ),
         "data_quality_gate_reason": (
-            "M1 reads prior validated 2438M evidence, governance config, and owner "
-            "review input only; it does not read cached market or outcome data."
+            "M1 validates prior evidence, governed config, and owner-review input only; "
+            "it does not read cached market or outcome data."
         ),
         **safety,
     }
@@ -272,24 +348,28 @@ def build_growth_tilt_candidate_runtime_spec_threshold_policy_approval(
 
 def _review_candidate(
     candidate_id: str,
-    source_rank: int,
+    selection_order: int,
     review: Mapping[str, Any],
-) -> tuple[
-    dict[str, Any],
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-]:
+    *,
+    shared_metric_ready: bool,
+    metric_blockers: Sequence[str],
+    threshold_policy_ready: bool,
+    threshold_blockers: Sequence[str],
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any] | None]:
     decision = str(review.get("decision") or "PENDING").upper()
     actions: list[dict[str, Any]] = []
+    metadata_missing = [field for field in REQUIRED_DECISION_FIELDS if not review.get(field)]
+    selection_ready = bool(
+        review.get("selection_order") == selection_order
+        and review.get("selection_basis") == "CONFIG_DECLARATION_ORDER"
+    )
+    if not selection_ready:
+        metadata_missing.extend(["selection_order", "selection_basis"])
+    metadata_missing = sorted(set(metadata_missing))
+
     if decision not in ALLOWED_DECISIONS:
         actions.append(
-            _action(
-                candidate_id,
-                DECISION_INVALID,
-                "decision",
-                f"Choose one of {sorted(ALLOWED_DECISIONS)}.",
-            )
+            _action(candidate_id, DECISION_INVALID, "decision", "Record a supported decision.")
         )
     elif decision == "PENDING":
         actions.append(
@@ -297,229 +377,441 @@ def _review_candidate(
                 candidate_id,
                 DECISION_PENDING,
                 "decision",
-                "Record an explicit APPROVE, REDEFINE, or WITHDRAW owner decision.",
+                "Record APPROVE, REDEFINE, or WITHDRAW before M2 eligibility evaluation.",
             )
         )
-    elif decision in {"REDEFINE", "WITHDRAW"}:
-        missing = [
-            field
-            for field in ("decision_rationale", "review_owner", "reviewed_at", "next_route")
-            if not review.get(field)
-        ]
-        if missing:
-            actions.append(
-                _action(
-                    candidate_id,
-                    REVIEW_METADATA_INCOMPLETE,
-                    "candidate_review",
-                    f"Complete decision metadata: {', '.join(missing)}.",
-                )
-            )
+    if decision != "PENDING" and metadata_missing:
         actions.append(
             _action(
                 candidate_id,
-                CANDIDATE_REDEFINITION_REQUIRED
-                if decision == "REDEFINE"
-                else CANDIDATE_WITHDRAWAL_REQUIRED,
-                "decision",
-                "Follow the explicit candidate definition or reselection route.",
+                REVIEW_METADATA_INCOMPLETE,
+                "candidate_review",
+                f"Complete decision metadata: {', '.join(metadata_missing)}.",
             )
         )
 
-    runtime_spec = _mapping(review.get("runtime_spec"))
-    runtime_spec_ready, runtime_missing = _runtime_spec_status(runtime_spec)
-    metric_rows, metric_contract_ready = _metric_review_rows(candidate_id, review)
-    threshold_rows, threshold_policy_ready = _threshold_review_rows(
-        candidate_id, review
-    )
-    review_metadata_ready = all(review.get(field) for field in REQUIRED_REVIEW_FIELDS)
+    runtime_spec_ready = False
+    executor_mapping_ready = False
+    redefinition_ready = False
+    metric_ready = False
+    threshold_ready = False
+    runtime_missing: list[str] = []
+    executor_missing: list[str] = []
 
     if decision == "APPROVE":
-        if not review_metadata_ready:
-            missing = [field for field in REQUIRED_REVIEW_FIELDS if not review.get(field)]
-            actions.append(
-                _action(
-                    candidate_id,
-                    REVIEW_METADATA_INCOMPLETE,
-                    "candidate_review",
-                    f"Complete owner review metadata: {', '.join(missing)}.",
-                )
-            )
-        if not runtime_spec_ready:
-            actions.append(
-                _action(
-                    candidate_id,
-                    RUNTIME_SPEC_INCOMPLETE,
-                    "runtime_spec",
-                    f"Complete approved runtime spec fields: {', '.join(runtime_missing)}.",
-                )
-            )
-        if not metric_contract_ready:
-            actions.extend(_metric_actions(candidate_id, metric_rows))
-        if not threshold_policy_ready:
-            actions.extend(_threshold_actions(candidate_id, threshold_rows))
-    elif decision == "PENDING":
-        if not runtime_spec_ready:
-            actions.append(
-                _action(
-                    candidate_id,
-                    RUNTIME_SPEC_INCOMPLETE,
-                    "runtime_spec",
-                    "Provide the executable candidate parameter contract if approving.",
-                )
-            )
-        if not metric_contract_ready:
-            actions.extend(_metric_actions(candidate_id, metric_rows))
-        if not threshold_policy_ready:
-            actions.extend(_threshold_actions(candidate_id, threshold_rows))
-
-    approval_ready = bool(
-        decision == "APPROVE"
-        and review_metadata_ready
-        and runtime_spec_ready
-        and metric_contract_ready
-        and threshold_policy_ready
-    )
-    review_status = (
-        "APPROVED"
-        if approval_ready
-        else (
-            "REDEFINITION_REQUIRED"
-            if decision == "REDEFINE"
-            else (
-                "WITHDRAWAL_RESELECTION_REQUIRED"
-                if decision == "WITHDRAW"
-                else ("PENDING" if decision == "PENDING" else "APPROVAL_INCOMPLETE")
-            )
+        runtime_spec = _mapping(review.get("runtime_spec"))
+        runtime_spec_ready, runtime_missing = _runtime_spec_status(
+            candidate_id, runtime_spec
         )
+        executor_mapping = _mapping(review.get("executor_mapping"))
+        executor_mapping_ready, executor_missing = _executor_mapping_status(
+            candidate_id, executor_mapping
+        )
+        metric_ready = bool(
+            review.get("metric_contract_ref") == EXPECTED_METRIC_CONTRACT_ID
+            and shared_metric_ready
+        )
+        threshold_ready = bool(
+            review.get("threshold_policy_ref") == EXPECTED_THRESHOLD_POLICY_ID
+            and threshold_policy_ready
+        )
+        if not runtime_spec_ready:
+            actions.append(
+                _action(
+                    candidate_id,
+                    RUNTIME_SPEC_INCOMPLETE,
+                    "runtime_spec",
+                    f"Resolve runtime fields/placeholders: {', '.join(runtime_missing)}.",
+                )
+            )
+        if not executor_mapping_ready:
+            actions.append(
+                _action(
+                    candidate_id,
+                    EXECUTOR_MAPPING_INCOMPLETE,
+                    "executor_mapping",
+                    f"Resolve executor fields: {', '.join(executor_missing)}.",
+                )
+            )
+        if not metric_ready:
+            action_blockers = list(metric_blockers)
+            if review.get("metric_contract_ref") != EXPECTED_METRIC_CONTRACT_ID:
+                action_blockers.append("metric_contract_ref_mismatch")
+            actions.append(
+                _action(
+                    candidate_id,
+                    METRIC_CONTRACT_INCOMPLETE,
+                    "metric_contract_ref",
+                    "Approve the shared metric contract: "
+                    f"{', '.join(sorted(set(action_blockers)))}.",
+                )
+            )
+        if not threshold_ready:
+            action_blockers = list(threshold_blockers)
+            if review.get("threshold_policy_ref") != EXPECTED_THRESHOLD_POLICY_ID:
+                action_blockers.append("threshold_policy_ref_mismatch")
+            actions.append(
+                _action(
+                    candidate_id,
+                    THRESHOLD_POLICY_INCOMPLETE,
+                    "threshold_policy_ref",
+                    "Preregister the candidate screening policy: "
+                    f"{', '.join(sorted(set(action_blockers)))}.",
+                )
+            )
+    elif decision == "REDEFINE":
+        redefinition_ready, redefinition_missing = _redefinition_status(
+            candidate_id, _mapping(review.get("redefinition"))
+        )
+        if not redefinition_ready:
+            actions.append(
+                _action(
+                    candidate_id,
+                    CANDIDATE_REDEFINITION_INCOMPLETE,
+                    "redefinition",
+                    f"Complete redefinition fields: {', '.join(redefinition_missing)}.",
+                )
+            )
+    elif decision == "WITHDRAW":
+        redefinition_ready = True
+
+    decision_complete = bool(
+        decision in {"APPROVE", "REDEFINE", "WITHDRAW"} and not metadata_missing
+        and (decision != "REDEFINE" or redefinition_ready)
     )
-    return (
-        {
+    m2_eligible = bool(
+        decision == "APPROVE"
+        and decision_complete
+        and runtime_spec_ready
+        and executor_mapping_ready
+        and metric_ready
+        and threshold_ready
+    )
+    if m2_eligible:
+        review_status = "APPROVED_FOR_PIT_REPLAY"
+    elif decision == "APPROVE":
+        review_status = "APPROVAL_CONTRACT_BLOCKED"
+    elif decision == "REDEFINE" and redefinition_ready:
+        review_status = "REDEFINED_SECOND_OWNER_APPROVAL_REQUIRED"
+    elif decision == "REDEFINE":
+        review_status = "REDEFINITION_INCOMPLETE"
+    elif decision == "WITHDRAW" and decision_complete:
+        review_status = "WITHDRAWN"
+    elif decision == "PENDING":
+        review_status = "PENDING"
+    else:
+        review_status = "INVALID_OR_INCOMPLETE"
+
+    result = {
+        "candidate_id": candidate_id,
+        "selection_order": selection_order,
+        "selection_basis": "CONFIG_DECLARATION_ORDER",
+        "performance_ranked": False,
+        "decision": decision,
+        "review_status": review_status,
+        "decision_owner": review.get("decision_owner"),
+        "decision_version": review.get("decision_version"),
+        "decision_timestamp": review.get("decision_timestamp"),
+        "decision_rationale": review.get("decision_rationale"),
+        "decision_complete": decision_complete,
+        "runtime_spec_ready": runtime_spec_ready,
+        "executor_mapping_ready": executor_mapping_ready,
+        "metric_contract_ready": metric_ready,
+        "threshold_policy_ready": threshold_ready,
+        "redefinition_ready": redefinition_ready,
+        "m2_eligible": m2_eligible,
+        "gap_codes": sorted(
+            {
+                str(item.get("gap_code"))
+                for item in actions
+                if item.get("candidate_id") == candidate_id
+            }
+        ),
+    }
+    approved_spec = None
+    if m2_eligible:
+        approved_spec = {
             "candidate_id": candidate_id,
-            "source_rank": source_rank,
-            "decision": decision,
-            "review_status": review_status,
-            "decision_rationale": review.get("decision_rationale"),
-            "review_owner": review.get("review_owner"),
-            "reviewed_at": review.get("reviewed_at"),
-            "next_route": review.get("next_route"),
-            "review_metadata_ready": review_metadata_ready,
-            "runtime_spec_ready": runtime_spec_ready,
-            "metric_contract_ready": metric_contract_ready,
-            "threshold_policy_ready": threshold_policy_ready,
-            "approval_ready": approval_ready,
-            "gap_codes": sorted(
-                {
-                    str(item.get("gap_code"))
-                    for item in actions
-                    if item.get("candidate_id") == candidate_id
-                }
-            ),
-        },
-        metric_rows,
-        threshold_rows,
-        actions,
-    )
+            "selection_order": selection_order,
+            "selection_basis": "CONFIG_DECLARATION_ORDER",
+            "performance_ranked": False,
+            "runtime_spec": dict(_mapping(review.get("runtime_spec"))),
+            "executor_mapping": dict(_mapping(review.get("executor_mapping"))),
+            "metric_contract_ref": review.get("metric_contract_ref"),
+            "threshold_policy_ref": review.get("threshold_policy_ref"),
+            "decision_version": review.get("decision_version"),
+        }
+    return result, actions, approved_spec
 
 
-def _runtime_spec_status(spec: Mapping[str, Any]) -> tuple[bool, list[str]]:
-    missing = [field for field in REQUIRED_RUNTIME_SPEC_FIELDS if not spec.get(field)]
-    if spec.get("approved") is not True:
-        missing.append("approved=true")
-    parameters = spec.get("parameters")
-    if not isinstance(parameters, Mapping) or not parameters:
-        missing.append("non_empty_parameters")
-    return not missing, missing
+def _runtime_spec_status(
+    candidate_id: str, spec: Mapping[str, Any]
+) -> tuple[bool, list[str]]:
+    missing = _missing_required_fields(spec, REQUIRED_RUNTIME_SPEC_FIELDS)
+    missing.extend(_owner_placeholder_paths(spec))
+    expected_operation = EXPECTED_M2_OPERATION_TYPES.get(candidate_id)
+    if expected_operation and spec.get("operation_type") != expected_operation:
+        missing.append("operation_type_semantic_mismatch")
+    parameters = _mapping(spec.get("parameters"))
+    if candidate_id == "recovery_reentry_speedup_guard":
+        invariants = {
+            "lead_steps": 1,
+            "confirmed_state_ramp_multiplier": 1.0,
+            "target_exposure_override_allowed": False,
+            "hard_veto_bypass_allowed": False,
+        }
+    else:
+        invariants = {
+            "relaxation_mode": "ONE_STEP_GRACE",
+            "grace_steps": 1,
+            "remove_confirmation_entirely": False,
+            "defensive_exposure_override_allowed": False,
+            "hard_veto_bypass_allowed": False,
+            "max_active_steps": 1,
+        }
+    for field, expected in invariants.items():
+        if parameters.get(field) != expected:
+            missing.append(f"parameters.{field}_invariant")
+    return not missing, sorted(set(missing))
 
 
-def _metric_review_rows(
-    candidate_id: str, review: Mapping[str, Any]
-) -> tuple[list[dict[str, Any]], bool]:
-    specs = _sequence(review.get("metric_specs"))
-    by_id = _records_by_key(specs, "metric_id")
+def _executor_mapping_status(
+    candidate_id: str, mapping: Mapping[str, Any]
+) -> tuple[bool, list[str]]:
+    missing = _missing_required_fields(mapping, REQUIRED_EXECUTOR_MAPPING_FIELDS)
+    missing.extend(_owner_placeholder_paths(mapping))
+    if mapping.get("executor_family") != "GrowthTiltCandidateOverlayExecutor":
+        missing.append("executor_family")
+    if mapping.get("operation_type") != EXPECTED_M2_OPERATION_TYPES.get(candidate_id):
+        missing.append("operation_type_semantic_mismatch")
+    return not missing, sorted(set(missing))
+
+
+def _redefinition_status(
+    candidate_id: str, redefinition: Mapping[str, Any]
+) -> tuple[bool, list[str]]:
+    missing = _missing_required_fields(redefinition, REQUIRED_REDEFINITION_FIELDS)
+    missing.extend(_owner_placeholder_paths(redefinition))
+    expected = {
+        "old_candidate_id": candidate_id,
+        "proposed_candidate_id": "post_confirmation_reentry_ramp_accelerator",
+        "overlap_with": "recovery_reentry_speedup_guard",
+        "new_candidate_role": "POST_CONFIRMATION_EXPOSURE_RAMP_ACCELERATOR",
+        "changes_trigger_timing": False,
+        "changes_ramp_speed": True,
+        "second_owner_approval_required": True,
+    }
+    for field, value in expected.items():
+        if redefinition.get(field) != value:
+            missing.append(f"{field}_orthogonality_invariant")
+    parameters = _mapping(redefinition.get("proposed_parameters"))
+    for field, value in {
+        "trigger_source": "EXACT_BASELINE_RECOVERY_CONFIRMATION",
+        "trigger_lead_steps": 0,
+        "target_exposure_override_allowed": False,
+        "hard_veto_bypass_allowed": False,
+        "reset_to_baseline_ramp_on_veto": True,
+    }.items():
+        if parameters.get(field) != value:
+            missing.append(f"proposed_parameters.{field}_orthogonality_invariant")
+    return not missing, sorted(set(missing))
+
+
+def _metric_contract_status(
+    contract: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], bool, list[str]]:
+    blockers: list[str] = []
+    if contract.get("contract_id") != EXPECTED_METRIC_CONTRACT_ID:
+        blockers.append("metric_contract_id_mismatch")
+    if contract.get("status") != "APPROVED":
+        blockers.append("metric_contract_not_owner_approved")
+    if not _governed_text(contract.get("owner")):
+        blockers.append("metric_contract_owner_unresolved")
+    epsilon = _mapping(contract.get("relative_delta_epsilon_policy"))
+    if epsilon.get("status") != "APPROVED" or not _positive_finite(epsilon.get("epsilon")):
+        blockers.append("relative_delta_epsilon_policy_unresolved")
+    if not _governed_text(epsilon.get("owner")):
+        blockers.append("relative_delta_epsilon_owner_unresolved")
+    empty_policy = _mapping(contract.get("empty_event_policy"))
+    if empty_policy.get("selected_status") not in {
+        "BLOCKED_INSUFFICIENT_EVENTS",
+        "COMPUTED_NOT_APPLICABLE",
+    }:
+        blockers.append("empty_event_policy_unresolved")
+
+    metrics = _sequence(contract.get("metrics"))
+    by_id = _records_by_key(metrics, "metric_id")
+    metric_ids = [
+        str(item.get("metric_id"))
+        for item in metrics
+        if isinstance(item, Mapping) and item.get("metric_id")
+    ]
+    if tuple(metric_ids) != tuple(REQUIRED_METRIC_IDS):
+        blockers.append("metric_identity_or_order_mismatch")
     rows: list[dict[str, Any]] = []
     for metric_id in REQUIRED_METRIC_IDS:
-        spec = _mapping(by_id.get(metric_id))
-        missing = [field for field in REQUIRED_METRIC_SPEC_FIELDS if not spec.get(field)]
+        metric = _mapping(by_id.get(metric_id))
+        missing = _missing_required_fields(
+            metric,
+            (
+                "definition",
+                "unit",
+                "direction",
+                "calculator_id",
+                "calculator_version",
+                "required_inputs",
+                "missing_policy",
+            ),
+        )
+        missing.extend(_owner_placeholder_paths(_mapping(metric.get("owner_fields"))))
+        for path, value in _leaf_items(_mapping(metric.get("owner_fields"))):
+            if value is None:
+                missing.append(f"owner_fields.{path}")
+        ready = not missing
+        if not ready:
+            blockers.append(f"metric_definition_incomplete:{metric_id}")
         rows.append(
             {
-                "candidate_id": candidate_id,
                 "metric_id": metric_id,
-                "source_field": spec.get("source_field"),
-                "unit": spec.get("unit"),
-                "normalization_rule_id": spec.get("normalization_rule_id"),
-                "calculator_id": spec.get("calculator_id"),
-                "calculator_version": spec.get("calculator_version"),
-                "ready": not missing,
-                "missing_fields": missing,
+                "definition": metric.get("definition"),
+                "unit": metric.get("unit"),
+                "direction": metric.get("direction"),
+                "calculator_id": metric.get("calculator_id"),
+                "calculator_version": metric.get("calculator_version"),
+                "ready": ready,
+                "missing_fields": sorted(set(missing)),
             }
         )
-    return rows, bool(rows) and all(item["ready"] is True for item in rows)
+    provenance = set(
+        str(item)
+        for item in _sequence(contract.get("common_runtime_provenance_fields"))
+    )
+    required_provenance = {
+        "metric_id",
+        "value",
+        "unit",
+        "finite",
+        "numerator",
+        "denominator",
+        "baseline_value",
+        "candidate_value",
+        "sample_count",
+        "event_count",
+        "window_start",
+        "window_end",
+        "as_of",
+        "source_artifact_refs",
+        "contract_version",
+        "calculator_version",
+        "status",
+        "blocker_codes",
+    }
+    if not required_provenance.issubset(provenance):
+        blockers.append("metric_runtime_provenance_incomplete")
+    blockers = sorted(set(blockers))
+    return rows, bool(rows) and not blockers, blockers
 
 
-def _threshold_review_rows(
-    candidate_id: str, review: Mapping[str, Any]
-) -> tuple[list[dict[str, Any]], bool]:
-    specs = _sequence(review.get("threshold_specs"))
-    if not specs:
-        return (
-            [
+def _threshold_policy_status(
+    policy: Mapping[str, Any], metric_contract: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], dict[str, bool], dict[str, list[str]]]:
+    global_blockers: list[str] = []
+    if policy.get("policy_id") != EXPECTED_THRESHOLD_POLICY_ID:
+        global_blockers.append("threshold_policy_id_mismatch")
+    if policy.get("policy_status") != "APPROVED":
+        global_blockers.append("threshold_policy_not_owner_approved")
+    if not _governed_text(policy.get("owner")):
+        global_blockers.append("threshold_policy_owner_unresolved")
+    if not _sequence(policy.get("validation_evidence")):
+        global_blockers.append("threshold_policy_validation_evidence_missing")
+    for field in ("rationale", "review_condition", "expiry_condition"):
+        if not policy.get(field):
+            global_blockers.append(f"threshold_policy_{field}_missing")
+    readiness = _mapping(policy.get("readiness_gate"))
+    expected_readiness = {
+        "required_metric_count": 6,
+        "computed_metric_count": 6,
+        "finite_metric_count": 6,
+        "threshold_evaluation_count": 6,
+        "pit_valid": True,
+        "baseline_and_candidate_comparable": True,
+        "minimum_primary_event_count": 5,
+        "unmet_status": "BLOCKED",
+    }
+    for field, expected in expected_readiness.items():
+        if readiness.get(field) != expected:
+            global_blockers.append(f"readiness_gate_{field}_mismatch")
+
+    metric_units = {
+        str(item.get("metric_id")): item.get("unit")
+        for item in _sequence(metric_contract.get("metrics"))
+        if isinstance(item, Mapping)
+    }
+    common = [
+        _mapping(item) for item in _sequence(policy.get("common_thresholds"))
+    ]
+    common_ids = {str(item.get("metric_id")) for item in common}
+    if common_ids != {
+        "return_delta_vs_baseline",
+        "max_drawdown_delta_vs_baseline",
+        "turnover_delta_vs_baseline",
+        "whipsaw_delta",
+    }:
+        global_blockers.append("common_threshold_metric_set_mismatch")
+
+    candidates = _records_by_key(_sequence(policy.get("candidate_thresholds")), "candidate_id")
+    rows: list[dict[str, Any]] = []
+    ready_by_candidate: dict[str, bool] = {}
+    blockers_by_candidate: dict[str, list[str]] = {}
+    for candidate_id in EXPECTED_CANDIDATE_IDS[:2]:
+        candidate = _mapping(candidates.get(candidate_id))
+        candidate_blockers = list(global_blockers)
+        if candidate.get("approval_dependency") != "APPROVED":
+            candidate_blockers.append("candidate_thresholds_not_owner_preregistered")
+        combined = common + [
+            _mapping(item) for item in _sequence(candidate.get("thresholds"))
+        ]
+        if len(combined) != 6:
+            candidate_blockers.append("candidate_threshold_count_mismatch")
+        combined_ids = [str(item.get("metric_id")) for item in combined]
+        if set(combined_ids) != set(REQUIRED_METRIC_IDS):
+            candidate_blockers.append("candidate_threshold_metric_set_mismatch")
+        for threshold in combined:
+            row_blockers: list[str] = []
+            comparator = str(threshold.get("comparator") or "").upper()
+            metric_id = str(threshold.get("metric_id") or "")
+            if comparator not in SUPPORTED_OPERATORS:
+                row_blockers.append(THRESHOLD_OPERATOR_UNSUPPORTED)
+            if metric_id not in REQUIRED_METRIC_IDS:
+                row_blockers.append(THRESHOLD_METRIC_BINDING_INVALID)
+            if not _is_finite_number(threshold.get("value")):
+                row_blockers.append(THRESHOLD_VALUE_INVALID)
+            if metric_units.get(metric_id) != threshold.get("unit"):
+                row_blockers.append("THRESHOLD_METRIC_UNIT_MISMATCH")
+            candidate_blockers.extend(row_blockers)
+            rows.append(
                 {
                     "candidate_id": candidate_id,
-                    "threshold_id": None,
-                    "metric_id": None,
-                    "operator": None,
-                    "threshold_value": None,
-                    "ready": False,
-                    "gap_codes": [THRESHOLD_POLICY_INCOMPLETE],
+                    "threshold_id": threshold.get("threshold_id"),
+                    "metric_id": metric_id or None,
+                    "operator": comparator or None,
+                    "threshold_value": threshold.get("value"),
+                    "unit": threshold.get("unit"),
+                    "ready": not row_blockers,
+                    "gap_codes": sorted(set(row_blockers)),
                 }
-            ],
-            False,
-        )
-    rows: list[dict[str, Any]] = []
-    for raw in specs:
-        spec = _mapping(raw)
-        operator = str(spec.get("operator") or "").upper()
-        metric_id = str(spec.get("metric_id") or "")
-        missing = [field for field in REQUIRED_THRESHOLD_FIELDS if not spec.get(field)]
-        gap_codes: list[str] = []
-        if missing:
-            gap_codes.append(THRESHOLD_POLICY_INCOMPLETE)
-        if operator not in SUPPORTED_OPERATORS:
-            gap_codes.append(THRESHOLD_OPERATOR_UNSUPPORTED)
-        if metric_id not in REQUIRED_METRIC_IDS:
-            gap_codes.append(THRESHOLD_METRIC_BINDING_INVALID)
-        if not _threshold_value_ready(operator, spec.get("threshold_value")):
-            gap_codes.append(THRESHOLD_VALUE_INVALID)
-        evidence = _sequence(spec.get("validation_evidence"))
-        if not evidence:
-            gap_codes.append(THRESHOLD_POLICY_INCOMPLETE)
-        if spec.get("policy_status") != "APPROVED":
-            gap_codes.append(THRESHOLD_POLICY_INCOMPLETE)
-        rows.append(
-            {
-                "candidate_id": candidate_id,
-                "threshold_id": spec.get("threshold_id"),
-                "metric_id": metric_id or None,
-                "operator": operator or None,
-                "threshold_value": spec.get("threshold_value"),
-                "policy_owner": spec.get("policy_owner"),
-                "policy_version": spec.get("policy_version"),
-                "policy_status": spec.get("policy_status"),
-                "evaluator_id": spec.get("evaluator_id"),
-                "evaluator_version": spec.get("evaluator_version"),
-                "validation_evidence": evidence,
-                "ready": not gap_codes,
-                "missing_fields": missing,
-                "gap_codes": sorted(set(gap_codes)),
-            }
-        )
-    return rows, all(item["ready"] is True for item in rows)
+            )
+        candidate_blockers = sorted(set(candidate_blockers))
+        blockers_by_candidate[candidate_id] = candidate_blockers
+        ready_by_candidate[candidate_id] = not candidate_blockers
+    return rows, ready_by_candidate, blockers_by_candidate
 
 
 def _strict_validation_errors(
     source: Mapping[str, Any],
     owner_review: Mapping[str, Any],
+    metric_contract: Mapping[str, Any],
+    threshold_policy: Mapping[str, Any],
     source_candidate_ids: Sequence[str],
     review_candidate_ids: Sequence[str],
     review_rows: Sequence[Any],
@@ -527,12 +819,45 @@ def _strict_validation_errors(
     as_of: str,
 ) -> list[str]:
     errors: list[str] = []
-    if source.get("schema_version") != EXPECTED_SOURCE_SCHEMA:
-        errors.append("source_2438m_schema_version_mismatch")
-    if source.get("status") != EXPECTED_SOURCE_STATUS:
-        errors.append("source_2438m_status_mismatch")
-    if source.get("next_route") != EXPECTED_SOURCE_ROUTE:
-        errors.append("source_2438m_route_mismatch")
+    expected = (
+        (
+            source.get("schema_version"),
+            EXPECTED_SOURCE_SCHEMA,
+            "source_2438m_schema_version_mismatch",
+        ),
+        (source.get("status"), EXPECTED_SOURCE_STATUS, "source_2438m_status_mismatch"),
+        (source.get("next_route"), EXPECTED_SOURCE_ROUTE, "source_2438m_route_mismatch"),
+        (
+            owner_review.get("schema_version"),
+            EXPECTED_OWNER_REVIEW_SCHEMA,
+            "owner_review_schema_version_mismatch",
+        ),
+        (owner_review.get("task_id"), "TRADING-2438M1", "owner_review_task_id_mismatch"),
+        (
+            owner_review.get("source_task_id"),
+            "TRADING-2438M",
+            "owner_review_source_task_id_mismatch",
+        ),
+        (
+            owner_review.get("market_regime"),
+            "ai_after_chatgpt",
+            "owner_review_market_regime_mismatch",
+        ),
+        (owner_review.get("as_of"), as_of, "owner_review_as_of_mismatch"),
+        (
+            metric_contract.get("schema_version"),
+            EXPECTED_METRIC_CONTRACT_SCHEMA,
+            "metric_contract_schema_version_mismatch",
+        ),
+        (
+            threshold_policy.get("schema_version"),
+            EXPECTED_THRESHOLD_POLICY_SCHEMA,
+            "threshold_policy_schema_version_mismatch",
+        ),
+    )
+    for actual, wanted, code in expected:
+        if actual != wanted:
+            errors.append(code)
     if source.get("blocked_count") != 3:
         errors.append("source_2438m_blocked_count_mismatch")
     if source.get("candidate_replay_outcome_rechecked") is not True:
@@ -541,20 +866,6 @@ def _strict_validation_errors(
         errors.append("source_2438m_as_of_mismatch")
     if tuple(source_candidate_ids) != EXPECTED_CANDIDATE_IDS:
         errors.append("source_authoritative_candidate_identity_or_order_mismatch")
-    if owner_review.get("schema_version") != EXPECTED_OWNER_REVIEW_SCHEMA:
-        errors.append("owner_review_schema_version_mismatch")
-    if owner_review.get("task_id") != "TRADING-2438M1":
-        errors.append("owner_review_task_id_mismatch")
-    if owner_review.get("source_task_id") != "TRADING-2438M":
-        errors.append("owner_review_source_task_id_mismatch")
-    if owner_review.get("market_regime") != "ai_after_chatgpt":
-        errors.append("owner_review_market_regime_mismatch")
-    if owner_review.get("as_of") != as_of:
-        errors.append("owner_review_as_of_mismatch")
-    if not owner_review.get("status"):
-        errors.append("owner_review_status_missing")
-    if not owner_review.get("owner_review_status"):
-        errors.append("owner_review_governance_status_missing")
     row_ids = [
         str(item.get("candidate_id"))
         for item in review_rows
@@ -564,46 +875,48 @@ def _strict_validation_errors(
         errors.append("candidate_identity_or_order_drift")
     if len(row_ids) != len(set(row_ids)):
         errors.append("duplicate_candidate_id")
-    if len(source_candidate_ids) != 3:
-        errors.append("source_top3_candidate_count_mismatch")
+    if not owner_review.get("status"):
+        errors.append("owner_review_status_missing")
+    if not owner_review.get("owner_review_status"):
+        errors.append("owner_review_governance_status_missing")
+    if not _selection_semantics_ready(_mapping(owner_review.get("candidate_selection"))):
+        errors.append("candidate_selection_semantics_invalid")
     if not _safety_boundary_ready(owner_review):
         errors.append("owner_review_safety_boundary_invalid")
     if not all(documentation_alignment.values()):
         errors.append("registry_catalog_docs_alignment_failed")
-    for review in review_rows:
+    for order, review in enumerate(review_rows, start=1):
         if not isinstance(review, Mapping):
+            errors.append(f"candidate_review_not_mapping:{order}")
             continue
-        metric_ids = [
-            str(item.get("metric_id"))
-            for item in _sequence(review.get("metric_specs"))
-            if isinstance(item, Mapping) and item.get("metric_id")
-        ]
-        if len(metric_ids) != len(set(metric_ids)):
-            errors.append(f"duplicate_metric_id:{review.get('candidate_id')}")
-        unknown_metrics = sorted(set(metric_ids) - set(REQUIRED_METRIC_IDS))
-        if unknown_metrics:
-            errors.append(
-                f"unknown_metric_id:{review.get('candidate_id')}:{','.join(unknown_metrics)}"
-            )
-        threshold_ids: list[str] = []
-        for threshold in _sequence(review.get("threshold_specs")):
-            if not isinstance(threshold, Mapping):
-                continue
-            if threshold.get("threshold_id"):
-                threshold_ids.append(str(threshold.get("threshold_id")))
-            operator = str(threshold.get("operator") or "").upper()
-            if operator and operator not in SUPPORTED_OPERATORS:
-                errors.append(
-                    f"unsupported_threshold_operator:{review.get('candidate_id')}:{operator}"
-                )
-            metric_id = str(threshold.get("metric_id") or "")
-            if metric_id and metric_id not in REQUIRED_METRIC_IDS:
-                errors.append(
-                    f"unknown_threshold_metric:{review.get('candidate_id')}:{metric_id}"
-                )
-        if len(threshold_ids) != len(set(threshold_ids)):
-            errors.append(f"duplicate_threshold_id:{review.get('candidate_id')}")
-    return errors
+        if review.get("selection_order") != order:
+            errors.append(f"candidate_selection_order_mismatch:{review.get('candidate_id')}")
+        if any(key in review for key in ("rank", "source_rank", "performance_rank")):
+            errors.append(f"prohibited_performance_rank_field:{review.get('candidate_id')}")
+    return sorted(set(errors))
+
+
+def _overall_status(
+    candidate_results: Sequence[Mapping[str, Any]], strict_errors: Sequence[str]
+) -> str:
+    if strict_errors or not candidate_results:
+        return BLOCKED_STATUS
+    if any(item.get("decision_complete") is not True for item in candidate_results):
+        return BLOCKED_STATUS
+    approved = [item for item in candidate_results if item.get("decision") == "APPROVE"]
+    if any(item.get("m2_eligible") is not True for item in approved):
+        return BLOCKED_STATUS
+    return READY_STATUS
+
+
+def _next_route(status: str, results: Sequence[Mapping[str, Any]]) -> str:
+    if status == READY_STATUS:
+        if not any(item.get("decision") == "APPROVE" for item in results):
+            return NEXT_ROUTE_NO_APPROVED
+        return NEXT_ROUTE_READY
+    if any(item.get("decision_complete") is not True for item in results):
+        return NEXT_ROUTE_DECISION
+    return NEXT_ROUTE_BLOCKED
 
 
 def _source_ready(source: Mapping[str, Any], candidate_ids: Sequence[str]) -> bool:
@@ -617,38 +930,13 @@ def _source_ready(source: Mapping[str, Any], candidate_ids: Sequence[str]) -> bo
     )
 
 
-def _overall_status(
-    candidate_results: Sequence[Mapping[str, Any]], strict_errors: Sequence[str]
-) -> str:
-    decisions = {str(item.get("decision")) for item in candidate_results}
-    if "WITHDRAW" in decisions:
-        return WITHDRAW_STATUS
-    if "REDEFINE" in decisions:
-        return REDEFINE_STATUS
-    if (
-        candidate_results
-        and not strict_errors
-        and all(item.get("approval_ready") is True for item in candidate_results)
-    ):
-        return READY_STATUS
-    return BLOCKED_STATUS
-
-
-def _next_route(status: str) -> str:
-    if status == READY_STATUS:
-        return NEXT_ROUTE_READY
-    if status == REDEFINE_STATUS:
-        return NEXT_ROUTE_REDEFINE
-    if status == WITHDRAW_STATUS:
-        return NEXT_ROUTE_WITHDRAW
-    return NEXT_ROUTE_BLOCKED
-
-
-def _threshold_value_ready(operator: str, value: object) -> bool:
-    if operator in {"BETWEEN", "OUTSIDE"}:
-        bounds = _sequence(value)
-        return len(bounds) == 2 and all(_is_finite_number(item) for item in bounds)
-    return _is_finite_number(value)
+def _selection_semantics_ready(selection: Mapping[str, Any]) -> bool:
+    return bool(
+        selection.get("selected_candidate_count") == 3
+        and selection.get("selection_basis") == "CONFIG_DECLARATION_ORDER"
+        and selection.get("performance_ranked") is False
+        and selection.get("pit_evidence_available") is False
+    )
 
 
 def _safety_boundary_ready(owner_review: Mapping[str, Any]) -> bool:
@@ -687,9 +975,17 @@ def _documentation_alignment(
             item in artifact_catalog_text for item in REQUIRED_CATALOG_REFERENCES
         ),
         "system_flow": all(item in system_flow_text for item in REQUIRED_FLOW_REFERENCES),
-        "requirement_doc": "TRADING-2438M1" in requirement_text
-        and "APPROVE" in requirement_text
-        and "WITHDRAW" in requirement_text,
+        "requirement_doc": all(
+            item in requirement_text
+            for item in (
+                "TRADING-2438M1A",
+                "TRADING-2438M1B",
+                "CONFIG_DECLARATION_ORDER",
+                "performance_ranked: false",
+                EXPECTED_METRIC_CONTRACT_ID,
+                EXPECTED_THRESHOLD_POLICY_ID,
+            )
+        ),
     }
 
 
@@ -697,12 +993,14 @@ def _requirements(
     *,
     source_ready: bool,
     candidate_identity_ready: bool,
+    selection_semantics_ready: bool,
     safety_ready: bool,
     documentation_ready: bool,
 ) -> list[dict[str, Any]]:
     checks = (
         ("source_2438m_ready", source_ready),
         ("candidate_identity_and_order_ready", candidate_identity_ready),
+        ("candidate_selection_semantics_ready", selection_semantics_ready),
         ("owner_review_safety_boundary_ready", safety_ready),
         ("registry_catalog_docs_alignment", documentation_ready),
     )
@@ -727,72 +1025,6 @@ def _action(
         "production_effect": "none",
         "broker_action": "none",
     }
-
-
-def _metric_actions(
-    candidate_id: str, metric_rows: Sequence[Mapping[str, Any]]
-) -> list[dict[str, Any]]:
-    return [
-        _action(
-            candidate_id,
-            METRIC_CONTRACT_INCOMPLETE,
-            f"metric_specs.{row.get('metric_id')}",
-            "Complete metric contract fields: "
-            f"{', '.join(str(item) for item in _sequence(row.get('missing_fields')))}.",
-        )
-        for row in metric_rows
-        if row.get("ready") is not True
-    ]
-
-
-def _threshold_actions(
-    candidate_id: str, threshold_rows: Sequence[Mapping[str, Any]]
-) -> list[dict[str, Any]]:
-    actions: list[dict[str, Any]] = []
-    for row in threshold_rows:
-        if row.get("ready") is True:
-            continue
-        threshold_id = row.get("threshold_id") or "missing_threshold_spec"
-        for gap_code in _sequence(row.get("gap_codes")) or [
-            THRESHOLD_POLICY_INCOMPLETE
-        ]:
-            actions.append(
-                _action(
-                    candidate_id,
-                    str(gap_code),
-                    f"threshold_specs.{threshold_id}",
-                    "Complete the governed threshold record without deriving a value "
-                    "from current metrics or prior runs.",
-                )
-            )
-    return actions
-
-
-def _candidate_ids(source: Mapping[str, Any]) -> list[str]:
-    values = source.get("top3_candidate_ids") or source.get("candidate_ids")
-    return [str(item) for item in _sequence(values) if item]
-
-
-def _records_by_id(records: Sequence[Any]) -> dict[str, Mapping[str, Any]]:
-    return _records_by_key(records, "candidate_id")
-
-
-def _records_by_key(
-    records: Sequence[Any], key: str
-) -> dict[str, Mapping[str, Any]]:
-    return {
-        str(item.get(key)): item
-        for item in records
-        if isinstance(item, Mapping) and item.get(key)
-    }
-
-
-def _review_status_count(results: Sequence[Mapping[str, Any]], status: str) -> int:
-    return sum(item.get("review_status") == status for item in results)
-
-
-def _decision_count(results: Sequence[Mapping[str, Any]], decision: str) -> int:
-    return sum(item.get("decision") == decision for item in results)
 
 
 def _safety() -> dict[str, Any]:
@@ -824,8 +1056,89 @@ def _safety() -> dict[str, Any]:
     }
 
 
+def _candidate_ids(source: Mapping[str, Any]) -> list[str]:
+    for key in ("top3_candidate_ids", "candidate_ids"):
+        values = [str(item) for item in _sequence(source.get(key)) if item]
+        if values:
+            return values
+    return [
+        str(item.get("candidate_id"))
+        for item in _sequence(source.get("candidate_results"))
+        if isinstance(item, Mapping) and item.get("candidate_id")
+    ]
+
+
+def _records_by_id(rows: Sequence[Any]) -> dict[str, Mapping[str, Any]]:
+    return _records_by_key(rows, "candidate_id")
+
+
+def _records_by_key(rows: Sequence[Any], key: str) -> dict[str, Mapping[str, Any]]:
+    return {
+        str(item.get(key)): item
+        for item in rows
+        if isinstance(item, Mapping) and item.get(key)
+    }
+
+
+def _decision_count(results: Sequence[Mapping[str, Any]], decision: str) -> int:
+    return sum(item.get("decision") == decision for item in results)
+
+
+def _missing_required_fields(
+    value: Mapping[str, Any], fields: Sequence[str]
+) -> list[str]:
+    missing: list[str] = []
+    for field in fields:
+        item = value.get(field)
+        if item is None or item == "" or item == [] or item == {}:
+            missing.append(field)
+    return missing
+
+
+def _owner_placeholder_paths(value: Any, prefix: str = "") -> list[str]:
+    paths: list[str] = []
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            paths.extend(_owner_placeholder_paths(item, path))
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for index, item in enumerate(value):
+            path = f"{prefix}[{index}]"
+            paths.extend(_owner_placeholder_paths(item, path))
+    elif isinstance(value, str) and value.startswith("OWNER_MUST_"):
+        paths.append(prefix or "owner_placeholder")
+    return paths
+
+
+def _leaf_items(value: Mapping[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
+    rows: list[tuple[str, Any]] = []
+    for key, item in value.items():
+        path = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(item, Mapping):
+            rows.extend(_leaf_items(item, path))
+        else:
+            rows.append((path, item))
+    return rows
+
+
+def _governed_text(value: object) -> bool:
+    return bool(
+        isinstance(value, str)
+        and value.strip()
+        and not value.startswith("OWNER_MUST_")
+    )
+
+
+def _positive_finite(value: object) -> bool:
+    return _is_finite_number(value) and float(value) > 0.0
+
+
 def _is_finite_number(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:

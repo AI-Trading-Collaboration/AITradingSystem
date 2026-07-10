@@ -20458,7 +20458,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_candidate_runtime_spec_threshold_policy_approval
-    title: Growth Tilt Candidate Runtime Spec And Threshold Policy Approval
+    title: Growth Tilt Candidate Research Contract Approval
     group: research
     cadence: ad_hoc
     audience: project_owner
@@ -20469,13 +20469,15 @@ reports:
       - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/candidate_runtime_spec_review_matrix.json
       - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/metric_contract_review_matrix.json
       - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/threshold_policy_review_matrix.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/owner_review_validation.json
+      - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/approved_candidate_runtime_specs.json
       - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/owner_action_checklist.json
       - outputs/research_strategies/growth_tilt_candidate_runtime_spec_threshold_policy_approval/no_effect_boundary.json
       - docs/research/growth_tilt_candidate_runtime_spec_threshold_policy_approval.md
     artifact_selection_policy: latest_available
     freshness_sla_days: 30
-    freshness_rationale: TRADING-2438M1 consumes the TRADING-2438M blocked runtime diagnosis and a tracked owner-review input to validate explicit APPROVE, REDEFINE, WITHDRAW, or PENDING decisions for the same top-3 candidates. APPROVE requires a parameterized executable spec, six metric contracts with calculator provenance, and at least one finite owner-approved threshold policy record with evaluator and governance metadata. The default tracked template contains no parameter or threshold values and must remain BLOCKED_OWNER_INPUT until the project owner, strategy owner, and policy owner complete it. The report does not run replay, backtest, scoring, paper-shadow, production, weights, or broker actions.
-    owner_action: complete_growth_tilt_candidate_runtime_spec_and_threshold_policy_review
+    freshness_rationale: TRADING-2438M1 consumes the TRADING-2438M blocked runtime diagnosis, the v2 mixed-decision owner review, the shared six-metric contract, the PIT screening policy, registry/catalog/system-flow contracts, and the revised M1/M2 development plan. Candidate selection is CONFIG_DECLARATION_ORDER with performance_ranked=false. A/B are recorded as APPROVE and C is REDEFINE; C does not block complete A/B contracts, but only fully validated APPROVE candidates may enter the M2 eligibility artifact. The tracked configs deliberately retain OWNER_MUST placeholders and PENDING_OWNER_PREREGISTRATION status, so the real run remains BLOCKED without invoking replay, backtest, scoring, paper-shadow, production, weights, or broker actions.
+    owner_action: resolve_growth_tilt_runtime_mappings_and_preregister_shared_metric_screening_policy
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
