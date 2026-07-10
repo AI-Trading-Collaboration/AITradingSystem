@@ -30,7 +30,7 @@ def test_real_inventory_is_ready_for_owner_review_but_m2_remains_blocked() -> No
     assert payload["strict_validation_errors"] == []
 
 
-def test_re_risk_output_exists_but_failed_channel_selection_is_not_eligible() -> None:
+def test_re_risk_output_mapping_is_separate_from_offline_selection() -> None:
     payload = _build()
     row = _signal(payload, "re_risk_allowed_probability")
 
@@ -38,9 +38,19 @@ def test_re_risk_output_exists_but_failed_channel_selection_is_not_eligible() ->
     assert row["source_family"] == "drawdown_recovery"
     assert row["callable_runtime_source"] is True
     assert row["pit_approved"] is False
+    assert row["producer_callable"] is True
+    assert row["output_path_resolved"] is True
+    assert row["semantics_registered"] is True
+    assert row["pit_lineage_valid"] is False
+    assert row["baseline_consumption_ready"] is False
+    assert row["offline_selection_pass"] is False
+    assert row["offline_selection_role"] == (
+        "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE"
+    )
     assert row["selection_status"] == "FAILED_FINAL_SELECTION"
     assert row["candidate_a_eligible"] is False
-    assert "DO_NOT_DE_RISK_CHANNEL_FAILED_FINAL_SELECTION" in row["blocker_codes"]
+    assert "RECOVERY_PIT_LINEAGE_CONTRACT_MISSING" in row["blocker_codes"]
+    assert "offline selection failure" in row["selection_notes"][1]
     assert payload["eligible_recovery_signal_ids"] == []
 
 

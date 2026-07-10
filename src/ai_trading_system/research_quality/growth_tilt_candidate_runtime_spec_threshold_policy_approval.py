@@ -616,26 +616,51 @@ def _redefinition_status(
 ) -> tuple[bool, list[str]]:
     missing = _missing_required_fields(redefinition, REQUIRED_REDEFINITION_FIELDS)
     missing.extend(_owner_placeholder_paths(redefinition))
-    expected = {
-        "old_candidate_id": candidate_id,
-        "proposed_candidate_id": "post_confirmation_reentry_ramp_accelerator",
-        "overlap_with": "recovery_reentry_speedup_guard",
-        "new_candidate_role": "POST_CONFIRMATION_EXPOSURE_RAMP_ACCELERATOR",
-        "changes_trigger_timing": False,
-        "changes_ramp_speed": True,
-        "second_owner_approval_required": True,
-    }
+    if candidate_id == "false_risk_off_confirmation_relaxation":
+        expected = {
+            "old_candidate_id": candidate_id,
+            "proposed_candidate_id": "non_hard_defensive_entry_persistence_guard",
+            "overlap_with": "BASELINE_NON_HARD_DEFENSIVE_ENTRY_REQUEST",
+            "new_candidate_role": "NON_HARD_DEFENSIVE_ENTRY_PERSISTENCE_GUARD",
+            "changes_trigger_timing": True,
+            "changes_ramp_speed": False,
+            "second_owner_approval_required": True,
+        }
+        parameter_invariants = {
+            "trigger_source": "EXACT_BASELINE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST",
+            "candidate_required_steps_expression": "baseline_required_steps_plus_one",
+            "maximum_added_steps": 1,
+            "changes_soft_component": False,
+            "changes_aggregate_non_hard_request_persistence": True,
+            "hard_veto_bypass_allowed": False,
+            "auto_extension_allowed": False,
+            "exposure_above_pre_request_baseline_allowed": False,
+            "aggregate_request_contract_status": (
+                "BLOCKED_NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST"
+            ),
+        }
+    else:
+        expected = {
+            "old_candidate_id": candidate_id,
+            "proposed_candidate_id": "post_confirmation_reentry_ramp_accelerator",
+            "overlap_with": "recovery_reentry_speedup_guard",
+            "new_candidate_role": "POST_CONFIRMATION_EXPOSURE_RAMP_ACCELERATOR",
+            "changes_trigger_timing": False,
+            "changes_ramp_speed": True,
+            "second_owner_approval_required": True,
+        }
+        parameter_invariants = {
+            "trigger_source": "EXACT_BASELINE_RECOVERY_CONFIRMATION",
+            "trigger_lead_steps": 0,
+            "target_exposure_override_allowed": False,
+            "hard_veto_bypass_allowed": False,
+            "reset_to_baseline_ramp_on_veto": True,
+        }
     for field, value in expected.items():
         if redefinition.get(field) != value:
             missing.append(f"{field}_orthogonality_invariant")
     parameters = _mapping(redefinition.get("proposed_parameters"))
-    for field, value in {
-        "trigger_source": "EXACT_BASELINE_RECOVERY_CONFIRMATION",
-        "trigger_lead_steps": 0,
-        "target_exposure_override_allowed": False,
-        "hard_veto_bypass_allowed": False,
-        "reset_to_baseline_ramp_on_veto": True,
-    }.items():
+    for field, value in parameter_invariants.items():
         if parameters.get(field) != value:
             missing.append(f"proposed_parameters.{field}_orthogonality_invariant")
     return not missing, sorted(set(missing))

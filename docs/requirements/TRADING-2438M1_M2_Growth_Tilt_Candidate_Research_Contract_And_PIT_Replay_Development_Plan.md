@@ -1342,3 +1342,7 @@ screening policy owner and pre-result preregistration
 现有 governed configs 和 event casebook 未提供足以消除上述 blocker 的 exact mappings；因此未猜值、未执行真实 replay、未生成 runtime metrics 或 PASS/FAIL。M2A executor 只完成 deterministic fixture validation：A confirmed ramp 保持不变，B grace 只允许一步，C second approval 前 BLOCKED，hard veto / expiry 回 baseline，candidate name 不参与 operation dispatch，所有非零 exposure delta 都有 reason code。
 
 验证结果：M1/M2A focused parallel pytest 69 passed，合并 docs/registry/task consistency 后 101 passed；fast tier 198 passed；contract-validation 197 passed；Ruff、compileall、真实 strict CLI 和 diff check 通过。full parallel pytest 为 5166 passed / 46 failed / 643 warnings；失败来自本次未修改且 HEAD 已存在的通用 CLI 参数契约错配，未用串行运行覆盖该结果。
+
+## M1D disposition amendment — 2026-07-10
+
+`TRADING-2438M1D` supersedes the earlier first-wave assumption that Candidate B remains APPROVE. The current governed disposition is A=`APPROVE`, B=`REDEFINE`, C=`REDEFINE`. Candidate B is proposed as `non_hard_defensive_entry_persistence_guard`, but the repository has no callable aggregate non-hard defensive request producer; it remains implementation-blocked and requires a second owner decision to WITHDRAW or separately approve new baseline behavior. Earlier `approved/redefine=2/1`, B soft-confirmation-grace, and first-wave A/B statements in this document are historical pre-M1D context, not the current replay handoff. Current real M2 eligibility remains zero.

@@ -353,7 +353,7 @@ def _signal_inventory(
             "channel_composer_v3_predictions.csv:re_risk_allowed_probability",
             "defensive",
             "drawdown_recovery",
-            pit_approved=do_not_de_risk_pass,
+            pit_approved=False,
             usage=_mapping(usage_by_signal.get("re_risk_allowed")),
             callable_runtime_source=(
                 'frame["re_risk_allowed_probability"]' in channel_code
@@ -362,17 +362,20 @@ def _signal_inventory(
             selection_status=(
                 "PASS" if do_not_de_risk_pass else "FAILED_FINAL_SELECTION"
             ),
-            candidate_a_eligible=do_not_de_risk_pass,
+            candidate_a_eligible=False,
             threshold=_mapping(do_not.get("thresholds")).get(
                 "do_not_de_risk_active_probability_min"
             ),
+            offline_selection_pass=do_not_de_risk_pass,
+            pit_lineage_valid=False,
+            baseline_consumption_ready=False,
         ),
         _signal_row(
             "re_risk_allowed",
             "src/ai_trading_system/channel_specific_first_layer_v3.py:signal_state",
             "defensive",
             "drawdown_recovery",
-            pit_approved=do_not_de_risk_pass,
+            pit_approved=False,
             usage=_mapping(usage_by_signal.get("re_risk_allowed")),
             callable_runtime_source='"re_risk_allowed":' in channel_code,
             selection_status=(
@@ -380,6 +383,9 @@ def _signal_inventory(
             ),
             candidate_a_eligible=False,
             threshold=0.55,
+            offline_selection_pass=do_not_de_risk_pass,
+            pit_lineage_valid=False,
+            baseline_consumption_ready=False,
         ),
         _signal_row(
             "growth_allowed",
@@ -395,6 +401,9 @@ def _signal_inventory(
             threshold=_mapping(risk_veto.get("thresholds")).get(
                 "veto_active_probability_min"
             ),
+            offline_selection_pass=risk_on_veto_pass,
+            pit_lineage_valid=risk_on_veto_pass,
+            baseline_consumption_ready=True,
         ),
         _signal_row(
             "first_layer_composer_v2_trend_state",
@@ -408,13 +417,20 @@ def _signal_inventory(
             selection_status="FROZEN_RESEARCH_BASELINE",
             candidate_a_eligible=False,
             threshold=None,
+            offline_selection_pass=True,
+            pit_lineage_valid=True,
+            baseline_consumption_ready=True,
         ),
     ]
-    if not do_not_de_risk_pass:
-        rows[0]["blocker_codes"] = [
-            "DO_NOT_DE_RISK_CHANNEL_FAILED_FINAL_SELECTION",
-            "RECOVERY_PERSISTENCE_CONTRACT_MISSING",
-        ]
+    rows[0]["blocker_codes"] = [
+        "RECOVERY_PIT_LINEAGE_CONTRACT_MISSING",
+        "RECOVERY_BASELINE_CONSUMPTION_CONTRACT_MISSING",
+        "RECOVERY_PERSISTENCE_CONTRACT_MISSING",
+    ]
+    rows[0]["selection_notes"] = [
+        "do_not_de_risk_pass is an offline selection result, not a runtime value",
+        "offline selection failure does not by itself invalidate the callable producer",
+    ]
     return rows
 
 
@@ -430,6 +446,9 @@ def _signal_row(
     selection_status: str,
     candidate_a_eligible: bool,
     threshold: Any,
+    offline_selection_pass: bool,
+    pit_lineage_valid: bool,
+    baseline_consumption_ready: bool,
 ) -> dict[str, Any]:
     return {
         "signal_id": signal_id,
@@ -437,10 +456,17 @@ def _signal_row(
         "channel": channel,
         "source_family": source_family,
         "pit_approved": pit_approved,
+        "pit_lineage_valid": pit_lineage_valid,
         "allowed_usage": _sequence(usage.get("allowed_usage")),
         "blocked_usage": _sequence(usage.get("blocked_usage")),
         "diagnostic_only": usage.get("diagnostic_only"),
         "callable_runtime_source": callable_runtime_source,
+        "producer_callable": callable_runtime_source,
+        "output_path_resolved": bool(output_path),
+        "semantics_registered": bool(usage),
+        "baseline_consumption_ready": baseline_consumption_ready,
+        "offline_selection_pass": offline_selection_pass,
+        "offline_selection_role": "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE",
         "selection_status": selection_status,
         "threshold": threshold,
         "candidate_a_eligible": candidate_a_eligible,
@@ -725,7 +751,9 @@ def _candidate_a_blockers(
 ) -> list[str]:
     blockers: list[str] = []
     if not signals:
-        blockers.append("A_CALLABLE_PIT_APPROVED_RECOVERY_SIGNAL_UNRESOLVED")
+        blockers.append(
+            "A_RECOVERY_PERMISSION_PIT_LINEAGE_AND_BASELINE_BINDING_UNRESOLVED"
+        )
     if baseline.get("recovery_persistence_contract_ready") is not True:
         blockers.append("A_BASELINE_RECOVERY_PERSISTENCE_CONTRACT_UNRESOLVED")
     if unresolved_vetoes:

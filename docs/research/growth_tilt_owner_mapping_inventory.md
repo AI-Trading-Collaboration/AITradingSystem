@@ -12,10 +12,10 @@
   "m2_mapping_status": "BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING",
   "mapping_blocker_codes": [
     "A_BASELINE_RECOVERY_PERSISTENCE_CONTRACT_UNRESOLVED",
-    "A_CALLABLE_PIT_APPROVED_RECOVERY_SIGNAL_UNRESOLVED",
     "A_COMPLETE_HARD_VETO_SET_UNRESOLVED",
     "A_GOVERNED_TRANSITION_SCOPE_UNRESOLVED",
     "A_QQQ_EQUIVALENT_EXPOSURE_BINDING_UNRESOLVED",
+    "A_RECOVERY_PERMISSION_PIT_LINEAGE_AND_BASELINE_BINDING_UNRESOLVED",
     "B_COMPLETE_HARD_VETO_SET_UNRESOLVED",
     "B_EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION_UNRESOLVED",
     "B_GOVERNED_TRANSITION_SCOPE_UNRESOLVED",
@@ -49,7 +49,7 @@
 [
   {
     "blocker_codes": [
-      "A_CALLABLE_PIT_APPROVED_RECOVERY_SIGNAL_UNRESOLVED",
+      "A_RECOVERY_PERMISSION_PIT_LINEAGE_AND_BASELINE_BINDING_UNRESOLVED",
       "A_BASELINE_RECOVERY_PERSISTENCE_CONTRACT_UNRESOLVED",
       "A_COMPLETE_HARD_VETO_SET_UNRESOLVED",
       "A_GOVERNED_TRANSITION_SCOPE_UNRESOLVED",
@@ -99,6 +99,6 @@
 
 ## 结论
 
-`re_risk_allowed_probability` 有实际生成路径，但 do-not-de-risk channel 未通过最终 selection，且没有 growth-tilt-bound persistence contract。仓库也没有可证明为 neutral/constructive -> defensive 唯一触发原因的 callable PIT soft confirmation。因此 A/B 仍不得进入 M2。
+`re_risk_allowed_probability` 有实际生成路径；do-not-de-risk channel 未通过 offline selection，但这不是 runtime value，也不单独使 producer mapping invalid。实际 blocker 是 PIT lineage、baseline consumption 和 growth-tilt-bound persistence contract 未闭合。仓库也没有可证明为 neutral/constructive -> defensive 唯一触发原因的 callable PIT soft confirmation。因此 A/B 仍不得进入 M2。
 
 完整 signal、confirmation、veto、regime、exposure 和 transition sample 见同目录 JSON。

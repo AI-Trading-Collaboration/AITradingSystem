@@ -1,0 +1,101 @@
+schema_version: growth_tilt_baseline_contract_decision_review.v1
+task_id: TRADING-2438M1D1
+status: PENDING_OWNER_DECISIONS
+owner: project_owner_via_codex_task
+as_of: '2026-07-10'
+base_commit: 407720dc38832ecaa685388170caede10756646f
+market_regime: ai_after_chatgpt
+requested_start_date: '2022-12-01'
+
+candidate_disposition:
+  - candidate_id: recovery_reentry_speedup_guard
+    decision: APPROVE
+    m2_eligibility: BLOCKED_PENDING_BASELINE_CONTRACTS
+    candidate_role: RECOVERY_REENTRY_TIMING_ACCELERATOR
+    decision_rationale: Keep the orthogonal timing hypothesis, but do not activate it until a governed baseline persistence rule exists and requires at least two consecutive steps.
+  - candidate_id: false_risk_off_confirmation_relaxation
+    decision: REDEFINE
+    m2_eligibility: BLOCKED_PENDING_REDEFINITION_AND_BASELINE_REQUEST
+    proposed_candidate_id: non_hard_defensive_entry_persistence_guard
+    candidate_role: NON_HARD_DEFENSIVE_ENTRY_PERSISTENCE_GUARD
+    second_owner_approval_required: true
+    decision_rationale: No exactly-one callable PIT soft confirmation exists; the candidate may only be redefined around an existing callable aggregate non-hard defensive request.
+    withdraw_if_callable_aggregate_request_absent: true
+  - candidate_id: missed_upside_reentry_accelerator
+    decision: REDEFINE
+    m2_eligibility: false
+    proposed_candidate_id: post_confirmation_reentry_ramp_accelerator
+    second_owner_approval_required: true
+
+recovery_persistence:
+  create_contract: true
+  contract_id: growth_tilt_recovery_persistence_contract_v1
+  signal_id: re_risk_allowed_probability
+  do_not_de_risk_semantics: DIAGNOSTIC_ONLY
+  do_not_de_risk_semantics_detail: do_not_de_risk_pass is an offline selection result and is not consumed by the runtime producer or compiler
+  baseline_required_consecutive_steps: null
+  maximum_gap_steps: null
+  reset_on_false: null
+  reset_on_missing: null
+  reset_on_hard_veto: true
+  evaluation_cadence: TRADING_DAY_EVALUATION
+  effective_timing: null
+  owner_decision_status: PARTIAL_OWNER_DECISION_REQUIRED
+
+defensive_entry:
+  existing_callable_soft_confirmation_found: false
+  existing_callable_aggregate_non_hard_request_found: false
+  candidate_b_route: REDEFINE_AGGREGATE_PERSISTENCE
+  route_implementation_status: BLOCKED_NO_CALLABLE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST
+  baseline_required_consecutive_steps: null
+  reset_on_false: null
+  reset_on_missing: null
+  owner_decision_status: REDEFINITION_RECORDED_IMPLEMENTATION_BLOCKED
+
+hard_veto:
+  contract_id: growth_tilt_hard_veto_aggregate_contract_v1
+  create_contract: true
+  risk_off_veto_resolution: BLOCKED_NO_PIT_CONTRACT
+  volatility_veto_resolution: RESOLVED_CALLABLE
+  event_risk_veto_resolution: BLOCKED_NO_PIT_CONTRACT
+  trend_break_veto_resolution: BLOCKED_NO_PIT_CONTRACT
+  tqqq_veto_resolution: RESOLVED_CALLABLE
+  complete_baseline_set: false
+  missing_component_policy: BLOCKED_NOT_FALSE
+  owner_decision_status: PARTIAL_OWNER_DECISION_REQUIRED
+
+transition:
+  contract_id: growth_tilt_regime_transition_contract_v1
+  create_contract: true
+  canonical_state_schema: first_layer_composer_v2.trend_state
+  requested_applied_split: true
+  effective_timing: null
+  hard_veto_priority: null
+  ordinary_request_priority: null
+  conflict_resolution: null
+  owner_decision_status: PARTIAL_OWNER_DECISION_REQUIRED
+
+exposure:
+  contract_id: growth_tilt_exposure_scalar_contract_v1
+  create_contract: true
+  native_scalar_id: null
+  unit: null
+  minimum_value: null
+  maximum_value: null
+  minimum_increment: null
+  qqq_equivalent_supported: true
+  qqq_equivalent_scope: EXISTING_CAP_ONLY_DERIVED_SCALAR_NOT_CANDIDATE_DELTA
+  qqq_equivalent_formula_ref: ai_trading_system.two_layer_policy_compiler._apply_caps
+  owner_decision_status: PARTIAL_OWNER_DECISION_REQUIRED
+
+safety_boundary:
+  decision_pack_only: true
+  replay_allowed: false
+  runtime_metrics_allowed: false
+  backtest_allowed: false
+  scoring_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  portfolio_weight_change_allowed: false
+  broker_action: none
+  production_effect: none
