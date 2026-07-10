@@ -1,0 +1,48 @@
+schema_version: arch_004_worktree_attribution.v1
+task_id: ARCH-004A
+status: ATTRIBUTABLE_ISOLATION_PROVEN
+as_of: 2026-07-11
+base_commit: 4ca63626f3a6f1978099501fbc601dea5e1b8941
+production_effect: none
+
+arch_004_owned_paths:
+  - config/architecture/arch_004_refactor_policy.yaml
+  - config/architecture/research_semantic_glossary.yaml
+  - docs/architecture/arch_004_phase_a_baseline.md
+  - docs/architecture/arch_004_semantic_glossary.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
+  - inputs/architecture/arch_004_compatibility_baseline.yaml
+  - inputs/architecture/arch_004_predecessor_reconciliation.yaml
+  - inputs/architecture/arch_004_worktree_attribution.yaml
+  - src/ai_trading_system/cli_commands/research_execution_common.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_research_execution_common.py
+
+shared_but_attributable_paths:
+  - path: docs/task_register.md
+    attributable_tasks:
+      - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW
+      - ARCH-004
+      - ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+
+prior_completed_owned_paths_not_part_of_arch_runtime_change:
+  - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
+  - docs/task_register_completed.md
+
+excluded_user_or_other_task_paths:
+  - docs/research/growth_tilt_owner_decision_resolution.md
+  - docs/research/indicator_family_only_model_review.md
+  - docs/research/layer1_selector_pause_or_continue_owner_pack.md
+
+staging_rule:
+  include_only_declared_owned_or_shared_paths: true
+  exclude_user_or_other_task_paths: true
+  verify_git_status_immediately_before_stage: true
+  abort_if_undeclared_overlap_appears: true
+  partial_stage_shared_file_if_unrelated_hunks_appear: true
+
+safety_boundary:
+  user_changes_preserved: true
+  destructive_git_operation_allowed: false
+  production_effect: none

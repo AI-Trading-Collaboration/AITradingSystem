@@ -1,0 +1,171 @@
+schema_version: arch_004_research_semantic_glossary.v1
+glossary_id: arch_004_research_semantic_glossary_v1
+status: frozen_phase_a
+owner: research_governance
+effective_date: 2026-07-11
+policy_metadata:
+  rationale: >
+    Market regime, primary research window, requested range, actual range,
+    effective coverage, point-in-time cutoff, and artifact generation time are
+    different facts. Conflating them caused the 2022-12-01 project regime start
+    to be reported as the QQQ/SGOV/TQQQ primary research start even though the
+    governed primary window is 2021-02-22.
+  intended_effect: >
+    Freeze unambiguous names and precedence before ARCH-004B introduces a
+    typed ResearchEvaluationContext. Reports and adapters may preserve current
+    behavior during Phase A, but no new contract may reuse one field for two
+    glossary concepts.
+  validation_evidence:
+    - config/market_regimes.yaml
+    - config/research/primary_research_window_policy.yaml
+    - config/research/research_window_registry.yaml
+    - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
+  review_condition: >
+    Owner review is required before changing a canonical term, date, scope,
+    precedence rule, required report field, or conflict behavior.
+
+canonical_terms:
+  anchor_event_date:
+    type: date
+    canonical_value: 2022-11-30
+    meaning: ChatGPT public launch date used to define the AI-cycle anchor event.
+    not_equivalent_to:
+      - market_regime_start
+      - primary_research_window_start
+      - requested_start
+      - actual_start
+  market_regime:
+    type: governed_identifier
+    canonical_value: ai_after_chatgpt
+    meaning: Project-level interpretation regime for AI-related U.S. trading research.
+    source: config/market_regimes.yaml
+    required_companion_fields:
+      - market_regime_start
+      - anchor_event_date
+  market_regime_start:
+    type: date
+    canonical_value: 2022-12-01
+    meaning: First full U.S. trading day after the anchor event; default AI-cycle comparison start.
+    source: config/market_regimes.yaml
+    forbidden_interpretations:
+      - universal_primary_research_window_start
+      - data_availability_start
+      - point_in_time_cutoff
+  primary_research_window_id:
+    type: governed_identifier
+    canonical_value: exact_three_asset_validated
+    scope:
+      assets:
+        - QQQ
+        - SGOV
+        - TQQQ
+      research_lines:
+        - first_layer
+        - second_layer
+        - actual_path
+        - main_leaderboard
+        - owner_review
+    source: config/research/primary_research_window_policy.yaml
+    not_global_for_unrelated_asset_families: true
+  primary_research_window_start:
+    type: date
+    canonical_value: 2021-02-22
+    scope_ref: primary_research_window_id
+    meaning: Governed primary validated start for the scoped QQQ/SGOV/TQQQ research lines.
+    forbidden_interpretations:
+      - market_regime_start
+      - universal_data_start
+      - promotion_approval
+  legacy_comparison_window_id:
+    type: governed_identifier
+    canonical_value: legacy_research_window_2022_12
+    start: 2022-12-01
+    evidence_role: LEGACY_COMPARISON_EVIDENCE
+    primary_owner_decision_evidence_allowed: false
+  sensitivity_window_id:
+    type: governed_identifier
+    canonical_value: exact_three_asset_primary_only_extension
+    start: 2020-05-28
+    evidence_role: SENSITIVITY_EVIDENCE_WITH_CAVEAT
+    required_caveat: sgov_secondary_gap_2020_05_28_to_2021_02_19
+  requested_date_range:
+    type: interval
+    fields:
+      - requested_start
+      - requested_end
+    meaning: Date interval explicitly requested by a command, user, workflow spec, or governed profile.
+    may_differ_from:
+      - actual_date_range
+      - effective_coverage
+  actual_date_range:
+    type: interval
+    fields:
+      - actual_start
+      - actual_end
+    meaning: Date interval actually evaluated after common-tradable and validation constraints.
+    must_not_be_inferred_from_requested_range: true
+  effective_coverage:
+    type: per_input_interval_map
+    meaning: Actual usable coverage for every required input after PIT, freshness, and completeness gates.
+    aggregate_only_allowed_when_component_coverage_is_linked: true
+  point_in_time_cutoff:
+    type: timestamp_or_date
+    canonical_field: as_of
+    meaning: Latest information time visible to the evaluation; not the backtest or research start.
+    required_related_fields:
+      - available_at
+      - observed_at
+      - valid_until
+  data_quality_as_of:
+    type: date
+    meaning: Date for which the data-quality result is valid; it cannot replace evaluation as_of.
+  generated_at:
+    type: timestamp
+    meaning: Artifact serialization time; it carries no market-information visibility meaning.
+  conclusion_window:
+    type: governed_evidence_scope
+    meaning: Window whose evidence supports the stated conclusion, with role and caveats disclosed.
+    required_fields:
+      - conclusion_window_id
+      - evidence_role
+      - requested_date_range
+      - actual_date_range
+      - effective_coverage
+
+resolution_rules:
+  precedence:
+    - explicit_workflow_or_cli_value
+    - governed_domain_profile
+    - governed_project_default_when_term_scope_matches
+  no_match_behavior: FAIL_CLOSED
+  conflict_behavior: FAIL_CLOSED
+  implicit_date_aliasing_allowed: false
+  one_field_multiple_term_meanings_allowed: false
+  derived_value_requires_lineage: true
+
+reporting_contract:
+  required_context_fields:
+    - market_regime
+    - market_regime_start
+    - research_window_id
+    - requested_date_range
+    - actual_date_range
+    - effective_coverage
+    - as_of
+    - data_quality_status
+    - policy_refs
+  generated_at_may_substitute_as_of: false
+  market_regime_start_may_substitute_research_window_start: false
+  missing_required_context_behavior: BLOCKED
+
+implementation_boundary:
+  phase_a_role: frozen_vocabulary_and_characterization
+  runtime_enforcement_phase: ARCH-004B
+  runtime_enforcement_implemented: false
+  strategy_logic_changed: false
+  threshold_changed: false
+  production_effect: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

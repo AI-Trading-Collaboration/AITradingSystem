@@ -1,0 +1,167 @@
+schema_version: arch_004_predecessor_reconciliation.v1
+report_type: arch_004_predecessor_reconciliation
+task_id: ARCH-004A
+status: ARCH_004_PREDECESSOR_RECONCILIATION_COMPLETE
+as_of: 2026-07-11
+source_commit: 4ca63626
+production_effect: none
+
+historical_baseline:
+  as_of: 2026-06-19
+  task_id: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+  closeout_status: ENGINEERING_CLOSEOUT_READY
+  engineering_surface_count: 2005
+  reader_brief_native_template_gap_count: 1599
+  interpretation: HISTORICAL_CONTROL_PLANE_BASELINE_ONLY
+
+current_control_plane_evidence:
+  report_index:
+    path: outputs/reports/report_index_2026-07-11.json
+    status: PASS_WITH_WARNINGS
+    report_count: 1358
+    missing_count: 39
+    stale_count: 116
+    unwaived_issue_count: 155
+    waiver_count: 0
+  engineering_surface_inventory:
+    path: outputs/reports/engineering_surface_inventory_2026-07-11.json
+    status: ENGINEERING_SURFACE_INVENTORY_READY_WITH_LIMITATIONS
+    surface_count: 3812
+    surface_count_delta_from_historical: 1807
+    surface_growth_ratio_from_historical: 0.901247
+    classifications:
+      KEEP: 3669
+      MERGE: 71
+      ARCHIVE: 62
+      DEPRECATE: 5
+      REMOVE_AFTER_COMPATIBILITY_WINDOW: 5
+  artifact_lifecycle:
+    path: outputs/reports/artifact_lifecycle_inventory_2026-07-11.json
+    status: ARTIFACT_LIFECYCLE_BLOCKED
+    validation_status: FAIL
+    current_count: 1183
+    invalid_count: 175
+    archived_artifact_count: 0
+    superseded_artifact_count: 8730
+  engineering_stage_b:
+    path: outputs/reports/engineering_stage_b_readiness_2026-07-11.json
+    status: ENGINEERING_STAGE_B_BLOCKED
+    validation_status: FAIL
+    config_without_schema_or_policy_metadata_count: 16
+    missing_validation_tier_count: 0
+    missing_error_category_count: 0
+    report_index_unwaived_issue_count: 155
+  reader_brief_consistency:
+    path: outputs/reports/reader_brief_consistency_pack_2026-07-11.json
+    status: PASS
+    checked_report_count: 529
+    native_template_gap_count: 1634
+    view_model_derived_section_count: 1634
+    interpretation: PASS_WITH_DERIVED_COMPATIBILITY_NOT_NATIVE_MIGRATION
+  canonical_system:
+    status_path: outputs/reports/canonical_system_status_2026-07-11.json
+    doctor_path: outputs/reports/canonical_system_doctor_2026-07-11.json
+    status: ENGINEERING_CONTROL_PLANE_BLOCKED
+    doctor_status: FAIL
+    doctor_failed_check_count: 2
+  full_parallel_validation:
+    baseline_before_correctness_fix:
+      path: outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json
+      status: FAIL
+      passed: 5305
+      failed: 46
+      warnings: 643
+      elapsed_seconds: 996.77
+    root_cause_task: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+    previously_failing_nodes_after_fix:
+      status: PASS
+      passed: 46
+      failed: 0
+      elapsed_seconds: 101.19
+    exit_validation:
+      path: outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json
+      status: PASS
+      passed: 5358
+      failed: 0
+      warnings: 643
+      elapsed_seconds: 876.65
+
+predecessor_capabilities:
+  - capability_id: root_cli_modularization
+    source_task: ARCH-001
+    disposition: REUSE
+    reason: Root cli.py remains a registration layer; domain command modules still require thin-interface migration.
+  - capability_id: artifact_ref_and_workflow_types
+    source_task: ARCH-002
+    disposition: EXTEND
+    reason: Extend existing types into ArtifactEnvelope and WorkflowSpec instead of creating competing contracts.
+  - capability_id: workflow_dashboard_shadow_seams
+    source_task: ARCH-003
+    disposition: REUSE
+    reason: Existing low-risk seams provide characterization boundaries for later migration.
+  - capability_id: engineering_surface_inventory
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: EXTEND
+    reason: Reuse the scanner and add module ownership, dependency, lifecycle, and continuous ratchet semantics.
+  - capability_id: canonical_system_status_and_doctor
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: REUSE
+    reason: Preserve the canonical first screen and strengthen its architecture/context checks.
+  - capability_id: artifact_lifecycle_inventory
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: EXTEND
+    reason: Current inventory is read-only; real deprecation and removal require a separate controlled workflow.
+  - capability_id: stage_b_readiness_and_error_taxonomy
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: EXTEND
+    reason: Keep the taxonomy and readiness surface while replacing hand-maintained coverage with manifests.
+  - capability_id: reader_brief_effective_view_model
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: CARRY_FORWARD
+    reason: Retain only as migration compatibility until native typed section providers replace derived gaps.
+  - capability_id: clean_clone_release_acceptance
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: REUSE
+    reason: Preserve as a final cutover gate; do not treat the 2026-06-19 pass as current evidence.
+  - capability_id: legacy_task_cli_and_schema_cleanup
+    source_task: TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+    disposition: CARRY_FORWARD
+    reason: The prior closeout explicitly deferred physical cleanup and compatibility removal.
+
+phase_a_gate:
+  predecessor_reconciliation_complete: true
+  current_control_plane_evidence_captured: true
+  full_parallel_validation_baseline_recorded: true
+  existing_failures_have_root_cause_and_linked_task: true
+  semantic_glossary_frozen: true
+  command_and_artifact_compatibility_baseline_frozen: true
+  shared_file_ownership_frozen: true
+  clean_handoff_or_attributable_isolation_proven: true
+  phase_b_unblocked: true
+
+control_plane_findings_not_phase_b_entry_blockers:
+  - REPORT_INDEX_UNWAIVED_ISSUES_155
+  - ARTIFACT_LIFECYCLE_VALIDATION_FAILED
+  - ENGINEERING_STAGE_B_VALIDATION_FAILED
+  - CANONICAL_SYSTEM_DOCTOR_FAILED
+  - READER_BRIEF_NATIVE_TEMPLATE_GAPS_1634
+
+resolved_phase_a_blockers:
+  - blocker_id: FULL_PARALLEL_VALIDATION_FAILED_46
+    resolution_task: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+    resolution: SHARED_CLI_ADAPTER_CONTRACT_RESTORED
+    exit_validation: PASS_5358
+  - blocker_id: CLEAN_HANDOFF_PENDING
+    resolution: ATTRIBUTABLE_ISOLATION_PROVEN
+    evidence: inputs/architecture/arch_004_worktree_attribution.yaml
+
+safety_boundary:
+  architecture_governance_and_cli_contract_correctness_only: true
+  strategy_logic_changed: false
+  threshold_changed: false
+  production_effect: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  waivers_added: 0

@@ -1,0 +1,133 @@
+schema_version: arch_004_compatibility_baseline.v1
+baseline_id: arch_004_phase_a_2026_07_11
+status: FROZEN_AFTER_ARCH_004A1_REMEDIATION
+as_of: 2026-07-11
+base_commit: 4ca63626f3a6f1978099501fbc601dea5e1b8941
+capture_mode: attributable_worktree_after_p0_correctness_fix
+production_effect: none
+
+surface_inventory:
+  source: outputs/reports/engineering_surface_inventory_2026-07-11.json
+  sha256: a92f9f5a3e0b0a110d71c82d947d693bcd166a05db7199dc72d353138fb42f16
+  total: 3812
+  types:
+    cli_top_level: 36
+    cli_command: 1103
+    report_registry_entry: 1358
+    artifact_catalog_family: 992
+    configuration_file: 293
+    operations_entry_point: 11
+    documentation_family: 19
+
+repository_inventory:
+  python_module_count: 752
+  python_test_file_count_at_capture: 1099
+  configuration_file_count: 293
+  dependency_manifests:
+    - path: pyproject.toml
+      sha256: d36f0b54536c73fecf45d077eb47fe2865e654c6c53ccd713a25ecdde4f1329f
+
+frozen_sources:
+  - contract_id: root_cli_registration
+    path: src/ai_trading_system/cli.py
+    sha256: 795ca21b67cb5b1eea94f28cccc760bf2d4f54a4b83e9522731164d6de732875
+  - contract_id: report_registry
+    path: config/report_registry.yaml
+    sha256: d0a5fb68a6904965ed622116ab71e9b571bc8bf18a96805a3d58c576f62927b4
+  - contract_id: artifact_catalog
+    path: docs/artifact_catalog.md
+    sha256: 063f90949f73c1836c6479b4926f82964a33f7eb841bec4c1a196f5ce0dcf61a
+  - contract_id: scheduled_tasks
+    path: config/scheduled_tasks.yaml
+    sha256: 8b5729f3f19f734581d3761cab50c0eaf4aa1dc2d9bc5f803d7359b05a40676a
+  - contract_id: execution_cli_date_adapters_after_arch_004a1
+    path: src/ai_trading_system/cli_commands/research_execution_common.py
+    sha256: 188c9318e0a530a0b269b8c11bb6bd594f51bb96a8650b95cd1433750a48cbcc
+
+explicit_cli_adapter_contracts:
+  date_range_kwargs:
+    positional_parameters:
+      - as_of
+      - start_date
+      - end_date
+    exact_output_keys:
+      - as_of_date
+      - start_date
+      - end_date
+    missing_start_default: 2022-12-01
+  as_of_kwargs:
+    positional_parameters:
+      - as_of
+    exact_output_keys:
+      - as_of_date
+
+artifact_and_report_baseline:
+  report_index:
+    path: outputs/reports/report_index_2026-07-11.json
+    sha256: 39583db49a2b669e62e8fd1d69d7697a3add756f34ab3cb94f311788bef39ce1
+    report_count: 1358
+    missing_count: 39
+    stale_count: 116
+    unwaived_issue_count: 155
+  artifact_lifecycle:
+    path: outputs/reports/artifact_lifecycle_inventory_2026-07-11.json
+    validation_status: FAIL
+  reader_brief_consistency:
+    path: outputs/reports/reader_brief_consistency_pack_2026-07-11.json
+    status: PASS
+    native_template_gap_count: 1634
+
+validation_baseline:
+  before_arch_004a1:
+    runtime_artifact: outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json
+    passed: 5305
+    failed: 46
+    warnings: 643
+    root_cause_task: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+  all_previously_failing_nodes_after_fix:
+    execution_mode: pytest_xdist_loadfile_16
+    passed: 46
+    failed: 0
+    elapsed_seconds: 101.19
+  full_after_fix:
+    status: PASS
+    runtime_artifact: outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json
+    passed: 5358
+    failed: 0
+    warnings: 643
+    elapsed_seconds: 876.65
+
+parity_requirements:
+  - cli_command_names_and_exit_semantics
+  - cli_parameter_names_types_and_defaults
+  - config_paths_and_resolution_precedence
+  - artifact_paths_schema_status_and_safety_fields
+  - data_quality_fail_closed_behavior
+  - pit_as_of_and_effective_coverage_semantics
+  - market_regime_and_research_window_interpretation
+  - threshold_policy_and_weight_versions
+  - report_reader_brief_and_audit_links
+  - production_paper_shadow_and_broker_boundaries
+
+change_protocol:
+  exact_hash_change_requires:
+    - linked_arch_004_task
+    - characterization_or_golden_evidence
+    - explicit_parity_result
+    - baseline_snapshot_update
+  surface_count_increase_requires:
+    - owner_approved_exception_or_replacement
+    - lifecycle_disposition
+  silent_contract_change_allowed: false
+  serial_validation_substitution_allowed: false
+
+safety_boundary:
+  strategy_logic_changed: false
+  threshold_changed: false
+  production_weight_changed: false
+  waivers_added: 0
+  production_effect: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none

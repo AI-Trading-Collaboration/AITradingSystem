@@ -16,16 +16,22 @@ def cli_scalar(value: object) -> str:
     return str(value)
 
 
-def date_range_kwargs(start: str | None, end: str | None) -> dict[str, date | None]:
-    parsed_start = (
-        parse_optional_date(start) if start is not None else DEFAULT_AI_REGIME_BACKTEST_START
-    )
-    parsed_end = parse_optional_date(end) if end is not None else None
-    return {"start": parsed_start, "end": parsed_end}
+def date_range_kwargs(
+    as_of: str | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> dict[str, date | None]:
+    """Adapt CLI date strings to the established execution-builder contract."""
+    return {
+        "as_of_date": parse_optional_date(as_of),
+        "start_date": parse_optional_date(start_date) or DEFAULT_AI_REGIME_BACKTEST_START,
+        "end_date": parse_optional_date(end_date),
+    }
 
 
 def as_of_kwargs(as_of: str | None) -> dict[str, date | None]:
-    return {"as_of": parse_optional_date(as_of) if as_of is not None else None}
+    """Adapt the CLI observation date to the established builder parameter name."""
+    return {"as_of_date": parse_optional_date(as_of)}
 
 
 def print_execution_semantics_payload(title: str, payload: dict[str, object]) -> None:

@@ -1,0 +1,158 @@
+schema_version: arch_004_refactor_policy.v1
+policy_id: arch_004_refactor_policy_v1
+status: phase_a_complete_phase_b_ready
+owner: architecture_governance
+policy_metadata:
+  rationale: >
+    The 2026-06-19 engineering closeout established a valid control-plane and
+    release-candidate baseline, but subsequent task-shaped growth expanded the
+    engineering surface from 2,005 to 3,812 entries and reintroduced report,
+    scheduling, semantic, ownership, and module-boundary pressure. ARCH-004 must
+    reuse the prior controls while completing real migration and subtraction.
+  intended_effect: >
+    Freeze non-essential growth during ARCH-004A, preserve investment behavior,
+    reconcile predecessor capabilities, establish a reproducible baseline, and
+    prevent semantic-kernel or domain migration work from starting before the
+    phase-A evidence gate passes.
+  validation_evidence: >
+    The policy is covered by tests/test_arch_004_refactor_policy.py, task and
+    documentation contract tests, docs freshness validation, and the ARCH-004A
+    predecessor reconciliation evidence package. Full parallel validation
+    passed with 5,358 tests at
+    outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json.
+  review_condition: >
+    Review before changing the active phase, freeze exceptions, shared-file
+    ownership, predecessor dispositions, phase gates, or any safety boundary.
+
+program:
+  task_id: ARCH-004
+  program_name: post_freeze_architecture_v2
+  current_phase: ARCH-004A
+  current_phase_status: COMPLETE
+  next_phase: ARCH-004B
+  next_phase_unblocked: true
+  predecessor_task_ids:
+    - ARCH-001
+    - ARCH-002
+    - ARCH-003
+    - TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN
+  predecessor_snapshot:
+    as_of: 2026-06-19
+    status: ENGINEERING_CLOSEOUT_READY
+    interpretation: HISTORICAL_CONTROL_PLANE_BASELINE_ONLY
+  current_baseline:
+    as_of: 2026-07-11
+    source_commit: 4ca63626
+    reconciliation_path: inputs/architecture/arch_004_predecessor_reconciliation.yaml
+    reader_path: docs/architecture/arch_004_phase_a_baseline.md
+    semantic_glossary_path: config/architecture/research_semantic_glossary.yaml
+    compatibility_baseline_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    worktree_attribution_path: inputs/architecture/arch_004_worktree_attribution.yaml
+    full_validation_artifact: outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json
+
+phase_a_completion:
+  completed_at: 2026-07-11
+  entry_failure_baseline:
+    passed: 5305
+    failed: 46
+    warnings: 643
+    runtime_artifact: outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json
+  p0_remediation_task: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+  exit_validation:
+    status: PASS
+    passed: 5358
+    failed: 0
+    warnings: 643
+    elapsed_seconds: 876.65
+    runtime_artifact: outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json
+
+feature_freeze:
+  active: true
+  activated_at: 2026-07-11
+  owner_approval_basis: owner_requested_arch_004_execution
+  allowed_change_classes:
+    - P0_CORRECTNESS_FIX
+    - DATA_QUALITY_OR_PIT_FIX
+    - SECURITY_OR_PRODUCTION_INCIDENT_FIX
+    - ARCH_004_CHARACTERIZATION
+    - ARCH_004_CONTRACT_OR_ADAPTER
+    - ARCH_004_BEHAVIOR_PRESERVING_MIGRATION
+    - EXPLICIT_OWNER_APPROVED_EXTERNAL_DEADLINE
+  forbidden_change_classes:
+    - NEW_TASK_SHAPED_RESEARCH_MODULE
+    - NEW_CANDIDATE_FAMILY
+    - NEW_REPORT_FAMILY_WITHOUT_REPLACEMENT
+    - NEW_COMMAND_IN_GOD_MODULE
+    - STRUCTURAL_REFACTOR_MIXED_WITH_STRATEGY_TUNING
+    - NEW_DUPLICATE_CONTROL_PLANE
+    - NEW_DUPLICATE_HELPER_FOR_DELIVERY_SPEED
+  exception_requirements:
+    - owner
+    - reason
+    - behavioral_impact
+    - risk
+    - validation_coverage
+    - exit_condition
+    - linked_task_id
+
+predecessor_disposition_vocabulary:
+  - REUSE
+  - EXTEND
+  - CARRY_FORWARD
+  - REPLACE
+  - REMOVE
+
+phase_a_exit_gate:
+  required:
+    - predecessor_reconciliation_complete
+    - current_control_plane_evidence_captured
+    - full_parallel_validation_baseline_recorded
+    - existing_failures_have_root_cause_and_linked_task
+    - semantic_glossary_frozen
+    - command_and_artifact_compatibility_baseline_frozen
+    - shared_file_ownership_frozen
+    - clean_handoff_or_attributable_isolation_proven
+  forbidden_shortcuts:
+    - ADD_VISIBILITY_WAIVER_TO_CLEAR_BASELINE
+    - REFRESH_ALL_OPTIONAL_ARTIFACTS_WITHOUT_CLASSIFICATION
+    - SERIAL_PYTEST_PASS_OVER_PARALLEL_FAILURE
+    - CHANGE_STRATEGY_BEHAVIOR_DURING_BASELINE_CAPTURE
+    - MARK_2026_06_19_RELEASE_CANDIDATE_AS_CURRENT_HEALTH
+
+shared_integration_ownership:
+  integration_owner: architecture_coordinator
+  exclusive_paths:
+    - src/ai_trading_system/cli.py
+    - config/report_registry.yaml
+    - docs/artifact_catalog.md
+    - docs/system_flow.md
+    - docs/task_register.md
+    - docs/task_register_completed.md
+    - config/architecture/arch_004_refactor_policy.yaml
+  worker_rule: >
+    Domain workers edit assigned module directories, fragments, and tests. They
+    do not edit aggregate or root integration files in parallel.
+
+behavior_preservation:
+  required:
+    - cli_command_and_exit_semantics
+    - artifact_path_schema_and_status
+    - data_quality_fail_closed
+    - pit_and_as_of_semantics
+    - market_regime_and_research_window_interpretation
+    - threshold_and_policy_versions
+    - production_effect
+    - paper_shadow_and_broker_boundaries
+  strategy_logic_changed: false
+  threshold_changed: false
+  production_weight_changed: false
+
+safety_boundary:
+  research_only: true
+  architecture_governance_only: true
+  production_effect: none
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action: none
+  data_quality_gate_bypass_allowed: false
