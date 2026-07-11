@@ -345,6 +345,7 @@ def _write_high_disagreement_monitor(tmp_path: Path) -> Path:
         "monitor_run_id": "monitor-high",
         "shadow_shortlist_id": "shadow-high",
         "as_of": "2026-06-07",
+        "generated_at": "2026-06-07T09:00:00+00:00",
         "status": "PASS",
         "candidate_count": 2,
         "broker_action_allowed": False,

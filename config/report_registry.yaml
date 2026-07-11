@@ -6221,8 +6221,9 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/consensus_drift_report.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-134 exposes candidate disagreement and consensus drift so HIGH
-      DISAGREEMENT can force manual_review in daily advisory.
+      TRADING-134 consumes an explicitly validated monitor, binds current/prior
+      monitor and policy checksums, and makes every non-consensus state require
+      manual review before daily advisory interpretation.
     owner_action: review_consensus_drift_before_accepting_daily_advisory
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

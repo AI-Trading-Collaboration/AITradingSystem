@@ -23,6 +23,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_candidate_observation as dynamic_v3_candidate_observation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_consensus_drift as dynamic_v3_consensus_drift_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_data_audit as dynamic_v3_data_audit_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -152,6 +155,7 @@ __all__ = [
     "dynamic_v3_data_provenance_commands",
     "dynamic_v3_candidate_evidence_commands",
     "dynamic_v3_candidate_observation_commands",
+    "dynamic_v3_consensus_drift_commands",
     "dynamic_v3_window_audit_commands",
     "dynamic_v3_weekly_real_snapshot_review_commands",
     "dynamic_v3_weight_path_commands",

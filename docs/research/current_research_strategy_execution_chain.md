@@ -486,7 +486,26 @@ Daily Position Advisory不是重新做一次策略研究，而是把某个显式
 
 当前结果上限是“指定monitor在指定日期的人工复核材料已完整产生且可从source重算”，不是策略当日有效、owner已批准、paper/real portfolio已改变或order已生成。所有artifact固定`official_target_weights_generated=false`、`portfolio_mutated=false`、`order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`和`production_effect=none`。
 
-后续优化空间按风险顺序为：先把consensus-drift生产端升级为自带source checksum与content-derived validator，消除当前由daily consumer交叉重算弥补的legacy限制；再把snapshot freshness从“不得来自未来”提升为versioned maximum-age policy；随后增加trading-calendar/timezone、同symbol universe completeness、previous-day delta和append-only daily supersession；最后才能用forward outcomes预注册校准agreement/dispersion/min-trade/adjustment limits。这些优化都必须生成新policy/version与out-of-sample证据，不得在已看到当日结果后就地调参或自动调仓。
+后续优化空间按风险顺序为：先把snapshot freshness从“不得来自未来”提升为versioned maximum-age policy；随后增加trading-calendar/timezone、同symbol universe completeness、previous-day delta和append-only daily supersession；最后才能用forward outcomes预注册校准agreement/dispersion/min-trade/adjustment limits。Consensus-drift生产端的source checksum和content-derived validator已由G2.4AK补齐，不再作为daily consumer需要弥补的legacy缺口。这些优化都必须生成新policy/version与out-of-sample证据，不得在已看到当日结果后就地调参或自动调仓。
+
+#### Consensus Drift 链（TRADING-134 / G2.4AK）
+
+Consensus Drift回答的是“同一shadow shortlist中的候选在同一天希望持有的组合相差多大，以及相对上一份有效monitor是否发生结构变化”，而不是“选择哪个候选”或“是否调仓”。它必须独立于Daily Position Advisory，因为drift producer需要先形成可复算的分歧证据，daily consumer只负责引用同链证据；如果二者共用隐式latest或在报告层临时重算，错误source id、mtime顺序或被修改的monitor都可能改变投资解释。
+
+| 环节 | 输入 | 计算/选择逻辑 | 输出 | Fail-closed 条件 |
+|---|---|---|---|---|
+| Current monitor gate | 显式`shadow_monitor_run_id/root`、drift `generated_at` cutoff | 先调用同一shadow-monitor validator；manifest/summary/requested id一致；manifest `generated_at <= drift cutoff`；所有daily rows与manifest同as-of，candidate id唯一，target weights非空、有限、位于[0,1]且sum=1 | validated current monitor、标准化candidate target rows | validator非PASS、id/date/generation串链、空/重复candidate或权重不守恒时在创建output目录前阻断 |
+| Previous monitor selection | current shortlist/as-of、同一monitor root、drift cutoff | 只考虑同`shadow_shortlist_id`、严格早于current as-of且`generated_at <= cutoff`的目录；按`(as_of, generated_at, monitor_run_id)`取最大值，不读取filesystem mtime；selected previous再次执行完整monitor与target invariants validation | previous monitor id、validation status、带eligible/reasons的inventory、可选previous targets | latest relevant candidate时间/id/内容非法或validator失败即阻断，不静默退回更旧artifact；无prior是显式`NOT_APPLICABLE`而非错误 |
+| Pairwise disagreement | 按candidate id稳定排序的target rows | 对每对候选计算`0.5 * Σ_symbol |w_left - w_right|`，缺失symbol按0处理；这是组合权重的total-variation距离，范围[0,1] | `candidate_pairwise_disagreement.csv` | target invariants未通过则不计算；pairwise输出必须由validator逐字重建 |
+| Symbol consensus | target rows、versioned policy的`max_symbol_dispersion`与`agreement_threshold` | 每个symbol计算mean、median、min、max、`dispersion=max-min`；`agreement=count(|w_i-median| <= policy.max_symbol_dispersion)/N`。内部candidate values不写入CSV；任一agreement低于阈值或normal dispersion gate超限至少为moderate，高阈值超限为high | `symbol_weight_dispersion.csv`、max dispersion、min agreement ratio | policy缺owner/version metadata、阈值非有限/[0,1]或high小于normal时阻断；不得用observed dispersion自身充当tolerance |
+| Exposure disagreement | 每个candidate的target weights | `risk=sum(symbol not in {CASH,TLT})`，`cash=CASH`，`defensive=sum({CASH,TLT})`；每类dispersion为candidate max-min，并与reviewed normal/high gates比较 | risk/cash/defensive exposure dispersion | candidate少于2或无symbol为`INSUFFICIENT_DATA`；不能把0值误写成已有充分共识 |
+| Previous consensus change | current/prior symbol mean weights与candidate ids | 对current/prior的symbol并集计算`abs(current_mean - previous_mean)`，缺失symbol按0；取最大值；同时比较candidate id集合，输出`UNCHANGED/CHANGED`，并写真实previous monitor id | `daily_consensus_change_vs_previous` | 无prior明确输出`NO_PRIOR_MONITOR_RUN`；不得把current id冒充previous id，也不得忽略只存在于previous的symbol |
+| Status与人工复核 | symbol/exposure gates、candidate count | high gate任一超限→`HIGH_DISAGREEMENT`；否则agreement或normal gate任一失败→`MODERATE_DISAGREEMENT`；少于2 candidates→`INSUFFICIENT_DATA`；其余`CONSENSUS`。只有CONSENSUS为`continue_monitoring`，其余全部`manual_review_required` | summary、position advisory implication | moderate/high/insufficient不得降成普通monitor或small-adjustment；所有状态仍固定owner approval required/no execution |
+| Lineage与validator | current/prior monitor各六类files、policy config、previous inventory、四类derived outputs | Run冻结所有source paths/checksums、config content checksum、policy id/version与output checksums；validator使用原generated cutoff重做monitor selection、pairwise、symbol、exposure、previous delta、summary、manifest derived fields和Markdown | manifest、summary、Markdown、validation payload、latest pointer | source path/checksum变化、重新选择结果不同、CSV/JSON/Markdown或output checksum篡改均FAIL |
+
+当前链路能证明：在某个明确cutoff下，指定monitor及其语义上最近的有效previous monitor产生了可从冻结sources完整重算的候选分歧证据。它不能证明candidate alpha有效、共识组合优于单候选、owner已批准，亦不允许修改monitor/config/advisory/portfolio/official weights、生成order或触发production/broker。Validator `PASS`是artifact integrity与计算忠实度结论，不是投资有效性或执行授权。
+
+后续优化空间按依赖顺序为：第一，将shadow-monitor本身升级为content-derived source/output checksum contract，减少下游对其结构validator加额外invariants；第二，把previous selection的date/time升级为明确的U.S. trading calendar、timezone与session-close policy，并增加append-only supersession；第三，定义versioned symbol-universe completeness与candidate进入/退出归因，使`CANDIDATE_SET_CHANGED`可分解为构成变化和真实weight变化；第四，在积累独立forward outcomes后，预注册比较median、trimmed mean、quality-weighted consensus及置信区间，并用holdout/cost/risk证据校准阈值。任何优化都必须产生新policy version和独立验证，不能根据已看到的单日分歧就地调整阈值或自动调仓。
 
 #### Portfolio intake 链
 
