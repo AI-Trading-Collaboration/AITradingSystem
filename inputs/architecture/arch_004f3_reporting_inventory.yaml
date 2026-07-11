@@ -1,9 +1,9 @@
 schema_version: reporting_architecture_inventory.v1
 reader_brief:
   path: src/ai_trading_system/reports/reader_brief.py
-  sha256: b2a4a858d59250c0a726e010f27f41b04b1abffff6a3c39f45ee6b2e3a08234f
-  line_count: 29027
-  top_level_function_count: 366
+  sha256: 15fd69575d03c5262d824313f4dad79d2ec42f4d4d4409e3b248750a1f69936a
+  line_count: 29050
+  top_level_function_count: 367
 report_registry:
   path: config/report_registry.yaml
   sha256: 6d661ab5bef4e11ce429dce18376429b4dd8f5c5e2794e5d6e190bb7bddde3d9

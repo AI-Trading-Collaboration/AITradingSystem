@@ -461,12 +461,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
     validate_weekly_ops_decision_update_artifact,
     weekly_ops_decision_update_report_payload,
 )
-from ai_trading_system.etf_portfolio.dynamic_v3_real_snapshot import (
-    DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
-    run_weekly_real_snapshot_review,
-    validate_weekly_real_snapshot_review,
-    weekly_real_snapshot_review_report_payload,
-)
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
     DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR,
@@ -985,7 +979,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_weekly_advisory_review_app,
     dynamic_v3_weekly_defensive_evidence_app,
     dynamic_v3_weekly_ops_decision_update_app,
-    dynamic_v3_weekly_real_snapshot_review_app,
     dynamic_v3_weight_adaptive_branch_app,
     dynamic_v3_weight_batch_backfill_app,
     dynamic_v3_weight_candidate_cluster_app,
@@ -1021,84 +1014,6 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
-
-
-@dynamic_v3_weekly_real_snapshot_review_app.command("run")
-def dynamic_v3_weekly_real_snapshot_review_run_command(
-    week_ending: Annotated[
-        str,
-        typer.Option("--week-ending", help="week ending date YYYY-MM-DD。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
-    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
-) -> None:
-    """生成 TRADING-208 weekly real snapshot advisory review。"""
-    result = run_weekly_real_snapshot_review(
-        week_ending=_parse_date(week_ending),
-        output_dir=output_dir,
-    )
-    summary = result["weekly_real_snapshot_summary"]
-    typer.echo(f"weekly_real_review_id={result['weekly_real_review_id']}")
-    typer.echo(f"snapshot_status={summary['snapshot_status']}")
-    typer.echo(f"owner_decision={summary['owner_decision']}")
-    typer.echo(f"next_action={summary['next_action']}")
-    typer.echo("broker_action_taken=false")
-    typer.echo("order_ticket_generated=false")
-
-
-@dynamic_v3_weekly_real_snapshot_review_app.command("report")
-def dynamic_v3_weekly_real_snapshot_review_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest weekly real snapshot review。"),
-    ] = False,
-    weekly_real_review_id: Annotated[
-        str | None,
-        typer.Option("--weekly-real-review-id", help="weekly real snapshot review id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
-    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
-) -> None:
-    """展示 TRADING-208 weekly real snapshot advisory review 摘要。"""
-    payload = weekly_real_snapshot_review_report_payload(
-        weekly_real_review_id=weekly_real_review_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    summary = _mapping_obj(payload.get("weekly_real_snapshot_summary"))
-    typer.echo(f"weekly_real_review_id={payload['weekly_real_review_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"owner_decision={summary.get('owner_decision')}")
-    typer.echo(f"next_action={summary.get('next_action')}")
-    typer.echo(f"report_path={payload['weekly_real_snapshot_review_report_path']}")
-
-
-@dynamic_v3_rescue_app.command("validate-weekly-real-snapshot-review")
-def dynamic_v3_validate_weekly_real_snapshot_review_command(
-    weekly_real_review_id: Annotated[
-        str,
-        typer.Option("--weekly-real-review-id", help="weekly real snapshot review id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
-    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
-) -> None:
-    """校验 TRADING-208 weekly real snapshot advisory review artifact。"""
-    payload = validate_weekly_real_snapshot_review(
-        weekly_real_review_id=weekly_real_review_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_taken=false")
-    typer.echo("order_ticket_generated=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
 
 
 @dynamic_v3_position_advisory_app.command("run")

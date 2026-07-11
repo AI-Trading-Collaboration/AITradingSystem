@@ -1214,27 +1214,44 @@ def run_weekly_real_snapshot_review(
     dry_run_dir: Path = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
     owner_review_dir: Path = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
     paper_action_dir: Path = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+    manual_snapshot_dir: Path = DEFAULT_MANUAL_PORTFOLIO_SNAPSHOT_DIR,
+    drift_dir: Path = DEFAULT_POSITION_DRIFT_DIR,
+    guardrail_dir: Path = DEFAULT_EXECUTION_GUARDRAILS_DIR,
     output_dir: Path = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    dry_run = _latest_manifest(
-        "latest_real_snapshot_dry_run",
-        dry_run_dir,
-        "real_snapshot_dry_run_manifest.json",
+    dry_run, owner, paper, selection_issues = _weekly_source_selection(
+        week_ending=week_ending,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
     )
-    owner = _latest_manifest(
-        "latest_real_execution_owner_review",
-        owner_review_dir,
-        "real_execution_owner_review_manifest.json",
+    inventory, inventory_issues = _owner_decision_inventory_at_or_before(
+        owner_review_dir=owner_review_dir,
+        week_ending=week_ending,
     )
-    paper = _latest_manifest(
-        "latest_real_snapshot_paper_action",
-        paper_action_dir,
-        "real_snapshot_paper_action_manifest.json",
+    source_validation = _weekly_source_validation(
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
+        manual_snapshot_dir=manual_snapshot_dir,
+        drift_dir=drift_dir,
+        guardrail_dir=guardrail_dir,
     )
-    owner_decision = _text(owner.get("owner_decision"), "pending") if owner else "pending"
-    paper_action_taken = _text(paper.get("action_type")) == "paper_only" if paper else False
+    source_failures = sorted(
+        name for name, payload in source_validation.items() if payload.get("status") != "PASS"
+    )
+    blocking_issues = [*selection_issues, *inventory_issues]
+    if source_failures:
+        blocking_issues.append("source_validation_failed:" + ",".join(source_failures))
+    if blocking_issues:
+        raise RealSnapshotError(
+            "weekly real snapshot source selection failed: " + ";".join(blocking_issues)
+        )
     weekly_id = _stable_id(
         "weekly-real-snapshot-review",
         week_ending.isoformat(),
@@ -1242,35 +1259,36 @@ def run_weekly_real_snapshot_review(
     )
     weekly_dir = _unique_dir(output_dir / weekly_id)
     weekly_dir.mkdir(parents=True, exist_ok=False)
-    latest_links = _mapping(dry_run.get("dry_run_artifact_links")) if dry_run else {}
-    summary = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weekly_real_snapshot_summary",
-        "weekly_real_review_id": weekly_dir.name,
-        "week_ending": week_ending.isoformat(),
-        "latest_snapshot_id": _text(latest_links.get("manual_portfolio_snapshot_id"), "MISSING"),
-        "latest_dry_run_id": _text(dry_run.get("dry_run_id"), "MISSING"),
-        "latest_owner_review_id": _text(owner.get("review_id"), "MISSING"),
-        "latest_paper_action_id": _text(paper.get("paper_action_id"), "MISSING"),
-        "snapshot_status": _text(dry_run.get("snapshot_status"), "MISSING"),
-        "recommended_action": _text(dry_run.get("manual_review_recommended_action"), "blocked"),
-        "owner_decision": owner_decision,
-        "paper_action_taken": paper_action_taken,
-        "broker_action_taken": False,
-        "order_ticket_generated": False,
-        "next_action": _weekly_next_action(dry_run, owner_decision, paper_action_taken),
-        "production_effect": PRODUCTION_EFFECT,
-        **_safety(),
-    }
-    decision_summary = _owner_decision_counts(owner_review_dir)
+    summary = _weekly_summary_payload(
+        weekly_real_review_id=weekly_dir.name,
+        week_ending=week_ending,
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+    )
+    decision_summary = _owner_decision_summary_from_inventory(inventory)
+    source_paths = _weekly_source_paths(
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
+    )
+    source_checksums = {key: _file_sha256(path) for key, path in source_paths.items()}
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weekly_real_snapshot_review_manifest",
         "weekly_real_review_id": weekly_dir.name,
         "week_ending": week_ending.isoformat(),
         "generated_at": generated.isoformat(),
-        "status": "PASS" if dry_run else "PASS_WITH_WARNINGS",
+        "status": "PASS" if summary["chain_status"] == "COMPLETE" else "PASS_WITH_WARNINGS",
+        "source_artifact_paths": {key: str(path) for key, path in source_paths.items()},
+        "source_artifact_checksums": source_checksums,
         "weekly_real_snapshot_summary_path": str(weekly_dir / "weekly_real_snapshot_summary.json"),
+        "weekly_owner_decision_inventory_path": str(
+            weekly_dir / "weekly_owner_decision_inventory.json"
+        ),
         "weekly_owner_decision_summary_path": str(
             weekly_dir / "weekly_owner_decision_summary.json"
         ),
@@ -1282,6 +1300,7 @@ def run_weekly_real_snapshot_review(
     }
     _write_json(weekly_dir / "weekly_real_snapshot_review_manifest.json", manifest)
     _write_json(weekly_dir / "weekly_real_snapshot_summary.json", summary)
+    _write_json(weekly_dir / "weekly_owner_decision_inventory.json", inventory)
     _write_json(weekly_dir / "weekly_owner_decision_summary.json", decision_summary)
     _write_text(
         weekly_dir / "weekly_real_snapshot_review_report.md",
@@ -1298,6 +1317,7 @@ def run_weekly_real_snapshot_review(
         "weekly_real_review_dir": weekly_dir,
         "manifest": manifest,
         "weekly_real_snapshot_summary": summary,
+        "weekly_owner_decision_inventory": inventory,
         "weekly_owner_decision_summary": decision_summary,
     }
 
@@ -1320,6 +1340,10 @@ def weekly_real_snapshot_review_report_payload(
             weekly_dir / "weekly_real_snapshot_summary.json"
         )
         or {},
+        "weekly_owner_decision_inventory": _read_optional_json(
+            weekly_dir / "weekly_owner_decision_inventory.json"
+        )
+        or {},
         "weekly_owner_decision_summary": _read_optional_json(
             weekly_dir / "weekly_owner_decision_summary.json"
         )
@@ -1332,16 +1356,91 @@ def validate_weekly_real_snapshot_review(
     *,
     weekly_real_review_id: str,
     output_dir: Path = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
+    dry_run_dir: Path = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+    owner_review_dir: Path = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+    paper_action_dir: Path = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+    manual_snapshot_dir: Path = DEFAULT_MANUAL_PORTFOLIO_SNAPSHOT_DIR,
+    drift_dir: Path = DEFAULT_POSITION_DRIFT_DIR,
+    guardrail_dir: Path = DEFAULT_EXECUTION_GUARDRAILS_DIR,
 ) -> dict[str, Any]:
     weekly_dir = output_dir / weekly_real_review_id
     manifest = _read_optional_json(weekly_dir / "weekly_real_snapshot_review_manifest.json") or {}
     summary = _read_optional_json(weekly_dir / "weekly_real_snapshot_summary.json") or {}
+    inventory = _read_optional_json(weekly_dir / "weekly_owner_decision_inventory.json") or {}
     decision_summary = _read_optional_json(weekly_dir / "weekly_owner_decision_summary.json") or {}
+    try:
+        week_ending = date.fromisoformat(_text(summary.get("week_ending")))
+        week_ending_valid = True
+    except ValueError:
+        week_ending = date.min
+        week_ending_valid = False
+    dry_run, owner, paper, selection_issues = _weekly_source_selection(
+        week_ending=week_ending,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
+    )
+    expected_inventory, inventory_issues = _owner_decision_inventory_at_or_before(
+        owner_review_dir=owner_review_dir,
+        week_ending=week_ending,
+    )
+    expected_decision_summary = _owner_decision_summary_from_inventory(expected_inventory)
+    expected_summary = _weekly_summary_payload(
+        weekly_real_review_id=weekly_real_review_id,
+        week_ending=week_ending,
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+    )
+    expected_source_paths = _weekly_source_paths(
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
+    )
+    recorded_source_paths = _mapping(manifest.get("source_artifact_paths"))
+    recorded_source_checksums = _mapping(manifest.get("source_artifact_checksums"))
+    source_files_present = all(path.is_file() for path in expected_source_paths.values())
+    source_checksums_match = source_files_present and all(
+        recorded_source_checksums.get(key) == _file_sha256(path)
+        for key, path in expected_source_paths.items()
+    )
+    source_validation = _weekly_source_validation(
+        dry_run=dry_run,
+        owner=owner,
+        paper=paper,
+        dry_run_dir=dry_run_dir,
+        owner_review_dir=owner_review_dir,
+        paper_action_dir=paper_action_dir,
+        manual_snapshot_dir=manual_snapshot_dir,
+        drift_dir=drift_dir,
+        guardrail_dir=guardrail_dir,
+    )
+    sources_validate = all(
+        payload.get("status") == "PASS" for payload in source_validation.values()
+    )
+    expected_status = (
+        "PASS" if expected_summary["chain_status"] == "COMPLETE" else "PASS_WITH_WARNINGS"
+    )
+    manifest_summary_consistent = all(
+        manifest.get(key) == value for key, value in summary.items()
+    )
+    report_path = weekly_dir / "weekly_real_snapshot_review_report.md"
+    reader_path = weekly_dir / "reader_brief_section.md"
+    rendered_report_matches = report_path.exists() and report_path.read_text(
+        encoding="utf-8"
+    ) == render_weekly_real_snapshot_review_report(manifest, summary, decision_summary)
+    rendered_reader_matches = reader_path.exists() and reader_path.read_text(
+        encoding="utf-8"
+    ) == render_weekly_real_reader_brief(summary)
     checks = _required_file_checks(
         weekly_dir,
         (
             "weekly_real_snapshot_review_manifest.json",
             "weekly_real_snapshot_summary.json",
+            "weekly_owner_decision_inventory.json",
             "weekly_owner_decision_summary.json",
             "weekly_real_snapshot_review_report.md",
             "reader_brief_section.md",
@@ -1355,6 +1454,26 @@ def validate_weekly_real_snapshot_review(
                 and summary.get("weekly_real_review_id") == weekly_real_review_id,
                 weekly_real_review_id,
             ),
+            _check("week_ending_valid", week_ending_valid, _text(summary.get("week_ending"))),
+            _check(
+                "source_selection_unambiguous",
+                not selection_issues and not inventory_issues,
+                ";".join([*selection_issues, *inventory_issues]),
+            ),
+            _check("source_artifacts_validate", sources_validate, "selected source chain"),
+            _check(
+                "source_paths_match",
+                recorded_source_paths
+                == {key: str(path) for key, path in expected_source_paths.items()},
+                "selected source chain",
+            ),
+            _check("source_files_present", source_files_present, "selected source chain"),
+            _check("source_checksums_match", source_checksums_match, "selected source chain"),
+            _check(
+                "owner_decision_inventory_content_derived",
+                inventory == expected_inventory,
+                "owner review inventory as of week ending",
+            ),
             _check(
                 "owner_decision_summary_present",
                 all(
@@ -1364,6 +1483,24 @@ def validate_weekly_real_snapshot_review(
                 and "pending_reviews" in decision_summary,
                 "owner decision counts",
             ),
+            _check(
+                "owner_decision_summary_content_derived",
+                decision_summary == expected_decision_summary,
+                "owner decision inventory counts",
+            ),
+            _check(
+                "weekly_summary_content_derived",
+                summary == expected_summary,
+                "selected source chain",
+            ),
+            _check(
+                "manifest_summary_consistent",
+                manifest_summary_consistent
+                and manifest.get("status") == expected_status,
+                "manifest/summary",
+            ),
+            _check("rendered_report_matches", rendered_report_matches, str(report_path)),
+            _check("rendered_reader_matches", rendered_reader_matches, str(reader_path)),
             _check("broker_action_not_taken", summary.get("broker_action_taken") is False, ""),
             _check(
                 "order_ticket_not_generated",
@@ -1496,7 +1633,10 @@ def render_weekly_real_snapshot_review_report(
             f"# Weekly Real Snapshot Advisory Review {manifest.get('weekly_real_review_id')}",
             "",
             f"- week_ending: {summary.get('week_ending')}",
+            f"- chain_status: {summary.get('chain_status')}",
             f"- latest_dry_run_id: {summary.get('latest_dry_run_id')}",
+            f"- latest_owner_review_id: {summary.get('latest_owner_review_id')}",
+            f"- latest_paper_action_id: {summary.get('latest_paper_action_id')}",
             f"- snapshot_status: {summary.get('snapshot_status')}",
             f"- recommended_action: {summary.get('recommended_action')}",
             f"- owner_decision: {summary.get('owner_decision')}",
@@ -1519,6 +1659,7 @@ def render_weekly_real_reader_brief(summary: Mapping[str, Any]) -> str:
         [
             "## Dynamic Rescue Real Snapshot Advisory Review",
             "",
+            f"- chain_status: {summary.get('chain_status')}",
             f"- snapshot_status: {summary.get('snapshot_status')}",
             f"- recommended_action: {summary.get('recommended_action')}",
             f"- owner_decision: {summary.get('owner_decision')}",
@@ -1701,15 +1842,337 @@ def _apply_deltas(before: Mapping[str, float], deltas: Mapping[str, float]) -> d
     return after
 
 
+def _weekly_source_selection(
+    *,
+    week_ending: date,
+    dry_run_dir: Path,
+    owner_review_dir: Path,
+    paper_action_dir: Path,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], list[str]]:
+    issues = [
+        *_manifest_timestamp_issues(
+            root=dry_run_dir,
+            filename="real_snapshot_dry_run_manifest.json",
+            label="dry_run",
+        ),
+        *_manifest_timestamp_issues(
+            root=owner_review_dir,
+            filename="real_execution_owner_review_manifest.json",
+            label="owner_review",
+        ),
+        *_manifest_timestamp_issues(
+            root=paper_action_dir,
+            filename="real_snapshot_paper_action_manifest.json",
+            label="paper_action",
+        ),
+    ]
+    dry_candidates = _manifest_candidates_at_or_before(
+        root=dry_run_dir,
+        filename="real_snapshot_dry_run_manifest.json",
+        week_ending=week_ending,
+    )
+    owner_candidates = _manifest_candidates_at_or_before(
+        root=owner_review_dir,
+        filename="real_execution_owner_review_manifest.json",
+        week_ending=week_ending,
+    )
+    paper_candidates = _manifest_candidates_at_or_before(
+        root=paper_action_dir,
+        filename="real_snapshot_paper_action_manifest.json",
+        week_ending=week_ending,
+    )
+    owner: dict[str, Any] = {}
+    dry_run: dict[str, Any] = {}
+    paper: dict[str, Any] = {}
+    if owner_candidates:
+        _, owner_path, owner_manifest = owner_candidates[-1]
+        owner_decision = (
+            _read_optional_json(owner_path.parent / "owner_execution_decision.json") or {}
+        )
+        if owner_manifest.get("owner_decision") != owner_decision.get("owner_decision"):
+            issues.append("owner_manifest_decision_mismatch")
+        owner = {**owner_manifest, **owner_decision, "status": owner_manifest.get("status")}
+        dry_run_id = _text(owner.get("dry_run_id"))
+        matching_dry = [
+            row for row in dry_candidates if row[2].get("dry_run_id") == dry_run_id
+        ]
+        if not matching_dry:
+            issues.append(f"owner_dry_run_missing:{dry_run_id or 'MISSING'}")
+        else:
+            _, dry_path, dry_manifest = matching_dry[-1]
+            dry_summary = _read_optional_json(
+                dry_path.parent / "real_snapshot_dry_run_summary.json"
+            ) or {}
+            dry_run = {
+                **dry_manifest,
+                **dry_summary,
+                "dry_run_artifact_links": _read_optional_json(
+                    dry_path.parent / "dry_run_artifact_links.json"
+                )
+                or {},
+            }
+        matching_paper = [
+            row
+            for row in paper_candidates
+            if row[2].get("owner_review_id") == owner.get("review_id")
+            and row[2].get("dry_run_id") == dry_run_id
+        ]
+        if matching_paper:
+            paper = dict(matching_paper[-1][2])
+    elif dry_candidates:
+        _, dry_path, dry_manifest = dry_candidates[-1]
+        dry_summary = _read_optional_json(
+            dry_path.parent / "real_snapshot_dry_run_summary.json"
+        ) or {}
+        dry_run = {
+            **dry_manifest,
+            **dry_summary,
+            "dry_run_artifact_links": _read_optional_json(
+                dry_path.parent / "dry_run_artifact_links.json"
+            )
+            or {},
+        }
+    return dry_run, owner, paper, issues
+
+
+def _weekly_source_validation(
+    *,
+    dry_run: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    paper: Mapping[str, Any],
+    dry_run_dir: Path,
+    owner_review_dir: Path,
+    paper_action_dir: Path,
+    manual_snapshot_dir: Path,
+    drift_dir: Path,
+    guardrail_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    validations: dict[str, dict[str, Any]] = {}
+    if dry_run:
+        validations["dry_run"] = validate_real_snapshot_dry_run(
+            dry_run_id=_text(dry_run.get("dry_run_id")),
+            output_dir=dry_run_dir,
+        )
+    if owner:
+        validations["owner_review"] = validate_real_execution_owner_review(
+            review_id=_text(owner.get("review_id")),
+            output_dir=owner_review_dir,
+        )
+    if paper:
+        validations["paper_action"] = validate_real_snapshot_paper_action(
+            paper_action_id=_text(paper.get("paper_action_id")),
+            output_dir=paper_action_dir,
+            owner_review_dir=owner_review_dir,
+            dry_run_dir=dry_run_dir,
+            manual_snapshot_dir=manual_snapshot_dir,
+            drift_dir=drift_dir,
+            guardrail_dir=guardrail_dir,
+        )
+    return validations
+
+
+def _weekly_source_paths(
+    *,
+    dry_run: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    paper: Mapping[str, Any],
+    dry_run_dir: Path,
+    owner_review_dir: Path,
+    paper_action_dir: Path,
+) -> dict[str, Path]:
+    paths: dict[str, Path] = {}
+    if dry_run:
+        dry_dir = dry_run_dir / _text(dry_run.get("dry_run_id"))
+        paths.update(
+            {
+                "dry_run_manifest": dry_dir / "real_snapshot_dry_run_manifest.json",
+                "dry_run_artifact_links": dry_dir / "dry_run_artifact_links.json",
+                "dry_run_summary": dry_dir / "real_snapshot_dry_run_summary.json",
+            }
+        )
+    if owner:
+        owner_dir = owner_review_dir / _text(owner.get("review_id"))
+        paths.update(
+            {
+                "owner_review_manifest": (
+                    owner_dir / "real_execution_owner_review_manifest.json"
+                ),
+                "owner_execution_decision": owner_dir / "owner_execution_decision.json",
+            }
+        )
+    if paper:
+        paper_dir = paper_action_dir / _text(paper.get("paper_action_id"))
+        paths.update(
+            {
+                "paper_action_manifest": paper_dir / "real_snapshot_paper_action_manifest.json",
+                "paper_action": paper_dir / "paper_action_from_real_snapshot.json",
+                "paper_state": paper_dir / "paper_state_after_action.json",
+            }
+        )
+    return paths
+
+
+def _owner_decision_inventory_at_or_before(
+    *,
+    owner_review_dir: Path,
+    week_ending: date,
+) -> tuple[dict[str, Any], list[str]]:
+    reviews: list[dict[str, Any]] = []
+    issues: list[str] = []
+    for decision_path in sorted(owner_review_dir.glob("*/owner_execution_decision.json")):
+        decision = _read_optional_json(decision_path) or {}
+        observed_at = _artifact_datetime(decision)
+        review_id = _text(decision.get("review_id"), decision_path.parent.name)
+        if observed_at is None:
+            issues.append(f"owner_decision_timestamp_invalid:{review_id}")
+            continue
+        if observed_at.date() > week_ending:
+            continue
+        manifest_path = decision_path.parent / "real_execution_owner_review_manifest.json"
+        manifest = _read_optional_json(manifest_path) or {}
+        validation = validate_real_execution_owner_review(
+            review_id=review_id,
+            output_dir=owner_review_dir,
+        )
+        if validation.get("status") != "PASS":
+            issues.append(f"owner_review_validation_failed:{review_id}")
+            continue
+        if manifest.get("updated_at") != decision.get("updated_at"):
+            issues.append(f"owner_review_timestamp_mismatch:{review_id}")
+            continue
+        reviews.append(
+            {
+                "review_id": review_id,
+                "dry_run_id": _text(decision.get("dry_run_id")),
+                "owner_decision": _text(decision.get("owner_decision"), "pending"),
+                "updated_at": observed_at.isoformat(),
+                "manifest_path": str(manifest_path),
+                "manifest_sha256": _file_sha256(manifest_path),
+                "decision_path": str(decision_path),
+                "decision_sha256": _file_sha256(decision_path),
+            }
+        )
+    reviews.sort(key=lambda row: (row["updated_at"], row["review_id"]))
+    return (
+        {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_weekly_owner_decision_inventory",
+            "week_ending": week_ending.isoformat(),
+            "review_count": len(reviews),
+            "reviews": reviews,
+        },
+        issues,
+    )
+
+
+def _manifest_candidates_at_or_before(
+    *,
+    root: Path,
+    filename: str,
+    week_ending: date,
+) -> list[tuple[datetime, Path, dict[str, Any]]]:
+    rows: list[tuple[datetime, Path, dict[str, Any]]] = []
+    for path in root.glob(f"*/{filename}"):
+        payload = _read_optional_json(path) or {}
+        observed_at = _artifact_datetime(payload)
+        if observed_at is not None and observed_at.date() <= week_ending:
+            rows.append((observed_at, path, payload))
+    rows.sort(key=lambda row: (row[0], row[1].as_posix()))
+    return rows
+
+
+def _manifest_timestamp_issues(*, root: Path, filename: str, label: str) -> list[str]:
+    return [
+        f"{label}_timestamp_invalid:{path.parent.name}"
+        for path in root.glob(f"*/{filename}")
+        if _artifact_datetime(_read_optional_json(path) or {}) is None
+    ]
+
+
+def _artifact_datetime(payload: Mapping[str, Any]) -> datetime | None:
+    for key in ("updated_at", "generated_at", "created_at"):
+        value = _text(payload.get(key))
+        if not value:
+            continue
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return parsed.replace(tzinfo=parsed.tzinfo or UTC).astimezone(UTC)
+    return None
+
+
+def _weekly_summary_payload(
+    *,
+    weekly_real_review_id: str,
+    week_ending: date,
+    dry_run: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    paper: Mapping[str, Any],
+) -> dict[str, Any]:
+    links = _mapping(dry_run.get("dry_run_artifact_links")) if dry_run else {}
+    owner_decision = _text(owner.get("owner_decision"), "pending") if owner else "pending"
+    paper_action_taken = _text(paper.get("action_type")) == "paper_only" if paper else False
+    chain_status = _weekly_chain_status(dry_run, owner, paper, owner_decision)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_real_snapshot_summary",
+        "weekly_real_review_id": weekly_real_review_id,
+        "week_ending": week_ending.isoformat(),
+        "chain_status": chain_status,
+        "latest_snapshot_id": _text(links.get("manual_portfolio_snapshot_id"), "MISSING"),
+        "latest_dry_run_id": _text(dry_run.get("dry_run_id"), "MISSING"),
+        "latest_owner_review_id": _text(owner.get("review_id"), "MISSING"),
+        "latest_paper_action_id": _text(paper.get("paper_action_id"), "MISSING"),
+        "snapshot_status": _text(dry_run.get("snapshot_status"), "MISSING"),
+        "recommended_action": _text(
+            dry_run.get("manual_review_recommended_action"),
+            "blocked",
+        ),
+        "owner_decision": owner_decision,
+        "paper_action_taken": paper_action_taken,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "next_action": _weekly_next_action(
+            dry_run,
+            owner_decision,
+            paper_action_taken,
+            bool(paper),
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+        **_safety(),
+    }
+
+
+def _weekly_chain_status(
+    dry_run: Mapping[str, Any],
+    owner: Mapping[str, Any],
+    paper: Mapping[str, Any],
+    owner_decision: str,
+) -> str:
+    if not dry_run:
+        return "MISSING_DRY_RUN"
+    if not owner:
+        return "OWNER_REVIEW_MISSING"
+    if owner_decision == "pending":
+        return "OWNER_DECISION_PENDING"
+    if not paper:
+        return "PAPER_ACTION_MISSING"
+    return "COMPLETE"
+
+
 def _weekly_next_action(
     dry_run: Mapping[str, Any],
     owner_decision: str,
     paper_action_taken: bool,
+    paper_action_present: bool,
 ) -> str:
     if not dry_run:
         return "update_snapshot"
     if owner_decision == "pending":
         return "owner_review_required"
+    if not paper_action_present:
+        return "paper_action_tracking_required"
     if owner_decision == "paper_adjustment_review_only" and paper_action_taken:
         return "paper_track"
     if owner_decision in {"needs_more_data", "defer"}:
@@ -1717,7 +2180,7 @@ def _weekly_next_action(
     return "continue_monitoring"
 
 
-def _owner_decision_counts(owner_review_dir: Path) -> dict[str, int]:
+def _owner_decision_summary_from_inventory(inventory: Mapping[str, Any]) -> dict[str, int]:
     counts = {
         "pending_reviews": 0,
         "monitor_count": 0,
@@ -1727,41 +2190,14 @@ def _owner_decision_counts(owner_review_dir: Path) -> dict[str, int]:
         "needs_more_data_count": 0,
         "defer_count": 0,
     }
-    if not owner_review_dir.exists():
-        return counts
-    for path in owner_review_dir.glob("*/owner_execution_decision.json"):
-        payload = _read_optional_json(path) or {}
-        decision = _text(payload.get("owner_decision"), "pending")
+    reviews = inventory.get("reviews")
+    for row in reviews if isinstance(reviews, list) else []:
+        decision = _text(_mapping(row).get("owner_decision"), "pending")
         if decision == "pending":
             counts["pending_reviews"] += 1
         elif f"{decision}_count" in counts:
             counts[f"{decision}_count"] += 1
     return counts
-
-
-def _latest_manifest(pointer_name: str, root: Path, filename: str) -> dict[str, Any]:
-    artifact_id = _latest_pointer_artifact_id(pointer_name)
-    path = root / artifact_id / filename if artifact_id else None
-    if path is not None and path.exists():
-        payload = _read_json(path)
-        if pointer_name == "latest_real_snapshot_dry_run":
-            payload["dry_run_artifact_links"] = _read_optional_json(
-                path.parent / "dry_run_artifact_links.json"
-            ) or {}
-        return payload
-    candidates = sorted(
-        root.glob(f"*/{filename}"),
-        key=lambda item: item.stat().st_mtime,
-        reverse=True,
-    )
-    if not candidates:
-        return {}
-    payload = _read_json(candidates[0])
-    if pointer_name == "latest_real_snapshot_dry_run":
-        payload["dry_run_artifact_links"] = _read_optional_json(
-            candidates[0].parent / "dry_run_artifact_links.json"
-        ) or {}
-    return payload
 
 
 def _validation_payload(

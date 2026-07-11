@@ -15225,23 +15225,37 @@ def _etf_dynamic_v3_real_snapshot_review_summary(
         weekly_path,
         "weekly_owner_decision_summary.json",
     )
-    dry_run_path = _dynamic_v3_sibling_artifact_path(
+    indexed_dry_run_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(report_index, "etf_dynamic_v3_real_snapshot_dry_run"),
         "real_snapshot_dry_run_manifest.json",
     )
-    owner_review_path = _dynamic_v3_sibling_artifact_path(
+    indexed_owner_review_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
             "etf_dynamic_v3_real_execution_owner_review",
         ),
         "real_execution_owner_review_manifest.json",
     )
-    paper_action_path = _dynamic_v3_sibling_artifact_path(
+    indexed_paper_action_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
             "etf_dynamic_v3_real_snapshot_paper_action",
         ),
         "real_snapshot_paper_action_manifest.json",
+    )
+    source_paths = _mapping(weekly_manifest.get("source_artifact_paths"))
+    has_frozen_source_contract = "chain_status" in weekly_manifest
+    dry_run_path = _path_or_fallback(
+        source_paths.get("dry_run_manifest"),
+        None if has_frozen_source_contract else indexed_dry_run_path,
+    )
+    owner_review_path = _path_or_fallback(
+        source_paths.get("owner_review_manifest"),
+        None if has_frozen_source_contract else indexed_owner_review_path,
+    )
+    paper_action_path = _path_or_fallback(
+        source_paths.get("paper_action_manifest"),
+        None if has_frozen_source_contract else indexed_paper_action_path,
     )
     weekly_summary = _read_optional_json(weekly_summary_path)
     owner_decision_summary = _read_optional_json(owner_decision_summary_path)
@@ -15253,6 +15267,7 @@ def _etf_dynamic_v3_real_snapshot_review_summary(
         source_summary.get("weekly_real_review_id"),
         "MISSING",
     )
+    chain_status = _text(source_summary.get("chain_status"), "UNKNOWN")
     snapshot_status = _text(source_summary.get("snapshot_status"), "MISSING")
     recommended_action = _text(source_summary.get("recommended_action"), "MISSING")
     owner_decision = _text(source_summary.get("owner_decision"), "pending")
@@ -15274,7 +15289,8 @@ def _etf_dynamic_v3_real_snapshot_review_summary(
         "status": _text(weekly_manifest.get("status"), "UNKNOWN"),
         "summary_sentence": (
             "Dynamic Rescue Real Snapshot Advisory Review: "
-            f"weekly={weekly_real_review_id}; snapshot={snapshot_status}; "
+            f"weekly={weekly_real_review_id}; chain_status={chain_status}; "
+            f"snapshot={snapshot_status}; "
             f"recommended_action={recommended_action}; owner_decision={owner_decision}; "
             f"paper_action_taken={str(paper_action_taken).lower()}; "
             f"broker_action_taken={str(broker_action_taken).lower()}; "
@@ -15282,6 +15298,7 @@ def _etf_dynamic_v3_real_snapshot_review_summary(
             f"next_action={next_action}."
         ),
         "weekly_real_review_id": weekly_real_review_id,
+        "chain_status": chain_status,
         "week_ending": _text(source_summary.get("week_ending"), "MISSING"),
         "latest_snapshot_id": _text(source_summary.get("latest_snapshot_id"), "MISSING"),
         "latest_dry_run_id": _text(source_summary.get("latest_dry_run_id"), "MISSING"),
@@ -15326,6 +15343,7 @@ def _missing_etf_dynamic_v3_real_snapshot_review_summary() -> dict[str, Any]:
             "snapshot review found."
         ),
         "weekly_real_review_id": "MISSING",
+        "chain_status": "MISSING_DRY_RUN",
         "week_ending": "MISSING",
         "latest_snapshot_id": "MISSING",
         "latest_dry_run_id": "MISSING",
@@ -27985,6 +28003,11 @@ def _int(value: object) -> int:
 
 def _mapping(value: object) -> dict[str, Any]:
     return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _path_or_fallback(value: object, fallback: Path | None) -> Path | None:
+    text = str(value).strip() if value is not None else ""
+    return Path(text) if text else fallback
 
 
 def _records(value: object) -> list[dict[str, Any]]:
