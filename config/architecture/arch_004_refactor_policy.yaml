@@ -876,12 +876,41 @@ phase_g_execution:
     status: IN_PROGRESS
     scope: interfaces_and_etf_cli
     target: src/ai_trading_system/cli_commands/etf_portfolio.py
+    requirement_path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+    stages:
+      G2_1_command_registry_and_golden_contract: COMPLETE
+      G2_2_registration_shell_and_shared_parameters: IN_PROGRESS
+      G2_3_data_operations_reporting_groups: NOT_STARTED
+      G2_4_research_shadow_portfolio_groups: NOT_STARTED
+      G2_5_freeze_deprecation_and_closeout: NOT_STARTED
     command_groups: [data, research, portfolio, shadow, operations, reporting]
     golden_command_option_default_exit_help_parity_required: true
     duplicate_command_allowed: false
     root_file_registration_and_compatibility_only: true
     investment_semantics_change_allowed: false
     implementation_started_in_g1_closeout_slice: false
+    g2_1_contract:
+      schema_version: arch_004g2_cli_contract.v1
+      scanner: src/ai_trading_system/platform/architecture/cli_contract.py
+      generator: scripts/architecture_etf_cli.py
+      baseline: inputs/architecture/arch_004g2_etf_cli_contract.yaml
+      source: src/ai_trading_system/cli_commands/etf_portfolio.py
+      root_command_count: 41
+      group_count: 291
+      leaf_command_count: 993
+      registered_leaf_count: 993
+      unique_path_count: 1284
+      duplicate_path_count: 0
+      tree_sha256: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      callback_location_in_contract: false
+      option_default_help_drift_fail_closed: true
+      focused_validation: {status: PASS, passed: 3}
+      architecture_fitness:
+        status: PASS
+        passed: 171
+        current_direct_writer_calls: 861
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T065844Z/test_runtime_summary.json
     production_effect: none
 
 safety_boundary:

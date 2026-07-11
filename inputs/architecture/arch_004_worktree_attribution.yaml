@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_COMPLETE_G2_IN_PROGRESS
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_1_COMPLETE_G2_2_IN_PROGRESS
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -17,6 +17,7 @@ arch_004_owned_paths:
   - docs/architecture/arch_004_semantic_glossary.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -148,6 +149,10 @@ arch_004_owned_paths:
   - tests/test_arch_004e_devex.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_004g_shared_writers.py
+  - tests/test_arch_004g2_etf_cli_contract.py
+  - src/ai_trading_system/platform/architecture/cli_contract.py
+  - scripts/architecture_etf_cli.py
+  - inputs/architecture/arch_004g2_etf_cli_contract.yaml
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/requirements/ARCH-004F3_Reporting_Architecture.md

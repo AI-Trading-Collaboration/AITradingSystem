@@ -1,8 +1,8 @@
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 797
-  python_test_file_count: 1113
+  python_module_count: 798
+  python_test_file_count: 1114
   direct_writer_baseline_count: 894
   direct_writer_current_count: 861
   direct_writer_violation_count: 0
@@ -59,8 +59,8 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 993
   static_import_reachability_file_count: 1
-  test_reference_file_count: 296
-  docs_config_reference_file_count: 114
+  test_reference_file_count: 297
+  docs_config_reference_file_count: 115
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:

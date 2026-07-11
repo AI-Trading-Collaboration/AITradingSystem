@@ -356,6 +356,17 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     }
     assert phase_g["g2_current_plan"]["status"] == "IN_PROGRESS"
     assert phase_g["g2_current_plan"]["implementation_started_in_g1_closeout_slice"] is False
+    assert phase_g["g2_current_plan"]["stages"] == {
+        "G2_1_command_registry_and_golden_contract": "COMPLETE",
+        "G2_2_registration_shell_and_shared_parameters": "IN_PROGRESS",
+        "G2_3_data_operations_reporting_groups": "NOT_STARTED",
+        "G2_4_research_shadow_portfolio_groups": "NOT_STARTED",
+        "G2_5_freeze_deprecation_and_closeout": "NOT_STARTED",
+    }
+    assert phase_g["g2_current_plan"]["g2_1_contract"]["leaf_command_count"] == 993
+    assert phase_g["g2_current_plan"]["g2_1_contract"]["duplicate_path_count"] == 0
+    assert phase_g["g2_current_plan"]["g2_1_contract"]["callback_location_in_contract"] is False
+    assert phase_g["g2_current_plan"]["g2_1_contract"]["architecture_fitness"]["passed"] == 171
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -705,10 +716,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g0["validation"]["contract_validation"]["passed"] == 203
     for source in phase_g0["sources"]:
         if source.get("historical_phase_g0_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G1"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g1_shared_writer_migration.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G1", "ARCH-004G2.1"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -862,6 +871,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3e["validation"]["focused"] == {"status": "PASS", "passed": 242}
     assert phase_g1_3e["validation"]["architecture_fitness"]["passed"] == 168
     for source in phase_g1_3e["sources"]:
+        if source.get("historical_phase_g1_3e_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.1"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_1_etf_cli_contract_baseline.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_1 = baseline["phase_g2_1_etf_cli_contract_baseline"]
+    assert phase_g2_1["status"] == "COMPLETE_G2_2_IN_PROGRESS"
+    assert phase_g2_1["contract"] == {
+        "schema_version": "arch_004g2_cli_contract.v1",
+        "root_command_count": 41,
+        "group_count": 291,
+        "leaf_command_count": 993,
+        "registered_leaf_count": 993,
+        "unique_path_count": 1284,
+        "duplicate_path_count": 0,
+        "tree_sha256": "afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2",
+        "callback_location_in_contract": False,
+        "runtime_behavior_changed": False,
+        "production_effect": "none",
+    }
+    assert phase_g2_1["validation"]["focused"] == {"status": "PASS", "passed": 3}
+    assert phase_g2_1["validation"]["architecture_fitness"]["passed"] == 171
+    for source in phase_g2_1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -884,7 +919,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_COMPLETE_G2_IN_PROGRESS"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_1_COMPLETE_G2_2_IN_PROGRESS"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

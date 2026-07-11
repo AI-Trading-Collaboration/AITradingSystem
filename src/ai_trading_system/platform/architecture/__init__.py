@@ -1,3 +1,9 @@
+from ai_trading_system.platform.architecture.cli_contract import (
+    CLI_CONTRACT_SCHEMA_VERSION,
+    CliContractError,
+    assert_frozen_cli_contract,
+    build_cli_contract,
+)
 from ai_trading_system.platform.architecture.dependency_gate import (
     ArchitectureGateReport,
     ArchitectureViolation,
@@ -33,6 +39,8 @@ from ai_trading_system.platform.architecture.scaffold import (
 )
 
 __all__ = [
+    "CLI_CONTRACT_SCHEMA_VERSION",
+    "CliContractError",
     "ArchitectureGateReport",
     "ArchitectureViolation",
     "DEFAULT_DEPRECATION_INVENTORY_PATH",
@@ -46,8 +54,10 @@ __all__ = [
     "ImpactSelection",
     "ScaffoldKind",
     "ScaffoldResult",
+    "assert_frozen_cli_contract",
     "build_aggregate_shadow_index",
     "build_architecture_fitness",
+    "build_cli_contract",
     "build_module_manifest",
     "build_test_manifest",
     "capture_direct_writer_baseline",
