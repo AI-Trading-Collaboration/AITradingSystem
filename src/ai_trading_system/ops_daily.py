@@ -87,7 +87,6 @@ from ai_trading_system.reports.score_change_attribution import (
     default_score_change_attribution_report_path,
 )
 from ai_trading_system.scheduled_tasks import (
-    DAILY_CADENCE_ID,
     load_scheduled_tasks_config,
 )
 from ai_trading_system.scoring.daily import default_daily_score_report_path
@@ -314,7 +313,7 @@ def resolve_daily_ops_market_date(observed_at: datetime | None = None) -> date:
 
 def _enforce_scheduled_daily_plan(plan: DailyOpsPlan) -> None:
     scheduled = load_scheduled_tasks_config()
-    daily_tasks = scheduled.cadence(DAILY_CADENCE_ID).tasks
+    daily_tasks = scheduled.daily_tasks(is_trading_day=plan.market_session.is_trading_day)
     expected_step_ids = tuple(
         task.daily_plan_step_id for task in daily_tasks if task.daily_plan_step_id
     )

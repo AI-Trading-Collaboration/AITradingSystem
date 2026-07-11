@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,12 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_SCHEDULED_TASKS_CONFIG_PATH = PROJECT_ROOT / "config" / "scheduled_tasks.yaml"
 DAILY_CADENCE_ID = "daily_trading_day"
 NON_DAILY_CADENCE_IDS = ("weekly", "biweekly", "monthly", "ad_hoc_research")
+
+
+class TaskActivationCondition(StrEnum):
+    ALWAYS = "always"
+    TRADING_DAY_ONLY = "trading_day_only"
+    CLOSED_MARKET_ONLY = "closed_market_only"
 
 
 @dataclass(frozen=True)
@@ -32,6 +39,20 @@ class ScheduledTask:
     active_shadow_weight_write: bool = False
     broker_action: bool = False
     trading_action: bool = False
+    activation_condition: TaskActivationCondition = TaskActivationCondition.ALWAYS
+
+    def active_for_session(self, *, is_trading_day: bool) -> bool:
+        return (
+            self.activation_condition is TaskActivationCondition.ALWAYS
+            or (
+                self.activation_condition is TaskActivationCondition.TRADING_DAY_ONLY
+                and is_trading_day
+            )
+            or (
+                self.activation_condition is TaskActivationCondition.CLOSED_MARKET_ONLY
+                and not is_trading_day
+            )
+        )
 
     @property
     def is_safety_scoped(self) -> bool:
@@ -91,8 +112,13 @@ class ScheduledTasksConfig:
     def tasks(self) -> tuple[ScheduledTask, ...]:
         return tuple(task for cadence in self.cadences for task in cadence.tasks)
 
-    def daily_tasks(self) -> tuple[ScheduledTask, ...]:
-        return self.cadence(DAILY_CADENCE_ID).tasks
+    def daily_tasks(self, *, is_trading_day: bool | None = None) -> tuple[ScheduledTask, ...]:
+        tasks = self.cadence(DAILY_CADENCE_ID).tasks
+        if is_trading_day is None:
+            return tasks
+        return tuple(
+            task for task in tasks if task.active_for_session(is_trading_day=is_trading_day)
+        )
 
     def non_daily_tasks(self) -> tuple[ScheduledTask, ...]:
         return tuple(
@@ -136,9 +162,13 @@ def load_scheduled_tasks_config(
     return config
 
 
-def scheduled_daily_step_ids(config: ScheduledTasksConfig) -> tuple[str, ...]:
+def scheduled_daily_step_ids(
+    config: ScheduledTasksConfig, *, is_trading_day: bool | None = None
+) -> tuple[str, ...]:
     return tuple(
-        task.daily_plan_step_id or "" for task in config.daily_tasks() if task.daily_plan_step_id
+        task.daily_plan_step_id or ""
+        for task in config.daily_tasks(is_trading_day=is_trading_day)
+        if task.daily_plan_step_id
     )
 
 
@@ -211,6 +241,9 @@ def _load_task(cadence_id: str, raw: Any) -> ScheduledTask:
         active_shadow_weight_write=bool(raw.get("active_shadow_weight_write", False)),
         broker_action=bool(raw.get("broker_action", False)),
         trading_action=bool(raw.get("trading_action", False)),
+        activation_condition=TaskActivationCondition(
+            str(raw.get("activation_condition") or TaskActivationCondition.ALWAYS.value)
+        ),
     )
 
 

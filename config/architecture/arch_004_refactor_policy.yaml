@@ -439,9 +439,9 @@ phase_f1_execution:
     F1_5_non_daily_controlled_due_dispatch: NOT_STARTED
     F1_6_validation_and_closeout: NOT_STARTED
   scheduled_task_inventory:
-    daily: 36
+    daily: 37
     non_daily: 41
-    total: 77
+    total: 78
   unified_external_trigger: aits ops daily-run
   additional_external_scheduler_entry_allowed: false
   non_daily_automatic_dispatch_enabled: false
@@ -449,18 +449,24 @@ phase_f1_execution:
   periodic_research_review_may_auto_tune: false
   compatibility_findings:
     trading_day_daily_plan: PASS
-    closed_market_daily_plan: LIMITED_LEGACY_ONLY_CONDITIONAL_STEP
-    closed_market_legacy_only_step_ids:
-      - official_policy_sources
+    closed_market_daily_plan: PASS
+    conditional_step_contract:
+      official_policy_sources: closed_market_only
+    additive_shadow_artifact_emission: NOT_STARTED
   focused_validation:
     status: PASS
-    passed: 23
+    passed: 79
   scoped_mypy: PASS
+  fast_unit:
+    status: PASS
+    passed: 198
+    elapsed_seconds: 68.71
+    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T011002Z/test_runtime_summary.json
   contract_validation:
     status: PASS
     passed: 197
-    elapsed_seconds: 44.18
-    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T005920Z/test_runtime_summary.json
+    elapsed_seconds: 44.05
+    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T011117Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

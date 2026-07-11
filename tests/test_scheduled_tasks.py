@@ -73,7 +73,9 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         skip_risk_event_openai_precheck=True,
     )
 
-    assert tuple(step.step_id for step in plan.steps) == scheduled_daily_step_ids(config)
+    assert tuple(step.step_id for step in plan.steps) == scheduled_daily_step_ids(
+        config, is_trading_day=True
+    )
     command_text = "\n".join(" ".join(step.command) for step in plan.steps if step.command)
     for expected in (
         "download-data",
@@ -172,6 +174,13 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
     step_by_id = {step.step_id: step for step in plan.steps}
 
     assert step_by_id["score_daily"].enabled is False
+    assert "official_policy_sources" in step_by_id
+    assert "official_policy_sources" in scheduled_daily_step_ids(
+        load_scheduled_tasks_config(), is_trading_day=False
+    )
+    assert "official_policy_sources" not in scheduled_daily_step_ids(
+        load_scheduled_tasks_config(), is_trading_day=True
+    )
     for step_id in (
         "reports_dashboard",
         "score_change_attribution",

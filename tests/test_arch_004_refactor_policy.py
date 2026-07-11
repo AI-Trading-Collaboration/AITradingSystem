@@ -161,18 +161,19 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
         "F1_6_validation_and_closeout": "NOT_STARTED",
     }
     assert phase_f1["scheduled_task_inventory"] == {
-        "daily": 36,
+        "daily": 37,
         "non_daily": 41,
-        "total": 77,
+        "total": 78,
     }
     assert phase_f1["unified_external_trigger"] == "aits ops daily-run"
     assert phase_f1["additional_external_scheduler_entry_allowed"] is False
     assert phase_f1["non_daily_automatic_dispatch_enabled"] is False
     assert phase_f1["legacy_dispatch_enabled_by_shadow_adapter"] is False
     assert phase_f1["compatibility_findings"]["trading_day_daily_plan"] == "PASS"
-    assert phase_f1["compatibility_findings"]["closed_market_daily_plan"] == (
-        "LIMITED_LEGACY_ONLY_CONDITIONAL_STEP"
-    )
+    assert phase_f1["compatibility_findings"]["closed_market_daily_plan"] == "PASS"
+    assert phase_f1["compatibility_findings"]["conditional_step_contract"] == {
+        "official_policy_sources": "closed_market_only"
+    }
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -270,8 +271,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     }
     for source in baseline["frozen_sources"]:
         if source.get("historical_phase_a_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004D"
-            assert source["current_hash_tracked_in"] == ("phase_d_reference_vertical_slice.sources")
+            assert source["superseded_by_phase"] in {"ARCH-004D", "ARCH-004F1"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["contract_id"]
@@ -436,12 +437,12 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f1["contracts"]["shadow_execution_enabled"] is False
     assert phase_f1["contracts"]["non_daily_automatic_dispatch_enabled"] is False
     assert phase_f1["scheduled_task_inventory"] == {
-        "daily": 36,
+        "daily": 37,
         "non_daily": 41,
-        "total": 77,
+        "total": 78,
     }
     assert phase_f1["parity"]["trading_day_fixture_1"] == "PASS"
-    assert phase_f1["parity"]["closed_market_fixture_1"] == ("LIMITED_LEGACY_ONLY_CONDITIONAL_STEP")
+    assert phase_f1["parity"]["closed_market_fixture_1"] == "PASS"
     for source in phase_f1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]

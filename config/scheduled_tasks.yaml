@@ -58,6 +58,17 @@ cadences:
           - validate-data
         closed_market_behavior: run_with_previous_trading_day
         production_effect: none
+      - task_id: daily_official_policy_sources
+        daily_plan_step_id: official_policy_sources
+        title: Fetch official policy and geopolitical sources on closed-market days
+        command: aits risk-events fetch-official-sources --as-of {as_of}
+        command_contains:
+          - risk-events
+          - fetch-official-sources
+          - --as-of
+        activation_condition: closed_market_only
+        closed_market_behavior: run
+        production_effect: local_cache_write
       - task_id: daily_pit_fetch_fmp_forward
         daily_plan_step_id: pit_snapshots_fetch_fmp_forward
         title: Fetch FMP forward PIT snapshots

@@ -1023,7 +1023,7 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("secret_hygiene"),
     )
 
-    tasks = load_scheduled_tasks_config().daily_tasks()
+    tasks = load_scheduled_tasks_config().daily_tasks(is_trading_day=True)
     for task in tasks:
         args = _daily_command_args(task.command)
         assert args[0] == "aits"

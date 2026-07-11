@@ -38,6 +38,7 @@ class LegacyScheduledWorkflowBinding:
     due_policy_id: str
     trading_calendar: str | None
     preserve_sequential_order: bool
+    is_trading_day: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -95,9 +96,15 @@ def assess_scheduled_cadence(
             legacy_production_effects=tuple(effect_rows),
         )
 
+    selected_tasks = tuple(
+        task
+        for task in cadence.tasks
+        if binding.is_trading_day is None
+        or task.active_for_session(is_trading_day=binding.is_trading_day)
+    )
     steps: list[WorkflowStepSpec] = []
     previous_step_id: str | None = None
-    for task in cadence.tasks:
+    for task in selected_tasks:
         dependencies = (
             (previous_step_id,)
             if binding.preserve_sequential_order and previous_step_id is not None

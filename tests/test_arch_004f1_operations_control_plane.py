@@ -227,7 +227,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 77
+    assert total == 78
 
 
 def test_daily_adapter_preserves_order_and_legacy_commands_without_enabling_runtime() -> None:
@@ -335,6 +335,7 @@ def test_daily_shadow_plan_matches_existing_trading_day_plan(as_of: date) -> Non
             due_policy_id="daily_trigger_v1",
             trading_calendar="XNYS",
             preserve_sequential_order=True,
+            is_trading_day=True,
         ),
     )
     assert assessment.workflow_spec is not None
@@ -365,6 +366,7 @@ def test_daily_shadow_plan_matches_existing_closed_market_plan(as_of: date) -> N
             due_policy_id="daily_trigger_v1",
             trading_calendar="XNYS",
             preserve_sequential_order=True,
+            is_trading_day=False,
         ),
     )
     assert assessment.workflow_spec is not None
@@ -380,9 +382,9 @@ def test_daily_shadow_plan_matches_existing_closed_market_plan(as_of: date) -> N
     )
 
     assert legacy_plan.market_session.is_trading_day is False
-    assert parity.status is CanonicalStatus.LIMITED
+    assert parity.status is CanonicalStatus.PASS
     assert parity.blocker_codes == ()
-    assert parity.legacy_only_step_ids == ("official_policy_sources",)
+    assert parity.legacy_only_step_ids == ()
 
 
 def test_unknown_legacy_production_effect_is_blocked_not_defaulted() -> None:

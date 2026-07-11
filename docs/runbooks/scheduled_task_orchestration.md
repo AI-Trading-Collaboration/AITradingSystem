@@ -70,6 +70,7 @@ aits ops daily-run --as-of 2026-05-06
 周末或 NYSE 常规整日休市日：
 
 - 仍运行 `validate-data`、PIT fetch/build/validate、SEC companyfacts/metrics、valuation、Dynamic v3 rescue `schedule observe`（输出 closed-market skip audit）、`ops health --non-trading-day` 和 secret scan。
+- `official_policy_sources` 以 `config/scheduled_tasks.yaml` 的 `activation_condition=closed_market_only` 在 `validate-data` 后运行；交易日不激活。配置计划、legacy daily plan和canonical shadow plan必须解析为相同步骤顺序。
 - 跳过 `score-daily`、forward evidence dry-run archive、dashboard、SEC PIT shadow observe / monitor、score change attribution、market panel、market data freshness review、freshness recovery、portfolio candidate tracking、portfolio tracking review、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality。
 - 不生成新的日报评分、decision snapshot、Reader Brief scoring artifacts、prediction ledger 行或执行动作。
 
