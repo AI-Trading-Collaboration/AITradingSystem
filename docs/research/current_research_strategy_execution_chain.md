@@ -361,6 +361,48 @@ base(parameters_1..7)
 
 Holdout 在 selection rule、window、metric 和 threshold 冻结前不得访问；访问后不能反复用于调参。E0/E1/E2 evidence 只支持 test/diagnostic/component replay，不支持 promotion；promotion 至少要求 owner-reviewed E3 full-advisory PIT replay 和 E4 forward paper-shadow。
 
+#### Dynamic-v3 true walk-forward selection
+
+设计目的不是把全周期leaderboard重复切成多个文件，而是防止“用全样本选出赢家，再把赢家的全样本指标贴到test window”造成未来信息泄漏。G2.4S将source sweep内冻结的candidate universe、normalized config和window policy作为唯一输入；当前profile config只用于核对evaluator、candidate budget和当前policy drift，历史sweep始终按其自身normalized config解释，不能被今天的配置静默重写。
+
+| 输入 | 必须证明 | 用途 |
+|---|---|---|
+| `sweep_manifest.json` | sweep id、evaluator、profile（若有）与目录一致；checksum冻结 | 运行身份和evaluator边界 |
+| `sweep_config.normalized.yaml` | source run冻结版本；checksum冻结 | 生成train/test windows、hard constraints和scoring weights |
+| `candidate_results.jsonl` | completed candidate id唯一；checksum冻结；不得按全周期gate预先删掉train候选 | candidate universe、parameters、real artifact link |
+| profile registry +当前profile config | evaluator、candidate budget、policy projection显式比较 | 识别current-policy drift；不改写历史source policy |
+| 每个candidate的real evaluation | 必须属于`<sweep>/real_evaluation/<candidate>/`，report/sweep/candidate id一致，checksum冻结 | `dynamic_candidate`和`static_base_candidate` daily paths |
+
+每个window独立切片，日期键使用`signal_date`且dynamic/static dates必须一致：
+
+```text
+R_dynamic(w) = product(1 + strategy_return_dynamic,t) - 1
+R_static(w)  = product(1 + strategy_return_static,t) - 1
+dynamic_vs_static_gap(w) = R_dynamic(w) - R_static(w)
+MDD(w) = min_t(equity_t / running_peak_t - 1)
+drawdown_degradation_pp(w) = abs(MDD_dynamic) - abs(MDD_static)
+turnover(w) = sum(turnover_dynamic,t)
+constraint_hit_rate(w) = count(days with non-empty constraints_applied) / row_count
+```
+
+Train leaderboard只使用该train window重算的path metrics和冻结scoring weights；分数相同时按candidate id稳定排序，不允许candidate/date hash jitter。未导出的window false-risk-off和window robustness不会按0获得正向分：对应score contribution强制移除，gate至少`REVIEW_REQUIRED`。每个window只允许从`train_gate != reject`且`train_score`非空的候选中选择；全体reject时明确`NO_ELIGIBLE_TRAIN_CANDIDATE`，不得按candidate id挑一个占位赢家，也不得生成test result。成功选择后才从同一candidate的test slice独立重算test metrics；全周期gate不得预先排除candidate，也不得复制全周期metrics到test。
+
+输出为`wf_windows.json`、`train_window_leaderboards.jsonl`、`selected_candidates.jsonl`、`test_window_results.jsonl`、Markdown和manifest。Manifest记录profile binding checks、source/output checksums、每个real artifact path/checksum、evidence method/completeness和limitations；validator重新读取所有source并复算windows、ranking、selection、test、summary、status和Markdown。Tiny fixture固定`PROXY_ONLY/INCOMPLETE/not_for_investment_decision=true`；real path完整时当前为`PATH_DERIVED_PARTIAL/REVIEW_REQUIRED`，因为path slicing尚未逐window重跑evaluator，且缺window false-risk-off/robustness。后续优化空间是导出window gate完整字段、实现逐fold evaluator rerun与purged/embargo policy、增加cost/lag/stress variants；这些完成前不得输出最终true walk-forward `PASS`。
+
+#### Dynamic-v3 overfit evidence
+
+Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：
+
+| 组件 | 当前方法 | 当前能证明什么 | 不能证明什么 |
+|---|---|---|---|
+| rank stability | `global_rank_percentile_diagnostic_v2` | 全周期rank/percentile | 跨fold rank stability |
+| parameter neighborhood | real neighbor full-period score deltas；缺real时synthetic proxy | 邻近参数是否有真实linked result | fold-specific sensitivity |
+| regime stability | real daily path按`selected_regime`聚合 | regime覆盖和return分布 | 每个regime的selection rank稳定性 |
+| extreme-day dependency | `abs(strategy_return)`最大日与Top-5占绝对收益总量比例 | 收益集中诊断 | 经校准的promotion boundary |
+| multiple testing | candidate count + `PBO/DSR NOT_RUN` | 搜索规模被披露 | multiplicity-adjusted significance |
+
+任何component仍为proxy、aggregate-only、missing或未校准时，overall最高`REVIEW_REQUIRED`；source candidate hard gate为`reject`时可重算为`HIGH_RISK`。当前`path_and_aggregate_overfit_v2`不允许`LOW_RISK`，修改manifest或component status不能升级结论。输出包括五个component JSON、Markdown和manifest；validator从candidate results/real path重新生成全部component、overall status、source/output checksums和Markdown。后续优化入口依次是消费同一walk-forward artifact的逐fold rank history、fold-specific real neighbors、per-regime gate/benchmark、预注册并校准extreme-day concentration boundary，以及PBO/DSR或等价multiple-testing correction；只有全部证据达到reviewed completeness后才讨论`LOW_RISK`。
+
 ### 5.10 Evidence ledger、state 与 decision
 
 `research_governance.py` 当前将证据分类为 E0～E5，并输出：

@@ -1628,11 +1628,17 @@ reports:
     command: aits etf dynamic-v3-rescue walk-forward selection-report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/wf_selection_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/wf_windows.json
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/train_window_leaderboards.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/selected_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/test_window_results.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/wf_selection_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-106 records per-window train selection and test-window outcomes
-      for true walk-forward review before promotion interpretation.
+      TRADING-106 re-derives train ranking and test-window outcomes from frozen
+      source daily paths. Profile/config/source/output checksums and evidence
+      completeness prevent full-period metrics, hash jitter, fixture proxy, or
+      partial path evidence from being misreported as true walk-forward PASS.
     owner_action: review_walk_forward_selection_before_overfit_or_promotion_review
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
@@ -1646,11 +1652,17 @@ reports:
     command: aits etf dynamic-v3-rescue overfit report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/overfit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/rank_stability.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/parameter_neighborhood_stability.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/regime_stability.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/extreme_day_dependency.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/multiple_testing_warning.json
       - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/overfit_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-107 fail-closed overfit review blocks HIGH_RISK candidates and
-      keeps REVIEW_REQUIRED as manual review only.
+      TRADING-107 recomputes source lineage and each overfit component, blocks
+      source hard-gate HIGH_RISK candidates, and caps proxy/partial evidence at
+      REVIEW_REQUIRED until fold-specific and multiplicity evidence exists.
     owner_action: review_overfit_report_before_any_promote_candidate_decision
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true

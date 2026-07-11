@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from itertools import product
+from math import isfinite
 from pathlib import Path
 from typing import Any, Literal, Self
 
@@ -8680,11 +8681,13 @@ def run_walk_forward_selection(
     if not resolved_sweep_id:
         raise DynamicV3ParameterResearchError("walk-forward selection requires a source sweep")
     sweep_dir = sweep_output_dir / resolved_sweep_id
-    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
-    source_results = [
-        row for row in _read_candidate_results(sweep_dir) if row.get("gate") != GATE_REJECT
-    ]
-    windows = walk_forward_windows(config)
+    evidence = _build_walk_forward_selection_evidence(
+        sweep_dir=sweep_dir,
+        source_sweep_id=resolved_sweep_id,
+        config_path=config_path,
+        profile=profile,
+        profile_config_path=profile_config_path,
+    )
     wf_selection_id = _stable_id(
         "wf-selection",
         resolved_sweep_id,
@@ -8692,44 +8695,6 @@ def run_walk_forward_selection(
         generated.isoformat(),
     )
     wf_dir = _unique_dir(output_dir / wf_selection_id)
-    wf_dir.mkdir(parents=True, exist_ok=False)
-    train_leaderboards: list[dict[str, Any]] = []
-    selected_rows: list[dict[str, Any]] = []
-    test_rows: list[dict[str, Any]] = []
-    for index, window in enumerate(windows, start=1):
-        leaderboard = _window_train_leaderboard(
-            source_results,
-            window=window,
-            window_index=index,
-        )
-        train_leaderboards.append(
-            {
-                "window_index": index,
-                "window": dict(window),
-                "leaderboard": leaderboard,
-            }
-        )
-        selected = leaderboard[0] if leaderboard else {}
-        if selected:
-            selected_rows.append(
-                {
-                    "window_index": index,
-                    "train_start": window["train_start"],
-                    "train_end": window["train_end"],
-                    "test_start": window["test_start"],
-                    "test_end": window["test_end"],
-                    "candidate_id": selected.get("candidate_id"),
-                    "train_rank": selected.get("train_rank"),
-                    "parameters": selected.get("parameters", {}),
-                }
-            )
-            test_rows.append(_walk_forward_selection_test_row(selected, window, config))
-    pass_count = sum(1 for row in test_rows if row.get("test_gate") != GATE_REJECT)
-    status = (
-        "PASS"
-        if test_rows and pass_count / len(test_rows) >= config.walk_forward.min_pass_ratio
-        else "REVIEW_REQUIRED"
-    )
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_walk_forward_selection_manifest",
@@ -8738,10 +8703,22 @@ def run_walk_forward_selection(
         "profile": profile,
         "config_path": str(config_path),
         "profile_config_path": str(profile_config_path),
-        "status": status,
-        "window_count": len(windows),
-        "selected_candidate_count": len(selected_rows),
-        "test_pass_count": pass_count,
+        "status": evidence["status"],
+        "selection_status": evidence["selection_status"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "profile_binding_status": evidence["profile_binding_status"],
+        "profile_binding_checks": evidence["profile_binding_checks"],
+        "window_count": evidence["summary"]["window_count"],
+        "selected_candidate_count": evidence["summary"]["selected_candidate_count"],
+        "test_pass_count": evidence["summary"]["test_pass_count"],
+        "source_candidate_count": evidence["summary"]["source_candidate_count"],
+        "usable_candidate_count": evidence["summary"]["usable_candidate_count"],
+        "source_artifacts": evidence["source_artifacts"],
+        "source_checksums": evidence["source_checksums"],
+        "real_artifact_sources": evidence["real_artifact_sources"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
         "started_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -8751,26 +8728,39 @@ def run_walk_forward_selection(
         "report_type": "etf_dynamic_v3_walk_forward_selection_report",
         "wf_selection_id": wf_selection_id,
         "source_sweep_id": resolved_sweep_id,
-        "status": status,
+        "status": evidence["status"],
+        "selection_status": evidence["selection_status"],
         "profile": profile,
-        "summary": {
-            "window_count": len(windows),
-            "selected_candidate_count": len(selected_rows),
-            "test_pass_count": pass_count,
-            "parameter_stability": _wf_parameter_stability(selected_rows),
-            "overfit_windows": [
-                row["window_index"] for row in test_rows if row.get("test_gate") == GATE_REJECT
-            ],
-        },
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "profile_binding_status": evidence["profile_binding_status"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
+        "summary": evidence["summary"],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    wf_dir.mkdir(parents=True, exist_ok=False)
     _write_json(wf_dir / "wf_selection_manifest.json", manifest)
-    _write_json(wf_dir / "wf_windows.json", {"windows": windows})
-    _write_jsonl(wf_dir / "train_window_leaderboards.jsonl", train_leaderboards)
-    _write_jsonl(wf_dir / "selected_candidates.jsonl", selected_rows)
-    _write_jsonl(wf_dir / "test_window_results.jsonl", test_rows)
+    _write_json(wf_dir / "wf_windows.json", {"windows": evidence["windows"]})
+    _write_jsonl(
+        wf_dir / "train_window_leaderboards.jsonl",
+        evidence["train_window_leaderboards"],
+    )
+    _write_jsonl(wf_dir / "selected_candidates.jsonl", evidence["selected_candidates"])
+    _write_jsonl(wf_dir / "test_window_results.jsonl", evidence["test_window_results"])
     _write_text(wf_dir / "wf_selection_report.md", render_wf_selection_markdown(report))
+    output_names = [
+        "wf_windows.json",
+        "train_window_leaderboards.jsonl",
+        "selected_candidates.jsonl",
+        "test_window_results.jsonl",
+        "wf_selection_report.md",
+    ]
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(wf_dir / name) for name in output_names
+    }
+    _write_json(wf_dir / "wf_selection_manifest.json", manifest)
     _update_latest_pointer(
         "latest_walk_forward_selection",
         wf_selection_id,
@@ -8825,12 +8815,12 @@ def validate_walk_forward_selection_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (wf_dir / name).exists(), name) for name in required
     ]
-    manifest = _read_optional_json(wf_dir / "wf_selection_manifest.json") or {}
-    checks.append(
-        _check(
-            "selected_candidates_present",
-            int(manifest.get("selected_candidate_count") or 0) > 0,
-            str(manifest.get("selected_candidate_count")),
+    manifest = _mapping(_read_optional_json(wf_dir / "wf_selection_manifest.json"))
+    checks.extend(
+        _walk_forward_selection_content_checks(
+            wf_dir=wf_dir,
+            wf_selection_id=wf_selection_id,
+            manifest=manifest,
         )
     )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -8844,6 +8834,207 @@ def validate_walk_forward_selection_artifact(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def _walk_forward_selection_content_checks(
+    *,
+    wf_dir: Path,
+    wf_selection_id: str,
+    manifest: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks = [
+        _check("manifest_is_object", bool(manifest), "wf_selection_manifest.json"),
+        _check(
+            "manifest_id_matches_directory",
+            _text(manifest.get("wf_selection_id")) == wf_selection_id,
+            _text(manifest.get("wf_selection_id")),
+        ),
+        _check(
+            "manifest_status_allowed",
+            _text(manifest.get("status")) in {"INCOMPLETE", "REVIEW_REQUIRED", "PASS"},
+            _text(manifest.get("status")),
+        ),
+    ]
+    source_sweep_id = _text(manifest.get("source_sweep_id"))
+    source_artifacts = _mapping(manifest.get("source_artifacts"))
+    candidate_results_raw = _text(source_artifacts.get("candidate_results_path"))
+    candidate_results_path = (
+        _resolve_project_path(Path(candidate_results_raw)) if candidate_results_raw else None
+    )
+    sweep_dir = None if candidate_results_path is None else candidate_results_path.parent
+    checks.extend(
+        [
+            _check(
+                "source_sweep_id_present",
+                bool(source_sweep_id),
+                source_sweep_id,
+            ),
+            _check(
+                "candidate_results_path_owned_by_sweep",
+                sweep_dir is not None
+                and sweep_dir.name == source_sweep_id
+                and candidate_results_path is not None
+                and candidate_results_path.name == "candidate_results.jsonl",
+                candidate_results_raw,
+            ),
+        ]
+    )
+    source_checksums = _mapping(manifest.get("source_checksums"))
+    for name, raw_path in source_artifacts.items():
+        checksum_key = name.removesuffix("_path") + "_sha256"
+        path = _resolve_project_path(Path(_text(raw_path))) if _text(raw_path) else None
+        checks.append(
+            _check(
+                f"source_checksum_matches:{name}",
+                path is not None
+                and path.is_file()
+                and _text(source_checksums.get(checksum_key)) == _file_sha256_path(path),
+                _text(source_checksums.get(checksum_key)),
+            )
+        )
+    expected: dict[str, Any] = {}
+    try:
+        if sweep_dir is None:
+            raise DynamicV3ParameterResearchError("candidate results source path is missing")
+        expected = _build_walk_forward_selection_evidence(
+            sweep_dir=sweep_dir,
+            source_sweep_id=source_sweep_id,
+            config_path=Path(_text(source_artifacts.get("requested_config_path"))),
+            profile=_text(manifest.get("profile")),
+            profile_config_path=Path(_text(source_artifacts.get("profile_config_path"))),
+        )
+        checks.append(_check("source_recomputation_succeeded", True, source_sweep_id))
+    except (DynamicV3ParameterResearchError, OSError, ValueError, json.JSONDecodeError) as exc:
+        checks.append(_check("source_recomputation_succeeded", False, str(exc)))
+    if expected:
+        expected_manifest_fields = {
+            "status": expected["status"],
+            "selection_status": expected["selection_status"],
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "profile_binding_status": expected["profile_binding_status"],
+            "profile_binding_checks": expected["profile_binding_checks"],
+            "source_artifacts": expected["source_artifacts"],
+            "source_checksums": expected["source_checksums"],
+            "real_artifact_sources": expected["real_artifact_sources"],
+            "not_for_investment_decision": expected["not_for_investment_decision"],
+        }
+        observed_manifest_fields = {
+            key: manifest.get(key) for key in expected_manifest_fields
+        }
+        checks.append(
+            _check(
+                "manifest_content_matches_source_recomputation",
+                observed_manifest_fields == expected_manifest_fields,
+                expected["evidence_completeness"],
+            )
+        )
+        for key in (
+            "window_count",
+            "selected_candidate_count",
+            "test_pass_count",
+            "source_candidate_count",
+            "usable_candidate_count",
+        ):
+            checks.append(
+                _check(
+                    f"manifest_summary_matches:{key}",
+                    manifest.get(key) == expected["summary"].get(key),
+                    str(expected["summary"].get(key)),
+                )
+            )
+        actual_windows = _mapping(_read_optional_json(wf_dir / "wf_windows.json"))
+        actual_train = _read_jsonl(wf_dir / "train_window_leaderboards.jsonl")
+        actual_selected = _read_jsonl(wf_dir / "selected_candidates.jsonl")
+        actual_test = _read_jsonl(wf_dir / "test_window_results.jsonl")
+        checks.extend(
+            [
+                _check(
+                    "windows_match_source_recomputation",
+                    _records(actual_windows.get("windows")) == expected["windows"],
+                    str(len(expected["windows"])),
+                ),
+                _check(
+                    "train_leaderboards_match_source_recomputation",
+                    actual_train == expected["train_window_leaderboards"],
+                    str(len(expected["train_window_leaderboards"])),
+                ),
+                _check(
+                    "selected_candidates_match_source_recomputation",
+                    actual_selected == expected["selected_candidates"],
+                    str(len(expected["selected_candidates"])),
+                ),
+                _check(
+                    "test_results_match_source_recomputation",
+                    actual_test == expected["test_window_results"],
+                    str(len(expected["test_window_results"])),
+                ),
+                _check(
+                    "proxy_evidence_cannot_claim_pass",
+                    expected["evidence_completeness"] != "PROXY_ONLY"
+                    or _text(manifest.get("status")) == "INCOMPLETE",
+                    _text(manifest.get("status")),
+                ),
+                _check(
+                    "partial_evidence_cannot_claim_pass",
+                    expected["evidence_completeness"] not in {
+                        "PATH_DERIVED_PARTIAL",
+                        "INCOMPLETE",
+                    }
+                    or _text(manifest.get("status")) != "PASS",
+                    _text(manifest.get("status")),
+                ),
+            ]
+        )
+        expected_report = {
+            "wf_selection_id": wf_selection_id,
+            "source_sweep_id": source_sweep_id,
+            "status": expected["status"],
+            "selection_status": expected["selection_status"],
+            "profile": _text(manifest.get("profile")),
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "profile_binding_status": expected["profile_binding_status"],
+            "not_for_investment_decision": expected["not_for_investment_decision"],
+            "summary": expected["summary"],
+        }
+        report_path = wf_dir / "wf_selection_report.md"
+        checks.append(
+            _check(
+                "markdown_matches_source_recomputation",
+                report_path.is_file()
+                and report_path.read_text(encoding="utf-8")
+                == render_wf_selection_markdown(expected_report),
+                str(report_path),
+            )
+        )
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    expected_output_names = {
+        "wf_windows.json",
+        "train_window_leaderboards.jsonl",
+        "selected_candidates.jsonl",
+        "test_window_results.jsonl",
+        "wf_selection_report.md",
+    }
+    checks.append(
+        _check(
+            "output_checksum_inventory_complete",
+            set(output_checksums) == expected_output_names,
+            ",".join(sorted(output_checksums)),
+        )
+    )
+    for filename in expected_output_names:
+        checks.append(
+            _check(
+                f"output_checksum_matches:{filename}",
+                _text(output_checksums.get(filename))
+                == _file_sha256_path(wf_dir / filename),
+                _text(output_checksums.get(filename)),
+            )
+        )
+    return checks
 
 
 def validate_walk_forward_artifact(
@@ -9021,35 +9212,28 @@ def run_overfit_review(
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     sweep_dir = sweep_output_dir / sweep_id
-    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
-    result = _candidate_result(sweep_dir, candidate_id)
-    if result is None:
-        raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
-    results = _read_candidate_results(sweep_dir)
+    evidence = _build_overfit_evidence(
+        sweep_dir=sweep_dir,
+        source_sweep_id=sweep_id,
+        candidate_id=candidate_id,
+    )
     overfit_id = _stable_id("overfit", sweep_id, candidate_id, generated.isoformat())
     overfit_dir = _unique_dir(output_dir / overfit_id)
-    overfit_dir.mkdir(parents=True, exist_ok=False)
-    rank = _candidate_rank(results, candidate_id)
-    rank_stability = _rank_stability_payload(results, candidate_id, rank)
-    neighborhood = _parameter_neighborhood_stability_payload(result, config)
-    regime = _overfit_regime_stability_payload(result)
-    extreme_day = _extreme_day_dependency_payload(result)
-    multiple_testing = _multiple_testing_warning_payload(results)
-    overfit_status = _overfit_status_from_components(
-        result=result,
-        rank_stability=rank_stability,
-        neighborhood=neighborhood,
-        extreme_day=extreme_day,
-        multiple_testing=multiple_testing,
-    )
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_overfit_manifest",
         "overfit_id": overfit_id,
         "source_sweep_id": sweep_id,
         "candidate_id": candidate_id,
-        "status": overfit_status,
-        "overfit_status": overfit_status,
+        "status": evidence["overfit_status"],
+        "overfit_status": evidence["overfit_status"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "component_evidence_statuses": evidence["component_evidence_statuses"],
+        "source_artifacts": evidence["source_artifacts"],
+        "source_checksums": evidence["source_checksums"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
         "started_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -9060,24 +9244,51 @@ def run_overfit_review(
         "overfit_id": overfit_id,
         "source_sweep_id": sweep_id,
         "candidate_id": candidate_id,
-        "status": overfit_status,
-        "overfit_status": overfit_status,
-        "rank_stability": rank_stability,
-        "parameter_neighborhood_stability": neighborhood,
-        "regime_stability": regime,
-        "extreme_day_dependency": extreme_day,
-        "multiple_testing_warning": multiple_testing,
+        "status": evidence["overfit_status"],
+        "overfit_status": evidence["overfit_status"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "component_evidence_statuses": evidence["component_evidence_statuses"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
+        "rank_stability": evidence["rank_stability"],
+        "parameter_neighborhood_stability": evidence[
+            "parameter_neighborhood_stability"
+        ],
+        "regime_stability": evidence["regime_stability"],
+        "extreme_day_dependency": evidence["extreme_day_dependency"],
+        "multiple_testing_warning": evidence["multiple_testing_warning"],
         "optional_pbo_dsr_status": "NOT_RUN_REVIEW_REQUIRED",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    overfit_dir.mkdir(parents=True, exist_ok=False)
     _write_json(overfit_dir / "overfit_manifest.json", manifest)
-    _write_json(overfit_dir / "rank_stability.json", rank_stability)
-    _write_json(overfit_dir / "parameter_neighborhood_stability.json", neighborhood)
-    _write_json(overfit_dir / "regime_stability.json", regime)
-    _write_json(overfit_dir / "extreme_day_dependency.json", extreme_day)
-    _write_json(overfit_dir / "multiple_testing_warning.json", multiple_testing)
+    _write_json(overfit_dir / "rank_stability.json", evidence["rank_stability"])
+    _write_json(
+        overfit_dir / "parameter_neighborhood_stability.json",
+        evidence["parameter_neighborhood_stability"],
+    )
+    _write_json(overfit_dir / "regime_stability.json", evidence["regime_stability"])
+    _write_json(
+        overfit_dir / "extreme_day_dependency.json", evidence["extreme_day_dependency"]
+    )
+    _write_json(
+        overfit_dir / "multiple_testing_warning.json", evidence["multiple_testing_warning"]
+    )
     _write_text(overfit_dir / "overfit_report.md", render_overfit_markdown(report))
+    output_names = [
+        "rank_stability.json",
+        "parameter_neighborhood_stability.json",
+        "regime_stability.json",
+        "extreme_day_dependency.json",
+        "multiple_testing_warning.json",
+        "overfit_report.md",
+    ]
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(overfit_dir / name) for name in output_names
+    }
+    _write_json(overfit_dir / "overfit_manifest.json", manifest)
     _update_latest_pointer("latest_overfit", overfit_id, overfit_dir / "overfit_manifest.json")
     return {"overfit_id": overfit_id, "overfit_dir": overfit_dir, "report": report}
 
@@ -9125,12 +9336,12 @@ def validate_overfit_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (overfit_dir / name).exists(), name) for name in required
     ]
-    manifest = _read_optional_json(overfit_dir / "overfit_manifest.json") or {}
-    checks.append(
-        _check(
-            "overfit_status_allowed",
-            _text(manifest.get("overfit_status")) in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
-            _text(manifest.get("overfit_status")),
+    manifest = _mapping(_read_optional_json(overfit_dir / "overfit_manifest.json"))
+    checks.extend(
+        _overfit_content_checks(
+            overfit_dir=overfit_dir,
+            overfit_id=overfit_id,
+            manifest=manifest,
         )
     )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -9144,6 +9355,388 @@ def validate_overfit_artifact(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def _build_overfit_evidence(
+    *,
+    sweep_dir: Path,
+    source_sweep_id: str,
+    candidate_id: str,
+) -> dict[str, Any]:
+    normalized_config_path = sweep_dir / "sweep_config.normalized.yaml"
+    sweep_manifest_path = sweep_dir / "sweep_manifest.json"
+    candidate_results_path = sweep_dir / "candidate_results.jsonl"
+    if sweep_dir.name != source_sweep_id:
+        raise DynamicV3ParameterResearchError("overfit source sweep path does not match id")
+    for path in (normalized_config_path, sweep_manifest_path, candidate_results_path):
+        if not path.is_file():
+            raise DynamicV3ParameterResearchError(f"overfit source missing: {path}")
+    config = load_parameter_sweep_config(normalized_config_path)
+    results = _read_candidate_results(sweep_dir)
+    result = _candidate_result_from_rows(results, candidate_id)
+    if result is None:
+        raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
+    evaluator_mode = _text(result.get("evaluator_mode"), config.execution.evaluator)
+    raw_real_path = _text(result.get("real_evaluation_artifact_path"))
+    real_path = _resolve_project_path(Path(raw_real_path)) if raw_real_path else None
+    expected_real_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(strict=False)
+    real_path_owned = (
+        real_path is not None and real_path.resolve(strict=False).parent == expected_real_dir
+    )
+    real_payload = _mapping(_read_optional_json(real_path))
+    expected_report_id = _text(
+        _mapping(result.get("metrics")).get("real_evaluation_report_id")
+    )
+    observed_report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
+    real_source_valid = (
+        evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+        and _text(result.get("metrics_source")) == "real_evaluation_artifact"
+        and real_path_owned
+        and bool(real_payload)
+        and bool(expected_report_id)
+        and observed_report_id == expected_report_id
+    )
+    rank = _candidate_rank(results, candidate_id)
+    rank_stability = _rank_stability_payload(results, candidate_id, rank)
+    rank_stability.update(
+        {
+            "status": "REVIEW_REQUIRED",
+            "evidence_status": "GLOBAL_FULL_PERIOD_RANK_ONLY",
+            "method": "global_rank_percentile_diagnostic_v2",
+            "limitation": "single full-period rank is not rank stability across folds",
+        }
+    )
+    if real_source_valid:
+        sensitivity = _real_sensitivity_rows(result, results, config)
+        sensitivity_summary = _sensitivity_evidence_summary(sensitivity, evaluator_mode)
+        max_abs_delta = max(
+            (abs(_float(row.get("score_delta"))) for row in sensitivity),
+            default=0.0,
+        )
+        neighborhood = {
+            "status": "REVIEW_REQUIRED",
+            "evidence_status": sensitivity_summary["status"],
+            "method": "real_neighbor_full_period_aggregate_v2",
+            "neighbor_count": len(sensitivity),
+            "real_neighbor_count": sensitivity_summary["real_neighbor_count"],
+            "missing_real_neighbor_count": sensitivity_summary[
+                "missing_real_neighbor_count"
+            ],
+            "max_abs_score_delta": round(max_abs_delta, 6),
+            "configured_pass_boundary": config.robustness.max_score_delta_for_pass,
+            "rows": sensitivity,
+            "limitation": "neighbor deltas are full-period aggregates, not fold-specific",
+        }
+        regime_payload = _real_regime_bucket_results(real_payload)
+        regime = {
+            **regime_payload,
+            "status": "REVIEW_REQUIRED",
+            "method": "real_daily_path_regime_diagnostic_v2",
+            "limitation": "regime returns do not prove per-regime selection rank stability",
+        }
+        extreme_day = _real_extreme_day_dependency_payload(real_payload)
+    else:
+        proxy = _parameter_neighborhood_stability_payload(result, config)
+        neighborhood = {
+            **proxy,
+            "status": "REVIEW_REQUIRED",
+            "evidence_status": "SYNTHETIC_OR_MISSING_REAL_NEIGHBOR_EVIDENCE",
+            "method": "synthetic_neighbor_proxy_v1",
+            "limitation": "proxy cannot support LOW_RISK",
+        }
+        regime = {
+            **_overfit_regime_stability_payload(result),
+            "status": "REVIEW_REQUIRED",
+            "evidence_status": "AGGREGATE_PROXY_ONLY",
+            "method": "aggregate_regime_proxy_v1",
+            "limitation": "aggregate status is not a regime path analysis",
+        }
+        extreme_day = {
+            **_extreme_day_dependency_payload(result),
+            "status": "REVIEW_REQUIRED",
+            "evidence_status": "AGGREGATE_PROXY_ONLY",
+            "method": "aggregate_gap_ratio_proxy_v1",
+            "limitation": "aggregate ratio cannot identify extreme-day dependency",
+        }
+    multiple_testing = {
+        "status": "REVIEW_REQUIRED",
+        "evidence_status": "UNADJUSTED_CANDIDATE_COUNT_ONLY",
+        "method": "candidate_count_diagnostic_v2",
+        "candidate_count": len(results),
+        "pbo_dsr_status": "NOT_RUN_REVIEW_REQUIRED",
+        "warning": "PBO/DSR or equivalent multiplicity evidence is not available",
+    }
+    components = {
+        "rank_stability": rank_stability,
+        "parameter_neighborhood_stability": neighborhood,
+        "regime_stability": regime,
+        "extreme_day_dependency": extreme_day,
+        "multiple_testing_warning": multiple_testing,
+    }
+    component_statuses = {
+        name: _text(component.get("evidence_status"), "UNKNOWN")
+        for name, component in components.items()
+    }
+    limitations = [
+        _text(component.get("limitation"))
+        for component in components.values()
+        if _text(component.get("limitation"))
+    ]
+    if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY:
+        evidence_completeness = "PROXY_ONLY"
+        limitations.append("tiny_fixture_is_not_investment_overfit_evidence")
+    elif not real_source_valid:
+        evidence_completeness = "INCOMPLETE"
+        limitations.append("real_evaluation_source_missing_or_invalid")
+    else:
+        evidence_completeness = "PATH_DERIVED_PARTIAL"
+    overfit_status = (
+        "HIGH_RISK" if _text(result.get("gate")) == GATE_REJECT else "REVIEW_REQUIRED"
+    )
+    source_artifacts = {
+        "sweep_manifest_path": str(sweep_manifest_path),
+        "normalized_config_path": str(normalized_config_path),
+        "candidate_results_path": str(candidate_results_path),
+        "real_evaluation_artifact_path": raw_real_path,
+    }
+    source_checksums = {
+        "sweep_manifest_sha256": _file_sha256_path(sweep_manifest_path),
+        "normalized_config_sha256": _file_sha256_path(normalized_config_path),
+        "candidate_results_sha256": _file_sha256_path(candidate_results_path),
+        "real_evaluation_artifact_sha256": (
+            "" if real_path is None else _file_sha256_path(real_path)
+        ),
+    }
+    return {
+        "overfit_status": overfit_status,
+        "evidence_method": "path_and_aggregate_overfit_v2",
+        "evidence_completeness": evidence_completeness,
+        "limitations": sorted(set(_texts(limitations))),
+        "component_evidence_statuses": component_statuses,
+        "not_for_investment_decision": (
+            evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
+        "source_artifacts": source_artifacts,
+        "source_checksums": source_checksums,
+        **components,
+    }
+
+
+def _real_extreme_day_dependency_payload(
+    real_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    dynamic_rows = _records(
+        _mapping(real_payload.get("comparison_daily_paths")).get("dynamic_candidate")
+    )
+    valid = _valid_daily_return_rows(dynamic_rows)
+    absolute_returns = sorted(
+        (abs(_float(row.get("strategy_return"))) for row in valid.values()),
+        reverse=True,
+    )
+    total_absolute_return = sum(absolute_returns)
+    largest_share = (
+        0.0
+        if not absolute_returns or total_absolute_return == 0
+        else absolute_returns[0] / total_absolute_return
+    )
+    top_five_share = (
+        0.0 if total_absolute_return == 0 else sum(absolute_returns[:5]) / total_absolute_return
+    )
+    return {
+        "status": "REVIEW_REQUIRED",
+        "evidence_status": (
+            "PATH_DERIVED_DIAGNOSTIC" if absolute_returns else "MISSING_REAL_DAILY_PATH"
+        ),
+        "method": "daily_absolute_return_concentration_v2",
+        "row_count": len(absolute_returns),
+        "largest_absolute_return_share": round(largest_share, 10),
+        "top_five_absolute_return_share": round(top_five_share, 10),
+        "limitation": "diagnostic has no calibrated promotion boundary",
+    }
+
+
+def _overfit_content_checks(
+    *,
+    overfit_dir: Path,
+    overfit_id: str,
+    manifest: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks = [
+        _check("manifest_is_object", bool(manifest), "overfit_manifest.json"),
+        _check(
+            "manifest_id_matches_directory",
+            _text(manifest.get("overfit_id")) == overfit_id,
+            _text(manifest.get("overfit_id")),
+        ),
+        _check(
+            "overfit_status_allowed",
+            _text(manifest.get("overfit_status"))
+            in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
+            _text(manifest.get("overfit_status")),
+        ),
+    ]
+    source_sweep_id = _text(manifest.get("source_sweep_id"))
+    candidate_id = _text(manifest.get("candidate_id"))
+    source_artifacts = _mapping(manifest.get("source_artifacts"))
+    candidate_results_raw = _text(source_artifacts.get("candidate_results_path"))
+    candidate_results_path = (
+        _resolve_project_path(Path(candidate_results_raw)) if candidate_results_raw else None
+    )
+    sweep_dir = None if candidate_results_path is None else candidate_results_path.parent
+    checks.append(
+        _check(
+            "candidate_results_path_owned_by_source_sweep",
+            sweep_dir is not None
+            and sweep_dir.name == source_sweep_id
+            and candidate_results_path is not None
+            and candidate_results_path.name == "candidate_results.jsonl",
+            candidate_results_raw,
+        )
+    )
+    source_checksums = _mapping(manifest.get("source_checksums"))
+    checksum_keys = {
+        "sweep_manifest_path": "sweep_manifest_sha256",
+        "normalized_config_path": "normalized_config_sha256",
+        "candidate_results_path": "candidate_results_sha256",
+        "real_evaluation_artifact_path": "real_evaluation_artifact_sha256",
+    }
+    for path_key, checksum_key in checksum_keys.items():
+        raw_path = _text(source_artifacts.get(path_key))
+        expected_checksum = _text(source_checksums.get(checksum_key))
+        path = _resolve_project_path(Path(raw_path)) if raw_path else None
+        matches = (
+            not raw_path and not expected_checksum
+        ) or (
+            path is not None
+            and path.is_file()
+            and expected_checksum == _file_sha256_path(path)
+        )
+        checks.append(
+            _check(
+                f"source_checksum_matches:{path_key}",
+                matches,
+                expected_checksum,
+            )
+        )
+    expected: dict[str, Any] = {}
+    try:
+        if sweep_dir is None:
+            raise DynamicV3ParameterResearchError("candidate results source path is missing")
+        expected = _build_overfit_evidence(
+            sweep_dir=sweep_dir,
+            source_sweep_id=source_sweep_id,
+            candidate_id=candidate_id,
+        )
+        checks.append(_check("source_recomputation_succeeded", True, candidate_id))
+    except (DynamicV3ParameterResearchError, OSError, ValueError, json.JSONDecodeError) as exc:
+        checks.append(_check("source_recomputation_succeeded", False, str(exc)))
+    component_files = {
+        "rank_stability": "rank_stability.json",
+        "parameter_neighborhood_stability": "parameter_neighborhood_stability.json",
+        "regime_stability": "regime_stability.json",
+        "extreme_day_dependency": "extreme_day_dependency.json",
+        "multiple_testing_warning": "multiple_testing_warning.json",
+    }
+    if expected:
+        manifest_fields = {
+            key: manifest.get(key)
+            for key in (
+                "status",
+                "overfit_status",
+                "evidence_method",
+                "evidence_completeness",
+                "limitations",
+                "component_evidence_statuses",
+                "source_artifacts",
+                "source_checksums",
+                "not_for_investment_decision",
+            )
+        }
+        expected_manifest_fields = {
+            "status": expected["overfit_status"],
+            "overfit_status": expected["overfit_status"],
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "component_evidence_statuses": expected["component_evidence_statuses"],
+            "source_artifacts": expected["source_artifacts"],
+            "source_checksums": expected["source_checksums"],
+            "not_for_investment_decision": expected["not_for_investment_decision"],
+        }
+        checks.extend(
+            [
+                _check(
+                    "manifest_content_matches_source_recomputation",
+                    manifest_fields == expected_manifest_fields,
+                    expected["overfit_status"],
+                ),
+                _check(
+                    "low_risk_not_fabricated_from_partial_or_proxy_evidence",
+                    expected["evidence_completeness"]
+                    not in {"PROXY_ONLY", "INCOMPLETE", "PATH_DERIVED_PARTIAL"}
+                    or _text(manifest.get("overfit_status")) != "LOW_RISK",
+                    _text(manifest.get("overfit_status")),
+                ),
+            ]
+        )
+        for component_name, filename in component_files.items():
+            actual_component = _mapping(_read_optional_json(overfit_dir / filename))
+            checks.append(
+                _check(
+                    f"component_matches_source:{component_name}",
+                    actual_component == expected[component_name],
+                    filename,
+                )
+            )
+        expected_report = {
+            "overfit_id": overfit_id,
+            "source_sweep_id": source_sweep_id,
+            "candidate_id": candidate_id,
+            "status": expected["overfit_status"],
+            "overfit_status": expected["overfit_status"],
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "component_evidence_statuses": expected["component_evidence_statuses"],
+            "not_for_investment_decision": expected["not_for_investment_decision"],
+            "rank_stability": expected["rank_stability"],
+            "parameter_neighborhood_stability": expected[
+                "parameter_neighborhood_stability"
+            ],
+            "regime_stability": expected["regime_stability"],
+            "extreme_day_dependency": expected["extreme_day_dependency"],
+            "multiple_testing_warning": expected["multiple_testing_warning"],
+            "optional_pbo_dsr_status": "NOT_RUN_REVIEW_REQUIRED",
+        }
+        report_path = overfit_dir / "overfit_report.md"
+        checks.append(
+            _check(
+                "markdown_matches_source_recomputation",
+                report_path.is_file()
+                and report_path.read_text(encoding="utf-8")
+                == render_overfit_markdown(expected_report),
+                str(report_path),
+            )
+        )
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    expected_output_names = {*component_files.values(), "overfit_report.md"}
+    checks.append(
+        _check(
+            "output_checksum_inventory_complete",
+            set(output_checksums) == expected_output_names,
+            ",".join(sorted(output_checksums)),
+        )
+    )
+    for filename in expected_output_names:
+        checks.append(
+            _check(
+                f"output_checksum_matches:{filename}",
+                _text(output_checksums.get(filename))
+                == _file_sha256_path(overfit_dir / filename),
+                _text(output_checksums.get(filename)),
+            )
+        )
+    return checks
 
 
 def validate_robustness_artifact(
@@ -10827,33 +11420,69 @@ def render_candidate_attribution_markdown(payload: Mapping[str, Any]) -> str:
 
 def render_wf_selection_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
-    return (
-        f"# Dynamic v3 Rescue Walk-forward Selection {payload.get('wf_selection_id')}\n\n"
-        f"- Source sweep: {payload.get('source_sweep_id')}\n"
-        f"- Profile: {payload.get('profile')}\n"
-        f"- Status: {payload.get('status')}\n"
-        f"- Window count: {summary.get('window_count')}\n"
-        f"- Selected candidates: {summary.get('selected_candidate_count')}\n"
-        f"- Test pass count: {summary.get('test_pass_count')}\n"
-        f"- Parameter stability: {summary.get('parameter_stability')}\n\n"
-        "## Safety\n"
-        "- production_candidate_generated=false\n"
+    limitations = _texts(payload.get("limitations"))
+    lines = [
+        f"# Dynamic v3 Rescue Walk-forward Selection {payload.get('wf_selection_id')}",
+        "",
+        f"- Source sweep: {payload.get('source_sweep_id')}",
+        f"- Profile: {payload.get('profile')}",
+        f"- Status: {payload.get('status')}",
+        f"- Selection status: {payload.get('selection_status')}",
+        f"- Evidence method: {payload.get('evidence_method')}",
+        f"- Evidence completeness: {payload.get('evidence_completeness')}",
+        f"- Profile binding: {payload.get('profile_binding_status')}",
+        f"- Not for investment decision: {payload.get('not_for_investment_decision')}",
+        f"- Window count: {summary.get('window_count')}",
+        f"- Source candidates: {summary.get('source_candidate_count')}",
+        f"- Usable candidates: {summary.get('usable_candidate_count')}",
+        f"- Selected candidates: {summary.get('selected_candidate_count')}",
+        f"- Test pass count: {summary.get('test_pass_count')}",
+        f"- Parameter stability: {summary.get('parameter_stability')}",
+        "",
+        "## Limitations",
+    ]
+    lines.extend(f"- {item}" for item in limitations)
+    lines.extend(
+        [
+            "",
+            "## Safety",
+            "- production_candidate_generated=false",
+        ]
     )
+    return "\n".join(lines) + "\n"
 
 
 def render_overfit_markdown(payload: Mapping[str, Any]) -> str:
-    return (
-        f"# Dynamic v3 Rescue Overfit Review {payload.get('overfit_id')}\n\n"
-        f"- Candidate: {payload.get('candidate_id')}\n"
-        f"- Source sweep: {payload.get('source_sweep_id')}\n"
-        f"- Overfit status: {payload.get('overfit_status')}\n"
-        f"- Optional PBO/DSR: {payload.get('optional_pbo_dsr_status')}\n\n"
-        "## Interpretation\n"
-        "- HIGH_RISK blocks promotion.\n"
-        "- REVIEW_REQUIRED requires manual review and cannot create production_candidate.\n\n"
-        "## Safety\n"
-        "- production_candidate_generated=false\n"
+    component_statuses = _mapping(payload.get("component_evidence_statuses"))
+    lines = [
+        f"# Dynamic v3 Rescue Overfit Review {payload.get('overfit_id')}",
+        "",
+        f"- Candidate: {payload.get('candidate_id')}",
+        f"- Source sweep: {payload.get('source_sweep_id')}",
+        f"- Overfit status: {payload.get('overfit_status')}",
+        f"- Evidence method: {payload.get('evidence_method')}",
+        f"- Evidence completeness: {payload.get('evidence_completeness')}",
+        f"- Not for investment decision: {payload.get('not_for_investment_decision')}",
+        f"- Optional PBO/DSR: {payload.get('optional_pbo_dsr_status')}",
+        "",
+        "## Component Evidence",
+    ]
+    lines.extend(f"- {name}: {status}" for name, status in sorted(component_statuses.items()))
+    lines.extend(["", "## Limitations"])
+    lines.extend(f"- {item}" for item in _texts(payload.get("limitations")))
+    lines.extend(
+        [
+            "",
+            "## Interpretation",
+            "- HIGH_RISK blocks promotion.",
+            "- REVIEW_REQUIRED requires manual review and cannot create production_candidate.",
+            "- Proxy or partial evidence cannot be upgraded to LOW_RISK by editing status fields.",
+            "",
+            "## Safety",
+            "- production_candidate_generated=false",
+        ]
     )
+    return "\n".join(lines) + "\n"
 
 
 def render_governance_markdown(payload: Mapping[str, Any]) -> str:
@@ -19284,53 +19913,626 @@ def _dynamic_vs_static_gap_attribution(
     }
 
 
-def _window_train_leaderboard(
-    results: Sequence[Mapping[str, Any]],
+def _build_walk_forward_selection_evidence(
     *,
-    window: Mapping[str, str],
-    window_index: int,
-) -> list[dict[str, Any]]:
-    rows = []
-    for row in results:
-        adjusted = float(row.get("score") or 0.0) + (
-            (_stable_int(row.get("candidate_id"), window.get("train_end")) % 11) / 10000.0
+    sweep_dir: Path,
+    source_sweep_id: str,
+    config_path: Path,
+    profile: str,
+    profile_config_path: Path,
+) -> dict[str, Any]:
+    normalized_config_path = sweep_dir / "sweep_config.normalized.yaml"
+    sweep_manifest_path = sweep_dir / "sweep_manifest.json"
+    candidate_results_path = sweep_dir / "candidate_results.jsonl"
+    if sweep_dir.name != source_sweep_id:
+        raise DynamicV3ParameterResearchError("source sweep path does not match sweep id")
+    for path in (normalized_config_path, sweep_manifest_path, candidate_results_path):
+        if not path.is_file():
+            raise DynamicV3ParameterResearchError(f"walk-forward source missing: {path}")
+    source_config = load_parameter_sweep_config(normalized_config_path)
+    source_manifest = _read_json(sweep_manifest_path)
+    source_results = [
+        row
+        for row in _read_candidate_results(sweep_dir)
+        if _text(row.get("status")) == "completed" and _text(row.get("candidate_id"))
+    ]
+    profile_binding = _walk_forward_profile_binding(
+        source_config=source_config,
+        source_manifest=source_manifest,
+        source_sweep_id=source_sweep_id,
+        source_result_count=len(source_results),
+        requested_config_path=config_path,
+        profile=profile,
+        profile_config_path=profile_config_path,
+    )
+    windows = walk_forward_windows(source_config)
+    evaluator_mode = source_config.execution.evaluator
+    candidate_evidence: dict[str, dict[str, Any]] = {}
+    real_artifact_sources: list[dict[str, Any]] = []
+    limitations = list(profile_binding["limitations"])
+    if profile_binding["status"] != "FAIL":
+        for result in source_results:
+            candidate_id = _text(result.get("candidate_id"))
+            if evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+                observed = _real_walk_forward_candidate_evidence(
+                    result=result,
+                    source_sweep_id=source_sweep_id,
+                    sweep_dir=sweep_dir,
+                    windows=windows,
+                    config=source_config,
+                )
+                real_artifact_sources.append(observed["source"])
+                if observed["status"] == "PASS":
+                    candidate_evidence[candidate_id] = observed
+                else:
+                    limitations.extend(observed["limitations"])
+            else:
+                candidate_evidence[candidate_id] = _fixture_walk_forward_candidate_evidence(
+                    result=result,
+                    windows=windows,
+                    config=source_config,
+                )
+    else:
+        limitations.append("profile_or_config_binding_failed")
+    train_leaderboards: list[dict[str, Any]] = []
+    selected_rows: list[dict[str, Any]] = []
+    test_rows: list[dict[str, Any]] = []
+    for index, window in enumerate(windows, start=1):
+        leaderboard = []
+        for candidate_id, observed in candidate_evidence.items():
+            window_evidence = _mapping(_mapping(observed.get("windows")).get(str(index)))
+            train_metrics = _mapping(window_evidence.get("train_metrics"))
+            if not train_metrics:
+                continue
+            leaderboard.append(
+                {
+                    "window_index": index,
+                    "candidate_id": candidate_id,
+                    "parameters": observed.get("parameters", {}),
+                    "train_score": train_metrics.get("selection_score"),
+                    "train_gate": train_metrics.get("gate"),
+                    "train_gate_reasons": train_metrics.get("gate_reasons", []),
+                    "train_metrics": train_metrics,
+                    "evidence_method": observed.get("evidence_method"),
+                    "evidence_completeness": observed.get("evidence_completeness"),
+                    "source_real_evaluation_artifact_path": observed.get(
+                        "real_evaluation_artifact_path", ""
+                    ),
+                }
+            )
+        leaderboard.sort(
+            key=lambda item: (
+                -_float(item.get("train_score"), -1.0),
+                _text(item.get("candidate_id")),
+            )
         )
-        rows.append({**dict(row), "train_score": round(adjusted, 6)})
-    ranked = sorted(rows, key=lambda item: item["train_score"], reverse=True)
-    for rank, row in enumerate(ranked, start=1):
-        row["train_rank"] = rank
-        row["window_index"] = window_index
-    return ranked
+        for rank, row in enumerate(leaderboard, start=1):
+            row["train_rank"] = rank
+        selected = next(
+            (
+                row
+                for row in leaderboard
+                if row.get("train_gate") != GATE_REJECT
+                and row.get("train_score") is not None
+            ),
+            None,
+        )
+        train_leaderboards.append(
+            {
+                "window_index": index,
+                "window": dict(window),
+                "selection_status": (
+                    "SELECTED" if selected is not None else "NO_ELIGIBLE_TRAIN_CANDIDATE"
+                ),
+                "selected_candidate_id": (
+                    "" if selected is None else _text(selected.get("candidate_id"))
+                ),
+                "leaderboard": leaderboard,
+            }
+        )
+        if selected is None:
+            continue
+        candidate_id = _text(selected.get("candidate_id"))
+        selected_rows.append(
+            {
+                "window_index": index,
+                **dict(window),
+                "candidate_id": candidate_id,
+                "train_rank": selected.get("train_rank"),
+                "train_score": selected.get("train_score"),
+                "parameters": selected.get("parameters", {}),
+                "evidence_method": selected.get("evidence_method"),
+                "evidence_completeness": selected.get("evidence_completeness"),
+            }
+        )
+        selected_window = _mapping(
+            _mapping(candidate_evidence[candidate_id].get("windows")).get(str(index))
+        )
+        test_metrics = _mapping(selected_window.get("test_metrics"))
+        if test_metrics:
+            test_rows.append(
+                {
+                    "window_index": index,
+                    "candidate_id": candidate_id,
+                    "train_rank": selected.get("train_rank"),
+                    **dict(window),
+                    "test_result": test_metrics,
+                    "test_gate": test_metrics.get("gate"),
+                    "test_reject_reasons": test_metrics.get("gate_reasons", []),
+                    "evidence_method": selected.get("evidence_method"),
+                    "evidence_completeness": selected.get("evidence_completeness"),
+                }
+            )
+    pass_count = sum(1 for row in test_rows if row.get("test_gate") == GATE_OBSERVE_ONLY)
+    selection_status = (
+        "PASS"
+        if test_rows
+        and pass_count / len(test_rows) >= source_config.walk_forward.min_pass_ratio
+        else "REVIEW_REQUIRED"
+    )
+    if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY:
+        evidence_method = "tiny_fixture_aggregate_proxy_v1"
+        evidence_completeness = "PROXY_ONLY"
+        status = "INCOMPLETE"
+        limitations.append("tiny_fixture_is_not_true_walk_forward_evidence")
+    elif (
+        profile_binding["status"] == "FAIL"
+        or not source_results
+        or len(candidate_evidence) != len(source_results)
+    ):
+        evidence_method = "real_daily_path_window_v1"
+        evidence_completeness = "INCOMPLETE"
+        status = "INCOMPLETE"
+        limitations.append("not_all_candidates_and_windows_have_valid_real_daily_paths")
+    elif len(test_rows) != len(windows):
+        evidence_method = "real_daily_path_window_v1"
+        evidence_completeness = "PATH_DERIVED_PARTIAL"
+        status = "INCOMPLETE"
+        limitations.append("no_eligible_train_candidate_for_one_or_more_windows")
+    else:
+        evidence_method = "real_daily_path_window_v1"
+        evidence_completeness = "PATH_DERIVED_PARTIAL"
+        status = "REVIEW_REQUIRED"
+        limitations.extend(
+            [
+                "window_false_risk_off_evidence_not_exported",
+                "window_robustness_evidence_not_exported",
+                "path_slicing_does_not_rerun_the_evaluator_per_window",
+            ]
+        )
+    limitations = sorted(set(_texts(limitations)))
+    summary = {
+        "window_count": len(windows),
+        "source_candidate_count": len(source_results),
+        "usable_candidate_count": len(candidate_evidence),
+        "selected_candidate_count": len(selected_rows),
+        "test_pass_count": pass_count,
+        "parameter_stability": _wf_parameter_stability(selected_rows),
+        "overfit_windows": [
+            row["window_index"] for row in test_rows if row.get("test_gate") == GATE_REJECT
+        ],
+    }
+    source_artifacts = {
+        "sweep_manifest_path": str(sweep_manifest_path),
+        "normalized_config_path": str(normalized_config_path),
+        "candidate_results_path": str(candidate_results_path),
+        "profile_config_path": str(_resolve_project_path(profile_config_path)),
+        "effective_profile_parameter_config_path": profile_binding[
+            "effective_profile_parameter_config_path"
+        ],
+        "requested_config_path": str(_resolve_project_path(config_path)),
+    }
+    source_checksums = {
+        name.removesuffix("_path") + "_sha256": _file_sha256_path(Path(path))
+        for name, path in source_artifacts.items()
+    }
+    return {
+        "status": status,
+        "selection_status": selection_status,
+        "evidence_method": evidence_method,
+        "evidence_completeness": evidence_completeness,
+        "limitations": limitations,
+        "profile_binding_status": profile_binding["status"],
+        "profile_binding_checks": profile_binding["checks"],
+        "not_for_investment_decision": (
+            evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
+        "windows": windows,
+        "train_window_leaderboards": train_leaderboards,
+        "selected_candidates": selected_rows,
+        "test_window_results": test_rows,
+        "summary": summary,
+        "source_artifacts": source_artifacts,
+        "source_checksums": source_checksums,
+        "real_artifact_sources": sorted(
+            real_artifact_sources,
+            key=lambda item: _text(item.get("candidate_id")),
+        ),
+    }
 
 
-def _walk_forward_selection_test_row(
-    selected: Mapping[str, Any],
-    window: Mapping[str, str],
+def _walk_forward_profile_binding(
+    *,
+    source_config: DynamicV3ParameterSweepConfig,
+    source_manifest: Mapping[str, Any],
+    source_sweep_id: str,
+    source_result_count: int,
+    requested_config_path: Path,
+    profile: str,
+    profile_config_path: Path,
+) -> dict[str, Any]:
+    profiles = load_sweep_profile_config(profile_config_path)
+    selected = profiles.profiles.get(profile)
+    if selected is None:
+        raise DynamicV3ParameterResearchError(f"unknown sweep profile: {profile}")
+    effective_config_path = _resolve_project_path(selected.config_path)
+    profile_config = load_parameter_sweep_config(effective_config_path)
+    requested_path = _resolve_project_path(requested_config_path)
+    source_profile = _text(source_manifest.get("profile"))
+    checks = [
+        _check(
+            "profile_evaluator_matches_source",
+            selected.evaluator_mode == source_config.execution.evaluator,
+            selected.evaluator_mode,
+        ),
+        _check(
+            "profile_candidate_limit_covers_source",
+            source_result_count <= selected.max_candidates,
+            f"{source_result_count}<={selected.max_candidates}",
+        ),
+        _check(
+            "profile_policy_matches_source",
+            _walk_forward_policy_projection(profile_config)
+            == _walk_forward_policy_projection(source_config),
+            str(effective_config_path),
+        ),
+        _check(
+            "manifest_sweep_id_matches_source",
+            _text(source_manifest.get("sweep_id")) == source_sweep_id,
+            _text(source_manifest.get("sweep_id")),
+        ),
+        _check(
+            "manifest_evaluator_matches_source",
+            _text(source_manifest.get("evaluator_mode"))
+            == source_config.execution.evaluator,
+            _text(source_manifest.get("evaluator_mode")),
+        ),
+        _check(
+            "manifest_profile_matches_when_recorded",
+            not source_profile or source_profile == profile,
+            source_profile or "UNRECORDED",
+        ),
+    ]
+    limitations: list[str] = []
+    if not source_profile:
+        limitations.append("source_sweep_profile_not_recorded")
+    if requested_path.resolve(strict=False) != effective_config_path.resolve(strict=False):
+        limitations.append("requested_config_path_is_not_profile_authoritative_config")
+    if not checks[2]["passed"]:
+        limitations.append("source_policy_differs_from_current_profile_policy")
+    critical_checks = [checks[index] for index in (0, 1, 3, 4, 5)]
+    if not all(check["passed"] for check in critical_checks):
+        status = "FAIL"
+    elif limitations:
+        status = "PASS_WITH_WARNINGS"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "checks": checks,
+        "limitations": limitations,
+        "effective_profile_parameter_config_path": str(effective_config_path),
+    }
+
+
+def _walk_forward_policy_projection(
     config: DynamicV3ParameterSweepConfig,
 ) -> dict[str, Any]:
-    metrics = dict(_mapping(selected.get("metrics")))
-    drift = (_stable_int(selected.get("candidate_id"), window.get("test_end")) % 9 - 4) / 1000.0
-    metrics["dynamic_vs_static_gap"] = round(
-        float(metrics.get("dynamic_vs_static_gap", 0.0)) + drift,
-        6,
-    )
-    metrics["drawdown_degradation_pp"] = round(
-        float(metrics.get("drawdown_degradation_pp", 0.0)) + abs(drift) / 2,
-        6,
-    )
-    gate, reasons = gate_candidate(metrics, config)
+    payload = config.model_dump(mode="json")
     return {
-        "window_index": selected.get("window_index"),
-        "candidate_id": selected.get("candidate_id"),
-        "train_rank": selected.get("train_rank"),
-        "train_start": window["train_start"],
-        "train_end": window["train_end"],
-        "test_start": window["test_start"],
-        "test_end": window["test_end"],
-        "test_result": metrics,
-        "test_gate": gate,
-        "test_reject_reasons": reasons,
+        key: payload[key]
+        for key in (
+            "baselines",
+            "parameter_space",
+            "hard_constraints",
+            "promotion_constraints",
+            "scoring",
+            "walk_forward",
+            "out_of_sample",
+            "robustness",
+            "shadow",
+        )
     }
+
+
+def _real_walk_forward_candidate_evidence(
+    *,
+    result: Mapping[str, Any],
+    source_sweep_id: str,
+    sweep_dir: Path,
+    windows: Sequence[Mapping[str, str]],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    candidate_id = _text(result.get("candidate_id"))
+    raw_path = _text(result.get("real_evaluation_artifact_path"))
+    real_path = _resolve_project_path(Path(raw_path)) if raw_path else None
+    expected_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(strict=False)
+    owned = real_path is not None and real_path.resolve(strict=False).parent == expected_dir
+    real_payload = _mapping(_read_optional_json(real_path))
+    report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
+    expected_report_id = _text(_mapping(result.get("metrics")).get("real_evaluation_report_id"))
+    source = {
+        "candidate_id": candidate_id,
+        "path": raw_path,
+        "sha256": "" if real_path is None else _file_sha256_path(real_path),
+        "report_id": report_id,
+        "path_owned_by_sweep_candidate": owned,
+    }
+    limitations: list[str] = []
+    if _text(result.get("evaluator_mode")) != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        limitations.append(f"{candidate_id}:candidate_not_real_evaluator")
+    if _text(result.get("metrics_source")) != "real_evaluation_artifact":
+        limitations.append(f"{candidate_id}:metrics_source_not_real_artifact")
+    if not owned or not real_payload:
+        limitations.append(f"{candidate_id}:real_artifact_missing_or_not_owned")
+    if not report_id or report_id != expected_report_id:
+        limitations.append(f"{candidate_id}:real_report_id_mismatch")
+    if _text(real_payload.get("source_sweep_id")) != source_sweep_id:
+        limitations.append(f"{candidate_id}:real_source_sweep_mismatch")
+    observed_candidate = _text(
+        real_payload.get("source_sweep_candidate_id"),
+        _text(real_payload.get("candidate_id")),
+    )
+    if observed_candidate != candidate_id:
+        limitations.append(f"{candidate_id}:real_source_candidate_mismatch")
+    paths = _mapping(real_payload.get("comparison_daily_paths"))
+    dynamic_rows = _records(paths.get("dynamic_candidate"))
+    static_rows = _records(paths.get("static_base_candidate"))
+    if not dynamic_rows or not static_rows:
+        limitations.append(f"{candidate_id}:comparison_daily_paths_missing")
+    window_payloads: dict[str, Any] = {}
+    if not limitations:
+        for index, window in enumerate(windows, start=1):
+            train_metrics = _walk_forward_path_metrics(
+                dynamic_rows=dynamic_rows,
+                static_rows=static_rows,
+                start=_text(window.get("train_start")),
+                end=_text(window.get("train_end")),
+                result=result,
+                config=config,
+            )
+            test_metrics = _walk_forward_path_metrics(
+                dynamic_rows=dynamic_rows,
+                static_rows=static_rows,
+                start=_text(window.get("test_start")),
+                end=_text(window.get("test_end")),
+                result=result,
+                config=config,
+            )
+            if not train_metrics or not test_metrics:
+                limitations.append(f"{candidate_id}:window_{index}_path_coverage_missing")
+                continue
+            window_payloads[str(index)] = {
+                "train_metrics": train_metrics,
+                "test_metrics": test_metrics,
+            }
+    return {
+        "status": "PASS" if not limitations and len(window_payloads) == len(windows) else "FAIL",
+        "candidate_id": candidate_id,
+        "parameters": _mapping(result.get("parameters")),
+        "evidence_method": "real_daily_path_window_v1",
+        "evidence_completeness": "PATH_DERIVED_PARTIAL",
+        "real_evaluation_artifact_path": raw_path,
+        "windows": window_payloads,
+        "limitations": limitations,
+        "source": source,
+    }
+
+
+def _fixture_walk_forward_candidate_evidence(
+    *,
+    result: Mapping[str, Any],
+    windows: Sequence[Mapping[str, str]],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    metrics = dict(_mapping(result.get("metrics")))
+    gate = _text(result.get("gate"), GATE_REVIEW_REQUIRED)
+    score = result.get("score")
+    proxy = {
+        **metrics,
+        "requested_start": "",
+        "requested_end": "",
+        "actual_start": "",
+        "actual_end": "",
+        "row_count": 0,
+        "selection_score": score,
+        "gate": gate,
+        "gate_reasons": _texts(result.get("gate_reasons")),
+        "evidence_method": "tiny_fixture_aggregate_proxy_v1",
+        "evidence_completeness": "PROXY_ONLY",
+        "not_for_investment_decision": True,
+    }
+    return {
+        "status": "PASS",
+        "candidate_id": _text(result.get("candidate_id")),
+        "parameters": _mapping(result.get("parameters")),
+        "evidence_method": "tiny_fixture_aggregate_proxy_v1",
+        "evidence_completeness": "PROXY_ONLY",
+        "real_evaluation_artifact_path": "",
+        "windows": {
+            str(index): {"train_metrics": dict(proxy), "test_metrics": dict(proxy)}
+            for index, _window in enumerate(windows, start=1)
+        },
+        "limitations": ["tiny_fixture_aggregate_metrics_are_not_window_evidence"],
+        "source": {},
+    }
+
+
+def _walk_forward_path_metrics(
+    *,
+    dynamic_rows: Sequence[Mapping[str, Any]],
+    static_rows: Sequence[Mapping[str, Any]],
+    start: str,
+    end: str,
+    result: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    start_date = _date_from_any(start)
+    end_date = _date_from_any(end)
+    if start_date is None or end_date is None or start_date > end_date:
+        return {}
+    dynamic_by_date = _valid_daily_return_rows(dynamic_rows)
+    static_by_date = _valid_daily_return_rows(static_rows)
+    if not dynamic_by_date or set(dynamic_by_date) != set(static_by_date):
+        return {}
+    dates = sorted(
+        day
+        for day in set(dynamic_by_date) & set(static_by_date)
+        if start_date <= day <= end_date
+    )
+    if not dates:
+        return {}
+    dynamic_returns = [dynamic_by_date[day]["strategy_return"] for day in dates]
+    static_returns = [static_by_date[day]["strategy_return"] for day in dates]
+    dynamic_total = _compounded_return(dynamic_returns)
+    static_total = _compounded_return(static_returns)
+    dynamic_drawdown = _max_drawdown_from_returns(dynamic_returns)
+    static_drawdown = _max_drawdown_from_returns(static_returns)
+    turnover = sum(dynamic_by_date[day]["turnover"] for day in dates)
+    constraint_hit_count = sum(
+        bool(_json_list(dynamic_by_date[day]["constraints_applied_json"])) for day in dates
+    )
+    data_quality = _window_data_quality_status(
+        [
+            *[_text(dynamic_by_date[day]["data_quality_status"]) for day in dates],
+            *[_text(static_by_date[day]["data_quality_status"]) for day in dates],
+        ]
+    )
+    metrics = {
+        "requested_start": start,
+        "requested_end": end,
+        "actual_start": dates[0].isoformat(),
+        "actual_end": dates[-1].isoformat(),
+        "row_count": len(dates),
+        "dynamic_total_return": round(dynamic_total, 10),
+        "static_total_return": round(static_total, 10),
+        "dynamic_vs_static_gap": round(dynamic_total - static_total, 10),
+        "dynamic_vs_static_gap_improvement": round(dynamic_total - static_total, 10),
+        "dynamic_max_drawdown": round(dynamic_drawdown, 10),
+        "static_max_drawdown": round(static_drawdown, 10),
+        "drawdown_degradation_pp": round(
+            abs(dynamic_drawdown) - abs(static_drawdown), 10
+        ),
+        "turnover": round(turnover, 10),
+        "turnover_reduction": 0.0,
+        "constraint_hit_count": constraint_hit_count,
+        "constraint_hit_rate": round(constraint_hit_count / len(dates), 10),
+        "constraint_hits_delta_vs_reference": 0,
+        "constraint_hit_reduction": 0.0,
+        "false_risk_off_delta": 0,
+        "robustness_status": "REVIEW_REQUIRED",
+        "overfit_status": "REVIEW_REQUIRED",
+        "data_quality": data_quality,
+        "lookahead_status": _text(
+            _mapping(result.get("metrics")).get("lookahead_status"), "UNKNOWN"
+        ),
+        "weight_path_status": _text(
+            _mapping(result.get("metrics")).get("weight_path_status"), "UNKNOWN"
+        ),
+        "evidence_method": "real_daily_path_window_v1",
+        "evidence_completeness": "PATH_DERIVED_PARTIAL",
+        "unsupported_gate_fields": [
+            "window_false_risk_off_delta",
+            "window_robustness_status",
+        ],
+    }
+    gate, reasons = gate_candidate(metrics, config)
+    if gate != GATE_REJECT:
+        gate = GATE_REVIEW_REQUIRED
+        reasons = sorted(
+            set(
+                [
+                    *reasons,
+                    "window_false_risk_off_evidence_not_exported",
+                    "window_robustness_evidence_not_exported",
+                ]
+            )
+        )
+    score, score_breakdown = score_candidate(metrics, config, gate)
+    unavailable_positive_score = (
+        _float(score_breakdown.get("false_risk_off_control"))
+        * config.scoring.weights.false_risk_off_control
+    )
+    score_breakdown["false_risk_off_control"] = 0.0
+    score_breakdown["unsupported_evidence_score_removed"] = round(
+        unavailable_positive_score,
+        6,
+    )
+    if score is not None:
+        score = round(max(0.0, score - unavailable_positive_score), 6)
+    metrics["gate"] = gate
+    metrics["gate_reasons"] = reasons
+    metrics["selection_score"] = score
+    metrics["score_breakdown"] = score_breakdown
+    return metrics
+
+
+def _valid_daily_return_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[date, dict[str, Any]]:
+    result: dict[date, dict[str, Any]] = {}
+    for row in rows:
+        day = _date_from_any(row.get("signal_date"))
+        if day is None or day in result:
+            return {}
+        try:
+            strategy_return = float(row.get("strategy_return"))
+            turnover = float(row.get("turnover") or 0.0)
+        except (TypeError, ValueError):
+            return {}
+        if (
+            not isfinite(strategy_return)
+            or not isfinite(turnover)
+            or strategy_return <= -1.0
+            or turnover < 0.0
+        ):
+            return {}
+        result[day] = {
+            "strategy_return": strategy_return,
+            "turnover": turnover,
+            "constraints_applied_json": row.get("constraints_applied_json", "[]"),
+            "data_quality_status": row.get("data_quality_status", "UNKNOWN"),
+        }
+    return result
+
+
+def _compounded_return(values: Sequence[float]) -> float:
+    compounded = 1.0
+    for value in values:
+        compounded *= 1.0 + value
+    return compounded - 1.0
+
+
+def _max_drawdown_from_returns(values: Sequence[float]) -> float:
+    equity = 1.0
+    peak = 1.0
+    max_drawdown = 0.0
+    for value in values:
+        equity *= 1.0 + value
+        peak = max(peak, equity)
+        max_drawdown = min(max_drawdown, equity / peak - 1.0)
+    return max_drawdown
+
+
+def _window_data_quality_status(values: Sequence[str]) -> str:
+    normalized = {_text(value, "UNKNOWN") for value in values}
+    if "FAIL" in normalized:
+        return "FAIL"
+    if "PASS_WITH_WARNINGS" in normalized:
+        return "PASS_WITH_WARNINGS"
+    if normalized == {"PASS"}:
+        return "PASS"
+    return "UNKNOWN"
 
 
 def _wf_parameter_stability(selected_rows: Sequence[Mapping[str, Any]]) -> str:

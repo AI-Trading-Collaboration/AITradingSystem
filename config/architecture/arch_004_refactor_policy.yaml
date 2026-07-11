@@ -1817,6 +1817,62 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: true
       evidence_validation_correctness_fix: true
+    g2_4_nineteenth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_walk_forward_selection, dynamic_v3_overfit]
+      callback_count: 6
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_validation_evidence.py
+      legacy_callback_definitions_remaining: 0
+      full_period_metrics_used_as_window_evidence: false
+      stable_hash_used_as_window_evidence: false
+      global_gate_pre_filters_train_candidates: false
+      rejected_or_unscored_train_candidate_may_be_selected: false
+      real_daily_path_window_recomputation_required: true
+      profile_config_source_lineage_checks_required: true
+      source_and_output_checksums_required: true
+      tiny_fixture_true_walk_forward_pass_allowed: false
+      partial_walk_forward_pass_allowed: false
+      overfit_component_method_and_evidence_status_required: true
+      partial_or_proxy_low_risk_allowed: false
+      content_recomputation_validation_required: true
+      source_sweep_execution_allowed: false
+      automatic_candidate_promotion_allowed: false
+      automatic_shadow_enrollment_allowed: false
+      production_effect: none
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31059
+      legacy_root_lines_after: 30896
+      legacy_root_line_reduction: 163
+      legacy_root_top_level_functions_after: 938
+      legacy_root_command_decorators_after: 899
+      parameter_research_domain_lines_before: 20346
+      parameter_research_domain_lines_after: 21548
+      parameter_research_domain_line_growth: 1202
+      domain_growth_reason: content-derived validation and honest path evidence pending G6 domain decomposition
+      real_walk_forward_smoke_id: 1ded73491a9da880
+      real_walk_forward_smoke_status: INCOMPLETE
+      real_walk_forward_source_candidate_count: 300
+      real_walk_forward_usable_candidate_count: 300
+      real_walk_forward_selected_candidate_count: 0
+      real_walk_forward_window_count: 2
+      real_walk_forward_validation: PASS
+      superseded_intermediate_walk_forward_id: 4aa0f92422101d7b
+      superseded_intermediate_validation: FAIL
+      real_overfit_smoke_id: 02b5d9d041395362
+      real_overfit_smoke_status: REVIEW_REQUIRED
+      real_overfit_validation: PASS
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 65}
+      architecture_fitness:
+        status: PASS
+        passed: 202
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T164009Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: true
+      evidence_validation_correctness_fix: true
     production_effect: none
 
 safety_boundary:

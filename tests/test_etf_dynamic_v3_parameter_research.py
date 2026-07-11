@@ -1454,6 +1454,268 @@ def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
     assert governance_report_payload(output_dir=tmp_path / "governance")["status"] == "PASS"
 
 
+def test_walk_forward_and_overfit_evidence_fail_closed_on_proxy_and_tampering(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    profile_path = _profile_config_path(tmp_path, config_path)
+    sweep_output_dir = tmp_path / "sweeps"
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    candidate_id = _top_candidate_id(sweep_output_dir / sweep_id)
+
+    def reject_hash_evidence(*_parts: object) -> int:
+        raise AssertionError("stable hash must not generate walk-forward evidence")
+
+    monkeypatch.setattr(dynamic_v3_research, "_stable_int", reject_hash_evidence)
+    selection = run_walk_forward_selection(
+        config_path=config_path,
+        profile="tiny_fixture",
+        sweep_id=sweep_id,
+        profile_config_path=profile_path,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "walk_forward_selection",
+    )
+    assert selection["report"]["status"] == "INCOMPLETE"
+    assert selection["report"]["evidence_completeness"] == "PROXY_ONLY"
+    selection_dir = selection["wf_selection_dir"]
+    assert (
+        validate_walk_forward_selection_artifact(
+            wf_selection_id=selection["wf_selection_id"],
+            output_dir=tmp_path / "walk_forward_selection",
+        )["status"]
+        == "PASS"
+    )
+    source_results_path = sweep_output_dir / sweep_id / "candidate_results.jsonl"
+    source_results_bytes = source_results_path.read_bytes()
+    source_results_path.write_bytes(source_results_bytes + b"\n")
+    assert (
+        validate_walk_forward_selection_artifact(
+            wf_selection_id=selection["wf_selection_id"],
+            output_dir=tmp_path / "walk_forward_selection",
+        )["status"]
+        == "FAIL"
+    )
+    source_results_path.write_bytes(source_results_bytes)
+    test_rows_path = selection_dir / "test_window_results.jsonl"
+    test_rows = [json.loads(line) for line in test_rows_path.read_text().splitlines()]
+    test_rows[0]["candidate_id"] = "tampered_candidate"
+    test_rows_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in test_rows) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        validate_walk_forward_selection_artifact(
+            wf_selection_id=selection["wf_selection_id"],
+            output_dir=tmp_path / "walk_forward_selection",
+        )["status"]
+        == "FAIL"
+    )
+
+    overfit = run_overfit_review(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "overfit",
+    )
+    assert overfit["report"]["overfit_status"] == "REVIEW_REQUIRED"
+    assert overfit["report"]["evidence_completeness"] == "PROXY_ONLY"
+    assert (
+        validate_overfit_artifact(
+            overfit_id=overfit["overfit_id"],
+            output_dir=tmp_path / "overfit",
+        )["status"]
+        == "PASS"
+    )
+    extreme_path = overfit["overfit_dir"] / "extreme_day_dependency.json"
+    extreme = json.loads(extreme_path.read_text(encoding="utf-8"))
+    extreme["status"] = "PASS"
+    extreme_path.write_text(json.dumps(extreme, sort_keys=True), encoding="utf-8")
+    assert (
+        validate_overfit_artifact(
+            overfit_id=overfit["overfit_id"],
+            output_dir=tmp_path / "overfit",
+        )["status"]
+        == "FAIL"
+    )
+
+
+def test_real_walk_forward_selection_uses_window_daily_paths(
+    tmp_path: Path,
+) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    sweep_output_dir = tmp_path / "sweeps"
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    sweep_dir = sweep_output_dir / sweep_id
+    normalized_path = sweep_dir / "sweep_config.normalized.yaml"
+    normalized = yaml.safe_load(normalized_path.read_text(encoding="utf-8"))
+    normalized["execution"]["evaluator"] = "real_dynamic_v3_rescue"
+    normalized["execution"]["evaluation_mode"] = "real_dynamic_v3_rescue"
+    normalized["data"]["quality_status"] = "PASS"
+    normalized_path.write_text(
+        yaml.safe_dump(normalized, sort_keys=False),
+        encoding="utf-8",
+    )
+    config = load_parameter_sweep_config(normalized_path)
+    windows = dynamic_v3_research.walk_forward_windows(config)
+    path_dates = pd.bdate_range(windows[0]["train_start"], windows[-1]["test_end"])
+    results_path = sweep_dir / "candidate_results.jsonl"
+    rows = [
+        json.loads(line)
+        for line in results_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    source_rows = list(rows)
+    for index, row in enumerate(source_rows, start=1):
+        candidate_id = row["candidate_id"]
+        report_id = f"real_eval_{candidate_id}"
+        real_dir = sweep_dir / "real_evaluation" / candidate_id
+        real_dir.mkdir(parents=True)
+        dynamic_return = 0.00015 + index / 1_000_000
+        dynamic_path = [
+            {
+                "signal_date": day.date().isoformat(),
+                "strategy_return": dynamic_return,
+                "turnover": 0.0,
+                "constraints_applied_json": "[]",
+                "data_quality_status": "PASS",
+                "selected_regime": "risk_on",
+            }
+            for day in path_dates
+        ]
+        static_path = [
+            {
+                "signal_date": day.date().isoformat(),
+                "strategy_return": 0.0001,
+                "turnover": 0.0,
+                "data_quality_status": "PASS",
+            }
+            for day in path_dates
+        ]
+        real_path = real_dir / "real_evaluation.json"
+        real_path.write_text(
+            json.dumps(
+                {
+                    "dynamic_v3_real_evaluation_report_id": report_id,
+                    "source_sweep_id": sweep_id,
+                    "source_sweep_candidate_id": candidate_id,
+                    "comparison_daily_paths": {
+                        "dynamic_candidate": dynamic_path,
+                        "static_base_candidate": static_path,
+                    },
+                },
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
+        row["evaluator_mode"] = "real_dynamic_v3_rescue"
+        row["evaluator_version"] = "real_dynamic_v3_rescue_v1"
+        row["metrics_source"] = "real_evaluation_artifact"
+        row["not_for_investment_decision"] = False
+        row["real_evaluation_artifact_path"] = str(real_path)
+        row["metrics"].update(
+            {
+                "real_evaluation_report_id": report_id,
+                "lookahead_status": "PASS",
+                "weight_path_status": "PARTIAL",
+            }
+        )
+    results_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+    manifest_path = sweep_dir / "sweep_manifest.json"
+    sweep_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    sweep_manifest.update(
+        {
+            "profile": "real_test",
+            "evaluator_mode": "real_dynamic_v3_rescue",
+            "not_for_investment_decision": False,
+        }
+    )
+    manifest_path.write_text(
+        json.dumps(sweep_manifest, sort_keys=True),
+        encoding="utf-8",
+    )
+    profile_path = tmp_path / "profiles.yaml"
+    profile_path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "profiles": {
+                    "real_test": {
+                        "description": "real path selection test",
+                        "config_path": str(normalized_path),
+                        "evaluator_mode": "real_dynamic_v3_rescue",
+                        "max_candidates": max(1, len(source_rows)),
+                        "workers": 1,
+                        "ci_safe": False,
+                        "not_for_investment_decision": False,
+                    }
+                },
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    selection = run_walk_forward_selection(
+        config_path=normalized_path,
+        profile="real_test",
+        sweep_id=sweep_id,
+        profile_config_path=profile_path,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "walk_forward_selection",
+    )
+    assert selection["report"]["status"] == "REVIEW_REQUIRED"
+    assert selection["report"]["selection_status"] == "REVIEW_REQUIRED"
+    assert selection["report"]["evidence_method"] == "real_daily_path_window_v1"
+    assert selection["report"]["evidence_completeness"] == "PATH_DERIVED_PARTIAL"
+    train_rows = [
+        json.loads(line)
+        for line in (
+            selection["wf_selection_dir"] / "train_window_leaderboards.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+    ]
+    assert train_rows[0]["leaderboard"]
+    assert len(train_rows[0]["leaderboard"]) == len(source_rows)
+    assert all(
+        row["train_metrics"]["row_count"] > 0 for row in train_rows[0]["leaderboard"]
+    )
+    assert all(
+        row["train_metrics"]["evidence_method"] == "real_daily_path_window_v1"
+        for row in train_rows[0]["leaderboard"]
+    )
+    assert (
+        validate_walk_forward_selection_artifact(
+            wf_selection_id=selection["wf_selection_id"],
+            output_dir=tmp_path / "walk_forward_selection",
+        )["status"]
+        == "PASS"
+    )
+
+    selected_candidate = selection["report"]["summary"]["selected_candidate_count"]
+    assert selected_candidate == len(windows)
+    candidate_id = train_rows[0]["leaderboard"][0]["candidate_id"]
+    overfit = run_overfit_review(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "overfit",
+    )
+    assert overfit["report"]["evidence_completeness"] == "PATH_DERIVED_PARTIAL"
+    assert overfit["report"]["overfit_status"] == "REVIEW_REQUIRED"
+    assert (
+        validate_overfit_artifact(
+            overfit_id=overfit["overfit_id"],
+            output_dir=tmp_path / "overfit",
+        )["status"]
+        == "PASS"
+    )
+
+
 def test_dynamic_v3_data_and_injection_audit_contracts(
     tmp_path: Path,
     real_smoke_cache: tuple[Path, Path, str],

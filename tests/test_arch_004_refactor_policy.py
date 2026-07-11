@@ -1927,7 +1927,43 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4r["migration"]["direct_writer_calls_after"] == 858
     assert phase_g2_4r["validation"]["focused"] == {"status": "PASS", "passed": 62}
     assert phase_g2_4r["validation"]["architecture_fitness"]["passed"] == 201
+    superseded_g2_4r = set(phase_g2_4r["superseded_source_paths"])
     for source in phase_g2_4r["sources"]:
+        if source["path"] in superseded_g2_4r:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4s = baseline["phase_g2_4s_etf_cli_dynamic_v3_validation_evidence"]
+    assert phase_g2_4s["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4s = phase_g2_4s["migration"]
+    assert migration_g2_4s["callback_count"] == 6
+    assert migration_g2_4s["full_period_metrics_used_as_window_evidence"] is False
+    assert migration_g2_4s["stable_hash_used_as_window_evidence"] is False
+    assert migration_g2_4s["global_gate_pre_filters_train_candidates"] is False
+    assert migration_g2_4s["rejected_or_unscored_train_candidate_may_be_selected"] is False
+    assert migration_g2_4s["real_daily_path_window_recomputation_required"] is True
+    assert migration_g2_4s["profile_config_source_lineage_checks_required"] is True
+    assert migration_g2_4s["source_and_output_checksums_required"] is True
+    assert migration_g2_4s["tiny_fixture_true_walk_forward_pass_allowed"] is False
+    assert migration_g2_4s["partial_walk_forward_pass_allowed"] is False
+    assert migration_g2_4s["current_walk_forward_status"] == "INCOMPLETE"
+    assert migration_g2_4s["current_walk_forward_no_eligible_window_count"] == 2
+    assert migration_g2_4s["current_overfit_method"] == "path_and_aggregate_overfit_v2"
+    assert migration_g2_4s["partial_or_proxy_low_risk_allowed"] is False
+    assert migration_g2_4s["content_recomputation_validation_required"] is True
+    assert migration_g2_4s["source_sweep_execution_allowed"] is False
+    assert migration_g2_4s["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4s["automatic_shadow_enrollment_allowed"] is False
+    assert migration_g2_4s["direct_writer_calls_after"] == 858
+    assert migration_g2_4s["python_module_count"] == 830
+    assert phase_g2_4s["real_smoke"]["walk_forward_validation"] == "PASS"
+    assert phase_g2_4s["real_smoke"]["selected_candidate_count"] == 0
+    assert phase_g2_4s["real_smoke"]["superseded_intermediate_validation"] == "FAIL"
+    assert phase_g2_4s["real_smoke"]["overfit_validation"] == "PASS"
+    assert phase_g2_4s["validation"]["focused"] == {"status": "PASS", "passed": 65}
+    assert phase_g2_4s["validation"]["architecture_fitness"]["passed"] == 202
+    assert phase_g2_4s["sources"]
+    for source in phase_g2_4s["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
