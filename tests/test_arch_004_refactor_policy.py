@@ -665,6 +665,26 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_tenth["legacy_root_command_decorators_after"] == 933
     assert g2_4_tenth["focused_validation"] == {"status": "PASS", "passed": 28}
     assert g2_4_tenth["architecture_fitness"]["passed"] == 193
+    g2_4_eleventh = phase_g["g2_current_plan"]["g2_4_eleventh_slice"]
+    assert g2_4_eleventh["status"] == "COMPLETE"
+    assert g2_4_eleventh["callback_count"] == 2
+    assert g2_4_eleventh["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_eleventh["reviewed_config_read_only"] is True
+    assert g2_4_eleventh["schema_and_safety_validation_only"] is True
+    assert g2_4_eleventh["stable_candidate_id_enumeration"] is True
+    assert g2_4_eleventh["evaluator_execution_allowed"] is False
+    assert g2_4_eleventh["backtest_or_pit_execution_allowed"] is False
+    assert g2_4_eleventh["fresh_data_quality_gate_required"] is False
+    assert g2_4_eleventh["runtime_artifact_write_allowed"] is False
+    assert g2_4_eleventh["production_candidate_generated"] is False
+    assert g2_4_eleventh["preview_limit_changes_candidate_universe"] is False
+    assert g2_4_eleventh["runtime_commands_deferred_to_next_slice"] is True
+    assert g2_4_eleventh["direct_writer_calls_after"] == 858
+    assert g2_4_eleventh["legacy_root_lines_after"] == 31833
+    assert g2_4_eleventh["legacy_root_top_level_functions_after"] == 971
+    assert g2_4_eleventh["legacy_root_command_decorators_after"] == 931
+    assert g2_4_eleventh["focused_validation"] == {"status": "PASS", "passed": 43}
+    assert g2_4_eleventh["architecture_fitness"]["passed"] == 194
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1603,6 +1623,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4j["validation"]["focused"] == {"status": "PASS", "passed": 28}
     assert phase_g2_4j["validation"]["architecture_fitness"]["passed"] == 193
     for source in phase_g2_4j["sources"]:
+        if source.get("historical_phase_g2_4j_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4K"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4k_etf_cli_dynamic_v3_sweep_config.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4k = baseline["phase_g2_4k_etf_cli_dynamic_v3_sweep_config"]
+    assert phase_g2_4k["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4k["migration"]["callback_count"] == 2
+    assert phase_g2_4k["migration"]["reviewed_config_read_only"] is True
+    assert phase_g2_4k["migration"]["stable_candidate_id_enumeration"] is True
+    assert phase_g2_4k["migration"]["evaluator_execution_allowed"] is False
+    assert phase_g2_4k["migration"]["runtime_artifact_write_allowed"] is False
+    assert phase_g2_4k["migration"]["production_candidate_generated"] is False
+    assert phase_g2_4k["migration"]["preview_limit_changes_candidate_universe"] is False
+    assert phase_g2_4k["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4k["validation"]["focused"] == {"status": "PASS", "passed": 43}
+    assert phase_g2_4k["validation"]["architecture_fitness"]["passed"] == 194
+    for source in phase_g2_4k["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1625,7 +1666,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4I_COMPLETE_G2_4J_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4J_COMPLETE_G2_4K_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

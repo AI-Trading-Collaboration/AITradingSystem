@@ -477,7 +477,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     build_research_index,
     build_shadow_shortlist,
     build_shadow_shortlist_monitoring_pack,
-    build_sweep_config_validation,
     build_sweep_leaderboard_payload,
     build_sweep_report_payload,
     candidate_cluster_report_payload,
@@ -514,7 +513,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     position_advisory_report_payload,
     position_drift_report_payload,
     position_review_report_payload,
-    preview_sweep_candidates,
     promotion_review_payload,
     rebuild_observe_pool_from_recovery,
     record_owner_review_decision,
@@ -1208,7 +1206,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_smoothing_benefit_lag_app,
     dynamic_v3_stress_scenario_library_app,
     dynamic_v3_sweep_app,
-    dynamic_v3_sweep_config_app,
     dynamic_v3_system_target_review_app,
     dynamic_v3_system_target_selection_review_app,
     dynamic_v3_targeted_search_v3_app,
@@ -1258,46 +1255,6 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
-
-
-@dynamic_v3_sweep_config_app.command("validate")
-def dynamic_v3_sweep_config_validate_command(
-    config_path: Annotated[
-        Path,
-        typer.Option("--config", "--config-path", help="parameter sweep config。"),
-    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
-) -> None:
-    """校验 TRADING-093 parameter sweep config contract。"""
-    payload = build_sweep_config_validation(config_path=config_path)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"config_path={config_path}")
-    typer.echo(f"candidate_preview_count={payload.get('candidate_preview_count')}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_candidate_generated=false")
-    typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_sweep_config_app.command("preview")
-def dynamic_v3_sweep_config_preview_command(
-    config_path: Annotated[
-        Path,
-        typer.Option("--config", "--config-path", help="parameter sweep config。"),
-    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
-    limit: Annotated[int, typer.Option("--limit", help="preview candidate count。")] = 20,
-) -> None:
-    """预览 TRADING-093 parameter sweep candidates。"""
-    try:
-        payload = preview_sweep_candidates(config_path=config_path, limit=limit)
-    except DynamicV3ParameterResearchError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"candidate_count={payload['candidate_count']}")
-    typer.echo(f"preview_count={payload['preview_count']}")
-    for row in payload["candidates"]:
-        typer.echo(f"{row['candidate_id']} {json.dumps(row['parameters'], sort_keys=True)}")
-    typer.echo("production_candidate_generated=false")
 
 
 @dynamic_v3_data_audit_app.command("run")
