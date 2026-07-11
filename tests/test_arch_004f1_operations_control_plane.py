@@ -16,6 +16,7 @@ from ai_trading_system.contracts.operations import (
     OperationsDueResolution,
     OperationsRunDecision,
     OperationsShadowPlan,
+    PeriodicOperationsPlan,
     build_operations_shadow_plan,
     resolve_operations_due,
 )
@@ -26,6 +27,9 @@ from ai_trading_system.contracts.workflow import (
     WorkflowCadence,
     WorkflowSpec,
     WorkflowStepSpec,
+)
+from ai_trading_system.legacy.periodic_operations_adapter import (
+    build_periodic_operations_plan,
 )
 from ai_trading_system.legacy.scheduled_tasks_adapter import (
     LegacyScheduledWorkflowBinding,
@@ -46,7 +50,11 @@ from ai_trading_system.platform.operations import (
     OperationsRunControl,
     OperationsRuntimeControlError,
     OperationsRuntimeControlPolicy,
+    PeriodicOperationsControlError,
+    build_periodic_due_contexts_from_daily,
+    dispatch_periodic_operations_plan,
     load_operations_runtime_control_policy,
+    load_periodic_operations_control_policy,
 )
 from ai_trading_system.scheduled_tasks import (
     ScheduledCadence,
@@ -71,7 +79,10 @@ def _weekly_policy() -> OperationsDuePolicy:
 
 
 def _runtime_policy(
-    *, max_run_attempts: int = 2, daily_cut_in: bool = False
+    *,
+    max_run_attempts: int = 2,
+    daily_cut_in: bool = False,
+    non_daily_dispatch: bool = False,
 ) -> OperationsRuntimeControlPolicy:
     return OperationsRuntimeControlPolicy(
         policy_id="test_runtime_control_v1",
@@ -81,7 +92,7 @@ def _runtime_policy(
         max_run_attempts=max_run_attempts,
         resume_idempotent_steps=True,
         legacy_daily_executor_cut_in_enabled=daily_cut_in,
-        non_daily_dispatch_enabled=False,
+        non_daily_dispatch_enabled=non_daily_dispatch,
     )
 
 
@@ -169,6 +180,409 @@ def test_due_resolution_requires_visible_daily_dq_and_artifact_evidence() -> Non
     assert resolution.status is CanonicalStatus.DUE
     assert resolution.reason_codes == ("DUE_POLICY_SATISFIED",)
     assert OperationsDueResolution.from_dict(resolution.to_dict()) == resolution
+
+
+def test_periodic_policy_covers_all_non_daily_cadences_without_dispatch() -> None:
+    policy = load_periodic_operations_control_policy()
+
+    assert policy.policy_id == "periodic_operations_control_v1"
+    assert policy.unified_external_trigger == "aits ops daily-run"
+    assert policy.automatic_command_dispatch_enabled is False
+    assert {item.cadence_id for item in policy.cadence_controls} == {
+        "weekly",
+        "biweekly",
+        "monthly",
+        "ad_hoc_research",
+    }
+    assert all(item.due_policy.requires_completed_daily for item in policy.cadence_controls)
+    assert all(item.due_policy.requires_data_quality for item in policy.cadence_controls)
+    assert all(item.due_policy.requires_artifacts for item in policy.cadence_controls)
+    assert all(item.due_policy.requires_owner_gate for item in policy.cadence_controls)
+
+
+def test_periodic_plan_accounts_for_all_41_tasks_and_round_trips() -> None:
+    as_of = date(2026, 7, 10)
+    generated_at = datetime(2026, 7, 11, tzinfo=UTC)
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=as_of,
+        daily_status=CanonicalStatus.PASS,
+        data_quality_status=CanonicalStatus.PASS,
+    )
+
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=generated_at,
+        contexts=contexts,
+    )
+
+    assert len(plan.entries) == 41
+    assert PeriodicOperationsPlan.from_dict(plan.to_dict()) == plan
+    assert plan.automatic_command_dispatch_enabled is False
+    assert all(entry.command_executed is False for entry in plan.entries)
+    assert all(len(entry.shadow_plan.run_ledger.entries) == 1 for entry in plan.entries)
+    assert all(
+        entry.shadow_plan.run_ledger.entries[0].step_id == entry.task_id for entry in plan.entries
+    )
+    statuses = {
+        cadence_id: {
+            entry.shadow_plan.due_resolution.status
+            for entry in plan.entries
+            if entry.cadence_id == cadence_id
+        }
+        for cadence_id in {entry.cadence_id for entry in plan.entries}
+    }
+    assert statuses["weekly"] == {CanonicalStatus.BLOCKED}
+    assert statuses["biweekly"] == {CanonicalStatus.BLOCKED}
+    assert statuses["monthly"] == {CanonicalStatus.NOT_DUE}
+    assert statuses["ad_hoc_research"] == {CanonicalStatus.NOT_DUE}
+    weekly_reasons = next(
+        entry.shadow_plan.due_resolution.reason_codes
+        for entry in plan.entries
+        if entry.cadence_id == "weekly"
+    )
+    assert "DATA_QUALITY_EVIDENCE_MISSING" in weekly_reasons
+    assert "REQUIRED_ARTIFACT_STATUS_MISSING" in weekly_reasons
+    assert "OWNER_GATE_STATUS_MISSING" in weekly_reasons
+
+
+@pytest.mark.parametrize(
+    ("as_of", "due_cadences"),
+    [
+        (date(2026, 7, 2), {"weekly"}),
+        (date(2026, 7, 24), {"weekly", "biweekly"}),
+        (date(2026, 7, 31), {"weekly", "monthly"}),
+    ],
+)
+def test_periodic_plan_uses_us_market_period_end_and_reviewed_biweekly_anchor(
+    as_of: date, due_cadences: set[str]
+) -> None:
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=as_of,
+        daily_status=CanonicalStatus.PASS,
+        data_quality_status=CanonicalStatus.PASS,
+        data_quality_evidence_id=f"dq:{as_of.isoformat()}",
+        required_artifacts_ready=True,
+        source_artifact_ids=(f"daily:{as_of.isoformat()}",),
+        owner_gate_approved=True,
+        owner_decision_id=f"owner:{as_of.isoformat()}",
+    )
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 31, tzinfo=UTC),
+        contexts=contexts,
+    )
+
+    statuses = {
+        cadence_id: {
+            entry.shadow_plan.due_resolution.status
+            for entry in plan.entries
+            if entry.cadence_id == cadence_id
+        }
+        for cadence_id in {entry.cadence_id for entry in plan.entries}
+    }
+    for cadence_id in {"weekly", "biweekly", "monthly"}:
+        expected = CanonicalStatus.DUE if cadence_id in due_cadences else CanonicalStatus.NOT_DUE
+        assert statuses[cadence_id] == {expected}
+    assert statuses["ad_hoc_research"] == {CanonicalStatus.NOT_DUE}
+
+
+def test_periodic_ad_hoc_requires_explicit_trigger_and_all_evidence() -> None:
+    as_of = date(2026, 7, 10)
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=as_of,
+        daily_status=CanonicalStatus.PASS,
+        data_quality_status=CanonicalStatus.PASS,
+        data_quality_evidence_id="dq:2026-07-10",
+        required_artifacts_ready=True,
+        source_artifact_ids=("daily:2026-07-10",),
+        owner_gate_approved=True,
+        owner_decision_id="owner:explicit-research",
+        explicit_trigger=True,
+    )
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 11, tzinfo=UTC),
+        contexts=contexts,
+    )
+
+    assert {
+        entry.shadow_plan.due_resolution.status
+        for entry in plan.entries
+        if entry.cadence_id == "ad_hoc_research"
+    } == {CanonicalStatus.DUE}
+    assert all(
+        entry.command_executed is False
+        for entry in plan.entries
+        if entry.cadence_id == "ad_hoc_research"
+    )
+
+
+def test_periodic_manual_dispatch_uses_runtime_control_and_blocks_duplicate(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 10)
+    policy = load_periodic_operations_control_policy()
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=as_of,
+        daily_status=CanonicalStatus.PASS,
+        data_quality_status=CanonicalStatus.PASS,
+        data_quality_evidence_id="dq:2026-07-10",
+        required_artifacts_ready=True,
+        source_artifact_ids=("daily:2026-07-10",),
+        owner_gate_approved=True,
+        owner_decision_id="owner:weekly",
+    )
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 11, tzinfo=UTC),
+        contexts=contexts,
+        policy=policy,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "periodic_control",
+        policy=_runtime_policy(non_daily_dispatch=True),
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    first = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=("weekly_backtest",),
+        control=control,
+        policy=policy,
+        runner=runner,
+        project_root=tmp_path,
+        manual_invocation=True,
+    )
+    duplicate = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=("weekly_backtest",),
+        control=control,
+        policy=policy,
+        runner=runner,
+        project_root=tmp_path,
+        manual_invocation=True,
+    )
+
+    assert first[0].status is CanonicalStatus.PASS
+    assert first[0].command == ("aits", "backtest", "--regime", "ai_after_chatgpt")
+    assert duplicate[0].status is CanonicalStatus.PASS
+    assert len(calls) == 1
+    state_root = tmp_path / "periodic_control" / "states"
+    state = json.loads(_execution_state_path(state_root).read_text(encoding="utf-8"))
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert state["status"] == "PASS"
+    assert ledger.entry("weekly_backtest").status is CanonicalStatus.PASS
+
+
+def test_periodic_dispatch_requires_runtime_flag_and_explicit_manual_invocation(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 10)
+    policy = load_periodic_operations_control_policy()
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=as_of,
+        daily_status=CanonicalStatus.PASS,
+        data_quality_status=CanonicalStatus.PASS,
+        data_quality_evidence_id="dq",
+        required_artifacts_ready=True,
+        source_artifact_ids=("daily",),
+        owner_gate_approved=True,
+        owner_decision_id="owner",
+    )
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 11, tzinfo=UTC),
+        contexts=contexts,
+        policy=policy,
+    )
+
+    with pytest.raises(PeriodicOperationsControlError, match="DISPATCH_DISABLED"):
+        dispatch_periodic_operations_plan(
+            plan,
+            selected_task_ids=("weekly_backtest",),
+            control=OperationsRunControl(
+                root=tmp_path / "disabled",
+                policy=_runtime_policy(non_daily_dispatch=False),
+            ),
+            policy=policy,
+            runner=lambda command, **kwargs: None,
+            manual_invocation=True,
+        )
+    with pytest.raises(PeriodicOperationsControlError, match="MANUAL_INVOCATION_REQUIRED"):
+        dispatch_periodic_operations_plan(
+            plan,
+            selected_task_ids=("weekly_backtest",),
+            control=OperationsRunControl(
+                root=tmp_path / "manual",
+                policy=_runtime_policy(non_daily_dispatch=True),
+            ),
+            policy=policy,
+            runner=lambda command, **kwargs: None,
+        )
+
+
+def test_periodic_dispatch_blocks_manual_checkpoint_and_unresolved_placeholders(
+    tmp_path: Path,
+) -> None:
+    policy = load_periodic_operations_control_policy()
+
+    def full_contexts(as_of: date, *, explicit_trigger: bool):
+        return build_periodic_due_contexts_from_daily(
+            as_of=as_of,
+            daily_status=CanonicalStatus.PASS,
+            data_quality_status=CanonicalStatus.PASS,
+            data_quality_evidence_id="dq",
+            required_artifacts_ready=True,
+            source_artifact_ids=("daily",),
+            owner_gate_approved=True,
+            owner_decision_id="owner",
+            explicit_trigger=explicit_trigger,
+        )
+
+    monthly_plan = build_periodic_operations_plan(
+        as_of=date(2026, 7, 31),
+        generated_at=datetime(2026, 7, 31, tzinfo=UTC),
+        contexts=full_contexts(date(2026, 7, 31), explicit_trigger=False),
+        policy=policy,
+    )
+    ad_hoc_plan = build_periodic_operations_plan(
+        as_of=date(2026, 7, 10),
+        generated_at=datetime(2026, 7, 11, tzinfo=UTC),
+        contexts=full_contexts(date(2026, 7, 10), explicit_trigger=True),
+        policy=policy,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "periodic",
+        policy=_runtime_policy(non_daily_dispatch=True),
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monthly = dispatch_periodic_operations_plan(
+        monthly_plan,
+        selected_task_ids=("monthly_artifact_catalog_review",),
+        control=control,
+        policy=policy,
+        runner=runner,
+        manual_invocation=True,
+    )
+    ad_hoc = dispatch_periodic_operations_plan(
+        ad_hoc_plan,
+        selected_task_ids=(
+            "ad_hoc_dynamic_v3_rescue_injection_audit",
+            "ad_hoc_dynamic_v3_rescue_candidate_attribution",
+        ),
+        control=control,
+        policy=policy,
+        runner=runner,
+        manual_invocation=True,
+    )
+
+    assert monthly[0].status is CanonicalStatus.BLOCKED
+    assert monthly[0].blocker_codes == ("COMMAND_PREFIX_NOT_ALLOWED",)
+    assert ad_hoc[0].status is CanonicalStatus.BLOCKED
+    assert "UNRESOLVED_BRACE_PLACEHOLDER" in ad_hoc[0].blocker_codes
+    assert ad_hoc[1].status is CanonicalStatus.BLOCKED
+    assert "UNRESOLVED_ANGLE_PLACEHOLDER" in ad_hoc[1].blocker_codes
+    assert calls == []
+
+
+def test_periodic_dispatch_returns_skipped_for_not_due_task_without_acquiring_lock(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 9)
+    policy = load_periodic_operations_control_policy()
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 9, tzinfo=UTC),
+        contexts=build_periodic_due_contexts_from_daily(
+            as_of=as_of,
+            daily_status=CanonicalStatus.PASS,
+            data_quality_status=CanonicalStatus.PASS,
+        ),
+        policy=policy,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "periodic",
+        policy=_runtime_policy(non_daily_dispatch=True),
+    )
+
+    result = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=("weekly_backtest",),
+        control=control,
+        policy=policy,
+        runner=lambda command, **kwargs: None,
+        manual_invocation=True,
+    )
+
+    assert result[0].status is CanonicalStatus.SKIPPED
+    assert result[0].blocker_codes == ("NOT_PERIOD_END",)
+    assert not (tmp_path / "periodic" / "locks").exists()
+
+
+def test_periodic_dispatch_failure_is_terminal_and_retry_exhausted(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 10)
+    policy = load_periodic_operations_control_policy()
+    plan = build_periodic_operations_plan(
+        as_of=as_of,
+        generated_at=datetime(2026, 7, 11, tzinfo=UTC),
+        contexts=build_periodic_due_contexts_from_daily(
+            as_of=as_of,
+            daily_status=CanonicalStatus.PASS,
+            data_quality_status=CanonicalStatus.PASS,
+            data_quality_evidence_id="dq",
+            required_artifacts_ready=True,
+            source_artifact_ids=("daily",),
+            owner_gate_approved=True,
+            owner_decision_id="owner",
+        ),
+        policy=policy,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "periodic",
+        policy=_runtime_policy(non_daily_dispatch=True),
+    )
+
+    def failing_runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, stdout="", stderr="failed")
+
+    failed = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=("weekly_backtest",),
+        control=control,
+        policy=policy,
+        runner=failing_runner,
+        manual_invocation=True,
+    )
+    retry = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=("weekly_backtest",),
+        control=control,
+        policy=policy,
+        runner=failing_runner,
+        manual_invocation=True,
+    )
+
+    assert failed[0].status is CanonicalStatus.FAILED
+    assert retry[0].status is CanonicalStatus.BLOCKED
+    assert retry[0].blocker_codes == ("STEP_ATTEMPT_BUDGET_EXHAUSTED:weekly_backtest",)
+    state_root = tmp_path / "periodic" / "states"
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert ledger.entry("weekly_backtest").status is CanonicalStatus.FAILED
 
 
 def test_due_resolution_fails_closed_when_quality_evidence_id_is_missing() -> None:
@@ -564,17 +978,17 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"
     assert payload["runtime_control_policy"]["legacy_daily_executor_cut_in_enabled"] is True
-    assert payload["runtime_control_policy"]["non_daily_dispatch_enabled"] is False
+    assert payload["runtime_control_policy"]["non_daily_dispatch_enabled"] is True
 
 
-def test_runtime_control_policy_is_governed_and_enables_daily_only_cut_in() -> None:
+def test_runtime_control_policy_enables_daily_and_explicit_non_daily_cut_in() -> None:
     policy = load_operations_runtime_control_policy()
 
     assert policy.policy_id == "operations_runtime_control_v1"
     assert policy.max_run_attempts == 2
     assert policy.resume_idempotent_steps is True
     assert policy.legacy_daily_executor_cut_in_enabled is True
-    assert policy.non_daily_dispatch_enabled is False
+    assert policy.non_daily_dispatch_enabled is True
 
 
 def test_runtime_control_blocks_concurrent_workflow_date_acquisition(tmp_path: Path) -> None:

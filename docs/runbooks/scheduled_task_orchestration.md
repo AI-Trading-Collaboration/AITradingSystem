@@ -69,6 +69,8 @@ aits ops daily-run --as-of 2026-05-06
 
 Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。F1.4后`legacy_daily_executor_cut_in_enabled=true`：`daily-run`先获取canonical workflow/date lease，再通过兼容façade执行原步骤；每步PASS/SKIPPED/FAILED与terminal状态同时写入`outputs/run_control/daily/states/<idempotency-key>.json`和相邻`*.run_ledger.json`。相同spec/as-of已PASS时不重复运行；active lock、unsafe resume或attempt exhausted在runner前阻断。`validate-data`失败必须在ledger中把该步记为FAILED、下游记为BLOCKED，且不得生成后续score/report。该切换不启用non-daily dispatch。
 
+F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operations_plan_YYYY-MM-DD.json`。该文件覆盖14 weekly、6 biweekly、6 monthly和15 ad-hoc任务，每项独立保存one-step WorkflowSpec、typed due resolution、non-executing RunLedger和原command template；缺DQ/artifact/owner evidence的due项BLOCKED，非period-end或event未触发项NOT_DUE。`automatic_command_dispatch_enabled=false`，因此daily trigger不执行这些命令。Operator只有在持有完整evidence/owner decision时才可显式调用`aits ops periodic-dispatch ... --confirm-manual-dispatch`；未解析`{...}`/`<...>`、自然语言manual checkpoint、非allowlist前缀、duplicate/concurrent/attempt exhausted均fail closed。该manual command不是外部scheduler entry。
+
 ## Closed-Market Mode
 
 周末或 NYSE 常规整日休市日：
@@ -80,7 +82,7 @@ Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in
 
 ## Weekly Cadence
 
-Weekly 任务在 `config/scheduled_tasks.yaml` 中登记，但不由 daily-run 自动执行：
+Weekly 任务在 `config/scheduled_tasks.yaml` 中登记；daily-run只生成逐项due/blocked/not-due评估，不自动执行：
 
 - backtest
 - backtest robustness

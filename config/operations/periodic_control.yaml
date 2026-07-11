@@ -1,0 +1,75 @@
+schema_version: periodic_operations_control_policy.v1
+policy_id: periodic_operations_control_v1
+owner: system_operations
+version: 1.0.0
+status: active_arch_004f1_f1_5_baseline
+policy_metadata:
+  rationale: >
+    The 41 registered non-daily tasks contain mixed weekly, biweekly, monthly,
+    and owner-selected research semantics. Their legacy date gates are absent
+    or natural language, so the unified daily trigger must evaluate reviewed
+    typed cadence rules without guessing task-specific evidence or parameters.
+  intended_effect: >
+    Give every non-daily task an independent one-step WorkflowSpec, due
+    resolution, and non-executing RunLedger. Missing daily, data-quality,
+    artifact, owner, event, or placeholder evidence remains audibly blocked.
+  validation_evidence: >
+    ARCH-004F1 focused fixtures cover all 41 tasks, weekly/biweekly/monthly
+    period boundaries, explicit-trigger behavior, missing evidence, and
+    deterministic plan serialization.
+  review_condition: >
+    Review before changing any cadence rule or anchor, evidence requirement,
+    owner gate, task dispatch mode, automatic execution flag, or unified
+    external trigger.
+unified_external_trigger: aits ops daily-run
+automatic_command_dispatch_enabled: false
+allowed_command_prefixes:
+  - "aits "
+  - "python scripts/"
+cadence_policies:
+  weekly:
+    due_policy_id: periodic_weekly_period_end_v1
+    workflow_cadence: weekly
+    rule: period_end
+    requires_trading_day: true
+    requires_completed_daily: true
+    requires_data_quality: true
+    requires_artifacts: true
+    requires_owner_gate: true
+    dispatch_mode: MANUAL_ONLY
+    rationale: Weekly tasks run only on the last U.S. trading day of the ISO week after reviewed evidence is present.
+  biweekly:
+    due_policy_id: periodic_biweekly_period_end_v1
+    workflow_cadence: biweekly
+    rule: interval_weeks
+    anchor_date: 2026-07-10
+    interval_weeks: 2
+    requires_trading_day: true
+    requires_completed_daily: true
+    requires_data_quality: true
+    requires_artifacts: true
+    requires_owner_gate: true
+    dispatch_mode: MANUAL_ONLY
+    rationale: The reviewed pilot anchor is Friday 2026-07-10; changing it requires operations-owner review.
+  monthly:
+    due_policy_id: periodic_monthly_period_end_v1
+    workflow_cadence: monthly
+    rule: period_end
+    requires_trading_day: true
+    requires_completed_daily: true
+    requires_data_quality: true
+    requires_artifacts: true
+    requires_owner_gate: true
+    dispatch_mode: MANUAL_ONLY
+    rationale: Monthly tasks run only on the last U.S. trading day of the month after reviewed evidence is present.
+  ad_hoc_research:
+    due_policy_id: periodic_ad_hoc_explicit_trigger_v1
+    workflow_cadence: manual
+    rule: explicit_trigger
+    requires_trading_day: true
+    requires_completed_daily: true
+    requires_data_quality: true
+    requires_artifacts: true
+    requires_owner_gate: true
+    dispatch_mode: EXPLICIT_MANUAL_ONLY
+    rationale: Ad-hoc research requires an explicit event plus owner-reviewed parameters and evidence; the daily trigger never infers it.

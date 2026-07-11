@@ -12,6 +12,7 @@ from ai_trading_system.contracts.data_quality import (
 from ai_trading_system.contracts.operations import (
     DueRule,
     OperationsContractError,
+    OperationsDispatchMode,
     OperationsDueContext,
     OperationsDuePolicy,
     OperationsDueResolution,
@@ -19,6 +20,8 @@ from ai_trading_system.contracts.operations import (
     OperationsRunControlResolution,
     OperationsRunDecision,
     OperationsShadowPlan,
+    PeriodicOperationsPlan,
+    PeriodicOperationsPlanEntry,
     build_operations_shadow_plan,
     resolve_operations_due,
 )
@@ -93,6 +96,7 @@ __all__ = [
     "FailurePropagation",
     "MarketRegimeSpec",
     "OperationsContractError",
+    "OperationsDispatchMode",
     "OperationsDueContext",
     "OperationsDuePolicy",
     "OperationsDueResolution",
@@ -100,6 +104,8 @@ __all__ = [
     "OperationsRunControlResolution",
     "OperationsRunDecision",
     "OperationsShadowPlan",
+    "PeriodicOperationsPlan",
+    "PeriodicOperationsPlanEntry",
     "PolicyRef",
     "PolicyRole",
     "ReaderTier",

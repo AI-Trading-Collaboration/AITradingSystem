@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 783
+module_count: 785
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1137,7 +1137,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.ops
   path: src/ai_trading_system/cli_commands/ops.py
-  sha256: e6871d7e87151a6e7ac473c564b3360c81db5f8ca58eddb81f07f53f5ffc668e
+  sha256: 4c97a887cae3137dbd9f4d7b1ab0ba0e24e107022d9597729d69889a17b8b6a2
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1989,7 +1989,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.__init__
   path: src/ai_trading_system/contracts/__init__.py
-  sha256: 44830ce03bb3f42f93617f5fec1142778464f2ca8d0b42341384bc93c58f53a6
+  sha256: 7fc86841d215a9e354f7ab3a3f998438def8f61ded3aea884110c67426b30f60
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2055,7 +2055,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.operations
   path: src/ai_trading_system/contracts/operations.py
-  sha256: 384e6f16c38be766f79e45715b8bc26624202e137d2344646a791cc1c46547c5
+  sha256: 0213a833934cb942462d0131f2beaf6f61807ea360a9afcae9121c89827d4521
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -9382,6 +9382,28 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.legacy.periodic_operations_adapter
+  path: src/ai_trading_system/legacy/periodic_operations_adapter.py
+  sha256: 7cd7613293b3c076e6da6c9bdd2381b3f824a8db6e29093050e24063c9a4d66a
+  rule_id: legacy
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: legacy
+  category: time_bounded_compatibility
+  public_contract: true
+  deprecation_status: sunset_arch_004g
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_research_evaluation_context.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.legacy.platform_contract_adapters
   path: src/ai_trading_system/legacy/platform_contract_adapters.py
   sha256: c58d7a46ea0a69644b47ba9b62947d696014b102bf4fa568cb65479b987701dc
@@ -10112,7 +10134,29 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.operations.__init__
   path: src/ai_trading_system/platform/operations/__init__.py
-  sha256: 70169d9aa345feec3173aa207a66dd3a43b5f004761da02a5376fd8e9120e4ad
+  sha256: fb4c80e3928c39f87e3290d35902353f5c0c8b93c508d8a3f5ecd91e9f6d9a0a
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.operations.periodic_control
+  path: src/ai_trading_system/platform/operations/periodic_control.py
+  sha256: 3eb1892e187c28f98a47ecb5a361ff6a81bcbf5c1db6903161cfc753ea9bd3f3
   rule_id: platform
   owner_profile: platform
   owners:

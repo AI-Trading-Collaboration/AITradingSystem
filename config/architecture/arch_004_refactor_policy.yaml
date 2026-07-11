@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_f1_in_progress
+status: phase_f3_ready
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,9 +30,9 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004F1
-  current_phase_status: IN_PROGRESS
-  next_phase: ARCH-004F3
+  current_phase: ARCH-004F3
+  current_phase_status: READY
+  next_phase: ARCH-004G
   next_phase_unblocked: false
   predecessor_task_ids:
     - ARCH-001
@@ -429,15 +429,15 @@ phase_f2_execution:
 
 phase_f1_execution:
   task_id: ARCH-004F1_OPERATIONS_CONTROL_PLANE
-  status: IN_PROGRESS
+  status: COMPLETE
   requirement_path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   stages:
     F1_1_inventory_due_contract_and_compatibility_adapter: COMPLETE
     F1_2_shadow_plan_and_daily_parity: COMPLETE
     F1_3_lock_retry_idempotency_and_resume: COMPLETE
     F1_4_daily_executor_adapter_cut_in: COMPLETE
-    F1_5_non_daily_controlled_due_dispatch: IN_PROGRESS
-    F1_6_validation_and_closeout: NOT_STARTED
+    F1_5_non_daily_controlled_due_dispatch: COMPLETE
+    F1_6_validation_and_closeout: COMPLETE
   scheduled_task_inventory:
     daily: 37
     non_daily: 41
@@ -445,6 +445,7 @@ phase_f1_execution:
   unified_external_trigger: aits ops daily-run
   additional_external_scheduler_entry_allowed: false
   non_daily_automatic_dispatch_enabled: false
+  non_daily_manual_dispatch_enabled: true
   legacy_dispatch_enabled_by_shadow_adapter: false
   runtime_control:
     policy_path: config/operations/runtime_control.yaml
@@ -465,7 +466,9 @@ phase_f1_execution:
     legacy_daily_executor_facade_preserved: true
     daily_cli_and_step_result_contract_parity: PASS
     validate_data_failure_blocks_downstream: true
+    non_daily_dispatch_enabled: true
   periodic_research_review_may_auto_tune: false
+  next_phase_unblocked: true
   compatibility_findings:
     trading_day_daily_plan: PASS
     closed_market_daily_plan: PASS
@@ -480,42 +483,51 @@ phase_f1_execution:
     controlled_daily_duplicate: ALREADY_COMPLETE
     controlled_daily_concurrent: BLOCKED
     controlled_daily_failure: FAILED
+    periodic_policy_schema: periodic_operations_control_policy.v1
+    periodic_plan_schema: periodic_operations_plan.v1
+    periodic_task_plan_count: 41
+    periodic_one_step_workflow_per_task: true
+    periodic_automatic_command_dispatch: false
+    periodic_manual_dispatch_requires_explicit_task_selection: true
+    periodic_manual_dispatch_requires_daily_dq_artifact_owner_evidence: true
+    periodic_unresolved_placeholder: BLOCKED
+    periodic_manual_checkpoint: BLOCKED
   focused_validation:
     status: PASS
-    passed: 105
+    passed: 118
   scoped_mypy: PASS
   fast_unit:
     status: PASS
     passed: 198
-    elapsed_seconds: 56.73
-    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T021207Z/test_runtime_summary.json
+    elapsed_seconds: 57.42
+    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T030344Z/test_runtime_summary.json
   contract_validation:
     status: PASS
     passed: 197
-    elapsed_seconds: 47.91
-    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T021310Z/test_runtime_summary.json
+    elapsed_seconds: 46.62
+    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T030450Z/test_runtime_summary.json
   integration_validation:
     status: PASS
-    passed: 981
-    elapsed_seconds: 59.88
-    runtime_artifact: outputs/validation_runtime/integration_20260711T021030Z/test_runtime_summary.json
+    passed: 983
+    elapsed_seconds: 62.06
+    runtime_artifact: outputs/validation_runtime/integration_20260711T030204Z/test_runtime_summary.json
   reproducibility_validation:
     status: PASS
     passed: 23
-    elapsed_seconds: 24.0
-    runtime_artifact: outputs/validation_runtime/reproducibility_20260711T021134Z/test_runtime_summary.json
+    elapsed_seconds: 24.02
+    runtime_artifact: outputs/validation_runtime/reproducibility_20260711T030313Z/test_runtime_summary.json
   architecture_fitness:
     status: PASS
-    passed: 125
-    elapsed_seconds: 51.86
-    runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T023214Z/test_runtime_summary.json
+    passed: 136
+    elapsed_seconds: 45.49
+    runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T030543Z/test_runtime_summary.json
   full_parallel_validation:
     status: PASS
-    passed: 5467
+    passed: 5480
     failed: 0
     warnings: 642
-    elapsed_seconds: 922.05
-    runtime_artifact: outputs/validation_runtime/full_20260711T021500Z/test_runtime_summary.json
+    elapsed_seconds: 1013.63
+    runtime_artifact: outputs/validation_runtime/full_20260711T030639Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

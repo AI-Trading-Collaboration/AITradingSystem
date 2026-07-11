@@ -35,6 +35,12 @@ class OperationsRunDecision(StrEnum):
     BLOCKED_UNSAFE_RESUME = "BLOCKED_UNSAFE_RESUME"
 
 
+class OperationsDispatchMode(StrEnum):
+    MANUAL_ONLY = "MANUAL_ONLY"
+    EXPLICIT_MANUAL_ONLY = "EXPLICIT_MANUAL_ONLY"
+    CONTROLLED_AUTOMATIC = "CONTROLLED_AUTOMATIC"
+
+
 @dataclass(frozen=True)
 class OperationsDuePolicy:
     schema_version: ClassVar[str] = "operations_due_policy.v1"
@@ -308,6 +314,147 @@ class OperationsShadowPlan:
             raise OperationsContractError(
                 "SHADOW_PLAN_ID_MISMATCH", plan.due_resolution.workflow_id
             )
+        return plan
+
+
+@dataclass(frozen=True)
+class PeriodicOperationsPlanEntry:
+    task_id: str
+    cadence_id: str
+    command_template: str
+    dispatch_mode: OperationsDispatchMode
+    workflow_spec: WorkflowSpec
+    shadow_plan: OperationsShadowPlan
+    command_executed: bool = False
+
+    def __post_init__(self) -> None:
+        _nonempty(self.task_id, "task_id")
+        _nonempty(self.cadence_id, "cadence_id")
+        _nonempty(self.command_template, "command_template")
+        if self.command_executed:
+            raise OperationsContractError("PERIODIC_PLAN_EXECUTION_FORBIDDEN", self.task_id)
+        if self.workflow_spec.spec_id != self.shadow_plan.workflow_spec_id:
+            raise OperationsContractError("PERIODIC_PLAN_SPEC_MISMATCH", self.task_id)
+        if self.workflow_spec.workflow_id != self.shadow_plan.due_resolution.workflow_id:
+            raise OperationsContractError("PERIODIC_PLAN_WORKFLOW_MISMATCH", self.task_id)
+        if len(self.workflow_spec.steps) != 1:
+            raise OperationsContractError("PERIODIC_PLAN_ONE_STEP_REQUIRED", self.task_id)
+        if self.workflow_spec.steps[0].step_id != self.task_id:
+            raise OperationsContractError("PERIODIC_PLAN_TASK_STEP_MISMATCH", self.task_id)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "task_id": self.task_id,
+            "cadence_id": self.cadence_id,
+            "command_template": self.command_template,
+            "dispatch_mode": self.dispatch_mode.value,
+            "workflow_spec": self.workflow_spec.to_dict(),
+            "shadow_plan": self.shadow_plan.to_dict(),
+            "command_executed": self.command_executed,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, object]) -> PeriodicOperationsPlanEntry:
+        shadow = payload.get("shadow_plan")
+        workflow = payload.get("workflow_spec")
+        if not isinstance(shadow, Mapping) or not isinstance(workflow, Mapping):
+            raise OperationsContractError(
+                "INVALID_OPERATIONS_PAYLOAD",
+                "workflow_spec and shadow_plan must be mappings",
+            )
+        return cls(
+            task_id=str(payload.get("task_id", "")),
+            cadence_id=str(payload.get("cadence_id", "")),
+            command_template=str(payload.get("command_template", "")),
+            dispatch_mode=OperationsDispatchMode(str(payload.get("dispatch_mode", ""))),
+            workflow_spec=WorkflowSpec.from_dict(workflow),
+            shadow_plan=OperationsShadowPlan.from_dict(shadow),
+            command_executed=payload.get("command_executed") is True,
+        )
+
+
+@dataclass(frozen=True)
+class PeriodicOperationsPlan:
+    schema_version: ClassVar[str] = "periodic_operations_plan.v1"
+
+    policy_id: str
+    as_of: date
+    generated_at: datetime
+    unified_external_trigger: str
+    scheduled_config_path: str
+    scheduled_config_sha256: str
+    policy_path: str
+    policy_sha256: str
+    entries: tuple[PeriodicOperationsPlanEntry, ...]
+    automatic_command_dispatch_enabled: bool = False
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.policy_id, "policy_id"),
+            (self.unified_external_trigger, "unified_external_trigger"),
+            (self.scheduled_config_path, "scheduled_config_path"),
+            (self.scheduled_config_sha256, "scheduled_config_sha256"),
+            (self.policy_path, "policy_path"),
+            (self.policy_sha256, "policy_sha256"),
+        ):
+            _nonempty(value, field)
+        _aware_datetime(self.generated_at, "generated_at")
+        if not self.entries:
+            raise OperationsContractError("PERIODIC_PLAN_ENTRIES_EMPTY", self.policy_id)
+        task_ids = [entry.task_id for entry in self.entries]
+        if len(task_ids) != len(set(task_ids)):
+            raise OperationsContractError("PERIODIC_PLAN_DUPLICATE_TASK", self.policy_id)
+        if self.automatic_command_dispatch_enabled:
+            raise OperationsContractError("PERIODIC_AUTOMATIC_DISPATCH_NOT_ENABLED", self.policy_id)
+
+    @property
+    def plan_id(self) -> str:
+        material = json.dumps(
+            self.to_dict(include_id=False),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return f"periodic_operations_{hashlib.sha256(material).hexdigest()[:20]}"
+
+    def to_dict(self, *, include_id: bool = True) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "schema_version": self.schema_version,
+            "policy_id": self.policy_id,
+            "as_of": self.as_of.isoformat(),
+            "generated_at": self.generated_at.isoformat(),
+            "unified_external_trigger": self.unified_external_trigger,
+            "scheduled_config_path": self.scheduled_config_path,
+            "scheduled_config_sha256": self.scheduled_config_sha256,
+            "policy_path": self.policy_path,
+            "policy_sha256": self.policy_sha256,
+            "entries": [entry.to_dict() for entry in self.entries],
+            "automatic_command_dispatch_enabled": self.automatic_command_dispatch_enabled,
+        }
+        return {"plan_id": self.plan_id, **payload} if include_id else payload
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, object]) -> PeriodicOperationsPlan:
+        plan = cls(
+            policy_id=str(payload.get("policy_id", "")),
+            as_of=_date_value(payload.get("as_of"), "as_of"),
+            generated_at=_datetime_value(payload.get("generated_at"), "generated_at"),
+            unified_external_trigger=str(payload.get("unified_external_trigger", "")),
+            scheduled_config_path=str(payload.get("scheduled_config_path", "")),
+            scheduled_config_sha256=str(payload.get("scheduled_config_sha256", "")),
+            policy_path=str(payload.get("policy_path", "")),
+            policy_sha256=str(payload.get("policy_sha256", "")),
+            entries=tuple(
+                PeriodicOperationsPlanEntry.from_dict(_mapping(item, "entry"))
+                for item in _list(payload, "entries")
+            ),
+            automatic_command_dispatch_enabled=(
+                payload.get("automatic_command_dispatch_enabled") is True
+            ),
+        )
+        supplied = payload.get("plan_id")
+        if supplied is not None and str(supplied) != plan.plan_id:
+            raise OperationsContractError("PERIODIC_PLAN_ID_MISMATCH", plan.policy_id)
         return plan
 
 
@@ -712,6 +859,12 @@ def _list(payload: Mapping[str, object], field: str) -> list[object]:
     value = payload.get(field, [])
     if not isinstance(value, list):
         raise OperationsContractError("INVALID_OPERATIONS_PAYLOAD", f"{field} must be list")
+    return value
+
+
+def _mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise OperationsContractError("INVALID_OPERATIONS_PAYLOAD", f"{field} must be mapping")
     return value
 
 

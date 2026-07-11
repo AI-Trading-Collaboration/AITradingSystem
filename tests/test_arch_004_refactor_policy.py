@@ -14,14 +14,14 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
+def test_arch_004_phase_f3_ready_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_f1_in_progress"
-    assert policy["program"]["current_phase"] == "ARCH-004F1"
-    assert policy["program"]["current_phase_status"] == "IN_PROGRESS"
-    assert policy["program"]["next_phase"] == "ARCH-004F3"
+    assert policy["status"] == "phase_f3_ready"
+    assert policy["program"]["current_phase"] == "ARCH-004F3"
+    assert policy["program"]["current_phase_status"] == "READY"
+    assert policy["program"]["next_phase"] == "ARCH-004G"
     assert policy["program"]["next_phase_unblocked"] is False
     assert policy["feature_freeze"]["active"] is True
     assert "NEW_TASK_SHAPED_RESEARCH_MODULE" in policy["feature_freeze"]["forbidden_change_classes"]
@@ -151,14 +151,14 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert runtime_validation["full_parallel"]["passed"] == 5430
     assert runtime_validation["full_parallel"]["failed"] == 0
     phase_f1 = policy["phase_f1_execution"]
-    assert phase_f1["status"] == "IN_PROGRESS"
+    assert phase_f1["status"] == "COMPLETE"
     assert phase_f1["stages"] == {
         "F1_1_inventory_due_contract_and_compatibility_adapter": "COMPLETE",
         "F1_2_shadow_plan_and_daily_parity": "COMPLETE",
         "F1_3_lock_retry_idempotency_and_resume": "COMPLETE",
         "F1_4_daily_executor_adapter_cut_in": "COMPLETE",
-        "F1_5_non_daily_controlled_due_dispatch": "IN_PROGRESS",
-        "F1_6_validation_and_closeout": "NOT_STARTED",
+        "F1_5_non_daily_controlled_due_dispatch": "COMPLETE",
+        "F1_6_validation_and_closeout": "COMPLETE",
     }
     assert phase_f1["scheduled_task_inventory"] == {
         "daily": 37,
@@ -168,6 +168,7 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert phase_f1["unified_external_trigger"] == "aits ops daily-run"
     assert phase_f1["additional_external_scheduler_entry_allowed"] is False
     assert phase_f1["non_daily_automatic_dispatch_enabled"] is False
+    assert phase_f1["non_daily_manual_dispatch_enabled"] is True
     assert phase_f1["legacy_dispatch_enabled_by_shadow_adapter"] is False
     runtime_control = phase_f1["runtime_control"]
     assert runtime_control["policy_id"] == "operations_runtime_control_v1"
@@ -180,6 +181,9 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert runtime_control["legacy_daily_executor_cut_in_enabled"] is True
     assert runtime_control["execution_ledger_schema"] == "run_ledger.v1"
     assert runtime_control["validate_data_failure_blocks_downstream"] is True
+    assert runtime_control["non_daily_dispatch_enabled"] is True
+    assert phase_f1["compatibility_findings"]["periodic_task_plan_count"] == 41
+    assert phase_f1["compatibility_findings"]["periodic_automatic_command_dispatch"] is False
     assert phase_f1["compatibility_findings"]["trading_day_daily_plan"] == "PASS"
     assert phase_f1["compatibility_findings"]["closed_market_daily_plan"] == "PASS"
     assert phase_f1["compatibility_findings"]["conditional_step_contract"] == {
@@ -445,7 +449,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
     phase_f1 = baseline["phase_f1_operations_control_plane"]
-    assert phase_f1["status"] == "IN_PROGRESS_F1_1_TO_F1_4_COMPLETE_F1_5_IN_PROGRESS"
+    assert phase_f1["status"] == "COMPLETE_F3_READY"
     assert phase_f1["contracts"]["shadow_execution_enabled"] is False
     assert phase_f1["contracts"]["additive_shadow_artifact_emission"] is True
     assert phase_f1["contracts"]["execution_state_schema"] == "operations_execution_state.v1"
@@ -453,6 +457,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f1["contracts"]["legacy_daily_executor_cut_in_enabled"] is True
     assert phase_f1["contracts"]["execution_ledger_schema"] == "run_ledger.v1"
     assert phase_f1["contracts"]["non_daily_automatic_dispatch_enabled"] is False
+    assert phase_f1["contracts"]["non_daily_manual_dispatch_enabled"] is True
+    assert phase_f1["contracts"]["periodic_plan_schema"] == "periodic_operations_plan.v1"
     assert phase_f1["scheduled_task_inventory"] == {
         "daily": 37,
         "non_daily": 41,
@@ -467,6 +473,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f1["parity"]["duplicate_completed_trigger"] == "ALREADY_COMPLETE"
     assert phase_f1["parity"]["non_idempotent_partial_resume"] == "BLOCKED"
     assert phase_f1["parity"]["atomic_state_write"] == "PASS"
+    assert phase_f1["parity"]["periodic_task_plan_count"] == 41
+    assert phase_f1["parity"]["periodic_automatic_command_dispatch"] is False
     for source in phase_f1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]

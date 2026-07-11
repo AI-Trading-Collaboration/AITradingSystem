@@ -9,6 +9,7 @@ arch_004_owned_paths:
   - config/architecture/arch_004_refactor_policy.yaml
   - config/scheduled_tasks.yaml
   - config/operations/runtime_control.yaml
+  - config/operations/periodic_control.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -46,6 +47,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/config/market_regimes.py
   - src/ai_trading_system/platform/operations/__init__.py
   - src/ai_trading_system/platform/operations/runtime_control.py
+  - src/ai_trading_system/platform/operations/periodic_control.py
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/dependency_gate.py
   - src/ai_trading_system/config.py
@@ -101,6 +103,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/cli_commands/ops.py
   - src/ai_trading_system/legacy/research_campaign_adapter.py
   - src/ai_trading_system/legacy/scheduled_tasks_adapter.py
+  - src/ai_trading_system/legacy/periodic_operations_adapter.py
   - tests/test_arch_004f2_research_lifecycle.py
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_scheduled_tasks.py

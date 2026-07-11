@@ -11,16 +11,19 @@ policy_metadata:
   intended_effect: >
     Use an atomic workflow/date lock, a deterministic idempotency key, a
     bounded run-attempt budget, and resume only when every affected step is
-    explicitly idempotent.
+    explicitly idempotent. Non-daily runtime leases may only be reached by the
+    explicit evidence-gated manual dispatcher while automatic periodic command
+    execution remains disabled in periodic_control.yaml.
   validation_evidence: >
     ARCH-004F1 focused tests cover concurrent acquisition, stale-lock recovery,
     duplicate completed triggers, retry exhaustion, safe resume, unsafe
     non-idempotent resume, owner-only release, and atomic state persistence.
   review_condition: >
     Review before changing lock TTL, attempt budget, resume eligibility,
-    daily executor cut-in, or any non-daily dispatch behavior.
+    daily executor cut-in, non-daily manual dispatch, or automatic periodic
+    execution behavior.
 lock_ttl_seconds: 21600
 max_run_attempts: 2
 resume_idempotent_steps: true
 legacy_daily_executor_cut_in_enabled: true
-non_daily_dispatch_enabled: false
+non_daily_dispatch_enabled: true

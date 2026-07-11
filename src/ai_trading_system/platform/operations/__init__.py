@@ -1,3 +1,15 @@
+from ai_trading_system.platform.operations.periodic_control import (
+    DEFAULT_PERIODIC_OPERATIONS_CONTROL_POLICY_PATH,
+    PeriodicCadenceControl,
+    PeriodicDispatchResult,
+    PeriodicOperationsControlError,
+    PeriodicOperationsControlPolicy,
+    build_periodic_due_contexts_from_daily,
+    default_periodic_operations_plan_path,
+    dispatch_periodic_operations_plan,
+    load_periodic_operations_control_policy,
+    write_periodic_operations_plan,
+)
 from ai_trading_system.platform.operations.runtime_control import (
     DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
     OperationsRunControl,
@@ -18,4 +30,14 @@ __all__ = [
     "OperationsRuntimeControlPolicy",
     "load_operations_runtime_control_policy",
     "operations_idempotency_key",
+    "DEFAULT_PERIODIC_OPERATIONS_CONTROL_POLICY_PATH",
+    "PeriodicCadenceControl",
+    "PeriodicDispatchResult",
+    "PeriodicOperationsControlError",
+    "PeriodicOperationsControlPolicy",
+    "build_periodic_due_contexts_from_daily",
+    "default_periodic_operations_plan_path",
+    "dispatch_periodic_operations_plan",
+    "load_periodic_operations_control_policy",
+    "write_periodic_operations_plan",
 ]

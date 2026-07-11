@@ -793,12 +793,16 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     reader_brief_quality_json = next(
         run_output_root.rglob("reports/reader_brief_quality_2026-05-06.json")
     )
+    periodic_plan_json = next(
+        run_output_root.rglob("metadata/periodic_operations_plan_2026-05-06.json")
+    )
     assert task_dashboard.exists()
     assert task_dashboard_json.exists()
     assert decision_summary_json.exists()
     assert order_intent_candidates_json.exists()
     assert reader_brief_json.exists()
     assert reader_brief_quality_json.exists()
+    assert periodic_plan_json.exists()
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.json").exists()
@@ -832,6 +836,11 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert order_candidate["execution_action"] == "none"
     assert order_candidate["would_create_order_intent"] is False
     assert order_candidate["would_submit_order"] is False
+    periodic_plan = json.loads(periodic_plan_json.read_text(encoding="utf-8"))
+    assert periodic_plan["schema_version"] == "periodic_operations_plan.v1"
+    assert len(periodic_plan["entries"]) == 41
+    assert periodic_plan["automatic_command_dispatch_enabled"] is False
+    assert all(entry["command_executed"] is False for entry in periodic_plan["entries"])
 
 
 def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:
@@ -859,6 +868,76 @@ def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:
     assert result.exit_code == 1
     assert "每日运行计划：BLOCKED_ENV" in result.output
     assert output_path.exists()
+
+
+def test_periodic_dispatch_cli_requires_evidence_and_uses_controlled_runtime(
+    tmp_path: Path, monkeypatch
+) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command, *, cwd):
+        calls.append(command)
+        assert cwd == tmp_path
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "_run_periodic_command", fake_runner)
+    arguments = [
+        "ops",
+        "periodic-dispatch",
+        "--as-of",
+        "2026-07-10",
+        "--task-id",
+        "weekly_backtest",
+        "--daily-status",
+        "PASS",
+        "--data-quality-status",
+        "PASS",
+        "--data-quality-evidence-id",
+        "dq:2026-07-10",
+        "--source-artifact-id",
+        "daily:2026-07-10",
+        "--owner-decision-id",
+        "owner:weekly",
+        "--confirm-manual-dispatch",
+    ]
+
+    first = CliRunner().invoke(app, arguments)
+    duplicate = CliRunner().invoke(app, arguments)
+
+    assert first.exit_code == 0, first.output
+    assert duplicate.exit_code == 0, duplicate.output
+    assert "weekly_backtest：PASS" in first.output
+    assert len(calls) == 1
+    plan_path = (
+        tmp_path
+        / "outputs"
+        / "run_control"
+        / "periodic"
+        / "plans"
+        / "periodic_operations_plan_2026-07-10.json"
+    )
+    assert plan_path.exists()
+    payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert payload["automatic_command_dispatch_enabled"] is False
+    assert len(payload["entries"]) == 41
+
+
+def test_periodic_dispatch_cli_fails_without_manual_confirmation() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "periodic-dispatch",
+            "--as-of",
+            "2026-07-10",
+            "--task-id",
+            "weekly_backtest",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "confirm-manual-dispatch" in result.output
 
 
 def test_daily_ops_plan_pit_failure_is_not_a_downstream_blocker() -> None:

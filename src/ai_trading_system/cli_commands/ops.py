@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Annotated
@@ -17,6 +18,7 @@ from ai_trading_system.cli_commands.risk_event_artifacts import (
     DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
     default_daily_decision_summary_path,
@@ -43,9 +45,13 @@ from ai_trading_system.historical_replay import (
     run_historical_day_replay,
     run_historical_replay_window,
 )
+from ai_trading_system.legacy.periodic_operations_adapter import (
+    build_periodic_operations_plan,
+)
 from ai_trading_system.ops_daily import (
     DailyOpsPlan,
     DailyOpsRunReport,
+    _execution_command,
     build_daily_ops_plan,
     daily_ops_shadow_path_for_plan,
     default_daily_ops_plan_path,
@@ -73,6 +79,15 @@ from ai_trading_system.pipeline_health import (
 from ai_trading_system.pit_snapshots import (
     DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
     default_pit_snapshot_validation_report_path,
+)
+from ai_trading_system.platform.operations import (
+    OperationsRunControl,
+    build_periodic_due_contexts_from_daily,
+    default_periodic_operations_plan_path,
+    dispatch_periodic_operations_plan,
+    load_operations_runtime_control_policy,
+    load_periodic_operations_control_policy,
+    write_periodic_operations_plan,
 )
 from ai_trading_system.report_traceability import default_report_trace_bundle_path
 from ai_trading_system.reports.calculation_explainers import default_calculation_explainers_path
@@ -729,10 +744,15 @@ def daily_ops_run_command(
         plan_date,
     )
     write_daily_ops_run_report(run_report, run_report_path, metadata_path=metadata_path)
+    periodic_plan_path = _write_periodic_plan_from_daily_run(
+        run_report=run_report,
+        output_root=run_paths.metadata_dir,
+    )
     if run_report.status.startswith("RUN_CONTROL_"):
         console.print(f"Canonical run control：{run_report.status}")
         console.print(f"Run ID：{resolved_run_id}")
         console.print(f"执行报告：{run_report_path}")
+        console.print(f"周期任务评估：{periodic_plan_path}")
         if run_report.status == "RUN_CONTROL_ALREADY_COMPLETE":
             return
         raise typer.Exit(code=1)
@@ -826,8 +846,16 @@ def daily_ops_run_command(
                 resolved_run_id=resolved_run_id,
                 legacy_mode=legacy_mode,
             ),
-            resolved_config={"scheduled_tasks": DEFAULT_SCHEDULED_TASKS_CONFIG_PATH},
-            schema_versions={"scheduled_tasks": "1"},
+            resolved_config={
+                "scheduled_tasks": DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
+                "periodic_operations_control": (
+                    PROJECT_ROOT / "config" / "operations" / "periodic_control.yaml"
+                ),
+            },
+            schema_versions={
+                "scheduled_tasks": "1",
+                "periodic_operations_plan": "periodic_operations_plan.v1",
+            },
             elapsed_seconds=(run_report.finished_at - run_report.started_at).total_seconds(),
             warnings=_daily_run_manifest_warnings(run_report),
         )
@@ -839,6 +867,7 @@ def daily_ops_run_command(
     console.print(f"Run bundle：{run_paths.run_root}")
     console.print(f"计划报告：{plan_report_path}")
     console.print(f"执行报告：{run_report_path}")
+    console.print(f"周期任务评估：{periodic_plan_path}")
     console.print(f"每日任务 Dashboard：{daily_task_dashboard_path}")
     console.print(f"每日任务 Dashboard JSON：{daily_task_dashboard_json_path}")
     console.print(f"每日决策总线 JSON：{daily_decision_summary_path}")
@@ -856,6 +885,170 @@ def daily_ops_run_command(
         console.print(f"失败步骤：{failed.step_id}；return_code={failed.return_code}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
+
+
+@ops_app.command("periodic-dispatch")
+def periodic_dispatch_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="调度判断日期，格式为 YYYY-MM-DD。"),
+    ],
+    task_id: Annotated[
+        list[str] | None,
+        typer.Option("--task-id", help="显式选择任务；可重复传入。"),
+    ] = None,
+    daily_status: Annotated[
+        str | None,
+        typer.Option(help="latest daily canonical status；必须显式提供。"),
+    ] = None,
+    data_quality_status: Annotated[
+        str | None,
+        typer.Option(help="cached data canonical quality status；必须显式提供。"),
+    ] = None,
+    data_quality_evidence_id: Annotated[
+        str | None,
+        typer.Option(help="数据质量证据 ID。"),
+    ] = None,
+    source_artifact_id: Annotated[
+        list[str] | None,
+        typer.Option("--source-artifact-id", help="required source artifact ID；可重复传入。"),
+    ] = None,
+    owner_decision_id: Annotated[
+        str | None,
+        typer.Option(help="人工 owner 决策证据 ID。"),
+    ] = None,
+    explicit_trigger: Annotated[
+        bool,
+        typer.Option("--explicit-trigger", help="仅用于显式 ad-hoc event。"),
+    ] = False,
+    confirm_manual_dispatch: Annotated[
+        bool,
+        typer.Option(
+            "--confirm-manual-dispatch",
+            help="确认这是人工受控 dispatch，不是新增 scheduler entry。",
+        ),
+    ] = False,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="periodic plan JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """用显式 evidence/owner gate 人工执行已登记的 non-daily task。"""
+    if not confirm_manual_dispatch:
+        raise typer.BadParameter("必须显式传入 --confirm-manual-dispatch。")
+    selected = tuple(item.strip() for item in (task_id or []) if item.strip())
+    if not selected:
+        raise typer.BadParameter("至少需要一个 --task-id。")
+    try:
+        resolved_daily_status = CanonicalStatus(str(daily_status or ""))
+        resolved_quality_status = CanonicalStatus(str(data_quality_status or ""))
+    except ValueError as exc:
+        raise typer.BadParameter(
+            "--daily-status 与 --data-quality-status 必须是 canonical status。"
+        ) from exc
+    if not data_quality_evidence_id or not owner_decision_id:
+        raise typer.BadParameter("必须提供 data-quality evidence 与 owner decision ID。")
+    source_ids = tuple(item.strip() for item in (source_artifact_id or []) if item.strip())
+    if not source_ids:
+        raise typer.BadParameter("至少需要一个 --source-artifact-id。")
+
+    dispatch_date = _parse_date(as_of)
+    generated_at = datetime.now(tz=UTC)
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=dispatch_date,
+        daily_status=resolved_daily_status,
+        data_quality_status=resolved_quality_status,
+        data_quality_evidence_id=data_quality_evidence_id,
+        required_artifacts_ready=True,
+        source_artifact_ids=source_ids,
+        owner_gate_approved=True,
+        owner_decision_id=owner_decision_id,
+        explicit_trigger=explicit_trigger,
+    )
+    periodic_policy = load_periodic_operations_control_policy()
+    plan = build_periodic_operations_plan(
+        as_of=dispatch_date,
+        generated_at=generated_at,
+        contexts=contexts,
+        policy=periodic_policy,
+    )
+    plan_path = output_path or default_periodic_operations_plan_path(
+        PROJECT_ROOT / "outputs" / "run_control" / "periodic" / "plans",
+        dispatch_date,
+    )
+    write_periodic_operations_plan(plan, plan_path)
+    runtime_policy = load_operations_runtime_control_policy()
+    control = OperationsRunControl(
+        root=PROJECT_ROOT / "outputs" / "run_control" / "periodic",
+        policy=runtime_policy,
+    )
+    results = dispatch_periodic_operations_plan(
+        plan,
+        selected_task_ids=selected,
+        control=control,
+        policy=periodic_policy,
+        runner=_run_periodic_command,
+        project_root=PROJECT_ROOT,
+        manual_invocation=True,
+    )
+    console.print(f"周期任务计划：{plan_path}")
+    for result in results:
+        console.print(
+            f"{result.task_id}：{result.status.value}"
+            + (f"；blockers={','.join(result.blocker_codes)}" if result.blocker_codes else "")
+        )
+    if any(result.status is not CanonicalStatus.PASS for result in results):
+        raise typer.Exit(code=1)
+
+
+def _run_periodic_command(command: tuple[str, ...], *, cwd: Path) -> object:
+    execution_command = _execution_command(command, cwd)
+    return subprocess.run(
+        execution_command,
+        cwd=cwd,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _write_periodic_plan_from_daily_run(
+    *, run_report: DailyOpsRunReport, output_root: Path
+) -> Path:
+    if run_report.status == "RUN_CONTROL_ALREADY_COMPLETE":
+        daily_status = CanonicalStatus.PASS
+    elif run_report.status in {"PASS", "PASS_WITH_SKIPS"}:
+        daily_status = CanonicalStatus.PASS
+    elif run_report.status.startswith("BLOCKED") or run_report.status.startswith(
+        "RUN_CONTROL_BLOCKED"
+    ):
+        daily_status = CanonicalStatus.BLOCKED
+    else:
+        daily_status = CanonicalStatus.FAILED
+    validate_result = next(
+        (result for result in run_report.step_results if result.step_id == "validate_data"),
+        None,
+    )
+    data_quality_status = (
+        CanonicalStatus.PASS
+        if validate_result is not None and validate_result.status == "PASS"
+        else CanonicalStatus.FAILED if validate_result is not None else None
+    )
+    generated_at = datetime.now(tz=UTC)
+    contexts = build_periodic_due_contexts_from_daily(
+        as_of=run_report.plan.as_of,
+        daily_status=daily_status,
+        data_quality_status=data_quality_status,
+    )
+    plan = build_periodic_operations_plan(
+        as_of=run_report.plan.as_of,
+        generated_at=generated_at,
+        contexts=contexts,
+    )
+    return write_periodic_operations_plan(
+        plan,
+        default_periodic_operations_plan_path(output_root, run_report.plan.as_of),
+    )
 
 
 def _daily_run_manifest_command(
