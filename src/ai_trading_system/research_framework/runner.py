@@ -17,6 +17,7 @@ from ai_trading_system.contracts import (
     EntrypointRef,
     PolicyRef,
     PolicyRole,
+    ResearchLifecycleRecord,
     RunLedger,
     WorkflowCadence,
     WorkflowSpec,
@@ -58,6 +59,7 @@ class ExperimentRunResult:
     output_paths: Mapping[str, Path]
     envelope: ArtifactEnvelope
     ledger: RunLedger
+    lifecycle: ResearchLifecycleRecord | None = None
 
 
 def run_experiment(
@@ -136,6 +138,14 @@ def run_experiment(
     )
     ledger_output = spec.output(OutputArtifactKind.RUN_LEDGER_JSON)
     write_json_atomic(output_paths[ledger_output.output_id], ledger.to_dict())
+    lifecycle = _write_optional_lifecycle(
+        plugins=plugins,
+        context=context,
+        payload=payload,
+        primary_result=primary_result,
+        generated_at=generated_at,
+        output_paths=output_paths,
+    )
 
     strict_errors = [*source_errors, *_string_list(payload.get("strict_validation_errors"))]
     strict = spec.strict_default if request.strict is None else request.strict
@@ -146,7 +156,31 @@ def run_experiment(
         output_paths=output_paths,
         envelope=envelope,
         ledger=ledger,
+        lifecycle=lifecycle,
     )
+
+
+def _write_optional_lifecycle(
+    *,
+    plugins: PluginRegistry,
+    context: ExperimentExecutionContext,
+    payload: Mapping[str, Any],
+    primary_result: ArtifactWriteResult,
+    generated_at: datetime,
+    output_paths: dict[str, Path],
+) -> ResearchLifecycleRecord | None:
+    plugin = plugins.optional_lifecycle(context.spec.report_plugin)
+    if plugin is None:
+        return None
+    primary_pointer = primary_result.to_pointer(
+        schema_version=str(payload.get("schema_version") or "")
+    )
+    lifecycle = plugin.build(context, payload, primary_pointer, generated_at)
+    primary_path = Path(primary_result.path)
+    lifecycle_path = primary_path.with_name(f"{primary_path.stem}.lifecycle.json")
+    write_json_atomic(lifecycle_path, lifecycle.to_dict())
+    output_paths["research_lifecycle"] = lifecycle_path
+    return lifecycle
 
 
 def _load_inputs(

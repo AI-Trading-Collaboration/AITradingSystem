@@ -1,5 +1,6 @@
 from ai_trading_system.research_framework.plugins import (
     CalculatorPlugin,
+    LifecyclePlugin,
     PluginRegistry,
     ReportPlugin,
     ResearchPluginError,
@@ -31,6 +32,7 @@ __all__ = [
     "ExperimentSpec",
     "ExperimentSpecError",
     "InputDocumentKind",
+    "LifecyclePlugin",
     "OutputArtifactKind",
     "OutputRoot",
     "PluginRef",

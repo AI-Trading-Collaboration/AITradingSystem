@@ -17,7 +17,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 2020c546fdd70640ecc6888564aae331e29e2ebdce593ead64b5cace77155584
+  current_sha256: 0afd56d0ce13dde1448443269d52e29696e1b60d8c3ff4f5d9d2e7e02b774a37
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 1
   fragment_paths:
@@ -25,7 +25,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 657541e5d27e296e8bd11c7c9b34958fec115c440b561e6920618a1b496b6332
+  current_sha256: 6c37ff47be127045f7074180599b3cac12287b51816740ebfd983e20b284ec2c
   fragment_root: config/architecture/fragments/flows
   fragment_count: 1
   fragment_paths:
@@ -36,14 +36,14 @@ fragments:
   owner: research_governance
   target_id: artifact_catalog
   path: config/architecture/fragments/artifacts/growth_tilt_candidate_family_closure.yaml
-  sha256: 7896ffaf1c6d286a2f868c3e988619f11d1221393c56770e6873f2a656358358
+  sha256: 68f27dd195707820e335df60e3ef72f8dc2a9ca7389b8f88c0b058329b0b66a4
   generated_source_of_truth_active: false
 - fragment_id: flow.growth_tilt_candidate_family_closure
   fragment_kind: flow
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
-  sha256: 58cf86f0fdddd5878d687fcb247b22c551c981e643d99d5c9f7a494b778cd03a
+  sha256: a5f5d351c9e4d09e6145eb3ff687b126b689694e63ec51a170e0f179e89a2303
   generated_source_of_truth_active: false
 - fragment_id: module.research_framework
   fragment_kind: module

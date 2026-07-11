@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 test_root: tests
-test_file_count: 1108
-test_count: 1050
+test_file_count: 1109
+test_count: 1051
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 98188b260ee8d8d0b2e26e2f7ad951d80880556e9edcaf756dd02ad6f74551e6
+  sha256: 71563311d9248fd4cfc1a6d85d68fba39859548a7771ab422d532359d38349f0
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7497,7 +7497,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004d_reference_vertical_slice
   path: tests/test_arch_004d_reference_vertical_slice.py
-  sha256: 6a701b5d58ab1d1a147b5bd598b4e720669889661b3a0d6dc0810a525d58126b
+  sha256: ae31366b3d5de62124a941f00ef892d1deec935c43cbf31d0459ebf9ff487044
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7534,6 +7534,24 @@ tests:
 - test_id: tests.test_arch_004f2_research_execution_chain
   path: tests/test_arch_004f2_research_execution_chain.py
   sha256: bd291f2bf690a44e4339e2f214d0e98d18f2b631a065fe1f6e9be5a811df0649
+  file_role: test
+  rule_id: architecture_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/contracts/
+  - src/ai_trading_system/platform/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.test_arch_004f2_research_lifecycle
+  path: tests/test_arch_004f2_research_lifecycle.py
+  sha256: 82d549a3cd6dc9cedfebb21a52c0d4d81061541956e350d0359b2b01eaa7d9d2
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

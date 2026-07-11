@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Any
 
+from ai_trading_system.contracts import (
+    ArtifactPointer,
+    ResearchLifecycleRecord,
+    ResearchReviewDecision,
+)
 from ai_trading_system.dynamic_strategy_report_common import json_block
 from ai_trading_system.research_framework.plugins import (
     ExperimentExecutionContext,
@@ -41,10 +47,58 @@ class GrowthTiltCandidateFamilyClosureReport:
         return render_growth_tilt_family_closure_markdown(payload)
 
 
+class GrowthTiltCandidateFamilyClosureLifecycle:
+    plugin_id = "growth_tilt_candidate_family_closure_report"
+    version = "v1"
+
+    def build(
+        self,
+        context: ExperimentExecutionContext,
+        payload: Mapping[str, Any],
+        primary_artifact: ArtifactPointer,
+        generated_at: datetime,
+    ) -> ResearchLifecycleRecord:
+        observation_ref = (
+            str(context.source_artifacts[0].get("path"))
+            if context.source_artifacts
+            else f"experiment:{context.spec.experiment_id}"
+        )
+        record = ResearchLifecycleRecord.initialize(
+            lifecycle_id=f"experiment:{context.spec.experiment_id}",
+            owner=context.spec.owner,
+            observation_ref=observation_ref,
+            at=generated_at,
+            actor=context.spec.owner,
+            reason_codes=("TERMINAL_CANDIDATE_FAMILY_REVIEW",),
+        )
+        record = record.attach_evidence(
+            evidence_refs=(primary_artifact.path,),
+            at=generated_at,
+            actor=context.spec.owner,
+            reason_codes=("NEGATIVE_RESEARCH_EVIDENCE_SNAPSHOT",),
+        )
+        ready = str(payload.get("status") or "") == closure.READY_STATUS
+        decision = (
+            ResearchReviewDecision.RETIRE if ready else ResearchReviewDecision.INVESTIGATE
+        )
+        reason_codes = tuple(str(item) for item in payload.get("closure_reason_codes", []) or [])
+        if not reason_codes:
+            reason_codes = tuple(
+                str(item) for item in payload.get("strict_validation_errors", []) or []
+            ) or ("SOURCE_CONTRACT_BLOCKED",)
+        return record.record_review(
+            decision=decision,
+            at=generated_at,
+            actor=context.spec.owner,
+            reason_codes=reason_codes,
+        )
+
+
 def growth_tilt_candidate_family_closure_registry() -> PluginRegistry:
     return PluginRegistry(
         calculators=(GrowthTiltCandidateFamilyClosureCalculator(),),
         reports=(GrowthTiltCandidateFamilyClosureReport(),),
+        lifecycles=(GrowthTiltCandidateFamilyClosureLifecycle(),),
     )
 
 

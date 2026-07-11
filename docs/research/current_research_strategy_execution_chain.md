@@ -268,6 +268,15 @@ Holdout 在 selection rule、window、metric 和 threshold 冻结前不得访问
 
 单一 `PASS` 不得覆盖多轴状态。例如 engineering PASS + evidence required 的正确结论仍是 promotion `NOT_READY`。
 
+ARCH-004F2.5 已新增 canonical `research_lifecycle.v1` runtime contract：
+
+- periodic review 只能物化 observation、evidence snapshot 与 review decision；
+- `OPEN_RESEARCH` 只进入 `CHANGE_PROPOSAL_PENDING`，不会自动生成候选或参数；
+- preregistration 必须在 result visibility 为 `NONE` 时冻结，并携带 context、selection checksum、metrics、policy refs和 validation plan；
+- 只有 validation `PASS` 才能进入人工 owner decision；`BLOCKED/FAILED` 不能 adoption；
+- `KEEP`、`INVESTIGATE`、`RETIRE` 分别进入 closed keep、investigating、retired，不复用模糊 READY 状态；
+- 既有 CampaignSpec 缺 canonical binding 时由 compatibility assessment列出 blockers，不从 legacy字段猜 context或selection policy。
+
 ### 5.10 Artifact、lineage、run ledger 与报告
 
 `REFERENCE` generic experiment runner：
@@ -284,6 +293,8 @@ ExperimentSpec
 
 `ArtifactEnvelope` 记录 producer、run/as-of、canonical status、payload pointer、input pointers、policy refs、DQ requirement、limitations 和 next actions。`ReportSpec` 声明 audience、reader tier、canonical source、section provider、view model、renderer、freshness、actionable 和 lifecycle。报告层只展示 canonical artifact，不重算 signal、weight、backtest 或 promotion decision。
 
+当 PluginRegistry 提供与 report plugin同 id/version 的 lifecycle capability时，generic runner额外写 `<primary-stem>.lifecycle.json`；未提供时不生成。该 sidecar不进入旧 payload的 artifact_paths，也不改变 primary、section、Markdown、envelope或run-ledger bytes。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |
@@ -297,7 +308,7 @@ ExperimentSpec
 | DQ | governance-only、未读 fresh cache，`data_quality_required=false`；不能解释为 DQ PASS |
 | Side effects | `production_effect=none`、no paper-shadow、no broker/order |
 
-当前 workspace 的 primary closure JSON 来自迁移前/兼容运行，尚未包含已登记 sidecar 文件；ARCH-004D tests 已证明 generic runner 在执行时会生成 envelope/run ledger。文档和 catalog 中“可生成”不能误写成“当前磁盘一定存在”。
+当前 workspace 的 primary closure JSON 来自迁移前/兼容运行，尚未包含已登记 sidecar 文件；ARCH-004D/F2 tests 已证明 generic runner 在执行时会生成 envelope、run ledger与 lifecycle sidecar。文档和 catalog 中“可生成”不能误写成“当前磁盘一定存在”。
 
 ## 7. 当前研究结果
 
@@ -369,7 +380,7 @@ Observation
 
 ## 10. 当前架构缺口
 
-1. Generic experiment runner 是 reference，不是全域 source-of-truth；
+1. Generic experiment/lifecycle runner 是 reference，不是全域 source-of-truth；
 2. feature/signal/candidate schema 仍按 domain/task 分散；
 3. historical artifacts 的 ResearchEvaluationContext 覆盖不足；
 4. `config/etf_portfolio/backtest.yaml` 的 regime default 与策略 primary-window policy 需要 caller 显式区分；

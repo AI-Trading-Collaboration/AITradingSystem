@@ -10,5 +10,6 @@ stages:
   - canonical_artifacts
   - report_plugin
   - envelope_and_run_ledger
+  - optional_lifecycle_plugin_and_sidecar
 compatibility_flow_entry_required: true
 generated_source_of_truth_active: false

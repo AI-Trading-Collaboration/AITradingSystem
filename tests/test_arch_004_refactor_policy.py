@@ -18,9 +18,9 @@ def test_arch_004_phase_f2_validating_policy_keeps_freeze_and_preserves_safety()
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_f2_in_progress"
+    assert policy["status"] == "phase_f2_complete"
     assert policy["program"]["current_phase"] == "ARCH-004F2"
-    assert policy["program"]["current_phase_status"] == "IN_PROGRESS"
+    assert policy["program"]["current_phase_status"] == "COMPLETE"
     assert policy["program"]["next_phase"] == "ARCH-004F1_OR_F3"
     assert policy["program"]["next_phase_unblocked"] is True
     assert policy["feature_freeze"]["active"] is True
@@ -119,13 +119,18 @@ def test_arch_004_phase_f2_validating_policy_keeps_freeze_and_preserves_safety()
     assert completion["full_parallel_validation"]["passed"] == 5420
     assert completion["full_parallel_validation"]["failed"] == 0
     phase_f2 = policy["phase_f2_execution"]
-    assert phase_f2["status"] == "BASELINE_DONE_RUNTIME_MIGRATION_PENDING"
+    assert phase_f2["status"] == "COMPLETE"
     assert phase_f2["stages"] == {
         "F2_1_current_state_inventory_and_trace": "COMPLETE",
         "F2_2_authoritative_execution_chain_document": "COMPLETE",
         "F2_3_lifecycle_contract_and_review_boundary": "DOCUMENTED_BASELINE_COMPLETE",
         "F2_4_reference_integration_and_validation": "COMPLETE",
-        "F2_5_generic_lifecycle_runtime_migration": "NOT_STARTED",
+        "F2_5_generic_lifecycle_runtime_migration": "COMPLETE",
+        "F2_5a_canonical_contract_and_state_machine": "COMPLETE",
+        "F2_5b_legacy_campaign_compatibility_assessment": "COMPLETE",
+        "F2_5c_optional_experiment_lifecycle_plugin": "COMPLETE",
+        "F2_5d_growth_tilt_reference_sidecar_parity": "COMPLETE",
+        "F2_5e_validation_and_closeout": "COMPLETE",
     }
     assert phase_f2["periodic_review_may_auto_tune"] is False
     assert phase_f2["result_visible_before_preregistration_freeze_allowed"] is False
@@ -135,6 +140,16 @@ def test_arch_004_phase_f2_validating_policy_keeps_freeze_and_preserves_safety()
     assert phase_f2["documentation_validation"]["focused_docs_and_policy"]["passed"] == 23
     assert phase_f2["documentation_validation"]["architecture_fitness"]["passed"] == 80
     assert phase_f2["documentation_validation"]["contract_validation"]["passed"] == 197
+    assert phase_f2["competing_campaign_runner_allowed"] is False
+    runtime_validation = phase_f2["runtime_migration_completion_validation"]
+    assert runtime_validation["focused"] == {"status": "PASS", "passed": 15}
+    assert runtime_validation["scoped_mypy"] == {"status": "PASS"}
+    assert runtime_validation["old_core_artifact_bytes_parity"] == "PASS"
+    assert runtime_validation["legacy_campaign_missing_binding_behavior"] == "BLOCKED"
+    assert runtime_validation["architecture_fitness"]["passed"] == 88
+    assert runtime_validation["contract_validation"]["passed"] == 197
+    assert runtime_validation["full_parallel"]["passed"] == 5430
+    assert runtime_validation["full_parallel"]["failed"] == 0
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -296,10 +311,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_d["validation"]["full_parallel"]["failed"] == 0
     for source in phase_d["sources"]:
         if source.get("historical_phase_d_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004E"
-            assert source["current_hash_tracked_in"] == (
-                "phase_e_devex_ownership_generated_indexes.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004E", "ARCH-004F2_RUNTIME"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -339,10 +352,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_e["validation"]["full_parallel"]["failed"] == 0
     for source in phase_e["sources"]:
         if source.get("historical_phase_e_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004F2"
-            assert source["current_hash_tracked_in"] == (
-                "phase_f2_research_lifecycle_and_execution_chain.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004F2", "ARCH-004F2_RUNTIME"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -363,6 +374,34 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f2["validation"]["architecture_fitness"]["passed"] == 80
     assert phase_f2["validation"]["contract_validation"]["passed"] == 197
     for source in phase_f2["sources"]:
+        if source.get("historical_phase_f2_documentation_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004F2_RUNTIME"
+            assert source["current_hash_tracked_in"] == (
+                "phase_f2_runtime_lifecycle.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    runtime = baseline["phase_f2_runtime_lifecycle"]
+    assert runtime["status"] == "COMPLETE_F1_F3_READY"
+    assert runtime["contracts"] == {
+        "lifecycle_schema": "research_lifecycle.v1",
+        "preregistration_schema": "research_preregistration.v1",
+        "legacy_campaign_disposition": "REUSE_WITH_EXPLICIT_COMPATIBILITY_ASSESSMENT",
+        "missing_binding_behavior": "BLOCKED",
+        "periodic_review_auto_tuning_allowed": False,
+        "lifecycle_sidecar_additive": True,
+    }
+    assert runtime["repository_inventory"] == {
+        "python_module_count_including_ignored": 779,
+        "python_test_and_support_file_count": 1109,
+    }
+    assert set(runtime["parity"].values()) == {"PASS"}
+    assert runtime["validation"]["architecture_fitness"]["passed"] == 88
+    assert runtime["validation"]["contract_validation"]["passed"] == 197
+    assert runtime["validation"]["full_parallel"]["passed"] == 5430
+    assert runtime["validation"]["full_parallel"]["failed"] == 0
+    for source in runtime["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -384,9 +423,7 @@ def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_DOCUMENTATION_BASELINE"
-    )
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_COMPLETE"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

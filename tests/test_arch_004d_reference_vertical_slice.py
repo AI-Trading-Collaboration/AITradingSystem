@@ -8,18 +8,21 @@ from pathlib import Path
 import pytest
 
 from ai_trading_system import dynamic_strategy_growth_tilt_candidate_family_closure as legacy
-from ai_trading_system.contracts import CanonicalStatus
+from ai_trading_system.contracts import CanonicalStatus, ResearchLifecycleStage
 from ai_trading_system.platform.artifacts import canonical_json_bytes
 from ai_trading_system.platform.config import ResolvedConfig
 from ai_trading_system.research_framework import (
     ExperimentRunRequest,
     ExperimentSpec,
     PluginRef,
+    PluginRegistry,
     ResearchPluginError,
     resolve_experiment_spec,
     run_experiment,
 )
 from ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure import (
+    GrowthTiltCandidateFamilyClosureCalculator,
+    GrowthTiltCandidateFamilyClosureReport,
     growth_tilt_candidate_family_closure_registry,
     render_growth_tilt_family_closure_markdown,
 )
@@ -86,6 +89,12 @@ def test_generic_runner_writes_legacy_artifacts_plus_envelope_and_ledger(
     assert result.ledger.entry("evaluate_and_render").status is CanonicalStatus.PASS
     assert result.output_paths["envelope"].exists()
     assert result.output_paths["run_ledger"].exists()
+    assert result.output_paths["research_lifecycle"].exists()
+    assert result.lifecycle is not None
+    assert result.lifecycle.stage is ResearchLifecycleStage.RETIRED
+    assert json.loads(
+        result.output_paths["research_lifecycle"].read_text(encoding="utf-8")
+    ) == result.lifecycle.to_dict()
     assert result.output_paths["primary"].read_bytes() == canonical_json_bytes(
         result.payload,
         trailing_newline=False,
@@ -118,6 +127,8 @@ def test_legacy_facade_has_payload_and_markdown_parity_with_generic_runner(
     primary_before = generic.output_paths["primary"].read_bytes()
     markdown_before = generic.output_paths["reader_markdown"].read_bytes()
     section_before = generic.output_paths["negative_result_ledger"].read_bytes()
+    envelope_before = generic.output_paths["envelope"].read_bytes()
+    ledger_before = generic.output_paths["run_ledger"].read_bytes()
 
     legacy_payload = legacy.run_growth_tilt_candidate_family_closure(
         m1e_path=paths["m1e"],
@@ -140,6 +151,8 @@ def test_legacy_facade_has_payload_and_markdown_parity_with_generic_runner(
     assert generic.output_paths["primary"].read_bytes() == primary_before
     assert generic.output_paths["reader_markdown"].read_bytes() == markdown_before
     assert generic.output_paths["negative_result_ledger"].read_bytes() == section_before
+    assert generic.output_paths["envelope"].read_bytes() == envelope_before
+    assert generic.output_paths["run_ledger"].read_bytes() == ledger_before
 
 
 def test_blocked_runner_preserves_null_evidence_and_blocked_sidecars(
@@ -162,6 +175,8 @@ def test_blocked_runner_preserves_null_evidence_and_blocked_sidecars(
     assert result.payload["runtime_metrics_materialized"] is False
     assert result.envelope.status is CanonicalStatus.BLOCKED
     assert result.envelope.data_quality is None
+    assert result.lifecycle is not None
+    assert result.lifecycle.stage is ResearchLifecycleStage.INVESTIGATING
     ledger_entry = result.ledger.entry("evaluate_and_render")
     assert ledger_entry.status is CanonicalStatus.BLOCKED
     assert ledger_entry.blocker_codes
@@ -199,6 +214,55 @@ def test_second_same_plugin_spec_requires_no_new_python_module_or_cli(
     assert result.payload["status"] == closure.READY_STATUS
     assert result.envelope.artifact_id == variant.experiment_id
     assert result.ledger.workflow_id == f"experiment:{variant.experiment_id}"
+    assert result.lifecycle is not None
+    assert result.output_paths["research_lifecycle"].exists()
+
+
+def test_optional_lifecycle_capability_is_additive_and_preserves_core_bytes(
+    tmp_path: Path,
+) -> None:
+    resolved = resolve_experiment_spec(SPEC_PATH)
+    paths = _write_source_fixtures(tmp_path)
+    request = ExperimentRunRequest(
+        project_root=PROJECT_ROOT,
+        output_root=tmp_path / "outputs",
+        docs_root=tmp_path / "docs",
+        as_of=AS_OF,
+        input_overrides=paths,
+        strict=True,
+        generated_at=GENERATED_AT,
+    )
+    without_lifecycle = run_experiment(
+        resolved_spec=resolved,
+        plugins=PluginRegistry(
+            calculators=(GrowthTiltCandidateFamilyClosureCalculator(),),
+            reports=(GrowthTiltCandidateFamilyClosureReport(),),
+        ),
+        request=request,
+    )
+    core_before = {
+        key: without_lifecycle.output_paths[key].read_bytes()
+        for key in (
+            "primary",
+            "negative_result_ledger",
+            "reader_markdown",
+            "envelope",
+            "run_ledger",
+        )
+    }
+
+    with_lifecycle = run_experiment(
+        resolved_spec=resolved,
+        plugins=growth_tilt_candidate_family_closure_registry(),
+        request=request,
+    )
+
+    assert without_lifecycle.lifecycle is None
+    assert "research_lifecycle" not in without_lifecycle.output_paths
+    assert with_lifecycle.lifecycle is not None
+    assert with_lifecycle.output_paths["research_lifecycle"].exists()
+    for key, content in core_before.items():
+        assert with_lifecycle.output_paths[key].read_bytes() == content
 
 
 def test_generic_runner_has_no_reference_slice_or_task_id_dependency() -> None:

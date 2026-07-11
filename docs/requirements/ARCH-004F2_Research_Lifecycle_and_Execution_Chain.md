@@ -7,7 +7,7 @@
 - task id：`ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`BASELINE_DONE`
+- status：`DONE`
 - owner：research platform owner / architecture coordinator
 - dependency：ARCH-004E `DONE`；full parallel `5,420 passed / 0 failed`
 - production effect：`none`
@@ -64,6 +64,29 @@
 - 与 ARCH-004D reference slice、ARCH-004B semantic context、ARCH-004C platform contracts 一致；
 - architecture/docs/task consistency、focused、contract/full gates 按影响范围执行。
 
+### F2.5 Generic lifecycle runtime migration
+
+既有 `research_campaign.py` 已提供 CampaignSpec、stage adapter、evidence budget、gate 和 owner-decision 能力，因此 F2.5 不新建竞争 campaign runner。实施边界固定为：
+
+1. 在 pure contracts 层新增 canonical research-lifecycle contract，固化 Observation -> EvidenceSnapshot -> ReviewDecision -> frozen ChangeProposal -> Validation -> OwnerDecision -> Adopt/Reject；
+2. preregistration 必须记录 hypothesis、baseline/candidate、ResearchEvaluationContext id、selection-rule checksum、metric ids、policy refs、validation plan、冻结时间与 `result_visibility=NONE`；
+3. `KEEP|INVESTIGATE|RETIRE|OPEN_RESEARCH` 显式映射到不同状态，不能把 INVESTIGATE 自动变为 change proposal；
+4. validation 只接受 `PASS|FAIL|BLOCKED`，owner adoption 仅允许从 validation PASS 进入，且必须记录人工 actor/reason/evidence；
+5. periodic trigger 只能创建 observation/evidence/review，不得自动创建 preregistration、owner decision 或 adoption；
+6. 为既有 CampaignSpec 提供 explicit compatibility assessment/adapter：缺 context、selection hash、result visibility 或 policy refs 时输出 blockers，不猜测 READY；
+7. generic ExperimentSpec/PluginRegistry 增加可选 lifecycle plugin/output；无 lifecycle contract 的既有 spec 保持 path/schema/status/bytes parity；
+8. growth-tilt terminal closure 作为 reference：primary closure PASS 与 research lifecycle `RETIRE`/terminal negative evidence 分开，新增 additive lifecycle sidecar，不改变旧 primary/section/Markdown/envelope/run-ledger bytes；
+9. 第二个 terminal experiment variant 仍只需 spec/plugin reuse，不新增 task-id module/CLI/report family；
+10. architecture dependency/direct-writer、focused/mypy/contract/full gates 通过后，才可把 F2 runtime 标为 COMPLETE。
+
+F2.5 子阶段：
+
+- F2.5a canonical lifecycle contract/status machine；
+- F2.5b legacy CampaignSpec compatibility assessment；
+- F2.5c optional experiment lifecycle plugin/output；
+- F2.5d growth-tilt closure reference sidecar parity；
+- F2.5e validation、compatibility snapshot 与 closeout。
+
 ## 验收标准
 
 - 文档覆盖 end-to-end 研究执行链，所有环节都有输入、输出、计算、状态、owner 和优化边界；
@@ -77,6 +100,9 @@
 
 ## 状态记录
 
+- 2026-07-11：F2.5e exit gates通过，ARCH-004F2归档 `DONE`。Architecture=`88 passed`、contract=`197 passed`、full=`5,430 passed / 0 failed / 643 warnings`；module/test manifests=`779/1,109`、orphan/overlap=0、direct writer=`894 baseline / 893 current / 0 violation`。Canonical lifecycle已建立，既有 campaign control plane复用且缺 binding fail closed；legacy domain-wide adoption 留给 ARCH-004G migration wave，不在 F2伪装为已迁完。F1/F3解锁。
+- 2026-07-11：F2.5a～d 实现完成，F2.5e 进入 `VALIDATING`。新增 pure `research_lifecycle.v1`/`research_preregistration.v1`、deterministic round-trip/state machine、periodic review no-auto-tune helper、legacy CampaignSpec explicit assessment、optional lifecycle plugin capability与 growth-tilt `.lifecycle.json` sidecar；无 lifecycle plugin时 runner完全不生成 sidecar。Focused=15、scoped mypy/Ruff PASS，旧 primary/section/Markdown/envelope/run-ledger bytes parity PASS；等待 architecture/contract/full gates。
+- 2026-07-11：F2.5 进入 `IN_PROGRESS`。审计确认 `research_campaign.py` 已有 CampaignSpec/stage/evidence/gate/owner-decision 控制面，故禁止另建第二套 runner；采用 pure lifecycle contract + explicit legacy assessment + optional Experiment lifecycle plugin 的扩展路径。Reference 继续选择 terminal/no-effect growth-tilt closure，新增 sidecar 必须 additive，旧 bytes/path/status 保持。
 - 2026-07-11：研究执行链路文档 baseline 完成并通过验证：focused docs/policy=`23 passed`、architecture-fitness=`80 passed`、contract-validation=`197 passed`，最近 full baseline=`5,420/0`。主文档现可作为当前设计/计算/结果/优化边界的权威人读说明；F2.5 generic lifecycle runtime migration 仍为 `NOT_STARTED`，不得把文档完成解释为 legacy 全域迁移完成。
 - 2026-07-11：F2.1/F2.2 完成，F2.3 的 lifecycle/review/optimization boundary 文档基线完成，F2.4 进入 `VALIDATING`。主文档已按 `CANONICAL|REFERENCE|LEGACY|BLOCKED|PLANNED` 区分真实状态，逐环节记录输入输出/计算/状态/DQ-PIT/context/consumer，并给出 B0～B4 实际公式、B5/B6 blocker、growth-tilt closure reference trace、当前结论与 11 类优化方向；catalog/system flow 已接入，新增文档契约测试，等待 generated architecture/docs/contract gate。
 - 2026-07-11：ARCH-004E exit gate 与推送完成后登记为 `IN_PROGRESS`。Owner 新增要求研究策略的具体执行链路必须有详细设计理由、逐环节输入输出/计算逻辑及优化空间；先执行 F2.1 真实链路盘点，F1/F3 保持可执行但本轮不并行修改共享控制面。

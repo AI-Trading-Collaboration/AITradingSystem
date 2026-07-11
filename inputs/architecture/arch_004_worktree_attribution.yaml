@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_DOCUMENTATION_BASELINE
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_COMPLETE
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -87,6 +87,9 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/research/current_research_strategy_execution_chain.md
   - tests/test_arch_004f2_research_execution_chain.py
+  - src/ai_trading_system/contracts/research_lifecycle.py
+  - src/ai_trading_system/legacy/research_campaign_adapter.py
+  - tests/test_arch_004f2_research_lifecycle.py
 
 shared_but_attributable_paths:
   - path: docs/task_register.md

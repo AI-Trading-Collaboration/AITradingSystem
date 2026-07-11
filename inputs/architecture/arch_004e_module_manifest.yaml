@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 777
+module_count: 779
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1989,7 +1989,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.__init__
   path: src/ai_trading_system/contracts/__init__.py
-  sha256: bb89aff741c8791ab18c21bc86f0f20b31e4a7bbad0f7322d30a795efa27acde
+  sha256: d6cf6d15543eb144e3ceb08baa849c2d1e82c2f2fdcb18aabfc2e6a394a6ae90
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2078,6 +2078,28 @@ modules:
 - module_id: src.ai_trading_system.contracts.research_context
   path: src/ai_trading_system/contracts/research_context.py
   sha256: 23bd2480505bad6b9e7098e1b8aac17b0233093d09dde4adb44df37446f1df8e
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.contracts.research_lifecycle
+  path: src/ai_trading_system/contracts/research_lifecycle.py
+  sha256: 06ec3de0e1528e7ddf0e98909880ab9580600bc7b46d1a159b283e95ef714fdf
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -9318,7 +9340,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.legacy.__init__
   path: src/ai_trading_system/legacy/__init__.py
-  sha256: 05add7a0318784fa093df27109d628e7cdfc786976c4d67ce7d7f26f3036eef5
+  sha256: 84446e616b99724072c6c3414c2c402155d5b6e807510df1aed44eecffa93678
   rule_id: legacy
   owner_profile: architecture
   owners:
@@ -9341,6 +9363,28 @@ modules:
 - module_id: src.ai_trading_system.legacy.platform_contract_adapters
   path: src/ai_trading_system/legacy/platform_contract_adapters.py
   sha256: c58d7a46ea0a69644b47ba9b62947d696014b102bf4fa568cb65479b987701dc
+  rule_id: legacy
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: legacy
+  category: time_bounded_compatibility
+  public_contract: true
+  deprecation_status: sunset_arch_004g
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_research_evaluation_context.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.legacy.research_campaign_adapter
+  path: src/ai_trading_system/legacy/research_campaign_adapter.py
+  sha256: a39b7d5672d0c0bf666213b110c04f25d3c8d508626eae3c353321eb69d0556f
   rule_id: legacy
   owner_profile: architecture
   owners:
@@ -11414,7 +11458,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_framework.__init__
   path: src/ai_trading_system/research_framework/__init__.py
-  sha256: 38dc6ee085dcc579da4d9740b87bed023960d442a63cd818092e97c12dc20fa1
+  sha256: f1d8c11d84957bdd590e8deaf9f61a0203ae463bd27636c03eef38578736308e
   rule_id: research_framework
   owner_profile: research
   owners:
@@ -11436,7 +11480,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_framework.plugins.__init__
   path: src/ai_trading_system/research_framework/plugins/__init__.py
-  sha256: d26d66a02145dfd74279a9e379ab9d60e2e46efdaa39aeb6ba3844a759dd3fc2
+  sha256: 13e6d94274fe2597b8e4196f16c39a2aa39767e4e93c6dd3093867c809082984
   rule_id: research_framework
   owner_profile: research
   owners:
@@ -11458,7 +11502,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure
   path: src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
-  sha256: 1c8f7e9652d3463b2b9fc1b2652e8efc64c8fb6f45e492781161dcb4040232a2
+  sha256: 7f6ddb5a4eee2d442e325c840d57444b5f44c392b6e0a53e40bf662d978f10f8
   rule_id: research_framework
   owner_profile: research
   owners:
@@ -11480,7 +11524,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_framework.runner
   path: src/ai_trading_system/research_framework/runner.py
-  sha256: 84118a7baa1e3973a81918546638e798d332f7a919851a1affe81a4c45b14c24
+  sha256: 32e828b8f47fbd00b3e1e067fac9460717785f6e35b3ab2106763e96d6d8d8b6
   rule_id: research_framework
   owner_profile: research
   owners:

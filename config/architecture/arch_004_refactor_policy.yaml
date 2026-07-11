@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_f2_in_progress
+status: phase_f2_complete
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -31,7 +31,7 @@ program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
   current_phase: ARCH-004F2
-  current_phase_status: IN_PROGRESS
+  current_phase_status: COMPLETE
   next_phase: ARCH-004F1_OR_F3
   next_phase_unblocked: true
   predecessor_task_ids:
@@ -335,7 +335,7 @@ phase_e_execution:
 
 phase_f2_execution:
   task_id: ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
-  status: BASELINE_DONE_RUNTIME_MIGRATION_PENDING
+  status: COMPLETE
   requirement_path: docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   deliverable_path: docs/research/current_research_strategy_execution_chain.md
   stages:
@@ -343,7 +343,12 @@ phase_f2_execution:
     F2_2_authoritative_execution_chain_document: COMPLETE
     F2_3_lifecycle_contract_and_review_boundary: DOCUMENTED_BASELINE_COMPLETE
     F2_4_reference_integration_and_validation: COMPLETE
-    F2_5_generic_lifecycle_runtime_migration: NOT_STARTED
+    F2_5_generic_lifecycle_runtime_migration: COMPLETE
+    F2_5a_canonical_contract_and_state_machine: COMPLETE
+    F2_5b_legacy_campaign_compatibility_assessment: COMPLETE
+    F2_5c_optional_experiment_lifecycle_plugin: COMPLETE
+    F2_5d_growth_tilt_reference_sidecar_parity: COMPLETE
+    F2_5e_validation_and_closeout: COMPLETE
   document_must_cover:
     - design_rationale
     - per_stage_inputs_and_provenance
@@ -357,6 +362,10 @@ phase_f2_execution:
   periodic_review_may_auto_tune: false
   result_visible_before_preregistration_freeze_allowed: false
   strategy_or_threshold_change_allowed_in_documentation_slice: false
+  competing_campaign_runner_allowed: false
+  existing_research_campaign_control_plane_disposition: REUSE_AND_EXTEND_VIA_CANONICAL_CONTRACT
+  lifecycle_sidecar_must_be_additive: true
+  legacy_primary_section_markdown_envelope_ledger_bytes_must_remain: true
   next_phase_unblocked: true
   interim_evidence:
     canonical_reference_legacy_blocked_planned_separated: true
@@ -391,6 +400,32 @@ phase_f2_execution:
       passed: 5420
       failed: 0
       runtime_artifact: outputs/validation_runtime/full_20260710T194002Z/test_runtime_summary.json
+  runtime_migration_completion_validation:
+    focused:
+      status: PASS
+      passed: 15
+    scoped_mypy:
+      status: PASS
+    old_core_artifact_bytes_parity: PASS
+    periodic_review_auto_tuning_prohibited: true
+    legacy_campaign_missing_binding_behavior: BLOCKED
+    architecture_fitness:
+      status: PASS
+      passed: 88
+      elapsed_seconds: 48.26
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T003900Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 44.62
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T001748Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5430
+      failed: 0
+      warnings: 643
+      elapsed_seconds: 1044.02
+      runtime_artifact: outputs/validation_runtime/full_20260711T001903Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true
