@@ -130,6 +130,10 @@ DYNAMIC_V3_EVIDENCE_READINESS_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_readiness.py"
 )
+DYNAMIC_V3_EVIDENCE_GOVERNANCE_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_governance.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -204,7 +208,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 29703
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 29165
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -415,8 +419,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 29703
-    assert len(legacy_names) == 893
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 29165
+    assert len(legacy_names) == 874
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -803,6 +807,36 @@ def test_g2_4_dynamic_v3_evidence_readiness_callbacks_leave_legacy_root() -> Non
         "dynamic_v3_overnight_readiness_run_command",
         "dynamic_v3_overnight_readiness_report_command",
         "dynamic_v3_validate_overnight_readiness_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+
+
+def test_g2_4_dynamic_v3_evidence_governance_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_EVIDENCE_GOVERNANCE_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_research_decision_run_command",
+        "dynamic_v3_research_decision_report_command",
+        "dynamic_v3_validate_research_decision_command",
+        "dynamic_v3_evidence_diagnosis_run_command",
+        "dynamic_v3_evidence_diagnosis_report_command",
+        "dynamic_v3_validate_evidence_diagnosis_command",
+        "dynamic_v3_gate_impact_run_command",
+        "dynamic_v3_gate_impact_report_command",
+        "dynamic_v3_validate_gate_impact_command",
+        "dynamic_v3_gate_policy_validate_command",
+        "dynamic_v3_gate_policy_report_command",
+        "dynamic_v3_gate_policy_apply_command",
+        "dynamic_v3_candidate_recovery_run_command",
+        "dynamic_v3_candidate_recovery_report_command",
+        "dynamic_v3_validate_candidate_recovery_command",
+        "dynamic_v3_observe_pool_rebuild_command",
+        "dynamic_v3_research_decision_update_command",
+        "dynamic_v3_research_decision_update_report_command",
+        "dynamic_v3_validate_research_decision_update_command",
     }
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names

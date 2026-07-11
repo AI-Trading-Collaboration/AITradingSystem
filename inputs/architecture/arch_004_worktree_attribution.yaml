@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4X_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4Y_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
 base_commit: 5622611d
 production_effect: none
@@ -199,6 +199,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_research_control.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_observation_lifecycle.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_readiness.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_governance.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py
