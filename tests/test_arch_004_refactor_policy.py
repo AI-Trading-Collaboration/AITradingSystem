@@ -2263,7 +2263,30 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4af["legacy_root_command_decorators_after"] == 791
     assert migration_g2_4af["python_module_count"] == 843
     assert phase_g2_4af["sources"]
+    superseded_g2_4af = set(phase_g2_4af["superseded_source_paths"])
     for source in phase_g2_4af["sources"]:
+        if source["path"] in superseded_g2_4af:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4ag = baseline[
+        "phase_g2_4ag_etf_cli_dynamic_v3_real_snapshot_paper_action"
+    ]
+    assert phase_g2_4ag["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4ag = phase_g2_4ag["migration"]
+    assert migration_g2_4ag["callback_count"] == 3
+    assert migration_g2_4ag["requires_validated_final_owner_decision"] is True
+    assert migration_g2_4ag["pending_owner_decision_allowed"] is False
+    assert migration_g2_4ag["content_derived_validation"] is True
+    assert migration_g2_4ag["source_checksum_binding"] is True
+    assert migration_g2_4ag["mutates_existing_paper_portfolio"] is False
+    assert migration_g2_4ag["real_portfolio_order_or_broker_mutation_allowed"] is False
+    assert migration_g2_4ag["legacy_root_lines_after"] == 27855
+    assert migration_g2_4ag["legacy_root_top_level_functions_after"] == 827
+    assert migration_g2_4ag["legacy_root_command_decorators_after"] == 788
+    assert migration_g2_4ag["python_module_count"] == 844
+    assert phase_g2_4ag["sources"]
+    for source in phase_g2_4ag["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2286,7 +2309,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AF_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AG_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

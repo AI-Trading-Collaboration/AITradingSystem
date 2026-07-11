@@ -29,6 +29,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_execution_guardrails_check,
     run_portfolio_exposure_validation,
     run_position_drift_analysis,
+    validate_execution_guardrails_artifact,
+    validate_manual_portfolio_artifact,
+    validate_position_drift_artifact,
     write_manual_portfolio_snapshot_artifact,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -793,12 +796,37 @@ def apply_real_snapshot_paper_action(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    owner_validation = validate_real_execution_owner_review(
+        review_id=owner_review_id,
+        output_dir=owner_review_dir,
+    )
+    if owner_validation.get("status") != "PASS":
+        raise RealSnapshotError(
+            f"owner review validation failed: {owner_validation.get('failed_check_count')} checks"
+        )
     owner_payload = real_execution_owner_review_report_payload(
         review_id=owner_review_id,
         output_dir=owner_review_dir,
     )
     owner_decision = _mapping(owner_payload.get("owner_execution_decision"))
     dry_run_id = _text(owner_decision.get("dry_run_id"))
+    decision = _text(owner_decision.get("owner_decision"), "pending")
+    if owner_payload.get("status") != "PASS" or decision not in OWNER_DECISIONS - {"pending"}:
+        raise RealSnapshotError("paper action requires a recorded non-pending owner decision")
+    if (
+        owner_payload.get("review_id") != owner_review_id
+        or owner_decision.get("review_id") != owner_review_id
+        or owner_payload.get("dry_run_id") != dry_run_id
+    ):
+        raise RealSnapshotError("owner review lineage does not match requested review")
+    dry_validation = validate_real_snapshot_dry_run(
+        dry_run_id=dry_run_id,
+        output_dir=dry_run_dir,
+    )
+    if dry_validation.get("status") != "PASS":
+        raise RealSnapshotError(
+            f"dry run validation failed: {dry_validation.get('failed_check_count')} checks"
+        )
     dry_payload = real_snapshot_dry_run_report_payload(
         dry_run_id=dry_run_id,
         output_dir=dry_run_dir,
@@ -807,14 +835,55 @@ def apply_real_snapshot_paper_action(
     snapshot_id = _text(links.get("manual_portfolio_snapshot_id"))
     drift_id = _text(links.get("drift_id"))
     guardrail_id = _text(links.get("guardrail_id"))
-    normalized = _read_json(manual_snapshot_dir / snapshot_id / "normalized_portfolio.json")
-    drift_summary = _read_json(drift_dir / drift_id / "consensus_drift_summary.json")
-    guardrail_checks = _read_jsonl(
-        guardrail_dir / guardrail_id / "proposed_adjustment_checks.jsonl"
+    source_validations = {
+        "manual_snapshot": validate_manual_portfolio_artifact(
+            snapshot_id=snapshot_id,
+            output_dir=manual_snapshot_dir,
+        ),
+        "position_drift": validate_position_drift_artifact(
+            drift_id=drift_id,
+            output_dir=drift_dir,
+        ),
+        "execution_guardrails": validate_execution_guardrails_artifact(
+            guardrail_id=guardrail_id,
+            output_dir=guardrail_dir,
+        ),
+    }
+    failed_sources = sorted(
+        name for name, payload in source_validations.items() if payload.get("status") != "PASS"
     )
+    if failed_sources:
+        raise RealSnapshotError(
+            "paper action source validation failed: " + ",".join(failed_sources)
+        )
+    source_paths = _paper_action_source_paths(
+        owner_review_id=owner_review_id,
+        dry_run_id=dry_run_id,
+        snapshot_id=snapshot_id,
+        drift_id=drift_id,
+        guardrail_id=guardrail_id,
+        owner_review_dir=owner_review_dir,
+        dry_run_dir=dry_run_dir,
+        manual_snapshot_dir=manual_snapshot_dir,
+        drift_dir=drift_dir,
+        guardrail_dir=guardrail_dir,
+    )
+    normalized = _read_json(source_paths["normalized_portfolio"])
+    drift_manifest = _read_json(source_paths["position_drift_manifest"])
+    drift_summary = _read_json(source_paths["consensus_drift_summary"])
+    guardrail_manifest = _read_json(source_paths["guardrail_manifest"])
+    guardrail_checks = _read_jsonl(source_paths["proposed_adjustment_checks"])
+    if (
+        normalized.get("snapshot_id") != snapshot_id
+        or drift_manifest.get("snapshot_id") != snapshot_id
+        or drift_manifest.get("drift_id") != drift_id
+        or guardrail_manifest.get("snapshot_id") != snapshot_id
+        or guardrail_manifest.get("drift_id") != drift_id
+        or guardrail_manifest.get("guardrail_id") != guardrail_id
+    ):
+        raise RealSnapshotError("paper action source lineage mismatch")
     before_weights = _float_mapping(normalized.get("weights"))
     proposed_deltas = _float_mapping(drift_summary.get("consensus_deltas"))
-    decision = _text(owner_decision.get("owner_decision"), "pending")
     action_type = "paper_only" if decision == "paper_adjustment_review_only" else "no_action"
     applied = (
         _self_financing_paper_deltas(guardrail_checks)
@@ -835,6 +904,8 @@ def apply_real_snapshot_paper_action(
         "paper_action_id": action_dir.name,
         "owner_review_id": owner_review_id,
         "dry_run_id": dry_run_id,
+        "snapshot_id": snapshot_id,
+        "drift_id": drift_id,
         "owner_decision": decision,
         "action_type": action_type,
         "before_weights": before_weights,
@@ -842,6 +913,10 @@ def apply_real_snapshot_paper_action(
         "applied_paper_deltas": applied,
         "after_weights": after_weights,
         "guardrail_id": guardrail_id,
+        "source_artifact_paths": {key: str(path) for key, path in source_paths.items()},
+        "source_artifact_checksums": {
+            key: _file_sha256(path) for key, path in source_paths.items()
+        },
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "order_ticket_generated": False,
@@ -930,11 +1005,130 @@ def validate_real_snapshot_paper_action(
     *,
     paper_action_id: str,
     output_dir: Path = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+    owner_review_dir: Path = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+    dry_run_dir: Path = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+    manual_snapshot_dir: Path = DEFAULT_MANUAL_PORTFOLIO_SNAPSHOT_DIR,
+    drift_dir: Path = DEFAULT_POSITION_DRIFT_DIR,
+    guardrail_dir: Path = DEFAULT_EXECUTION_GUARDRAILS_DIR,
 ) -> dict[str, Any]:
     action_dir = output_dir / paper_action_id
     manifest = _read_optional_json(action_dir / "real_snapshot_paper_action_manifest.json") or {}
     action = _read_optional_json(action_dir / "paper_action_from_real_snapshot.json") or {}
     paper_state = _read_optional_json(action_dir / "paper_state_after_action.json") or {}
+    owner_review_id = _text(action.get("owner_review_id"))
+    dry_run_id = _text(action.get("dry_run_id"))
+    snapshot_id = _text(action.get("snapshot_id"))
+    drift_id = _text(action.get("drift_id"))
+    guardrail_id = _text(action.get("guardrail_id"))
+    expected_source_paths = _paper_action_source_paths(
+        owner_review_id=owner_review_id,
+        dry_run_id=dry_run_id,
+        snapshot_id=snapshot_id,
+        drift_id=drift_id,
+        guardrail_id=guardrail_id,
+        owner_review_dir=owner_review_dir,
+        dry_run_dir=dry_run_dir,
+        manual_snapshot_dir=manual_snapshot_dir,
+        drift_dir=drift_dir,
+        guardrail_dir=guardrail_dir,
+    )
+    recorded_source_paths = _mapping(action.get("source_artifact_paths"))
+    recorded_source_checksums = _mapping(action.get("source_artifact_checksums"))
+    source_files_present = all(path.is_file() for path in expected_source_paths.values())
+    source_checksums_match = source_files_present and all(
+        recorded_source_checksums.get(key) == _file_sha256(path)
+        for key, path in expected_source_paths.items()
+    )
+    owner_manifest = _read_optional_json(expected_source_paths["owner_review_manifest"]) or {}
+    owner_decision = _read_optional_json(expected_source_paths["owner_execution_decision"]) or {}
+    dry_links = _read_optional_json(expected_source_paths["dry_run_artifact_links"]) or {}
+    normalized = _read_optional_json(expected_source_paths["normalized_portfolio"]) or {}
+    drift_manifest = _read_optional_json(expected_source_paths["position_drift_manifest"]) or {}
+    drift_summary = _read_optional_json(expected_source_paths["consensus_drift_summary"]) or {}
+    guardrail_manifest = _read_optional_json(expected_source_paths["guardrail_manifest"]) or {}
+    guardrail_checks = _read_jsonl(expected_source_paths["proposed_adjustment_checks"])
+    expected_decision = _text(owner_decision.get("owner_decision"), "pending")
+    expected_action_type = (
+        "paper_only" if expected_decision == "paper_adjustment_review_only" else "no_action"
+    )
+    expected_before = _float_mapping(normalized.get("weights"))
+    expected_proposed = _float_mapping(drift_summary.get("consensus_deltas"))
+    expected_applied = (
+        _self_financing_paper_deltas(guardrail_checks)
+        if expected_action_type == "paper_only"
+        else {
+            symbol: 0.0
+            for symbol in sorted(set(expected_before) | set(expected_proposed))
+        }
+    )
+    expected_after = _apply_deltas(expected_before, expected_applied)
+    source_validations = {
+        "owner_review": validate_real_execution_owner_review(
+            review_id=owner_review_id,
+            output_dir=owner_review_dir,
+        ),
+        "dry_run": validate_real_snapshot_dry_run(
+            dry_run_id=dry_run_id,
+            output_dir=dry_run_dir,
+        ),
+        "manual_snapshot": validate_manual_portfolio_artifact(
+            snapshot_id=snapshot_id,
+            output_dir=manual_snapshot_dir,
+        ),
+        "position_drift": validate_position_drift_artifact(
+            drift_id=drift_id,
+            output_dir=drift_dir,
+        ),
+        "execution_guardrails": validate_execution_guardrails_artifact(
+            guardrail_id=guardrail_id,
+            output_dir=guardrail_dir,
+        ),
+    }
+    sources_validate = all(
+        payload.get("status") == "PASS" for payload in source_validations.values()
+    )
+    source_lineage_matches = (
+        owner_manifest.get("review_id") == owner_review_id
+        and owner_decision.get("review_id") == owner_review_id
+        and owner_manifest.get("dry_run_id") == dry_run_id
+        and owner_decision.get("dry_run_id") == dry_run_id
+        and dry_links.get("manual_portfolio_snapshot_id") == snapshot_id
+        and dry_links.get("drift_id") == drift_id
+        and dry_links.get("guardrail_id") == guardrail_id
+        and normalized.get("snapshot_id") == snapshot_id
+        and drift_manifest.get("snapshot_id") == snapshot_id
+        and drift_manifest.get("drift_id") == drift_id
+        and guardrail_manifest.get("snapshot_id") == snapshot_id
+        and guardrail_manifest.get("drift_id") == drift_id
+        and guardrail_manifest.get("guardrail_id") == guardrail_id
+    )
+    action_content_derived = (
+        action.get("owner_decision") == expected_decision
+        and action.get("action_type") == expected_action_type
+        and _float_mapping(action.get("before_weights")) == expected_before
+        and _float_mapping(action.get("proposed_deltas")) == expected_proposed
+        and _float_mapping(action.get("applied_paper_deltas")) == expected_applied
+        and _float_mapping(action.get("after_weights")) == expected_after
+    )
+    manifest_action_consistent = all(
+        manifest.get(key) == action.get(key)
+        for key in (
+            "paper_action_id",
+            "owner_review_id",
+            "dry_run_id",
+            "snapshot_id",
+            "drift_id",
+            "guardrail_id",
+            "owner_decision",
+            "action_type",
+            "before_weights",
+            "proposed_deltas",
+            "applied_paper_deltas",
+            "after_weights",
+            "source_artifact_paths",
+            "source_artifact_checksums",
+        )
+    )
     checks = _required_file_checks(
         action_dir,
         (
@@ -949,18 +1143,49 @@ def validate_real_snapshot_paper_action(
             _check(
                 "paper_action_id_matches",
                 manifest.get("paper_action_id") == paper_action_id
-                and action.get("paper_action_id") == paper_action_id,
+                and action.get("paper_action_id") == paper_action_id
+                and paper_state.get("paper_action_id") == paper_action_id,
                 paper_action_id,
             ),
+            _check(
+                "owner_decision_final",
+                owner_manifest.get("status") == "PASS"
+                and expected_decision in OWNER_DECISIONS - {"pending"},
+                expected_decision,
+            ),
+            _check("source_artifacts_validate", sources_validate, "all sources must PASS"),
+            _check("source_lineage_matches", source_lineage_matches, "source ids"),
+            _check(
+                "source_paths_match",
+                recorded_source_paths
+                == {key: str(path) for key, path in expected_source_paths.items()}
+                and manifest.get("source_artifact_paths") == action.get("source_artifact_paths"),
+                "canonical source paths",
+            ),
+            _check("source_files_present", source_files_present, "source artifacts"),
+            _check("source_checksums_match", source_checksums_match, "source artifacts"),
             _check(
                 "action_type_valid",
                 action.get("action_type") in {"paper_only", "no_action"},
                 "",
             ),
+            _check("action_content_derived", action_content_derived, "source recomputation"),
+            _check(
+                "manifest_action_consistent",
+                manifest_action_consistent,
+                "manifest/action payload",
+            ),
             _check(
                 "paper_state_weight_sum",
                 abs(_safe_float(paper_state.get("weight_sum")) - 1.0) <= 0.0001,
                 _text(paper_state.get("weight_sum")),
+            ),
+            _check(
+                "paper_state_content_derived",
+                paper_state.get("source_snapshot_id") == snapshot_id
+                and _float_mapping(paper_state.get("weights")) == expected_after
+                and paper_state.get("weight_sum") == round(sum(expected_after.values()), 6),
+                "after weights projection",
             ),
             _check(
                 "real_snapshot_not_mutated",
@@ -1423,6 +1648,40 @@ def _self_financing_paper_deltas(checks: Sequence[Mapping[str, Any]]) -> dict[st
     return {cash_symbol: cash_delta, **dict(sorted(non_cash.items()))}
 
 
+def _paper_action_source_paths(
+    *,
+    owner_review_id: str,
+    dry_run_id: str,
+    snapshot_id: str,
+    drift_id: str,
+    guardrail_id: str,
+    owner_review_dir: Path,
+    dry_run_dir: Path,
+    manual_snapshot_dir: Path,
+    drift_dir: Path,
+    guardrail_dir: Path,
+) -> dict[str, Path]:
+    return {
+        "owner_review_manifest": (
+            owner_review_dir / owner_review_id / "real_execution_owner_review_manifest.json"
+        ),
+        "owner_execution_decision": (
+            owner_review_dir / owner_review_id / "owner_execution_decision.json"
+        ),
+        "dry_run_manifest": dry_run_dir / dry_run_id / "real_snapshot_dry_run_manifest.json",
+        "dry_run_artifact_links": dry_run_dir / dry_run_id / "dry_run_artifact_links.json",
+        "normalized_portfolio": (
+            manual_snapshot_dir / snapshot_id / "normalized_portfolio.json"
+        ),
+        "position_drift_manifest": drift_dir / drift_id / "position_drift_manifest.json",
+        "consensus_drift_summary": drift_dir / drift_id / "consensus_drift_summary.json",
+        "guardrail_manifest": guardrail_dir / guardrail_id / "guardrail_manifest.json",
+        "proposed_adjustment_checks": (
+            guardrail_dir / guardrail_id / "proposed_adjustment_checks.jsonl"
+        ),
+    }
+
+
 def _apply_deltas(before: Mapping[str, float], deltas: Mapping[str, float]) -> dict[str, float]:
     symbols = sorted(set(before) | set(deltas))
     after = {
@@ -1561,6 +1820,10 @@ def _safety() -> dict[str, Any]:
 def _stable_id(*parts: object) -> str:
     digest = sha256("|".join(str(part) for part in parts).encode("utf-8")).hexdigest()
     return digest[:16]
+
+
+def _file_sha256(path: Path) -> str:
+    return sha256(path.read_bytes()).hexdigest()
 
 
 def _unique_dir(path: Path) -> Path:

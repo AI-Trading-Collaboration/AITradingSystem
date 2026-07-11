@@ -68,6 +68,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_real_snapshot_intake as dynamic_v3_real_snapshot_intake_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_real_snapshot_paper_action as dynamic_v3_real_snapshot_paper_action_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rescue as dynamic_v3_rescue_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -121,6 +124,7 @@ __all__ = [
     "dynamic_v3_real_snapshot_intake_commands",
     "dynamic_v3_real_snapshot_dry_run_commands",
     "dynamic_v3_research_control_commands",
+    "dynamic_v3_real_snapshot_paper_action_commands",
     "dynamic_v3_failure_attribution_commands",
     "dynamic_v3_evidence_readiness_commands",
     "dynamic_v3_evidence_governance_commands",

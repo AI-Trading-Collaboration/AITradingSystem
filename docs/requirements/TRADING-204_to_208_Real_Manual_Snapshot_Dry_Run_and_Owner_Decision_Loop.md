@@ -89,6 +89,8 @@ Weekly real snapshot review 是 weekly/manual cadence，不新增独立 daily sc
 
 ## 进展记录
 
+- 2026-07-12：ARCH-004G2.4AG接口迁移与TRADING-207 source-binding hardening完成。Paper action callbacks已有独立canonical owner；pending在任何写入前被拒绝，owner/dry-run/manual snapshot/drift/guardrail validations、id lineage、九类source path/checksum和content-derived recomputation均已实现。Focused 96与architecture-fitness 216通过；paper-only/no-action语义及no real snapshot/existing paper portfolio/official weights/order/production/broker边界保持。
+- 2026-07-12：ARCH-004G2.4AG开始迁移TRADING-207接口并修复source-binding缺口。Paper action apply必须拒绝pending/非法owner decision及任一上游validation FAIL，在任何output mutation前验证owner review、dry-run、manual snapshot、drift和guardrail；artifact必须冻结source path/checksum/id lineage，validator从sources重算action type、before/proposed/applied capped deltas、after weights与paper state。该强化不改变paper-only/no-action业务语义，也不扩大到真实snapshot、既有paper portfolio、official weights、production、broker或order。
 - 2026-06-12：需求从附件导入并登记为 P0 `IN_PROGRESS`。实现范围限定为 P0 dry-run、owner decision、paper tracking、weekly review 与 no broker/no order-ticket/no production 安全闭环。
 - 2026-06-12：baseline 实现完成并转入 `VALIDATING`。真实验收链路使用
   `config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.example.yaml`
