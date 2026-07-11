@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 841
+module_count: 842
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: e94c5b2d2531efce76749b17f463d960cc0eca0d9acd335c908a243e8b7e8e89
+  sha256: bca3213380c521b7a20ea013179a73ad42952183a9162d5def30dfaf24ca0931
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: fec49560171349b2ec2377abfbcc81e4270d151d3ec0b5a920c81333f7323cf5
+  sha256: 56e3dfd55d39cd12b6826ec39e7ec0b9043d2e91e699f200e2ce0d1cfbc7501a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9849,6 +9849,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_real_evaluation
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_real_evaluation.py
   sha256: 9192469dc97d8ac57581218332970f52bc26081eee5258017d58805f13f8b2e4
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_real_snapshot_dry_run
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_real_snapshot_dry_run.py
+  sha256: 62e7a14170997d18dd76986a9b51bae153103f9b330eeca0cee92e86f3aa16aa
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

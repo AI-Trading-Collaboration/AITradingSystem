@@ -2221,7 +2221,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4ad["legacy_root_command_decorators_after"] == 798
     assert migration_g2_4ad["python_module_count"] == 841
     assert phase_g2_4ad["sources"]
+    superseded_g2_4ad = set(phase_g2_4ad["superseded_source_paths"])
     for source in phase_g2_4ad["sources"]:
+        if source["path"] in superseded_g2_4ad:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4ae = baseline["phase_g2_4ae_etf_cli_dynamic_v3_real_snapshot_dry_run"]
+    assert phase_g2_4ae["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4ae = phase_g2_4ae["migration"]
+    assert migration_g2_4ae["callback_count"] == 3
+    assert migration_g2_4ae["explicit_operator_trigger_required"] is True
+    assert migration_g2_4ae["writes_risk_control_and_review_artifacts"] is True
+    assert migration_g2_4ae["runs_snapshot_intake"] is False
+    assert migration_g2_4ae["creates_owner_decision_or_paper_action"] is False
+    assert migration_g2_4ae["order_real_portfolio_or_broker_mutation_allowed"] is False
+    assert migration_g2_4ae["legacy_root_lines_after"] == 28032
+    assert migration_g2_4ae["legacy_root_top_level_functions_after"] == 834
+    assert migration_g2_4ae["legacy_root_command_decorators_after"] == 795
+    assert migration_g2_4ae["python_module_count"] == 842
+    assert phase_g2_4ae["sources"]
+    for source in phase_g2_4ae["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2244,7 +2264,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AD_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AE_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

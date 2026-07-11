@@ -492,6 +492,14 @@ G2.4AD处理owner真实持仓信息进入研究系统前的隐私和结构门禁
 
 该链只完成“脱敏输入可进入研究”的证明，不运行exposure/drift/guardrail/manual review或dry-run。`manual_portfolio_snapshot_id`是规范化研究输入的lineage，不是broker sync、真实portfolio mutation或order authorization。后续优化空间是对原始snapshot path/content、schema config和manual snapshot manifest冻结checksum；让validator验证source checksum与redaction report一致性；增加字段级privacy classification/version和artifact retention/deletion policy；对latest pointer增加staleness/owner review cadence。任何优化都不能把broker import或自动补造position作为便利路径。
 
+#### Real snapshot dry-run orchestration 链
+
+G2.4AE是前述逐层manual workflow之外的显式组合入口。`real-snapshot-dry-run run`要求operator同时给出已存在的`snapshot_intake_id`和`shadow_shortlist_id`；它先读取intake manifest并要求status非FAIL且含`manual_portfolio_snapshot_id`，然后使用同一generated time和reviewed defaults依次调用portfolio exposure、position drift、execution guardrails和manual execution review pack。允许写入这四类中间research artifacts以及最终dry-run artifact，但不运行intake，也不创建owner decision或paper action。
+
+最终dry-run写`real_snapshot_dry_run_manifest.json`、`dry_run_artifact_links.json`、`real_snapshot_dry_run_summary.json`、Markdown、Reader Brief section和latest pointer。Links必须包含snapshot intake、manual snapshot、exposure、drift、guardrail和manual review ids；summary披露snapshot/exposure/drift/guardrail status与manual-review recommendation。Guardrail BLOCKED只把manifest标为`PASS_WITH_WARNINGS`，不是执行失败或自动绕过；recommendation只允许`no_trade/monitor/manual_review/paper_adjustment_review_only/blocked`。
+
+`report`只读指定id或显式latest；validator检查五个必需文件、manifest/summary id一致、全部links存在、recommendation枚举、`order_ticket_generated=false`和统一no-broker safety。当前优化空间是把各中间artifact路径/checksum和policy version写进links、验证同一generated time与snapshot lineage、在部分中间写入后失败时记录transaction/run ledger并定义清理/恢复策略、让validator重放source-link一致性。不能把便捷orchestration扩展成scheduler自动运行、owner approval、paper action、official weights、real portfolio mutation或broker execution。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：
