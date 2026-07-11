@@ -80,9 +80,14 @@ def artifact_stem(value: object) -> str:
     )
 
 
+def mapping_obj(value: object) -> dict[str, object]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
 __all__ = [
     "artifact_stem",
     "load_optional_json_payload",
+    "mapping_obj",
     "parse_date",
     "quality_metadata",
     "resolve_date",

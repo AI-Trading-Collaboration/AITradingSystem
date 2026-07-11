@@ -53,6 +53,9 @@ BASELINE_REVIEW_COMMANDS_PATH = (
 SHADOW_REVIEW_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py"
 )
+DYNAMIC_ALLOCATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -127,7 +130,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33656
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33405
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -338,8 +341,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33656
-    assert len(legacy_names) == 998
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33405
+    assert len(legacy_names) == 993
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -383,6 +386,24 @@ def test_g2_4_shadow_review_callbacks_and_domain_import_leave_legacy_root() -> N
     assert "ai_trading_system.etf_portfolio.shadow_ready_review" not in _imported_modules(
         legacy_tree
     )
+
+
+def test_g2_4_dynamic_allocation_callbacks_and_helpers_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_ALLOCATION_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    common_names = _function_names(ast.parse(COMMON_PATH.read_text(encoding="utf-8")))
+    callbacks = {
+        "dynamic_allocation_decide_command",
+        "dynamic_allocation_report_command",
+        "dynamic_allocation_validate_command",
+    }
+
+    assert legacy_names.isdisjoint(callbacks | {"_json_float_mapping_option", "_mapping_obj"})
+    assert callbacks | {"json_float_mapping_option"} <= canonical_names
+    assert "mapping_obj" in common_names
 
 
 def __file_path() -> Path:

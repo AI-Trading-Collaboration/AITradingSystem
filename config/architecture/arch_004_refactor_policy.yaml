@@ -1263,6 +1263,38 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
       production_effect: none
+    g2_4_third_slice:
+      status: COMPLETE
+      command_groups: [dynamic_allocation]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py
+      exclusive_helper_moved: [json_float_mapping_option]
+      shared_helpers_moved: [mapping_obj]
+      legacy_callback_definitions_remaining: 0
+      legacy_helper_definitions_remaining: 0
+      candidate_decision_artifact_write_allowed: true
+      candidate_policy_registry_artifact_write_allowed: true
+      runtime_registry_mutation_allowed: false
+      official_target_weights_mutation_allowed: false
+      production_rebalance_allowed: false
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 33656
+      legacy_root_lines_after: 33405
+      legacy_root_line_reduction: 251
+      legacy_root_top_level_functions_after: 993
+      legacy_root_command_decorators_after: 953
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 21}
+      architecture_fitness:
+        status: PASS
+        passed: 186
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T103440Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
+      production_effect: none
     production_effect: none
 
 safety_boundary:
