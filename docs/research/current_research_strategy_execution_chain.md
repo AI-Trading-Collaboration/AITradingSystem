@@ -425,6 +425,12 @@ TRADING-098把candidate report、walk-forward和robustness证据连接成observe
 
 当前优化空间是给research index增加不可变source checksum和schema版本、让pointer repair记录选择排序与候选清单、把governance diff接入owner decision ledger。进入条件是保持CLI兼容、所有重建结果可由canonical source复算、缺失或歧义时fail closed；禁止把“latest pointer已修复”解释为研究证据更新、candidate晋升或生产状态变化。
 
+#### Observation lifecycle 与 promotion review
+
+Shadow monitor输入observe-only registry与`as_of`，只计算观察年龄、rebalance count、最新指标和是否达到“可进入人工promotion review”的最低观察条件；report/validate只读已有monitor artifact。Scheduled observe由daily scheduler触发，计算交易日/周度due条件、latest pointer健康度、stale状态，并可在due时运行observe-only monitor；它不运行sweep、walk-forward、robustness或promotion pack。Promotion review读取registry显示材料是否存在；promotion pack聚合candidate attribution、data provenance、window audit、walk-forward/robustness等既有证据，输出manual-review pack，validation只校验该pack，不产生production candidate。
+
+后续优化空间是把monitor metrics改为独立forward observation ledger、让scheduled observe引用canonical periodic plan id、让promotion pack直接消费每项source validator artifact。任何优化都必须保持“到期检查不等于自动研究、review-ready不等于promotion、pack PASS不等于生产批准”，且不得写official weights或broker state。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

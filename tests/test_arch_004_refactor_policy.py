@@ -2047,7 +2047,30 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4v["legacy_root_command_decorators_after"] == 878
     assert migration_g2_4v["python_module_count"] == 833
     assert phase_g2_4v["sources"]
+    superseded_g2_4v = set(phase_g2_4v["superseded_source_paths"])
     for source in phase_g2_4v["sources"]:
+        if source["path"] in superseded_g2_4v:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4w = baseline["phase_g2_4w_etf_cli_dynamic_v3_observation_lifecycle"]
+    assert phase_g2_4w["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4w = phase_g2_4w["migration"]
+    assert migration_g2_4w["callback_count"] == 7
+    assert migration_g2_4w["shadow_monitor_observe_only"] is True
+    assert migration_g2_4w["scheduled_observe_lightweight_gate_only"] is True
+    assert migration_g2_4w["scheduled_observe_research_execution_allowed"] is False
+    assert migration_g2_4w["promotion_pack_manual_review_only"] is True
+    assert migration_g2_4w["promotion_pack_pass_means_production_approval"] is False
+    assert migration_g2_4w["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4w["automatic_shadow_enrollment_allowed"] is False
+    assert migration_g2_4w["official_weight_or_broker_mutation_allowed"] is False
+    assert migration_g2_4w["legacy_root_lines_after"] == 30163
+    assert migration_g2_4w["legacy_root_top_level_functions_after"] == 910
+    assert migration_g2_4w["legacy_root_command_decorators_after"] == 871
+    assert migration_g2_4w["python_module_count"] == 834
+    assert phase_g2_4w["sources"]
+    for source in phase_g2_4w["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2070,7 +2093,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4V_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4W_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
