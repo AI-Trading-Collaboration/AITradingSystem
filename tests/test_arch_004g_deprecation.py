@@ -46,7 +46,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 796
+    assert inventory.python_module_count == 797
     assert inventory.python_test_file_count == 1113
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 861
@@ -61,8 +61,8 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 993
     assert surfaces["reader_brief_legacy_builder_renderer"].line_count == 29027
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
-    assert surfaces["dynamic_strategy_task_wrappers"].line_count == 89155
-    assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2144
+    assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
+    assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2114
     assert all(not item.removal_ready for item in inventory.surfaces)
     assert all(len(item.open_gate_ids) == 12 for item in inventory.surfaces)
     assert_frozen_deprecation_inventory(inventory)

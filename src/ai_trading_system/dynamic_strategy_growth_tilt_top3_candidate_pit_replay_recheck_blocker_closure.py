@@ -15,18 +15,7 @@ from ai_trading_system import (
 from ai_trading_system import (
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck as m2438c,
 )
-from ai_trading_system.config import (
-    PROJECT_ROOT,
-    configured_price_tickers,
-    configured_rate_series,
-    load_data_quality,
-    load_universe,
-)
-from ai_trading_system.data.quality import (
-    default_quality_report_path,
-    validate_data_cache,
-    write_data_quality_report,
-)
+from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.dynamic_strategy_report_common import json_block as _json_block
 from ai_trading_system.dynamic_strategy_report_common import (
     load_json_document_or_missing_flag as _load_json_document,
@@ -38,6 +27,9 @@ from ai_trading_system.dynamic_strategy_report_common import (
     write_json_artifact,
     write_markdown_artifact,
     write_section_json_artifact,
+)
+from ai_trading_system.research_framework.data_quality_gate import (
+    run_growth_tilt_data_quality_gate,
 )
 from ai_trading_system.research_framework.runtime_metadata import (
     PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS,
@@ -145,7 +137,7 @@ def run_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure(
     if data_quality_summary_path is not None:
         data_quality_summary = _load_data_quality_summary(data_quality_summary_path)
     else:
-        data_quality_summary = _run_data_quality_gate(
+        data_quality_summary = run_growth_tilt_data_quality_gate(
             prices_path=prices_path,
             rates_path=rates_path,
             as_of_date=as_of_date,
@@ -195,54 +187,6 @@ def _load_data_quality_summary(path: Path) -> Mapping[str, Any]:
             "data_quality_report_path": str(path),
         }
     return _as_mapping(json.loads(path.read_text(encoding="utf-8")))
-
-
-def _run_data_quality_gate(
-    *,
-    prices_path: Path,
-    rates_path: Path,
-    as_of_date: date | None,
-    output_path: Path | None,
-) -> dict[str, Any]:
-    universe = load_universe()
-    quality_config = load_data_quality()
-    resolved_as_of = as_of_date or date.today()
-    report_path = output_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        resolved_as_of,
-    )
-    report = validate_data_cache(
-        prices_path=prices_path,
-        rates_path=rates_path,
-        expected_price_tickers=configured_price_tickers(
-            universe,
-            include_full_ai_chain=False,
-        ),
-        expected_rate_series=configured_rate_series(universe),
-        quality_config=quality_config,
-        as_of=resolved_as_of,
-        manifest_path=prices_path.parent / "download_manifest.csv",
-        secondary_prices_path=prices_path.parent / "prices_marketstack_daily.csv",
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
-    )
-    write_data_quality_report(report, report_path)
-    return {
-        "data_quality_gate_executed": True,
-        "data_quality_gate_passed": report.passed,
-        "data_quality_status": report.status,
-        "data_quality_report_path": str(report_path),
-        "data_quality_as_of": str(report.as_of),
-        "data_quality_error_count": report.error_count,
-        "data_quality_warning_count": report.warning_count,
-        "data_quality_info_count": report.info_count,
-    }
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    try:
-        return prices_path.resolve() == DEFAULT_PRICES_PATH.resolve()
-    except OSError:
-        return prices_path == DEFAULT_PRICES_PATH
 
 
 def _source_validation_errors(sources: Mapping[str, Any]) -> list[str]:

@@ -1575,50 +1575,119 @@ phase_g1_3d_pit_replay_runtime_metadata_migration:
       sha256: 57d7da2cd0111796990426fa7214bd04ec1e4d56cee87420a8bdfba30d4bc609
     - path: src/ai_trading_system/research_framework/__init__.py
       sha256: 4347abbf8a830deffaaa77fe9f50a7bf25afa307e9a3929e55d05530ba3f6b27
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure.py
       sha256: 7f39471de328fa2f0c268c255422ca6760e97f8adeb28493b6d60743866f6eca
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
       sha256: dd536c37d952730458f71e6b330bc0fd4f492a03a574639b1667ae83db7e3711
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
       sha256: bba6eee8daeb3cf66848d5b583f5be323f5b4a369075bcbeb2279b4f866f02b9
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
       sha256: 08a065bdaa1efcb052e8fbdae02678d7ff9e8874c6f384dbd319e0efe11f66d0
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck.py
       sha256: c319743421bd1e5088d72d187d618f507b1b69dee7e924c0cd845417bd87f0d7
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
       sha256: 15b347e7c82149be9eca45d54ce60602d98606e58211476287c967f2f0a6b988
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
       sha256: d08efb13f43975e686f0b6fce043b0dd820cf7226e0c465972181a693456c195
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
       sha256: db23269539270951bd69c8b8a2bb6954bd200a3f59e345363b200dca96477259
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
       sha256: 730f5d6ba47eb346ebf4d47638d9f66e614075499eeda574d292c322abfd33ed
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
       sha256: fd38fb4361058e39f95cccd298274e25c64f5acff3994481dfa136862a669290
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: tests/test_arch_004g_shared_writers.py
       sha256: c34f3f156c8ef595e4f955e59b388816b58fbb8e1efb78418368ec85aa5531b0
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
       sha256: 520e18ce4ad00797e847897709ec92c943bb2dce3b7709ed1a41d0531f86f050
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: tests/test_arch_004g_deprecation.py
       sha256: 43e5eb87328434f5e615dfcb39368372123de63214c11f62c13336e6d6fe797f
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: tests/test_arch_004_refactor_policy.py
       sha256: d65c29c9677f39a859916a629b6e47810b4fce360267b517ca7d48ecf98188d1
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
       sha256: eefcce9bddf34eed046f45239b1811b1f353c6185c66d48443a6a34f6c8a1d3d
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: docs/system_flow.md
       sha256: 9687b2e4448268e14f61838288616e7c37ae949560d9452176ee1bb30bfe6d38
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: config/architecture/arch_004_refactor_policy.yaml
       sha256: 00e1192f8204e86686c23fb5d80de6bd66c27c3a87fb8abbfeaac059a0ec7529
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004_worktree_attribution.yaml
       sha256: 93ab3efd3bbbe478668aae3f4a585f2e0187d85662bc5fcfff4af6a99ea4c8ab
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004e_module_manifest.yaml
       sha256: 3d1d915e0c90c6577f4e360d8e08ecef6b7a903022481879b85864f106439afa
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: 68c1e5785447c466f6788eb55907087a3934343d15c0d172a74ba3e0c77772a4
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: af57c0e4c68570f40ee554ab5e3bade07fb4e5e2f796a613dee17c9e7effe145
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: cbe8bc882eede43ab890ebe7b4ff56b618ec758ee1f6924825b597de67154a8d
+      historical_phase_g1_3d_hash: true
+      superseded_by_phase: ARCH-004G1.3E
+      current_hash_tracked_in: phase_g1_3e_growth_tilt_data_quality_gate_migration.sources
   validation:
     focused: {status: PASS, passed: 182}
     scoped_ruff: PASS
@@ -1628,3 +1697,98 @@ phase_g1_3d_pit_replay_runtime_metadata_migration:
       current_direct_writer_calls: 861
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T061534Z/test_runtime_summary.json
+
+phase_g1_3e_growth_tilt_data_quality_gate_migration:
+  status: SIXTH_FAMILY_COMPLETE_G1_COMPLETE_G2_IN_PROGRESS
+  as_of: 2026-07-11
+  family:
+    canonical_helper: run_growth_tilt_data_quality_gate
+    inventory_helper_count: 106
+    inventory_group_count: 51
+    migrated_module_count: 15
+    migrated_caller_count: 15
+    removed_private_gate_helper_count: 15
+    removed_private_secondary_helper_count: 15
+    private_gate_helper_remaining_count: 0
+  parity:
+    direct_validate_data_cache_call: PASS
+    direct_write_data_quality_report_call: PASS
+    validate_kwargs: PASS
+    include_full_ai_chain_false: PASS
+    manifest_path: PASS
+    secondary_prices_path: PASS
+    marketstack_requirement: PASS
+    summary_schema: PASS
+    exception_propagation: PASS
+    exception_downgrade_allowed: false
+    fabricated_pass_allowed: false
+    workflow_decisions_changed: false
+    production_effect: none
+  sources:
+    - path: src/ai_trading_system/research_framework/data_quality_gate.py
+      sha256: 2a4fa7b17022802cf54bb80d1c42491f993d6d13eb3687094cbdd3c70cfb71b7
+    - path: src/ai_trading_system/research_framework/__init__.py
+      sha256: e347180090f69e2025f5850ca5a52481029db5615beea9c475ea38f3d20eeb92
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_forward_aging_candidate_pack.py
+      sha256: 34350a1a8f84f08b4f9417e19e6a6e0f22f66b230f585b5cc915a7243998b6c4
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_paper_shadow_candidate_promotion_review.py
+      sha256: fce2a251198bea971c2ba278c957c48b309c441c9caf35b7dc95afde1ca83cfb
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation.py
+      sha256: 0fb2de0a5cae79ff787e7dcdd63f938532d52204184797608e70f968e1b9447c
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation.py
+      sha256: 0372f99b2b95d5d50cec1414aac4c756772899a55e25f6581ff192bb706916f3
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure.py
+      sha256: 1627a662aec612a6736c88daa31559c38c3535a8df52da84dc97b3dd61284f79
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
+      sha256: 520140349384a03404350323dea7a30391deda17a87d83b863aa67c8d575ca27
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
+      sha256: e4d5c5ebf831df9012e5f28f27d3dcd59593f6cc45acebabf9a00cca998fa9a1
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay.py
+      sha256: 5e6d76820acf5fca5b57b13a4b5b6d65d53312f2dbdf679f68cbb522a3bdea22
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
+      sha256: cbcb41dae06a27eb04f5585defb26d43e396df6ab21193773c54c75d63d15708
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck.py
+      sha256: 41dc938ffd6c4c8d6a91399464406ef9129c79b6238a65a32184f2d93ec72b0d
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
+      sha256: 768e35ab5c2e6b914f1650eacfb896fb575388108e4ae5d6cb2186d3c9d58ec9
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
+      sha256: b0d82a79275c2c75ce23aa8c59dcf1e1acc3662c5dec95687c5a7c8c45a0aed4
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
+      sha256: 7ea9424e17ad3be5873a19246e535a43affb011059df9f82c89017078cd198ac
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
+      sha256: 5a1d4f1f8f3f152907489f4c22b25d1095a6feac0a6ac194685237e959fc7bb3
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
+      sha256: d737a46427bd4e3ee1b9f92179110ac54bd336c759a14414267b754aecb82211
+    - path: tests/test_arch_004g_shared_writers.py
+      sha256: 6a043e0e97c7e7fcbc83000a42bd7e88f21861bec670cbc6cadb09c27523a491
+    - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+      sha256: d7bab0cadd60a28d9f81c71c167fdbc68a52cb9425ce3218ec98465406a2a76d
+    - path: tests/test_arch_004g_deprecation.py
+      sha256: 4a403e0ee93a8ee570df98333e7666b8b37827d31e3c1a662d7363e25dea13e0
+    - path: tests/test_arch_004_refactor_policy.py
+      sha256: 0868e2784d4aea2917be119bfd92881fe78ae2197be776f37c1303b9e28ba83e
+    - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+      sha256: f5f58ecaa0199d0e19493049fdaf9adc839ac756d2be759b7540c3893c407e4a
+    - path: docs/system_flow.md
+      sha256: c0f99149bbcf7adda473c7a82341485c67c918cce3bf9bcea5a03afed1747c5c
+    - path: config/architecture/arch_004_refactor_policy.yaml
+      sha256: 1c7a72df5dec61d62f9bdf55995636a8282b2e930f351cfe93407208cfc08727
+    - path: inputs/architecture/arch_004_worktree_attribution.yaml
+      sha256: a11a5f139c1a0edaf74f9cb3460de7f610eda3b9f26ba896a09ce4194db9e9bc
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: 95774c5294dd21877a5605f797eaaf126d441fad4361bcdac2fb4381e735af1b
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: 2f28940696353516ef9c1e1fea69f5ea0f97146d4204d59540f0bbe19bdd930b
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: 19034028270a43d904564abaa09c0a8de828e71fb1c1f5cb308b0cd2ed759221
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: 84d592783a2c4d86fd43900aea92dfe3dba6126a7132214b75ba12057f8218b3
+  validation:
+    focused: {status: PASS, passed: 242}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 168
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T064010Z/test_runtime_summary.json

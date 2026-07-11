@@ -222,7 +222,8 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == (
         "COMPLETE"
     )
-    assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "IN_PROGRESS"
+    assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
+    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "IN_PROGRESS"
     assert phase_g["permanent_dual_track_allowed"] is False
     assert phase_g["runtime_removal_allowed_in_g0"] is False
     assert phase_g["investment_semantics_change_allowed"] is False
@@ -248,7 +249,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g1_slices"] == {
         "G1_1_three_governance_module_writer_implementation_migration": "COMPLETE",
         "G1_2_internal_caller_migration_and_private_wrapper_removal": "COMPLETE",
-        "G1_3_next_shared_helper_family": "IN_PROGRESS",
+        "G1_3_next_shared_helper_family": "COMPLETE",
         "G1_3a_trading_engine_summary_writer_migration": "COMPLETE",
         "G1_3b_next_shared_helper_family": "COMPLETE",
         "G1_3b_notification_retry_writer_migration": "COMPLETE",
@@ -256,7 +257,8 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "G1_3c_checksum_helper_migration": "COMPLETE",
         "G1_3d_runtime_metadata_helper_inventory": "COMPLETE",
         "G1_3d_pit_replay_observe_only_metadata_migration": "COMPLETE",
-        "G1_3e_data_quality_and_safety_helper_inventory": "IN_PROGRESS",
+        "G1_3e_data_quality_and_safety_helper_inventory": "COMPLETE",
+        "G1_3e_growth_tilt_data_quality_gate_migration": "COMPLETE",
     }
     assert phase_g["g1_current_evidence"]["direct_writer_before"] == 893
     assert phase_g["g1_current_evidence"]["direct_writer_after"] == 861
@@ -309,6 +311,51 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "passed": 182,
     }
     assert phase_g["g1_fifth_family_plan"]["architecture_fitness"]["passed"] == 166
+    assert phase_g["g1_current_evidence"]["canonical_data_quality_gate"] == (
+        "run_growth_tilt_data_quality_gate"
+    )
+    assert phase_g["g1_current_evidence"]["private_data_quality_gate_helpers_removed"] == 15
+    assert phase_g["g1_current_evidence"]["private_secondary_price_helpers_removed"] == 15
+    assert phase_g["g1_sixth_family_plan"]["direct_validate_data_cache_call_required"] is True
+    assert phase_g["g1_sixth_family_plan"]["exception_downgrade_allowed"] is False
+    assert phase_g["g1_sixth_family_plan"]["private_gate_helper_remaining_count"] == 0
+    assert phase_g["g1_sixth_family_plan"]["focused_validation"] == {
+        "status": "PASS",
+        "passed": 242,
+    }
+    assert phase_g["g1_sixth_family_plan"]["architecture_fitness"]["passed"] == 168
+    assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
+    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "IN_PROGRESS"
+    assert phase_g["g1_closeout"] == {
+        "status": "COMPLETE",
+        "canonical_family_count": 6,
+        "private_helper_removal_count": 80,
+        "direct_writer_before": 893,
+        "direct_writer_after": 861,
+        "direct_writer_reduction": 32,
+        "dynamic_wrapper_lines_before_g1_3d": 89805,
+        "dynamic_wrapper_lines_after_g1_3e": 88315,
+        "dynamic_wrapper_line_reduction": 1490,
+        "dynamic_wrapper_functions_before_g1_3d": 2154,
+        "dynamic_wrapper_functions_after_g1_3e": 2114,
+        "dynamic_wrapper_function_reduction": 40,
+        "safety_assertion_groups_audited": 29,
+        "unsafe_cross_semantic_abstraction_avoided": True,
+        "legacy_callers_for_selected_families": 0,
+        "architecture_fitness": {
+            "status": "PASS",
+            "passed": 168,
+            "current_direct_writer_calls": 861,
+            "violation_count": 0,
+            "runtime_artifact": (
+                "outputs/validation_runtime/"
+                "architecture-fitness_20260711T064010Z/test_runtime_summary.json"
+            ),
+        },
+        "production_effect": "none",
+    }
+    assert phase_g["g2_current_plan"]["status"] == "IN_PROGRESS"
+    assert phase_g["g2_current_plan"]["implementation_started_in_g1_closeout_slice"] is False
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -788,6 +835,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3d["validation"]["focused"] == {"status": "PASS", "passed": 182}
     assert phase_g1_3d["validation"]["architecture_fitness"]["passed"] == 166
     for source in phase_g1_3d["sources"]:
+        if source.get("historical_phase_g1_3d_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G1.3E"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g1_3e_growth_tilt_data_quality_gate_migration.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g1_3e = baseline["phase_g1_3e_growth_tilt_data_quality_gate_migration"]
+    assert phase_g1_3e["status"] == "SIXTH_FAMILY_COMPLETE_G1_COMPLETE_G2_IN_PROGRESS"
+    assert phase_g1_3e["family"] == {
+        "canonical_helper": "run_growth_tilt_data_quality_gate",
+        "inventory_helper_count": 106,
+        "inventory_group_count": 51,
+        "migrated_module_count": 15,
+        "migrated_caller_count": 15,
+        "removed_private_gate_helper_count": 15,
+        "removed_private_secondary_helper_count": 15,
+        "private_gate_helper_remaining_count": 0,
+    }
+    assert phase_g1_3e["parity"]["direct_validate_data_cache_call"] == "PASS"
+    assert phase_g1_3e["parity"]["marketstack_requirement"] == "PASS"
+    assert phase_g1_3e["parity"]["exception_downgrade_allowed"] is False
+    assert phase_g1_3e["parity"]["fabricated_pass_allowed"] is False
+    assert phase_g1_3e["validation"]["focused"] == {"status": "PASS", "passed": 242}
+    assert phase_g1_3e["validation"]["architecture_fitness"]["passed"] == 168
+    for source in phase_g1_3e["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -810,7 +884,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3D_COMPLETE_G1_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_COMPLETE_G2_IN_PROGRESS"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

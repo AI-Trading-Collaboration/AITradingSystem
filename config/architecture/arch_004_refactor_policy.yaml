@@ -602,8 +602,8 @@ phase_g_execution:
   requirement_path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   stages:
     G0_inventory_deprecation_policy_and_removal_gate: COMPLETE
-    G1_shared_platform_helper_migration: IN_PROGRESS
-    G2_interfaces_and_etf_cli_migration: NOT_STARTED
+    G1_shared_platform_helper_migration: COMPLETE
+    G2_interfaces_and_etf_cli_migration: IN_PROGRESS
     G3_reporting_native_migration: NOT_STARTED
     G4_operations_consumer_migration: NOT_STARTED
     G5_research_wrapper_migration: NOT_STARTED
@@ -645,7 +645,7 @@ phase_g_execution:
   g1_slices:
     G1_1_three_governance_module_writer_implementation_migration: COMPLETE
     G1_2_internal_caller_migration_and_private_wrapper_removal: COMPLETE
-    G1_3_next_shared_helper_family: IN_PROGRESS
+    G1_3_next_shared_helper_family: COMPLETE
     G1_3a_trading_engine_summary_writer_migration: COMPLETE
     G1_3b_next_shared_helper_family: COMPLETE
     G1_3b_notification_retry_writer_migration: COMPLETE
@@ -653,7 +653,8 @@ phase_g_execution:
     G1_3c_checksum_helper_migration: COMPLETE
     G1_3d_runtime_metadata_helper_inventory: COMPLETE
     G1_3d_pit_replay_observe_only_metadata_migration: COMPLETE
-    G1_3e_data_quality_and_safety_helper_inventory: IN_PROGRESS
+    G1_3e_data_quality_and_safety_helper_inventory: COMPLETE
+    G1_3e_growth_tilt_data_quality_gate_migration: COMPLETE
   g1_current_evidence:
     migrated_modules:
       - src/ai_trading_system/cache_catalog.py
@@ -688,6 +689,10 @@ phase_g_execution:
     canonical_runtime_metadata_helper: with_pit_replay_observe_only_runtime_metadata
     private_runtime_metadata_helpers_removed: 10
     runtime_metadata_callers_using_canonical_helper: 10
+    canonical_data_quality_gate: run_growth_tilt_data_quality_gate
+    private_data_quality_gate_helpers_removed: 15
+    private_secondary_price_helpers_removed: 15
+    data_quality_callers_using_canonical_gate: 15
     runtime_removal_performed: false
     production_effect: none
   g1_first_family_validation:
@@ -812,6 +817,71 @@ phase_g_execution:
       current_direct_writer_calls: 861
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T061534Z/test_runtime_summary.json
+    production_effect: none
+  g1_sixth_family_plan:
+    status: COMPLETE
+    family: growth_tilt_required_data_quality_gate
+    inventory_helper_count: 106
+    inventory_group_count: 51
+    migrated_module_target: 15
+    private_gate_helper_removal_target: 15
+    private_secondary_price_helper_removal_target: 15
+    real_caller_count: 15
+    canonical_helper: run_growth_tilt_data_quality_gate
+    direct_validate_data_cache_call_required: true
+    direct_write_data_quality_report_call_required: true
+    exception_downgrade_allowed: false
+    fabricated_pass_allowed: false
+    preserve_marketstack_requirement: true
+    preserve_summary_schema: true
+    inventory_module_count_after: 797
+    migrated_module_count: 15
+    removed_private_gate_helper_count: 15
+    removed_private_secondary_helper_count: 15
+    private_gate_helper_remaining_count: 0
+    canonical_caller_count: 15
+    focused_validation: {status: PASS, passed: 242}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 168
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T064010Z/test_runtime_summary.json
+    production_effect: none
+  g1_closeout:
+    status: COMPLETE
+    canonical_family_count: 6
+    private_helper_removal_count: 80
+    direct_writer_before: 893
+    direct_writer_after: 861
+    direct_writer_reduction: 32
+    dynamic_wrapper_lines_before_g1_3d: 89805
+    dynamic_wrapper_lines_after_g1_3e: 88315
+    dynamic_wrapper_line_reduction: 1490
+    dynamic_wrapper_functions_before_g1_3d: 2154
+    dynamic_wrapper_functions_after_g1_3e: 2114
+    dynamic_wrapper_function_reduction: 40
+    safety_assertion_groups_audited: 29
+    unsafe_cross_semantic_abstraction_avoided: true
+    legacy_callers_for_selected_families: 0
+    architecture_fitness:
+      status: PASS
+      passed: 168
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T064010Z/test_runtime_summary.json
+    production_effect: none
+  g2_current_plan:
+    status: IN_PROGRESS
+    scope: interfaces_and_etf_cli
+    target: src/ai_trading_system/cli_commands/etf_portfolio.py
+    command_groups: [data, research, portfolio, shadow, operations, reporting]
+    golden_command_option_default_exit_help_parity_required: true
+    duplicate_command_allowed: false
+    root_file_registration_and_compatibility_only: true
+    investment_semantics_change_allowed: false
+    implementation_started_in_g1_closeout_slice: false
     production_effect: none
 
 safety_boundary:

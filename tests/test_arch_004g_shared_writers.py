@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -11,9 +12,14 @@ from ai_trading_system import (
     cache_catalog,
     data_refresh_audit,
     data_source_fallback_policy,
+    dynamic_strategy_growth_tilt_forward_aging_candidate_pack,
+    dynamic_strategy_growth_tilt_paper_shadow_candidate_promotion_review,
+    dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation,
+    dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation,
     dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure,
     dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure,
     dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay,
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation,
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck,
     dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure,
@@ -27,6 +33,10 @@ from ai_trading_system.platform.artifacts import (
     write_json_atomic,
     write_json_atomic_without_trailing_newline,
     write_text_atomic,
+)
+from ai_trading_system.research_framework import data_quality_gate as dq_gate
+from ai_trading_system.research_framework.data_quality_gate import (
+    run_growth_tilt_data_quality_gate,
 )
 from ai_trading_system.research_framework.runtime_metadata import (
     PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS,
@@ -218,3 +228,125 @@ def test_g1_3d_private_metadata_helpers_are_removed_and_safety_alias_is_shared()
         module.SAFETY_FALSE_FIELDS is PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS
         for module in modules
     )
+
+
+def test_g1_3e_growth_tilt_data_quality_gate_preserves_required_call_contract(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    universe = object()
+    quality_config = object()
+    report_path = tmp_path / "reports" / "quality.json"
+    report = SimpleNamespace(
+        passed=True,
+        status="PASS",
+        as_of=date(2026, 7, 11),
+        error_count=0,
+        warning_count=2,
+        info_count=3,
+    )
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(dq_gate, "load_universe", lambda: universe)
+    monkeypatch.setattr(dq_gate, "load_data_quality", lambda: quality_config)
+    monkeypatch.setattr(
+        dq_gate,
+        "configured_price_tickers",
+        lambda value, *, include_full_ai_chain: (
+            captured.update(
+                universe=value,
+                include_full_ai_chain=include_full_ai_chain,
+            )
+            or ("QQQ", "SGOV")
+        ),
+    )
+    monkeypatch.setattr(dq_gate, "configured_rate_series", lambda value: ("DFF",))
+    monkeypatch.setattr(
+        dq_gate,
+        "default_quality_report_path",
+        lambda root, as_of: captured.update(report_root=root, report_as_of=as_of)
+        or report_path,
+    )
+
+    def fake_validate_data_cache(**kwargs: object) -> SimpleNamespace:
+        captured["validate_kwargs"] = kwargs
+        return report
+
+    monkeypatch.setattr(dq_gate, "validate_data_cache", fake_validate_data_cache)
+    monkeypatch.setattr(
+        dq_gate,
+        "write_data_quality_report",
+        lambda value, path: captured.update(written_report=value, written_path=path),
+    )
+    prices_path = dq_gate.DEFAULT_GROWTH_TILT_PRICES_PATH
+    rates_path = tmp_path / "rates_daily.csv"
+
+    summary = run_growth_tilt_data_quality_gate(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        as_of_date=date(2026, 7, 11),
+        output_path=None,
+    )
+
+    kwargs = captured["validate_kwargs"]
+    assert isinstance(kwargs, dict)
+    assert kwargs == {
+        "prices_path": prices_path,
+        "rates_path": rates_path,
+        "expected_price_tickers": ("QQQ", "SGOV"),
+        "expected_rate_series": ("DFF",),
+        "quality_config": quality_config,
+        "as_of": date(2026, 7, 11),
+        "manifest_path": prices_path.parent / "download_manifest.csv",
+        "secondary_prices_path": prices_path.parent / "prices_marketstack_daily.csv",
+        "require_secondary_prices": True,
+    }
+    assert captured["universe"] is universe
+    assert captured["include_full_ai_chain"] is False
+    assert captured["written_report"] is report
+    assert captured["written_path"] == report_path
+    assert summary == {
+        "data_quality_gate_executed": True,
+        "data_quality_gate_passed": True,
+        "data_quality_status": "PASS",
+        "data_quality_report_path": str(report_path),
+        "data_quality_as_of": "2026-07-11",
+        "data_quality_error_count": 0,
+        "data_quality_warning_count": 2,
+        "data_quality_info_count": 3,
+    }
+
+    monkeypatch.setattr(
+        dq_gate,
+        "validate_data_cache",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("DQ failed")),
+    )
+    with pytest.raises(RuntimeError, match="DQ failed"):
+        run_growth_tilt_data_quality_gate(
+            prices_path=tmp_path / "alternate_prices.csv",
+            rates_path=rates_path,
+            as_of_date=date(2026, 7, 11),
+            output_path=report_path,
+        )
+
+
+def test_g1_3e_private_data_quality_gate_helpers_are_removed() -> None:
+    modules = (
+        dynamic_strategy_growth_tilt_forward_aging_candidate_pack,
+        dynamic_strategy_growth_tilt_paper_shadow_candidate_promotion_review,
+        dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_escalation,
+        dynamic_strategy_growth_tilt_persistent_candidate_pit_replay_blocker_root_cause_remediation,
+        dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure,
+        dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure,
+    )
+
+    assert all(not hasattr(module, "_run_data_quality_gate") for module in modules)
+    assert all(not hasattr(module, "_requires_marketstack_prices") for module in modules)
