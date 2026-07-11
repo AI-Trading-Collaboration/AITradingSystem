@@ -600,6 +600,26 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_seventh["legacy_root_command_decorators_after"] == 942
     assert g2_4_seventh["focused_validation"] == {"status": "PASS", "passed": 27}
     assert g2_4_seventh["architecture_fitness"]["passed"] == 190
+    g2_4_eighth = phase_g["g2_current_plan"]["g2_4_eighth_slice"]
+    assert g2_4_eighth["status"] == "COMPLETE"
+    assert g2_4_eighth["callback_count"] == 3
+    assert g2_4_eighth["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_eighth["remaining_dynamic_v3_commands_stay_legacy_owned"] is True
+    assert g2_4_eighth["v0_4_review_package_read_only"] is True
+    assert g2_4_eighth["base_candidate_must_match_reviewed_policy"] is True
+    assert g2_4_eighth["latest_report_mode_read_only"] is True
+    assert g2_4_eighth["candidate_evaluation_artifact_write_allowed"] is True
+    assert g2_4_eighth["owner_approval_executed"] is False
+    assert g2_4_eighth["shadow_enrollment_allowed"] is False
+    assert g2_4_eighth["automatic_candidate_promotion_allowed"] is False
+    assert g2_4_eighth["official_target_weights_mutation_allowed"] is False
+    assert g2_4_eighth["validation_checks_canonical_and_legacy_owners"] is True
+    assert g2_4_eighth["direct_writer_calls_after"] == 858
+    assert g2_4_eighth["legacy_root_lines_after"] == 32389
+    assert g2_4_eighth["legacy_root_top_level_functions_after"] == 979
+    assert g2_4_eighth["legacy_root_command_decorators_after"] == 939
+    assert g2_4_eighth["focused_validation"] == {"status": "PASS", "passed": 28}
+    assert g2_4_eighth["architecture_fitness"]["passed"] == 191
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1475,6 +1495,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4g["validation"]["focused"] == {"status": "PASS", "passed": 27}
     assert phase_g2_4g["validation"]["architecture_fitness"]["passed"] == 190
     for source in phase_g2_4g["sources"]:
+        if source.get("historical_phase_g2_4g_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4H"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4h_etf_cli_dynamic_v3_rescue_base.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4h = baseline["phase_g2_4h_etf_cli_dynamic_v3_rescue_base"]
+    assert phase_g2_4h["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4h["migration"]["callback_count"] == 3
+    assert phase_g2_4h["migration"]["remaining_dynamic_v3_commands_stay_legacy_owned"] is True
+    assert phase_g2_4h["migration"]["v0_4_review_package_read_only"] is True
+    assert phase_g2_4h["migration"]["base_candidate_must_match_reviewed_policy"] is True
+    assert phase_g2_4h["migration"]["latest_report_mode_read_only"] is True
+    assert phase_g2_4h["migration"]["shadow_enrollment_allowed"] is False
+    assert phase_g2_4h["migration"]["owner_approval_executed"] is False
+    assert phase_g2_4h["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4h["validation"]["focused"] == {"status": "PASS", "passed": 28}
+    assert phase_g2_4h["validation"]["architecture_fitness"]["passed"] == 191
+    for source in phase_g2_4h["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1497,7 +1538,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4F_COMPLETE_G2_4G_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4G_COMPLETE_G2_4H_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

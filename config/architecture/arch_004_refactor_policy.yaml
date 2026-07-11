@@ -1424,6 +1424,40 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
       production_effect: none
+    g2_4_eighth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_rescue_base]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rescue.py
+      legacy_callback_definitions_remaining: 0
+      remaining_dynamic_v3_commands_stay_legacy_owned: true
+      v0_4_review_package_read_only: true
+      base_candidate_must_match_reviewed_policy: true
+      latest_report_mode_read_only: true
+      candidate_evaluation_artifact_write_allowed: true
+      owner_approval_executed: false
+      shadow_enrollment_allowed: false
+      automatic_candidate_promotion_allowed: false
+      official_target_weights_mutation_allowed: false
+      validation_checks_canonical_and_legacy_owners: true
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 32546
+      legacy_root_lines_after: 32389
+      legacy_root_line_reduction: 157
+      legacy_root_top_level_functions_after: 979
+      legacy_root_command_decorators_after: 939
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 28}
+      architecture_fitness:
+        status: PASS
+        passed: 191
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T114426Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
+      production_effect: none
     production_effect: none
 
 safety_boundary:

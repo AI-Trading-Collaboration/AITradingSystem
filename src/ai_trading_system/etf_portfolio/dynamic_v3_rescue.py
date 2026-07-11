@@ -662,6 +662,20 @@ def build_dynamic_v3_rescue_validation_report(
     / "ai_trading_system"
     / "cli_commands"
     / "etf_portfolio.py",
+    registration_path: Path = PROJECT_ROOT
+    / "src"
+    / "ai_trading_system"
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio"
+    / "registration.py",
+    base_command_owner_path: Path = PROJECT_ROOT
+    / "src"
+    / "ai_trading_system"
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue.py",
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = _coerce_datetime(generated_at or datetime.now(UTC))
@@ -834,11 +848,15 @@ def build_dynamic_v3_rescue_validation_report(
         and "next_formal_or_search_plan_decision" in reader_text,
         "Reader Brief exposes no-promotion v3 promotion and next-plan fields",
     )
-    cli_text = _safe_read_text(cli_path)
+    legacy_cli_text = _safe_read_text(cli_path)
+    registration_text = _safe_read_text(registration_path)
+    base_command_owner_text = _safe_read_text(base_command_owner_path)
+    cli_text = legacy_cli_text + base_command_owner_text
     _append_check(
         checks,
         "cli_namespace_available",
-        "dynamic-v3-rescue" in cli_text and "dynamic_v3_rescue_app" in cli_text,
+        "dynamic-v3-rescue" in registration_text
+        and "dynamic_v3_rescue_app" in base_command_owner_text,
         "CLI exposes dynamic-v3-rescue namespace",
     )
     _append_check(
