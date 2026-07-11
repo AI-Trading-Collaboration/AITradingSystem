@@ -880,8 +880,8 @@ phase_g_execution:
     stages:
       G2_1_command_registry_and_golden_contract: COMPLETE
       G2_2_registration_shell_and_shared_parameters: COMPLETE
-      G2_3_data_operations_reporting_groups: IN_PROGRESS
-      G2_4_research_shadow_portfolio_groups: NOT_STARTED
+      G2_3_data_operations_reporting_groups: COMPLETE
+      G2_4_research_shadow_portfolio_groups: IN_PROGRESS
       G2_5_freeze_deprecation_and_closeout: NOT_STARTED
     command_groups: [data, research, portfolio, shadow, operations, reporting]
     golden_command_option_default_exit_help_parity_required: true
@@ -1147,6 +1147,54 @@ phase_g_execution:
       regime_interpretation_changed: false
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
+    g2_3_closeout:
+      status: COMPLETE
+      slice_count: 8
+      canonical_module_count: 9
+      migrated_callback_count: 26
+      migrated_helper_count: 13
+      legacy_selected_callback_definitions_remaining: 0
+      legacy_selected_helper_definitions_remaining: 0
+      legacy_selected_domain_imports_remaining: 0
+      legacy_root_lines_before: 36045
+      legacy_root_lines_after: 34440
+      legacy_root_line_reduction: 1605
+      legacy_root_top_level_functions_before: 1049
+      legacy_root_top_level_functions_after: 1010
+      legacy_root_function_reduction: 39
+      legacy_root_command_decorators_before: 993
+      legacy_root_command_decorators_after: 967
+      legacy_root_command_decorator_reduction: 26
+      direct_writer_calls_before: 861
+      direct_writer_calls_after: 860
+      root_command_count: 41
+      group_count: 291
+      leaf_command_count: 993
+      duplicate_path_count: 0
+      tree_sha256: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_closeout_validation: {status: PASS, passed: 15}
+      architecture_fitness:
+        status: PASS
+        passed: 183
+        current_direct_writer_calls: 860
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T093526Z/test_runtime_summary.json
+      data_quality_behavior_changed: false
+      regime_interpretation_changed: false
+      strategy_or_threshold_changed: false
+      production_effect: none
+    g2_4_current_plan:
+      status: IN_PROGRESS
+      first_slice: baseline_review
+      implementation_started_in_g2_3_closeout: false
+      callback_count: 7
+      canonical_target: src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
+      owner_decision_semantics_sensitive: true
+      runtime_state_mutation_allowed: false
+      strategy_or_threshold_change_allowed: false
+      required_parity:
+        [eligibility, evidence_matrix, package, owner_decision, proposal_draft,
+         outcome, validation, artifact_paths, exit_codes, safety_boundary, cli_tree]
     production_effect: none
 
 safety_boundary:

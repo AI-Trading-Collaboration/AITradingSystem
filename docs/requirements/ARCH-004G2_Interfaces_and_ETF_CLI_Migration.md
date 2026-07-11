@@ -7,7 +7,7 @@
 - task id：`ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - priority：`P0`
-- status：`IN_PROGRESS`
+- status：`IN_PROGRESS`（G2.3 `COMPLETE`，G2.4 `IN_PROGRESS`）
 - owner：interface platform / architecture coordinator
 - dependency：ARCH-004G1 `COMPLETE`
 - production effect：`none`
@@ -90,6 +90,8 @@ G2因此先把当前Click/Typer解析后的真实command tree冻结为可复算c
 
 ## 当前状态
 
+- 2026-07-11：G2.3 closeout正式通过：selected-group test=`15 passed`、contract/policy=`27 passed`、architecture-fitness=`183 passed`、standalone contract/Ruff PASS；G2.4保持`IN_PROGRESS`，Baseline Review实现尚未开始。G2.3的DQ/regime/strategy/threshold/production/broker不变量全部保留。
+- 2026-07-11：G2.3正式`COMPLETE`，G2.4 research/shadow/portfolio进入`IN_PROGRESS`。退出审计固定8 slices / 9 canonical modules / 26 callbacks / 13 helpers；旧root selected callback/helper/domain imports均为0。G2.3累计root=`36,045 -> 34,440 lines / 1,049 -> 1,010 functions / 993 -> 967 decorators`，direct writer=`861 -> 860`；closeout focused=`15 passed`，CLI仍为41 root/291 group/993 leaf/0 duplicate。G2.4首个slice选择7个Baseline Review callback，本closeout未开始实现。
 - 2026-07-11：G2.3H trend-calibration slice `COMPLETE`，G2.3继续。最终trend/DQ/direct/contract=`54 passed`、contract/policy=`26 passed`、architecture-fitness=`182 passed`、Ruff/standalone contract PASS；generated=`811 modules / 1,114 tests / 860 direct writers / 0 violations`。Legacy root净减3 callback、4 DQ helper及254行，DQ-before-feature fail closed，strategy/regime/threshold不变，runtime 993 leaf不变。
 - 2026-07-11：G2.3H trend-calibration slice实现完成并进入`VALIDATING`。三个callback迁canonical trend module，四个cached-DQ helper迁canonical data-quality并供legacy callers alias复用；旧root定义/import=0。Root=`34,694 -> 34,440 lines / 1,017 -> 1,010 functions / 970 -> 967 decorators`；tree不变，trend/DQ/direct/contract=`54 passed`，DQ-before-feature fail-closed fixture PASS，等待compatibility/generated/architecture门禁。
 - 2026-07-11：G2.3H选择`trend-calibration run/report/validate`三个DQ/feature/research-sensitive callback，并把download-manifest、Marketstack path/requirement与完整cached-DQ gate四个helper迁入canonical data-quality module。旧root callers直接alias复用，trend module禁止反向依赖legacy root。退出要求DQ先于feature/search且失败exit 1、standard-price failure保持BadParameter、policy market regime与evaluation-only/candidate-only、dataset/report/registry path/schema、report read-only、validation fail-closed及CLI tree parity。

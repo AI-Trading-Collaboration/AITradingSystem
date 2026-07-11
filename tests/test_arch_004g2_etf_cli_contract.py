@@ -274,6 +274,69 @@ def test_g2_3_trend_calibration_callbacks_and_dq_helpers_leave_legacy_root() -> 
     assert dq_helpers <= data_quality_names
 
 
+def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    migrated_callbacks = {
+        "data_ingest_command",
+        "data_validate_command",
+        "features_build_command",
+        "data_quality_price_freshness_command",
+        "data_quality_report_command",
+        "data_quality_validate_command",
+        "ops_dry_run_command",
+        "ops_report_command",
+        "ops_validate_command",
+        "evidence_dashboard_aggregate_command",
+        "evidence_dashboard_report_command",
+        "evidence_dashboard_validate_command",
+        "weekly_review_aggregate_command",
+        "weekly_review_generate_command",
+        "weekly_review_run_command",
+        "weekly_review_validate_command",
+        "parameter_review_aggregate_command",
+        "parameter_review_report_command",
+        "parameter_review_run_command",
+        "parameter_review_validate_command",
+        "satellite_attribution_build_command",
+        "satellite_attribution_report_command",
+        "satellite_attribution_validate_command",
+        "trend_calibration_run_command",
+        "trend_calibration_report_command",
+        "trend_calibration_validate_command",
+    }
+    migrated_helpers = {
+        "_parse_date",
+        "_resolve_date",
+        "_satellite_symbols",
+        "_parse_operations_graph_cadence",
+        "_weekly_review_date",
+        "_run_weekly_review_generate",
+        "_run_parameter_review_report_command",
+        "_load_optional_json_payload",
+        "_quality_metadata",
+        "_download_manifest_path",
+        "_marketstack_prices_path",
+        "_requires_marketstack_prices",
+        "_run_cached_data_quality_gate",
+    }
+    migrated_domain_imports = {
+        "ai_trading_system.etf_portfolio.data_quality",
+        "ai_trading_system.etf_portfolio.parameter_review",
+        "ai_trading_system.etf_portfolio.satellite_attribution",
+        "ai_trading_system.etf_portfolio.strategy_evidence_dashboard",
+        "ai_trading_system.etf_portfolio.trend_calibration",
+        "ai_trading_system.etf_portfolio.weekly_review",
+    }
+
+    assert len(migrated_callbacks) == 26
+    assert len(migrated_helpers) == 13
+    assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
+    assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34440
+    assert len(legacy_names) == 1010
+
+
 def __file_path() -> Path:
     return Path(__file__).resolve()
 
@@ -305,4 +368,12 @@ def _function_names(tree: ast.Module) -> set[str]:
         node.name
         for node in tree.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+
+def _imported_modules(tree: ast.Module) -> set[str]:
+    return {
+        node.module
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module is not None
     }

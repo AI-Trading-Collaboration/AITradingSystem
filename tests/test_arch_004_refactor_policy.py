@@ -359,8 +359,8 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g2_current_plan"]["stages"] == {
         "G2_1_command_registry_and_golden_contract": "COMPLETE",
         "G2_2_registration_shell_and_shared_parameters": "COMPLETE",
-        "G2_3_data_operations_reporting_groups": "IN_PROGRESS",
-        "G2_4_research_shadow_portfolio_groups": "NOT_STARTED",
+        "G2_3_data_operations_reporting_groups": "COMPLETE",
+        "G2_4_research_shadow_portfolio_groups": "IN_PROGRESS",
         "G2_5_freeze_deprecation_and_closeout": "NOT_STARTED",
     }
     assert phase_g["g2_current_plan"]["g2_1_contract"]["leaf_command_count"] == 993
@@ -459,6 +459,28 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_3_eighth["legacy_root_command_decorators_after"] == 967
     assert g2_3_eighth["focused_validation"] == {"status": "PASS", "passed": 54}
     assert g2_3_eighth["architecture_fitness"]["passed"] == 182
+    g2_3_closeout = phase_g["g2_current_plan"]["g2_3_closeout"]
+    assert g2_3_closeout["status"] == "COMPLETE"
+    assert g2_3_closeout["slice_count"] == 8
+    assert g2_3_closeout["canonical_module_count"] == 9
+    assert g2_3_closeout["migrated_callback_count"] == 26
+    assert g2_3_closeout["migrated_helper_count"] == 13
+    assert g2_3_closeout["legacy_selected_callback_definitions_remaining"] == 0
+    assert g2_3_closeout["legacy_selected_helper_definitions_remaining"] == 0
+    assert g2_3_closeout["legacy_selected_domain_imports_remaining"] == 0
+    assert g2_3_closeout["legacy_root_line_reduction"] == 1605
+    assert g2_3_closeout["legacy_root_function_reduction"] == 39
+    assert g2_3_closeout["legacy_root_command_decorator_reduction"] == 26
+    assert g2_3_closeout["direct_writer_calls_after"] == 860
+    assert g2_3_closeout["focused_closeout_validation"] == {"status": "PASS", "passed": 15}
+    assert g2_3_closeout["architecture_fitness"]["passed"] == 183
+    g2_4 = phase_g["g2_current_plan"]["g2_4_current_plan"]
+    assert g2_4["status"] == "IN_PROGRESS"
+    assert g2_4["first_slice"] == "baseline_review"
+    assert g2_4["implementation_started_in_g2_3_closeout"] is False
+    assert g2_4["callback_count"] == 7
+    assert g2_4["owner_decision_semantics_sensitive"] is True
+    assert g2_4["runtime_state_mutation_allowed"] is False
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1174,6 +1196,26 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3h["validation"]["focused"] == {"status": "PASS", "passed": 54}
     assert phase_g2_3h["validation"]["architecture_fitness"]["passed"] == 182
     for source in phase_g2_3h["sources"]:
+        if source.get("historical_phase_g2_3h_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.3_CLOSEOUT"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_3_closeout_g2_4_start.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    closeout = baseline["phase_g2_3_closeout_g2_4_start"]
+    assert closeout["status"] == "COMPLETE_G2_4_IN_PROGRESS"
+    assert closeout["g2_3_closeout"]["slice_count"] == 8
+    assert closeout["g2_3_closeout"]["canonical_module_count"] == 9
+    assert closeout["g2_3_closeout"]["migrated_callback_count"] == 26
+    assert closeout["g2_3_closeout"]["migrated_helper_count"] == 13
+    assert closeout["g2_3_closeout"]["legacy_selected_definitions_remaining"] == 0
+    assert closeout["g2_3_closeout"]["legacy_selected_domain_imports_remaining"] == 0
+    assert closeout["g2_4_start"]["first_slice"] == "baseline_review"
+    assert closeout["g2_4_start"]["implementation_started"] is False
+    assert closeout["validation"]["architecture_fitness"]["passed"] == 183
+    for source in closeout["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
