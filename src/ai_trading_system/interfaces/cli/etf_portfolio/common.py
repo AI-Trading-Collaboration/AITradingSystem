@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -11,8 +12,9 @@ from ai_trading_system.etf_portfolio.data import (
     latest_price_date,
     read_price_frame,
     standardize_price_frame,
+    write_quality_report,
 )
-from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_REPORT_DIR, load_etf_config_bundle
 
 
 def parse_date(value: str | None) -> date:
@@ -47,4 +49,34 @@ def satellite_symbols(config: Any) -> set[str]:
     return set(config.p1.satellite_stocks)
 
 
-__all__ = ["parse_date", "resolve_date", "satellite_symbols"]
+def load_optional_json_payload(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    if not path.exists():
+        raise typer.BadParameter(f"JSON artifact 不存在：{path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"JSON artifact 解析失败：{path}") from exc
+    if not isinstance(payload, dict):
+        raise typer.BadParameter(f"JSON artifact root 必须是 object：{path}")
+    return payload
+
+
+def quality_metadata(report: Any) -> dict[str, object]:
+    report_date = report.max_date.isoformat() if report.max_date else "unknown"
+    report_path = DEFAULT_ETF_REPORT_DIR / f"data_quality_{report_date}.md"
+    write_quality_report(report, report_path)
+    return {
+        "data_quality_status": report.status,
+        "data_quality_report": f"`{report_path}`",
+    }
+
+
+__all__ = [
+    "load_optional_json_payload",
+    "parse_date",
+    "quality_metadata",
+    "resolve_date",
+    "satellite_symbols",
+]

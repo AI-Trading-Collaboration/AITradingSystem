@@ -1088,6 +1088,35 @@ phase_g_execution:
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T084901Z/test_runtime_summary.json
       reporting_behavior_changed: false
       runtime_behavior_changed: false
+    g2_3_seventh_slice:
+      status: COMPLETE
+      command_groups: [data, reporting, satellite_attribution]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py
+      shared_helpers_moved: [load_optional_json_payload, quality_metadata]
+      legacy_optional_json_callers_using_canonical_helper: 60
+      legacy_quality_metadata_callers_using_canonical_helper: 15
+      legacy_callback_definitions_remaining: 0
+      legacy_helper_definitions_remaining: 0
+      legacy_satellite_attribution_imports_remaining: 0
+      default_ai_regime_start_unchanged: 2022-12-01
+      invalid_price_fixture_fail_closed: true
+      legacy_root_lines_before: 34937
+      legacy_root_lines_after: 34694
+      legacy_root_line_reduction: 243
+      legacy_root_top_level_functions_after: 1017
+      legacy_root_command_decorators_after: 970
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 78}
+      architecture_fitness:
+        status: PASS
+        passed: 181
+        current_direct_writer_calls: 860
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T090707Z/test_runtime_summary.json
+      data_quality_behavior_changed: false
+      regime_interpretation_changed: false
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

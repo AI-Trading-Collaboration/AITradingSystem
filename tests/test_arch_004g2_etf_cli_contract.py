@@ -41,6 +41,10 @@ WEEKLY_REVIEW_COMMANDS_PATH = (
 PARAMETER_REVIEW_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/parameter_review.py"
 )
+SATELLITE_ATTRIBUTION_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -115,7 +119,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34937
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34694
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -224,6 +228,23 @@ def test_g2_3_parameter_review_callbacks_and_helper_leave_legacy_root() -> None:
     helper = "run_parameter_review_report"
     assert legacy_names.isdisjoint(callbacks | {f"_{helper}_command"})
     assert callbacks | {helper} <= canonical_names
+
+
+def test_g2_3_satellite_attribution_callbacks_and_shared_helpers_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(SATELLITE_ATTRIBUTION_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    common_names = _function_names(ast.parse(COMMON_PATH.read_text(encoding="utf-8")))
+    callbacks = {
+        "satellite_attribution_build_command",
+        "satellite_attribution_report_command",
+        "satellite_attribution_validate_command",
+    }
+    shared_helpers = {"load_optional_json_payload", "quality_metadata"}
+    assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in shared_helpers})
+    assert callbacks | {"prepare_satellite_attribution_dataset"} <= canonical_names
+    assert shared_helpers <= common_names
 
 
 def __file_path() -> Path:

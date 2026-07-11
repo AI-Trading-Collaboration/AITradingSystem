@@ -5,6 +5,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     parameter_review as parameter_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import reporting as reporting_commands
+from ai_trading_system.interfaces.cli.etf_portfolio import (
+    satellite_attribution as satellite_attribution_commands,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio import weekly_review as weekly_review_commands
 from ai_trading_system.interfaces.cli.etf_portfolio.registration import etf_app
 
@@ -15,5 +18,6 @@ __all__ = [
     "operations_commands",
     "parameter_review_commands",
     "reporting_commands",
+    "satellite_attribution_commands",
     "weekly_review_commands",
 ]

@@ -2071,6 +2071,9 @@ phase_g2_3a_etf_cli_data_features:
       current_hash_tracked_in: phase_g2_3b_etf_cli_data_quality.sources
     - path: src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
       sha256: ccb3a8214b75a45472e392ddc3a317cf8a972c4144d7a767ea9f9dedbbfc045c
+      historical_phase_g2_3a_hash: true
+      superseded_by_phase: ARCH-004G2.3G
+      current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources
     - path: src/ai_trading_system/interfaces/cli/etf_portfolio/data.py
       sha256: ec3cb3808e5ca2726c49a68efcc7981c1cc1f281c53633f752cd84a3825dc27c
     - path: inputs/architecture/arch_004g2_etf_cli_contract.yaml
@@ -2341,22 +2344,22 @@ phase_g2_3f_etf_cli_parameter_review:
     runtime_behavior_changed: false
     production_effect: none
   sources:
-    - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 0ba86e0a7b1058f4aa2ecaa1e9fa8b8cc9644ac821b2227ec3b2c4f245a30122}
-    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 61bf1d3804010c3226998b67905f2959a64163fb84cbb757ad099da29c9b26b6}
+    - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 0ba86e0a7b1058f4aa2ecaa1e9fa8b8cc9644ac821b2227ec3b2c4f245a30122, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 61bf1d3804010c3226998b67905f2959a64163fb84cbb757ad099da29c9b26b6, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
     - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/parameter_review.py, sha256: a51f564d92f0a5297f85119689e81a9076cf8068ebb8638979190cf1f32ec0bf}
-    - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 58e26791c8bab88b3524456509c52b1a5bf9f179d65f21740af8e4cbd9751e44}
-    - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: dff522ce94fc56fd716dd66939e29e212946ac829f26185cdb0ac598a3be6436}
-    - {path: tests/test_arch_004g_deprecation.py, sha256: bcb2eeaf150c2beb4aedfb04a2916fcf13cb28a4ce28a9da9253c89084ac975c}
-    - {path: tests/test_arch_004_refactor_policy.py, sha256: 5079566074d17c5d996b0bec86c5875afd9aa3cee79518e0d526827958d3cea2}
-    - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 644f33031d4db148d4e34254ba9140745b4b53f870dac0f2680905c49b8116e7}
-    - {path: docs/system_flow.md, sha256: 6bbd9a0fe4d8b01e752b8006196fcbc0411b4e939f35b7026eaca7e310957f4a}
-    - {path: config/architecture/arch_004_refactor_policy.yaml, sha256: 39ec295a70634125648366e1607559b4d59cc2634a4e05cb3862a81de425e7f8}
-    - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 27e786972c66aedde2591fbd3210e435367131878f89acba1b85be2153332067}
-    - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 52b6030ecccf768cb5f699c9aee7b374db0f350190dd669b5c611c95b2ec1685}
-    - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: f6b785d6367c8fca9f7237eb96105118afd05413c250e7f84d41672f21ff68ea}
-    - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 20f3b6371a31be2df984d49a050a8ddfb7010a3b37f3bb5ffd5ca60d8ebfa7c4}
-    - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 2eac0780cd680c9be90eb58bdc062667536abc039224007daf989891a8470051}
-    - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 72d2a1a2b167cd735429100d6ace38dcdd16691814a24ec54b2b7fa10e1707ad}
+    - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 58e26791c8bab88b3524456509c52b1a5bf9f179d65f21740af8e4cbd9751e44, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: dff522ce94fc56fd716dd66939e29e212946ac829f26185cdb0ac598a3be6436, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: tests/test_arch_004g_deprecation.py, sha256: bcb2eeaf150c2beb4aedfb04a2916fcf13cb28a4ce28a9da9253c89084ac975c, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: tests/test_arch_004_refactor_policy.py, sha256: 5079566074d17c5d996b0bec86c5875afd9aa3cee79518e0d526827958d3cea2, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 644f33031d4db148d4e34254ba9140745b4b53f870dac0f2680905c49b8116e7, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: docs/system_flow.md, sha256: 6bbd9a0fe4d8b01e752b8006196fcbc0411b4e939f35b7026eaca7e310957f4a, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: config/architecture/arch_004_refactor_policy.yaml, sha256: 39ec295a70634125648366e1607559b4d59cc2634a4e05cb3862a81de425e7f8, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 27e786972c66aedde2591fbd3210e435367131878f89acba1b85be2153332067, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 52b6030ecccf768cb5f699c9aee7b374db0f350190dd669b5c611c95b2ec1685, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: f6b785d6367c8fca9f7237eb96105118afd05413c250e7f84d41672f21ff68ea, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 20f3b6371a31be2df984d49a050a8ddfb7010a3b37f3bb5ffd5ca60d8ebfa7c4, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 2eac0780cd680c9be90eb58bdc062667536abc039224007daf989891a8470051, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
+    - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 72d2a1a2b167cd735429100d6ace38dcdd16691814a24ec54b2b7fa10e1707ad, historical_phase_g2_3f_hash: true, superseded_by_phase: ARCH-004G2.3G, current_hash_tracked_in: phase_g2_3g_etf_cli_satellite_attribution.sources}
   validation:
     focused: {status: PASS, passed: 65}
     scoped_ruff: PASS
@@ -2365,3 +2368,51 @@ phase_g2_3f_etf_cli_parameter_review:
       status: PASS
       passed: 180
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T084901Z/test_runtime_summary.json
+
+phase_g2_3g_etf_cli_satellite_attribution:
+  status: COMPLETE_G2_3_CONTINUES
+  as_of: 2026-07-11
+  migration:
+    callback_count: 3
+    shared_helper_count: 2
+    legacy_callback_definitions_remaining: 0
+    legacy_helper_definitions_remaining: 0
+    legacy_satellite_attribution_imports_remaining: 0
+    default_ai_regime_start: 2022-12-01
+    invalid_price_fixture_fail_closed: true
+    direct_writer_calls_after: 860
+    legacy_root_lines_after: 34694
+    legacy_root_top_level_functions_after: 1017
+    legacy_root_command_decorators_after: 970
+    tree_sha256: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+    data_quality_behavior_changed: false
+    regime_interpretation_changed: false
+    runtime_behavior_changed: false
+    production_effect: none
+  sources:
+    - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 3c35cdbab1aa598035c82a02a088e809e9f8e0d46bac44d1049fd92eefcf64d2}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: b1c2815d5d77bc8b8c1ad5150dc4f679ede31e4107d3b83e680a4965a6fad724}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/common.py, sha256: d812f436ca517caf43809235b8f205cdc99870947394ce4902a8bcc374530083}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py, sha256: ba1661eef16e7be8aa5bfd7f9795b816fd3734554a46894d5356413e0799daa0}
+    - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 1bf6376e93381914e417b63069f712b4de2e5a9deeaed6385e00ba253281ec19}
+    - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: 080463a1835ee3c0af3a5f467770d79096550581d2e444d9c436d7dcffed7080}
+    - {path: tests/test_arch_004g_deprecation.py, sha256: dc1fcc149dc176744921e3a6c2c836b38a6a4ff703602311032171a76932045c}
+    - {path: tests/test_arch_004_refactor_policy.py, sha256: 6d6f4063d13dd3030d4e6534ae41adae86eae55f5f55025ebcd3614bfae2dc0d}
+    - {path: tests/test_etf_satellite_attribution.py, sha256: ae82398a5852e62d566547a638d05095595531db71fcf2b1a69c7a205e5a590b}
+    - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: 6621b55c6818a5f4952fff73f367ddd345d8f47073d823d5b57a23ed62e1a747}
+    - {path: docs/system_flow.md, sha256: 41855eb65e1aff6ba8e7882a07ca662288b92cdb495641910139ef24dc05359f}
+    - {path: config/architecture/arch_004_refactor_policy.yaml, sha256: f15ee960d9183613106473bde13a7193b7228040d4a1741f1a29eea68e6f2b2e}
+    - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: 26dba713e11ed4780ff3bda727f1a24969133796b0a23a10b037b05eff9c0e7c}
+    - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 3ab4037492d3a8e9d6d3659285fb07b01345c396c6e6a28257a367b784a9d8f8}
+    - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 9a7205717409a8aa01eada5244bb180116eeef1a3d3f51d8fe8b055273e3926e}
+    - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 929d7e2bdf1c688d0e48b9160bc3cc34a9f2c6733cb614252659485401db2b95}
+    - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 44869178760aa54eedc01e45253f9e8d1ced5889710e5bf4fe762f2d1a3c9144}
+    - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 41f5207b95815db0e0b781ffb19d034746692945508087d0468887db59192f3c}
+  validation:
+    focused: {status: PASS, passed: 78}
+    scoped_ruff: PASS
+    standalone_contract_validate: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 181
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T090707Z/test_runtime_summary.json

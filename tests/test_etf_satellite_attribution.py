@@ -307,6 +307,29 @@ def test_satellite_attribution_cli_build_report_and_validate(tmp_path: Path) -> 
     assert list((tmp_path / "validation").glob("satellite_attribution_validation_*.json"))
 
 
+def test_satellite_attribution_cli_build_fails_closed_on_invalid_prices(tmp_path: Path) -> None:
+    prices_path = tmp_path / "invalid_prices.csv"
+    prices_path.write_text("date,symbol,close\n2026-06-30,SPY,not-a-number\n", encoding="utf-8")
+    output_dir = tmp_path / "datasets"
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "satellite-attribution",
+            "build",
+            "--prices-path",
+            str(prices_path),
+            "--as-of",
+            "2026-06-30",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert not list(output_dir.glob("satellite_attribution_dataset_*.json"))
+
+
 def _dataset() -> dict[str, object]:
     return build_satellite_attribution_dataset(
         satellite_reports=_satellite_reports(),

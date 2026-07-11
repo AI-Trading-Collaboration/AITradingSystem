@@ -437,6 +437,17 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_3_sixth["legacy_root_command_decorators_after"] == 973
     assert g2_3_sixth["focused_validation"] == {"status": "PASS", "passed": 65}
     assert g2_3_sixth["architecture_fitness"]["passed"] == 180
+    g2_3_seventh = phase_g["g2_current_plan"]["g2_3_seventh_slice"]
+    assert g2_3_seventh["callback_count"] == 3
+    assert g2_3_seventh["legacy_callback_definitions_remaining"] == 0
+    assert g2_3_seventh["legacy_helper_definitions_remaining"] == 0
+    assert g2_3_seventh["legacy_satellite_attribution_imports_remaining"] == 0
+    assert str(g2_3_seventh["default_ai_regime_start_unchanged"]) == "2022-12-01"
+    assert g2_3_seventh["invalid_price_fixture_fail_closed"] is True
+    assert g2_3_seventh["legacy_root_top_level_functions_after"] == 1017
+    assert g2_3_seventh["legacy_root_command_decorators_after"] == 970
+    assert g2_3_seventh["focused_validation"] == {"status": "PASS", "passed": 78}
+    assert g2_3_seventh["architecture_fitness"]["passed"] == 181
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1017,10 +1028,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3a["validation"]["architecture_fitness"]["passed"] == 175
     for source in phase_g2_3a["sources"]:
         if source.get("historical_phase_g2_3a_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.3B"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_3b_etf_cli_data_quality.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G2.3B", "ARCH-004G2.3G"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -1113,6 +1122,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3f["validation"]["focused"] == {"status": "PASS", "passed": 65}
     assert phase_g2_3f["validation"]["architecture_fitness"]["passed"] == 180
     for source in phase_g2_3f["sources"]:
+        if source.get("historical_phase_g2_3f_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.3G"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_3g_etf_cli_satellite_attribution.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_3g = baseline["phase_g2_3g_etf_cli_satellite_attribution"]
+    assert phase_g2_3g["status"] == "COMPLETE_G2_3_CONTINUES"
+    assert phase_g2_3g["migration"]["callback_count"] == 3
+    assert phase_g2_3g["migration"]["shared_helper_count"] == 2
+    assert phase_g2_3g["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_3g["migration"]["legacy_helper_definitions_remaining"] == 0
+    assert str(phase_g2_3g["migration"]["default_ai_regime_start"]) == "2022-12-01"
+    assert phase_g2_3g["migration"]["invalid_price_fixture_fail_closed"] is True
+    assert phase_g2_3g["migration"]["data_quality_behavior_changed"] is False
+    assert phase_g2_3g["migration"]["regime_interpretation_changed"] is False
+    assert phase_g2_3g["validation"]["focused"] == {"status": "PASS", "passed": 78}
+    assert phase_g2_3g["validation"]["architecture_fitness"]["passed"] == 181
+    for source in phase_g2_3g["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
