@@ -42,11 +42,13 @@ PARAMETER_REVIEW_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/parameter_review.py"
 )
 SATELLITE_ATTRIBUTION_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py"
 )
 TREND_CALIBRATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/trend_calibration.py"
+)
+BASELINE_REVIEW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py"
 )
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
@@ -122,7 +124,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34440
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33950
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -333,8 +335,31 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34440
-    assert len(legacy_names) == 1010
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33950
+    assert len(legacy_names) == 1002
+
+
+def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(BASELINE_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    common_names = _function_names(ast.parse(COMMON_PATH.read_text(encoding="utf-8")))
+    callbacks = {
+        "baseline_review_eligibility_command",
+        "baseline_review_matrix_command",
+        "baseline_review_package_command",
+        "baseline_review_capture_decision_command",
+        "baseline_review_proposal_draft_command",
+        "baseline_review_outcome_command",
+        "baseline_review_validate_command",
+    }
+
+    assert legacy_names.isdisjoint(callbacks | {"_artifact_stem"})
+    assert callbacks <= canonical_names
+    assert "artifact_stem" in common_names
+    assert "ai_trading_system.etf_portfolio.baseline_review" not in _imported_modules(legacy_tree)
 
 
 def __file_path() -> Path:
@@ -365,9 +390,7 @@ def _add_typer_count(tree: ast.Module) -> int:
 
 def _function_names(tree: ast.Module) -> set[str]:
     return {
-        node.name
-        for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        node.name for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     }
 
 

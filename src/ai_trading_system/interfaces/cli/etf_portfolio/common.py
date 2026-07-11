@@ -73,7 +73,15 @@ def quality_metadata(report: Any) -> dict[str, object]:
     }
 
 
+def artifact_stem(value: object) -> str:
+    text = str(value).strip().replace(":", "_").replace("/", "_").replace("\\", "_")
+    return "".join(
+        character if character.isalnum() or character in "._-" else "_" for character in text
+    )
+
+
 __all__ = [
+    "artifact_stem",
     "load_optional_json_payload",
     "parse_date",
     "quality_metadata",

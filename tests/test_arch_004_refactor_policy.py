@@ -203,9 +203,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_f3["owner_daily_brief_core_section_limit"] == 10
     assert phase_f3["owner_queue_requires_due_and_actionable"] is True
     assert phase_f3["reporting_layer_may_recompute_investment_conclusion"] is False
-    assert phase_f3["legacy_unclassified_disposition"] == (
-        "AUDIT_INDEX_LIMITED_UNCLASSIFIED"
-    )
+    assert phase_f3["legacy_unclassified_disposition"] == ("AUDIT_INDEX_LIMITED_UNCLASSIFIED")
     assert phase_f3["next_phase_unblocked"] is True
     assert phase_f3["completion_validation"]["full_parallel"] == {
         "status": "PASS",
@@ -219,9 +217,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     }
     phase_g = policy["phase_g_execution"]
     assert phase_g["status"] == "IN_PROGRESS"
-    assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == (
-        "COMPLETE"
-    )
+    assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == ("COMPLETE")
     assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
     assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "IN_PROGRESS"
     assert phase_g["permanent_dual_track_allowed"] is False
@@ -272,9 +268,10 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "passed": 29,
     }
     assert phase_g["g1_first_family_validation"]["architecture_fitness"]["passed"] == 159
-    assert phase_g["g1_first_family_validation"]["architecture_fitness"][
-        "current_direct_writer_calls"
-    ] == 887
+    assert (
+        phase_g["g1_first_family_validation"]["architecture_fitness"]["current_direct_writer_calls"]
+        == 887
+    )
     assert phase_g["g1_second_family_plan"]["direct_writer_after"] == 877
     assert phase_g["g1_second_family_plan"]["removed_private_writer_count"] == 10
     assert phase_g["g1_second_family_plan"]["json_sort_keys"] is False
@@ -300,9 +297,10 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     }
     assert phase_g["g1_fourth_family_plan"]["architecture_fitness"]["passed"] == 164
     assert phase_g["g1_current_evidence"]["private_runtime_metadata_helpers_removed"] == 10
-    assert phase_g["g1_current_evidence"][
-        "canonical_runtime_metadata_helper"
-    ] == "with_pit_replay_observe_only_runtime_metadata"
+    assert (
+        phase_g["g1_current_evidence"]["canonical_runtime_metadata_helper"]
+        == "with_pit_replay_observe_only_runtime_metadata"
+    )
     assert phase_g["g1_fifth_family_plan"]["inventory_ast_field_group_count"] == 14
     assert phase_g["g1_fifth_family_plan"]["canonical_safety_false_field_count"] == 39
     assert phase_g["g1_fifth_family_plan"]["private_metadata_helper_remaining_count"] == 0
@@ -480,7 +478,24 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4["implementation_started_in_g2_3_closeout"] is False
     assert g2_4["callback_count"] == 7
     assert g2_4["owner_decision_semantics_sensitive"] is True
-    assert g2_4["runtime_state_mutation_allowed"] is False
+    assert g2_4["production_runtime_state_mutation_allowed"] is False
+    assert g2_4["governance_journal_write_allowed"] is True
+    assert g2_4["journal_link_optional"] is True
+    g2_4_first = phase_g["g2_current_plan"]["g2_4_first_slice"]
+    assert g2_4_first["status"] == "COMPLETE"
+    assert g2_4_first["callback_count"] == 7
+    assert g2_4_first["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_first["legacy_helper_definitions_remaining"] == 0
+    assert g2_4_first["legacy_baseline_review_imports_remaining"] == 0
+    assert g2_4_first["governance_journal_write_allowed"] is True
+    assert g2_4_first["production_runtime_state_mutation_allowed"] is False
+    assert g2_4_first["proposal_is_draft_only"] is True
+    assert g2_4_first["direct_writer_calls_after"] == 858
+    assert g2_4_first["legacy_root_lines_after"] == 33950
+    assert g2_4_first["legacy_root_top_level_functions_after"] == 1002
+    assert g2_4_first["legacy_root_command_decorators_after"] == 960
+    assert g2_4_first["focused_validation"] == {"status": "PASS", "passed": 36}
+    assert g2_4_first["architecture_fitness"]["passed"] == 184
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -851,9 +866,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1["parity"]["production_effect"] == "none"
     assert phase_g1["validation"]["focused"]["passed"] == 29
     assert phase_g1["validation"]["architecture_fitness"]["passed"] == 159
-    assert phase_g1["validation"]["architecture_fitness"][
-        "current_direct_writer_calls"
-    ] == 887
+    assert phase_g1["validation"]["architecture_fitness"]["current_direct_writer_calls"] == 887
     for source in phase_g1["sources"]:
         if source.get("historical_phase_g1_hash"):
             assert source["superseded_by_phase"] in {"ARCH-004G1.3A", "ARCH-004G1.3C"}
@@ -1175,10 +1188,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3g["validation"]["architecture_fitness"]["passed"] == 181
     for source in phase_g2_3g["sources"]:
         if source.get("historical_phase_g2_3g_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.3H"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_3h_etf_cli_trend_calibration.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G2.3H", "ARCH-004G2.4A"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -1197,10 +1208,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3h["validation"]["architecture_fitness"]["passed"] == 182
     for source in phase_g2_3h["sources"]:
         if source.get("historical_phase_g2_3h_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.3_CLOSEOUT"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_3_closeout_g2_4_start.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G2.3_CLOSEOUT", "ARCH-004G2.4A"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -1216,6 +1225,28 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert closeout["g2_4_start"]["implementation_started"] is False
     assert closeout["validation"]["architecture_fitness"]["passed"] == 183
     for source in closeout["sources"]:
+        if source.get("historical_phase_g2_3_closeout_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4A"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4a_etf_cli_baseline_review.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4a = baseline["phase_g2_4a_etf_cli_baseline_review"]
+    assert phase_g2_4a["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4a["migration"]["callback_count"] == 7
+    assert phase_g2_4a["migration"]["shared_helper_count"] == 1
+    assert phase_g2_4a["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_4a["migration"]["legacy_helper_definitions_remaining"] == 0
+    assert phase_g2_4a["migration"]["legacy_baseline_review_imports_remaining"] == 0
+    assert phase_g2_4a["migration"]["governance_journal_write_allowed"] is True
+    assert phase_g2_4a["migration"]["production_runtime_state_mutation_allowed"] is False
+    assert phase_g2_4a["migration"]["proposal_is_draft_only"] is True
+    assert phase_g2_4a["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4a["validation"]["focused"] == {"status": "PASS", "passed": 36}
+    assert phase_g2_4a["validation"]["architecture_fitness"]["passed"] == 184
+    for source in phase_g2_4a["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1238,7 +1269,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_2_COMPLETE_G2_3_IN_PROGRESS"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_3_COMPLETE_G2_4A_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

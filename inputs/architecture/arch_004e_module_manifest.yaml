@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 811
+module_count: 812
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: e6c047d18ad674a19c63c462be7901ae54791be6fc325cb2c1c879e3663108f3
+  sha256: 358604e5fe1aea53b576723b1c9f429c5915f72ea5880d581a1a7b1b17c7a63c
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,27 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: f95d0ae6a1252c07e48d08b123562d7e1c573ea1c23f4960d517dcb862f464e7
+  sha256: da87b4066c0432b230e074e6cd19cab90a67e6fda31a5842989ad217716819e2
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.baseline_review
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
+  sha256: ddc676194832473b439e45b04bb56f8a1ab72c268aaa757f46e03730f8f649a7
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9408,7 +9428,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.common
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
-  sha256: d812f436ca517caf43809235b8f205cdc99870947394ce4902a8bcc374530083
+  sha256: 99ad64214f335802f0847f041e4f2d88e99b592992da94002cd51cee884b3e68
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

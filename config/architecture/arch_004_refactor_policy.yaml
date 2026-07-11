@@ -1190,11 +1190,46 @@ phase_g_execution:
       callback_count: 7
       canonical_target: src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
       owner_decision_semantics_sensitive: true
-      runtime_state_mutation_allowed: false
+      production_runtime_state_mutation_allowed: false
+      governance_journal_write_allowed: true
+      journal_link_optional: true
       strategy_or_threshold_change_allowed: false
       required_parity:
         [eligibility, evidence_matrix, package, owner_decision, proposal_draft,
          outcome, validation, artifact_paths, exit_codes, safety_boundary, cli_tree]
+    g2_4_first_slice:
+      status: COMPLETE
+      command_groups: [baseline_review]
+      callback_count: 7
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
+      shared_helpers_moved: [artifact_stem]
+      legacy_callback_definitions_remaining: 0
+      legacy_helper_definitions_remaining: 0
+      legacy_baseline_review_imports_remaining: 0
+      governance_journal_write_allowed: true
+      journal_link_optional: true
+      production_runtime_state_mutation_allowed: false
+      proposal_is_draft_only: true
+      baseline_config_mutated: false
+      target_weights_mutated: false
+      direct_writer_calls_before: 860
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 34440
+      legacy_root_lines_after: 33950
+      legacy_root_line_reduction: 490
+      legacy_root_top_level_functions_after: 1002
+      legacy_root_command_decorators_after: 960
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 36}
+      architecture_fitness:
+        status: PASS
+        passed: 184
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T095654Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
+      production_effect: none
     production_effect: none
 
 safety_boundary:
