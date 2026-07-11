@@ -500,6 +500,21 @@ G2.4AE是前述逐层manual workflow之外的显式组合入口。`real-snapshot
 
 `report`只读指定id或显式latest；validator检查五个必需文件、manifest/summary id一致、全部links存在、recommendation枚举、`order_ticket_generated=false`和统一no-broker safety。当前优化空间是把各中间artifact路径/checksum和policy version写进links、验证同一generated time与snapshot lineage、在部分中间写入后失败时记录transaction/run ledger并定义清理/恢复策略、让validator重放source-link一致性。不能把便捷orchestration扩展成scheduler自动运行、owner approval、paper action、official weights、real portfolio mutation或broker execution。
 
+#### Real execution owner decision journal 链
+
+G2.4AF在dry-run研究材料与任何paper-only action之间建立独立的人工决策日志。这样设计是为了把三个容易混淆的事实拆开：系统已完成风险计算、owner已表达决定、系统已执行动作。前两者可以形成审计证据，第三者必须由后续独立边界处理；owner journal中的`PASS`或非pending decision都不是order、portfolio mutation或broker authorization。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出与写入 | 阻断条件 | 后续优化空间 |
+|---|---|---|---|---|---|
+| `real-execution-owner-review create` | 显式`dry_run_id`、dry-run artifact root、owner-review output root | 只读既有dry-run manifest/links/summary；生成稳定review id，复制`dry_run_id`、`manual_execution_review_id`与`recommended_action`，初始`owner_decision=pending`、`status=PENDING_OWNER_DECISION` | `real_execution_owner_review_manifest.json`、`owner_execution_decision.json`、Markdown report、latest pointer | dry-run不存在、不可读或缺关键字段时fail closed；不补跑dry-run | 冻结dry-run与manual-review checksum、记录policy/schema version、增加显式staleness与review expiry |
+| `real-execution-owner-review record` | 显式`review_id`、非pending decision、可选脱敏owner notes | decision仅允许`monitor`、`no_trade`、`paper_adjustment_review_only`、`reject_advisory`、`needs_more_data`、`defer`；写入前拒绝5位及以上连续数字，以及account/order/tax-lot/SSN/passport/national-id/personal-identifier/statement-path敏感token；校验通过后更新decision、manifest、report和latest pointer | 人工decision record与更新时间；安全字段强制`broker_action_taken=false`、`order_ticket_generated=false`、`production_effect=none` | `pending`不能作为最终记录；非法枚举或敏感notes在任何artifact mutation前阻断，避免部分写入 | 将decision演进为append-only immutable journal；增加reviewer identity、签名、时间来源、reason taxonomy、supersession/reversal policy和notes分类/脱敏审计 |
+| `real-execution-owner-review report` | 显式`review_id`，或operator明确选择`latest` | 只读manifest和decision，不运行上游、不改变状态 | review id、status、decision、recommended action、report path | id/latest无法解析或artifact缺失时失败 | 披露source checksum、decision version、review age、superseded状态与完整lineage |
+| `validate-real-execution-owner-review` | 显式`review_id`与artifact root | 检查三个必需文件、manifest/decision id一致、decision枚举、no-broker/no-order/no-production safety，并重新扫描已落盘notes以发现绕过CLI的篡改 | content-derived validation payload；任一check失败时CLI exit 1 | 文件/id/枚举/safety/privacy任一失败即FAIL | 增加manifest/decision/report交叉重算、artifact checksum链、reviewer signature验证、append-only event sequence和retention policy |
+
+计算边界刻意很窄：`create`只把已有dry-run推荐映射成待决策记录；`record`只做枚举、安全与隐私校验后保存owner选择，不重新计算exposure、drift、guardrail，也不把`paper_adjustment_review_only`自动应用到纸面组合。后续paper action必须消费一个显式review id并在独立模块中再次验证其资格。由此可以明确回答每个结果的含义：`pending`表示等待人工决定；其他枚举只表示人工意图已记录；validator `PASS`只表示日志结构、安全边界和privacy contract成立。
+
+当前实现仍有可优化空间。优先级最高的是把可覆盖的单份decision JSON升级为append-only decision events，并以reviewer、时间、source checksum和签名建立不可抵赖审计链；其次是明确decision撤销/替代规则、notes retention与字段级classification；最后才是改善owner界面的可读性。任何优化都不得把decision journal变成scheduler entry、自动paper action、order ticket、official weights、真实portfolio、production state或broker执行入口。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：
