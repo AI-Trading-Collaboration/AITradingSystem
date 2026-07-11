@@ -431,6 +431,12 @@ Shadow monitor输入observe-only registry与`as_of`，只计算观察年龄、re
 
 后续优化空间是把monitor metrics改为独立forward observation ledger、让scheduled observe引用canonical periodic plan id、让promotion pack直接消费每项source validator artifact。任何优化都必须保持“到期检查不等于自动研究、review-ready不等于promotion、pack PASS不等于生产批准”，且不得写official weights或broker state。
 
+#### Evidence readiness 链
+
+Evidence summary从指定sweep汇总candidate证据完整度与是否可进入下一阶段；medium-real report/validate只总结或校验已有medium-real sweep；regime coverage读取指定sweep与标准ETF价格缓存，审计tech/semiconductor覆盖和AI bull-market overfit风险。Candidate interpretation把既有top candidates、weight path和限制转成人工可读材料；observe pool只把满足研究条件的候选写入独立observe-only artifact，不写shadow registry；overnight readiness根据medium-real完成/失败数与运行耗时估算判断是否具备运行更大研究的条件，但不会启动overnight sweep。
+
+这些输出回答“证据和运行条件是否足够继续研究”，不回答“是否应晋升或交易”。优化入口包括统一各阶段的evidence completeness schema、给regime coverage增加PIT/context binding、让observe pool保存source validator checksum、用真实runtime ledger校准overnight耗时。任何ready/usable/observe-only状态都不得自动映射为promotion、production或broker动作。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

@@ -2070,7 +2070,31 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4w["legacy_root_command_decorators_after"] == 871
     assert migration_g2_4w["python_module_count"] == 834
     assert phase_g2_4w["sources"]
+    superseded_g2_4w = set(phase_g2_4w["superseded_source_paths"])
     for source in phase_g2_4w["sources"]:
+        if source["path"] in superseded_g2_4w:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4x = baseline["phase_g2_4x_etf_cli_dynamic_v3_evidence_readiness"]
+    assert phase_g2_4x["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4x = phase_g2_4x["migration"]
+    assert migration_g2_4x["callback_count"] == 17
+    assert migration_g2_4x["evidence_summary_is_promotion"] is False
+    assert migration_g2_4x["medium_real_report_runs_sweep"] is False
+    assert migration_g2_4x["regime_coverage_requires_price_input"] is True
+    assert migration_g2_4x["interpretation_is_manual_review_material"] is True
+    assert migration_g2_4x["observe_pool_writes_shadow_registry"] is False
+    assert migration_g2_4x["overnight_readiness_runs_overnight_sweep"] is False
+    assert migration_g2_4x["ready_or_usable_means_production_ready"] is False
+    assert migration_g2_4x["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4x["official_weight_or_broker_mutation_allowed"] is False
+    assert migration_g2_4x["legacy_root_lines_after"] == 29703
+    assert migration_g2_4x["legacy_root_top_level_functions_after"] == 893
+    assert migration_g2_4x["legacy_root_command_decorators_after"] == 854
+    assert migration_g2_4x["python_module_count"] == 835
+    assert phase_g2_4x["sources"]
+    for source in phase_g2_4x["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2093,7 +2117,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4W_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4X_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
