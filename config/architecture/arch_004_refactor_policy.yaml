@@ -434,8 +434,8 @@ phase_f1_execution:
   stages:
     F1_1_inventory_due_contract_and_compatibility_adapter: COMPLETE
     F1_2_shadow_plan_and_daily_parity: COMPLETE
-    F1_3_lock_retry_idempotency_and_resume: IN_PROGRESS
-    F1_4_daily_executor_adapter_cut_in: NOT_STARTED
+    F1_3_lock_retry_idempotency_and_resume: COMPLETE
+    F1_4_daily_executor_adapter_cut_in: IN_PROGRESS
     F1_5_non_daily_controlled_due_dispatch: NOT_STARTED
     F1_6_validation_and_closeout: NOT_STARTED
   scheduled_task_inventory:
@@ -446,6 +446,21 @@ phase_f1_execution:
   additional_external_scheduler_entry_allowed: false
   non_daily_automatic_dispatch_enabled: false
   legacy_dispatch_enabled_by_shadow_adapter: false
+  runtime_control:
+    policy_path: config/operations/runtime_control.yaml
+    policy_id: operations_runtime_control_v1
+    lock_record_schema: operations_lock_record.v1
+    execution_state_schema: operations_execution_state.v1
+    resolution_schema: operations_run_control_resolution.v1
+    deterministic_idempotency_key: true
+    concurrent_workflow_date_lock: BLOCKED
+    stale_lock_recovery: EXPIRED_ONLY
+    duplicate_completed_trigger: ALREADY_COMPLETE
+    max_run_attempts: 2
+    step_attempt_budget_from_workflow_spec: true
+    non_idempotent_partial_resume: BLOCKED
+    atomic_state_write: true
+    legacy_daily_executor_cut_in_enabled: false
   periodic_research_review_may_auto_tune: false
   compatibility_findings:
     trading_day_daily_plan: PASS
@@ -457,18 +472,18 @@ phase_f1_execution:
     legacy_markdown_bytes_changed: false
   focused_validation:
     status: PASS
-    passed: 81
+    passed: 91
   scoped_mypy: PASS
   fast_unit:
     status: PASS
     passed: 198
-    elapsed_seconds: 69.26
-    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T012532Z/test_runtime_summary.json
+    elapsed_seconds: 74.15
+    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T014354Z/test_runtime_summary.json
   contract_validation:
     status: PASS
     passed: 197
-    elapsed_seconds: 44.57
-    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T012650Z/test_runtime_summary.json
+    elapsed_seconds: 45.35
+    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T014515Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

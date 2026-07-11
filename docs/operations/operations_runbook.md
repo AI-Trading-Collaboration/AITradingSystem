@@ -152,6 +152,8 @@ aits ops daily-run --as-of YYYY-MM-DD
 
 `daily-plan`与`daily-run`会在既有`daily_ops_plan_*.md`旁写入additive `*.operations_shadow.json`。该sidecar只记录activated canonical WorkflowSpec、due resolution、non-executing RunLedger和legacy parity，固定`commands_executed=false`、`non_daily_dispatch_enabled=false`；它不是第二个scheduler入口，也不表示任何step已PASS。Parity不是PASS时必须fail closed。
 
+ARCH-004F1 runtime-control policy位于`config/operations/runtime_control.yaml`。当前sidecar只披露其path/hash、attempt/resume policy和`legacy_daily_executor_cut_in_enabled=false`；因此lock/idempotency state尚未控制生产daily executor。F1.4 cut-in前不得把generic runtime-control测试解释为daily-run已经具备自动resume，也不得手工将policy flag改为true绕过parity与验证。
+
 ## Daily Tasks
 
 交易日 daily chain 至少覆盖以下必需任务；完整顺序以 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准。

@@ -67,6 +67,8 @@ aits ops daily-run --as-of 2026-05-06
 
 两者还会在原计划Markdown旁写入 `daily_operations_shadow.v1` JSON sidecar，保存source config hash、market-session activated WorkflowSpec、DUE resolution、non-executing RunLedger和exact parity。该sidecar是additive审计证据，不执行命令、不启用non-daily dispatch、不改变原Markdown bytes/path。
 
+Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。F1.3只建立并验证atomic lock、idempotency、run/step attempt与idempotent-only resume能力；`legacy_daily_executor_cut_in_enabled=false`期间，既有`run_daily_ops_plan`仍是executor，不能声称daily run已经由canonical lease控制。F1.4必须完成executor adapter与terminal state parity后才允许切换。
+
 ## Closed-Market Mode
 
 周末或 NYSE 常规整日休市日：

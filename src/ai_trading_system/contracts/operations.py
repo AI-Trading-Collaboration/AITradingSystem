@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from enum import StrEnum
 from typing import ClassVar
@@ -24,6 +24,15 @@ class DueRule(StrEnum):
     PERIOD_END = "period_end"
     INTERVAL_WEEKS = "interval_weeks"
     EXPLICIT_TRIGGER = "explicit_trigger"
+
+
+class OperationsRunDecision(StrEnum):
+    START_NEW = "START_NEW"
+    RESUME = "RESUME"
+    ALREADY_COMPLETE = "ALREADY_COMPLETE"
+    BLOCKED_CONCURRENT = "BLOCKED_CONCURRENT"
+    BLOCKED_RETRY_EXHAUSTED = "BLOCKED_RETRY_EXHAUSTED"
+    BLOCKED_UNSAFE_RESUME = "BLOCKED_UNSAFE_RESUME"
 
 
 @dataclass(frozen=True)
@@ -302,6 +311,224 @@ class OperationsShadowPlan:
         return plan
 
 
+@dataclass(frozen=True)
+class OperationsExecutionState:
+    schema_version: ClassVar[str] = "operations_execution_state.v1"
+
+    idempotency_key: str
+    workflow_id: str
+    workflow_spec_id: str
+    as_of: date
+    run_id: str
+    status: CanonicalStatus
+    attempt: int
+    started_at: datetime
+    updated_at: datetime
+    finished_at: datetime | None = None
+    completed_step_ids: tuple[str, ...] = ()
+    current_step_id: str | None = None
+    step_attempts: tuple[tuple[str, int], ...] = ()
+    blocker_codes: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.idempotency_key, "idempotency_key"),
+            (self.workflow_id, "workflow_id"),
+            (self.workflow_spec_id, "workflow_spec_id"),
+            (self.run_id, "run_id"),
+        ):
+            _nonempty(value, field)
+        if isinstance(self.attempt, bool) or self.attempt < 1:
+            raise OperationsContractError("INVALID_RUN_ATTEMPT", self.run_id)
+        _aware_datetime(self.started_at, "started_at")
+        _aware_datetime(self.updated_at, "updated_at")
+        if self.finished_at is not None:
+            _aware_datetime(self.finished_at, "finished_at")
+        if self.updated_at < self.started_at:
+            raise OperationsContractError("RUN_STATE_TIME_REVERSED", self.run_id)
+        if self.finished_at is not None and self.finished_at < self.started_at:
+            raise OperationsContractError("RUN_STATE_TIME_REVERSED", self.run_id)
+        completed = tuple(
+            sorted(set(_nonempty(item, "completed_step_id") for item in self.completed_step_ids))
+        )
+        object.__setattr__(self, "completed_step_ids", completed)
+        blockers = tuple(
+            sorted(set(_nonempty(item, "blocker_code") for item in self.blocker_codes))
+        )
+        object.__setattr__(self, "blocker_codes", blockers)
+        if self.current_step_id is not None:
+            _nonempty(self.current_step_id, "current_step_id")
+            if self.current_step_id in completed:
+                raise OperationsContractError("RUN_CURRENT_STEP_ALREADY_COMPLETE", self.run_id)
+        attempts: dict[str, int] = {}
+        for step_id, count in self.step_attempts:
+            _nonempty(step_id, "step_attempt_id")
+            if isinstance(count, bool) or count < 1:
+                raise OperationsContractError("INVALID_STEP_ATTEMPT", step_id)
+            if step_id in attempts:
+                raise OperationsContractError("DUPLICATE_STEP_ATTEMPT", step_id)
+            attempts[step_id] = count
+        object.__setattr__(self, "step_attempts", tuple(sorted(attempts.items())))
+        terminal = self.status in {
+            CanonicalStatus.PASS,
+            CanonicalStatus.BLOCKED,
+            CanonicalStatus.FAILED,
+        }
+        if terminal != (self.finished_at is not None):
+            raise OperationsContractError("RUN_TERMINAL_TIME_MISMATCH", self.run_id)
+        if self.status in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED} and not blockers:
+            raise OperationsContractError("RUN_TERMINAL_BLOCKER_REQUIRED", self.run_id)
+
+    def with_step_started(self, *, step_id: str, at: datetime) -> OperationsExecutionState:
+        if self.status is not CanonicalStatus.RUNNING:
+            raise OperationsContractError("RUN_NOT_RUNNING", self.run_id)
+        if self.current_step_id is not None:
+            raise OperationsContractError("RUN_STEP_ALREADY_ACTIVE", self.current_step_id)
+        if step_id in self.completed_step_ids:
+            raise OperationsContractError("RUN_STEP_ALREADY_COMPLETE", step_id)
+        _aware_datetime(at, "step_started_at")
+        attempts = dict(self.step_attempts)
+        attempts[step_id] = attempts.get(step_id, 0) + 1
+        return replace(
+            self,
+            current_step_id=_nonempty(step_id, "step_id"),
+            step_attempts=tuple(attempts.items()),
+            updated_at=at,
+        )
+
+    def with_step_passed(self, *, step_id: str, at: datetime) -> OperationsExecutionState:
+        if self.current_step_id != step_id:
+            raise OperationsContractError("RUN_ACTIVE_STEP_MISMATCH", step_id)
+        _aware_datetime(at, "step_finished_at")
+        return replace(
+            self,
+            completed_step_ids=(*self.completed_step_ids, step_id),
+            current_step_id=None,
+            updated_at=at,
+        )
+
+    def terminal(
+        self,
+        *,
+        status: CanonicalStatus,
+        at: datetime,
+        blocker_codes: tuple[str, ...] = (),
+    ) -> OperationsExecutionState:
+        if status not in {CanonicalStatus.PASS, CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}:
+            raise OperationsContractError("INVALID_RUN_TERMINAL_STATUS", status.value)
+        _aware_datetime(at, "finished_at")
+        return replace(
+            self,
+            status=status,
+            updated_at=at,
+            finished_at=at,
+            current_step_id=None,
+            blocker_codes=blocker_codes,
+        )
+
+    def with_step_retry_ready(self, *, step_id: str, at: datetime) -> OperationsExecutionState:
+        if self.current_step_id != step_id:
+            raise OperationsContractError("RUN_ACTIVE_STEP_MISMATCH", step_id)
+        _aware_datetime(at, "step_retry_at")
+        return replace(self, current_step_id=None, updated_at=at)
+
+    def step_attempt_count(self, step_id: str) -> int:
+        return dict(self.step_attempts).get(step_id, 0)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "idempotency_key": self.idempotency_key,
+            "workflow_id": self.workflow_id,
+            "workflow_spec_id": self.workflow_spec_id,
+            "as_of": self.as_of.isoformat(),
+            "run_id": self.run_id,
+            "status": self.status.value,
+            "attempt": self.attempt,
+            "started_at": self.started_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "finished_at": None if self.finished_at is None else self.finished_at.isoformat(),
+            "completed_step_ids": list(self.completed_step_ids),
+            "current_step_id": self.current_step_id,
+            "step_attempts": [
+                {"step_id": step_id, "attempts": attempts}
+                for step_id, attempts in self.step_attempts
+            ],
+            "blocker_codes": list(self.blocker_codes),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, object]) -> OperationsExecutionState:
+        return cls(
+            idempotency_key=str(payload.get("idempotency_key", "")),
+            workflow_id=str(payload.get("workflow_id", "")),
+            workflow_spec_id=str(payload.get("workflow_spec_id", "")),
+            as_of=_date_value(payload.get("as_of"), "as_of"),
+            run_id=str(payload.get("run_id", "")),
+            status=CanonicalStatus(str(payload.get("status", ""))),
+            attempt=_int_value(payload.get("attempt"), "attempt"),
+            started_at=_datetime_value(payload.get("started_at"), "started_at"),
+            updated_at=_datetime_value(payload.get("updated_at"), "updated_at"),
+            finished_at=_optional_datetime_value(payload.get("finished_at"), "finished_at"),
+            completed_step_ids=tuple(str(item) for item in _list(payload, "completed_step_ids")),
+            current_step_id=_optional_text(payload.get("current_step_id"), "current_step_id"),
+            step_attempts=_step_attempts_value(payload.get("step_attempts", [])),
+            blocker_codes=tuple(str(item) for item in _list(payload, "blocker_codes")),
+        )
+
+
+@dataclass(frozen=True)
+class OperationsRunControlResolution:
+    schema_version: ClassVar[str] = "operations_run_control_resolution.v1"
+
+    decision: OperationsRunDecision
+    idempotency_key: str
+    workflow_id: str
+    workflow_spec_id: str
+    as_of: date
+    attempt: int
+    resume_completed_step_ids: tuple[str, ...] = ()
+    blocker_codes: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        _nonempty(self.idempotency_key, "idempotency_key")
+        _nonempty(self.workflow_id, "workflow_id")
+        _nonempty(self.workflow_spec_id, "workflow_spec_id")
+        if isinstance(self.attempt, bool) or self.attempt < 0:
+            raise OperationsContractError("INVALID_RUN_ATTEMPT", self.workflow_id)
+        object.__setattr__(
+            self,
+            "resume_completed_step_ids",
+            tuple(
+                sorted(
+                    set(
+                        _nonempty(item, "resume_completed_step_id")
+                        for item in self.resume_completed_step_ids
+                    )
+                )
+            ),
+        )
+        blockers = tuple(
+            sorted(set(_nonempty(item, "blocker_code") for item in self.blocker_codes))
+        )
+        object.__setattr__(self, "blocker_codes", blockers)
+        if self.decision.value.startswith("BLOCKED_") and not blockers:
+            raise OperationsContractError("RUN_CONTROL_BLOCKER_REQUIRED", self.workflow_id)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "decision": self.decision.value,
+            "idempotency_key": self.idempotency_key,
+            "workflow_id": self.workflow_id,
+            "workflow_spec_id": self.workflow_spec_id,
+            "as_of": self.as_of.isoformat(),
+            "attempt": self.attempt,
+            "resume_completed_step_ids": list(self.resume_completed_step_ids),
+            "blocker_codes": list(self.blocker_codes),
+        }
+
+
 def build_operations_shadow_plan(
     *,
     spec: WorkflowSpec,
@@ -460,3 +687,44 @@ def _optional_text(value: object, field: str) -> str | None:
     if value is None:
         return None
     return _nonempty(str(value), field)
+
+
+def _aware_datetime(value: datetime, field: str) -> None:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise OperationsContractError("OPERATIONS_DATETIME_TZ_REQUIRED", field)
+
+
+def _datetime_value(value: object, field: str) -> datetime:
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise OperationsContractError("INVALID_OPERATIONS_DATETIME", field) from exc
+    else:
+        raise OperationsContractError("INVALID_OPERATIONS_DATETIME", field)
+    _aware_datetime(parsed, field)
+    return parsed
+
+
+def _optional_datetime_value(value: object, field: str) -> datetime | None:
+    return None if value is None else _datetime_value(value, field)
+
+
+def _step_attempts_value(value: object) -> tuple[tuple[str, int], ...]:
+    if not isinstance(value, list):
+        raise OperationsContractError("INVALID_OPERATIONS_PAYLOAD", "step_attempts must be list")
+    parsed: list[tuple[str, int]] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            raise OperationsContractError(
+                "INVALID_OPERATIONS_PAYLOAD", "step_attempt must be mapping"
+            )
+        parsed.append(
+            (
+                str(item.get("step_id", "")),
+                _int_value(item.get("attempts"), "step_attempts.attempts"),
+            )
+        )
+    return tuple(parsed)

@@ -1,0 +1,26 @@
+schema_version: operations_runtime_control_policy.v1
+policy_id: operations_runtime_control_v1
+owner: system_operations
+version: 1.0.0
+status: active_arch_004f1
+policy_metadata:
+  rationale: >
+    Prevent overlapping workflow runs, duplicate completion, unsafe retries, and
+    silent replay after a crash while ARCH-004F1 migrates the legacy daily
+    executor to the canonical WorkflowSpec and RunLedger control plane.
+  intended_effect: >
+    Use an atomic workflow/date lock, a deterministic idempotency key, a
+    bounded run-attempt budget, and resume only when every affected step is
+    explicitly idempotent.
+  validation_evidence: >
+    ARCH-004F1 focused tests cover concurrent acquisition, stale-lock recovery,
+    duplicate completed triggers, retry exhaustion, safe resume, unsafe
+    non-idempotent resume, owner-only release, and atomic state persistence.
+  review_condition: >
+    Review before changing lock TTL, attempt budget, resume eligibility,
+    daily executor cut-in, or any non-daily dispatch behavior.
+lock_ttl_seconds: 21600
+max_run_attempts: 2
+resume_idempotent_steps: true
+legacy_daily_executor_cut_in_enabled: false
+non_daily_dispatch_enabled: false

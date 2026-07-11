@@ -58,6 +58,10 @@ from ai_trading_system.official_policy_sources import (
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
 from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.operations import (
+    DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
+    load_operations_runtime_control_policy,
+)
 from ai_trading_system.reports.artifact_lineage import (
     default_artifact_lineage_json_path,
     default_artifact_lineage_markdown_path,
@@ -1892,6 +1896,7 @@ def write_daily_ops_shadow_plan(
     output_path: Path,
     *,
     scheduled_tasks_path: Path = DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
+    runtime_control_policy_path: Path = DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
 ) -> Path:
     scheduled = load_scheduled_tasks_config(scheduled_tasks_path)
     payload = build_daily_schedule_shadow_payload(
@@ -1905,6 +1910,19 @@ def write_daily_ops_shadow_plan(
         source_config_path=scheduled.path,
         source_config_sha256=hashlib.sha256(scheduled.path.read_bytes()).hexdigest(),
     )
+    runtime_policy = load_operations_runtime_control_policy(runtime_control_policy_path)
+    payload["runtime_control_policy"] = {
+        "policy_id": runtime_policy.policy_id,
+        "version": runtime_policy.version,
+        "path": str(runtime_control_policy_path),
+        "sha256": hashlib.sha256(runtime_control_policy_path.read_bytes()).hexdigest(),
+        "max_run_attempts": runtime_policy.max_run_attempts,
+        "resume_idempotent_steps": runtime_policy.resume_idempotent_steps,
+        "legacy_daily_executor_cut_in_enabled": (
+            runtime_policy.legacy_daily_executor_cut_in_enabled
+        ),
+        "non_daily_dispatch_enabled": runtime_policy.non_daily_dispatch_enabled,
+    }
     write_json_atomic(output_path, payload)
     return output_path
 

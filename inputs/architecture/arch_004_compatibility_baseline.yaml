@@ -635,21 +635,28 @@ phase_f2_runtime_lifecycle:
       runtime_artifact: outputs/validation_runtime/full_20260711T001903Z/test_runtime_summary.json
 
 phase_f1_operations_control_plane:
-  status: IN_PROGRESS_F1_1_F1_2_COMPLETE_F1_3_IN_PROGRESS
+  status: IN_PROGRESS_F1_1_TO_F1_3_COMPLETE_F1_4_IN_PROGRESS
   as_of: 2026-07-11
   contracts:
     due_policy_schema: operations_due_policy.v1
     due_resolution_schema: operations_due_resolution.v1
     shadow_plan_schema: operations_shadow_plan.v1
     daily_shadow_schema: daily_operations_shadow.v1
+    execution_state_schema: operations_execution_state.v1
+    run_control_resolution_schema: operations_run_control_resolution.v1
+    lock_record_schema: operations_lock_record.v1
     legacy_schedule_binding: EXPLICIT_ONLY
     unknown_cadence_or_effect: BLOCKED
     shadow_execution_enabled: false
     additive_shadow_artifact_emission: true
     non_daily_automatic_dispatch_enabled: false
     unified_external_trigger: aits ops daily-run
+    deterministic_idempotency_key: true
+    idempotent_only_resume: true
+    step_attempt_budget_from_workflow_spec: true
+    legacy_daily_executor_cut_in_enabled: false
   repository_inventory:
-    python_module_count_including_ignored: 781
+    python_module_count_including_ignored: 783
     python_test_and_support_file_count: 1110
   scheduled_task_inventory:
     daily: 37
@@ -664,27 +671,40 @@ phase_f1_operations_control_plane:
       official_policy_sources: closed_market_only
     additive_shadow_artifact_emission: PASS
     legacy_markdown_bytes: PASS
+    concurrent_lock: BLOCKED
+    stale_lock_recovery: EXPIRED_ONLY
+    duplicate_completed_trigger: ALREADY_COMPLETE
+    run_attempt_exhausted: BLOCKED
+    step_attempt_exhausted: BLOCKED
+    non_idempotent_partial_resume: BLOCKED
+    atomic_state_write: PASS
   sources:
     - path: src/ai_trading_system/contracts/operations.py
-      sha256: 990636f4f32706ca10e2cdc4fef86174fcc7496e58a15ffa5ed706b5aa4f2fb2
+      sha256: b996f147ee29c26364d217d39aee836f76ca6739a2c27161442f1e6f92a950e4
     - path: src/ai_trading_system/contracts/__init__.py
-      sha256: 2fab85f87a725196b9003908efc58ec2a8015a680f8a16b82097d41fbda97bb9
+      sha256: 44830ce03bb3f42f93617f5fec1142778464f2ca8d0b42341384bc93c58f53a6
     - path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
       sha256: 4213ed2f8100fb42391b3b81ecdc831d9314b751c0a9ff96d703156f80eb7153
     - path: src/ai_trading_system/legacy/__init__.py
       sha256: fbd61175562cb21d4d695b30c87c7e346b1e8b682e6aa5b046f1aa165bac7a1a
     - path: tests/test_arch_004f1_operations_control_plane.py
-      sha256: cb2b957c93c76e1a91509b846ef6b570a2a7a4ad924646165830de997ce358b2
+      sha256: 4869b10ac6ab89b1f66f668b704094fd35686910faf21cd62b965b9df1e1010f
     - path: tests/test_arch_004_refactor_policy.py
-      sha256: 94f0f7cc213da08f4ddabdb27b01c0c0220c41e7e26fd477fddd0307b6c9c2ad
+      sha256: 26ad165dc0a191e38acd6239aaee6363926946dac552472ef9973666554aa824
     - path: src/ai_trading_system/scheduled_tasks.py
       sha256: 86070baba8d0ec5d65de5fd616a13249074b3cf9c314ce12fd5e372372103052
     - path: src/ai_trading_system/ops_daily.py
-      sha256: 3f9a39040b0dbb73832b9777d9dcfb721d07915bb1987a43f4fe368f0a714d7e
+      sha256: d749e52f438494ab28de4a89a116256bebd711bd056dc3e0622048da65bd52a6
     - path: src/ai_trading_system/cli_commands/ops.py
       sha256: 925057151a551447315efebc810120f4cee7cb9ca95fbb88c663c678a9a869f5
     - path: config/scheduled_tasks.yaml
       sha256: f1b001859686467d74d257bf022b67053c273f02f39f1ae69a7dfeaf3ed5f42c
+    - path: config/operations/runtime_control.yaml
+      sha256: 129f8fb307a172926641a48aac031205c777ac7349f8e632f634c9675488b6e3
+    - path: src/ai_trading_system/platform/operations/__init__.py
+      sha256: 70169d9aa345feec3173aa207a66dd3a43b5f004761da02a5376fd8e9120e4ad
+    - path: src/ai_trading_system/platform/operations/runtime_control.py
+      sha256: d50a8fd595d16c68d354b26bc72c737bb8d58a10967c3dbc2e83d014345f5d54
     - path: tests/test_scheduled_tasks.py
       sha256: de4cc0d8f832919c46faf9dd1137a8809319b39182b9a99d73dab5b251434fdc
     - path: tests/test_ops_daily.py
@@ -692,38 +712,38 @@ phase_f1_operations_control_plane:
     - path: tests/test_cli_direct.py
       sha256: 89f3386c3ea0b37f5d51867769d4b45a964a0276d3bf9cab9b7d3ec201f77532
     - path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
-      sha256: 649e8bdfee3c042c12c759211d17f338bf280aee8d3ec8b30d60ae913be51916
+      sha256: f4515d05734135f2de0495d53498b9271517ef45b19a07e5a10a51edb4eae6c6
     - path: docs/operations/operations_runbook.md
-      sha256: 7064457511c97f06c7d23338504d8baa27d1942e3d65d79252750a09ecc47723
+      sha256: d234d4a8ea3cfdf3698319331fdbec0a5a34c52218c2c28a9ba45890881e9fdc
     - path: docs/runbooks/scheduled_task_orchestration.md
-      sha256: 62c5ad2efe09cf3c4ab0222489e92b2bc48196ec9036687e6c982ba3265475af
+      sha256: b3f18fdbe2f9f80f215bd1965a028b886b2252123ad3691c1dfecf8e0121338a
     - path: docs/artifact_catalog.md
-      sha256: 549f4c541f851af7d51adea3552f45f46b73a1cfc6731621ecb125bbec4d17a4
+      sha256: 7596d66cb46a5e35316b6ddbe411ca99b8abf85b9ab1b1ebe4ec77aa54ac347a
     - path: docs/system_flow.md
-      sha256: 7889e04ce921da8dd11af4e3a630efa36f26d41e2c7312c1f98b3ab2ed8f8e30
+      sha256: d77950e7e30391c7f4d80b1aad9870322f350b7e6c1b5f1644cfe129ae2329b0
     - path: config/architecture/arch_004_refactor_policy.yaml
-      sha256: 85ff393bd7f9095159454a6e5aab116c731be7471ae5ea991c734e69448fe68e
+      sha256: 9184f41722223fce62c92fcc387560a85e717f819c1b2a8028922d6afd44c050
     - path: inputs/architecture/arch_004e_module_manifest.yaml
-      sha256: 83542ed9f023eb2c24aae32fbc5bb715e59d8ad8de4bb6619aa1fe94b029fa8e
+      sha256: 4b595d145d65ca999ee422196029bae240819a9ccaf47148cc91512f947777f7
     - path: inputs/architecture/arch_004e_test_manifest.yaml
-      sha256: 8a058be45209faf64d8c5309789aa3b64a242029b9e250f55896e5fa6621775a
+      sha256: 12a39d5ee8bc54b2826c0d8dcf393731a74f5463d2caeb3a3c11437911045fa2
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-      sha256: 2a3e65648d4603a4ed84429e0729caf1fb5f94f28de160e1f3ef6ccecb96f24f
+      sha256: 21053d3a387e3d27104863e849b30bc929c6a23739a8db20255a390255adb8ed
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
-      sha256: 3c4a56da23412cb45fbff81bbf2acb4e3af5f1951d99905359033042779ba6a7
+      sha256: db3ae900ffd65f05ba318ce51185165d589fd653683225816411a9f0c077a107
   validation:
     focused:
       status: PASS
-      passed: 81
+      passed: 91
     scoped_mypy:
       status: PASS
     fast_unit:
       status: PASS
       passed: 198
-      elapsed_seconds: 69.26
-      runtime_artifact: outputs/validation_runtime/fast-unit_20260711T012532Z/test_runtime_summary.json
+      elapsed_seconds: 74.15
+      runtime_artifact: outputs/validation_runtime/fast-unit_20260711T014354Z/test_runtime_summary.json
     contract_validation:
       status: PASS
       passed: 197
-      elapsed_seconds: 44.57
-      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T012650Z/test_runtime_summary.json
+      elapsed_seconds: 45.35
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T014515Z/test_runtime_summary.json

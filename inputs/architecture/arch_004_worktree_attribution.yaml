@@ -8,6 +8,7 @@ production_effect: none
 arch_004_owned_paths:
   - config/architecture/arch_004_refactor_policy.yaml
   - config/scheduled_tasks.yaml
+  - config/operations/runtime_control.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -43,6 +44,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/config/__init__.py
   - src/ai_trading_system/platform/config/resolver.py
   - src/ai_trading_system/platform/config/market_regimes.py
+  - src/ai_trading_system/platform/operations/__init__.py
+  - src/ai_trading_system/platform/operations/runtime_control.py
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/dependency_gate.py
   - src/ai_trading_system/config.py

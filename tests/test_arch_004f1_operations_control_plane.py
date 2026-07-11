@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -13,12 +13,18 @@ from ai_trading_system.contracts.operations import (
     OperationsDueContext,
     OperationsDuePolicy,
     OperationsDueResolution,
+    OperationsRunDecision,
     OperationsShadowPlan,
     build_operations_shadow_plan,
     resolve_operations_due,
 )
 from ai_trading_system.contracts.status import CanonicalStatus
-from ai_trading_system.contracts.workflow import WorkflowCadence, WorkflowSpec
+from ai_trading_system.contracts.workflow import (
+    EntrypointRef,
+    WorkflowCadence,
+    WorkflowSpec,
+    WorkflowStepSpec,
+)
 from ai_trading_system.legacy.scheduled_tasks_adapter import (
     LegacyScheduledWorkflowBinding,
     assess_daily_shadow_parity,
@@ -30,6 +36,12 @@ from ai_trading_system.ops_daily import (
     render_daily_ops_plan,
     write_daily_ops_plan,
     write_daily_ops_shadow_plan,
+)
+from ai_trading_system.platform.operations import (
+    OperationsRunControl,
+    OperationsRuntimeControlError,
+    OperationsRuntimeControlPolicy,
+    load_operations_runtime_control_policy,
 )
 from ai_trading_system.scheduled_tasks import (
     ScheduledCadence,
@@ -50,6 +62,44 @@ def _weekly_policy() -> OperationsDuePolicy:
         requires_data_quality=True,
         requires_artifacts=True,
         requires_owner_gate=False,
+    )
+
+
+def _runtime_policy(*, max_run_attempts: int = 2) -> OperationsRuntimeControlPolicy:
+    return OperationsRuntimeControlPolicy(
+        policy_id="test_runtime_control_v1",
+        owner="test",
+        version="1.0.0",
+        lock_ttl_seconds=60,
+        max_run_attempts=max_run_attempts,
+        resume_idempotent_steps=True,
+        legacy_daily_executor_cut_in_enabled=False,
+        non_daily_dispatch_enabled=False,
+    )
+
+
+def _runtime_spec(*, first_idempotent: bool = True, second_max_attempts: int = 1) -> WorkflowSpec:
+    first = WorkflowStepSpec(
+        step_id="first",
+        entrypoint=EntrypointRef(module="tests.fake", callable_name="first"),
+        idempotent=first_idempotent,
+        lock_key=None if first_idempotent else "synthetic:first",
+        max_attempts=1,
+    )
+    second = WorkflowStepSpec(
+        step_id="second",
+        entrypoint=EntrypointRef(module="tests.fake", callable_name="second"),
+        dependencies=("first",),
+        idempotent=True,
+        max_attempts=second_max_attempts,
+    )
+    return WorkflowSpec(
+        workflow_id="synthetic_runtime",
+        owner="test",
+        cadence=WorkflowCadence.DAILY,
+        timezone="UTC",
+        steps=(first, second),
+        due_policy_id="test_due_v1",
     )
 
 
@@ -465,3 +515,179 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["parity"]["status"] == "PASS"
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
+    assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"
+    assert payload["runtime_control_policy"]["legacy_daily_executor_cut_in_enabled"] is False
+    assert payload["runtime_control_policy"]["non_daily_dispatch_enabled"] is False
+
+
+def test_runtime_control_policy_is_governed_and_keeps_cut_in_disabled() -> None:
+    policy = load_operations_runtime_control_policy()
+
+    assert policy.policy_id == "operations_runtime_control_v1"
+    assert policy.max_run_attempts == 2
+    assert policy.resume_idempotent_steps is True
+    assert policy.legacy_daily_executor_cut_in_enabled is False
+    assert policy.non_daily_dispatch_enabled is False
+
+
+def test_runtime_control_blocks_concurrent_workflow_date_acquisition(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+
+    first = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    second = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+
+    assert first.resolution.decision is OperationsRunDecision.START_NEW
+    assert first.lease is not None
+    assert second.resolution.decision is OperationsRunDecision.BLOCKED_CONCURRENT
+    assert second.lease is None
+    first.lease.release()
+
+
+def test_runtime_control_recovers_only_expired_lock(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    first = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert first.lease is not None
+
+    recovered = control.acquire(
+        spec=spec,
+        as_of=date(2026, 7, 11),
+        run_id="run_2",
+        now=now + timedelta(seconds=61),
+    )
+
+    assert recovered.resolution.decision is OperationsRunDecision.RESUME
+    assert recovered.resolution.attempt == 2
+    assert recovered.lease is not None
+    recovered.lease.release()
+
+
+def test_runtime_control_completed_idempotency_key_is_not_reexecuted(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    acquired = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert acquired.lease is not None
+    acquired.lease.start_step("first", at=now)
+    acquired.lease.pass_step("first", at=now)
+    acquired.lease.start_step("second", at=now)
+    acquired.lease.pass_step("second", at=now)
+    acquired.lease.finish(CanonicalStatus.PASS, at=now)
+
+    duplicate = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+
+    assert duplicate.resolution.decision is OperationsRunDecision.ALREADY_COMPLETE
+    assert duplicate.resolution.resume_completed_step_ids == ("first", "second")
+    assert duplicate.lease is None
+
+
+def test_runtime_control_resumes_only_remaining_idempotent_steps(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    first = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert first.lease is not None
+    first.lease.start_step("first", at=now)
+    first.lease.pass_step("first", at=now)
+    first.lease.release()
+
+    resumed = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+
+    assert resumed.resolution.decision is OperationsRunDecision.RESUME
+    assert resumed.resolution.resume_completed_step_ids == ("first",)
+    assert resumed.lease is not None
+    resumed.lease.start_step("second", at=now)
+    resumed.lease.pass_step("second", at=now)
+    resumed.lease.finish(CanonicalStatus.PASS, at=now)
+
+
+def test_runtime_control_blocks_non_idempotent_partial_resume(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec(first_idempotent=False)
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    first = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert first.lease is not None
+    first.lease.start_step("first", at=now)
+    first.lease.pass_step("first", at=now)
+    first.lease.release()
+
+    blocked = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_UNSAFE_RESUME
+    assert blocked.resolution.blocker_codes == ("NON_IDEMPOTENT_RESUME:first",)
+    assert blocked.lease is None
+
+
+def test_runtime_control_blocks_after_attempt_budget_is_exhausted(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy(max_run_attempts=2))
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    first = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert first.lease is not None
+    first.lease.release()
+    second = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+    assert second.lease is not None
+    second.lease.release()
+
+    blocked = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_3", now=now)
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_RETRY_EXHAUSTED
+    assert blocked.resolution.blocker_codes == ("RUN_ATTEMPT_BUDGET_EXHAUSTED",)
+
+
+def test_runtime_control_consumes_step_retry_budget_from_workflow_spec(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec(second_max_attempts=2)
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    acquired = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert acquired.lease is not None
+    acquired.lease.start_step("first", at=now)
+    acquired.lease.pass_step("first", at=now)
+    acquired.lease.start_step("second", at=now)
+
+    assert acquired.lease.fail_step("second", retryable=True, blocker_code="TRANSIENT", at=now)
+    acquired.lease.start_step("second", at=now)
+    acquired.lease.pass_step("second", at=now)
+    assert acquired.lease.state.step_attempt_count("second") == 2
+    acquired.lease.finish(CanonicalStatus.PASS, at=now)
+
+
+def test_runtime_control_exhausted_step_attempt_cannot_resume_after_crash(tmp_path: Path) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec(second_max_attempts=1)
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    acquired = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert acquired.lease is not None
+    acquired.lease.start_step("first", at=now)
+    acquired.lease.pass_step("first", at=now)
+    acquired.lease.start_step("second", at=now)
+    acquired.lease.release()
+
+    blocked = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_2", now=now)
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_RETRY_EXHAUSTED
+    assert blocked.resolution.blocker_codes == ("STEP_ATTEMPT_BUDGET_EXHAUSTED:second",)
+
+
+def test_runtime_control_state_writes_are_atomic_and_owner_release_is_enforced(
+    tmp_path: Path,
+) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    spec = _runtime_spec()
+    now = datetime(2026, 7, 11, tzinfo=UTC)
+    acquired = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
+    assert acquired.lease is not None
+    state_files = list((tmp_path / "states").glob("*.json"))
+    assert len(state_files) == 1
+    assert json.loads(state_files[0].read_text(encoding="utf-8"))["status"] == "RUNNING"
+    assert list(tmp_path.rglob("*.tmp")) == []
+
+    owner_path = next((tmp_path / "locks").glob("*/owner.json"))
+    owner_payload = json.loads(owner_path.read_text(encoding="utf-8"))
+    owner_payload["owner_run_id"] = "different_owner"
+    owner_path.write_text(json.dumps(owner_payload), encoding="utf-8")
+    with pytest.raises(OperationsRuntimeControlError, match="LOCK_OWNER_MISMATCH"):
+        acquired.lease.release()
