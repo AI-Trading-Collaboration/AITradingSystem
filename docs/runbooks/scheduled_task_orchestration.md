@@ -65,6 +65,8 @@ aits ops daily-run --as-of 2026-05-06
 
 计划和执行器都应显示同一顺序。若配置与代码步骤不一致，`daily-plan` / `daily-run` 应 fail closed，而不是继续用隐式顺序运行。
 
+两者还会在原计划Markdown旁写入 `daily_operations_shadow.v1` JSON sidecar，保存source config hash、market-session activated WorkflowSpec、DUE resolution、non-executing RunLedger和exact parity。该sidecar是additive审计证据，不执行命令、不启用non-daily dispatch、不改变原Markdown bytes/path。
+
 ## Closed-Market Mode
 
 周末或 NYSE 常规整日休市日：

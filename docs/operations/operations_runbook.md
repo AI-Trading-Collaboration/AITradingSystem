@@ -150,6 +150,8 @@ aits ops daily-run --as-of YYYY-MM-DD
 
 `daily-run` 面向最新已完成的 U.S. equity market trading day。历史严格复现使用 `aits ops replay-day --mode cache-only --as-of YYYY-MM-DD`，不要用生产 daily scheduler 入口补造历史 PIT 视图。
 
+`daily-plan`与`daily-run`会在既有`daily_ops_plan_*.md`旁写入additive `*.operations_shadow.json`。该sidecar只记录activated canonical WorkflowSpec、due resolution、non-executing RunLedger和legacy parity，固定`commands_executed=false`、`non_daily_dispatch_enabled=false`；它不是第二个scheduler入口，也不表示任何step已PASS。Parity不是PASS时必须fail closed。
+
 ## Daily Tasks
 
 交易日 daily chain 至少覆盖以下必需任务；完整顺序以 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准。

@@ -95,6 +95,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/contracts/operations.py
   - src/ai_trading_system/scheduled_tasks.py
   - src/ai_trading_system/ops_daily.py
+  - src/ai_trading_system/cli_commands/ops.py
   - src/ai_trading_system/legacy/research_campaign_adapter.py
   - src/ai_trading_system/legacy/scheduled_tasks_adapter.py
   - tests/test_arch_004f2_research_lifecycle.py

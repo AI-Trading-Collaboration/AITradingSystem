@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import os
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
 
@@ -21,7 +24,13 @@ from ai_trading_system.legacy.scheduled_tasks_adapter import (
     assess_daily_shadow_parity,
     assess_scheduled_cadence,
 )
-from ai_trading_system.ops_daily import build_daily_ops_plan
+from ai_trading_system.ops_daily import (
+    build_daily_ops_plan,
+    daily_ops_shadow_path_for_plan,
+    render_daily_ops_plan,
+    write_daily_ops_plan,
+    write_daily_ops_shadow_plan,
+)
 from ai_trading_system.scheduled_tasks import (
     ScheduledCadence,
     ScheduledTask,
@@ -424,3 +433,35 @@ def test_due_resolution_id_detects_tampering() -> None:
 
     with pytest.raises(OperationsContractError, match="DUE_RESOLUTION_ID_MISMATCH"):
         OperationsDueResolution.from_dict(payload)
+
+
+@pytest.mark.parametrize("as_of", [date(2026, 5, 6), date(2026, 5, 10)])
+def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
+    tmp_path: Path, as_of: date
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    markdown_path = tmp_path / f"daily_ops_plan_{as_of.isoformat()}.md"
+    expected_markdown = (
+        render_daily_ops_plan(plan, env={}).replace("\n", os.linesep).encode("utf-8")
+    )
+
+    write_daily_ops_plan(plan, markdown_path, env={})
+    shadow_path = daily_ops_shadow_path_for_plan(markdown_path)
+    write_daily_ops_shadow_plan(plan, shadow_path)
+    first_bytes = shadow_path.read_bytes()
+    write_daily_ops_shadow_plan(plan, shadow_path)
+
+    payload = json.loads(first_bytes)
+    assert markdown_path.read_bytes() == expected_markdown
+    assert shadow_path.read_bytes() == first_bytes
+    assert payload["schema_version"] == "daily_operations_shadow.v1"
+    assert payload["commands_executed"] is False
+    assert payload["non_daily_dispatch_enabled"] is False
+    assert payload["production_effect"] == "none"
+    assert payload["parity"]["status"] == "PASS"
+    assert payload["shadow_plan"]["execution_enabled"] is False
+    assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"

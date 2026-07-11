@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
+from pathlib import Path
 
+from ai_trading_system.contracts.operations import (
+    DueRule,
+    OperationsDueContext,
+    OperationsDuePolicy,
+    build_operations_shadow_plan,
+    resolve_operations_due,
+)
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.workflow import (
     EntrypointRef,
@@ -57,6 +66,15 @@ class DailyShadowParityAssessment:
     expected_step_ids: tuple[str, ...]
     observed_step_ids: tuple[str, ...]
     legacy_only_step_ids: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "status": self.status.value,
+            "blocker_codes": list(self.blocker_codes),
+            "expected_step_ids": list(self.expected_step_ids),
+            "observed_step_ids": list(self.observed_step_ids),
+            "legacy_only_step_ids": list(self.legacy_only_step_ids),
+        }
 
 
 def assess_scheduled_cadence(
@@ -188,6 +206,83 @@ def assess_daily_shadow_parity(
         observed_step_ids=observed_step_ids,
         legacy_only_step_ids=legacy_only_step_ids,
     )
+
+
+def build_daily_schedule_shadow_payload(
+    *,
+    cadence: ScheduledCadence,
+    as_of: date,
+    generated_at: datetime,
+    is_trading_day: bool,
+    observed_step_ids: tuple[str, ...],
+    observed_commands: tuple[tuple[str, ...], ...],
+    observed_enabled: tuple[bool, ...],
+    source_config_path: Path,
+    source_config_sha256: str,
+) -> dict[str, object]:
+    binding = LegacyScheduledWorkflowBinding(
+        owner="system_operations",
+        timezone="America/New_York",
+        due_policy_id="daily_unified_trigger_v1",
+        trading_calendar="XNYS",
+        preserve_sequential_order=True,
+        is_trading_day=is_trading_day,
+    )
+    compatibility = assess_scheduled_cadence(cadence, binding=binding)
+    if compatibility.status is not CanonicalStatus.PASS or compatibility.workflow_spec is None:
+        raise LegacyScheduledTaskDispatchBlocked(
+            "daily schedule compatibility assessment did not produce a canonical workflow"
+        )
+    policy = OperationsDuePolicy(
+        policy_id=binding.due_policy_id,
+        owner=binding.owner,
+        version="1.0.0",
+        cadence=WorkflowCadence.DAILY,
+        rule=DueRule.DAILY_TRIGGER,
+        requires_trading_day=False,
+        requires_completed_daily=False,
+        requires_data_quality=False,
+        requires_artifacts=False,
+        requires_owner_gate=False,
+    )
+    resolution = resolve_operations_due(
+        workflow_id=compatibility.workflow_spec.workflow_id,
+        policy=policy,
+        context=OperationsDueContext(as_of=as_of, is_trading_day=is_trading_day),
+    )
+    run_id = f"daily_shadow_{as_of.isoformat()}_{generated_at.strftime('%Y%m%dT%H%M%S%f%z')}"
+    shadow_plan = build_operations_shadow_plan(
+        spec=compatibility.workflow_spec,
+        due_resolution=resolution,
+        run_id=run_id,
+        created_at=generated_at,
+    )
+    parity = assess_daily_shadow_parity(
+        cadence=cadence,
+        workflow_spec=compatibility.workflow_spec,
+        observed_step_ids=observed_step_ids,
+        observed_commands=observed_commands,
+        observed_enabled=observed_enabled,
+        is_trading_day=is_trading_day,
+    )
+    if parity.status is not CanonicalStatus.PASS:
+        raise LegacyScheduledTaskDispatchBlocked(
+            "daily legacy/canonical shadow parity failed: " + ",".join(parity.blocker_codes)
+        )
+    return {
+        "schema_version": "daily_operations_shadow.v1",
+        "source_config": {
+            "path": str(source_config_path),
+            "sha256": source_config_sha256,
+        },
+        "workflow_spec": compatibility.workflow_spec.to_dict(),
+        "shadow_plan": shadow_plan.to_dict(),
+        "parity": parity.to_dict(),
+        "commands_executed": False,
+        "non_daily_dispatch_enabled": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def _workflow_step(task: ScheduledTask, *, dependencies: tuple[str, ...]) -> WorkflowStepSpec:

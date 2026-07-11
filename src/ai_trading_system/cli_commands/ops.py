@@ -44,8 +44,10 @@ from ai_trading_system.historical_replay import (
     run_historical_replay_window,
 )
 from ai_trading_system.ops_daily import (
+    DailyOpsPlan,
     DailyOpsRunReport,
     build_daily_ops_plan,
+    daily_ops_shadow_path_for_plan,
     default_daily_ops_plan_path,
     default_daily_ops_run_metadata_path,
     default_daily_ops_run_report_path,
@@ -53,6 +55,7 @@ from ai_trading_system.ops_daily import (
     run_daily_ops_plan,
     write_daily_ops_plan,
     write_daily_ops_run_report,
+    write_daily_ops_shadow_plan,
 )
 from ai_trading_system.order_intent_candidates import (
     default_order_intent_candidates_path,
@@ -363,7 +366,7 @@ def _build_daily_ops_plan_from_cli_options(
     full_universe: bool,
     run_id: str | None = None,
     default_observed_at: datetime | None = None,
-):
+) -> tuple[date, DailyOpsPlan]:
     plan_date = (
         _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(default_observed_at)
     )
@@ -492,12 +495,15 @@ def daily_ops_plan_command(
         plan_date,
     )
     write_daily_ops_plan(plan, report_path, env=os.environ)
+    shadow_path = daily_ops_shadow_path_for_plan(report_path)
+    write_daily_ops_shadow_plan(plan, shadow_path)
 
     status = plan.status(os.environ)
     style = "green" if status == "READY" else "yellow" if status == "READY_WITH_SKIPS" else "red"
     missing_env = plan.missing_env_vars(os.environ)
     console.print(f"[{style}]每日运行计划：{status}[/{style}]")
     console.print(f"报告：{report_path}")
+    console.print(f"Canonical shadow：{shadow_path}")
     console.print(f"步骤数：{len(plan.steps)}")
     if missing_env:
         console.print(f"缺失环境变量：{', '.join(missing_env)}")
@@ -695,11 +701,19 @@ def daily_ops_run_command(
         plan_date,
     )
     write_daily_ops_plan(plan, plan_report_path, env=os.environ)
+    write_daily_ops_shadow_plan(
+        plan,
+        daily_ops_shadow_path_for_plan(plan_report_path),
+    )
     if legacy_mode == "mirror":
-        write_daily_ops_plan(
+        legacy_plan_path = write_daily_ops_plan(
             plan,
             default_daily_ops_plan_path(reports_dir, plan_date),
             env=os.environ,
+        )
+        write_daily_ops_shadow_plan(
+            plan,
+            daily_ops_shadow_path_for_plan(legacy_plan_path),
         )
     run_report = run_daily_ops_plan(
         plan,
@@ -872,11 +886,7 @@ def _daily_run_manifest_command(
         llm_request_profile,
         "--include-download-data" if include_download_data else "--skip-download-data",
         "--include-pit-snapshots" if include_pit_snapshots else "--skip-pit-snapshots",
-        (
-            "--include-sec-fundamentals"
-            if include_sec_fundamentals
-            else "--skip-sec-fundamentals"
-        ),
+        ("--include-sec-fundamentals" if include_sec_fundamentals else "--skip-sec-fundamentals"),
         (
             "--include-valuation-snapshots"
             if include_valuation_snapshots
@@ -909,9 +919,7 @@ def _daily_run_manifest_warnings(report: DailyOpsRunReport) -> tuple[str, ...]:
     warnings: list[str] = []
     if report.missing_env_vars:
         warnings.append("missing_env_vars:" + ",".join(report.missing_env_vars))
-    warnings.extend(
-        "input_visibility:" + issue.code for issue in report.visibility_issues
-    )
+    warnings.extend("input_visibility:" + issue.code for issue in report.visibility_issues)
     warnings.extend(
         f"step:{result.step_id}:{result.status}"
         for result in report.step_results

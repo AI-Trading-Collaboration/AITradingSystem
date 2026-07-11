@@ -154,8 +154,8 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert phase_f1["status"] == "IN_PROGRESS"
     assert phase_f1["stages"] == {
         "F1_1_inventory_due_contract_and_compatibility_adapter": "COMPLETE",
-        "F1_2_shadow_plan_and_daily_parity": "IN_PROGRESS",
-        "F1_3_lock_retry_idempotency_and_resume": "NOT_STARTED",
+        "F1_2_shadow_plan_and_daily_parity": "COMPLETE",
+        "F1_3_lock_retry_idempotency_and_resume": "IN_PROGRESS",
         "F1_4_daily_executor_adapter_cut_in": "NOT_STARTED",
         "F1_5_non_daily_controlled_due_dispatch": "NOT_STARTED",
         "F1_6_validation_and_closeout": "NOT_STARTED",
@@ -174,6 +174,7 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert phase_f1["compatibility_findings"]["conditional_step_contract"] == {
         "official_policy_sources": "closed_market_only"
     }
+    assert phase_f1["compatibility_findings"]["additive_shadow_artifact_emission"] == ("COMPLETE")
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -433,8 +434,9 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
     phase_f1 = baseline["phase_f1_operations_control_plane"]
-    assert phase_f1["status"] == "IN_PROGRESS_F1_1_COMPLETE_F1_2_IN_PROGRESS"
+    assert phase_f1["status"] == "IN_PROGRESS_F1_1_F1_2_COMPLETE_F1_3_IN_PROGRESS"
     assert phase_f1["contracts"]["shadow_execution_enabled"] is False
+    assert phase_f1["contracts"]["additive_shadow_artifact_emission"] is True
     assert phase_f1["contracts"]["non_daily_automatic_dispatch_enabled"] is False
     assert phase_f1["scheduled_task_inventory"] == {
         "daily": 37,
@@ -443,6 +445,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     }
     assert phase_f1["parity"]["trading_day_fixture_1"] == "PASS"
     assert phase_f1["parity"]["closed_market_fixture_1"] == "PASS"
+    assert phase_f1["parity"]["additive_shadow_artifact_emission"] == "PASS"
+    assert phase_f1["parity"]["legacy_markdown_bytes"] == "PASS"
     for source in phase_f1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]

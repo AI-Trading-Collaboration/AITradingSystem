@@ -433,8 +433,8 @@ phase_f1_execution:
   requirement_path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   stages:
     F1_1_inventory_due_contract_and_compatibility_adapter: COMPLETE
-    F1_2_shadow_plan_and_daily_parity: IN_PROGRESS
-    F1_3_lock_retry_idempotency_and_resume: NOT_STARTED
+    F1_2_shadow_plan_and_daily_parity: COMPLETE
+    F1_3_lock_retry_idempotency_and_resume: IN_PROGRESS
     F1_4_daily_executor_adapter_cut_in: NOT_STARTED
     F1_5_non_daily_controlled_due_dispatch: NOT_STARTED
     F1_6_validation_and_closeout: NOT_STARTED
@@ -452,21 +452,23 @@ phase_f1_execution:
     closed_market_daily_plan: PASS
     conditional_step_contract:
       official_policy_sources: closed_market_only
-    additive_shadow_artifact_emission: NOT_STARTED
+    additive_shadow_artifact_emission: COMPLETE
+    shadow_schema: daily_operations_shadow.v1
+    legacy_markdown_bytes_changed: false
   focused_validation:
     status: PASS
-    passed: 79
+    passed: 81
   scoped_mypy: PASS
   fast_unit:
     status: PASS
     passed: 198
-    elapsed_seconds: 68.71
-    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T011002Z/test_runtime_summary.json
+    elapsed_seconds: 69.26
+    runtime_artifact: outputs/validation_runtime/fast-unit_20260711T012532Z/test_runtime_summary.json
   contract_validation:
     status: PASS
     passed: 197
-    elapsed_seconds: 44.05
-    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T011117Z/test_runtime_summary.json
+    elapsed_seconds: 44.57
+    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T012650Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

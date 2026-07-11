@@ -578,6 +578,9 @@ phase_f2_runtime_lifecycle:
       sha256: 3137793309049aa1b66dccfbacece50e8b9a13884c70871ebbb96a04c60949f0
     - path: docs/artifact_catalog.md
       sha256: 0afd56d0ce13dde1448443269d52e29696e1b60d8c3ff4f5d9d2e7e02b774a37
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: docs/system_flow.md
       sha256: 6c37ff47be127045f7074180599b3cac12287b51816740ebfd983e20b284ec2c
       historical_phase_f2_runtime_hash: true
@@ -632,15 +635,17 @@ phase_f2_runtime_lifecycle:
       runtime_artifact: outputs/validation_runtime/full_20260711T001903Z/test_runtime_summary.json
 
 phase_f1_operations_control_plane:
-  status: IN_PROGRESS_F1_1_COMPLETE_F1_2_IN_PROGRESS
+  status: IN_PROGRESS_F1_1_F1_2_COMPLETE_F1_3_IN_PROGRESS
   as_of: 2026-07-11
   contracts:
     due_policy_schema: operations_due_policy.v1
     due_resolution_schema: operations_due_resolution.v1
     shadow_plan_schema: operations_shadow_plan.v1
+    daily_shadow_schema: daily_operations_shadow.v1
     legacy_schedule_binding: EXPLICIT_ONLY
     unknown_cadence_or_effect: BLOCKED
     shadow_execution_enabled: false
+    additive_shadow_artifact_emission: true
     non_daily_automatic_dispatch_enabled: false
     unified_external_trigger: aits ops daily-run
   repository_inventory:
@@ -657,24 +662,27 @@ phase_f1_operations_control_plane:
     closed_market_fixture_2: PASS
     conditional_step_contract:
       official_policy_sources: closed_market_only
-    additive_shadow_artifact_emission: NOT_STARTED
+    additive_shadow_artifact_emission: PASS
+    legacy_markdown_bytes: PASS
   sources:
     - path: src/ai_trading_system/contracts/operations.py
       sha256: 990636f4f32706ca10e2cdc4fef86174fcc7496e58a15ffa5ed706b5aa4f2fb2
     - path: src/ai_trading_system/contracts/__init__.py
       sha256: 2fab85f87a725196b9003908efc58ec2a8015a680f8a16b82097d41fbda97bb9
     - path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
-      sha256: 6fa2c08c47230e558b37b3168bd04a89f96773eea1f70a806211911d5c082fae
+      sha256: 4213ed2f8100fb42391b3b81ecdc831d9314b751c0a9ff96d703156f80eb7153
     - path: src/ai_trading_system/legacy/__init__.py
       sha256: fbd61175562cb21d4d695b30c87c7e346b1e8b682e6aa5b046f1aa165bac7a1a
     - path: tests/test_arch_004f1_operations_control_plane.py
-      sha256: fba9f20ecbbdd28dc6ec8e5d26f6b89e8120f0a866d3c0b4677109dbd8d32ecc
+      sha256: cb2b957c93c76e1a91509b846ef6b570a2a7a4ad924646165830de997ce358b2
     - path: tests/test_arch_004_refactor_policy.py
-      sha256: d506f5ba0abb2c7308530cbfd5f22f7ec88fb8d07ad3fbfbd79531d347e698c7
+      sha256: 94f0f7cc213da08f4ddabdb27b01c0c0220c41e7e26fd477fddd0307b6c9c2ad
     - path: src/ai_trading_system/scheduled_tasks.py
       sha256: 86070baba8d0ec5d65de5fd616a13249074b3cf9c314ce12fd5e372372103052
     - path: src/ai_trading_system/ops_daily.py
-      sha256: eae701f9ec6e9e907c489f80bd83a42e69b486863e4cc959568208e8cdd60326
+      sha256: 3f9a39040b0dbb73832b9777d9dcfb721d07915bb1987a43f4fe368f0a714d7e
+    - path: src/ai_trading_system/cli_commands/ops.py
+      sha256: 925057151a551447315efebc810120f4cee7cb9ca95fbb88c663c678a9a869f5
     - path: config/scheduled_tasks.yaml
       sha256: f1b001859686467d74d257bf022b67053c273f02f39f1ae69a7dfeaf3ed5f42c
     - path: tests/test_scheduled_tasks.py
@@ -684,36 +692,38 @@ phase_f1_operations_control_plane:
     - path: tests/test_cli_direct.py
       sha256: 89f3386c3ea0b37f5d51867769d4b45a964a0276d3bf9cab9b7d3ec201f77532
     - path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
-      sha256: b60856a39bf8cf94f853d4930bb79555047d418bc33b71cfdc4da553c2ac45e0
+      sha256: 649e8bdfee3c042c12c759211d17f338bf280aee8d3ec8b30d60ae913be51916
     - path: docs/operations/operations_runbook.md
-      sha256: 538840b8eb64bfeb7735cd0197bc92084b90c3c04a24157d5cace53212230a66
+      sha256: 7064457511c97f06c7d23338504d8baa27d1942e3d65d79252750a09ecc47723
     - path: docs/runbooks/scheduled_task_orchestration.md
-      sha256: 9421bb169b0361bc5b3e027cd94d74729d5d9062d1ad9215e79968f63d2e1082
+      sha256: 62c5ad2efe09cf3c4ab0222489e92b2bc48196ec9036687e6c982ba3265475af
+    - path: docs/artifact_catalog.md
+      sha256: 549f4c541f851af7d51adea3552f45f46b73a1cfc6731621ecb125bbec4d17a4
     - path: docs/system_flow.md
-      sha256: 8c604606c4751c5844c2dadc837c282a6af155b025da58c78a33b6180d22eceb
+      sha256: 7889e04ce921da8dd11af4e3a630efa36f26d41e2c7312c1f98b3ab2ed8f8e30
     - path: config/architecture/arch_004_refactor_policy.yaml
-      sha256: a07a9d266a5bdcc432639973b0212b7ea54a508e766c2df84d7227ade030c726
+      sha256: 85ff393bd7f9095159454a6e5aab116c731be7471ae5ea991c734e69448fe68e
     - path: inputs/architecture/arch_004e_module_manifest.yaml
-      sha256: 838ac33be8f25fba21a8a548f6e657a4111f6c709f224e49952e212cc3ac82bd
+      sha256: 83542ed9f023eb2c24aae32fbc5bb715e59d8ad8de4bb6619aa1fe94b029fa8e
     - path: inputs/architecture/arch_004e_test_manifest.yaml
-      sha256: 956a1accfd2e298ab31c9291b6cbf791208f0ccd86aab965e2541c6bcab2411a
+      sha256: 8a058be45209faf64d8c5309789aa3b64a242029b9e250f55896e5fa6621775a
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-      sha256: de0036394ac1f64b5dd85272c2d90a4b41702291c789dbca5faf25ecf5261213
+      sha256: 2a3e65648d4603a4ed84429e0729caf1fb5f94f28de160e1f3ef6ccecb96f24f
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: 3c4a56da23412cb45fbff81bbf2acb4e3af5f1951d99905359033042779ba6a7
   validation:
     focused:
       status: PASS
-      passed: 79
+      passed: 81
     scoped_mypy:
       status: PASS
     fast_unit:
       status: PASS
       passed: 198
-      elapsed_seconds: 68.71
-      runtime_artifact: outputs/validation_runtime/fast-unit_20260711T011002Z/test_runtime_summary.json
+      elapsed_seconds: 69.26
+      runtime_artifact: outputs/validation_runtime/fast-unit_20260711T012532Z/test_runtime_summary.json
     contract_validation:
       status: PASS
       passed: 197
-      elapsed_seconds: 44.05
-      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T011117Z/test_runtime_summary.json
+      elapsed_seconds: 44.57
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T012650Z/test_runtime_summary.json

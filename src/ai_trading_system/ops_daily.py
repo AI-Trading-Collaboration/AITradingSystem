@@ -48,12 +48,16 @@ from ai_trading_system.fundamentals.sec_metrics import (
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
 )
+from ai_trading_system.legacy.scheduled_tasks_adapter import (
+    build_daily_schedule_shadow_payload,
+)
 from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
 )
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
+from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.reports.artifact_lineage import (
     default_artifact_lineage_json_path,
     default_artifact_lineage_markdown_path,
@@ -87,6 +91,7 @@ from ai_trading_system.reports.score_change_attribution import (
     default_score_change_attribution_report_path,
 )
 from ai_trading_system.scheduled_tasks import (
+    DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
     load_scheduled_tasks_config,
 )
 from ai_trading_system.scoring.daily import default_daily_score_report_path
@@ -1875,6 +1880,32 @@ def write_daily_ops_plan(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_daily_ops_plan(plan, env=env), encoding="utf-8")
+    return output_path
+
+
+def daily_ops_shadow_path_for_plan(output_path: Path) -> Path:
+    return output_path.with_name(f"{output_path.stem}.operations_shadow.json")
+
+
+def write_daily_ops_shadow_plan(
+    plan: DailyOpsPlan,
+    output_path: Path,
+    *,
+    scheduled_tasks_path: Path = DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
+) -> Path:
+    scheduled = load_scheduled_tasks_config(scheduled_tasks_path)
+    payload = build_daily_schedule_shadow_payload(
+        cadence=scheduled.cadence("daily_trading_day"),
+        as_of=plan.as_of,
+        generated_at=plan.generated_at,
+        is_trading_day=plan.market_session.is_trading_day,
+        observed_step_ids=tuple(step.step_id for step in plan.steps),
+        observed_commands=tuple(step.command for step in plan.steps),
+        observed_enabled=tuple(step.enabled for step in plan.steps),
+        source_config_path=scheduled.path,
+        source_config_sha256=hashlib.sha256(scheduled.path.read_bytes()).hexdigest(),
+    )
+    write_json_atomic(output_path, payload)
     return output_path
 
 
