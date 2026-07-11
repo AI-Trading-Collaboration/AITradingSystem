@@ -59,6 +59,14 @@
 
 退出：选定helper family的legacy caller=0；旧helper frozen或removed；architecture dependency和focused/full gate通过。
 
+G1分片：
+
+- G1.1 `cache_catalog`、`data_refresh_audit`、`data_source_fallback_policy`的本地JSON/text writer实现迁到`platform.artifacts`；保留原私有函数签名作为短期frozen compatibility wrapper，JSON必须显式`trailing_newline=false`以保持旧bytes，原`None|Path`返回契约不变；
+- G1.2 迁移三模块内部caller后删除上述私有wrapper，并以direct-writer/reachability ratchet证明旧入口为零；
+- G1.3 从inventory选择下一helper family，只有两个以上真实caller且能证明schema/error/bytes parity才抽取。
+
+G1.1不是G1完成条件；若wrapper长期保留或允许新增caller，视为永久双轨失败。
+
 ### G2 Interfaces 与 ETF CLI
 
 - 按data、research、portfolio、shadow、operations、reporting command group拆`etf_portfolio.py`；
@@ -117,6 +125,10 @@
 
 ## 状态记录
 
+- 2026-07-11：G1首个helper family完成并准备独立closeout，G1.3继续`IN_PROGRESS`。最终focused=`29 passed`、architecture=`159 passed`、Ruff PASS；direct writer=887、architecture violation=0，private wrapper=0。该family满足implementation migration、caller migration、旧入口删除和bytes parity；G1整体仍未完成，下一family必须重新按真实重复caller筛选。
+- 2026-07-11：G1.2完成，G1.3进入`IN_PROGRESS`。三模块全部internal caller已直接调用`write_json_atomic_without_trailing_newline/write_text_atomic`，6个private compatibility wrapper已删除，旧入口reachability=0。新增canonical no-newline helper由三个真实模块共同消费；writer、三个模块和platform writer regression=`17 passed`，Ruff PASS。Direct-writer仍为887（G1.1已完成6-call reduction）；等待architecture/compatibility gate后归档该family并选择下一family。
+- 2026-07-11：G1.1完成，G1.2进入`IN_PROGRESS`。`cache_catalog`、`data_refresh_audit`、`data_source_fallback_policy`的6个direct writer实现已委托`platform.artifacts.write_json_atomic/write_text_atomic`；JSON显式`trailing_newline=false`，原`None|Path`返回不变。Focused writer+module regression=`11 passed`、Ruff、architecture generator PASS；direct writer=`893 -> 887`、violation=0。6个私有wrapper仍在，状态仅为frozen compatibility，G1.2必须迁caller并删除。
+- 2026-07-11：G1.1登记并进入`IN_PROGRESS`。选择三个共享report/data-governance模块中完全同构的`_write_json/_write_text`实现；本slice预计减少6个direct `Path.write_text` callsite，保留无独立逻辑的frozen private wrapper以维持调用/返回契约，G1.2必须迁caller并删除wrapper。必须验证Unicode、sort keys、indent、无trailing newline、text bytes、返回值与atomic write parity。
 - 2026-07-11：G0完成，G1进入`IN_PROGRESS`。Architecture=`156 passed`、contract-validation=`203 passed`，G tests已纳入architecture与contract正式tier；inventory drift、missing replacement、非法transition、blocked gate removal全部fail closed。G0保持0 runtime deletion、0 investment semantics change；下一步从direct-writer/helper family中选择有两个以上真实caller且可bytes parity的G1 slice。
 - 2026-07-11：G0实现进入`VALIDATING`。新增pure deprecation record/gate contract、reviewed policy、deterministic scanner与tracked inventory；当前inventory=`795 modules / 1,112 tests / 893 direct writers / 7 legacy files / 99 dynamic wrappers / 48 matching research_quality implementations`，9 targets=`6 ACTIVE / 3 DEPRECATED / 0 removal-ready`。ETF CLI=`37,604 lines / 993 command decorators`，Reader Brief=`29,027 lines`。Focused=6、Ruff/mypy、architecture generator PASS；等待architecture/contract gate后进入G1。
 - 2026-07-11：F3完成后登记G并进入G0。当前只允许inventory/policy/characterization，不直接删除runtime surface；3份并行用户研究文档继续排除在ARCH-004提交范围外。

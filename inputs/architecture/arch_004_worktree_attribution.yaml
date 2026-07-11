@@ -74,6 +74,9 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/architecture/dependency_gate.py
   - src/ai_trading_system/platform/architecture/deprecation.py
   - src/ai_trading_system/config.py
+  - src/ai_trading_system/cache_catalog.py
+  - src/ai_trading_system/data_refresh_audit.py
+  - src/ai_trading_system/data_source_fallback_policy.py
   - src/ai_trading_system/dynamic_strategy_report_common.py
   - src/ai_trading_system/research_governance.py
   - src/ai_trading_system/run_artifacts.py
@@ -114,6 +117,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/reports/engineering_closeout.py
   - tests/test_arch_004e_devex.py
   - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_004g_shared_writers.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/requirements/ARCH-004F3_Reporting_Architecture.md

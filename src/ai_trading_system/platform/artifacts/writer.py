@@ -157,6 +157,27 @@ def write_json_atomic(
     )
 
 
+def write_json_atomic_without_trailing_newline(
+    path: Path,
+    payload: Any,
+    *,
+    sort_keys: bool = True,
+    indent: int | None = 2,
+    ensure_ascii: bool = False,
+    default: Callable[[Any], Any] | None = None,
+) -> ArtifactWriteResult:
+    """Write canonical JSON atomically while preserving no-newline byte contracts."""
+    return write_json_atomic(
+        path,
+        payload,
+        sort_keys=sort_keys,
+        indent=indent,
+        ensure_ascii=ensure_ascii,
+        trailing_newline=False,
+        default=default,
+    )
+
+
 def write_yaml_atomic(
     path: Path,
     payload: Any,

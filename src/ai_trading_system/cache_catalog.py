@@ -14,6 +14,10 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
+from ai_trading_system.platform.artifacts import (
+    write_json_atomic_without_trailing_newline,
+    write_text_atomic,
+)
 
 CACHE_CATALOG_SCHEMA_VERSION = 1
 CACHE_CATALOG_REPORT_TYPE = "cache_catalog"
@@ -261,11 +265,17 @@ def write_cache_catalog_artifact(
         catalog_path=catalog_path,
         validation=validation,
     )
-    _write_json(catalog_path, payload_with_paths)
-    _write_text(markdown_path, render_cache_catalog_markdown(payload_with_paths))
-    _write_json(validation_json_path, validation_report_to_payload(validation))
-    _write_text(validation_md_path, render_cache_catalog_validation_markdown(validation))
-    _write_text(reader_brief_path, render_cache_catalog_reader_brief(payload_with_paths))
+    write_json_atomic_without_trailing_newline(catalog_path, payload_with_paths)
+    write_text_atomic(markdown_path, render_cache_catalog_markdown(payload_with_paths))
+    write_json_atomic_without_trailing_newline(
+        validation_json_path, validation_report_to_payload(validation)
+    )
+    write_text_atomic(
+        validation_md_path, render_cache_catalog_validation_markdown(validation)
+    )
+    write_text_atomic(
+        reader_brief_path, render_cache_catalog_reader_brief(payload_with_paths)
+    )
     _write_latest_pointer(
         output_dir=output_dir,
         payload=payload_with_paths,
@@ -317,16 +327,16 @@ def validate_cache_catalog_artifact(
     payload = load_cache_catalog_payload(catalog_path)
     validation = validate_cache_catalog_payload(payload, catalog_path=catalog_path)
     artifact_dir = catalog_path.parent
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         artifact_dir / "cache_catalog_validation.json",
         validation_report_to_payload(validation),
     )
-    _write_text(
+    write_text_atomic(
         artifact_dir / "cache_catalog_validation.md",
         render_cache_catalog_validation_markdown(validation),
     )
     updated = _with_validation_summary(payload, catalog_path=catalog_path, validation=validation)
-    _write_json(catalog_path, updated)
+    write_json_atomic_without_trailing_newline(catalog_path, updated)
     return validation, catalog_path
 
 
@@ -1335,7 +1345,7 @@ def _write_latest_pointer(
     payload: Mapping[str, Any],
     catalog_path: Path,
 ) -> None:
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         output_dir / LATEST_POINTER_NAME,
         {
             "schema_version": CACHE_CATALOG_SCHEMA_VERSION,
@@ -1510,16 +1520,3 @@ def _parse_date(value: str) -> date | None:
 
 def _escape_markdown_table(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
-
-
-def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-
-
-def _write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")

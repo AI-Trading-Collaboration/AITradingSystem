@@ -245,6 +245,26 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g0_validation"]["focused"] == {"status": "PASS", "passed": 6}
     assert phase_g["g0_validation"]["architecture_fitness"]["passed"] == 156
     assert phase_g["g0_validation"]["contract_validation"]["passed"] == 203
+    assert phase_g["g1_slices"] == {
+        "G1_1_three_governance_module_writer_implementation_migration": "COMPLETE",
+        "G1_2_internal_caller_migration_and_private_wrapper_removal": "COMPLETE",
+        "G1_3_next_shared_helper_family": "IN_PROGRESS",
+    }
+    assert phase_g["g1_current_evidence"]["direct_writer_before"] == 893
+    assert phase_g["g1_current_evidence"]["direct_writer_after"] == 887
+    assert phase_g["g1_current_evidence"]["direct_writer_reduction"] == 6
+    assert phase_g["g1_current_evidence"]["private_compatibility_wrappers_remaining"] == 0
+    assert phase_g["g1_current_evidence"]["private_compatibility_wrappers_removed"] == 6
+    assert phase_g["g1_current_evidence"]["internal_callers_using_canonical_writer"] is True
+    assert phase_g["g1_current_evidence"]["runtime_removal_performed"] is False
+    assert phase_g["g1_first_family_validation"]["focused"] == {
+        "status": "PASS",
+        "passed": 29,
+    }
+    assert phase_g["g1_first_family_validation"]["architecture_fitness"]["passed"] == 159
+    assert phase_g["g1_first_family_validation"]["architecture_fitness"][
+        "current_direct_writer_calls"
+    ] == 887
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -388,10 +408,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_c["validation"]["full_parallel"]["failed"] == 0
     for source in phase_c["sources"]:
         if source.get("historical_phase_c_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004F3"
-            assert source["current_hash_tracked_in"] == (
-                "phase_f3_reporting_architecture.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004F3", "ARCH-004G1"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -597,6 +615,36 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g0["validation"]["architecture_fitness"]["passed"] == 156
     assert phase_g0["validation"]["contract_validation"]["passed"] == 203
     for source in phase_g0["sources"]:
+        if source.get("historical_phase_g0_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G1"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g1_shared_writer_migration.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g1 = baseline["phase_g1_shared_writer_migration"]
+    assert phase_g1["status"] == "FIRST_FAMILY_COMPLETE_G1_CONTINUES"
+    assert phase_g1["family"] == {
+        "canonical_json_writer": "write_json_atomic_without_trailing_newline",
+        "canonical_text_writer": "write_text_atomic",
+        "migrated_module_count": 3,
+        "removed_private_wrapper_count": 6,
+        "private_wrapper_remaining_count": 0,
+        "internal_callers_use_canonical_writer": True,
+        "direct_writer_before": 893,
+        "direct_writer_after": 887,
+        "direct_writer_reduction": 6,
+    }
+    assert phase_g1["parity"]["artifact_path_schema_status"] == "PASS"
+    assert phase_g1["parity"]["data_quality_behavior_changed"] is False
+    assert phase_g1["parity"]["production_effect"] == "none"
+    assert phase_g1["validation"]["focused"]["passed"] == 29
+    assert phase_g1["validation"]["architecture_fitness"]["passed"] == 159
+    assert phase_g1["validation"]["architecture_fitness"][
+        "current_direct_writer_calls"
+    ] == 887
+    for source in phase_g1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 

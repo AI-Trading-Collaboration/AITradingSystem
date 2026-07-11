@@ -499,7 +499,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cache_catalog
   path: src/ai_trading_system/cache_catalog.py
-  sha256: 5019d694322b8aebd0e7ef4cb343827b7cb0bf27319e702c6c889497140bf243
+  sha256: 1f8ec5b4a5941acd610f336e74b5ebd1fda23f60f15cceb46ff58ba20ad402f3
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2525,7 +2525,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data_refresh_audit
   path: src/ai_trading_system/data_refresh_audit.py
-  sha256: 1160b2895bf10284b0f9ecb433606fbdb079eb9e1381fa01e31e90b3b4538d32
+  sha256: 92890e17b933717f23a1f80cdd52592916e543424ff1d8f20c53c60cc3b467dc
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2545,7 +2545,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data_source_fallback_policy
   path: src/ai_trading_system/data_source_fallback_policy.py
-  sha256: a03ab537bf8bf35c51eb38e99c8748adee440b01d063b1710528dfd1cabee0d7
+  sha256: 2a1f57cdf0f9df4c85b8f23102cf6df0e5d82cf04edcb1290de80590cbee062a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -10134,7 +10134,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.__init__
   path: src/ai_trading_system/platform/artifacts/__init__.py
-  sha256: 1fe64ad2b58660c499695d2a072b88f53c747a68c61db06a657233a8e65b2a22
+  sha256: 20f8b8dc2643d2fb438ca12b1ef81076e129556fdc3b8d0602940c5c535a503e
   rule_id: platform
   owner_profile: platform
   owners:
@@ -10156,7 +10156,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.writer
   path: src/ai_trading_system/platform/artifacts/writer.py
-  sha256: 8b8f3cb65ceef164ea7cc3add479737e8a27449a46de24c34074cdfbe0ad6461
+  sha256: dc205f99f09a976ed4b92906c9d7d6b97c6b6cffdc398af63481c5d07ab233ff
   rule_id: platform
   owner_profile: platform
   owners:

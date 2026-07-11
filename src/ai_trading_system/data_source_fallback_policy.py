@@ -12,6 +12,10 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
+from ai_trading_system.platform.artifacts import (
+    write_json_atomic_without_trailing_newline,
+    write_text_atomic,
+)
 
 DATA_SOURCE_FALLBACK_SCHEMA_VERSION = 1
 DATA_SOURCE_FALLBACK_REPORT_TYPE = "data_source_fallback_policy"
@@ -236,14 +240,18 @@ def write_data_source_fallback_policy_artifact(
         report_path=report_path,
         validation=validation,
     )
-    _write_json(report_path, payload_with_paths)
-    _write_text(markdown_path, render_data_source_fallback_policy_markdown(payload_with_paths))
-    _write_json(validation_json_path, validation_report_to_payload(validation))
-    _write_text(
+    write_json_atomic_without_trailing_newline(report_path, payload_with_paths)
+    write_text_atomic(
+        markdown_path, render_data_source_fallback_policy_markdown(payload_with_paths)
+    )
+    write_json_atomic_without_trailing_newline(
+        validation_json_path, validation_report_to_payload(validation)
+    )
+    write_text_atomic(
         validation_md_path,
         render_data_source_fallback_policy_validation_markdown(validation),
     )
-    _write_text(
+    write_text_atomic(
         reader_brief_path,
         render_data_source_fallback_policy_reader_brief(payload_with_paths),
     )
@@ -298,16 +306,16 @@ def validate_data_source_fallback_policy_artifact(
     payload = load_data_source_fallback_policy_payload(report_path)
     validation = validate_data_source_fallback_policy_payload(payload, report_path=report_path)
     artifact_dir = report_path.parent
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         artifact_dir / "data_source_fallback_policy_validation.json",
         validation_report_to_payload(validation),
     )
-    _write_text(
+    write_text_atomic(
         artifact_dir / "data_source_fallback_policy_validation.md",
         render_data_source_fallback_policy_validation_markdown(validation),
     )
     updated = _with_validation_summary(payload, report_path=report_path, validation=validation)
-    _write_json(report_path, updated)
+    write_json_atomic_without_trailing_newline(report_path, updated)
     return validation, report_path
 
 
@@ -1126,7 +1134,7 @@ def _write_latest_pointer(
     report_path: Path,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         output_dir / LATEST_POINTER_NAME,
         {
             "schema_version": DATA_SOURCE_FALLBACK_SCHEMA_VERSION,
@@ -1191,19 +1199,6 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError(f"JSON artifact must be an object: {path}")
     return raw
-
-
-def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-
-
-def _write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def _sha256(path: Path) -> str:

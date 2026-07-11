@@ -642,6 +642,38 @@ phase_g_execution:
       status: PASS
       passed: 203
       runtime_artifact: outputs/validation_runtime/contract-validation_20260711T044719Z/test_runtime_summary.json
+  g1_slices:
+    G1_1_three_governance_module_writer_implementation_migration: COMPLETE
+    G1_2_internal_caller_migration_and_private_wrapper_removal: COMPLETE
+    G1_3_next_shared_helper_family: IN_PROGRESS
+  g1_current_evidence:
+    migrated_modules:
+      - src/ai_trading_system/cache_catalog.py
+      - src/ai_trading_system/data_refresh_audit.py
+      - src/ai_trading_system/data_source_fallback_policy.py
+    canonical_writer: ai_trading_system.platform.artifacts
+    direct_writer_before: 893
+    direct_writer_after: 887
+    direct_writer_reduction: 6
+    legacy_json_trailing_newline_preserved: false
+    legacy_return_contract_preserved: true
+    private_compatibility_wrappers_remaining: 0
+    private_compatibility_wrappers_removed: 6
+    internal_callers_using_canonical_writer: true
+    canonical_no_trailing_newline_helper: write_json_atomic_without_trailing_newline
+    runtime_removal_performed: false
+    production_effect: none
+  g1_first_family_validation:
+    focused:
+      status: PASS
+      passed: 29
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 159
+      current_direct_writer_calls: 887
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T050507Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

@@ -20,6 +20,10 @@ from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest_data_source_fallback_policy_summary,
 )
+from ai_trading_system.platform.artifacts import (
+    write_json_atomic_without_trailing_newline,
+    write_text_atomic,
+)
 from ai_trading_system.trading_calendar import us_equity_market_session
 from ai_trading_system.trading_engine.market_data_refresh import (
     REFRESH_BLOCKED,
@@ -190,8 +194,8 @@ def write_validate_data_audit_sidecar(
     record_path = (
         output_dir / f"validate_data_{report.as_of.isoformat()}_{_hash_record(record)}.json"
     )
-    _write_json(record_path, record)
-    _write_json(
+    write_json_atomic_without_trailing_newline(record_path, record)
+    write_json_atomic_without_trailing_newline(
         output_dir / LATEST_VALIDATE_DATA_AUDIT_POINTER_NAME,
         {
             "schema_version": DATA_REFRESH_AUDIT_SCHEMA_VERSION,
@@ -389,11 +393,17 @@ def write_data_refresh_audit_artifact(
         audit_path=audit_path,
         validation=validation,
     )
-    _write_json(audit_path, payload_with_paths)
-    _write_text(markdown_path, render_data_refresh_audit_markdown(payload_with_paths))
-    _write_json(validation_json_path, validation_report_to_payload(validation))
-    _write_text(validation_md_path, render_data_refresh_audit_validation_markdown(validation))
-    _write_text(reader_brief_path, render_data_refresh_audit_reader_brief(payload_with_paths))
+    write_json_atomic_without_trailing_newline(audit_path, payload_with_paths)
+    write_text_atomic(markdown_path, render_data_refresh_audit_markdown(payload_with_paths))
+    write_json_atomic_without_trailing_newline(
+        validation_json_path, validation_report_to_payload(validation)
+    )
+    write_text_atomic(
+        validation_md_path, render_data_refresh_audit_validation_markdown(validation)
+    )
+    write_text_atomic(
+        reader_brief_path, render_data_refresh_audit_reader_brief(payload_with_paths)
+    )
     _write_latest_pointer(output_dir=output_dir, payload=payload_with_paths, audit_path=audit_path)
     return {
         "artifact_dir": artifact_dir,
@@ -468,16 +478,16 @@ def validate_data_refresh_audit_artifact(
     payload = load_data_refresh_audit_payload(audit_path)
     validation = validate_data_refresh_audit_payload(payload, audit_path=audit_path)
     artifact_dir = audit_path.parent
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         artifact_dir / "data_refresh_audit_validation.json",
         validation_report_to_payload(validation),
     )
-    _write_text(
+    write_text_atomic(
         artifact_dir / "data_refresh_audit_validation.md",
         render_data_refresh_audit_validation_markdown(validation),
     )
     updated = _with_validation_summary(payload, audit_path=audit_path, validation=validation)
-    _write_json(audit_path, updated)
+    write_json_atomic_without_trailing_newline(audit_path, updated)
     return validation, audit_path
 
 
@@ -1248,7 +1258,7 @@ def _write_latest_pointer(
     payload: Mapping[str, Any],
     audit_path: Path,
 ) -> None:
-    _write_json(
+    write_json_atomic_without_trailing_newline(
         output_dir / LATEST_POINTER_NAME,
         {
             "schema_version": DATA_REFRESH_AUDIT_SCHEMA_VERSION,
@@ -1354,21 +1364,6 @@ def _read_json(path: Path) -> Any:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-
-
-def _write_json(path: Path, payload: Mapping[str, Any]) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-    return path
-
-
-def _write_text(path: Path, text: str) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-    return path
 
 
 def _issue_dict(issue: DataRefreshAuditIssue) -> dict[str, Any]:
