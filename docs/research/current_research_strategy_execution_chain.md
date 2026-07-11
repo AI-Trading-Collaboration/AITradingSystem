@@ -484,6 +484,14 @@ G2.4AC把风险控制层的四类artifact汇总为单一owner-review入口。`pa
 
 后续优化空间包括：冻结四类source artifact checksum和同一snapshot lineage；让validator从source重建checklist/decision而非只相信manifest；将owner decision id、reviewer、decision time和sign-off保留给独立治理contract；为Reader Brief增加source completeness和staleness披露。不能通过自动运行上游、自动记录approval、生成order ticket或修改portfolio来弥补证据缺口；pack PASS始终只等于“材料结构可供人工复核”。
 
+#### Real snapshot intake 与 redaction 链
+
+G2.4AD处理owner真实持仓信息进入研究系统前的隐私和结构门禁。`real-snapshot template`只向显式output path写入redaction-safe YAML模板，模板使用manual account label并把contains-account-number/order-id/tax-lot等声明固定为false。`lint`只读owner提供的YAML，检查payload是否为mapping，并递归识别broker import、account/order/tax-lot、personally identifying与statement path等禁止字段；出现blocking issue时`redaction_status=FAIL`并exit 1。
+
+`intake`先运行同一lint；仅在redaction非FAIL时调用manual-portfolio artifact writer，按reviewed schema规范化positions并取得`manual_portfolio_snapshot_id`。随后写`real_snapshot_intake_manifest.json`、`redaction_check.json`、`normalized_real_snapshot.json`、Markdown与latest pointer。状态由redaction blockers和manual snapshot status共同决定；缺manual snapshot link或任一硬失败不能形成PASS。`report`只读指定id或显式latest；`validate-real-snapshot`检查必需文件、id、redaction、manual snapshot link、snapshot status以及broker/order safety。
+
+该链只完成“脱敏输入可进入研究”的证明，不运行exposure/drift/guardrail/manual review或dry-run。`manual_portfolio_snapshot_id`是规范化研究输入的lineage，不是broker sync、真实portfolio mutation或order authorization。后续优化空间是对原始snapshot path/content、schema config和manual snapshot manifest冻结checksum；让validator验证source checksum与redaction report一致性；增加字段级privacy classification/version和artifact retention/deletion policy；对latest pointer增加staleness/owner review cadence。任何优化都不能把broker import或自动补造position作为便利路径。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

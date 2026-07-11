@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 81194c408db2873c7b4a42b9235613a21c269f97f1ad9f97e32ea197c71edfe1
+  sha256: 2fb2892ad3379d4d1a8e055730c2562f8275b3ad11fa648af509387ee81a1cb9
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 0c945ee89f6bd1c3c454633d89573e5a55a47260708ba4cbce4e3ee9fce83458
+  sha256: 9e104163965fab5fd04516039dd6a83dc20367be0f4ba55e0cd3087d5e6c355a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 453f033536961f606b1fda7dd159c1b59cc14aa35d670df52272d864eba74017
+  sha256: ba079541097bc1ec0ffc2f38bfc430eeba49e21e2c0c17ee3249ca025f561932
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

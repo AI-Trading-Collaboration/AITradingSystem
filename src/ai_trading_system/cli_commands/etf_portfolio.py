@@ -464,28 +464,21 @@ from ai_trading_system.etf_portfolio.dynamic_v3_pressure_validation import (
 from ai_trading_system.etf_portfolio.dynamic_v3_real_snapshot import (
     DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
     DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
-    DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
     DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
-    DEFAULT_REAL_SNAPSHOT_TEMPLATE_PATH,
     DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
     apply_real_snapshot_paper_action,
     create_real_execution_owner_review,
-    intake_real_snapshot,
-    lint_real_snapshot_file,
     real_execution_owner_review_report_payload,
     real_snapshot_dry_run_report_payload,
     real_snapshot_paper_action_report_payload,
-    real_snapshot_report_payload,
     record_real_execution_owner_decision,
     run_real_snapshot_dry_run,
     run_weekly_real_snapshot_review,
     validate_real_execution_owner_review,
-    validate_real_snapshot,
     validate_real_snapshot_dry_run,
     validate_real_snapshot_paper_action,
     validate_weekly_real_snapshot_review,
     weekly_real_snapshot_review_report_payload,
-    write_real_snapshot_template,
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
@@ -922,7 +915,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_promotion_threshold_sensitivity_app,
     dynamic_v3_readiness_health_recovery_app,
     dynamic_v3_real_execution_owner_review_app,
-    dynamic_v3_real_snapshot_app,
     dynamic_v3_real_snapshot_dry_run_app,
     dynamic_v3_real_snapshot_paper_action_app,
     dynamic_v3_refined_method_proposal_app,
@@ -1045,109 +1037,6 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
-
-
-@dynamic_v3_real_snapshot_app.command("template")
-def dynamic_v3_real_snapshot_template_command(
-    output_path: Annotated[
-        Path,
-        typer.Option("--output", "--output-path", help="redaction-safe real snapshot template。"),
-    ] = DEFAULT_REAL_SNAPSHOT_TEMPLATE_PATH,
-) -> None:
-    """生成 TRADING-204 redaction-safe real manual snapshot template。"""
-    payload = write_real_snapshot_template(output_path)
-    typer.echo(f"template_path={payload['template_path']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo("broker_imported=false")
-    typer.echo("broker_action_allowed=false")
-    typer.echo("order_ticket_generated=false")
-
-
-@dynamic_v3_real_snapshot_app.command("lint")
-def dynamic_v3_real_snapshot_lint_command(
-    snapshot: Annotated[Path, typer.Option("--snapshot", help="real manual snapshot YAML。")],
-) -> None:
-    """检查 TRADING-204 real manual snapshot 是否 redaction-safe。"""
-    payload = lint_real_snapshot_file(snapshot)
-    typer.echo(f"redaction_status={payload['redaction_status']}")
-    typer.echo(f"blocking_issues={len(payload['blocking_issues'])}")
-    typer.echo(f"warnings={len(payload['warnings'])}")
-    typer.echo("broker_imported=false")
-    typer.echo("broker_action_taken=false")
-    if payload["redaction_status"] == "FAIL":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_real_snapshot_app.command("intake")
-def dynamic_v3_real_snapshot_intake_command(
-    snapshot: Annotated[Path, typer.Option("--snapshot", help="real manual snapshot YAML。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
-    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
-) -> None:
-    """接入 TRADING-204 owner-maintained real manual snapshot。"""
-    result = intake_real_snapshot(snapshot_path=snapshot, output_dir=output_dir)
-    manifest = result["manifest"]
-    typer.echo(f"snapshot_intake_id={result['snapshot_intake_id']}")
-    typer.echo(f"status={manifest['status']}")
-    typer.echo(f"redaction_status={manifest['redaction_status']}")
-    typer.echo(f"snapshot_status={manifest['snapshot_status']}")
-    typer.echo(f"manual_portfolio_snapshot_id={manifest['manual_portfolio_snapshot_id']}")
-    typer.echo("broker_action_allowed=false")
-    typer.echo("broker_action_taken=false")
-    if manifest["status"] == "FAIL":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_real_snapshot_app.command("report")
-def dynamic_v3_real_snapshot_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest real snapshot intake。"),
-    ] = False,
-    snapshot_intake_id: Annotated[
-        str | None,
-        typer.Option("--snapshot-intake-id", help="real snapshot intake id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
-    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
-) -> None:
-    """展示 TRADING-204 real snapshot intake 摘要。"""
-    payload = real_snapshot_report_payload(
-        snapshot_intake_id=snapshot_intake_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    typer.echo(f"snapshot_intake_id={payload['snapshot_intake_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"redaction_status={payload['redaction_status']}")
-    typer.echo(f"snapshot_status={payload['snapshot_status']}")
-    typer.echo(f"report_path={payload['real_snapshot_intake_report_path']}")
-    typer.echo("broker_action_allowed=false")
-
-
-@dynamic_v3_rescue_app.command("validate-real-snapshot")
-def dynamic_v3_validate_real_snapshot_command(
-    snapshot_intake_id: Annotated[
-        str,
-        typer.Option("--snapshot-intake-id", help="real snapshot intake id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
-    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
-) -> None:
-    """校验 TRADING-204 real snapshot intake artifact。"""
-    payload = validate_real_snapshot(snapshot_intake_id=snapshot_intake_id, output_dir=output_dir)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_allowed=false")
-    typer.echo("broker_action_taken=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
 
 
 @dynamic_v3_real_snapshot_dry_run_app.command("run")
