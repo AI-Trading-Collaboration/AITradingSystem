@@ -35,6 +35,9 @@ OPERATIONS_COMMANDS_PATH = (
 REPORTING_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/reporting.py"
 )
+WEEKLY_REVIEW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/weekly_review.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -109,7 +112,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35364
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35125
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -186,6 +189,22 @@ def test_g2_3_evidence_dashboard_callbacks_leave_legacy_root() -> None:
     }
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
+
+
+def test_g2_3_weekly_review_callbacks_and_helpers_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(WEEKLY_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "weekly_review_aggregate_command",
+        "weekly_review_generate_command",
+        "weekly_review_run_command",
+        "weekly_review_validate_command",
+    }
+    helpers = {"weekly_review_date", "run_weekly_review_generate"}
+    assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in helpers})
+    assert callbacks | helpers <= canonical_names
 
 
 def __file_path() -> Path:
