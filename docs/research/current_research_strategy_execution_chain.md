@@ -464,6 +464,18 @@ Portfolio intake把“owner提供的当前组合描述”转换成后续exposure
 
 设计上的关键分界是：intake回答“这份持仓描述是否结构化、完整且可供人工研究使用”，exposure回答“组合暴露是什么”，drift回答“当前与候选目标相差多少”，guardrail回答“哪些变化应被限制”，owner review才回答“是否继续人工处理”。任一intake `PASS`或normalized artifact都不等于portfolio approval、position advisory、official target weights、production state mutation或broker authorization。优化应优先增强provenance、content-derived validation、schema演进和隐私检查，不能通过自动补值或串行调用下游来制造表面完整性。
 
+#### Portfolio risk controls 链
+
+G2.4AB把intake之后、owner decision之前的三个计算层迁到独立模块，并保持每层只能消费显式上游artifact。它们共同生成风险解释材料，但没有任何一层拥有交易执行权。
+
+| 环节 | 输入 | 计算逻辑 | 输出 | 阻断条件与优化空间 |
+|---|---|---|---|---|
+| `portfolio-exposure validate/report` | 已通过intake的snapshot id/root、`portfolio_exposure_policy_v1.yaml` | 从normalized positions按symbol/category/currency聚合single-symbol、risk asset、cash、tech、semiconductor、defensive和currency weights，再与reviewed exposure limits比较；report只读已有artifact | exposure manifest、summary、diagnostics、report与validation | snapshot或policy缺失/失配、关键暴露计算失败时fail closed；后续应冻结snapshot/policy checksum、由validator重算聚合值并显式披露policy version |
+| `position-drift run/report` | snapshot id、shadow shortlist id、两者artifact roots、`position_advisory_v1.yaml` | 对每个candidate target与当前normalized weights计算symbol delta和绝对漂移；聚合candidate consensus、agreement/disagreement、cash/risk/defensive差异，并生成仅供复核的action candidates | candidate drift matrix、consensus drift summary、diagnostic action candidates、report与validation | 上游归属不一致、目标权重缺失或agreement不可计算时不能形成可执行建议；后续应增加source checksum/id binding、missing-target completeness和content-derived delta重算 |
+| `execution-guardrails check/report` | 已有drift/exposure ids与roots、`execution_guardrails_v1.yaml` | 对oversized delta应用review cap，对高分歧下的risk increase标记block，生成stepwise review plan；不写回drift、snapshot或target | guardrail summary、capped/blocked rows、review plan、report与validation | source artifact无效或config不完整时fail closed；后续应把阈值全部绑定policy owner/version/evidence/review condition，并验证每个cap/block可从source内容重算 |
+
+三层必须按intake PASS后由operator显式执行，且不会自动构建manual execution review。Exposure PASS只说明暴露分析可读，drift的`recommended_action`只表示复核优先级，guardrail cap/block只表示“若人工继续，应先受哪些限制”；三者都不等于order ticket、portfolio approval、official target weights或broker authorization。优化方向优先是lineage、checksum、content-derived validation和阈值治理，不是把三层合成一个自动执行流水线。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

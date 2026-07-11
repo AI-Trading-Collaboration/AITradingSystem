@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 838
+module_count: 839
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 2f79f8113af6e7c99db1c6561e6f86fe53141e954faaf749af0c204289423da6
+  sha256: f2eacdc57d353a8a3aba1ac63b1b67ab11f427af5e835db49ffd2a71624d7b8e
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: bae43a2b76f796b5008853ad477297bd3b30ca16c1ca7f712f319ca5abd1ae38
+  sha256: 8f49d6bd37d2ee0645a19d9b26592b569c2c6a9e51bf88edb0f38069ff3c61a7
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9789,6 +9789,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_portfolio_intake
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_portfolio_intake.py
   sha256: 4c6e93eef0408b0f92250662ff46faaebb3edc874bcabb281edfc475b463ad88
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_portfolio_risk_controls
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_portfolio_risk_controls.py
+  sha256: 4f8cb0760c5983fb90e83a6ddd769739f7713f6f293c9ffb7d3300b5691da806
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
