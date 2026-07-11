@@ -1775,7 +1775,8 @@ reports:
     freshness_sla_days: 7
     freshness_rationale: >
       TRADING-098 observe-only candidates require age, rebalance count, source
-      sweep, walk-forward, robustness, and latest metrics before promotion review.
+      sweep, owner-selected explicit walk-forward and robustness artifact ids,
+      validated observation basis, and latest metrics before promotion review.
     owner_action: review_shadow_report_before_promotion_pack
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true

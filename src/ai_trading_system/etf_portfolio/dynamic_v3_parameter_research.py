@@ -10107,6 +10107,8 @@ def register_shadow_candidate(
     sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
     walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
     robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
+    walk_forward_id: str | None = None,
+    robustness_id: str | None = None,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
@@ -10128,11 +10130,27 @@ def register_shadow_candidate(
     registry = load_shadow_registry(registry_path)
     candidates = _records(registry.get("candidates"))
     existing = next((row for row in candidates if row.get("candidate_id") == candidate_id), None)
+    explicit_walk_forward_id = _text(walk_forward_id)
+    explicit_robustness_id = _text(robustness_id)
+    if bool(explicit_walk_forward_id) != bool(explicit_robustness_id):
+        raise DynamicV3ParameterResearchError(
+            "walk_forward_id and robustness_id must be provided together"
+        )
     basis = _shadow_observation_basis(
-        candidate_id,
+        candidate_id=candidate_id,
+        source_sweep_id=sweep_id,
+        walk_forward_id=explicit_walk_forward_id,
+        robustness_id=explicit_robustness_id,
         walk_forward_dir=walk_forward_dir,
         robustness_dir=robustness_dir,
     )
+    if explicit_walk_forward_id and basis.get("status") != "complete":
+        failures = ", ".join(
+            key for key, passed in _mapping(basis.get("checks")).items() if passed is not True
+        )
+        raise DynamicV3ParameterResearchError(
+            f"explicit shadow observation basis is not usable: {failures}"
+        )
     record = {
         "candidate_id": candidate_id,
         "strategy_family": STRATEGY_FAMILY,
@@ -10141,6 +10159,9 @@ def register_shadow_candidate(
         "source_walk_forward_id": basis.get("source_walk_forward_id", ""),
         "source_robustness_id": basis.get("source_robustness_id", ""),
         "observation_basis_status": basis.get("status"),
+        "observation_basis_selection": (
+            "explicit_artifact_ids" if explicit_walk_forward_id else "none"
+        ),
         "parameters": report.get("parameters", {}),
         "evaluator_mode": report.get("evaluator_mode", EVALUATOR_TINY_FIXTURE_PROXY),
         "evaluator_version": report.get("evaluator_version", ""),
@@ -10364,10 +10385,22 @@ def validate_shadow_registry(
     robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
 ) -> dict[str, Any]:
     registry = load_shadow_registry(registry_path)
+    candidates = _records(registry.get("candidates"))
+    candidate_ids = [_text(row.get("candidate_id")) for row in candidates]
     checks: list[dict[str, Any]] = [
-        _check("registry_exists", registry_path.exists(), str(registry_path))
+        _check("registry_exists", registry_path.exists(), str(registry_path)),
+        _check(
+            "registry_schema_version_supported",
+            registry.get("schema_version") == 1,
+            str(registry.get("schema_version")),
+        ),
+        _check(
+            "candidate_ids_present_and_unique",
+            all(candidate_ids) and len(candidate_ids) == len(set(candidate_ids)),
+            f"row_count={len(candidate_ids)} unique_count={len(set(candidate_ids))}",
+        ),
     ]
-    for row in _records(registry.get("candidates")):
+    for row in candidates:
         candidate_id = _text(row.get("candidate_id"))
         source_sweep_id = _text(row.get("source_sweep_id"))
         checks.append(
@@ -10391,10 +10424,48 @@ def validate_shadow_registry(
             / candidate_id
             / "candidate_report.json"
         )
-        checks.append(
-            _check(
-                f"{candidate_id}:candidate_report_exists", report_path.exists(), str(report_path)
-            )
+        report = _mapping(_read_optional_json(report_path))
+        candidate_result = (
+            _candidate_result(sweep_output_dir / source_sweep_id, candidate_id)
+            if source_sweep_id and candidate_id
+            else None
+        )
+        checks.extend(
+            [
+                _check(
+                    f"{candidate_id}:candidate_report_exists",
+                    report_path.exists(),
+                    str(report_path),
+                ),
+                _check(
+                    f"{candidate_id}:candidate_report_identity_matches",
+                    _text(report.get("source_sweep_id")) == source_sweep_id
+                    and _text(report.get("candidate_id")) == candidate_id,
+                    f"sweep={report.get('source_sweep_id')} candidate={report.get('candidate_id')}",
+                ),
+                _check(
+                    f"{candidate_id}:candidate_result_present",
+                    candidate_result is not None,
+                    candidate_id,
+                ),
+                _check(
+                    f"{candidate_id}:registry_matches_candidate_source",
+                    candidate_result is not None
+                    and _mapping(row.get("parameters"))
+                    == _mapping(candidate_result.get("parameters"))
+                    and _text(row.get("evaluator_mode"))
+                    == _text(candidate_result.get("evaluator_mode"))
+                    and _text(row.get("evaluator_version"))
+                    == _text(candidate_result.get("evaluator_version"))
+                    and _text(row.get("real_evaluation_artifact_path"))
+                    == _text(candidate_result.get("real_evaluation_artifact_path"))
+                    and _text(row.get("metrics_source"))
+                    == _text(candidate_result.get("metrics_source"))
+                    and _mapping(row.get("latest_metrics"))
+                    == _mapping(candidate_result.get("metrics")),
+                    candidate_id,
+                ),
+            ]
         )
         checks.append(
             _check(
@@ -10406,9 +10477,14 @@ def validate_shadow_registry(
         basis_status = _text(row.get("observation_basis_status"), "incomplete_observation_basis")
         source_walk_forward_id = _text(row.get("source_walk_forward_id"))
         source_robustness_id = _text(row.get("source_robustness_id"))
-        wf_manifest_path = walk_forward_dir / source_walk_forward_id / "wf_manifest.json"
-        robustness_manifest_path = (
-            robustness_dir / source_robustness_id / "robustness_manifest.json"
+        explicit_pair = bool(source_walk_forward_id) and bool(source_robustness_id)
+        basis = _shadow_observation_basis(
+            candidate_id=candidate_id,
+            source_sweep_id=source_sweep_id,
+            walk_forward_id=source_walk_forward_id,
+            robustness_id=source_robustness_id,
+            walk_forward_dir=walk_forward_dir,
+            robustness_dir=robustness_dir,
         )
         checks.append(
             _check(
@@ -10417,61 +10493,35 @@ def validate_shadow_registry(
                 basis_status,
             )
         )
-        if basis_status == "complete":
-            checks.append(
+        checks.extend(
+            [
                 _check(
-                    f"{candidate_id}:source_walk_forward_id_present",
-                    bool(source_walk_forward_id),
-                    "complete basis requires walk-forward id",
-                )
-            )
-            checks.append(
+                    f"{candidate_id}:source_evidence_ids_paired",
+                    bool(source_walk_forward_id) == bool(source_robustness_id),
+                    "walk-forward and robustness ids must be paired",
+                ),
                 _check(
-                    f"{candidate_id}:source_robustness_id_present",
-                    bool(source_robustness_id),
-                    "complete basis requires robustness id",
-                )
-            )
-        if source_walk_forward_id:
-            wf_manifest = _mapping(_read_optional_json(wf_manifest_path))
-            checks.append(
+                    f"{candidate_id}:observation_basis_selection_valid",
+                    _text(row.get("observation_basis_selection"), "none")
+                    == ("explicit_artifact_ids" if explicit_pair else "none"),
+                    _text(row.get("observation_basis_selection"), "none"),
+                ),
                 _check(
-                    f"{candidate_id}:source_walk_forward_exists",
-                    wf_manifest_path.exists(),
-                    str(wf_manifest_path),
+                    f"{candidate_id}:observation_basis_status_matches_recomputation",
+                    basis_status == basis.get("status"),
+                    f"declared={basis_status} recomputed={basis.get('status')}",
+                ),
+            ]
+        )
+        if source_walk_forward_id or source_robustness_id:
+            for check_id, passed in _mapping(basis.get("checks")).items():
+                checks.append(
+                    _check(
+                        f"{candidate_id}:{check_id}",
+                        passed is True,
+                        _text(_mapping(basis.get("details")).get(check_id)),
+                    )
                 )
-            )
-            checks.append(
-                _check(
-                    f"{candidate_id}:source_walk_forward_evidence_usable",
-                    _text(wf_manifest.get("status")) == "REVIEW_REQUIRED"
-                    and _text(wf_manifest.get("evidence_completeness")) == "PATH_DERIVED_PARTIAL"
-                    and wf_manifest.get("not_for_investment_decision") is False,
-                    _text(wf_manifest.get("evidence_completeness")),
-                )
-            )
-        if source_robustness_id:
-            robustness_manifest = _mapping(_read_optional_json(robustness_manifest_path))
-            checks.append(
-                _check(
-                    f"{candidate_id}:source_robustness_exists",
-                    robustness_manifest_path.exists(),
-                    str(robustness_manifest_path),
-                )
-            )
-            checks.append(
-                _check(
-                    f"{candidate_id}:source_robustness_evidence_usable",
-                    _text(robustness_manifest.get("status")) == "REVIEW_REQUIRED"
-                    and _text(robustness_manifest.get("evaluator_mode"))
-                    == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
-                    and _text(robustness_manifest.get("source_identity_status")) == "PASS"
-                    and _text(robustness_manifest.get("evidence_completeness"))
-                    == "PATH_AND_AGGREGATE_PARTIAL"
-                    and robustness_manifest.get("not_for_investment_decision") is False,
-                    _text(robustness_manifest.get("evidence_completeness")),
-                )
-            )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -18277,34 +18327,111 @@ def _sensitivity_evidence_summary(
 
 
 def _shadow_observation_basis(
-    candidate_id: str,
     *,
+    candidate_id: str,
+    source_sweep_id: str,
+    walk_forward_id: str,
+    robustness_id: str,
     walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
     robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
-) -> dict[str, str]:
-    wf_manifest = _latest_walk_forward_manifest_for_candidate(candidate_id, walk_forward_dir)
-    rob_manifest = _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
-    wf_payload = _mapping(_read_optional_json(wf_manifest))
-    rob_payload = _mapping(_read_optional_json(rob_manifest))
-    wf_ready = (
-        _text(wf_payload.get("status")) == "REVIEW_REQUIRED"
-        and _text(wf_payload.get("evidence_completeness")) == "PATH_DERIVED_PARTIAL"
-        and wf_payload.get("not_for_investment_decision") is False
+) -> dict[str, Any]:
+    if not walk_forward_id and not robustness_id:
+        return {
+            "status": "incomplete_observation_basis",
+            "source_walk_forward_id": "",
+            "source_robustness_id": "",
+            "checks": {},
+            "details": {},
+        }
+    wf_manifest_path = walk_forward_dir / walk_forward_id / "wf_manifest.json"
+    wf_leaderboard_path = walk_forward_dir / walk_forward_id / "wf_leaderboard.json"
+    rob_manifest_path = robustness_dir / robustness_id / "robustness_manifest.json"
+    wf_payload = _mapping(_read_optional_json(wf_manifest_path))
+    wf_leaderboard = _mapping(_read_optional_json(wf_leaderboard_path))
+    rob_payload = _mapping(_read_optional_json(rob_manifest_path))
+    wf_validation = validate_walk_forward_artifact(
+        walk_forward_id=walk_forward_id,
+        output_dir=walk_forward_dir,
     )
-    rob_ready = (
-        _text(rob_payload.get("status")) == "REVIEW_REQUIRED"
-        and _text(rob_payload.get("evaluator_mode")) == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
-        and _text(rob_payload.get("source_identity_status")) == "PASS"
-        and _text(rob_payload.get("evidence_completeness")) == "PATH_AND_AGGREGATE_PARTIAL"
-        and rob_payload.get("not_for_investment_decision") is False
+    rob_validation = validate_robustness_artifact(
+        robustness_id=robustness_id,
+        output_dir=robustness_dir,
     )
-    wf_id = _text(wf_payload.get("walk_forward_id")) if wf_ready else ""
-    rob_id = _text(rob_payload.get("robustness_id")) if rob_ready else ""
-    status = "complete" if wf_id and rob_id else "incomplete_observation_basis"
+    wf_candidate_present = any(
+        _text(row.get("candidate_id")) == candidate_id
+        for row in _records(wf_leaderboard.get("candidates"))
+    )
+    checks = {
+        "source_walk_forward_exists": wf_manifest_path.is_file(),
+        "source_walk_forward_validation_pass": wf_validation.get("status") == "PASS",
+        "source_walk_forward_identity_matches": (
+            _text(wf_payload.get("walk_forward_id")) == walk_forward_id
+            and _text(wf_payload.get("source_sweep_id")) == source_sweep_id
+            and wf_candidate_present
+        ),
+        "source_walk_forward_evidence_usable": (
+            _text(wf_payload.get("status")) == "REVIEW_REQUIRED"
+            and _text(wf_payload.get("evidence_completeness")) == "PATH_DERIVED_PARTIAL"
+            and wf_payload.get("not_for_investment_decision") is False
+        ),
+        "source_robustness_exists": rob_manifest_path.is_file(),
+        "source_robustness_validation_pass": rob_validation.get("status") == "PASS",
+        "source_robustness_identity_matches": (
+            _text(rob_payload.get("robustness_id")) == robustness_id
+            and _text(rob_payload.get("source_sweep_id")) == source_sweep_id
+            and _text(rob_payload.get("candidate_id")) == candidate_id
+        ),
+        "source_robustness_evidence_usable": (
+            _text(rob_payload.get("status")) == "REVIEW_REQUIRED"
+            and _text(rob_payload.get("evaluator_mode")) == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+            and _text(rob_payload.get("source_identity_status")) == "PASS"
+            and _text(rob_payload.get("evidence_completeness")) == "PATH_AND_AGGREGATE_PARTIAL"
+            and rob_payload.get("not_for_investment_decision") is False
+        ),
+    }
+    wf_ready = all(
+        checks[key]
+        for key in (
+            "source_walk_forward_exists",
+            "source_walk_forward_validation_pass",
+            "source_walk_forward_identity_matches",
+            "source_walk_forward_evidence_usable",
+        )
+    )
+    rob_ready = all(
+        checks[key]
+        for key in (
+            "source_robustness_exists",
+            "source_robustness_validation_pass",
+            "source_robustness_identity_matches",
+            "source_robustness_evidence_usable",
+        )
+    )
+    status = "complete" if wf_ready and rob_ready else "incomplete_observation_basis"
+    details = {
+        "source_walk_forward_exists": str(wf_manifest_path),
+        "source_walk_forward_validation_pass": _text(wf_validation.get("status")),
+        "source_walk_forward_identity_matches": (
+            f"walk_forward_id={wf_payload.get('walk_forward_id')} "
+            f"source_sweep_id={wf_payload.get('source_sweep_id')} "
+            f"candidate_present={wf_candidate_present}"
+        ),
+        "source_walk_forward_evidence_usable": _text(wf_payload.get("evidence_completeness")),
+        "source_robustness_exists": str(rob_manifest_path),
+        "source_robustness_validation_pass": _text(rob_validation.get("status")),
+        "source_robustness_identity_matches": (
+            f"robustness_id={rob_payload.get('robustness_id')} "
+            f"source_sweep_id={rob_payload.get('source_sweep_id')} "
+            f"candidate_id={rob_payload.get('candidate_id')}"
+        ),
+        "source_robustness_evidence_usable": _text(rob_payload.get("evidence_completeness")),
+    }
     return {
         "status": status,
-        "source_walk_forward_id": wf_id,
-        "source_robustness_id": rob_id,
+        "source_walk_forward_id": walk_forward_id if wf_ready else "",
+        "source_robustness_id": robustness_id if rob_ready else "",
+        "checks": checks,
+        "details": details,
     }
 
 
@@ -18368,26 +18495,8 @@ def _promotion_evidence(
     )
     wf_id = _text(_mapping(record).get("source_walk_forward_id"))
     rob_id = _text(_mapping(record).get("source_robustness_id"))
-    wf_manifest_path = (
-        walk_forward_dir / wf_id / "wf_manifest.json"
-        if wf_id
-        else _latest_walk_forward_manifest_for_candidate(candidate_id, walk_forward_dir)
-    )
-    if wf_manifest_path is not None and not wf_manifest_path.exists():
-        wf_manifest_path = _latest_walk_forward_manifest_for_candidate(
-            candidate_id, walk_forward_dir
-        )
-    if wf_manifest_path is not None:
-        wf_id = wf_manifest_path.parent.name
-    rob_manifest_path = (
-        robustness_dir / rob_id / "robustness_manifest.json"
-        if rob_id
-        else _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
-    )
-    if rob_manifest_path is not None and not rob_manifest_path.exists():
-        rob_manifest_path = _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
-    if rob_manifest_path is not None:
-        rob_id = rob_manifest_path.parent.name
+    wf_manifest_path = walk_forward_dir / wf_id / "wf_manifest.json" if wf_id else None
+    rob_manifest_path = robustness_dir / rob_id / "robustness_manifest.json" if rob_id else None
     wf_report = None if wf_manifest_path is None else wf_manifest_path.parent / "wf_report.md"
     rob_report = (
         None if rob_manifest_path is None else rob_manifest_path.parent / "robustness_report.md"
@@ -21454,27 +21563,6 @@ def _latest_overfit_manifest_for_candidate(candidate_id: str, output_dir: Path) 
     for manifest_path in output_dir.glob("*/overfit_manifest.json"):
         manifest = _read_optional_json(manifest_path)
         if _mapping(manifest).get("candidate_id") == candidate_id:
-            candidates.append(manifest_path)
-    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
-
-
-def _latest_walk_forward_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:
-    candidates = []
-    for leaderboard_path in output_dir.glob("*/wf_leaderboard.json"):
-        leaderboard = _read_optional_json(leaderboard_path)
-        rows = _records(_mapping(leaderboard).get("candidates"))
-        if any(_text(row.get("candidate_id")) == candidate_id for row in rows):
-            manifest_path = leaderboard_path.parent / "wf_manifest.json"
-            if manifest_path.exists():
-                candidates.append(manifest_path)
-    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
-
-
-def _latest_robustness_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:
-    candidates = []
-    for manifest_path in output_dir.glob("*/robustness_manifest.json"):
-        manifest = _read_optional_json(manifest_path)
-        if _text(_mapping(manifest).get("candidate_id")) == candidate_id:
             candidates.append(manifest_path)
     return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
 

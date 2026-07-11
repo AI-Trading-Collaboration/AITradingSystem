@@ -41,6 +41,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rescue as dynamic_v3_rescue_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_shadow_registry as dynamic_v3_shadow_registry_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sweep_config as dynamic_v3_sweep_config_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -84,6 +87,7 @@ __all__ = [
     "dynamic_v3_failure_attribution_commands",
     "dynamic_v3_injection_audit_commands",
     "dynamic_v3_legacy_validation_commands",
+    "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_sweep_config_commands",
     "dynamic_v3_sweep_runtime_commands",
     "dynamic_v3_data_audit_commands",

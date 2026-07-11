@@ -595,6 +595,20 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
     assert registered["candidate"]["observation_basis_status"] == "incomplete_observation_basis"
     assert registered["candidate"]["source_walk_forward_id"] == ""
     assert registered["candidate"]["source_robustness_id"] == ""
+    with pytest.raises(
+        DynamicV3ParameterResearchError,
+        match="explicit shadow observation basis is not usable",
+    ):
+        register_shadow_candidate(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            walk_forward_id=wf["walk_forward_id"],
+            robustness_id=robustness["robustness_id"],
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=tmp_path / "walk_forward",
+            robustness_dir=tmp_path / "robustness",
+        )
     assert (
         validate_shadow_registry(
             registry_path=registry_path,
@@ -640,7 +654,8 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         output_dir=tmp_path / "promotion",
     )
     assert pack["pack"]["status"] in {"incomplete", "review_required", "reject"}
-    assert "tiny_fixture_not_for_investment_decision" in pack["pack"]["decision_reasons"]
+    assert "missing_walk_forward_report" in pack["pack"]["decision_reasons"]
+    assert "missing_robustness_report" in pack["pack"]["decision_reasons"]
     assert pack["pack"]["production_candidate_generated"] is False
     evidence_summary = pack["pack"]["evidence_summary"]
     assert evidence_summary["backtest_window_status"] == "FAIL"
@@ -709,6 +724,14 @@ def test_shadow_registry_requires_candidate_report_and_rejects_hard_reject(
     assert registered["candidate"]["observation_basis_status"] == "incomplete_observation_basis"
     assert registered["candidate"]["source_walk_forward_id"] == ""
     assert registered["candidate"]["source_robustness_id"] == ""
+    with pytest.raises(DynamicV3ParameterResearchError, match="must be provided together"):
+        register_shadow_candidate(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            walk_forward_id="wf-only",
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+        )
     assert (
         validate_shadow_registry(
             registry_path=registry_path,

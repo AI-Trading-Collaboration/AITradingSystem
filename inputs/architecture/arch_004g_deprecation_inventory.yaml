@@ -1,7 +1,7 @@
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 831
+  python_module_count: 832
   python_test_file_count: 1114
   direct_writer_baseline_count: 894
   direct_writer_current_count: 858
@@ -52,12 +52,12 @@ surfaces:
   migration_wave: G2
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
   file_count: 1
-  line_count: 30762
-  byte_count: 1295468
-  source_sha256: b9e280e03070eaa14618df8df23207d54e6372ac119e401da55352bbc9e46468
-  top_level_function_count: 932
+  line_count: 30628
+  byte_count: 1290341
+  source_sha256: 90eed8725e9403cb6d95b6caea3c56aab14c52a6606a06ed18b8411548e76195
+  top_level_function_count: 928
   top_level_class_count: 0
-  cli_command_decorator_count: 893
+  cli_command_decorator_count: 889
   static_import_reachability_file_count: 1
   test_reference_file_count: 297
   docs_config_reference_file_count: 115
@@ -269,13 +269,13 @@ surfaces:
   migration_wave: G6
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   file_count: 1
-  line_count: 22183
-  byte_count: 912198
-  source_sha256: 780c652c1f97053bd08768e071d5cebfacea3b9561212cad608cfb0feef54334
-  top_level_function_count: 562
+  line_count: 22271
+  byte_count: 916123
+  source_sha256: a7823ce8837f9cfb80666946e6bc20fc91beab0cffa6cd55160b38558c799234
+  top_level_function_count: 560
   top_level_class_count: 21
   cli_command_decorator_count: 0
-  static_import_reachability_file_count: 21
+  static_import_reachability_file_count: 22
   test_reference_file_count: 43
   docs_config_reference_file_count: 16
   required_removal_gate_count: 12

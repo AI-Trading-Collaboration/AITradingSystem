@@ -1997,7 +1997,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4t["real_smoke"]["current_shadow_registry_validation"] == "FAIL"
     assert phase_g2_4t["real_smoke"]["automatic_registry_mutation_performed"] is False
     assert phase_g2_4t["sources"]
+    superseded_g2_4t = set(phase_g2_4t["superseded_source_paths"])
     for source in phase_g2_4t["sources"]:
+        if source["path"] in superseded_g2_4t:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4u = baseline["phase_g2_4u_etf_cli_dynamic_v3_shadow_registry"]
+    assert phase_g2_4u["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4u = phase_g2_4u["migration"]
+    assert migration_g2_4u["callback_count"] == 4
+    assert migration_g2_4u["implicit_mtime_evidence_selection_allowed"] is False
+    assert migration_g2_4u["explicit_evidence_ids_must_be_paired"] is True
+    assert migration_g2_4u["content_recomputation_validation_required"] is True
+    assert migration_g2_4u["candidate_and_sweep_ownership_required"] is True
+    assert migration_g2_4u["promotion_latest_fallback_allowed"] is False
+    assert migration_g2_4u["validator_automatic_registry_repair_allowed"] is False
+    assert migration_g2_4u["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4u["automatic_shadow_enrollment_allowed"] is False
+    assert migration_g2_4u["legacy_root_lines_after"] == 30628
+    assert migration_g2_4u["legacy_root_top_level_functions_after"] == 928
+    assert migration_g2_4u["legacy_root_command_decorators_after"] == 889
+    assert migration_g2_4u["python_module_count"] == 832
+    assert phase_g2_4u["real_smoke"]["temporary_explicit_registration"] == "PASS"
+    assert phase_g2_4u["real_smoke"]["current_shadow_registry_validation"] == "FAIL"
+    assert phase_g2_4u["real_smoke"]["automatic_registry_mutation_performed"] is False
+    assert phase_g2_4u["sources"]
+    for source in phase_g2_4u["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2020,7 +2046,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4T_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4U_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

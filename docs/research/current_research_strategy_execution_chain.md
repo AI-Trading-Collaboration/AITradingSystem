@@ -1,6 +1,6 @@
 # 当前研究策略执行链路、计算逻辑与优化边界
 
-最后更新：2026-07-11
+最后更新：2026-07-12
 
 项目级 AI market regime：`ai_after_chatgpt`，起点 `2022-12-01`
 
@@ -404,6 +404,20 @@ Train leaderboard只使用该train window重算的path metrics和冻结scoring w
 设计原因是兼容历史命令不应等于兼容历史错误语义。旧TRADING-096曾把full-period metrics复制到40个window rows后加入stable-hash drift；旧TRADING-097曾把regime observation和aggregate stress analysis包装成`PASS`。这些artifact现在只证明历史workflow执行过，不能继续作为证据充足性依据。Shadow observation basis也只接受当前real、source identity PASS、非fixture的`PATH_DERIVED_PARTIAL` walk-forward和`PATH_AND_AGGREGATE_PARTIAL` robustness；旧manifest或tiny fixture不会形成complete basis。
 
 后续优化顺序是：先让real evaluator导出逐window完整false-risk-off/robustness/cost/lag字段；再实现purged/embargo fold rerun和fold-specific real neighbors；随后定义有owner/version/rationale/validation的dedicated stress bucket与per-regime comparator/gate policy；最后才允许校准robustness PASS boundary。不能通过改状态名、把aggregate proxy重命名为bucket、或用观察行数替代稳定性统计来“优化”结论。
+
+#### Shadow observation basis 登记与验证
+
+TRADING-098把candidate report、walk-forward和robustness证据连接成observe-only登记记录。这里的“登记”是owner触发的治理动作，不是发现目录中有新文件后自动升级。
+
+| 环节 | 输入 | 计算与校验 | 输出 | 优化边界 |
+|---|---|---|---|---|
+| register | `sweep_id`、`candidate_id`、candidate report；可选且必须成对的`walk_forward_id`/`robustness_id` | candidate report必须归属指定sweep/candidate且非reject；显式证据必须分别通过source-recomputing validator，walk-forward leaderboard包含candidate，两份manifest的source sweep/candidate归属一致，并满足当前usable contract | registry row：source ids、`observation_basis_status`、evaluator/metrics provenance、promotion observation floor；固定`observe_only` | 未给证据id只写`incomplete_observation_basis`；只给一个、证据失效或归属错误时fail closed；禁止按mtime隐式选择latest |
+| list/report | registry row | 只读投影，不重新计算策略收益，不补写证据，不自动promotion | candidate list或JSON/Markdown shadow report | 报告中的eligibility必须以完整basis和观察期为前提；registry validation失败时不得把报告当promotion依据 |
+| validate | registry、candidate report、显式source ids及其artifact目录 | 逐行重算candidate/sweep ownership、artifact validator状态、usable contract和期望basis status，并与登记字段比较；检查重复candidate与observe-only安全边界 | PASS/FAIL checks；无registry mutation | validator只能暴露stale/forged link，不得替换id、重登记或改状态 |
+
+为什么必须显式给artifact id：文件修改时间不属于研究语义，也不能证明owner知道本次采用了哪一组证据；同一candidate可能同时存在历史、fixture、失败和新版本artifact。显式id把“谁选择了什么证据”固定在命令输入和registry lineage中，也使旧artifact在validator升级后能够被可靠识别为stale，而不是被静默替换。
+
+当前结果：真实candidate `a72139edcaef7d22`已有通过当前validator的walk-forward `7b6db671cbd67468`和robustness `87b0fc81d6681368`，但runtime registry仍绑定旧artifact，因此当前registry validation为FAIL；系统不会自动迁移。后续优化空间包括把登记动作写入独立owner decision ledger、为证据组合生成不可变selection checksum、让shadow report直接引用最新validation artifact，以及在完整逐fold/专用stress证据可用后版本化提升usable contract。任何优化都不能自动enroll、promotion、写official weights或产生broker action。
 
 #### Dynamic-v3 overfit evidence
 
