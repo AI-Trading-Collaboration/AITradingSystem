@@ -7853,40 +7853,86 @@ def run_candidate_attribution(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    candidate_report = candidate_report_payload(
-        sweep_id=sweep_id,
-        candidate_id=candidate_id,
-        output_dir=sweep_output_dir,
-        write=True,
-    )
+    sweep_dir = sweep_output_dir / sweep_id
+    candidate_results_path = sweep_dir / "candidate_results.jsonl"
+    candidate_result = _candidate_result(sweep_dir, candidate_id)
+    if candidate_result is None:
+        raise DynamicV3ParameterResearchError(f"candidate not found in sweep: {candidate_id}")
+    candidate_report_path = sweep_dir / "candidates" / candidate_id / "candidate_report.json"
+    candidate_report = _mapping(_read_optional_json(candidate_report_path))
+    if not candidate_report:
+        raise DynamicV3ParameterResearchError(
+            "candidate report is required before attribution: "
+            f"run candidate report for {sweep_id}/{candidate_id}"
+        )
+    if (
+        _text(candidate_report.get("candidate_id")) != candidate_id
+        or _text(candidate_report.get("source_sweep_id")) != sweep_id
+        or _text(candidate_report.get("report_type"))
+        != "etf_dynamic_v3_parameter_candidate_report"
+    ):
+        raise DynamicV3ParameterResearchError(
+            f"candidate report lineage mismatch: {candidate_report_path}"
+        )
     attribution_dir = output_dir / candidate_id
-    attribution_dir.mkdir(parents=True, exist_ok=True)
     real_path_raw = _text(candidate_report.get("real_evaluation_artifact_path"))
-    real_path = Path(real_path_raw) if real_path_raw else None
+    result_real_path_raw = _text(candidate_result.get("real_evaluation_artifact_path"))
+    if real_path_raw != result_real_path_raw:
+        raise DynamicV3ParameterResearchError(
+            "candidate report real evaluation path does not match candidate result"
+        )
+    real_path = _resolve_project_path(Path(real_path_raw)) if real_path_raw else None
+    expected_real_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(strict=False)
+    if real_path is not None and real_path.resolve(strict=False).parent != expected_real_dir:
+        raise DynamicV3ParameterResearchError(
+            "real evaluation artifact must belong to source sweep candidate directory"
+        )
     real_payload = _read_optional_json(real_path) if real_path is not None else None
+    if real_payload is not None:
+        expected_report_id = _text(
+            _mapping(candidate_report.get("metrics")).get("real_evaluation_report_id")
+        )
+        observed_report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
+        if not expected_report_id or observed_report_id != expected_report_id:
+            raise DynamicV3ParameterResearchError(
+                "real evaluation report id does not match candidate report metrics"
+            )
     weight_metadata_path = (
         real_path.parent / "weight_path_metadata.json" if real_path is not None else None
     )
-    weight_metadata = (
-        _read_optional_json(weight_metadata_path) if weight_metadata_path is not None else None
+    evaluation_id = _text(_mapping(real_payload).get("dynamic_v3_real_evaluation_report_id"))
+    weight_inspection = (
+        _inspect_weight_path_evidence(evaluation_id, real_path.parent)
+        if real_path is not None and real_payload is not None and evaluation_id
+        else _missing_weight_path_inspection()
     )
+    weight_metadata = _mapping(weight_inspection.get("metadata"))
     metrics = _mapping(candidate_report.get("metrics"))
-    weight_delta = _candidate_weight_delta_rows(real_payload)
-    incomplete_reasons = []
+    weight_delta = _candidate_weight_delta_rows(
+        real_payload,
+        daily_weights_path=(None if real_path is None else real_path.parent / "daily_weights.csv"),
+        candidate_id=candidate_id,
+        source_sweep_id=sweep_id,
+    )
+    incomplete_reasons: list[str] = []
     if real_payload is None:
         incomplete_reasons.append("missing_real_evaluation_artifact")
-    if not weight_metadata or not weight_metadata.get("has_daily_weights"):
-        incomplete_reasons.append("MISSING_DAILY_WEIGHT_PATH")
-    attribution_completeness = _text(
-        _mapping(weight_metadata).get("attribution_completeness"),
-        WEIGHT_PATH_INCOMPLETE if incomplete_reasons else WEIGHT_PATH_PARTIAL,
+    observed_weight_completeness = _text(
+        weight_inspection.get("observed_attribution_completeness"),
+        WEIGHT_PATH_INCOMPLETE,
     )
+    declared_weight_completeness = _text(
+        weight_inspection.get("declared_attribution_completeness"),
+        WEIGHT_PATH_INCOMPLETE,
+    )
+    if observed_weight_completeness == WEIGHT_PATH_INCOMPLETE:
+        incomplete_reasons.append("MISSING_DAILY_WEIGHT_PATH")
+    if real_payload is not None and observed_weight_completeness != WEIGHT_PATH_INCOMPLETE:
+        if not weight_delta:
+            incomplete_reasons.append("MISSING_WEIGHT_DELTA_EVIDENCE")
     if incomplete_reasons:
         status = WEIGHT_PATH_INCOMPLETE
         explainability_status = WEIGHT_PATH_INCOMPLETE
-    elif attribution_completeness == WEIGHT_PATH_COMPLETE:
-        status = WEIGHT_PATH_COMPLETE
-        explainability_status = WEIGHT_PATH_COMPLETE
     else:
         status = WEIGHT_PATH_PARTIAL
         explainability_status = WEIGHT_PATH_PARTIAL
@@ -7895,6 +7941,37 @@ def run_candidate_attribution(
     drawdown = _drawdown_window_attribution(real_payload, metrics)
     turnover = _turnover_attribution(real_payload, metrics)
     gap = _dynamic_vs_static_gap_attribution(real_payload, metrics)
+    components = {
+        "rebalance_event_attribution": rebalance,
+        "constraint_event_attribution": constraint,
+        "drawdown_window_attribution": drawdown,
+        "turnover_attribution": turnover,
+        "dynamic_vs_static_gap_attribution": gap,
+    }
+    component_statuses: dict[str, str] = {
+        "weight_path_delta": "INCOMPLETE" if not weight_delta else "PASS",
+    }
+    for name, component in components.items():
+        component_status = WEIGHT_PATH_INCOMPLETE if incomplete_reasons else WEIGHT_PATH_PARTIAL
+        source_analysis_status = _text(component.get("status"), "UNKNOWN")
+        component.update(
+            {
+                "candidate_id": candidate_id,
+                "source_sweep_id": sweep_id,
+                "status": component_status,
+                "source_analysis_status": source_analysis_status,
+                "attribution_method": "path_and_aggregate_v2",
+            }
+        )
+        component_statuses[name] = component_status
+    source_checksums = {
+        "candidate_results_sha256": _file_sha256_path(candidate_results_path),
+        "candidate_report_sha256": _file_sha256_path(candidate_report_path),
+        "real_evaluation_sha256": "" if real_path is None else _file_sha256_path(real_path),
+        "weight_path_metadata_sha256": (
+            "" if weight_metadata_path is None else _file_sha256_path(weight_metadata_path)
+        ),
+    }
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_candidate_attribution_manifest",
@@ -7904,11 +7981,20 @@ def run_candidate_attribution(
         "generated_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "incomplete_reasons": incomplete_reasons,
-        "real_evaluation_artifact_path": "" if real_path is None else str(real_path),
+        "candidate_results_path": str(candidate_results_path),
+        "candidate_report_path": str(candidate_report_path),
+        "real_evaluation_artifact_path": real_path_raw,
         "weight_path_metadata_path": (
             "" if weight_metadata_path is None else str(weight_metadata_path)
         ),
-        "attribution_completeness": attribution_completeness,
+        "attribution_completeness": status,
+        "weight_path_declared_completeness": declared_weight_completeness,
+        "weight_path_observed_completeness": observed_weight_completeness,
+        "weight_path_failed_check_count": weight_inspection.get("failed_check_count", 0),
+        "weight_path_limitations": weight_inspection.get("limitations", []),
+        "component_evidence_statuses": component_statuses,
+        "source_checksums": source_checksums,
+        "source_mutation_performed": False,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
     }
     report = {
@@ -7918,7 +8004,13 @@ def run_candidate_attribution(
         "source_sweep_id": sweep_id,
         "status": manifest["status"],
         "explainability_status": explainability_status,
-        "attribution_completeness": attribution_completeness,
+        "attribution_completeness": status,
+        "weight_path_declared_completeness": declared_weight_completeness,
+        "weight_path_observed_completeness": observed_weight_completeness,
+        "weight_path_limitations": weight_inspection.get("limitations", []),
+        "component_evidence_statuses": component_statuses,
+        "attribution_method": "path_and_aggregate_v2",
+        "source_mutation_performed": False,
         "weight_path_metadata": weight_metadata or {},
         "incomplete_reasons": incomplete_reasons,
         "weight_path_delta": weight_delta,
@@ -7934,7 +8026,7 @@ def run_candidate_attribution(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
-    _write_json(attribution_dir / "attribution_manifest.json", manifest)
+    attribution_dir.mkdir(parents=True, exist_ok=True)
     _write_csv(attribution_dir / "weight_path_delta.csv", weight_delta)
     _write_json(attribution_dir / "rebalance_event_attribution.json", rebalance)
     _write_json(attribution_dir / "constraint_event_attribution.json", constraint)
@@ -7945,6 +8037,19 @@ def run_candidate_attribution(
         attribution_dir / "candidate_attribution_report.md",
         render_candidate_attribution_markdown(report),
     )
+    output_names = [
+        "weight_path_delta.csv",
+        "rebalance_event_attribution.json",
+        "constraint_event_attribution.json",
+        "drawdown_window_attribution.json",
+        "turnover_attribution.json",
+        "dynamic_vs_static_gap_attribution.json",
+        "candidate_attribution_report.md",
+    ]
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(attribution_dir / name) for name in output_names
+    }
+    _write_json(attribution_dir / "attribution_manifest.json", manifest)
     _update_latest_pointer(
         "latest_candidate_attribution",
         candidate_id,
@@ -7984,15 +8089,8 @@ def validate_candidate_attribution_artifact(
         _check(f"artifact_exists:{name}", (candidate_dir / name).exists(), name)
         for name in required
     )
-    manifest = _read_optional_json(candidate_dir / "attribution_manifest.json") or {}
-    checks.append(
-        _check(
-            "no_fabricated_weight_path",
-            _text(manifest.get("status"))
-            in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
-            "missing path evidence must be explicit",
-        )
-    )
+    manifest = _mapping(_read_optional_json(candidate_dir / "attribution_manifest.json"))
+    checks.extend(_candidate_attribution_content_checks(candidate_dir, candidate_id, manifest))
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -8004,6 +8102,421 @@ def validate_candidate_attribution_artifact(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def _candidate_attribution_content_checks(
+    candidate_dir: Path,
+    candidate_id: str,
+    manifest: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks = [
+        _check("manifest_is_object", bool(manifest), "attribution_manifest.json"),
+        _check(
+            "manifest_candidate_id_matches",
+            _text(manifest.get("candidate_id")) == candidate_id,
+            _text(manifest.get("candidate_id")),
+        ),
+        _check(
+            "manifest_source_sweep_id_present",
+            bool(_text(manifest.get("source_sweep_id"))),
+            _text(manifest.get("source_sweep_id")),
+        ),
+        _check(
+            "manifest_status_explicit",
+            _text(manifest.get("status"))
+            in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
+            _text(manifest.get("status")),
+        ),
+        _check(
+            "source_mutation_not_performed",
+            manifest.get("source_mutation_performed") is False,
+            str(manifest.get("source_mutation_performed")),
+        ),
+    ]
+    source_sweep_id = _text(manifest.get("source_sweep_id"))
+    candidate_report_raw = _text(manifest.get("candidate_report_path"))
+    candidate_report_path = (
+        _resolve_project_path(Path(candidate_report_raw)) if candidate_report_raw else None
+    )
+    candidate_report = _mapping(_read_optional_json(candidate_report_path))
+    candidate_report_path_owned = False
+    sweep_dir: Path | None = None
+    if candidate_report_path is not None:
+        try:
+            sweep_dir = candidate_report_path.parents[2]
+            candidate_report_path_owned = (
+                candidate_report_path.parent.name == candidate_id
+                and candidate_report_path.parents[1].name == "candidates"
+                and sweep_dir.name == source_sweep_id
+            )
+        except IndexError:
+            candidate_report_path_owned = False
+    checks.extend(
+        [
+            _check(
+                "candidate_report_exists",
+                candidate_report_path is not None and candidate_report_path.is_file(),
+                candidate_report_raw,
+            ),
+            _check(
+                "candidate_report_candidate_id_matches",
+                _text(candidate_report.get("candidate_id")) == candidate_id,
+                _text(candidate_report.get("candidate_id")),
+            ),
+            _check(
+                "candidate_report_source_sweep_id_matches",
+                _text(candidate_report.get("source_sweep_id")) == source_sweep_id,
+                _text(candidate_report.get("source_sweep_id")),
+            ),
+            _check(
+                "candidate_report_path_owned_by_sweep_candidate",
+                candidate_report_path_owned,
+                candidate_report_raw,
+            ),
+        ]
+    )
+    source_checksums = _mapping(manifest.get("source_checksums"))
+    candidate_results_raw = _text(manifest.get("candidate_results_path"))
+    candidate_results_path = (
+        _resolve_project_path(Path(candidate_results_raw)) if candidate_results_raw else None
+    )
+    expected_candidate_results_path = (
+        None if sweep_dir is None else sweep_dir / "candidate_results.jsonl"
+    )
+    candidate_result = (
+        _candidate_result(sweep_dir, candidate_id) if sweep_dir is not None else None
+    )
+    checks.append(
+        _check(
+            "candidate_report_checksum_matches",
+            candidate_report_path is not None
+            and _text(source_checksums.get("candidate_report_sha256"))
+            == _file_sha256_path(candidate_report_path),
+            _text(source_checksums.get("candidate_report_sha256")),
+        )
+    )
+    checks.extend(
+        [
+            _check(
+                "candidate_results_path_matches_sweep",
+                candidate_results_path is not None
+                and expected_candidate_results_path is not None
+                and candidate_results_path.resolve(strict=False)
+                == expected_candidate_results_path.resolve(strict=False),
+                candidate_results_raw,
+            ),
+            _check(
+                "candidate_results_checksum_matches",
+                candidate_results_path is not None
+                and _text(source_checksums.get("candidate_results_sha256"))
+                == _file_sha256_path(candidate_results_path),
+                _text(source_checksums.get("candidate_results_sha256")),
+            ),
+            _check(
+                "candidate_result_present",
+                candidate_result is not None,
+                candidate_id,
+            ),
+            _check(
+                "candidate_report_matches_candidate_result",
+                candidate_result is not None
+                and _text(candidate_report.get("real_evaluation_artifact_path"))
+                == _text(candidate_result.get("real_evaluation_artifact_path"))
+                and _mapping(candidate_report.get("parameters"))
+                == _mapping(candidate_result.get("parameters"))
+                and _text(candidate_report.get("metrics_source"))
+                == _text(candidate_result.get("metrics_source")),
+                candidate_id,
+            ),
+        ]
+    )
+
+    real_path_raw = _text(manifest.get("real_evaluation_artifact_path"))
+    real_path = _resolve_project_path(Path(real_path_raw)) if real_path_raw else None
+    real_payload = _mapping(_read_optional_json(real_path))
+    expected_real_dir: Path | None = None
+    if sweep_dir is not None:
+        try:
+            expected_real_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(
+                strict=False
+            )
+        except IndexError:
+            expected_real_dir = None
+    real_path_owned = (
+        real_path is None
+        or (
+            expected_real_dir is not None
+            and real_path.resolve(strict=False).parent == expected_real_dir
+        )
+    )
+    checks.extend(
+        [
+            _check("real_evaluation_path_owned_by_candidate", real_path_owned, real_path_raw),
+            _check(
+                "candidate_report_real_path_matches_manifest",
+                _text(candidate_report.get("real_evaluation_artifact_path")) == real_path_raw,
+                real_path_raw,
+            ),
+            _check(
+                "real_evaluation_checksum_matches",
+                (
+                    not real_path_raw
+                    and not _text(source_checksums.get("real_evaluation_sha256"))
+                )
+                or (
+                    real_path is not None
+                    and real_path.is_file()
+                    and _text(source_checksums.get("real_evaluation_sha256"))
+                    == _file_sha256_path(real_path)
+                ),
+                _text(source_checksums.get("real_evaluation_sha256")),
+            ),
+        ]
+    )
+    expected_report_id = _text(
+        _mapping(candidate_report.get("metrics")).get("real_evaluation_report_id")
+    )
+    observed_report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
+    checks.append(
+        _check(
+            "real_evaluation_report_id_matches",
+            (not real_path_raw and not expected_report_id)
+            or (bool(real_payload) and observed_report_id == expected_report_id),
+            f"expected={expected_report_id};observed={observed_report_id}",
+        )
+    )
+
+    weight_metadata_path_raw = _text(manifest.get("weight_path_metadata_path"))
+    weight_metadata_path = (
+        _resolve_project_path(Path(weight_metadata_path_raw)) if weight_metadata_path_raw else None
+    )
+    expected_weight_path = (
+        None if real_path is None else real_path.parent / "weight_path_metadata.json"
+    )
+    checks.extend(
+        [
+            _check(
+                "weight_metadata_path_matches_real_artifact",
+                (weight_metadata_path is None and expected_weight_path is None)
+                or (
+                    weight_metadata_path is not None
+                    and expected_weight_path is not None
+                    and weight_metadata_path.resolve(strict=False)
+                    == expected_weight_path.resolve(strict=False)
+                ),
+                weight_metadata_path_raw,
+            ),
+            _check(
+                "weight_metadata_checksum_matches",
+                (
+                    weight_metadata_path is None
+                    and not _text(source_checksums.get("weight_path_metadata_sha256"))
+                )
+                or (
+                    weight_metadata_path is not None
+                    and _text(source_checksums.get("weight_path_metadata_sha256"))
+                    == _file_sha256_path(weight_metadata_path)
+                ),
+                _text(source_checksums.get("weight_path_metadata_sha256")),
+            ),
+        ]
+    )
+    weight_inspection = (
+        _inspect_weight_path_evidence(observed_report_id, real_path.parent)
+        if real_path is not None and real_payload and observed_report_id
+        else _missing_weight_path_inspection()
+    )
+    observed_weight_status = _text(
+        weight_inspection.get("observed_attribution_completeness"), WEIGHT_PATH_INCOMPLETE
+    )
+    declared_weight_status = _text(
+        weight_inspection.get("declared_attribution_completeness"), WEIGHT_PATH_INCOMPLETE
+    )
+    checks.extend(
+        [
+            _check(
+                "weight_path_observed_completeness_matches",
+                _text(manifest.get("weight_path_observed_completeness"))
+                == observed_weight_status,
+                observed_weight_status,
+            ),
+            _check(
+                "weight_path_declared_completeness_matches",
+                _text(manifest.get("weight_path_declared_completeness"))
+                == declared_weight_status,
+                declared_weight_status,
+            ),
+            _check(
+                "weight_path_limitations_match",
+                _texts(manifest.get("weight_path_limitations"))
+                == _texts(weight_inspection.get("limitations")),
+                ",".join(_texts(weight_inspection.get("limitations"))),
+            ),
+        ]
+    )
+
+    expected_delta = _candidate_weight_delta_rows(
+        real_payload or None,
+        daily_weights_path=(None if real_path is None else real_path.parent / "daily_weights.csv"),
+        candidate_id=candidate_id,
+        source_sweep_id=source_sweep_id,
+    )
+    actual_delta = _read_csv_as_text(candidate_dir / "weight_path_delta.csv")
+    delta_matches = _candidate_weight_delta_csv_matches(actual_delta, expected_delta)
+    checks.append(
+        _check(
+            "weight_path_delta_matches_source",
+            delta_matches,
+            "expected_rows="
+            f"{len(expected_delta)};actual_rows="
+            f"{0 if actual_delta is None else len(actual_delta)}",
+        )
+    )
+    expected_incomplete_reasons: list[str] = []
+    if not real_payload:
+        expected_incomplete_reasons.append("missing_real_evaluation_artifact")
+    if observed_weight_status == WEIGHT_PATH_INCOMPLETE:
+        expected_incomplete_reasons.append("MISSING_DAILY_WEIGHT_PATH")
+    if real_payload and observed_weight_status != WEIGHT_PATH_INCOMPLETE and not expected_delta:
+        expected_incomplete_reasons.append("MISSING_WEIGHT_DELTA_EVIDENCE")
+    expected_status = (
+        WEIGHT_PATH_INCOMPLETE if expected_incomplete_reasons else WEIGHT_PATH_PARTIAL
+    )
+    checks.extend(
+        [
+            _check(
+                "incomplete_reasons_match_source",
+                _texts(manifest.get("incomplete_reasons")) == expected_incomplete_reasons,
+                ",".join(expected_incomplete_reasons),
+            ),
+            _check(
+                "attribution_status_matches_source",
+                _text(manifest.get("status")) == expected_status
+                and _text(manifest.get("attribution_completeness")) == expected_status,
+                expected_status,
+            ),
+            _check(
+                "complete_attribution_not_fabricated",
+                _text(manifest.get("status")) != WEIGHT_PATH_COMPLETE,
+                "path_and_aggregate_v2 is not complete explainability",
+            ),
+        ]
+    )
+    component_files = {
+        "rebalance_event_attribution": "rebalance_event_attribution.json",
+        "constraint_event_attribution": "constraint_event_attribution.json",
+        "drawdown_window_attribution": "drawdown_window_attribution.json",
+        "turnover_attribution": "turnover_attribution.json",
+        "dynamic_vs_static_gap_attribution": "dynamic_vs_static_gap_attribution.json",
+    }
+    component_statuses = _mapping(manifest.get("component_evidence_statuses"))
+    expected_component_status = (
+        WEIGHT_PATH_INCOMPLETE if expected_incomplete_reasons else WEIGHT_PATH_PARTIAL
+    )
+    checks.append(
+        _check(
+            "weight_delta_component_status_matches",
+            _text(component_statuses.get("weight_path_delta"))
+            == ("PASS" if expected_delta else WEIGHT_PATH_INCOMPLETE),
+            _text(component_statuses.get("weight_path_delta")),
+        )
+    )
+    for component_name, filename in component_files.items():
+        component = _mapping(_read_optional_json(candidate_dir / filename))
+        checks.extend(
+            [
+                _check(
+                    f"{component_name}_candidate_id_matches",
+                    _text(component.get("candidate_id")) == candidate_id,
+                    _text(component.get("candidate_id")),
+                ),
+                _check(
+                    f"{component_name}_source_sweep_matches",
+                    _text(component.get("source_sweep_id")) == source_sweep_id,
+                    _text(component.get("source_sweep_id")),
+                ),
+                _check(
+                    f"{component_name}_status_matches",
+                    _text(component.get("status")) == expected_component_status
+                    and _text(component_statuses.get(component_name))
+                    == expected_component_status,
+                    expected_component_status,
+                ),
+                _check(
+                    f"{component_name}_method_explicit",
+                    _text(component.get("attribution_method")) == "path_and_aggregate_v2",
+                    _text(component.get("attribution_method")),
+                ),
+                _check(
+                    f"{component_name}_source_analysis_status_present",
+                    bool(_text(component.get("source_analysis_status"))),
+                    _text(component.get("source_analysis_status")),
+                ),
+            ]
+        )
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    for filename, expected_checksum in output_checksums.items():
+        checks.append(
+            _check(
+                f"output_checksum_matches:{filename}",
+                _text(expected_checksum) == _file_sha256_path(candidate_dir / filename),
+                _text(expected_checksum),
+            )
+        )
+    checks.append(
+        _check(
+            "output_checksum_inventory_complete",
+            set(output_checksums)
+            == {
+                "weight_path_delta.csv",
+                *component_files.values(),
+                "candidate_attribution_report.md",
+            },
+            ",".join(sorted(output_checksums)),
+        )
+    )
+    return checks
+
+
+def _candidate_weight_delta_csv_matches(
+    actual: pd.DataFrame | None,
+    expected: Sequence[Mapping[str, Any]],
+) -> bool:
+    if not expected:
+        return actual is not None and actual.empty and list(actual.columns) == ["status"]
+    required = {
+        "as_of",
+        "candidate_id",
+        "source_sweep_id",
+        "reference_group",
+        "symbol",
+        "candidate_weight",
+        "baseline_weight",
+        "delta",
+    }
+    if actual is None or len(actual) != len(expected) or not required <= set(actual.columns):
+        return False
+    actual_by_symbol = {row["symbol"]: row for row in actual.to_dict(orient="records")}
+    for expected_row in expected:
+        row = actual_by_symbol.get(_text(expected_row.get("symbol")))
+        if row is None:
+            return False
+        for field in ("as_of", "candidate_id", "source_sweep_id", "reference_group"):
+            if _text(row.get(field)) != _text(expected_row.get(field)):
+                return False
+        for field in ("candidate_weight", "baseline_weight", "delta"):
+            try:
+                if abs(float(row.get(field)) - float(expected_row.get(field))) > 1e-9:
+                    return False
+            except (TypeError, ValueError):
+                return False
+        if abs(
+            float(row["candidate_weight"])
+            - float(row["baseline_weight"])
+            - float(row["delta"])
+        ) > 1e-6:
+            return False
+    return True
 
 
 def weight_path_report_payload(
@@ -10277,13 +10790,20 @@ def render_injection_audit_markdown(payload: Mapping[str, Any]) -> str:
 
 
 def render_candidate_attribution_markdown(payload: Mapping[str, Any]) -> str:
+    component_statuses = _mapping(payload.get("component_evidence_statuses"))
     lines = [
         f"# Dynamic v3 Rescue Candidate Attribution {payload.get('candidate_id')}",
         "",
         f"- Source sweep: {payload.get('source_sweep_id')}",
         f"- Status: {payload.get('status')}",
         f"- Explainability: {payload.get('explainability_status')}",
+        f"- Attribution method: {payload.get('attribution_method')}",
+        "- Weight path declared/observed: "
+        f"{payload.get('weight_path_declared_completeness')} / "
+        f"{payload.get('weight_path_observed_completeness')}",
+        f"- Weight path limitations: {', '.join(_texts(payload.get('weight_path_limitations')))}",
         f"- Incomplete reasons: {', '.join(_texts(payload.get('incomplete_reasons')))}",
+        f"- Source mutation performed: {str(payload.get('source_mutation_performed')).lower()}",
         "",
         "## Attribution Summary",
         f"- Constraint: {_mapping(payload.get('constraint_event_attribution')).get('summary')}",
@@ -10292,9 +10812,16 @@ def render_candidate_attribution_markdown(payload: Mapping[str, Any]) -> str:
         "- Dynamic-vs-static gap: "
         f"{_mapping(payload.get('dynamic_vs_static_gap_attribution')).get('summary')}",
         "",
+        "## Component Evidence Status",
+    ]
+    lines.extend(f"- {name}: {status}" for name, status in sorted(component_statuses.items()))
+    lines.extend(
+        [
+        "",
         "## Safety",
         "- production_candidate_generated=false",
-    ]
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -17819,6 +18346,19 @@ def _inspect_weight_path_evidence(evaluation_id: str, search_root: Path) -> dict
     }
 
 
+def _missing_weight_path_inspection() -> dict[str, Any]:
+    return {
+        "weight_path_dir": "",
+        "matching_directory_count": 0,
+        "metadata": {},
+        "declared_attribution_completeness": WEIGHT_PATH_INCOMPLETE,
+        "observed_attribution_completeness": WEIGHT_PATH_INCOMPLETE,
+        "checks": [],
+        "failed_check_count": 0,
+        "limitations": ["weight_path_artifact_not_available"],
+    }
+
+
 def _read_csv_as_text(path: Path) -> pd.DataFrame | None:
     if not path.is_file():
         return None
@@ -18604,16 +19144,66 @@ def _latest_weight_hash_from_candidate(candidate: Mapping[str, Any]) -> str:
     return _stable_id(weights)
 
 
-def _candidate_weight_delta_rows(real_payload: Mapping[str, Any] | None) -> list[dict[str, Any]]:
-    if not real_payload:
+def _candidate_weight_delta_rows(
+    real_payload: Mapping[str, Any] | None,
+    *,
+    daily_weights_path: Path | None,
+    candidate_id: str,
+    source_sweep_id: str,
+) -> list[dict[str, Any]]:
+    if not real_payload or daily_weights_path is None:
         return []
-    best = _mapping(real_payload.get("best_candidate"))
-    reference = _first_row_by_group(real_payload.get("comparison_table"), "dynamic_v0_4")
-    best_weights = _mapping(best.get("latest_weights"))
-    reference_weights = _mapping(reference.get("latest_weights"))
+    daily = _read_csv_as_text(daily_weights_path)
+    required = {"date", "symbol", "weight", "candidate_id"}
+    if daily is None or daily.empty or not required <= set(daily.columns):
+        return []
+    parsed_dates = pd.to_datetime(daily["date"], errors="coerce")
+    if not bool(parsed_dates.notna().all()):
+        return []
+    latest_date = parsed_dates.max()
+    latest = daily.loc[parsed_dates.eq(latest_date)].copy()
+    if latest.empty or not bool(latest["candidate_id"].eq(candidate_id).all()):
+        return []
+    candidate_weights = pd.to_numeric(latest["weight"], errors="coerce")
+    if not bool(candidate_weights.notna().all()):
+        return []
+    best_weights = {
+        _text(symbol): float(weight)
+        for symbol, weight in zip(latest["symbol"], candidate_weights, strict=True)
+    }
+    reference_rows = _records(
+        _mapping(real_payload.get("comparison_daily_paths")).get("static_base_candidate")
+    )
+    if not reference_rows:
+        return []
+    reference_date = _date_from_any(reference_rows[-1].get("signal_date"))
+    if reference_date != latest_date.date():
+        return []
+    reference_weights_raw = _json_mapping(reference_rows[-1].get("target_weights_json"))
+    try:
+        reference_weights = {
+            _text(symbol): float(weight) for symbol, weight in reference_weights_raw.items()
+        }
+    except (TypeError, ValueError):
+        return []
+    reference_values = pd.Series(list(reference_weights.values()), dtype="float64")
+    if (
+        reference_values.empty
+        or reference_values.abs().eq(float("inf")).any()
+        or (reference_values < -WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).any()
+        or (reference_values > 1.0 + WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).any()
+        or abs(float(reference_values.sum()) - 1.0) > WEIGHT_PATH_WEIGHT_SUM_TOLERANCE
+    ):
+        return []
+    if not best_weights or not reference_weights:
+        return []
     symbols = sorted(set(best_weights) | set(reference_weights))
     return [
         {
+            "as_of": latest_date.date().isoformat(),
+            "candidate_id": candidate_id,
+            "source_sweep_id": source_sweep_id,
+            "reference_group": "static_base_candidate",
             "symbol": symbol,
             "candidate_weight": float(best_weights.get(symbol, 0.0)),
             "baseline_weight": float(reference_weights.get(symbol, 0.0)),

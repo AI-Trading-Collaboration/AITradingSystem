@@ -151,6 +151,20 @@ small_real 链路完成后必须执行以下 gate；需要具体 id 的命令使
 - 第 13.2 节所有 validate 命令已 PASS；`aits docs report-contract --latest` PASS，warnings=0
 - 已知 warning：`prices_download_manifest_checksum_missing`；必须在后续 owner review 中继续披露
 
+### 13.5 ARCH-004G2.4R Candidate Evidence 加固
+
+状态：`BASELINE_DONE_VALIDATING`
+
+审计发现TRADING-105当前存在四类证据缺口：attribution隐式重写candidate report；weight completeness只读metadata声明；真实candidate weight delta读取错误对象而生成空CSV；validator只检查存在性。G2.4R验收补充为：
+
+- `candidate report`是显式上游artifact；`candidate attribution`缺report时fail closed，不自动生成或修改；
+- real evaluation路径必须归属于指定sweep/candidate，report id与candidate result一致；
+- attribution必须消费G2.4Q重新推导的observed weight-path completeness和limitations；
+- candidate latest weights从validated `daily_weights.csv`最后日期读取，reference weights来自同一real report中有完整daily path的`static_base_candidate`，`delta=candidate-reference`逐行可复算；当前artifact未导出dynamic_v0_4 daily path，不得把summary metrics反推成v0.4 weights；
+- manifest记录candidate report、real evaluation、weight metadata的路径与checksum，以及component evidence status；
+- validator重新读取source和所有输出，验证id/path/checksum/schema/row/delta/status parity；诚实缺source的`INCOMPLETE` package可以证明“证据不足”，但伪造`PARTIAL/COMPLETE`或串线必须FAIL；
+- CLI迁canonical owner，命令树、options/default/help/exit保持冻结；不运行sweep或real evaluation，不promotion、不改source、不产生production/broker effect。
+
 ## 已知限制
 
 - `small_real` 的 `max_constraint_hit_rate=0.65` 是 workflow-smoke 校准值，依据 2026-06-05 real evaluator 候选约 0.642-0.647 的 constraint-hit range；它只允许不劣于 reference path 的候选进入 observe-only/manual-review 下游 artifact 验证，不是 promotion gate。
@@ -160,6 +174,8 @@ small_real 链路完成后必须执行以下 gate；需要具体 id 的命令使
 
 ## 进展记录
 
+- 2026-07-12：G2.4R正确性修复与CLI迁移完成。Candidate attribution不再隐式写candidate report；manifest锁定candidate results/report/real/weight source与checksums，消费G2.4Q observed weight evidence，从candidate/static-base同run daily paths生成非空可复算delta，五类component保留source analysis并明确`path_and_aggregate_v2`。Validator从source重算lineage/delta/status/checksums，伪造状态、上游漂移和delta篡改均FAIL。Focused 62、architecture-fitness 201通过。TRADING-105保持`VALIDATING`：当前整体最多PARTIAL，后续需导出dynamic_v0_4 daily path并把aggregate proxies升级为逐event/逐window attribution。
+- 2026-07-12：ARCH-004G2.4R进入`IN_PROGRESS`。确认现有真实candidate attribution的`weight_path_delta.csv`只有`status`表头，但manifest可声明`PARTIAL`；根因是candidate weight从错误对象读取，且validator未检查内容。同步冻结显式candidate-report prerequisite、source lineage/path ownership、G2.4Q observed completeness、真实daily latest-weight delta与content-derived validation合同。
 - 2026-07-11：ARCH-004G2.4P复核发现旧injection audit存在参数归因混杂：所有参数共享全体候选config/metric/weight hash distinct count，不能证明单一参数效应；同时截断grid前缀不能保证覆盖排序靠前的参数轴。TRADING-102继续保持`VALIDATING`，验收补充为base+逐轴OFAT matched pair、pair-only effect classification、独立`parameter_effect_summary.json`、matched-pair coverage disclosure，以及budget不足时`INCOMPLETE`且`validate-injection-audit` fail closed。既有2026-06-06 injection artifact只能证明旧workflow执行过，不能继续作为逐参数有效性结论。
 - 2026-07-11：G2.4P正确性修复与CLI迁移完成：默认候选顺序固定为共同base+7个逐轴pair，effect只使用其他required parameters一致的pairs；新增独立summary artifact、legacy artifact结构化降级与pair coverage validation。Focused 53、reporting/policy组合70、architecture-fitness 199通过。TRADING-102仍为`VALIDATING`，因为需要在当前真实cache上重跑完整20-candidate injection audit后，才能重新建立逐参数效果证据；旧artifact不再具备该证明力。
 - 2026-06-06：新增任务文档并进入 `IN_PROGRESS`，按 owner 粘贴的 TRADING-102～110 大功能开发计划启动实现。

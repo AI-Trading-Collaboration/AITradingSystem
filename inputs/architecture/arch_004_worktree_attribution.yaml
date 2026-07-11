@@ -190,6 +190,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_injection_audit.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_path.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_candidate_evidence.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py

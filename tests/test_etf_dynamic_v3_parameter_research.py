@@ -399,6 +399,88 @@ def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
     assert (sweep_dir / "candidates" / candidate_id / "candidate_report.json").exists()
 
 
+def test_candidate_attribution_requires_explicit_candidate_report(tmp_path: Path) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    sweep_output_dir = tmp_path / "sweeps"
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    candidate_id = _top_candidate_id(sweep_output_dir / sweep_id)
+    attribution_root = tmp_path / "candidate_attribution"
+
+    with pytest.raises(DynamicV3ParameterResearchError, match="candidate report is required"):
+        run_candidate_attribution(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=attribution_root,
+        )
+
+    assert not (attribution_root / candidate_id).exists()
+
+
+def test_candidate_attribution_validation_recomputes_status_and_source_checksum(
+    tmp_path: Path,
+) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    sweep_output_dir = tmp_path / "sweeps"
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    candidate_id = _top_candidate_id(sweep_output_dir / sweep_id)
+    candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        output_dir=sweep_output_dir,
+        write=True,
+    )
+    attribution_root = tmp_path / "candidate_attribution"
+    run_candidate_attribution(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=attribution_root,
+    )
+    assert (
+        validate_candidate_attribution_artifact(
+            candidate_id=candidate_id,
+            output_dir=attribution_root,
+        )["status"]
+        == "PASS"
+    )
+
+    manifest_path = attribution_root / candidate_id / "attribution_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["status"] = "PARTIAL"
+    manifest["attribution_completeness"] = "PARTIAL"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    forged = validate_candidate_attribution_artifact(
+        candidate_id=candidate_id,
+        output_dir=attribution_root,
+    )
+    assert forged["status"] == "FAIL"
+    assert "attribution_status_matches_source" in {
+        check["check_id"] for check in forged["checks"] if not check["passed"]
+    }
+
+    manifest["status"] = "INCOMPLETE"
+    manifest["attribution_completeness"] = "INCOMPLETE"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    candidate_report_path = (
+        sweep_output_dir / sweep_id / "candidates" / candidate_id / "candidate_report.json"
+    )
+    candidate_report_path.write_text(
+        candidate_report_path.read_text(encoding="utf-8") + "\n",
+        encoding="utf-8",
+    )
+    stale_source = validate_candidate_attribution_artifact(
+        candidate_id=candidate_id,
+        output_dir=attribution_root,
+    )
+    assert stale_source["status"] == "FAIL"
+    assert "candidate_report_checksum_matches" in {
+        check["check_id"] for check in stale_source["checks"] if not check["passed"]
+    }
+
+
 def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: Path) -> None:
     config_path = _tiny_config_path(tmp_path)
     sweep_output_dir = tmp_path / "sweeps"
@@ -883,6 +965,20 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     assert weight_metadata["status"] == "PASS"
     assert weight_metadata["production_effect"] == "none"
 
+    candidate_report_path = (
+        output_dir
+        / sweep_id
+        / "candidates"
+        / results[0]["candidate_id"]
+        / "candidate_report.json"
+    )
+    candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=results[0]["candidate_id"],
+        output_dir=output_dir,
+        write=True,
+    )
+    candidate_report_before = candidate_report_path.read_bytes()
     attribution = run_candidate_attribution(
         sweep_id=sweep_id,
         candidate_id=results[0]["candidate_id"],
@@ -891,6 +987,51 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     )
     assert attribution["report"]["status"] == "PARTIAL"
     assert attribution["report"]["attribution_completeness"] == "PARTIAL"
+    assert attribution["report"]["weight_path_observed_completeness"] == "PARTIAL"
+    assert candidate_report_path.read_bytes() == candidate_report_before
+    weight_delta = pd.read_csv(
+        tmp_path
+        / "candidate_attribution"
+        / results[0]["candidate_id"]
+        / "weight_path_delta.csv"
+    )
+    assert not weight_delta.empty
+    assert {
+        "as_of",
+        "candidate_id",
+        "source_sweep_id",
+        "reference_group",
+        "symbol",
+        "candidate_weight",
+        "baseline_weight",
+        "delta",
+    } <= set(weight_delta.columns)
+    assert (
+        weight_delta["candidate_weight"] - weight_delta["baseline_weight"]
+    ).sub(weight_delta["delta"]).abs().max() <= 1e-9
+    assert (
+        validate_candidate_attribution_artifact(
+            candidate_id=results[0]["candidate_id"],
+            output_dir=tmp_path / "candidate_attribution",
+        )["status"]
+        == "PASS"
+    )
+    weight_delta.loc[0, "delta"] = float(weight_delta.loc[0, "delta"]) + 0.1
+    weight_delta.to_csv(
+        tmp_path
+        / "candidate_attribution"
+        / results[0]["candidate_id"]
+        / "weight_path_delta.csv",
+        index=False,
+    )
+    broken_delta = validate_candidate_attribution_artifact(
+        candidate_id=results[0]["candidate_id"],
+        output_dir=tmp_path / "candidate_attribution",
+    )
+    assert broken_delta["status"] == "FAIL"
+    assert "weight_path_delta_matches_source" in {
+        check["check_id"] for check in broken_delta["checks"] if not check["passed"]
+    }
 
     window_audit = run_window_audit(
         as_of=pd.Timestamp("2022-12-01").date(),
@@ -1220,6 +1361,12 @@ def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
     sweep_id = sweep["sweep_id"]
     candidate_id = _top_candidate_id(sweep_output_dir / sweep_id)
 
+    candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        output_dir=sweep_output_dir,
+        write=True,
+    )
     attribution = run_candidate_attribution(
         sweep_id=sweep_id,
         candidate_id=candidate_id,

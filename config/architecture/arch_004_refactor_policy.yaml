@@ -1779,6 +1779,44 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: true
       evidence_validation_correctness_fix: true
+    g2_4_eighteenth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_candidate_evidence]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_candidate_evidence.py
+      legacy_callback_definitions_remaining: 0
+      explicit_candidate_report_prerequisite: true
+      attribution_source_mutation_allowed: false
+      candidate_results_and_report_checksums_required: true
+      real_artifact_sweep_candidate_ownership_required: true
+      observed_weight_path_completeness_required: true
+      weight_delta_recomputed_from_daily_paths: true
+      current_weight_reference: static_base_candidate
+      dynamic_v0_4_weights_may_be_inferred_from_summary: false
+      current_attribution_method: path_and_aggregate_v2
+      complete_attribution_allowed: false
+      validation_recomputes_lineage_delta_status_and_checksums: true
+      sweep_or_real_evaluation_execution_allowed: false
+      automatic_candidate_promotion_allowed: false
+      production_effect: none
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31144
+      legacy_root_lines_after: 31059
+      legacy_root_line_reduction: 85
+      legacy_root_top_level_functions_after: 944
+      legacy_root_command_decorators_after: 905
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 62}
+      architecture_fitness:
+        status: PASS
+        passed: 201
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T154650Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: true
+      evidence_validation_correctness_fix: true
     production_effect: none
 
 safety_boundary:

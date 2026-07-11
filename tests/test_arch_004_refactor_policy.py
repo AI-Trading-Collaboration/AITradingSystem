@@ -1900,7 +1900,34 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4q["migration"]["direct_writer_calls_after"] == 858
     assert phase_g2_4q["validation"]["focused"] == {"status": "PASS", "passed": 59}
     assert phase_g2_4q["validation"]["architecture_fitness"]["passed"] == 200
+    superseded_g2_4q = set(phase_g2_4q["superseded_source_paths"])
     for source in phase_g2_4q["sources"]:
+        if source["path"] in superseded_g2_4q:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4r = baseline["phase_g2_4r_etf_cli_dynamic_v3_candidate_evidence"]
+    assert phase_g2_4r["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    assert phase_g2_4r["migration"]["callback_count"] == 3
+    assert phase_g2_4r["migration"]["explicit_candidate_report_prerequisite"] is True
+    assert phase_g2_4r["migration"]["attribution_source_mutation_allowed"] is False
+    assert phase_g2_4r["migration"]["candidate_results_and_report_checksums_required"] is True
+    assert phase_g2_4r["migration"]["real_artifact_sweep_candidate_ownership_required"] is True
+    assert phase_g2_4r["migration"]["observed_weight_path_completeness_required"] is True
+    assert phase_g2_4r["migration"]["weight_delta_recomputed_from_daily_paths"] is True
+    assert phase_g2_4r["migration"]["current_weight_reference"] == "static_base_candidate"
+    assert phase_g2_4r["migration"]["dynamic_v0_4_weights_may_be_inferred_from_summary"] is False
+    assert phase_g2_4r["migration"]["current_attribution_method"] == "path_and_aggregate_v2"
+    assert phase_g2_4r["migration"]["complete_attribution_allowed"] is False
+    assert phase_g2_4r["migration"][
+        "validation_recomputes_lineage_delta_status_and_checksums"
+    ] is True
+    assert phase_g2_4r["migration"]["sweep_or_real_evaluation_execution_allowed"] is False
+    assert phase_g2_4r["migration"]["automatic_candidate_promotion_allowed"] is False
+    assert phase_g2_4r["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4r["validation"]["focused"] == {"status": "PASS", "passed": 62}
+    assert phase_g2_4r["validation"]["architecture_fitness"]["passed"] == 201
+    for source in phase_g2_4r["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 

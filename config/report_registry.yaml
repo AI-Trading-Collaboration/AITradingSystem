@@ -1580,13 +1580,16 @@ reports:
     command: aits etf dynamic-v3-rescue candidate attribution --sweep-id <sweep_id> --candidate-id <candidate_id>
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/weight_path_delta.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/*_attribution.json
       - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/candidate_attribution_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-105 explains candidate weight deltas, constraint events, drawdown,
-      turnover, and dynamic-vs-static gap; TRADING-112 daily weight path evidence
-      upgrades attribution to PARTIAL/COMPLETE and missing path evidence remains
-      INCOMPLETE rather than fabricated.
+      TRADING-105 locks the explicit candidate report and source checksums, derives
+      latest candidate-vs-static-base weights from validated daily paths, and
+      recomputes lineage, delta, component status, and output checksums. Missing
+      source/path evidence remains INCOMPLETE; current path_and_aggregate_v2 is
+      capped at PARTIAL rather than fabricating complete explainability.
     owner_action: review_candidate_attribution_before_promotion_pack_interpretation
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true

@@ -307,6 +307,30 @@ declared != observed -> validation FAIL
 
 当前 exporter 的真实结果是`minimal/PARTIAL`：已能解释daily target path、events和turnover，但缺`pre_constraint_weight`、`post_rescue_weight`、`constraint_limit`。后续优化空间不是把metadata改成`COMPLETE`，而是让真实计算链输出这些中间状态、增加constraint/rescue前后权重守恒测试、用独立replay核对return/cost，并在真实20-candidate run中验证不同参数的完整daily path差异。任何优化都必须保持evaluation目录唯一、source artifact不可变和no-promotion/no-production边界。
 
+#### Candidate attribution 证据链
+
+Candidate attribution回答“这个候选相对可复核reference具体改变了什么、这些差异来自哪份路径”，而不是重复输出candidate score。阶段边界是显式的：先由`candidate report`命令冻结candidate result视图，再由`candidate attribution`只读消费；缺candidate report时fail closed，不得在下游隐式补建或改写上游。
+
+| 输入 | 归属/校验 | 用途 |
+|---|---|---|
+| `candidate_results.jsonl` | 路径必须属于`<sweep_id>`；checksum冻结；candidate id唯一命中 | 证明candidate、parameters、metrics source与real artifact link来自指定sweep |
+| `candidate_report.json` | 路径必须为`<sweep>/candidates/<candidate>/`；id、sweep、parameters与result一致；checksum冻结 | attribution的显式上游视图 |
+| real evaluation JSON | 必须位于`<sweep>/real_evaluation/<candidate>/`；report id与candidate metrics一致 | aggregate constraint/drawdown/turnover/static-gap分析与comparison paths |
+| G2.4Q weight-path inspection | 从六类文件内容重新推导observed completeness，不相信metadata自述 | 决定daily path是否可用及其limitations |
+| `static_base_candidate` daily path | 与candidate来自同一real report并具有真实`target_weights_json` | 当前可审计的latest-weight reference |
+
+Latest weight delta按最后一个可验证signal date计算：
+
+```text
+candidate_weight(symbol, t_last) = validated daily_weights.csv 的最后日期权重
+reference_weight(symbol, t_last) = 同一 real report 的 static_base_candidate 最后日期 target weight
+delta(symbol) = candidate_weight - reference_weight
+```
+
+输出为`weight_path_delta.csv`、五类component attribution JSON、Markdown和manifest。Manifest记录source paths/checksums、declared/observed weight status、limitations、component status和output checksums；validator重新读取source并复算delta、lineage、status与checksum，而不是验证producer自己的声明。状态规则：source或weight core缺失、delta无法形成=`INCOMPLETE`；source和delta有效但constraint/rescue/drawdown/turnover/gap仍混合path summary与aggregate proxy=`PARTIAL`；当前`path_and_aggregate_v2`不得输出`COMPLETE`。
+
+为什么reference不是`dynamic_v0_4`：当前real artifact只有v0.4 summary metrics，没有导出v0.4 daily weights；从summary反推权重会伪造证据。后续优化入口是先扩展exporter提供同窗v0.4 daily path，再新增candidate-vs-v0.4 delta；同时把五类component从aggregate proxy升级到逐event、逐drawdown-window和逐turnover reconciliation。升级前必须保持`PARTIAL`，不能仅修改status字段。
+
 ### 5.8 Parameter injection audit
 
 参数进入effective policy不等于已经影响回测结果，而“不同候选总体上存在hash差异”也不能证明每个参数都有效。Dynamic-v3 Injection Audit因此采用one-factor-at-a-time matched-pair设计：
