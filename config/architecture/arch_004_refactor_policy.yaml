@@ -1637,6 +1637,41 @@ phase_g_execution:
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T125625Z/test_runtime_summary.json
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
+    g2_4_fourteenth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_data_provenance]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_provenance.py
+      legacy_callback_definitions_remaining: 0
+      inspect_and_validate_read_only: true
+      manifest_repair_requires_explicit_mode: true
+      supported_repair_mode: reconstruct-from-cache
+      repair_requires_all_cache_files: true
+      reconstructed_rows_use_current_file_checksums: true
+      reconstructed_source_label_required: cache_rebuild_from_existing_file
+      reconstructed_provenance_status_required: RECONSTRUCTED_MANIFEST
+      original_download_event_unavailable_disclosed: true
+      provider_or_endpoint_invention_allowed: false
+      reconstructed_may_claim_primary_download_provenance: false
+      candidate_or_backtest_execution_allowed: false
+      production_effect: none
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31464
+      legacy_root_lines_after: 31379
+      legacy_root_line_reduction: 85
+      legacy_root_top_level_functions_after: 956
+      legacy_root_command_decorators_after: 917
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 46}
+      architecture_fitness:
+        status: PASS
+        passed: 197
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T130854Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

@@ -729,6 +729,31 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_thirteenth["legacy_root_command_decorators_after"] == 920
     assert g2_4_thirteenth["focused_validation"] == {"status": "PASS", "passed": 45}
     assert g2_4_thirteenth["architecture_fitness"]["passed"] == 196
+    g2_4_fourteenth = phase_g["g2_current_plan"]["g2_4_fourteenth_slice"]
+    assert g2_4_fourteenth["status"] == "COMPLETE"
+    assert g2_4_fourteenth["callback_count"] == 3
+    assert g2_4_fourteenth["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_fourteenth["inspect_and_validate_read_only"] is True
+    assert g2_4_fourteenth["manifest_repair_requires_explicit_mode"] is True
+    assert g2_4_fourteenth["supported_repair_mode"] == "reconstruct-from-cache"
+    assert g2_4_fourteenth["repair_requires_all_cache_files"] is True
+    assert g2_4_fourteenth["reconstructed_rows_use_current_file_checksums"] is True
+    assert g2_4_fourteenth["reconstructed_source_label_required"] == (
+        "cache_rebuild_from_existing_file"
+    )
+    assert g2_4_fourteenth["reconstructed_provenance_status_required"] == (
+        "RECONSTRUCTED_MANIFEST"
+    )
+    assert g2_4_fourteenth["original_download_event_unavailable_disclosed"] is True
+    assert g2_4_fourteenth["provider_or_endpoint_invention_allowed"] is False
+    assert g2_4_fourteenth["reconstructed_may_claim_primary_download_provenance"] is False
+    assert g2_4_fourteenth["candidate_or_backtest_execution_allowed"] is False
+    assert g2_4_fourteenth["direct_writer_calls_after"] == 858
+    assert g2_4_fourteenth["legacy_root_lines_after"] == 31379
+    assert g2_4_fourteenth["legacy_root_top_level_functions_after"] == 956
+    assert g2_4_fourteenth["legacy_root_command_decorators_after"] == 917
+    assert g2_4_fourteenth["focused_validation"] == {"status": "PASS", "passed": 46}
+    assert g2_4_fourteenth["architecture_fitness"]["passed"] == 197
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1730,6 +1755,26 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4m["validation"]["focused"] == {"status": "PASS", "passed": 45}
     assert phase_g2_4m["validation"]["architecture_fitness"]["passed"] == 196
     for source in phase_g2_4m["sources"]:
+        if source.get("historical_phase_g2_4m_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4N"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4n_etf_cli_dynamic_v3_data_provenance.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4n = baseline["phase_g2_4n_etf_cli_dynamic_v3_data_provenance"]
+    assert phase_g2_4n["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4n["migration"]["callback_count"] == 3
+    assert phase_g2_4n["migration"]["inspect_and_validate_read_only"] is True
+    assert phase_g2_4n["migration"]["supported_repair_mode"] == "reconstruct-from-cache"
+    assert phase_g2_4n["migration"]["repair_requires_all_cache_files"] is True
+    assert phase_g2_4n["migration"]["original_download_event_unavailable_disclosed"] is True
+    assert phase_g2_4n["migration"]["provider_or_endpoint_invention_allowed"] is False
+    assert phase_g2_4n["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4n["validation"]["focused"] == {"status": "PASS", "passed": 46}
+    assert phase_g2_4n["validation"]["architecture_fitness"]["passed"] == 197
+    for source in phase_g2_4n["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1752,7 +1797,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4L_COMPLETE_G2_4M_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4M_COMPLETE_G2_4N_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
