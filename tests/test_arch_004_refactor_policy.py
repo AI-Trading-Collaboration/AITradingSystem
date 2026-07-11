@@ -427,6 +427,16 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_3_fifth["legacy_root_command_decorators_after"] == 977
     assert g2_3_fifth["focused_validation"] == {"status": "PASS", "passed": 84}
     assert g2_3_fifth["architecture_fitness"]["passed"] == 179
+    g2_3_sixth = phase_g["g2_current_plan"]["g2_3_sixth_slice"]
+    assert g2_3_sixth["callback_count"] == 4
+    assert g2_3_sixth["legacy_callback_definitions_remaining"] == 0
+    assert g2_3_sixth["legacy_helper_definitions_remaining"] == 0
+    assert g2_3_sixth["legacy_parameter_review_imports_remaining"] == 0
+    assert g2_3_sixth["canonical_date_helper_reused"] == "weekly_review_date"
+    assert g2_3_sixth["legacy_root_top_level_functions_after"] == 1022
+    assert g2_3_sixth["legacy_root_command_decorators_after"] == 973
+    assert g2_3_sixth["focused_validation"] == {"status": "PASS", "passed": 65}
+    assert g2_3_sixth["architecture_fitness"]["passed"] == 180
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1083,6 +1093,26 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3e["validation"]["focused"] == {"status": "PASS", "passed": 84}
     assert phase_g2_3e["validation"]["architecture_fitness"]["passed"] == 179
     for source in phase_g2_3e["sources"]:
+        if source.get("historical_phase_g2_3e_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.3F"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_3f_etf_cli_parameter_review.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_3f = baseline["phase_g2_3f_etf_cli_parameter_review"]
+    assert phase_g2_3f["status"] == "COMPLETE_G2_3_CONTINUES"
+    assert phase_g2_3f["migration"]["callback_count"] == 4
+    assert phase_g2_3f["migration"]["shared_helper_count"] == 1
+    assert phase_g2_3f["migration"]["canonical_date_helper_reused"] == "weekly_review_date"
+    assert phase_g2_3f["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_3f["migration"]["legacy_helper_definitions_remaining"] == 0
+    assert phase_g2_3f["migration"]["legacy_parameter_review_imports_remaining"] == 0
+    assert phase_g2_3f["migration"]["reporting_behavior_changed"] is False
+    assert phase_g2_3f["validation"]["focused"] == {"status": "PASS", "passed": 65}
+    assert phase_g2_3f["validation"]["architecture_fitness"]["passed"] == 180
+    for source in phase_g2_3f["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
