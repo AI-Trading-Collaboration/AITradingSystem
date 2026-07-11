@@ -17,6 +17,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v2_review as dynamic_v2_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_failure_attribution as dynamic_v3_failure_attribution_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_real_evaluation as dynamic_v3_real_evaluation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -48,6 +51,7 @@ __all__ = [
     "dynamic_v2_review_commands",
     "dynamic_v3_rescue_commands",
     "dynamic_v3_real_evaluation_commands",
+    "dynamic_v3_failure_attribution_commands",
     "etf_app",
     "operations_commands",
     "parameter_review_commands",

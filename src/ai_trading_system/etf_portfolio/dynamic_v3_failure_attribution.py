@@ -635,11 +635,13 @@ def build_dynamic_v3_failure_attribution_validation_report(
     / "ai_trading_system"
     / "reports"
     / "reader_brief.py",
-    cli_path: Path = PROJECT_ROOT
+    command_owner_path: Path = PROJECT_ROOT
     / "src"
     / "ai_trading_system"
-    / "cli_commands"
-    / "etf_portfolio.py",
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio"
+    / "dynamic_v3_failure_attribution.py",
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
@@ -742,7 +744,7 @@ def build_dynamic_v3_failure_attribution_validation_report(
         and "Dynamic v0.3 Failure Attribution" in reader_text,
         "Reader Brief exposes Dynamic v0.3 Failure Attribution section",
     )
-    cli_text = _read_text(cli_path)
+    cli_text = _read_text(command_owner_path)
     _append_check(
         checks,
         "cli_commands_visible",
