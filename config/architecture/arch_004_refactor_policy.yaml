@@ -879,8 +879,8 @@ phase_g_execution:
     requirement_path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
     stages:
       G2_1_command_registry_and_golden_contract: COMPLETE
-      G2_2_registration_shell_and_shared_parameters: IN_PROGRESS
-      G2_3_data_operations_reporting_groups: NOT_STARTED
+      G2_2_registration_shell_and_shared_parameters: COMPLETE
+      G2_3_data_operations_reporting_groups: IN_PROGRESS
       G2_4_research_shadow_portfolio_groups: NOT_STARTED
       G2_5_freeze_deprecation_and_closeout: NOT_STARTED
     command_groups: [data, research, portfolio, shadow, operations, reporting]
@@ -911,6 +911,36 @@ phase_g_execution:
         current_direct_writer_calls: 861
         violation_count: 0
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T065844Z/test_runtime_summary.json
+    g2_2_registration_shell:
+      status: COMPLETE
+      canonical_registration: src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
+      canonical_export: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+      legacy_root: src/ai_trading_system/cli_commands/etf_portfolio.py
+      typer_apps_moved: 291
+      add_typer_relationships_moved: 290
+      legacy_typer_app_definitions_remaining: 0
+      legacy_add_typer_relationships_remaining: 0
+      legacy_root_lines_before: 37604
+      legacy_root_lines_after: 36045
+      legacy_root_line_reduction: 1559
+      legacy_root_bytes_before: 1579334
+      legacy_root_bytes_after: 1520029
+      legacy_root_byte_reduction: 59305
+      top_level_functions_unchanged: 1049
+      command_decorators_unchanged: 993
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      node_contracts_equal: true
+      callback_functions_moved: 0
+      real_cli_help_fixtures: [data, portfolio]
+      focused_validation: {status: PASS, passed: 341, file_count: 25}
+      contract_characterization: {status: PASS, passed: 6}
+      architecture_fitness:
+        status: PASS
+        passed: 174
+        current_direct_writer_calls: 861
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T071517Z/test_runtime_summary.json
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

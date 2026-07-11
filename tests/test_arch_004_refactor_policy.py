@@ -358,8 +358,8 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g2_current_plan"]["implementation_started_in_g1_closeout_slice"] is False
     assert phase_g["g2_current_plan"]["stages"] == {
         "G2_1_command_registry_and_golden_contract": "COMPLETE",
-        "G2_2_registration_shell_and_shared_parameters": "IN_PROGRESS",
-        "G2_3_data_operations_reporting_groups": "NOT_STARTED",
+        "G2_2_registration_shell_and_shared_parameters": "COMPLETE",
+        "G2_3_data_operations_reporting_groups": "IN_PROGRESS",
         "G2_4_research_shadow_portfolio_groups": "NOT_STARTED",
         "G2_5_freeze_deprecation_and_closeout": "NOT_STARTED",
     }
@@ -367,6 +367,19 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g2_current_plan"]["g2_1_contract"]["duplicate_path_count"] == 0
     assert phase_g["g2_current_plan"]["g2_1_contract"]["callback_location_in_contract"] is False
     assert phase_g["g2_current_plan"]["g2_1_contract"]["architecture_fitness"]["passed"] == 171
+    g2_2 = phase_g["g2_current_plan"]["g2_2_registration_shell"]
+    assert g2_2["typer_apps_moved"] == 291
+    assert g2_2["add_typer_relationships_moved"] == 290
+    assert g2_2["legacy_typer_app_definitions_remaining"] == 0
+    assert g2_2["legacy_add_typer_relationships_remaining"] == 0
+    assert g2_2["legacy_root_line_reduction"] == 1559
+    assert g2_2["top_level_functions_unchanged"] == 1049
+    assert g2_2["command_decorators_unchanged"] == 993
+    assert g2_2["callback_functions_moved"] == 0
+    assert g2_2["focused_validation"] == {"status": "PASS", "passed": 341, "file_count": 25}
+    assert g2_2["contract_characterization"] == {"status": "PASS", "passed": 6}
+    assert g2_2["architecture_fitness"]["passed"] == 174
+    assert g2_2["runtime_behavior_changed"] is False
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -897,6 +910,39 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_1["validation"]["focused"] == {"status": "PASS", "passed": 3}
     assert phase_g2_1["validation"]["architecture_fitness"]["passed"] == 171
     for source in phase_g2_1["sources"]:
+        if source.get("historical_phase_g2_1_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.2"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_2_etf_cli_registration_shell.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_2 = baseline["phase_g2_2_etf_cli_registration_shell"]
+    assert phase_g2_2["status"] == "COMPLETE_G2_3_IN_PROGRESS"
+    assert phase_g2_2["migration"] == {
+        "typer_apps_moved": 291,
+        "add_typer_relationships_moved": 290,
+        "legacy_typer_app_definitions_remaining": 0,
+        "legacy_add_typer_relationships_remaining": 0,
+        "legacy_root_lines_before": 37604,
+        "legacy_root_lines_after": 36045,
+        "legacy_root_line_reduction": 1559,
+        "top_level_functions_unchanged": 1049,
+        "command_decorators_unchanged": 993,
+        "tree_sha256": "afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2",
+        "node_contracts_equal": True,
+        "callback_functions_moved": 0,
+        "runtime_behavior_changed": False,
+        "production_effect": "none",
+    }
+    assert phase_g2_2["validation"]["cli_consumer_focused"] == {
+        "status": "PASS",
+        "passed": 341,
+        "file_count": 25,
+    }
+    assert phase_g2_2["validation"]["architecture_fitness"]["passed"] == 174
+    for source in phase_g2_2["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -919,7 +965,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_1_COMPLETE_G2_2_IN_PROGRESS"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_2_COMPLETE_G2_3_IN_PROGRESS"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

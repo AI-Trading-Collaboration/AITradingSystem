@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_1_COMPLETE_G2_2_IN_PROGRESS
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_2_COMPLETE_G2_3_IN_PROGRESS
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -153,6 +153,11 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/architecture/cli_contract.py
   - scripts/architecture_etf_cli.py
   - inputs/architecture/arch_004g2_etf_cli_contract.yaml
+  - src/ai_trading_system/interfaces/__init__.py
+  - src/ai_trading_system/interfaces/cli/__init__.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
+  - src/ai_trading_system/cli_commands/etf_portfolio.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/requirements/ARCH-004F3_Reporting_Architecture.md

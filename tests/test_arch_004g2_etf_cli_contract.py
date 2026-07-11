@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import ast
+import hashlib
 from pathlib import Path
 
 import pytest
 import typer
+from typer.testing import CliRunner
 
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
+from ai_trading_system.interfaces.cli.etf_portfolio import etf_app as canonical_etf_app
 from ai_trading_system.platform.architecture import (
     CLI_CONTRACT_SCHEMA_VERSION,
     CliContractError,
@@ -18,6 +22,9 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATH = PROJECT_ROOT / "src/ai_trading_system/cli_commands/etf_portfolio.py"
 BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_004g2_etf_cli_contract.yaml"
+REGISTRATION_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py"
+)
 
 
 def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
@@ -82,5 +89,61 @@ def test_g2_1_cli_contract_detects_option_default_and_help_drift(tmp_path: Path)
         assert_frozen_cli_contract(after_contract, baseline_path=frozen_path)
 
 
+def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    registration_tree = ast.parse(REGISTRATION_PATH.read_text(encoding="utf-8"))
+
+    assert canonical_etf_app is etf_app
+    assert _typer_app_count(legacy_tree) == 0
+    assert _add_typer_count(legacy_tree) == 0
+    assert _typer_app_count(registration_tree) == 291
+    assert _add_typer_count(registration_tree) == 290
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 36045
+    assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_sha256"),
+    [
+        (["data", "--help"], "a3699045160cf408407036e9d4b9d6433ad4b7518ccfdd9656a8082525109a3f"),
+        (
+            ["portfolio", "--help"],
+            "5b6a33a94f50471ec8b4f811f8b3ba51060483b9e963a9f0d0e50dae8045d161",
+        ),
+    ],
+)
+def test_g2_2_real_cli_help_fixtures_preserve_bytes(
+    args: list[str],
+    expected_sha256: str,
+) -> None:
+    result = CliRunner().invoke(etf_app, args, terminal_width=120, color=False)
+
+    assert result.exit_code == 0
+    assert result.exception is None
+    assert hashlib.sha256(result.stdout.encode("utf-8")).hexdigest() == expected_sha256
+
+
 def __file_path() -> Path:
     return Path(__file__).resolve()
+
+
+def _typer_app_count(tree: ast.Module) -> int:
+    return sum(
+        isinstance(node, (ast.Assign, ast.AnnAssign))
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Attribute)
+        and isinstance(node.value.func.value, ast.Name)
+        and node.value.func.value.id == "typer"
+        and node.value.func.attr == "Typer"
+        for node in tree.body
+    )
+
+
+def _add_typer_count(tree: ast.Module) -> int:
+    return sum(
+        isinstance(node, ast.Expr)
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Attribute)
+        and node.value.func.attr == "add_typer"
+        for node in tree.body
+    )
