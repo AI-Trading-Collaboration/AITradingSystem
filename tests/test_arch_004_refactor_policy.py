@@ -496,6 +496,22 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_first["legacy_root_command_decorators_after"] == 960
     assert g2_4_first["focused_validation"] == {"status": "PASS", "passed": 36}
     assert g2_4_first["architecture_fitness"]["passed"] == 184
+    g2_4_second = phase_g["g2_current_plan"]["g2_4_second_slice"]
+    assert g2_4_second["status"] == "COMPLETE"
+    assert g2_4_second["callback_count"] == 4
+    assert g2_4_second["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_second["legacy_shadow_ready_review_imports_remaining"] == 0
+    assert g2_4_second["candidate_governance_artifact_write_allowed"] is True
+    assert g2_4_second["decision_journal_write_allowed"] is False
+    assert g2_4_second["approved_enrollment_artifact_write_allowed"] is True
+    assert g2_4_second["automatic_paper_shadow_execution_allowed"] is False
+    assert g2_4_second["runtime_registry_mutation_allowed"] is False
+    assert g2_4_second["direct_writer_calls_after"] == 858
+    assert g2_4_second["legacy_root_lines_after"] == 33656
+    assert g2_4_second["legacy_root_top_level_functions_after"] == 998
+    assert g2_4_second["legacy_root_command_decorators_after"] == 956
+    assert g2_4_second["focused_validation"] == {"status": "PASS", "passed": 21}
+    assert g2_4_second["architecture_fitness"]["passed"] == 185
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1247,6 +1263,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4a["validation"]["focused"] == {"status": "PASS", "passed": 36}
     assert phase_g2_4a["validation"]["architecture_fitness"]["passed"] == 184
     for source in phase_g2_4a["sources"]:
+        if source.get("historical_phase_g2_4a_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4B"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4b_etf_cli_shadow_review.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4b = baseline["phase_g2_4b_etf_cli_shadow_review"]
+    assert phase_g2_4b["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4b["migration"]["callback_count"] == 4
+    assert phase_g2_4b["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_4b["migration"]["legacy_shadow_ready_review_imports_remaining"] == 0
+    assert phase_g2_4b["migration"]["candidate_governance_artifact_write_allowed"] is True
+    assert phase_g2_4b["migration"]["decision_journal_write_allowed"] is False
+    assert phase_g2_4b["migration"]["automatic_paper_shadow_execution_allowed"] is False
+    assert phase_g2_4b["migration"]["runtime_registry_mutation_allowed"] is False
+    assert phase_g2_4b["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4b["validation"]["focused"] == {"status": "PASS", "passed": 21}
+    assert phase_g2_4b["validation"]["architecture_fitness"]["passed"] == 185
+    for source in phase_g2_4b["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1269,7 +1306,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_3_COMPLETE_G2_4A_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4A_COMPLETE_G2_4B_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

@@ -11,6 +11,7 @@ from ai_trading_system.interfaces.cli.etf_portfolio import reporting as reportin
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     satellite_attribution as satellite_attribution_commands,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import shadow_review as shadow_review_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     trend_calibration as trend_calibration_commands,
 )
@@ -25,6 +26,7 @@ __all__ = [
     "operations_commands",
     "parameter_review_commands",
     "reporting_commands",
+    "shadow_review_commands",
     "satellite_attribution_commands",
     "weekly_review_commands",
     "trend_calibration_commands",

@@ -1230,6 +1230,39 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
       production_effect: none
+    g2_4_second_slice:
+      status: COMPLETE
+      command_groups: [shadow_review]
+      callback_count: 4
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py
+      canonical_helpers_reused: [artifact_stem, load_optional_json_payload]
+      legacy_callback_definitions_remaining: 0
+      legacy_shadow_ready_review_imports_remaining: 0
+      candidate_governance_artifact_write_allowed: true
+      decision_journal_write_allowed: false
+      decision_journal_link_record_allowed: true
+      approved_enrollment_artifact_write_allowed: true
+      automatic_paper_shadow_execution_allowed: false
+      runtime_registry_mutation_allowed: false
+      production_runtime_state_mutation_allowed: false
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 33950
+      legacy_root_lines_after: 33656
+      legacy_root_line_reduction: 294
+      legacy_root_top_level_functions_after: 998
+      legacy_root_command_decorators_after: 956
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 21}
+      architecture_fitness:
+        status: PASS
+        passed: 185
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T102101Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
+      production_effect: none
     production_effect: none
 
 safety_boundary:

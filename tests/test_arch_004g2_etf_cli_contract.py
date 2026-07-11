@@ -50,6 +50,9 @@ TREND_CALIBRATION_COMMANDS_PATH = (
 BASELINE_REVIEW_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py"
 )
+SHADOW_REVIEW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -124,7 +127,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33950
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33656
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -335,8 +338,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33950
-    assert len(legacy_names) == 1002
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33656
+    assert len(legacy_names) == 998
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -360,6 +363,26 @@ def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() ->
     assert callbacks <= canonical_names
     assert "artifact_stem" in common_names
     assert "ai_trading_system.etf_portfolio.baseline_review" not in _imported_modules(legacy_tree)
+
+
+def test_g2_4_shadow_review_callbacks_and_domain_import_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(SHADOW_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "shadow_review_package_command",
+        "shadow_review_approve_command",
+        "shadow_review_enroll_approved_command",
+        "shadow_review_validate_command",
+    }
+
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert "ai_trading_system.etf_portfolio.shadow_ready_review" not in _imported_modules(
+        legacy_tree
+    )
 
 
 def __file_path() -> Path:
