@@ -59,6 +59,9 @@ DYNAMIC_ALLOCATION_COMMANDS_PATH = (
 DYNAMIC_CALIBRATION_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_calibration.py"
 )
+DYNAMIC_ROBUSTNESS_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_robustness.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -133,7 +136,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33199
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 32979
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -344,8 +347,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 33199
-    assert len(legacy_names) == 990
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 32979
+    assert len(legacy_names) == 988
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -419,6 +422,16 @@ def test_g2_4_dynamic_calibration_callbacks_leave_legacy_root() -> None:
         "dynamic_calibration_report_command",
         "dynamic_calibration_validate_command",
     }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+
+
+def test_g2_4_dynamic_robustness_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_ROBUSTNESS_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {"dynamic_robustness_report_command", "dynamic_robustness_validate_command"}
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
 
