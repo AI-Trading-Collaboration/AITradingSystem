@@ -13,7 +13,7 @@ dependency_gate:
   policy_id: arch_004c_platform_dependency_policy
   status: PASS
   scanned_python_files: 795
-  current_direct_writer_calls: 887
+  current_direct_writer_calls: 877
   baseline_direct_writer_calls: 894
   violation_count: 0
   violations: []

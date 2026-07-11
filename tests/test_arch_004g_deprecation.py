@@ -49,7 +49,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert inventory.python_module_count == 795
     assert inventory.python_test_file_count == 1113
     assert inventory.direct_writer_baseline_count == 894
-    assert inventory.direct_writer_current_count == 887
+    assert inventory.direct_writer_current_count == 877
     assert inventory.direct_writer_violation_count == 0
     assert inventory.legacy_adapter_file_count == 7
     assert inventory.dynamic_strategy_wrapper_file_count == 99

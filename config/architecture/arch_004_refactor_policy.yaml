@@ -646,19 +646,26 @@ phase_g_execution:
     G1_1_three_governance_module_writer_implementation_migration: COMPLETE
     G1_2_internal_caller_migration_and_private_wrapper_removal: COMPLETE
     G1_3_next_shared_helper_family: IN_PROGRESS
+    G1_3a_trading_engine_summary_writer_migration: COMPLETE
+    G1_3b_next_shared_helper_family: IN_PROGRESS
   g1_current_evidence:
     migrated_modules:
       - src/ai_trading_system/cache_catalog.py
       - src/ai_trading_system/data_refresh_audit.py
       - src/ai_trading_system/data_source_fallback_policy.py
+      - src/ai_trading_system/trading_engine/data_freshness_summary.py
+      - src/ai_trading_system/trading_engine/pipeline_health_summary.py
+      - src/ai_trading_system/trading_engine/parameter_governance_summary.py
+      - src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py
+      - src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
     canonical_writer: ai_trading_system.platform.artifacts
     direct_writer_before: 893
-    direct_writer_after: 887
-    direct_writer_reduction: 6
+    direct_writer_after: 877
+    direct_writer_reduction: 16
     legacy_json_trailing_newline_preserved: false
     legacy_return_contract_preserved: true
     private_compatibility_wrappers_remaining: 0
-    private_compatibility_wrappers_removed: 6
+    private_compatibility_wrappers_removed: 16
     internal_callers_using_canonical_writer: true
     canonical_no_trailing_newline_helper: write_json_atomic_without_trailing_newline
     runtime_removal_performed: false
@@ -674,6 +681,34 @@ phase_g_execution:
       current_direct_writer_calls: 887
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T050507Z/test_runtime_summary.json
+  g1_second_family_plan:
+    status: COMPLETE
+    family: trading_engine_summary_and_governance_writers
+    migrated_module_target: 5
+    private_writer_removal_target: 10
+    canonical_json_writer: write_json_atomic
+    canonical_text_writer: write_text_atomic
+    json_sort_keys: false
+    json_trailing_newline: true
+    preserve_json_insertion_order: true
+    preserve_text_bytes: true
+    preserve_oserror_boundary: true
+    compatibility_wrapper_allowed: false
+    migrated_module_count: 5
+    removed_private_writer_count: 10
+    private_writer_remaining_count: 0
+    direct_writer_before: 887
+    direct_writer_after: 877
+    direct_writer_reduction: 10
+    focused_validation: {status: PASS, passed: 95}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 161
+      current_direct_writer_calls: 877
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T052542Z/test_runtime_summary.json
+    production_effect: none
 
 safety_boundary:
   research_only: true

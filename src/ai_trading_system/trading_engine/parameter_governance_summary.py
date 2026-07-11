@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 SCHEMA_VERSION = "1.0"
@@ -121,11 +122,11 @@ def write_parameter_governance_summary_report(
             error=str(exc),
         )
 
-    _write_json(output_json_path, payload)
-    _write_text(output_md_path, render_parameter_governance_summary_report(payload))
+    write_json_atomic(output_json_path, payload, sort_keys=False)
+    write_text_atomic(output_md_path, render_parameter_governance_summary_report(payload))
     run_log = _run_log_payload(payload=payload, generated_at=generated)
-    _write_json(run_log_json_path, run_log)
-    _write_text(run_log_md_path, render_parameter_governance_summary_run_log(run_log))
+    write_json_atomic(run_log_json_path, run_log, sort_keys=False)
+    write_text_atomic(run_log_md_path, render_parameter_governance_summary_run_log(run_log))
 
     if fail_on_safety_anomaly and payload.get("governance_state") == STATE_SAFETY_ANOMALY:
         raise SystemExit(2)
@@ -1130,16 +1131,6 @@ def _read_structured_object(path: Path | None) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def _assert_governance_safety_invariants(payload: dict[str, Any]) -> None:

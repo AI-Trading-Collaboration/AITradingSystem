@@ -6,6 +6,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "parameter_governance_daily_digest"
 RUN_REPORT_TYPE = "parameter_governance_daily_digest_run"
@@ -159,11 +161,11 @@ def write_parameter_governance_daily_digest(
             error=str(exc),
         )
 
-    _write_json(output_json_path, payload)
-    _write_text(output_md_path, render_parameter_governance_daily_digest_markdown(payload))
+    write_json_atomic(output_json_path, payload, sort_keys=False)
+    write_text_atomic(output_md_path, render_parameter_governance_daily_digest_markdown(payload))
     run_log = _run_log_payload(payload=payload, generated_at=generated)
-    _write_json(run_log_json_path, run_log)
-    _write_text(run_log_md_path, render_parameter_governance_daily_digest_run_log(run_log))
+    write_json_atomic(run_log_json_path, run_log, sort_keys=False)
+    write_text_atomic(run_log_md_path, render_parameter_governance_daily_digest_run_log(run_log))
 
     has_safety_anomaly = _mapping(payload.get("daily_readout")).get("has_safety_anomaly") is True
     if fail_on_safety_anomaly and has_safety_anomaly:
@@ -997,16 +999,6 @@ def _read_json_object(path: Path | None) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def _assert_digest_safety_invariants(payload: dict[str, Any]) -> None:

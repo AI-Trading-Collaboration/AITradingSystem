@@ -249,12 +249,14 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "G1_1_three_governance_module_writer_implementation_migration": "COMPLETE",
         "G1_2_internal_caller_migration_and_private_wrapper_removal": "COMPLETE",
         "G1_3_next_shared_helper_family": "IN_PROGRESS",
+        "G1_3a_trading_engine_summary_writer_migration": "COMPLETE",
+        "G1_3b_next_shared_helper_family": "IN_PROGRESS",
     }
     assert phase_g["g1_current_evidence"]["direct_writer_before"] == 893
-    assert phase_g["g1_current_evidence"]["direct_writer_after"] == 887
-    assert phase_g["g1_current_evidence"]["direct_writer_reduction"] == 6
+    assert phase_g["g1_current_evidence"]["direct_writer_after"] == 877
+    assert phase_g["g1_current_evidence"]["direct_writer_reduction"] == 16
     assert phase_g["g1_current_evidence"]["private_compatibility_wrappers_remaining"] == 0
-    assert phase_g["g1_current_evidence"]["private_compatibility_wrappers_removed"] == 6
+    assert phase_g["g1_current_evidence"]["private_compatibility_wrappers_removed"] == 16
     assert phase_g["g1_current_evidence"]["internal_callers_using_canonical_writer"] is True
     assert phase_g["g1_current_evidence"]["runtime_removal_performed"] is False
     assert phase_g["g1_first_family_validation"]["focused"] == {
@@ -265,6 +267,14 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["g1_first_family_validation"]["architecture_fitness"][
         "current_direct_writer_calls"
     ] == 887
+    assert phase_g["g1_second_family_plan"]["direct_writer_after"] == 877
+    assert phase_g["g1_second_family_plan"]["removed_private_writer_count"] == 10
+    assert phase_g["g1_second_family_plan"]["json_sort_keys"] is False
+    assert phase_g["g1_second_family_plan"]["focused_validation"] == {
+        "status": "PASS",
+        "passed": 95,
+    }
+    assert phase_g["g1_second_family_plan"]["architecture_fitness"]["passed"] == 161
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -645,6 +655,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         "current_direct_writer_calls"
     ] == 887
     for source in phase_g1["sources"]:
+        if source.get("historical_phase_g1_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G1.3A"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g1_3a_trading_engine_summary_writer_migration.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g1_3a = baseline["phase_g1_3a_trading_engine_summary_writer_migration"]
+    assert phase_g1_3a["status"] == "SECOND_FAMILY_COMPLETE_G1_CONTINUES"
+    assert phase_g1_3a["family"] == {
+        "canonical_json_writer": "write_json_atomic",
+        "canonical_text_writer": "write_text_atomic",
+        "migrated_module_count": 5,
+        "removed_private_writer_count": 10,
+        "private_writer_remaining_count": 0,
+        "direct_writer_before": 887,
+        "direct_writer_after": 877,
+        "direct_writer_reduction": 10,
+    }
+    assert phase_g1_3a["parity"]["sort_keys"] is False
+    assert phase_g1_3a["parity"]["trailing_newline"] is True
+    assert phase_g1_3a["parity"]["oserror_boundary"] == "PASS"
+    assert phase_g1_3a["parity"]["investment_semantics_changed"] is False
+    assert phase_g1_3a["validation"]["focused"] == {"status": "PASS", "passed": 95}
+    assert phase_g1_3a["validation"]["architecture_fitness"]["passed"] == 161
+    for source in phase_g1_3a["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -666,7 +703,9 @@ def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G0_IN_PROGRESS"
+    assert attribution["status"] == (
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3A_COMPLETE_G1_CONTINUES"
+    )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

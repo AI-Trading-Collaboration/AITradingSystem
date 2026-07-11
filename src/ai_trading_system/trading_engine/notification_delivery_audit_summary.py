@@ -6,6 +6,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "notification_delivery_audit_summary"
 RUN_REPORT_TYPE = "notification_delivery_audit_summary_run"
@@ -203,11 +205,11 @@ def write_notification_delivery_audit_summary(
             error=str(exc),
         )
 
-    _write_json(output_json_path, payload)
-    _write_text(output_markdown_path, render_notification_delivery_audit_markdown(payload))
+    write_json_atomic(output_json_path, payload, sort_keys=False)
+    write_text_atomic(output_markdown_path, render_notification_delivery_audit_markdown(payload))
     run_log = _run_log_payload(payload=payload, generated_at=generated)
-    _write_json(run_log_json_path, run_log)
-    _write_text(run_log_markdown_path, render_notification_delivery_audit_run_log(run_log))
+    write_json_atomic(run_log_json_path, run_log, sort_keys=False)
+    write_text_atomic(run_log_markdown_path, render_notification_delivery_audit_run_log(run_log))
     return payload
 
 
@@ -1577,16 +1579,6 @@ def _walk_mapping(value: object, prefix: str = "") -> list[tuple[str, str, objec
         for index, child in enumerate(value):
             records.extend(_walk_mapping(child, f"{prefix}[{index}]"))
     return records
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
 
 
 def _sha256_path(path: Path) -> str:

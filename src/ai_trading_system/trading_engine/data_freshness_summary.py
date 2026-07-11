@@ -10,6 +10,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "data_freshness_summary"
 RUN_REPORT_TYPE = "data_freshness_summary_run"
@@ -372,11 +374,11 @@ def write_data_freshness_summary(
             error=str(exc),
         )
 
-    _write_json(output_json_path, payload)
-    _write_text(output_md_path, render_data_freshness_summary_markdown(payload))
+    write_json_atomic(output_json_path, payload, sort_keys=False)
+    write_text_atomic(output_md_path, render_data_freshness_summary_markdown(payload))
     run_log = _run_log_payload(payload=payload, generated_at=generated)
-    _write_json(run_log_json_path, run_log)
-    _write_text(run_log_md_path, render_data_freshness_summary_run_log(run_log))
+    write_json_atomic(run_log_json_path, run_log, sort_keys=False)
+    write_text_atomic(run_log_md_path, render_data_freshness_summary_run_log(run_log))
 
     if fail_on_critical and payload.get("freshness_status") == FRESHNESS_CRITICAL:
         raise SystemExit(2)
@@ -1306,16 +1308,6 @@ def _markdown_bullets(values: list[str]) -> list[str]:
     if not values:
         return ["- None."]
     return [f"- {value}" for value in values]
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def _sha256(path: Path) -> str:

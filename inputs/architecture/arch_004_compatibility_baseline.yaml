@@ -1125,28 +1125,64 @@ phase_g1_shared_writer_migration:
       sha256: 2a1f57cdf0f9df4c85b8f23102cf6df0e5d82cf04edcb1290de80590cbee062a
     - path: tests/test_arch_004g_shared_writers.py
       sha256: c3b20f2958d32a9f3105f77bef2b31959e90ebe4caa45ef0e9a3ea9c30e8c27b
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
       sha256: 7752bc7df89f5296dd381b6d798f357876504f846b364b295f892fd619e2f71e
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: tests/test_arch_004g_deprecation.py
       sha256: 0a49bba8b1c07f01586d4141daf897b0c84f41642483663586b7c50dd96c035f
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: tests/test_arch_004_refactor_policy.py
       sha256: f203ab951877acd5c5e9184d13227f7dd2559b9d27899f4189dd590f0ef26369
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
       sha256: 1c08f931a91c4081518aa640d5223415f08b0cf2dca167ee005ccc7f014240b7
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: docs/system_flow.md
       sha256: 09c782efad42561105c3d1ba455ba2db818d2368a9defad6a7185e25ef4d4e9d
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: config/architecture/arch_004_refactor_policy.yaml
       sha256: 906639078360e5ba831d01cf55e967616b35ee5e1e8b0e85689108672a38691b
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004_worktree_attribution.yaml
       sha256: cee9300e661f481ca9ecee5c66944e533e6678c0408bf193fb7a58bbcd2f725f
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004e_module_manifest.yaml
       sha256: 5d907aa9eb2435f866fca3abf59c9b6c90398cb0fea304ec271c8238dcad89b9
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: df004bc330251fa3f2a63ca56981668ddd5b75e152e0884cf86929db83225764
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: f7e3496238e6869dd7e8bee0ae6fef16f2c3730df632e098dd57da28bf65b88f
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: 23ff22b597ac4997be71b61ba1d696ca8d08d9dccd370e08b8a990240acb417f
+      historical_phase_g1_hash: true
+      superseded_by_phase: ARCH-004G1.3A
+      current_hash_tracked_in: phase_g1_3a_trading_engine_summary_writer_migration.sources
   validation:
     focused: {status: PASS, passed: 29}
     scoped_ruff: PASS
@@ -1156,3 +1192,72 @@ phase_g1_shared_writer_migration:
       current_direct_writer_calls: 887
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T050507Z/test_runtime_summary.json
+
+phase_g1_3a_trading_engine_summary_writer_migration:
+  status: SECOND_FAMILY_COMPLETE_G1_CONTINUES
+  as_of: 2026-07-11
+  family:
+    canonical_json_writer: write_json_atomic
+    canonical_text_writer: write_text_atomic
+    migrated_module_count: 5
+    removed_private_writer_count: 10
+    private_writer_remaining_count: 0
+    direct_writer_before: 887
+    direct_writer_after: 877
+    direct_writer_reduction: 10
+  parity:
+    unicode_json_bytes: PASS
+    insertion_order: PASS
+    indent: 2
+    sort_keys: false
+    trailing_newline: true
+    text_bytes: PASS
+    atomic_result: PASS
+    oserror_boundary: PASS
+    payload_schema_changed: false
+    investment_semantics_changed: false
+    production_effect: none
+  sources:
+    - path: src/ai_trading_system/trading_engine/data_freshness_summary.py
+      sha256: ff67bfa8d8524da16de8d3215988d3569a8c1399484e3b03fd711dd7b0f3e2d7
+    - path: src/ai_trading_system/trading_engine/pipeline_health_summary.py
+      sha256: bf9fd1f6d01f3c0d8929b98d9d99213f454ee7d97b4c4e4d22f9e2a99c78b003
+    - path: src/ai_trading_system/trading_engine/parameter_governance_summary.py
+      sha256: 06f581381c238e01a67e94235b874f8100b2c9c50fb65590feae481a63ef3c44
+    - path: src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py
+      sha256: 0254572b856864e210bec84db4b9c523fc0f96768b03a8d91e1596b01f12f1ba
+    - path: src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
+      sha256: 1e33d47b673061e6f02dbca66cde309c122d76abb3cf770705481cd78ccaa433
+    - path: tests/test_arch_004g_shared_writers.py
+      sha256: 50695d066f1e0592e0dc7823f1691380d15d21487893254a78d6aef0595362cc
+    - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+      sha256: a9653abe22d7937388f39ec31c03b141595085e2e213049fb5540c54b6051c4d
+    - path: tests/test_arch_004g_deprecation.py
+      sha256: 39cde92fa89f5ed5f04bde75deaa2205b639788234ef604e03b44ca9e0e9fa36
+    - path: tests/test_arch_004_refactor_policy.py
+      sha256: 915f9ac7149ce37e96f27d28aeeffd6ace891f24566f2da0e9f363d6812ba144
+    - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+      sha256: 455cb19c40f8d80ca903acc1a06ff976891f3672975840c7d08bcc9bcffbcf16
+    - path: docs/system_flow.md
+      sha256: 6ded268cd27bd5a1c35d01d9b071affd92a5581efb02b5481e1acae1a4a0c821
+    - path: config/architecture/arch_004_refactor_policy.yaml
+      sha256: 882710ac2654f476af07d4a436d301df892b9467572c165ffadc699ace262ac3
+    - path: inputs/architecture/arch_004_worktree_attribution.yaml
+      sha256: 799b7db2c1e0f830c7bf39c86d601f5eef7cf7c7bed468e5f87de0800a217092
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: c77c45e70ddc2c76aaa0900dfb2a292c215d60e6faad7c94bbda8392f4e8b838
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: 6eb8a7bbdb23ae8e92a3136ff790b72f5c75b362921872fbe5fbf768cae1f46d
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: 5f712fd2b422146d8c9627c8f3b691d7d579caab4746339390c6a2a1a147b81c
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: 3149c1c7be326f9bc1a475268881b0fed928019b18cb95d7d8be2e17cc6b495e
+  validation:
+    focused: {status: PASS, passed: 95}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 161
+      current_direct_writer_calls: 877
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T052542Z/test_runtime_summary.json

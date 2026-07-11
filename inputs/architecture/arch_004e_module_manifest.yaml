@@ -14684,7 +14684,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.data_freshness_summary
   path: src/ai_trading_system/trading_engine/data_freshness_summary.py
-  sha256: af3b34eef57f23a51e7b023572622302f9eea664544402363587fbc4bd533609
+  sha256: ff67bfa8d8524da16de8d3215988d3569a8c1399484e3b03fd711dd7b0f3e2d7
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -14957,7 +14957,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.notification_delivery_audit_summary
   path: src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
-  sha256: 21dd665dfe3574f99dd4625971ef5a85b7b833185338818fd55b3677e9f5ff11
+  sha256: 1e33d47b673061e6f02dbca66cde309c122d76abb3cf770705481cd78ccaa433
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15125,7 +15125,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.parameter_governance_daily_digest
   path: src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py
-  sha256: 75278c671e237b0f135a8fa6466c5406b155936659efbd8a490c314c772ed07b
+  sha256: 0254572b856864e210bec84db4b9c523fc0f96768b03a8d91e1596b01f12f1ba
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15146,7 +15146,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.parameter_governance_summary
   path: src/ai_trading_system/trading_engine/parameter_governance_summary.py
-  sha256: b92044f08deee3e8c8429d38419321b238c8c955edfd13bfb02c93a688915782
+  sha256: 06f581381c238e01a67e94235b874f8100b2c9c50fb65590feae481a63ef3c44
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15419,7 +15419,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.pipeline_health_summary
   path: src/ai_trading_system/trading_engine/pipeline_health_summary.py
-  sha256: 5a7e2d9f1207207e78feb308a58c2bc855161650a10dc43de2a78bd2d10da95b
+  sha256: bf9fd1f6d01f3c0d8929b98d9d99213f454ee7d97b4c4e4d22f9e2a99c78b003
   rule_id: trading_engine
   owner_profile: trading
   owners:
