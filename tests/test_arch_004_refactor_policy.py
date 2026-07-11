@@ -708,6 +708,27 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_twelfth["legacy_root_command_decorators_after"] == 923
     assert g2_4_twelfth["focused_validation"] == {"status": "PASS", "passed": 44}
     assert g2_4_twelfth["architecture_fitness"]["passed"] == 195
+    g2_4_thirteenth = phase_g["g2_current_plan"]["g2_4_thirteenth_slice"]
+    assert g2_4_thirteenth["status"] == "COMPLETE"
+    assert g2_4_thirteenth["callback_count"] == 3
+    assert g2_4_thirteenth["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_thirteenth["explicit_as_of_and_end_required"] is True
+    assert g2_4_thirteenth["same_validate_data_path_used"] is True
+    assert g2_4_thirteenth["failed_quality_evidence_write_allowed"] is True
+    assert g2_4_thirteenth["dq_failure_may_be_reported_as_pass"] is False
+    assert g2_4_thirteenth["checksum_and_provenance_artifacts_required"] is True
+    assert g2_4_thirteenth["pit_coverage_and_data_gap_artifacts_required"] is True
+    assert g2_4_thirteenth["latest_report_mode_read_only"] is True
+    assert g2_4_thirteenth["validation_requires_dq_non_fail"] is True
+    assert g2_4_thirteenth["cache_or_download_manifest_mutation_allowed"] is False
+    assert g2_4_thirteenth["candidate_generation_allowed"] is False
+    assert g2_4_thirteenth["backtest_or_pit_evaluation_allowed"] is False
+    assert g2_4_thirteenth["direct_writer_calls_after"] == 858
+    assert g2_4_thirteenth["legacy_root_lines_after"] == 31464
+    assert g2_4_thirteenth["legacy_root_top_level_functions_after"] == 959
+    assert g2_4_thirteenth["legacy_root_command_decorators_after"] == 920
+    assert g2_4_thirteenth["focused_validation"] == {"status": "PASS", "passed": 45}
+    assert g2_4_thirteenth["architecture_fitness"]["passed"] == 196
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1688,6 +1709,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4l["validation"]["focused"] == {"status": "PASS", "passed": 44}
     assert phase_g2_4l["validation"]["architecture_fitness"]["passed"] == 195
     for source in phase_g2_4l["sources"]:
+        if source.get("historical_phase_g2_4l_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4M"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4m_etf_cli_dynamic_v3_data_audit.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4m = baseline["phase_g2_4m_etf_cli_dynamic_v3_data_audit"]
+    assert phase_g2_4m["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4m["migration"]["callback_count"] == 3
+    assert phase_g2_4m["migration"]["same_validate_data_path_used"] is True
+    assert phase_g2_4m["migration"]["failed_quality_evidence_write_allowed"] is True
+    assert phase_g2_4m["migration"]["dq_failure_may_be_reported_as_pass"] is False
+    assert phase_g2_4m["migration"]["checksum_and_provenance_artifacts_required"] is True
+    assert phase_g2_4m["migration"]["validation_requires_dq_non_fail"] is True
+    assert phase_g2_4m["migration"]["cache_or_download_manifest_mutation_allowed"] is False
+    assert phase_g2_4m["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4m["validation"]["focused"] == {"status": "PASS", "passed": 45}
+    assert phase_g2_4m["validation"]["architecture_fitness"]["passed"] == 196
+    for source in phase_g2_4m["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1710,7 +1752,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4K_COMPLETE_G2_4L_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4L_COMPLETE_G2_4M_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

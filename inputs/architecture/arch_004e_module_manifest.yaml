@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 823
+module_count: 824
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: b7495674592b8a91eb42a9da93a6525547c8dad791b4905606c4838354a4fe04
+  sha256: 850d5d7d829aff20b8fa3fc602ca4ed5ff3864c399831e795de545c096864dff
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 4b72cff15956fb1552f3fec3cdc40663050f082849554bb62d00913a1ed4418c
+  sha256: 1e05f03136981d364e27032499877b6fc09f8aa8aab28076f0a6f5d87db29cca
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9569,6 +9569,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v2_review
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v2_review.py
   sha256: f7addc98fc84b8c974e0a16723cd85d23daa8e8fe9d0f02cdc03e1957574ca40
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_data_audit
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_audit.py
+  sha256: c9afd2a3318b52f1cf26269a2bde38015422f032bee6ae3120e0cec6b140cac4
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

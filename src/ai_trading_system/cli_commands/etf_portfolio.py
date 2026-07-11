@@ -415,7 +415,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CANDIDATE_CLUSTER_DIR,
     DEFAULT_CANDIDATE_RECOVERY_DIR,
     DEFAULT_CONSENSUS_DRIFT_DIR,
-    DEFAULT_DATA_AUDIT_DIR,
     DEFAULT_DATA_PROVENANCE_DIR,
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
     DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
@@ -481,7 +480,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     candidate_report_payload,
     consensus_drift_report_payload,
     create_owner_review,
-    data_audit_report_payload,
     data_provenance_inspect_price_cache,
     data_provenance_repair_price_manifest,
     data_provenance_validate,
@@ -525,7 +523,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_candidate_clustering,
     run_candidate_recovery,
     run_consensus_drift,
-    run_data_audit,
     run_evidence_diagnosis,
     run_evidence_summary,
     run_execution_guardrails_check,
@@ -560,7 +557,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_candidate_cluster_artifact,
     validate_candidate_recovery_artifact,
     validate_consensus_drift_artifact,
-    validate_data_audit_artifact,
     validate_evidence_diagnosis_artifact,
     validate_evidence_gate_policy,
     validate_evidence_summary_artifact,
@@ -1000,7 +996,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_consensus_risk_app,
     dynamic_v3_cost_sensitivity_metrics_materialization_app,
     dynamic_v3_cost_sensitivity_review_app,
-    dynamic_v3_data_audit_app,
     dynamic_v3_data_provenance_app,
     dynamic_v3_data_warning_impact_app,
     dynamic_v3_data_warning_repair_plan_app,
@@ -1244,85 +1239,6 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
-
-
-@dynamic_v3_data_audit_app.command("run")
-def dynamic_v3_data_audit_run_command(
-    as_of: Annotated[str, typer.Option("--as-of", help="data audit as-of date。")],
-    end: Annotated[str, typer.Option("--end", help="data audit end date。")],
-    prices_path: Annotated[
-        Path,
-        typer.Option("--prices-path", help="标准化 ETF daily price cache。"),
-    ] = DEFAULT_ETF_PRICE_PATH,
-    rates_path: Annotated[
-        Path,
-        typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="data audit artifact root。"),
-    ] = DEFAULT_DATA_AUDIT_DIR,
-) -> None:
-    """运行 TRADING-103 research data manifest / PIT coverage audit。"""
-    result = run_data_audit(
-        as_of=_parse_date(as_of),
-        end=_parse_date(end),
-        prices_path=prices_path,
-        rates_path=rates_path,
-        output_dir=output_dir,
-    )
-    report = result["report"]
-    typer.echo(f"data_audit_id={result['data_audit_id']}")
-    typer.echo(f"data_audit_dir={result['data_audit_dir']}")
-    typer.echo(f"status={report['status']}")
-    typer.echo(f"data_quality_status={report['data_quality_status']}")
-    typer.echo(
-        "prices_download_manifest_checksum_missing="
-        f"{str(report['prices_download_manifest_checksum_missing']).lower()}"
-    )
-    typer.echo("production_candidate_generated=false")
-
-
-@dynamic_v3_data_audit_app.command("report")
-def dynamic_v3_data_audit_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest data audit pointer。"),
-    ] = False,
-    audit_id: Annotated[str | None, typer.Option("--audit-id", help="data audit id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="data audit artifact root。"),
-    ] = DEFAULT_DATA_AUDIT_DIR,
-) -> None:
-    """展示 TRADING-103 data audit 摘要。"""
-    payload = data_audit_report_payload(
-        data_audit_id=audit_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    typer.echo(f"data_audit_id={payload['data_audit_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"data_quality_status={payload['data_quality_status']}")
-    typer.echo(f"report_path={payload['report_path']}")
-    typer.echo("production_candidate_generated=false")
-
-
-@dynamic_v3_rescue_app.command("validate-data-audit")
-def dynamic_v3_validate_data_audit_command(
-    audit_id: Annotated[str, typer.Option("--audit-id", help="data audit id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="data audit artifact root。"),
-    ] = DEFAULT_DATA_AUDIT_DIR,
-) -> None:
-    """校验 TRADING-103 data audit artifacts。"""
-    payload = validate_data_audit_artifact(data_audit_id=audit_id, output_dir=output_dir)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_candidate_generated=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
 
 
 @dynamic_v3_data_provenance_app.command("inspect-price-cache")
