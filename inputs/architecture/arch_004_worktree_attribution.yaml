@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4B_COMPLETE_G2_4C_VALIDATING
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4C_COMPLETE_G2_4D_VALIDATING
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -155,6 +155,7 @@ arch_004_owned_paths:
   - tests/test_etf_baseline_review.py
   - tests/test_etf_shadow_ready_review.py
   - tests/test_etf_dynamic_allocation.py
+  - tests/test_etf_dynamic_calibration.py
   - src/ai_trading_system/platform/architecture/cli_contract.py
   - scripts/architecture_etf_cli.py
   - inputs/architecture/arch_004g2_etf_cli_contract.yaml
@@ -167,6 +168,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/baseline_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/shadow_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_allocation.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_calibration.py
+  - src/ai_trading_system/etf_portfolio/dynamic_calibration.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/data.py
   - src/ai_trading_system/cli_commands/etf_compat.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/data_quality.py

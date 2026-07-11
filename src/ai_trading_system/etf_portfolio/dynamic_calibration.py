@@ -422,13 +422,29 @@ def build_dynamic_calibration_validation_report(
         and "etf_dynamic_calibration_validation" in registry_text,
         "report registry includes dynamic calibration report and validation",
     )
-    cli_text = (
-        PROJECT_ROOT / "src" / "ai_trading_system" / "cli_commands" / "etf_portfolio.py"
+    registration_text = (
+        PROJECT_ROOT
+        / "src"
+        / "ai_trading_system"
+        / "interfaces"
+        / "cli"
+        / "etf_portfolio"
+        / "registration.py"
+    ).read_text(encoding="utf-8")
+    command_owner_text = (
+        PROJECT_ROOT
+        / "src"
+        / "ai_trading_system"
+        / "interfaces"
+        / "cli"
+        / "etf_portfolio"
+        / "dynamic_calibration.py"
     ).read_text(encoding="utf-8")
     _append_check(
         checks,
         "cli_visibility",
-        "dynamic-calibration" in cli_text and "dynamic_calibration_app" in cli_text,
+        "dynamic-calibration" in registration_text
+        and "dynamic_calibration_app" in command_owner_text,
         "CLI exposes dynamic-calibration namespace",
     )
     reader_brief_text = (
