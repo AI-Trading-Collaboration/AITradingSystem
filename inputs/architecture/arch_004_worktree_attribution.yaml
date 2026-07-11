@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3A_COMPLETE_G1_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3B_COMPLETE_G1_CONTINUES
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -82,6 +82,14 @@ arch_004_owned_paths:
   - src/ai_trading_system/trading_engine/parameter_governance_summary.py
   - src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py
   - src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
+  - src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py
+  - src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py
+  - src/ai_trading_system/trading_engine/operator_brief_notification_delivery_preflight.py
+  - src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py
+  - src/ai_trading_system/trading_engine/operator_brief_notification_draft.py
+  - src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py
+  - src/ai_trading_system/trading_engine/retry_execution_dry_run.py
+  - src/ai_trading_system/trading_engine/retry_candidate_queue.py
   - src/ai_trading_system/dynamic_strategy_report_common.py
   - src/ai_trading_system/research_governance.py
   - src/ai_trading_system/run_artifacts.py

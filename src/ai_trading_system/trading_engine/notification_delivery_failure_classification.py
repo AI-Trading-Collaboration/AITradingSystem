@@ -5,6 +5,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "notification_delivery_failure_classification"
 TASK_ID = "TRADING-036"
@@ -123,11 +125,11 @@ def write_notification_delivery_failure_classification(
         run_log_path=log_path,
         generated_at=generated,
     )
-    _write_json(json_path, payload)
-    _write_text(
+    write_json_atomic(json_path, payload, sort_keys=False)
+    write_text_atomic(
         markdown_path, render_notification_delivery_failure_classification_markdown(payload)
     )
-    _write_text(log_path, render_notification_delivery_failure_classification_log(payload))
+    write_text_atomic(log_path, render_notification_delivery_failure_classification_log(payload))
     return payload
 
 
@@ -877,16 +879,6 @@ def _normalize_path(path: Path) -> Path:
     if value.is_absolute():
         return value.resolve(strict=False)
     return (Path.cwd() / value).resolve(strict=False)
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
 
 
 def _parse_iso_date(value: str) -> date | None:

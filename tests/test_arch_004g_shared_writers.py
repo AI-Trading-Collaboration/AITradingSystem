@@ -14,9 +14,17 @@ from ai_trading_system.platform.artifacts import (
 from ai_trading_system.trading_engine import (
     data_freshness_summary,
     notification_delivery_audit_summary,
+    notification_delivery_failure_classification,
+    operator_brief_notification_approval_gate,
+    operator_brief_notification_delivery_preflight,
+    operator_brief_notification_dispatch_preview,
+    operator_brief_notification_draft,
+    operator_brief_notification_draft_dispatch,
     parameter_governance_daily_digest,
     parameter_governance_summary,
     pipeline_health_summary,
+    retry_candidate_queue,
+    retry_execution_dry_run,
 )
 
 
@@ -79,6 +87,22 @@ def test_g1_3a_summary_private_writer_helpers_are_removed() -> None:
         parameter_governance_summary,
         parameter_governance_daily_digest,
         notification_delivery_audit_summary,
+    )
+
+    assert all(not hasattr(module, "_write_json") for module in modules)
+    assert all(not hasattr(module, "_write_text") for module in modules)
+
+
+def test_g1_3b_notification_retry_private_writer_helpers_are_removed() -> None:
+    modules = (
+        operator_brief_notification_approval_gate,
+        notification_delivery_failure_classification,
+        operator_brief_notification_delivery_preflight,
+        operator_brief_notification_dispatch_preview,
+        operator_brief_notification_draft,
+        operator_brief_notification_draft_dispatch,
+        retry_execution_dry_run,
+        retry_candidate_queue,
     )
 
     assert all(not hasattr(module, "_write_json") for module in modules)

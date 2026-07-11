@@ -21,7 +21,7 @@ repository:
   python_module_count: 795
   python_test_file_count: 1113
   direct_writer_baseline_count: 894
-  direct_writer_current_count: 877
+  direct_writer_current_count: 861
   direct_writer_violation_count: 0
   legacy_adapter_file_count: 7
   dynamic_strategy_wrapper_file_count: 99

@@ -647,7 +647,9 @@ phase_g_execution:
     G1_2_internal_caller_migration_and_private_wrapper_removal: COMPLETE
     G1_3_next_shared_helper_family: IN_PROGRESS
     G1_3a_trading_engine_summary_writer_migration: COMPLETE
-    G1_3b_next_shared_helper_family: IN_PROGRESS
+    G1_3b_next_shared_helper_family: COMPLETE
+    G1_3b_notification_retry_writer_migration: COMPLETE
+    G1_3c_next_shared_helper_family: IN_PROGRESS
   g1_current_evidence:
     migrated_modules:
       - src/ai_trading_system/cache_catalog.py
@@ -658,14 +660,22 @@ phase_g_execution:
       - src/ai_trading_system/trading_engine/parameter_governance_summary.py
       - src/ai_trading_system/trading_engine/parameter_governance_daily_digest.py
       - src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
+      - src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py
+      - src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py
+      - src/ai_trading_system/trading_engine/operator_brief_notification_delivery_preflight.py
+      - src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py
+      - src/ai_trading_system/trading_engine/operator_brief_notification_draft.py
+      - src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py
+      - src/ai_trading_system/trading_engine/retry_execution_dry_run.py
+      - src/ai_trading_system/trading_engine/retry_candidate_queue.py
     canonical_writer: ai_trading_system.platform.artifacts
     direct_writer_before: 893
-    direct_writer_after: 877
-    direct_writer_reduction: 16
+    direct_writer_after: 861
+    direct_writer_reduction: 32
     legacy_json_trailing_newline_preserved: false
     legacy_return_contract_preserved: true
     private_compatibility_wrappers_remaining: 0
-    private_compatibility_wrappers_removed: 16
+    private_compatibility_wrappers_removed: 32
     internal_callers_using_canonical_writer: true
     canonical_no_trailing_newline_helper: write_json_atomic_without_trailing_newline
     runtime_removal_performed: false
@@ -708,6 +718,35 @@ phase_g_execution:
       current_direct_writer_calls: 877
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T052542Z/test_runtime_summary.json
+    production_effect: none
+  g1_third_family_plan:
+    status: COMPLETE
+    family: trading_engine_notification_and_retry_writers
+    migrated_module_target: 8
+    private_writer_removal_target: 16
+    canonical_json_writer: write_json_atomic
+    canonical_text_writer: write_text_atomic
+    json_sort_keys: false
+    json_trailing_newline: true
+    preserve_json_insertion_order: true
+    preserve_text_bytes: true
+    preserve_oserror_boundary: true
+    compatibility_wrapper_allowed: false
+    direct_writer_before: 877
+    direct_writer_target: 861
+    direct_writer_after: 861
+    direct_writer_reduction: 16
+    migrated_module_count: 8
+    removed_private_writer_count: 16
+    private_writer_remaining_count: 0
+    focused_validation: {status: PASS, passed: 139}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 162
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T053802Z/test_runtime_summary.json
     production_effect: none
 
 safety_boundary:

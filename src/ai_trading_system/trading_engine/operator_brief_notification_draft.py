@@ -7,6 +7,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "operator_brief_notification_draft"
 RUN_REPORT_TYPE = "operator_brief_notification_draft_run"
@@ -202,14 +204,14 @@ def write_operator_brief_notification_draft(
         )
 
     payload = bundle["payload"]
-    _write_json(metadata_path, payload)
-    _write_text(summary_markdown_path, bundle["summary_markdown"])
-    _write_text(email_path, bundle["email_draft"])
-    _write_text(chat_path, bundle["chat_draft"])
-    _write_text(mobile_path, bundle["mobile_summary"])
+    write_json_atomic(metadata_path, payload, sort_keys=False)
+    write_text_atomic(summary_markdown_path, bundle["summary_markdown"])
+    write_text_atomic(email_path, bundle["email_draft"])
+    write_text_atomic(chat_path, bundle["chat_draft"])
+    write_text_atomic(mobile_path, bundle["mobile_summary"])
     run_log = _run_log_payload(payload=payload, generated_at=generated)
-    _write_json(run_log_json_path, run_log)
-    _write_text(run_log_md_path, render_operator_brief_notification_draft_run_log(run_log))
+    write_json_atomic(run_log_json_path, run_log, sort_keys=False)
+    write_text_atomic(run_log_md_path, render_operator_brief_notification_draft_run_log(run_log))
 
     if fail_on_urgent and payload.get("notification_severity") == SEVERITY_URGENT:
         raise SystemExit(2)
@@ -1136,19 +1138,6 @@ def _read_json_object_with_status(path: Path) -> tuple[dict[str, Any], str, str]
     if not isinstance(payload, dict):
         return {}, STATUS_INVALID, "JSON root is not an object"
     return payload, STATUS_FOUND, ""
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-
-
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
 
 
 def _redacted_strings(

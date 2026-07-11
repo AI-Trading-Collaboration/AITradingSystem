@@ -7,6 +7,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "operator_brief_notification_approval_gate"
 TASK_ID = "TRADING-033"
@@ -155,11 +157,11 @@ def write_operator_brief_notification_approval_gate(
     )
     markdown = render_operator_brief_notification_approval_gate_markdown(payload)
     run_log = render_operator_brief_notification_approval_gate_run_log(payload)
-    _write_json(json_path, payload)
-    _write_text(markdown_path, markdown)
-    _write_json(latest_json_path, payload)
-    _write_text(latest_markdown_path, markdown)
-    _write_text(run_log_path, run_log)
+    write_json_atomic(json_path, payload, sort_keys=False)
+    write_text_atomic(markdown_path, markdown)
+    write_json_atomic(latest_json_path, payload, sort_keys=False)
+    write_text_atomic(latest_markdown_path, markdown)
+    write_text_atomic(run_log_path, run_log)
     return payload
 
 
@@ -955,16 +957,6 @@ def _sha256_path(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
 
 
 def _mapping(value: object) -> dict[str, Any]:
