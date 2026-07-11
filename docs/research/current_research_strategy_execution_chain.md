@@ -471,6 +471,23 @@ Position Advisory位于“observe-only candidate”与“owner人工仓位复核
 3. 在有forward outcome和cost/slippage证据后，才能预注册校准agreement、dispersion、min-trade和adjustment limits；不能用本次已看到的advisory结果就地调阈值；
 4. 最后再评估candidate-quality-weighted consensus、稳健中心、置信区间与上一期delta。任何方法变更必须新建versioned hypothesis/policy和out-of-sample验证，不得扩展为自动调仓。
 
+#### Daily Position Advisory 链（TRADING-133 / G2.4AJ）
+
+Daily Position Advisory不是重新做一次策略研究，而是把某个显式shadow monitor run在指定`as_of`的candidate targets转成当日人工复核材料。它与TRADING-129的区别是：TRADING-129从shortlist的latest weight path形成一次性readiness advisory；TRADING-133只消费已生成的daily monitor targets，并可用同链consensus-drift artifact做交叉印证。设置独立层是为了不把“今日观察变化”混成新candidate selection、owner approval或交易执行。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed 条件 |
+|---|---|---|---|---|
+| Monitor gate | 显式`shadow_monitor_run_id/root` | 先运行同一monitor validator；manifest/summary/run id必须一致；每个daily row的`as_of`必须等于monitor `as_of`；candidate id唯一，weights有限、在[0,1]且sum=1 | validated monitor source status、daily targets | validator非PASS、空/重复candidate、日期串链、权重越界/不守恒时在任何output前阻断 |
+| Daily consensus | monitor target rows、reviewed consensus policy | 按symbol计算mean/median/min/max/dispersion；`agreement=count(abs(w_i-median) <= policy.max_symbol_dispersion)/candidate_count`，不再用observed dispersion自身作tolerance；agreement低于policy threshold或dispersion超限则`DISAGREEMENT_REVIEW_REQUIRED` | `daily_consensus_weights.csv`、consensus status | 无有效target为`INSUFFICIENT_DATA`；任何非`CONSENSUS`都强制manual review，不得继续small-adjustment suggestion |
+| Drift corroboration | 可选`consensus_drift` artifact root | 只考虑monitor id一致、`generated_at <= daily generated_at`、as-of一致、drift config当前checksum与daily config一致的artifact；按`generated_at, drift_id`选最新，不使用filesystem mtime；selected artifact validator必须PASS，summary disagreement必须等于daily从monitor/config重算的status | selected drift id、`CORROBORATED`/`NOT_AVAILABLE_RECOMPUTED`、drift inventory | 最新同monitor/config/as-of artifact验证失败或status不一致时阻断；future、错链、错config artifact不得被选中 |
+| Snapshot delta | 可选manual snapshot、monitor `as_of`、advisory limits | 先使用strict snapshot normalization；`snapshot.as_of <= monitor.as_of`；然后按candidate计算`target-current`、total absolute adjustment、max symbol adjustment与`no_trade/within_limits/requires_manual_review` | `daily_position_deltas.jsonl` | future snapshot、schema/weight/value/broker flag失败即阻断；无snapshot不伪造delta，mode必须`TARGET_ONLY` |
+| Action priority | consensus/drift status、snapshot ownership、delta limits | 优先级：任何consensus非`CONSENSUS`或drift为high/moderate/insufficient→`manual_review`；无snapshot→`monitor`；snapshot未owner-reviewed或delta超限→`manual_review`；全部低于min-trade→`no_trade`；否则`small_adjustment_review_only` | `daily_advisory_actions.json`、manifest、Markdown、Reader Brief section | 任何输出都固定manual review/owner approval/no broker；`small_adjustment_review_only`不是调仓命令 |
+| Lineage validation | monitor六类files、config、可选snapshot、可选selected drift五类files、daily outputs | Run冻结source paths/checksums、drift inventory、policy id/version和output checksums；validator在原`generated_at` cutoff下重做monitor gate、drift selection、targets/consensus/deltas/actions/manifest/report/Reader Brief | `daily_advisory_manifest.json`、validation checks、latest pointer | source drift、future snapshot、selection改变、计算结果或展示文本篡改、output checksum不一致均FAIL |
+
+当前结果上限是“指定monitor在指定日期的人工复核材料已完整产生且可从source重算”，不是策略当日有效、owner已批准、paper/real portfolio已改变或order已生成。所有artifact固定`official_target_weights_generated=false`、`portfolio_mutated=false`、`order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`和`production_effect=none`。
+
+后续优化空间按风险顺序为：先把consensus-drift生产端升级为自带source checksum与content-derived validator，消除当前由daily consumer交叉重算弥补的legacy限制；再把snapshot freshness从“不得来自未来”提升为versioned maximum-age policy；随后增加trading-calendar/timezone、同symbol universe completeness、previous-day delta和append-only daily supersession；最后才能用forward outcomes预注册校准agreement/dispersion/min-trade/adjustment limits。这些优化都必须生成新policy/version与out-of-sample证据，不得在已看到当日结果后就地调参或自动调仓。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

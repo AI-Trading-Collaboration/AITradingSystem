@@ -6193,12 +6193,15 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_advisory_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_candidate_targets.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_consensus_weights.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_position_deltas.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_advisory_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_position_advisory_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/reader_brief_section.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-133 converts latest shadow monitor targets into TARGET_ONLY or
-      SNAPSHOT_DELTA manual-review advisory and keeps owner approval required.
+      TRADING-133 converts an explicitly validated shadow monitor into TARGET_ONLY
+      or SNAPSHOT_DELTA manual-review evidence, binds same-chain drift and source
+      checksums, and keeps owner approval required.
     owner_action: owner_review_daily_position_advisory_before_any_position_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

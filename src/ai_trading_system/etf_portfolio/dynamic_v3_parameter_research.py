@@ -5035,6 +5035,253 @@ def validate_portfolio_snapshot_file(
     }
 
 
+def _compute_position_advisory_daily(
+    *,
+    shadow_monitor_run_id: str,
+    config_path: Path,
+    portfolio_snapshot_path: Path | None,
+    shadow_monitor_run_dir: Path,
+    consensus_drift_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    monitor_validation = validate_shadow_monitor_run_artifact(
+        monitor_run_id=shadow_monitor_run_id,
+        output_dir=shadow_monitor_run_dir,
+    )
+    if monitor_validation.get("status") != "PASS":
+        raise DynamicV3ParameterResearchError(
+            "shadow monitor validation must PASS before daily position advisory"
+        )
+    config = load_position_advisory_config(config_path)
+    monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
+    monitor_manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
+    monitor_rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
+    monitor_as_of_text = _text(monitor_manifest.get("as_of"))
+    try:
+        monitor_as_of = date.fromisoformat(monitor_as_of_text)
+    except ValueError as exc:
+        raise DynamicV3ParameterResearchError("shadow monitor as_of must be ISO date") from exc
+    target_rows = [_daily_target_row_from_monitor(row) for row in monitor_rows]
+    if (
+        monitor_manifest.get("monitor_run_id") != shadow_monitor_run_id
+        or not _position_advisory_target_rows_valid(target_rows)
+        or any(_text(row.get("as_of")) != monitor_as_of_text for row in target_rows)
+    ):
+        raise DynamicV3ParameterResearchError(
+            "daily position advisory monitor targets violate id, as-of, or weight invariants"
+        )
+    consensus_rows, consensus_status = _daily_consensus_target_weights(target_rows, config)
+    disagreement_status = _disagreement_status(
+        candidate_count=len(target_rows),
+        symbol_rows=consensus_rows,
+        exposure=_exposure_disagreement_summary(target_rows),
+        config=config,
+    )
+    drift_evidence = _select_position_advisory_daily_drift(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        monitor_as_of=monitor_as_of_text,
+        config_path=config_path,
+        recomputed_disagreement_status=disagreement_status,
+        consensus_drift_dir=consensus_drift_dir,
+        generated_at=generated_at,
+    )
+    snapshot = (
+        _normalize_portfolio_snapshot(portfolio_snapshot_path, strict=True)
+        if portfolio_snapshot_path is not None
+        else {}
+    )
+    if snapshot and snapshot.get("failed_check_count"):
+        failed = ", ".join(
+            _text(check.get("name"), _text(check.get("check_id"), "unknown_check"))
+            for check in _records(snapshot.get("checks"))
+            if check.get("passed") is False
+        )
+        raise DynamicV3ParameterResearchError(f"portfolio snapshot validation failed: {failed}")
+    if snapshot:
+        try:
+            snapshot_as_of = date.fromisoformat(_text(snapshot.get("as_of")))
+        except ValueError as exc:
+            raise DynamicV3ParameterResearchError(
+                "portfolio snapshot as_of must be ISO date"
+            ) from exc
+        if snapshot_as_of > monitor_as_of:
+            raise DynamicV3ParameterResearchError(
+                "portfolio snapshot as_of cannot be later than shadow monitor as_of"
+            )
+    delta_rows = _daily_position_delta_rows(target_rows, snapshot, config) if snapshot else []
+    actions = _daily_position_advisory_actions(
+        daily_advisory_id="",
+        as_of=monitor_as_of_text,
+        target_rows=target_rows,
+        delta_rows=delta_rows,
+        snapshot=snapshot,
+        consensus_status=consensus_status,
+        disagreement_status=disagreement_status,
+        config=config,
+    )
+    return {
+        "config": config,
+        "monitor_manifest": monitor_manifest,
+        "monitor_validation_status": monitor_validation.get("status"),
+        "target_rows": target_rows,
+        "consensus_rows": consensus_rows,
+        "consensus_status": consensus_status,
+        "disagreement_status": disagreement_status,
+        "snapshot": snapshot,
+        "delta_rows": delta_rows,
+        "actions": actions,
+        **drift_evidence,
+    }
+
+
+def _select_position_advisory_daily_drift(
+    *,
+    shadow_monitor_run_id: str,
+    monitor_as_of: str,
+    config_path: Path,
+    recomputed_disagreement_status: str,
+    consensus_drift_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    inventory: list[dict[str, Any]] = []
+    relevant: list[tuple[datetime, str, Path, list[str]]] = []
+    config_checksum = _file_sha256_path(config_path)
+    cutoff = generated_at if generated_at.tzinfo else generated_at.replace(tzinfo=UTC)
+    if consensus_drift_dir.exists():
+        for child in sorted(consensus_drift_dir.iterdir(), key=lambda path: path.name):
+            if not child.is_dir():
+                continue
+            manifest = _read_optional_json(child / "consensus_drift_manifest.json") or {}
+            if manifest.get("source_shadow_monitor_run_id") != shadow_monitor_run_id:
+                continue
+            summary = _read_optional_json(child / "consensus_drift_summary.json") or {}
+            drift_id = _text(manifest.get("drift_id"), child.name)
+            drift_generated = _parse_datetime(_text(manifest.get("generated_at")))
+            drift_config_path = Path(_text(manifest.get("config_path")))
+            drift_config_matches = (
+                drift_config_path.is_file()
+                and _file_sha256_path(drift_config_path) == config_checksum
+            )
+            within_cutoff = drift_generated is not None and drift_generated <= cutoff
+            same_as_of = (
+                _text(manifest.get("as_of")) == monitor_as_of
+                and _text(summary.get("as_of")) == monitor_as_of
+            )
+            reasons: list[str] = []
+            validation_status = "NOT_EVALUATED"
+            if drift_generated is None:
+                reasons.append("generated_at_invalid")
+            elif not within_cutoff:
+                reasons.append("generated_after_daily_advisory_cutoff")
+            if not same_as_of:
+                reasons.append("as_of_mismatch")
+            if not drift_config_matches:
+                reasons.append("config_checksum_mismatch")
+            if within_cutoff and same_as_of and drift_config_matches:
+                validation = validate_consensus_drift_artifact(
+                    drift_id=drift_id,
+                    output_dir=consensus_drift_dir,
+                )
+                validation_status = _text(validation.get("status"), "FAIL")
+                if validation_status != "PASS":
+                    reasons.append("drift_validation_failed")
+                if summary.get("shadow_monitor_run_id") != shadow_monitor_run_id:
+                    reasons.append("summary_monitor_id_mismatch")
+                if summary.get("disagreement_status") != recomputed_disagreement_status:
+                    reasons.append("disagreement_status_mismatch")
+                relevant.append((drift_generated, drift_id, child, reasons))
+            inventory.append(
+                {
+                    "drift_id": drift_id,
+                    "drift_dir": str(child),
+                    "generated_at": manifest.get("generated_at", ""),
+                    "as_of": manifest.get("as_of", ""),
+                    "config_path": str(drift_config_path),
+                    "config_checksum_matches": drift_config_matches,
+                    "within_daily_cutoff": within_cutoff,
+                    "validation_status": validation_status,
+                    "disagreement_status": summary.get("disagreement_status", ""),
+                    "eligible": not reasons,
+                    "reasons": reasons,
+                }
+            )
+    if not relevant:
+        return {
+            "selected_drift_id": "",
+            "selected_drift_dir": None,
+            "drift_evidence_status": "NOT_AVAILABLE_RECOMPUTED",
+            "drift_inventory": inventory,
+        }
+    _, selected_id, selected_dir, selected_reasons = max(
+        relevant,
+        key=lambda item: (item[0], item[1]),
+    )
+    if selected_reasons:
+        raise DynamicV3ParameterResearchError(
+            "latest same-chain consensus drift evidence is invalid: "
+            + ", ".join(selected_reasons)
+        )
+    return {
+        "selected_drift_id": selected_id,
+        "selected_drift_dir": selected_dir,
+        "drift_evidence_status": "CORROBORATED",
+        "drift_inventory": inventory,
+    }
+
+
+def _position_advisory_daily_source_paths(
+    *,
+    shadow_monitor_run_id: str,
+    shadow_monitor_run_dir: Path,
+    config_path: Path,
+    portfolio_snapshot_path: Path | None,
+    selected_drift_dir: Path | None,
+) -> dict[str, str]:
+    monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
+    paths = {
+        "shadow_monitor_manifest": str(monitor_dir / "shadow_monitor_manifest.json"),
+        "shadow_candidate_daily_results": str(
+            monitor_dir / "shadow_candidate_daily_results.jsonl"
+        ),
+        "shadow_candidate_weekly_summary": str(
+            monitor_dir / "shadow_candidate_weekly_summary.jsonl"
+        ),
+        "shadow_monitor_summary": str(monitor_dir / "shadow_monitor_summary.json"),
+        "shadow_monitor_report": str(monitor_dir / "shadow_monitor_report.md"),
+        "shadow_monitor_reader_brief": str(monitor_dir / "reader_brief_section.md"),
+        "position_advisory_config": str(config_path),
+        "portfolio_snapshot": (
+            "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
+        ),
+        "consensus_drift_manifest": "",
+        "consensus_drift_pairwise": "",
+        "consensus_drift_symbol_dispersion": "",
+        "consensus_drift_summary": "",
+        "consensus_drift_report": "",
+    }
+    if selected_drift_dir is not None:
+        paths.update(
+            {
+                "consensus_drift_manifest": str(
+                    selected_drift_dir / "consensus_drift_manifest.json"
+                ),
+                "consensus_drift_pairwise": str(
+                    selected_drift_dir / "candidate_pairwise_disagreement.csv"
+                ),
+                "consensus_drift_symbol_dispersion": str(
+                    selected_drift_dir / "symbol_weight_dispersion.csv"
+                ),
+                "consensus_drift_summary": str(
+                    selected_drift_dir / "consensus_drift_summary.json"
+                ),
+                "consensus_drift_report": str(
+                    selected_drift_dir / "consensus_drift_report.md"
+                ),
+            }
+        )
+    return paths
+
+
 def run_position_advisory_daily(
     *,
     shadow_monitor_run_id: str,
@@ -5046,40 +5293,22 @@ def run_position_advisory_daily(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    config = load_position_advisory_config(config_path)
-    monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
-    monitor_manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
-    monitor_rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
-    target_rows = [_daily_target_row_from_monitor(row) for row in monitor_rows]
-    consensus_rows, consensus_status = _daily_consensus_target_weights(target_rows, config)
-    drift = _latest_consensus_drift_for_monitor(
+    computation = _compute_position_advisory_daily(
         shadow_monitor_run_id=shadow_monitor_run_id,
-        output_dir=consensus_drift_dir,
+        config_path=config_path,
+        portfolio_snapshot_path=portfolio_snapshot_path,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+        generated_at=generated,
     )
-    disagreement_status = _text(drift.get("disagreement_status"), consensus_status)
-    snapshot = (
-        _normalize_portfolio_snapshot(portfolio_snapshot_path, strict=True)
-        if portfolio_snapshot_path is not None
-        else {}
-    )
-    if snapshot and snapshot.get("failed_check_count"):
-        failed = ", ".join(
-            check["name"]
-            for check in _records(snapshot.get("checks"))
-            if check.get("passed") is False
-        )
-        raise DynamicV3ParameterResearchError(f"portfolio snapshot validation failed: {failed}")
-    delta_rows = _daily_position_delta_rows(target_rows, snapshot, config) if snapshot else []
-    actions = _daily_position_advisory_actions(
-        daily_advisory_id="",
-        as_of=_text(monitor_manifest.get("as_of")),
-        target_rows=target_rows,
-        delta_rows=delta_rows,
-        snapshot=snapshot,
-        consensus_status=consensus_status,
-        disagreement_status=disagreement_status,
-        config=config,
-    )
+    monitor_manifest = computation["monitor_manifest"]
+    target_rows = computation["target_rows"]
+    consensus_rows = computation["consensus_rows"]
+    disagreement_status = computation["disagreement_status"]
+    snapshot = computation["snapshot"]
+    delta_rows = computation["delta_rows"]
+    actions = computation["actions"]
+    config = computation["config"]
     daily_advisory_id = _stable_id(
         "position-advisory-daily",
         shadow_monitor_run_id,
@@ -5090,15 +5319,35 @@ def run_position_advisory_daily(
     advisory_dir = _unique_dir(output_dir / daily_advisory_id)
     advisory_dir.mkdir(parents=True, exist_ok=False)
     actions["daily_advisory_id"] = advisory_dir.name
+    source_artifact_paths = _position_advisory_daily_source_paths(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        config_path=config_path,
+        portfolio_snapshot_path=portfolio_snapshot_path,
+        selected_drift_dir=computation["selected_drift_dir"],
+    )
+    source_artifact_checksums = {
+        key: "" if not path else _file_sha256_path(Path(path))
+        for key, path in source_artifact_paths.items()
+    }
+    policy_metadata = _mapping(config.get("policy_metadata"))
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_position_advisory_daily_manifest",
         "daily_advisory_id": advisory_dir.name,
         "source_shadow_monitor_run_id": shadow_monitor_run_id,
         "source_shadow_shortlist_id": monitor_manifest.get("shadow_shortlist_id", ""),
+        "source_shadow_monitor_run_root": str(shadow_monitor_run_dir),
+        "source_consensus_drift_root": str(consensus_drift_dir),
+        "source_monitor_validation_status": computation["monitor_validation_status"],
+        "source_consensus_drift_id": computation["selected_drift_id"],
+        "consensus_drift_evidence_status": computation["drift_evidence_status"],
+        "consensus_drift_inventory": computation["drift_inventory"],
+        "source_artifact_paths": source_artifact_paths,
+        "source_artifact_checksums": source_artifact_checksums,
         "as_of": monitor_manifest.get("as_of", ""),
         "generated_at": generated.isoformat(),
-        "status": "PASS" if target_rows else "PASS_WITH_WARNINGS",
+        "status": "PASS",
         "mode": actions["mode"],
         "candidate_count": len(target_rows),
         "consensus_status": actions["consensus_status"],
@@ -5109,6 +5358,7 @@ def run_position_advisory_daily(
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "portfolio_snapshot_provided": bool(snapshot),
+        "portfolio_snapshot_as_of": snapshot.get("as_of", ""),
         "portfolio_snapshot_path": (
             "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
         ),
@@ -5121,6 +5371,11 @@ def run_position_advisory_daily(
         ),
         "reader_brief_section_path": str(advisory_dir / "reader_brief_section.md"),
         "config_path": str(config_path),
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -5141,6 +5396,18 @@ def run_position_advisory_daily(
         ),
     )
     _write_text(advisory_dir / "reader_brief_section.md", reader_brief)
+    output_names = {
+        "daily_candidate_targets.jsonl",
+        "daily_consensus_weights.csv",
+        "daily_position_deltas.jsonl",
+        "daily_advisory_actions.json",
+        "daily_position_advisory_report.md",
+        "reader_brief_section.md",
+    }
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(advisory_dir / name) for name in sorted(output_names)
+    }
+    _write_json(advisory_dir / "daily_advisory_manifest.json", manifest)
     _update_latest_pointer(
         "latest_position_advisory_daily",
         advisory_dir.name,
@@ -5184,6 +5451,10 @@ def validate_position_advisory_daily_artifact(
     manifest = _read_optional_json(advisory_dir / "daily_advisory_manifest.json") or {}
     actions = _read_optional_json(advisory_dir / "daily_advisory_actions.json") or {}
     targets = _read_jsonl(advisory_dir / "daily_candidate_targets.jsonl")
+    deltas = _read_jsonl(advisory_dir / "daily_position_deltas.jsonl")
+    consensus_path = advisory_dir / "daily_consensus_weights.csv"
+    report_path = advisory_dir / "daily_position_advisory_report.md"
+    reader_brief_path = advisory_dir / "reader_brief_section.md"
     required = [
         "daily_advisory_manifest.json",
         "daily_candidate_targets.jsonl",
@@ -5196,6 +5467,94 @@ def validate_position_advisory_daily_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name) for name in required
     ]
+    source_paths = _mapping(manifest.get("source_artifact_paths"))
+    source_checksums = _mapping(manifest.get("source_artifact_checksums"))
+    monitor_run_id = _text(manifest.get("source_shadow_monitor_run_id"))
+    monitor_root = Path(_text(manifest.get("source_shadow_monitor_run_root")))
+    consensus_drift_root = Path(_text(manifest.get("source_consensus_drift_root")))
+    config_path = Path(_text(manifest.get("config_path")))
+    snapshot_path_text = _text(manifest.get("portfolio_snapshot_path"))
+    generated_at = _parse_datetime(_text(manifest.get("generated_at")))
+    expected_targets: list[dict[str, Any]] = []
+    expected_consensus: list[dict[str, Any]] = []
+    expected_deltas: list[dict[str, Any]] = []
+    expected_actions: dict[str, Any] = {}
+    expected_source_paths: dict[str, str] = {}
+    expected_inventory: list[dict[str, Any]] = []
+    expected_snapshot: dict[str, Any] = {}
+    expected_monitor_manifest: dict[str, Any] = {}
+    expected_consensus_status = ""
+    expected_disagreement_status = ""
+    expected_selected_drift_id = ""
+    expected_drift_evidence_status = ""
+    expected_policy_metadata: dict[str, Any] = {}
+    recomputation_error = ""
+    try:
+        if generated_at is None:
+            raise DynamicV3ParameterResearchError("daily advisory generated_at is invalid")
+        computation = _compute_position_advisory_daily(
+            shadow_monitor_run_id=monitor_run_id,
+            config_path=config_path,
+            portfolio_snapshot_path=(Path(snapshot_path_text) if snapshot_path_text else None),
+            shadow_monitor_run_dir=monitor_root,
+            consensus_drift_dir=consensus_drift_root,
+            generated_at=generated_at,
+        )
+        expected_targets = computation["target_rows"]
+        expected_consensus = computation["consensus_rows"]
+        expected_deltas = computation["delta_rows"]
+        expected_actions = dict(computation["actions"])
+        expected_actions["daily_advisory_id"] = daily_advisory_id
+        expected_snapshot = computation["snapshot"]
+        expected_monitor_manifest = computation["monitor_manifest"]
+        expected_consensus_status = computation["consensus_status"]
+        expected_disagreement_status = computation["disagreement_status"]
+        expected_selected_drift_id = computation["selected_drift_id"]
+        expected_drift_evidence_status = computation["drift_evidence_status"]
+        expected_inventory = computation["drift_inventory"]
+        expected_policy_metadata = _mapping(computation["config"].get("policy_metadata"))
+        expected_source_paths = _position_advisory_daily_source_paths(
+            shadow_monitor_run_id=monitor_run_id,
+            shadow_monitor_run_dir=monitor_root,
+            config_path=config_path,
+            portfolio_snapshot_path=(Path(snapshot_path_text) if snapshot_path_text else None),
+            selected_drift_dir=computation["selected_drift_dir"],
+        )
+    except Exception as exc:  # noqa: BLE001
+        recomputation_error = str(exc)
+    source_files_present = bool(expected_source_paths) and all(
+        not raw_path or Path(raw_path).is_file() for raw_path in expected_source_paths.values()
+    )
+    source_checksums_match = source_files_present and all(
+        _text(source_checksums.get(key))
+        == ("" if not raw_path else _file_sha256_path(Path(raw_path)))
+        for key, raw_path in expected_source_paths.items()
+    )
+    expected_report = (
+        render_daily_position_advisory_markdown(
+            manifest,
+            expected_targets,
+            expected_consensus,
+            expected_deltas,
+            expected_actions,
+        )
+        if not recomputation_error
+        else ""
+    )
+    expected_reader_brief = (
+        render_daily_position_advisory_reader_brief(expected_actions, expected_deltas)
+        if not recomputation_error
+        else ""
+    )
+    output_names = {
+        "daily_candidate_targets.jsonl",
+        "daily_consensus_weights.csv",
+        "daily_position_deltas.jsonl",
+        "daily_advisory_actions.json",
+        "daily_position_advisory_report.md",
+        "reader_brief_section.md",
+    }
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
     checks.extend(
         [
             _check(
@@ -5205,6 +5564,106 @@ def validate_position_advisory_daily_artifact(
                 daily_advisory_id,
             ),
             _check("target_weights_present", bool(targets), "candidate targets required"),
+            _check(
+                "source_recomputation_succeeds",
+                not recomputation_error,
+                recomputation_error or "daily advisory source inputs recomputed",
+            ),
+            _check(
+                "source_paths_match",
+                source_paths == expected_source_paths,
+                _canonical_json(expected_source_paths),
+            ),
+            _check(
+                "source_checksums_match",
+                source_checksums_match,
+                _canonical_json(source_checksums),
+            ),
+            _check(
+                "source_monitor_validation_passes",
+                manifest.get("source_monitor_validation_status") == "PASS"
+                and not recomputation_error,
+                _text(manifest.get("source_monitor_validation_status")),
+            ),
+            _check(
+                "consensus_drift_inventory_matches",
+                _records(manifest.get("consensus_drift_inventory")) == expected_inventory,
+                f"expected={len(expected_inventory)}",
+            ),
+            _check(
+                "candidate_targets_content_matches",
+                targets == expected_targets,
+                f"actual={len(targets)} expected={len(expected_targets)}",
+            ),
+            _check(
+                "consensus_weights_content_matches",
+                consensus_path.is_file()
+                and consensus_path.read_text(encoding="utf-8")
+                == _render_csv_text(expected_consensus).replace("\r\n", "\n"),
+                f"expected_rows={len(expected_consensus)}",
+            ),
+            _check(
+                "position_deltas_content_matches",
+                deltas == expected_deltas,
+                f"actual={len(deltas)} expected={len(expected_deltas)}",
+            ),
+            _check(
+                "advisory_actions_content_matches",
+                actions == expected_actions,
+                _text(actions.get("recommended_action")),
+            ),
+            _check(
+                "manifest_derived_fields_match",
+                manifest.get("source_shadow_shortlist_id")
+                == expected_monitor_manifest.get("shadow_shortlist_id", "")
+                and manifest.get("as_of") == expected_monitor_manifest.get("as_of", "")
+                and manifest.get("status") == "PASS"
+                and manifest.get("mode") == expected_actions.get("mode")
+                and manifest.get("candidate_count") == len(expected_targets)
+                and manifest.get("consensus_status") == expected_actions.get("consensus_status")
+                and manifest.get("disagreement_status") == expected_disagreement_status
+                and manifest.get("recommended_action")
+                == expected_actions.get("recommended_action")
+                and manifest.get("portfolio_snapshot_provided") is bool(expected_snapshot)
+                and manifest.get("portfolio_snapshot_as_of")
+                == expected_snapshot.get("as_of", "")
+                and manifest.get("source_consensus_drift_id") == expected_selected_drift_id
+                and manifest.get("consensus_drift_evidence_status")
+                == expected_drift_evidence_status
+                and manifest.get("policy_id")
+                == _text(expected_policy_metadata.get("policy_id"))
+                and manifest.get("policy_version")
+                == _text(expected_policy_metadata.get("version")),
+                (
+                    f"consensus={expected_consensus_status} "
+                    f"disagreement={expected_disagreement_status}"
+                ),
+            ),
+            _check(
+                "daily_report_content_matches",
+                report_path.is_file()
+                and report_path.read_text(encoding="utf-8") == expected_report,
+                str(report_path),
+            ),
+            _check(
+                "reader_brief_content_matches",
+                reader_brief_path.is_file()
+                and reader_brief_path.read_text(encoding="utf-8") == expected_reader_brief,
+                str(reader_brief_path),
+            ),
+            _check(
+                "output_checksum_inventory_complete",
+                set(output_checksums) == output_names,
+                ",".join(sorted(output_checksums)),
+            ),
+            *[
+                _check(
+                    f"output_checksum_matches:{name}",
+                    _text(output_checksums.get(name)) == _file_sha256_path(advisory_dir / name),
+                    _text(output_checksums.get(name)),
+                )
+                for name in sorted(output_names)
+            ],
             _check(
                 "owner_approval_required",
                 manifest.get("owner_approval_required") is True
@@ -5227,6 +5686,13 @@ def validate_position_advisory_daily_artifact(
                 bool(manifest.get("portfolio_snapshot_provided"))
                 or manifest.get("mode") == POSITION_ADVISORY_TARGET_ONLY,
                 "missing snapshot must produce TARGET_ONLY",
+            ),
+            _check(
+                "no_execution_effect",
+                manifest.get("official_target_weights_generated") is False
+                and manifest.get("portfolio_mutated") is False
+                and manifest.get("order_ticket_generated") is False,
+                "daily advisory is review evidence, not execution authorization",
             ),
         ]
     )
@@ -5257,7 +5723,10 @@ def run_consensus_drift(
     monitor_manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
     monitor_rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
     target_rows = [_daily_target_row_from_monitor(row) for row in monitor_rows]
-    symbol_rows = _symbol_weight_dispersion_rows(target_rows)
+    symbol_rows = _symbol_weight_dispersion_rows(
+        target_rows,
+        agreement_tolerance=_float(_mapping(config.get("consensus")).get("max_symbol_dispersion")),
+    )
     pairwise_rows = _candidate_pairwise_disagreement_rows(target_rows)
     exposure = _exposure_disagreement_summary(target_rows)
     previous_change = _daily_consensus_change_vs_previous(
@@ -17294,12 +17763,15 @@ def _daily_consensus_target_weights(
     target_rows: Sequence[Mapping[str, Any]],
     config: Mapping[str, Any],
 ) -> tuple[list[dict[str, Any]], str]:
-    rows = _symbol_weight_dispersion_rows(target_rows)
-    if not rows:
-        return [], "INSUFFICIENT_DATA"
     consensus_config = _mapping(config.get("consensus"))
     agreement_threshold = _float(consensus_config.get("agreement_threshold"))
     max_dispersion = _float(consensus_config.get("max_symbol_dispersion"))
+    rows = _symbol_weight_dispersion_rows(
+        target_rows,
+        agreement_tolerance=max_dispersion,
+    )
+    if not rows:
+        return [], "INSUFFICIENT_DATA"
     disagreement = False
     for row in rows:
         values = _records(row.get("_candidate_values"))
@@ -17313,6 +17785,8 @@ def _daily_consensus_target_weights(
 
 def _symbol_weight_dispersion_rows(
     target_rows: Sequence[Mapping[str, Any]],
+    *,
+    agreement_tolerance: float | None = None,
 ) -> list[dict[str, Any]]:
     symbols = sorted(
         {symbol for row in target_rows for symbol in _mapping(row.get("target_weights")).keys()}
@@ -17328,7 +17802,8 @@ def _symbol_weight_dispersion_rows(
             continue
         center = _median(values)
         dispersion = max(values) - min(values)
-        agreement = sum(1 for value in values if abs(value - center) <= dispersion) / len(values)
+        tolerance = dispersion if agreement_tolerance is None else agreement_tolerance
+        agreement = sum(1 for value in values if abs(value - center) <= tolerance) / len(values)
         rows.append(
             {
                 "symbol": symbol,
@@ -17468,26 +17943,6 @@ def _daily_consensus_change_vs_previous(
     }
 
 
-def _latest_consensus_drift_for_monitor(
-    *,
-    shadow_monitor_run_id: str,
-    output_dir: Path,
-) -> dict[str, Any]:
-    if not output_dir.exists():
-        return {}
-    candidates = []
-    for child in output_dir.iterdir():
-        if not child.is_dir():
-            continue
-        manifest = _read_optional_json(child / "consensus_drift_manifest.json") or {}
-        if manifest.get("source_shadow_monitor_run_id") == shadow_monitor_run_id:
-            candidates.append(child)
-    if not candidates:
-        return {}
-    latest = max(candidates, key=lambda path: path.stat().st_mtime)
-    return _read_optional_json(latest / "consensus_drift_summary.json") or {}
-
-
 def _daily_position_delta_rows(
     target_rows: Sequence[Mapping[str, Any]],
     snapshot: Mapping[str, Any],
@@ -17550,9 +18005,15 @@ def _daily_position_advisory_actions(
     mode = POSITION_ADVISORY_SNAPSHOT_DELTA if snapshot else POSITION_ADVISORY_TARGET_ONLY
     if consensus_status != "CONSENSUS":
         reasons.append("candidate_target_weight_consensus_not_confirmed")
-    if disagreement_status == "HIGH_DISAGREEMENT":
-        reasons.append("high_candidate_disagreement_forces_manual_review")
-    if disagreement_status == "HIGH_DISAGREEMENT":
+    consensus_requires_review = consensus_status != "CONSENSUS"
+    drift_requires_review = disagreement_status in {
+        "HIGH_DISAGREEMENT",
+        "MODERATE_DISAGREEMENT",
+        "INSUFFICIENT_DATA",
+    }
+    if consensus_requires_review or drift_requires_review:
+        reasons.append("candidate_disagreement_forces_manual_review")
+    if consensus_requires_review or drift_requires_review:
         recommended_action = "manual_review"
     elif not snapshot:
         reasons.append("current_portfolio_snapshot_missing")

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+import os
+from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
 import yaml
 from dynamic_v3_position_readiness_helpers import (
     position_advisory_config,
@@ -14,6 +16,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     POSITION_ADVISORY_SNAPSHOT_DELTA,
     POSITION_ADVISORY_TARGET_ONLY,
+    DynamicV3ParameterResearchError,
     create_owner_review,
     run_consensus_drift,
     run_position_advisory_daily,
@@ -104,6 +107,165 @@ def test_high_disagreement_forces_daily_manual_review(tmp_path: Path) -> None:
     assert monitor_dir.exists()
     assert drift["summary"]["disagreement_status"] == "HIGH_DISAGREEMENT"
     assert advisory["daily_advisory_actions"]["recommended_action"] == "manual_review"
+    assert all(
+        row["candidate_agreement_ratio"] == 0.0
+        for row in advisory["daily_consensus_weights"]
+    )
+
+
+def test_daily_advisory_rejects_invalid_monitor_and_future_snapshot_before_write(
+    tmp_path: Path,
+) -> None:
+    fixture = shadow_shortlist_fixture(tmp_path)
+    monitor = run_shadow_shortlist_monitor(
+        shadow_shortlist_id=fixture["shadow"]["shadow_shortlist_id"],
+        as_of=date(2026, 6, 7),
+        shadow_shortlist_dir=tmp_path / "shadow_shortlist",
+        output_dir=tmp_path / "shadow_monitor_runs",
+    )
+    monitor_manifest_path = (
+        Path(monitor["monitor_run_dir"]) / "shadow_monitor_manifest.json"
+    )
+    monitor_manifest = json.loads(monitor_manifest_path.read_text(encoding="utf-8"))
+    monitor_manifest["broker_action_allowed"] = True
+    monitor_manifest_path.write_text(json.dumps(monitor_manifest), encoding="utf-8")
+    with pytest.raises(
+        DynamicV3ParameterResearchError,
+        match="shadow monitor validation must PASS",
+    ):
+        run_position_advisory_daily(
+            shadow_monitor_run_id=monitor["monitor_run_id"],
+            config_path=position_advisory_config(tmp_path),
+            shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+            output_dir=tmp_path / "position_advisory_daily",
+        )
+    assert not (tmp_path / "position_advisory_daily").exists()
+
+    valid_root = tmp_path / "valid_case"
+    valid_root.mkdir()
+    valid_fixture = shadow_shortlist_fixture(valid_root)
+    valid_monitor = run_shadow_shortlist_monitor(
+        shadow_shortlist_id=valid_fixture["shadow"]["shadow_shortlist_id"],
+        as_of=date(2026, 6, 7),
+        shadow_shortlist_dir=valid_root / "shadow_shortlist",
+        output_dir=valid_root / "shadow_monitor_runs",
+    )
+    future_snapshot = _write_snapshot(valid_root / "future_snapshot.yaml", as_of="2026-06-08")
+    with pytest.raises(
+        DynamicV3ParameterResearchError,
+        match="snapshot as_of cannot be later",
+    ):
+        run_position_advisory_daily(
+            shadow_monitor_run_id=valid_monitor["monitor_run_id"],
+            config_path=position_advisory_config(valid_root),
+            portfolio_snapshot_path=future_snapshot,
+            shadow_monitor_run_dir=valid_root / "shadow_monitor_runs",
+            output_dir=valid_root / "position_advisory_daily",
+        )
+    assert not (valid_root / "position_advisory_daily").exists()
+
+
+def test_daily_advisory_selects_semantic_latest_same_chain_drift_not_mtime(
+    tmp_path: Path,
+) -> None:
+    _write_high_disagreement_monitor(tmp_path)
+    config_path = position_advisory_config(tmp_path)
+    older = run_consensus_drift(
+        shadow_monitor_run_id="monitor-high",
+        config_path=config_path,
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        output_dir=tmp_path / "consensus_drift",
+        generated_at=datetime(2026, 6, 7, 10, tzinfo=UTC),
+    )
+    newer = run_consensus_drift(
+        shadow_monitor_run_id="monitor-high",
+        config_path=config_path,
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        output_dir=tmp_path / "consensus_drift",
+        generated_at=datetime(2026, 6, 7, 11, tzinfo=UTC),
+    )
+    os.utime(Path(older["drift_dir"]), (2_000_000_000, 2_000_000_000))
+
+    advisory = run_position_advisory_daily(
+        shadow_monitor_run_id="monitor-high",
+        config_path=config_path,
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        consensus_drift_dir=tmp_path / "consensus_drift",
+        output_dir=tmp_path / "position_advisory_daily",
+        generated_at=datetime(2026, 6, 7, 12, tzinfo=UTC),
+    )
+    assert advisory["manifest"]["source_consensus_drift_id"] == newer["drift_id"]
+    assert advisory["manifest"]["consensus_drift_evidence_status"] == "CORROBORATED"
+
+
+def test_daily_advisory_rejects_tampered_same_chain_drift_before_write(
+    tmp_path: Path,
+) -> None:
+    _write_high_disagreement_monitor(tmp_path)
+    config_path = position_advisory_config(tmp_path)
+    drift = run_consensus_drift(
+        shadow_monitor_run_id="monitor-high",
+        config_path=config_path,
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        output_dir=tmp_path / "consensus_drift",
+        generated_at=datetime(2026, 6, 7, 10, tzinfo=UTC),
+    )
+    summary_path = Path(drift["drift_dir"]) / "consensus_drift_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["disagreement_status"] = "CONSENSUS"
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    with pytest.raises(
+        DynamicV3ParameterResearchError,
+        match="latest same-chain consensus drift evidence is invalid",
+    ):
+        run_position_advisory_daily(
+            shadow_monitor_run_id="monitor-high",
+            config_path=config_path,
+            shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+            consensus_drift_dir=tmp_path / "consensus_drift",
+            output_dir=tmp_path / "position_advisory_daily",
+            generated_at=datetime(2026, 6, 7, 11, tzinfo=UTC),
+        )
+    assert not (tmp_path / "position_advisory_daily").exists()
+
+
+def test_daily_advisory_validator_detects_output_and_source_drift(tmp_path: Path) -> None:
+    fixture = shadow_shortlist_fixture(tmp_path)
+    monitor = run_shadow_shortlist_monitor(
+        shadow_shortlist_id=fixture["shadow"]["shadow_shortlist_id"],
+        as_of=date(2026, 6, 7),
+        shadow_shortlist_dir=tmp_path / "shadow_shortlist",
+        output_dir=tmp_path / "shadow_monitor_runs",
+    )
+    advisory = run_position_advisory_daily(
+        shadow_monitor_run_id=monitor["monitor_run_id"],
+        config_path=position_advisory_config(tmp_path),
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        output_dir=tmp_path / "position_advisory_daily",
+    )
+    actions_path = Path(advisory["daily_advisory_dir"]) / "daily_advisory_actions.json"
+    actions = json.loads(actions_path.read_text(encoding="utf-8"))
+    actions["recommended_action"] = "small_adjustment_review_only"
+    actions_path.write_text(json.dumps(actions), encoding="utf-8")
+    output_validation = validate_position_advisory_daily_artifact(
+        daily_advisory_id=advisory["daily_advisory_id"],
+        output_dir=tmp_path / "position_advisory_daily",
+    )
+    assert output_validation["status"] == "FAIL"
+    assert "advisory_actions_content_matches" in _failed_check_ids(output_validation)
+
+    monitor_report = Path(monitor["monitor_run_dir"]) / "shadow_monitor_report.md"
+    monitor_report.write_text(
+        monitor_report.read_text(encoding="utf-8") + "\nsource drift\n",
+        encoding="utf-8",
+    )
+    source_validation = validate_position_advisory_daily_artifact(
+        daily_advisory_id=advisory["daily_advisory_id"],
+        output_dir=tmp_path / "position_advisory_daily",
+    )
+    assert source_validation["status"] == "FAIL"
+    assert "source_checksums_match" in _failed_check_ids(source_validation)
 
 
 def test_position_advisory_daily_flows_into_reader_brief(tmp_path: Path) -> None:
@@ -217,7 +379,57 @@ def _write_high_disagreement_monitor(tmp_path: Path) -> Path:
         "\n".join(json.dumps(row) for row in rows) + "\n",
         encoding="utf-8",
     )
+    (monitor_dir / "shadow_candidate_weekly_summary.jsonl").write_text("", encoding="utf-8")
+    (monitor_dir / "shadow_monitor_summary.json").write_text(
+        json.dumps(
+            {
+                "monitor_run_id": "monitor-high",
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (monitor_dir / "shadow_monitor_report.md").write_text("# Monitor\n", encoding="utf-8")
+    (monitor_dir / "reader_brief_section.md").write_text("## Monitor\n", encoding="utf-8")
     return monitor_dir
+
+
+def _write_snapshot(path: Path, *, as_of: str) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "as_of": as_of,
+                "base_currency": "USD",
+                "account_type": "manual_snapshot",
+                "source": "manual",
+                "total_equity": 100000.0,
+                "cash": {"symbol": "CASH", "weight": 0.20, "value": 20000.0},
+                "positions": [
+                    {
+                        "symbol": "QQQ",
+                        "weight": 0.80,
+                        "value": 80000.0,
+                        "currency": "USD",
+                    }
+                ],
+                "metadata": {"owner_reviewed": True, "broker_imported": False},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _failed_check_ids(payload: dict[str, object]) -> set[str]:
+    return {
+        str(check["check_id"])
+        for check in payload["checks"]  # type: ignore[index]
+        if check["passed"] is False  # type: ignore[index]
+    }
 
 
 def _write_minimal_leaderboard(tmp_path: Path) -> Path:
