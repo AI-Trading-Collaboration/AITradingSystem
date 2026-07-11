@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 import pytest
+import typer
 import yaml
 from typer.testing import CliRunner
 
@@ -25,6 +27,7 @@ from ai_trading_system.etf_portfolio.trend_calibration import (
     run_trend_signal_weight_search,
     write_trend_calibration_report,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import trend_calibration as trend_cli
 from ai_trading_system.reports import reader_brief
 
 GENERATED_AT = datetime(2026, 6, 5, 12, 0, tzinfo=UTC)
@@ -121,6 +124,42 @@ def test_trend_calibration_validation_cli_and_reader_brief(tmp_path: Path) -> No
 
     missing = reader_brief._etf_trend_calibration_summary({"reports": []})
     assert missing["availability"] == "MISSING"
+
+
+def test_trend_calibration_run_stops_before_price_features_when_cached_dq_fails(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+
+    def fail_dq(**_: object) -> tuple[Path, object]:
+        calls.append("dq")
+        raise typer.Exit(code=1)
+
+    def unexpected_prices(*_: object, **__: object) -> tuple[pd.DataFrame, object]:
+        calls.append("prices")
+        return _sample_prices(), SimpleNamespace(passed=True, status="PASS")
+
+    monkeypatch.setattr(trend_cli, "run_cached_data_quality_gate_with_report", fail_dq)
+    monkeypatch.setattr(trend_cli, "load_standard_prices", unexpected_prices)
+
+    with pytest.raises(typer.Exit):
+        trend_cli.trend_calibration_run_command(
+            prices_path=tmp_path / "prices.csv",
+            rates_path=tmp_path / "rates.csv",
+            as_of="2024-03-29",
+            start="2023-01-03",
+            end="2024-03-29",
+            top=1,
+            config_path=DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH,
+            data_quality_output_path=tmp_path / "dq.md",
+            dataset_output_dir=tmp_path / "datasets",
+            report_output_dir=tmp_path / "reports",
+            registry_output_dir=tmp_path / "registry",
+        )
+
+    assert calls == ["dq"]
+    assert not (tmp_path / "datasets").exists()
 
 
 def _build_dataset() -> dict[str, object]:

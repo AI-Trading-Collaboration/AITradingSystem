@@ -151,6 +151,7 @@ arch_004_owned_paths:
   - tests/test_arch_004g_shared_writers.py
   - tests/test_arch_004g2_etf_cli_contract.py
   - tests/test_etf_satellite_attribution.py
+  - tests/test_etf_trend_calibration.py
   - src/ai_trading_system/platform/architecture/cli_contract.py
   - scripts/architecture_etf_cli.py
   - inputs/architecture/arch_004g2_etf_cli_contract.yaml
@@ -167,6 +168,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/parameter_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/reporting.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/trend_calibration.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/weekly_review.py
   - src/ai_trading_system/cli_direct.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md

@@ -6,7 +6,21 @@ from typing import Annotated
 
 import typer
 
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_price_tickers,
+    configured_rate_series,
+    load_data_quality,
+    load_universe,
+)
+from ai_trading_system.data.quality import (
+    DataQualityReport,
+    default_quality_report_path,
+    validate_data_cache,
+)
+from ai_trading_system.data.quality import (
+    write_data_quality_report as write_cache_data_quality_report,
+)
 from ai_trading_system.etf_portfolio.data import read_price_frame, standardize_price_frame
 from ai_trading_system.etf_portfolio.data_quality import (
     DEFAULT_ETF_DATA_QUALITY_POLICY_CONFIG_PATH,
@@ -26,6 +40,84 @@ from ai_trading_system.etf_portfolio.models import (
 from ai_trading_system.interfaces.cli.etf_portfolio.common import parse_date, resolve_date
 from ai_trading_system.interfaces.cli.etf_portfolio.registration import data_quality_app
 from ai_trading_system.reports.report_index import DEFAULT_REPORT_REGISTRY_PATH
+
+
+def download_manifest_path(prices_path: Path) -> Path:
+    return prices_path.parent / "download_manifest.csv"
+
+
+def marketstack_prices_path(prices_path: Path) -> Path:
+    return prices_path.parent / "prices_marketstack_daily.csv"
+
+
+def requires_marketstack_prices(prices_path: Path) -> bool:
+    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+    try:
+        return prices_path.resolve() == default_prices_path.resolve()
+    except OSError:
+        return prices_path == default_prices_path
+
+
+def run_cached_data_quality_gate(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    as_of: date,
+    output_path: Path | None = None,
+) -> Path:
+    quality_output, _ = _run_cached_data_quality_gate(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        as_of=as_of,
+        output_path=output_path,
+    )
+    return quality_output
+
+
+def run_cached_data_quality_gate_with_report(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    as_of: date,
+    output_path: Path | None = None,
+) -> tuple[Path, DataQualityReport]:
+    return _run_cached_data_quality_gate(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        as_of=as_of,
+        output_path=output_path,
+    )
+
+
+def _run_cached_data_quality_gate(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    as_of: date,
+    output_path: Path | None,
+) -> tuple[Path, DataQualityReport]:
+    quality_output = output_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        as_of,
+    )
+    universe = load_universe()
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(universe),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=load_data_quality(),
+        as_of=as_of,
+        manifest_path=download_manifest_path(prices_path),
+        secondary_prices_path=marketstack_prices_path(prices_path),
+        require_secondary_prices=requires_marketstack_prices(prices_path),
+    )
+    write_cache_data_quality_report(data_quality_report, quality_output)
+    typer.echo(f"validate_data_status={data_quality_report.status}")
+    typer.echo(f"validate_data_report={quality_output}")
+    if not data_quality_report.passed:
+        raise typer.Exit(code=1)
+    return quality_output, data_quality_report
 
 
 @data_quality_app.command("price-freshness")
@@ -198,4 +290,9 @@ __all__ = [
     "data_quality_price_freshness_command",
     "data_quality_report_command",
     "data_quality_validate_command",
+    "download_manifest_path",
+    "marketstack_prices_path",
+    "requires_marketstack_prices",
+    "run_cached_data_quality_gate",
+    "run_cached_data_quality_gate_with_report",
 ]

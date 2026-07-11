@@ -1117,6 +1117,36 @@ phase_g_execution:
       data_quality_behavior_changed: false
       regime_interpretation_changed: false
       runtime_behavior_changed: false
+    g2_3_eighth_slice:
+      status: COMPLETE
+      command_groups: [data_quality, research, trend_calibration]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/trend_calibration.py
+      shared_dq_helpers_moved:
+        [download_manifest_path, marketstack_prices_path, requires_marketstack_prices,
+         run_cached_data_quality_gate]
+      legacy_callback_definitions_remaining: 0
+      legacy_dq_helper_definitions_remaining: 0
+      legacy_trend_calibration_imports_remaining: 0
+      dq_gate_precedes_price_and_feature_build: true
+      dq_failure_fixture_fail_closed: true
+      legacy_root_lines_before: 34694
+      legacy_root_lines_after: 34440
+      legacy_root_line_reduction: 254
+      legacy_root_top_level_functions_after: 1010
+      legacy_root_command_decorators_after: 967
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 54}
+      architecture_fitness:
+        status: PASS
+        passed: 182
+        current_direct_writer_calls: 860
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T092501Z/test_runtime_summary.json
+      data_quality_behavior_changed: false
+      regime_interpretation_changed: false
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

@@ -45,6 +45,9 @@ SATELLITE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/satellite_attribution.py"
 )
+TREND_CALIBRATION_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/trend_calibration.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -119,7 +122,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34694
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 34440
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -245,6 +248,30 @@ def test_g2_3_satellite_attribution_callbacks_and_shared_helpers_leave_legacy_ro
     assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in shared_helpers})
     assert callbacks | {"prepare_satellite_attribution_dataset"} <= canonical_names
     assert shared_helpers <= common_names
+
+
+def test_g2_3_trend_calibration_callbacks_and_dq_helpers_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(TREND_CALIBRATION_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    data_quality_names = _function_names(
+        ast.parse(DATA_QUALITY_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "trend_calibration_run_command",
+        "trend_calibration_report_command",
+        "trend_calibration_validate_command",
+    }
+    dq_helpers = {
+        "download_manifest_path",
+        "marketstack_prices_path",
+        "requires_marketstack_prices",
+        "run_cached_data_quality_gate",
+    }
+    assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in dq_helpers})
+    assert callbacks <= canonical_names
+    assert dq_helpers <= data_quality_names
 
 
 def __file_path() -> Path:
