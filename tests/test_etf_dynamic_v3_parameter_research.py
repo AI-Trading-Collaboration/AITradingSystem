@@ -101,6 +101,161 @@ def test_parameter_sweep_config_validation_and_candidate_id(tmp_path: Path) -> N
         load_parameter_sweep_config(invalid_path)
 
 
+def test_injection_audit_selection_starts_with_ofat_matched_pairs() -> None:
+    config = load_parameter_sweep_config(DEFAULT_PARAMETER_SWEEP_CONFIG_PATH)
+
+    selected = dynamic_v3_research._select_injection_audit_candidates(
+        config,
+        max_candidates=8,
+    )
+
+    assert len(selected) == 8
+    base = selected[0]["parameters"]
+    for parameter, candidate in zip(
+        dynamic_v3_research.REQUIRED_INJECTION_PARAMETERS,
+        selected[1:],
+        strict=True,
+    ):
+        changed = {name for name, value in candidate["parameters"].items() if value != base[name]}
+        assert changed == {parameter}
+
+
+def test_parameter_effect_summary_does_not_cross_attribute_other_axis_changes() -> None:
+    parameters = {
+        "rescue_intensity": 0.5,
+        "smooth_window_days": 5,
+        "constraint_buffer_bps": 25,
+        "turnover_penalty": 0.1,
+        "risk_off_confirmation_days": 2,
+        "rebalance_cooldown_days": 3,
+        "drawdown_guard": "soft",
+    }
+
+    def row(
+        candidate_id: str,
+        *,
+        changes: dict[str, object] | None = None,
+        config_hash: str = "config-a",
+        metric_hash: str = "metric-a",
+    ) -> dict[str, object]:
+        return {
+            "candidate_id": candidate_id,
+            **parameters,
+            **(changes or {}),
+            "effective_real_policy_hash": config_hash,
+            "effective_rescue_policy_hash": "rescue-a",
+            "metric_hash": metric_hash,
+            "latest_weight_hash": "weight-a",
+        }
+
+    matrix = [
+        row("base"),
+        row(
+            "rescue-change",
+            changes={"rescue_intensity": 0.75},
+            config_hash="config-b",
+            metric_hash="metric-b",
+        ),
+        row("smooth-change", changes={"smooth_window_days": 10}),
+    ]
+
+    effects = dynamic_v3_research._parameter_effect_summary(matrix, matrix)
+    by_parameter = {effect["parameter"]: effect for effect in effects}
+
+    assert by_parameter["rescue_intensity"]["effect_status"] == "EFFECTIVE"
+    assert by_parameter["rescue_intensity"]["matched_pair_count"] == 1
+    assert by_parameter["smooth_window_days"]["effect_status"] == "NOT_CONSUMED"
+    assert by_parameter["smooth_window_days"]["config_changed_pair_count"] == 0
+    assert (
+        by_parameter["constraint_buffer_bps"]["effect_status"]
+        == "INSUFFICIENT_MATCHED_PAIR_EVIDENCE"
+    )
+
+
+def test_injection_audit_validation_requires_and_accepts_complete_pair_coverage(
+    tmp_path: Path,
+) -> None:
+    audit_id = "pair-complete"
+    audit_dir = tmp_path / audit_id
+    audit_dir.mkdir()
+    effect_rows = [
+        {
+            "parameter": parameter,
+            "effect_status": "NO_OBSERVED_EFFECT",
+            "matched_pair_count": 1,
+        }
+        for parameter in dynamic_v3_research.REQUIRED_INJECTION_PARAMETERS
+    ]
+    (audit_dir / "injection_audit_manifest.json").write_text(
+        json.dumps(
+            {
+                "audit_id": audit_id,
+                "status": "PASS",
+                "candidate_count": 8,
+                "max_candidates": 8,
+                "parameter_effect_pair_coverage_complete": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (audit_dir / "candidate_parameter_matrix.csv").write_text(
+        "candidate_id\nbase\n",
+        encoding="utf-8",
+    )
+    (audit_dir / "weight_path_diff_summary.json").write_text(
+        json.dumps({"distinct_latest_weight_hash_count": 1}),
+        encoding="utf-8",
+    )
+    (audit_dir / "metric_diff_summary.json").write_text("{}", encoding="utf-8")
+    (audit_dir / "parameter_effect_summary.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "parameter_effect_pair_coverage_complete": True,
+                "parameter_effects": effect_rows,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (audit_dir / "parameter_effect_report.md").write_text("# report\n", encoding="utf-8")
+
+    validation = validate_injection_audit_artifact(audit_id=audit_id, output_dir=tmp_path)
+    report = dynamic_v3_research.injection_audit_report_payload(
+        audit_id=audit_id,
+        output_dir=tmp_path,
+    )
+
+    assert validation["status"] == "PASS"
+    assert report["parameter_effect_pair_coverage_complete"] is True
+    assert report["parameter_effects"] == effect_rows
+
+
+def test_injection_audit_report_downgrades_legacy_summary_without_traceback(
+    tmp_path: Path,
+) -> None:
+    audit_id = "legacy-audit"
+    audit_dir = tmp_path / audit_id
+    audit_dir.mkdir()
+    (audit_dir / "injection_audit_manifest.json").write_text(
+        json.dumps({"audit_id": audit_id, "status": "PASS", "candidate_count": 20}),
+        encoding="utf-8",
+    )
+    (audit_dir / "weight_path_diff_summary.json").write_text("{}", encoding="utf-8")
+    (audit_dir / "metric_diff_summary.json").write_text("{}", encoding="utf-8")
+
+    report = dynamic_v3_research.injection_audit_report_payload(
+        audit_id=audit_id,
+        output_dir=tmp_path,
+    )
+
+    assert report["status"] == "INCOMPLETE"
+    assert report["parameter_effect_pair_coverage_complete"] is False
+    assert report["parameters_without_matched_pairs"] == list(
+        dynamic_v3_research.REQUIRED_INJECTION_PARAMETERS
+    )
+    assert report["limitations"] == ["legacy_parameter_effect_summary_missing"]
+
+
 def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
     config_path = _tiny_config_path(tmp_path)
     output_dir = tmp_path / "sweeps"
@@ -1097,12 +1252,15 @@ def test_dynamic_v3_data_and_injection_audit_contracts(
         output_dir=tmp_path / "injection_audit",
     )
     assert injection["report"]["candidate_count"] == 1
+    assert injection["report"]["status"] == "INCOMPLETE"
+    assert injection["report"]["parameter_effect_pair_coverage_complete"] is False
+    assert (injection["audit_dir"] / "parameter_effect_summary.json").exists()
     assert (
         validate_injection_audit_artifact(
             audit_id=injection["audit_id"],
             output_dir=tmp_path / "injection_audit",
         )["status"]
-        == "PASS"
+        == "FAIL"
     )
 
 
@@ -1190,9 +1348,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     (outcome_dashboard_dir / "pending_reason_dashboard.json").write_text(
         json.dumps(
             {
-                "top_pending_reasons": [
-                    {"reason": "future_window_not_reached", "count": 22}
-                ],
+                "top_pending_reasons": [{"reason": "future_window_not_reached", "count": 22}],
                 "next_action": "continue_forward_tracking",
                 "production_effect": "none",
                 "broker_action_taken": False,
@@ -1348,9 +1504,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     (decision_dir / "forward_next_actions.json").write_text(
         json.dumps(
             {
-                "next_actions": [
-                    {"action": "run_next_due_scan", "target_date": "2026-06-21"}
-                ],
+                "next_actions": [{"action": "run_next_due_scan", "target_date": "2026-06-21"}],
                 "production_effect": "none",
             }
         ),
@@ -1690,9 +1844,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
                 "stress_scenario_library_id": "dynamic_v3_rescue_stress_scenario_library_v1",
                 "scenario_count": 9,
                 "required_scenarios_present": True,
-                "candidate_validation_use": (
-                    "standardized_dynamic_v3_candidate_stress_validation"
-                ),
+                "candidate_validation_use": ("standardized_dynamic_v3_candidate_stress_validation"),
                 "next_validation_action": (
                     "use_library_ids_in_next_stress_backfill_or_case_review"
                 ),
@@ -1772,9 +1924,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         json.dumps(
             {
                 "casebook_run_id": "flip123",
-                "flip_rotation_casebook_id": (
-                    "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
-                ),
+                "flip_rotation_casebook_id": ("dynamic_v3_rescue_flip_rotation_event_casebook_v1"),
                 "status": "PASS",
                 "production_effect": "none",
                 "broker_action_taken": False,
@@ -1787,9 +1937,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         json.dumps(
             {
                 "casebook_run_id": "flip123",
-                "flip_rotation_casebook_id": (
-                    "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
-                ),
+                "flip_rotation_casebook_id": ("dynamic_v3_rescue_flip_rotation_event_casebook_v1"),
                 "event_count": 5,
                 "useful_flip_count": 3,
                 "false_positive_count": 2,
@@ -1888,10 +2036,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["candidate_decision_confirmation_count"] == 3
     assert summary["candidate_decision_owner_action"] == "formalize_research_method"
     assert summary["candidate_decision_final_decision"] == "FORMALIZE_RESEARCH_METHOD"
-    assert (
-        summary["candidate_decision_next_action"]
-        == "start_daily_paper_shadow_runner_design"
-    )
+    assert summary["candidate_decision_next_action"] == "start_daily_paper_shadow_runner_design"
     assert summary["candidate_decision_ledger_validation_status"] == "PASS"
     assert summary["promotion_threshold_calibration_id"] == "threshold123"
     assert summary["promotion_threshold_policy_id"] == "research_promotion_gate_thresholds_v1"
@@ -1914,10 +2059,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["paper_shadow_daily_status"] == "RECORDED"
     assert summary["paper_shadow_daily_signal_output"] == "OBSERVE_RISK_ON"
     assert summary["paper_shadow_daily_risk_state"] == "risk_on"
-    assert (
-        summary["paper_shadow_daily_next_action"]
-        == "continue_daily_paper_shadow_observation"
-    )
+    assert summary["paper_shadow_daily_next_action"] == "continue_daily_paper_shadow_observation"
     assert summary["paper_shadow_daily_validation_status"] == "PASS"
     assert summary["paper_shadow_daily"] == str(daily_path)
     assert summary["paper_shadow_drift_monitor_id"] == "drift123"
@@ -1932,10 +2074,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["evidence_staleness_monitor_id"] == "stale123"
     assert summary["evidence_freshness_status"] == "ACCEPTABLE"
     assert summary["evidence_coverage_status"] == "MANUAL_REVIEW_REQUIRED"
-    assert (
-        summary["evidence_weekly_review_coverage_classification"]
-        == "RECOVERY_MODE_REVIEW"
-    )
+    assert summary["evidence_weekly_review_coverage_classification"] == "RECOVERY_MODE_REVIEW"
     assert summary["evidence_weekly_review_coverage_safe_for_continuation"] is False
     assert summary["evidence_requested_as_of"] == "2026-06-16"
     assert summary["evidence_freshness_reference_date"] == "2026-06-12"
@@ -1944,10 +2083,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["evidence_stale_artifacts"] == "none"
     assert summary["evidence_blocking_artifacts"] == "none"
     assert summary["evidence_missing_artifacts"] == "none"
-    assert (
-        summary["evidence_next_refresh_action"]
-        == "continue_with_manual_freshness_note"
-    )
+    assert summary["evidence_next_refresh_action"] == "continue_with_manual_freshness_note"
     assert summary["evidence_safe_to_continue_shadow"] is True
     assert summary["evidence_safety_boundary_status"] == "PASS"
     assert summary["evidence_staleness_validation_status"] == "PASS"
@@ -1967,10 +2103,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["shadow_continuation_safety_boundary_status"] == "PASS"
     assert summary["shadow_continuation_validation_status"] == "PASS"
     assert summary["stress_scenario_library_run_id"] == "stress123"
-    assert (
-        summary["stress_scenario_library_id"]
-        == "dynamic_v3_rescue_stress_scenario_library_v1"
-    )
+    assert summary["stress_scenario_library_id"] == "dynamic_v3_rescue_stress_scenario_library_v1"
     assert summary["stress_scenario_count"] == 9
     assert summary["stress_scenario_required_present"] is True
     assert (
@@ -1983,37 +2116,25 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     )
     assert summary["stress_scenario_validation_status"] == "PASS"
     assert summary["drawdown_casebook_run_id"] == "casebook123"
-    assert (
-        summary["drawdown_casebook_id"]
-        == "dynamic_v3_rescue_drawdown_event_casebook_v1"
-    )
+    assert summary["drawdown_casebook_id"] == "dynamic_v3_rescue_drawdown_event_casebook_v1"
     assert summary["drawdown_casebook_event_count"] == 5
     assert summary["drawdown_casebook_worst_event"] == "semiconductor_pullback_2024_07"
     assert summary["drawdown_casebook_regime_coverage"] == (
-        "risk_off, semiconductor_pullback, sideways_choppy, strong_recovery, "
-        "tech_drawdown"
+        "risk_off, semiconductor_pullback, sideways_choppy, strong_recovery, tech_drawdown"
     )
     assert (
-        summary["drawdown_casebook_next_action"]
-        == "use_casebook_in_next_drawdown_mismatch_review"
+        summary["drawdown_casebook_next_action"] == "use_casebook_in_next_drawdown_mismatch_review"
     )
     assert summary["drawdown_casebook_validation_status"] == "PASS"
     assert summary["flip_rotation_casebook_run_id"] == "flip123"
     assert (
-        summary["flip_rotation_casebook_id"]
-        == "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
+        summary["flip_rotation_casebook_id"] == "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
     )
     assert summary["flip_rotation_casebook_event_count"] == 5
     assert summary["flip_rotation_useful_count"] == 3
     assert summary["flip_rotation_false_positive_count"] == 2
-    assert (
-        summary["flip_rotation_dominant_trigger"]
-        == "high_volatility_sideways_signal"
-    )
-    assert (
-        summary["flip_rotation_next_action"]
-        == "use_casebook_in_next_flip_rotation_review"
-    )
+    assert summary["flip_rotation_dominant_trigger"] == "high_volatility_sideways_signal"
+    assert summary["flip_rotation_next_action"] == "use_casebook_in_next_flip_rotation_review"
     assert summary["flip_rotation_casebook_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"

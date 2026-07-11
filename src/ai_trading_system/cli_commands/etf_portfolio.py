@@ -425,7 +425,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_GATE_IMPACT_DIR,
     DEFAULT_GATE_POLICY_DIR,
     DEFAULT_GOVERNANCE_DIR,
-    DEFAULT_INJECTION_AUDIT_DIR,
     DEFAULT_INTERPRETATION_PACK_DIR,
     DEFAULT_LATEST_POINTER_DIR,
     DEFAULT_MANUAL_EXECUTION_REVIEW_DIR,
@@ -487,7 +486,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     gate_impact_report_payload,
     governance_diff_payload,
     governance_report_payload,
-    injection_audit_report_payload,
     interpretation_report_payload,
     manual_execution_review_report_payload,
     manual_portfolio_report_payload,
@@ -523,7 +521,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_evidence_summary,
     run_execution_guardrails_check,
     run_gate_impact,
-    run_injection_audit,
     run_interpretation_pack,
     run_overfit_review,
     run_overnight_readiness,
@@ -557,7 +554,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_evidence_summary_artifact,
     validate_execution_guardrails_artifact,
     validate_gate_impact_artifact,
-    validate_injection_audit_artifact,
     validate_interpretation_pack_artifact,
     validate_manual_execution_review_artifact,
     validate_manual_portfolio_artifact,
@@ -1030,7 +1026,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_historical_paper_sim_app,
     dynamic_v3_historical_replay_app,
     dynamic_v3_hypothesis_backlog_app,
-    dynamic_v3_injection_audit_app,
     dynamic_v3_limited_consistency_app,
     dynamic_v3_limited_instability_app,
     dynamic_v3_limited_long_risk_app,
@@ -1266,95 +1261,6 @@ def dynamic_v3_weight_path_report_command(
     typer.echo(f"daily_weights_path={payload['daily_weights_path']}")
     typer.echo(f"weight_path_metadata_path={payload['weight_path_metadata_path']}")
     typer.echo("production_candidate_generated=false")
-
-
-@dynamic_v3_injection_audit_app.command("run")
-def dynamic_v3_injection_audit_run_command(
-    config_path: Annotated[
-        Path,
-        typer.Option("--config", "--config-path", help="parameter sweep config。"),
-    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
-    as_of: Annotated[str, typer.Option("--as-of", help="audit as-of date。")] = "2026-06-04",
-    end: Annotated[str, typer.Option("--end", help="audit end date。")] = "2026-06-04",
-    max_candidates: Annotated[
-        int,
-        typer.Option("--max-candidates", help="audit candidate count。"),
-    ] = 20,
-    prices_path: Annotated[
-        Path,
-        typer.Option("--prices-path", help="real evaluator 标准化 ETF daily price cache。"),
-    ] = DEFAULT_ETF_PRICE_PATH,
-    rates_path: Annotated[
-        Path,
-        typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="injection audit artifact root。"),
-    ] = DEFAULT_INJECTION_AUDIT_DIR,
-) -> None:
-    """运行 TRADING-102 parameter injection audit。"""
-    try:
-        result = run_injection_audit(
-            config_path=config_path,
-            as_of=_parse_date(as_of),
-            end=_parse_date(end),
-            max_candidates=max_candidates,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            output_dir=output_dir,
-        )
-    except DynamicV3ParameterResearchError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    report = result["report"]
-    typer.echo(f"audit_id={result['audit_id']}")
-    typer.echo(f"audit_dir={result['audit_dir']}")
-    typer.echo(f"status={report['status']}")
-    typer.echo(f"candidate_count={report['candidate_count']}")
-    typer.echo(f"no_observed_effect_parameters={','.join(report['no_observed_effect_parameters'])}")
-    typer.echo("production_candidate_generated=false")
-
-
-@dynamic_v3_injection_audit_app.command("report")
-def dynamic_v3_injection_audit_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest injection audit pointer。"),
-    ] = False,
-    audit_id: Annotated[str | None, typer.Option("--audit-id", help="injection audit id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="injection audit artifact root。"),
-    ] = DEFAULT_INJECTION_AUDIT_DIR,
-) -> None:
-    """展示 TRADING-102 injection audit 摘要。"""
-    payload = injection_audit_report_payload(
-        audit_id=audit_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    typer.echo(f"audit_id={payload['audit_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"candidate_count={payload['candidate_count']}")
-    typer.echo(f"report_path={payload['report_path']}")
-    typer.echo("production_candidate_generated=false")
-
-
-@dynamic_v3_rescue_app.command("validate-injection-audit")
-def dynamic_v3_validate_injection_audit_command(
-    audit_id: Annotated[str, typer.Option("--audit-id", help="injection audit id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="injection audit artifact root。"),
-    ] = DEFAULT_INJECTION_AUDIT_DIR,
-) -> None:
-    """校验 TRADING-102 injection audit artifacts。"""
-    payload = validate_injection_audit_artifact(audit_id=audit_id, output_dir=output_dir)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_candidate_generated=false")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
 
 
 @dynamic_v3_candidate_app.command("report")

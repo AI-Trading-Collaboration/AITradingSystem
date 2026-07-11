@@ -1560,12 +1560,14 @@ reports:
     command: aits etf dynamic-v3-rescue injection-audit report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/injection_audit/*/injection_audit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/injection_audit/*/parameter_effect_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/injection_audit/*/parameter_effect_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-102 verifies candidate parameters are consumed by the real
-      evaluator and that weight path or metric differences are observable.
-    owner_action: review_injection_audit_before_trusting_real_sweep_parameter_differences
+      TRADING-102 uses one-factor-at-a-time matched pairs to verify candidate
+      parameters are consumed by the real evaluator and that weight path or
+      metric differences are attributable to the selected parameter.
+    owner_action: require_complete_matched_pair_coverage_before_trusting_parameter_effects
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false

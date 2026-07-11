@@ -1705,6 +1705,42 @@ phase_g_execution:
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T134512Z/test_runtime_summary.json
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
+    g2_4_sixteenth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_injection_audit]
+      callback_count: 3
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_injection_audit.py
+      legacy_callback_definitions_remaining: 0
+      deterministic_base_plus_ofat_pairs: true
+      grid_prefix_may_prove_parameter_effect: false
+      parameter_effect_uses_matched_pairs_only: true
+      declared_mapping_alone_proves_consumption: false
+      independent_parameter_effect_artifact_required: true
+      insufficient_pair_status: INSUFFICIENT_MATCHED_PAIR_EVIDENCE
+      insufficient_pair_coverage_audit_status: INCOMPLETE
+      validation_fails_on_incomplete_pair_coverage: true
+      real_evaluation_uses_dq_and_pit_context: true
+      latest_report_mode_read_only: true
+      automatic_candidate_promotion_allowed: false
+      production_effect: none
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31277
+      legacy_root_lines_after: 31183
+      legacy_root_line_reduction: 94
+      legacy_root_top_level_functions_after: 949
+      legacy_root_command_decorators_after: 910
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 53}
+      architecture_fitness:
+        status: PASS
+        passed: 199
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T142310Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: true
+      investment_interpretation_correctness_fix: true
     production_effect: none
 
 safety_boundary:

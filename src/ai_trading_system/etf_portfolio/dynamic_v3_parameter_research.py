@@ -1796,11 +1796,12 @@ def run_injection_audit(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    requested_max_candidates = max(max_candidates, 1)
     base_config = load_parameter_sweep_config(config_path)
     config = base_config.model_copy(
         update={
             "data": base_config.data.model_copy(update={"as_of": as_of, "end": end}),
-            "run": base_config.run.model_copy(update={"max_candidates": max(max_candidates, 1)}),
+            "run": base_config.run.model_copy(update={"max_candidates": requested_max_candidates}),
             "execution": base_config.execution.model_copy(
                 update={
                     "evaluator": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
@@ -1816,12 +1817,9 @@ def run_injection_audit(
     if any(not check["passed"] for check in governance_checks):
         failed = ", ".join(check["check_id"] for check in governance_checks if not check["passed"])
         raise DynamicV3ParameterResearchError(f"governance validation failed: {failed}")
-    unbounded = config.model_copy(
-        update={"run": config.run.model_copy(update={"max_candidates": max_candidates * 20})}
-    )
     candidates = _select_injection_audit_candidates(
-        parameter_grid_candidates(unbounded),
-        max_candidates=max_candidates,
+        config,
+        max_candidates=requested_max_candidates,
     )
     audit_id = _stable_id(
         "injection-audit",
@@ -1873,16 +1871,23 @@ def run_injection_audit(
     weight_summary = _weight_path_diff_summary(results)
     metric_summary = _metric_diff_summary(results)
     parameter_effects = _parameter_effect_summary(matrix_rows, results)
+    parameters_without_matched_pairs = [
+        row["parameter"] for row in parameter_effects if int(row["matched_pair_count"]) == 0
+    ]
+    pair_coverage_complete = not parameters_without_matched_pairs
+    audit_status = "PASS" if pair_coverage_complete else "INCOMPLETE"
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_injection_audit_manifest",
         "audit_id": audit_id,
-        "status": "PASS",
+        "status": audit_status,
         "config_path": str(config_path),
         "as_of": as_of.isoformat(),
         "end": end.isoformat(),
         "candidate_count": len(results),
-        "max_candidates": max_candidates,
+        "max_candidates": requested_max_candidates,
+        "parameter_effect_pair_coverage_complete": pair_coverage_complete,
+        "parameters_without_matched_pairs": parameters_without_matched_pairs,
         "data_quality_status": real_context.data_quality_status,
         "search_space_version": governance.search_space_version,
         "started_at": generated.isoformat(),
@@ -1893,10 +1898,12 @@ def run_injection_audit(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_injection_audit_report",
         "audit_id": audit_id,
-        "status": "PASS",
+        "status": audit_status,
         "candidate_count": len(results),
         "data_quality_status": real_context.data_quality_status,
         "parameter_effects": parameter_effects,
+        "parameter_effect_pair_coverage_complete": pair_coverage_complete,
+        "parameters_without_matched_pairs": parameters_without_matched_pairs,
         "weight_path_diff_summary": weight_summary,
         "metric_diff_summary": metric_summary,
         "not_consumed_parameters": [
@@ -1907,6 +1914,11 @@ def run_injection_audit(
             for row in parameter_effects
             if row["effect_status"] == "NO_OBSERVED_EFFECT"
         ],
+        "insufficient_matched_pair_parameters": [
+            row["parameter"]
+            for row in parameter_effects
+            if row["effect_status"] == "INSUFFICIENT_MATCHED_PAIR_EVIDENCE"
+        ],
         "all_weight_paths_almost_identical": (
             weight_summary.get("distinct_latest_weight_hash_count") == 1
         ),
@@ -1916,6 +1928,19 @@ def run_injection_audit(
     _write_json(audit_dir / "injection_audit_manifest.json", manifest)
     _write_json(audit_dir / "weight_path_diff_summary.json", weight_summary)
     _write_json(audit_dir / "metric_diff_summary.json", metric_summary)
+    _write_json(
+        audit_dir / "parameter_effect_summary.json",
+        {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_parameter_effect_summary",
+            "audit_id": audit_id,
+            "status": audit_status,
+            "parameter_effect_pair_coverage_complete": pair_coverage_complete,
+            "parameters_without_matched_pairs": parameters_without_matched_pairs,
+            "parameter_effects": parameter_effects,
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        },
+    )
     _write_text(
         audit_dir / "parameter_effect_report.md",
         render_injection_audit_markdown(report),
@@ -1943,14 +1968,33 @@ def injection_audit_report_payload(
     manifest = _read_json(audit_dir / "injection_audit_manifest.json")
     weight_summary = _read_json(audit_dir / "weight_path_diff_summary.json")
     metric_summary = _read_json(audit_dir / "metric_diff_summary.json")
+    parameter_effect_summary_path = audit_dir / "parameter_effect_summary.json"
+    parameter_effect_summary = _read_optional_json(parameter_effect_summary_path) or {}
+    legacy_effect_summary_missing = not parameter_effect_summary
+    parameters_without_matched_pairs = manifest.get("parameters_without_matched_pairs", [])
+    if legacy_effect_summary_missing:
+        parameters_without_matched_pairs = list(REQUIRED_INJECTION_PARAMETERS)
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_injection_audit_report_view",
         "audit_id": resolved_id,
-        "status": manifest.get("status", "UNKNOWN"),
+        "status": "INCOMPLETE"
+        if legacy_effect_summary_missing
+        else manifest.get("status", "UNKNOWN"),
         "candidate_count": manifest.get("candidate_count"),
         "weight_path_diff_summary": weight_summary,
         "metric_diff_summary": metric_summary,
+        "parameter_effect_pair_coverage_complete": (
+            False
+            if legacy_effect_summary_missing
+            else manifest.get("parameter_effect_pair_coverage_complete", False)
+        ),
+        "parameters_without_matched_pairs": parameters_without_matched_pairs,
+        "parameter_effects": parameter_effect_summary.get("parameter_effects", []),
+        "parameter_effect_summary_path": str(parameter_effect_summary_path),
+        "limitations": (
+            ["legacy_parameter_effect_summary_missing"] if legacy_effect_summary_missing else []
+        ),
         "report_path": str(audit_dir / "parameter_effect_report.md"),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -1968,6 +2012,7 @@ def validate_injection_audit_artifact(
         "candidate_parameter_matrix.csv",
         "weight_path_diff_summary.json",
         "metric_diff_summary.json",
+        "parameter_effect_summary.json",
         "parameter_effect_report.md",
     ]
     checks = [
@@ -1975,6 +2020,7 @@ def validate_injection_audit_artifact(
     ]
     manifest = _read_optional_json(audit_dir / "injection_audit_manifest.json") or {}
     weight_summary = _read_optional_json(audit_dir / "weight_path_diff_summary.json") or {}
+    effect_summary = _read_optional_json(audit_dir / "parameter_effect_summary.json") or {}
     candidate_count = int(manifest.get("candidate_count") or 0)
     requested_floor = min(20, int(manifest.get("max_candidates") or 20))
     checks.append(
@@ -1983,6 +2029,37 @@ def validate_injection_audit_artifact(
             candidate_count >= requested_floor,
             str(manifest.get("candidate_count")),
         )
+    )
+    effect_rows = _records(effect_summary.get("parameter_effects"))
+    effect_by_parameter = {_text(row.get("parameter")): row for row in effect_rows}
+    allowed_effect_statuses = {
+        "EFFECTIVE",
+        "NO_OBSERVED_EFFECT",
+        "NOT_CONSUMED",
+        "INSUFFICIENT_MATCHED_PAIR_EVIDENCE",
+    }
+    checks.extend(
+        [
+            _check(
+                "parameter_effect_summary_covers_required_parameters",
+                set(effect_by_parameter) == set(REQUIRED_INJECTION_PARAMETERS),
+                ",".join(sorted(effect_by_parameter)),
+            ),
+            _check(
+                "parameter_effect_statuses_valid",
+                all(
+                    _text(row.get("effect_status")) in allowed_effect_statuses
+                    for row in effect_rows
+                ),
+                "effect statuses use governed taxonomy",
+            ),
+            _check(
+                "matched_pair_coverage_complete",
+                bool(effect_summary.get("parameter_effect_pair_coverage_complete"))
+                and all(int(row.get("matched_pair_count") or 0) > 0 for row in effect_rows),
+                "every required parameter has an OFAT matched pair",
+            ),
+        ]
     )
     checks.append(
         _check(
@@ -10186,19 +10263,24 @@ def render_injection_audit_markdown(payload: Mapping[str, Any]) -> str:
         f"- Status: {payload.get('status')}",
         f"- Candidate count: {payload.get('candidate_count')}",
         f"- Data quality status: {payload.get('data_quality_status')}",
+        "- Parameter effect pair coverage complete: "
+        f"{payload.get('parameter_effect_pair_coverage_complete')}",
+        "- Parameters without matched pairs: "
+        f"{', '.join(_texts(payload.get('parameters_without_matched_pairs'))) or 'none'}",
         f"- All weight paths almost identical: {payload.get('all_weight_paths_almost_identical')}",
         "",
         "## Parameter Effects",
         "",
-        "| Parameter | Status | Distinct values | Config hashes | Metric hashes | Weight hashes |",
+        "| Parameter | Status | Matched pairs | Config-changed pairs | "
+        "Metric-changed pairs | Weight-changed pairs |",
         "|---|---|---:|---:|---:|---:|",
     ]
     for row in _records(payload.get("parameter_effects")):
         lines.append(
             f"| {row.get('parameter')} | {row.get('effect_status')} | "
-            f"{row.get('distinct_value_count')} | "
-            f"{row.get('distinct_effective_config_hash_count')} | "
-            f"{row.get('distinct_metric_hash_count')} | {row.get('distinct_weight_hash_count')} |"
+            f"{row.get('matched_pair_count')} | "
+            f"{row.get('config_changed_pair_count')} | "
+            f"{row.get('metric_changed_pair_count')} | {row.get('weight_changed_pair_count')} |"
         )
     lines.extend(["", "## Safety", "- production_candidate_generated=false"])
     return "\n".join(lines) + "\n"
@@ -17942,27 +18024,94 @@ def _file_summary_payload(summary: Any) -> dict[str, Any] | None:
 
 
 def _select_injection_audit_candidates(
-    candidates: Sequence[Mapping[str, Any]],
+    config: DynamicV3ParameterSweepConfig,
     *,
     max_candidates: int,
 ) -> list[dict[str, Any]]:
-    selected: list[dict[str, Any]] = []
-    covered: dict[str, set[str]] = {parameter: set() for parameter in REQUIRED_INJECTION_PARAMETERS}
-    for candidate in candidates:
-        params = _mapping(candidate.get("parameters"))
-        score = sum(
-            1
-            for parameter in REQUIRED_INJECTION_PARAMETERS
-            if _text(params.get(parameter)) not in covered[parameter]
+    limit = max(max_candidates, 1)
+    version = _git_commit()
+    manifest_hash = config.data.manifest_hash
+    base_parameters = {
+        parameter: axis.values[0] for parameter, axis in config.parameter_space.items()
+    }
+    selected = [
+        _injection_audit_candidate(
+            base_parameters,
+            code_version=version,
+            data_manifest_hash=manifest_hash,
         )
-        if score <= 0 and len(selected) >= max_candidates:
+    ]
+    selected_parameter_keys = {_canonical_json(base_parameters)}
+
+    # The first candidates form deterministic one-factor-at-a-time pairs with
+    # the same base. Grid-prefix diversity cannot prove a parameter-specific
+    # effect because earlier axes may remain constant after truncation.
+    for parameter in REQUIRED_INJECTION_PARAMETERS:
+        axis = config.parameter_space.get(parameter)
+        if axis is None:
+            continue
+        alternate = next(
+            (value for value in axis.values[1:] if value != base_parameters[parameter]),
+            None,
+        )
+        if alternate is None:
+            continue
+        parameters = {**base_parameters, parameter: alternate}
+        parameter_key = _canonical_json(parameters)
+        if parameter_key in selected_parameter_keys:
+            continue
+        selected.append(
+            _injection_audit_candidate(
+                parameters,
+                code_version=version,
+                data_manifest_hash=manifest_hash,
+            )
+        )
+        selected_parameter_keys.add(parameter_key)
+        if len(selected) >= limit:
+            return selected[:limit]
+
+    pool_config = config.model_copy(
+        update={
+            "run": config.run.model_copy(
+                update={"max_candidates": max(limit * 20, limit + len(selected))}
+            )
+        }
+    )
+    for candidate in parameter_grid_candidates(
+        pool_config,
+        code_version=version,
+        data_manifest_hash=manifest_hash,
+    ):
+        parameter_key = _canonical_json(_mapping(candidate.get("parameters")))
+        if parameter_key in selected_parameter_keys:
             continue
         selected.append(dict(candidate))
-        for parameter in REQUIRED_INJECTION_PARAMETERS:
-            covered[parameter].add(_text(params.get(parameter)))
-        if len(selected) >= max_candidates and all(len(values) >= 2 for values in covered.values()):
+        selected_parameter_keys.add(parameter_key)
+        if len(selected) >= limit:
             break
-    return selected[:max_candidates]
+    return selected
+
+
+def _injection_audit_candidate(
+    parameters: Mapping[str, Any],
+    *,
+    code_version: str,
+    data_manifest_hash: str,
+) -> dict[str, Any]:
+    normalized = dict(parameters)
+    return {
+        "candidate_id": stable_candidate_id(
+            normalized,
+            strategy_family=STRATEGY_FAMILY,
+            code_version=code_version,
+            data_manifest_hash=data_manifest_hash,
+        ),
+        "strategy_family": STRATEGY_FAMILY,
+        "parameters": normalized,
+        "code_version": code_version,
+        "data_manifest_hash": data_manifest_hash,
+    }
 
 
 def _injection_matrix_row(
@@ -18028,24 +18177,82 @@ def _parameter_effect_summary(
         }
         metric_hashes = {_text(row.get("metric_hash")) for row in matrix_rows}
         weight_hashes = {_text(row.get("latest_weight_hash")) for row in matrix_rows}
-        consumed = parameter in PARAMETER_EFFECT_FIELDS
-        has_effect = len(config_hashes) > 1 or len(metric_hashes) > 1 or len(weight_hashes) > 1
-        status = "EFFECTIVE" if consumed and has_effect else "NO_OBSERVED_EFFECT"
-        if not consumed:
+        matched_pairs = _parameter_matched_pairs(matrix_rows, parameter=parameter)
+        config_changed_pairs = [
+            pair
+            for pair in matched_pairs
+            if _effective_policy_hash(pair[0]) != _effective_policy_hash(pair[1])
+        ]
+        metric_changed_pairs = [
+            pair
+            for pair in config_changed_pairs
+            if _text(pair[0].get("metric_hash")) != _text(pair[1].get("metric_hash"))
+        ]
+        weight_changed_pairs = [
+            pair
+            for pair in config_changed_pairs
+            if _text(pair[0].get("latest_weight_hash")) != _text(pair[1].get("latest_weight_hash"))
+        ]
+        declared_consumed = parameter in PARAMETER_EFFECT_FIELDS
+        consumed = bool(config_changed_pairs)
+        if not declared_consumed:
             status = "NOT_CONSUMED"
+        elif not matched_pairs:
+            status = "INSUFFICIENT_MATCHED_PAIR_EVIDENCE"
+        elif not consumed:
+            status = "NOT_CONSUMED"
+        elif metric_changed_pairs or weight_changed_pairs:
+            status = "EFFECTIVE"
+        else:
+            status = "NO_OBSERVED_EFFECT"
         rows.append(
             {
                 "parameter": parameter,
                 "effect_status": status,
                 "consumed": consumed,
+                "declared_consumed": declared_consumed,
                 "distinct_value_count": len(values),
                 "distinct_effective_config_hash_count": len(config_hashes),
                 "distinct_metric_hash_count": len(metric_hashes),
                 "distinct_weight_hash_count": len(weight_hashes),
+                "matched_pair_count": len(matched_pairs),
+                "config_changed_pair_count": len(config_changed_pairs),
+                "metric_changed_pair_count": len(metric_changed_pairs),
+                "weight_changed_pair_count": len(weight_changed_pairs),
+                "matched_pair_candidate_ids": [
+                    [str(left.get("candidate_id")), str(right.get("candidate_id"))]
+                    for left, right in matched_pairs
+                ],
                 "candidate_count": len(results),
             }
         )
     return rows
+
+
+def _parameter_matched_pairs(
+    matrix_rows: Sequence[Mapping[str, Any]],
+    *,
+    parameter: str,
+) -> list[tuple[Mapping[str, Any], Mapping[str, Any]]]:
+    pairs: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+    comparison_parameters = [
+        candidate_parameter
+        for candidate_parameter in REQUIRED_INJECTION_PARAMETERS
+        if candidate_parameter != parameter
+    ]
+    for index, left in enumerate(matrix_rows):
+        for right in matrix_rows[index + 1 :]:
+            if left.get(parameter) == right.get(parameter):
+                continue
+            if all(left.get(name) == right.get(name) for name in comparison_parameters):
+                pairs.append((left, right))
+    return pairs
+
+
+def _effective_policy_hash(row: Mapping[str, Any]) -> str:
+    return _text(row.get("effective_real_policy_hash")) + _text(
+        row.get("effective_rescue_policy_hash")
+    )
 
 
 def _latest_weight_hash_from_candidate(candidate: Mapping[str, Any]) -> str:

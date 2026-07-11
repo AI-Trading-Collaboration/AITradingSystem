@@ -283,13 +283,37 @@ turnover = sum(abs(period_turnover))
 
 Transaction cost 至少包含 commission、spread、slippage、market impact、sell tax、FX 和适用的 delay term；不同 runner 当前仍有 contract 差异，必须以具体 policy/version 为准，不能跨报告直接比较未对齐的 cost proxy。
 
-### 5.8 Robustness、holdout 与 falsification
+### 5.8 Parameter injection audit
+
+参数进入effective policy不等于已经影响回测结果，而“不同候选总体上存在hash差异”也不能证明每个参数都有效。Dynamic-v3 Injection Audit因此采用one-factor-at-a-time matched-pair设计：
+
+```text
+base(parameters_1..7)
+  + pair_1(only rescue_intensity changed)
+  + pair_2(only smooth_window_days changed)
+  + ...
+  + pair_7(only drawdown_guard changed)
+  + optional broader grid candidates
+```
+
+输入是reviewed sweep config、governed search-space version、明确的as-of/end、price/rate cache；real evaluator前仍必须通过cached DQ/PIT context。每个参数只比较“其他required parameters完全相同”的pair：
+
+| Pair evidence | 结论 |
+|---|---|
+| 没有matched pair | `INSUFFICIENT_MATCHED_PAIR_EVIDENCE` |
+| effective real/rescue policy hash未变化 | `NOT_CONSUMED` |
+| policy hash变化，但metric与latest-weight hash均未变化 | `NO_OBSERVED_EFFECT` |
+| policy hash变化，且metric或latest-weight hash变化 | `EFFECTIVE` |
+
+固定输出包括normalized config、candidate/results JSONL、candidate parameter matrix、weight/metric diff、独立`parameter_effect_summary.json`和Markdown。缺任何required parameter pair时audit是`INCOMPLETE`，`validate-injection-audit`必须FAIL；配置中的`PARAMETER_EFFECT_FIELDS`只说明预期注入位置，不能单独证明实际消费。当前weight effect仍基于real-evaluation latest weight hash，daily path证据另标为incomplete；后续优化入口是完整daily weight/path attribution与多随机种子重复，而不是放宽matched-pair gate。
+
+### 5.9 Robustness、holdout 与 falsification
 
 必需检查包括：simple benchmark、fixed exposure、rebalance interval、module subset、same-turnover random、same-exposure random、no-gate model target、volatility target、cost stress、lag sensitivity、purged/walk-forward、leave-one-regime-out、block bootstrap 和 worst-window。
 
 Holdout 在 selection rule、window、metric 和 threshold 冻结前不得访问；访问后不能反复用于调参。E0/E1/E2 evidence 只支持 test/diagnostic/component replay，不支持 promotion；promotion 至少要求 owner-reviewed E3 full-advisory PIT replay 和 E4 forward paper-shadow。
 
-### 5.9 Evidence ledger、state 与 decision
+### 5.10 Evidence ledger、state 与 decision
 
 `research_governance.py` 当前将证据分类为 E0～E5，并输出：
 
@@ -309,7 +333,7 @@ ARCH-004F2.5 已新增 canonical `research_lifecycle.v1` runtime contract：
 - `KEEP`、`INVESTIGATE`、`RETIRE` 分别进入 closed keep、investigating、retired，不复用模糊 READY 状态；
 - 既有 CampaignSpec 缺 canonical binding 时由 compatibility assessment列出 blockers，不从 legacy字段猜 context或selection policy。
 
-### 5.10 Artifact、lineage、run ledger 与报告
+### 5.11 Artifact、lineage、run ledger 与报告
 
 `REFERENCE` generic experiment runner：
 

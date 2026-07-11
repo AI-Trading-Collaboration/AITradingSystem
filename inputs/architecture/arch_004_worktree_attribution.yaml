@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4O_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4P_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-11
-base_commit: c3dbf5de
+base_commit: 7e3b8e7d
 production_effect: none
 
 arch_004_owned_paths:
@@ -18,6 +18,7 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -187,6 +188,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_audit.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_provenance.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_injection_audit.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_rescue.py

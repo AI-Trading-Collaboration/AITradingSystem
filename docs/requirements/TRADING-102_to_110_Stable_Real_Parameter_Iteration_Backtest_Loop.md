@@ -160,6 +160,8 @@ small_real 链路完成后必须执行以下 gate；需要具体 id 的命令使
 
 ## 进展记录
 
+- 2026-07-11：ARCH-004G2.4P复核发现旧injection audit存在参数归因混杂：所有参数共享全体候选config/metric/weight hash distinct count，不能证明单一参数效应；同时截断grid前缀不能保证覆盖排序靠前的参数轴。TRADING-102继续保持`VALIDATING`，验收补充为base+逐轴OFAT matched pair、pair-only effect classification、独立`parameter_effect_summary.json`、matched-pair coverage disclosure，以及budget不足时`INCOMPLETE`且`validate-injection-audit` fail closed。既有2026-06-06 injection artifact只能证明旧workflow执行过，不能继续作为逐参数有效性结论。
+- 2026-07-11：G2.4P正确性修复与CLI迁移完成：默认候选顺序固定为共同base+7个逐轴pair，effect只使用其他required parameters一致的pairs；新增独立summary artifact、legacy artifact结构化降级与pair coverage validation。Focused 53、reporting/policy组合70、architecture-fitness 199通过。TRADING-102仍为`VALIDATING`，因为需要在当前真实cache上重跑完整20-candidate injection audit后，才能重新建立逐参数效果证据；旧artifact不再具备该证明力。
 - 2026-06-06：新增任务文档并进入 `IN_PROGRESS`，按 owner 粘贴的 TRADING-102～110 大功能开发计划启动实现。
 - 2026-06-06：首次 2026-06-05 `small_real` 50-candidate real sweep 完成但 50/50 因 `constraint_hit_rate_exceeds_policy` 被 reject；修复 interrupted sweep resume 去重与 manifest 追溯问题，并将 `small_real` workflow-smoke absolute constraint-hit gate 校准为 0.65，同时保留 `max_constraint_hits_delta_vs_reference=0` 和 manual-review safety boundary。
 - 2026-06-06：small_real 完整链路按第 13 节跑通并进入 `VALIDATING`；候选 `aa02bb947cf29885` 只进入 observe-only/manual-review 路径，promotion pack status=`incomplete`，不得解读为 production candidate。
