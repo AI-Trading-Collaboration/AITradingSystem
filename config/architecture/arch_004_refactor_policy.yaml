@@ -649,7 +649,9 @@ phase_g_execution:
     G1_3a_trading_engine_summary_writer_migration: COMPLETE
     G1_3b_next_shared_helper_family: COMPLETE
     G1_3b_notification_retry_writer_migration: COMPLETE
-    G1_3c_next_shared_helper_family: IN_PROGRESS
+    G1_3c_next_shared_helper_family: COMPLETE
+    G1_3c_checksum_helper_migration: COMPLETE
+    G1_3d_runtime_metadata_helper_inventory: IN_PROGRESS
   g1_current_evidence:
     migrated_modules:
       - src/ai_trading_system/cache_catalog.py
@@ -678,6 +680,9 @@ phase_g_execution:
     private_compatibility_wrappers_removed: 32
     internal_callers_using_canonical_writer: true
     canonical_no_trailing_newline_helper: write_json_atomic_without_trailing_newline
+    canonical_checksum_helper: sha256_path
+    private_checksum_helpers_removed: 8
+    checksum_callers_using_canonical_helper: 13
     runtime_removal_performed: false
     production_effect: none
   g1_first_family_validation:
@@ -747,6 +752,32 @@ phase_g_execution:
       current_direct_writer_calls: 861
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T053802Z/test_runtime_summary.json
+    production_effect: none
+  g1_fourth_family_plan:
+    status: COMPLETE
+    family: streaming_file_sha256_helpers
+    migrated_module_target: 8
+    private_checksum_helper_removal_target: 8
+    real_caller_count: 13
+    canonical_checksum_helper: sha256_path
+    default_chunk_size_bytes: 1048576
+    preserve_checksum_hex: true
+    preserve_streaming_read: true
+    preserve_oserror_boundary: true
+    compatibility_wrapper_allowed: false
+    direct_writer_count_unchanged: 861
+    migrated_module_count: 8
+    removed_private_checksum_helper_count: 8
+    private_checksum_helper_remaining_count: 0
+    canonical_caller_count: 13
+    focused_validation: {status: PASS, passed: 155}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 164
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T055201Z/test_runtime_summary.json
     production_effect: none
 
 safety_boundary:

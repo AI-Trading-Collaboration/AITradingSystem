@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "operator_brief_notification_draft"
@@ -842,7 +841,7 @@ def _input_artifacts(
 def _artifact_record(path: Path, status: str) -> dict[str, Any]:
     record = {"status": status, "path": str(path), "sha256": ""}
     if path.exists() and path.is_file():
-        record["sha256"] = _sha256(path)
+        record["sha256"] = sha256_path(path)
     return record
 
 
@@ -1220,14 +1219,6 @@ def _string_value(value: Any) -> str:
 
 def _bool_text(value: Any) -> str:
     return "true" if value is True else "false"
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _isoformat_z(value: datetime) -> str:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -10,7 +9,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "data_freshness_summary"
@@ -761,7 +760,7 @@ def _scan_source(
         "status": status,
         "artifact_status": ARTIFACT_FOUND,
         "artifact_path": str(artifact_path),
-        "artifact_sha256": _sha256(artifact_path),
+        "artifact_sha256": sha256_path(artifact_path),
         "artifact_date": artifact_date.isoformat(),
         "data_date": None if data_date is None else data_date.isoformat(),
         "date_source": date_source,
@@ -1308,14 +1307,6 @@ def _markdown_bullets(values: list[str]) -> list[str]:
     if not values:
         return ["- None."]
     return [f"- {value}" for value in values]
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _isoformat_z(value: datetime) -> str:

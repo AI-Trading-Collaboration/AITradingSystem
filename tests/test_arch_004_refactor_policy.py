@@ -252,7 +252,9 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "G1_3a_trading_engine_summary_writer_migration": "COMPLETE",
         "G1_3b_next_shared_helper_family": "COMPLETE",
         "G1_3b_notification_retry_writer_migration": "COMPLETE",
-        "G1_3c_next_shared_helper_family": "IN_PROGRESS",
+        "G1_3c_next_shared_helper_family": "COMPLETE",
+        "G1_3c_checksum_helper_migration": "COMPLETE",
+        "G1_3d_runtime_metadata_helper_inventory": "IN_PROGRESS",
     }
     assert phase_g["g1_current_evidence"]["direct_writer_before"] == 893
     assert phase_g["g1_current_evidence"]["direct_writer_after"] == 861
@@ -284,6 +286,15 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "passed": 139,
     }
     assert phase_g["g1_third_family_plan"]["architecture_fitness"]["passed"] == 162
+    assert phase_g["g1_current_evidence"]["canonical_checksum_helper"] == "sha256_path"
+    assert phase_g["g1_current_evidence"]["private_checksum_helpers_removed"] == 8
+    assert phase_g["g1_fourth_family_plan"]["canonical_caller_count"] == 13
+    assert phase_g["g1_fourth_family_plan"]["direct_writer_count_unchanged"] == 861
+    assert phase_g["g1_fourth_family_plan"]["focused_validation"] == {
+        "status": "PASS",
+        "passed": 155,
+    }
+    assert phase_g["g1_fourth_family_plan"]["architecture_fitness"]["passed"] == 164
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -665,10 +676,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     ] == 887
     for source in phase_g1["sources"]:
         if source.get("historical_phase_g1_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G1.3A"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g1_3a_trading_engine_summary_writer_migration.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G1.3A", "ARCH-004G1.3C"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -692,10 +701,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3a["validation"]["architecture_fitness"]["passed"] == 161
     for source in phase_g1_3a["sources"]:
         if source.get("historical_phase_g1_3a_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G1.3B"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g1_3b_notification_retry_writer_migration.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G1.3B", "ARCH-004G1.3C"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -718,6 +725,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3b["validation"]["focused"] == {"status": "PASS", "passed": 139}
     assert phase_g1_3b["validation"]["architecture_fitness"]["passed"] == 162
     for source in phase_g1_3b["sources"]:
+        if source.get("historical_phase_g1_3b_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G1.3C"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g1_3c_streaming_checksum_helper_migration.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g1_3c = baseline["phase_g1_3c_streaming_checksum_helper_migration"]
+    assert phase_g1_3c["status"] == "FOURTH_FAMILY_COMPLETE_G1_CONTINUES"
+    assert phase_g1_3c["family"] == {
+        "canonical_checksum_helper": "sha256_path",
+        "default_chunk_size_bytes": 1048576,
+        "migrated_module_count": 8,
+        "migrated_caller_count": 13,
+        "removed_private_checksum_helper_count": 8,
+        "private_checksum_helper_remaining_count": 0,
+        "direct_writer_before": 861,
+        "direct_writer_after": 861,
+    }
+    assert phase_g1_3c["parity"]["default_cross_chunk_digest"] == "PASS"
+    assert phase_g1_3c["parity"]["missing_path_oserror"] == "PASS"
+    assert phase_g1_3c["parity"]["workflow_decisions_changed"] is False
+    assert phase_g1_3c["validation"]["focused"] == {"status": "PASS", "passed": 155}
+    assert phase_g1_3c["validation"]["architecture_fitness"]["passed"] == 164
+    for source in phase_g1_3c["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -740,7 +773,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3B_COMPLETE_G1_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3C_COMPLETE_G1_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

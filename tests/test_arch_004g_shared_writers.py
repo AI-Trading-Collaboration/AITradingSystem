@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import pytest
 
 from ai_trading_system import cache_catalog, data_refresh_audit, data_source_fallback_policy
 from ai_trading_system.platform.artifacts import (
+    sha256_path,
     write_json_atomic,
     write_json_atomic_without_trailing_newline,
     write_text_atomic,
@@ -107,3 +109,32 @@ def test_g1_3b_notification_retry_private_writer_helpers_are_removed() -> None:
 
     assert all(not hasattr(module, "_write_json") for module in modules)
     assert all(not hasattr(module, "_write_text") for module in modules)
+
+
+def test_g1_3c_sha256_path_preserves_streaming_digest_and_oserror(tmp_path: Path) -> None:
+    content = (b"checksum-boundary\x00" * 65537) + b"tail"
+    path = tmp_path / "checksum.bin"
+    path.write_bytes(content)
+
+    assert sha256_path(path) == hashlib.sha256(content).hexdigest()
+    assert sha256_path(path, chunk_size=17) == hashlib.sha256(content).hexdigest()
+    with pytest.raises(OSError):
+        sha256_path(tmp_path / "missing.bin")
+    with pytest.raises(ValueError, match="chunk_size must be positive"):
+        sha256_path(path, chunk_size=0)
+
+
+def test_g1_3c_private_checksum_helpers_are_removed() -> None:
+    modules = (
+        data_freshness_summary,
+        pipeline_health_summary,
+        notification_delivery_audit_summary,
+        operator_brief_notification_approval_gate,
+        operator_brief_notification_delivery_preflight,
+        operator_brief_notification_dispatch_preview,
+        operator_brief_notification_draft,
+        operator_brief_notification_draft_dispatch,
+    )
+
+    assert all(not hasattr(module, "_sha256") for module in modules)
+    assert all(not hasattr(module, "_sha256_path") for module in modules)

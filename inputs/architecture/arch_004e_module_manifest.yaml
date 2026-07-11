@@ -10134,7 +10134,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.__init__
   path: src/ai_trading_system/platform/artifacts/__init__.py
-  sha256: 20f8b8dc2643d2fb438ca12b1ef81076e129556fdc3b8d0602940c5c535a503e
+  sha256: 2dd437cbb9918836bd05e297300e3c46158fd46f96f3603d625f3ef8de0348ee
   rule_id: platform
   owner_profile: platform
   owners:
@@ -10156,7 +10156,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.writer
   path: src/ai_trading_system/platform/artifacts/writer.py
-  sha256: dc205f99f09a976ed4b92906c9d7d6b97c6b6cffdc398af63481c5d07ab233ff
+  sha256: bebb16cecbd9d9e1059c68b9874b088aecaa2c4e888eb980391445b9f4341e82
   rule_id: platform
   owner_profile: platform
   owners:
@@ -14684,7 +14684,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.data_freshness_summary
   path: src/ai_trading_system/trading_engine/data_freshness_summary.py
-  sha256: ff67bfa8d8524da16de8d3215988d3569a8c1399484e3b03fd711dd7b0f3e2d7
+  sha256: abbcc2dc61b0bd9d60468a894d966eaa1f122d4880d60382424e5aa2c4866596
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -14957,7 +14957,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.notification_delivery_audit_summary
   path: src/ai_trading_system/trading_engine/notification_delivery_audit_summary.py
-  sha256: 1e33d47b673061e6f02dbca66cde309c122d76abb3cf770705481cd78ccaa433
+  sha256: b0980acc474fa0a70a6b4f5c1477e09bceb73bcb5bc56e1d3325cbe77e7ef455
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -14999,7 +14999,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.operator_brief_notification_approval_gate
   path: src/ai_trading_system/trading_engine/operator_brief_notification_approval_gate.py
-  sha256: c51fe07d750e1010993d11f60c0c845d36228e9a8d4103679dbd96b9b82141b0
+  sha256: 21e0b0b8883492ba6aabb043102958f123b2e666a1e9a1b6eb6d1dfbe65ac4b2
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15020,7 +15020,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.operator_brief_notification_delivery_preflight
   path: src/ai_trading_system/trading_engine/operator_brief_notification_delivery_preflight.py
-  sha256: 52809b8474418cc2a2153dea656bb3956d3540b226f409e23d1b42b3907f40f5
+  sha256: 3840fd2798d102caeb61ea6badec1dca9eec368f01de62c8ffb8898dd4dfbe38
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15041,7 +15041,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.operator_brief_notification_dispatch_preview
   path: src/ai_trading_system/trading_engine/operator_brief_notification_dispatch_preview.py
-  sha256: 23dd080a853563b522b42465690bcc3bdc2b6f3b1194f8571678f10131717f52
+  sha256: 428a497c14dbe92425fbf790ef74de96baf50b9791d8756491179a87ecc4da99
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15062,7 +15062,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.operator_brief_notification_draft
   path: src/ai_trading_system/trading_engine/operator_brief_notification_draft.py
-  sha256: 33c3c993e86eced6c2c837436528a942ec88cbe744d67ac5767e93323868cdbe
+  sha256: adec96b0a4d968af6e01e2f0f4ae9abbd8d9215b780e2de3cf41a443904331ad
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15083,7 +15083,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.operator_brief_notification_draft_dispatch
   path: src/ai_trading_system/trading_engine/operator_brief_notification_draft_dispatch.py
-  sha256: 8f7adda214cd2a7d5cafcfa5b054b56715a1e6a1ddd7c7f0769a9a4523ff60ed
+  sha256: 1a1779a2873668f20f1521ad7f0739f0c5136f077bc89678bb7a84ed6c0382c1
   rule_id: trading_engine
   owner_profile: trading
   owners:
@@ -15419,7 +15419,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_engine.pipeline_health_summary
   path: src/ai_trading_system/trading_engine/pipeline_health_summary.py
-  sha256: bf9fd1f6d01f3c0d8929b98d9d99213f454ee7d97b4c4e4d22f9e2a99c78b003
+  sha256: b567710ab1d0390d25e0b1173beb44256246aab65225275f56232e10a88425a0
   rule_id: trading_engine
   owner_profile: trading
   owners:

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "operator_brief_notification_delivery_preflight"
@@ -611,7 +610,7 @@ def _load_draft_artifact(*, label: str, path_value: object, data_root: Path) -> 
         "label": label,
         "status": STATUS_FOUND if non_empty else STATUS_EMPTY,
         "path": str(path),
-        "sha256": _sha256_path(path),
+        "sha256": sha256_path(path),
         "content": content,
         "non_empty": non_empty,
         "blocking_reasons": [] if non_empty else [f"{label} file is empty."],
@@ -1150,7 +1149,7 @@ def _read_json_object_with_status(path: Path) -> tuple[dict[str, Any], str, str 
 
 
 def _artifact_record(path: Path, status: str) -> dict[str, Any]:
-    sha256 = _sha256_path(path) if path.exists() and path.is_file() else None
+    sha256 = sha256_path(path) if path.exists() and path.is_file() else None
     return {
         "status": status,
         "path": str(path) if path else None,
@@ -1213,14 +1212,6 @@ def _parse_iso_date(value: str) -> date | None:
         return date.fromisoformat(value)
     except ValueError:
         return None
-
-
-def _sha256_path(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _mapping(value: object) -> dict[str, Any]:

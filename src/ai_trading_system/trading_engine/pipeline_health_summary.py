@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "pipeline_health_summary"
@@ -769,7 +768,7 @@ def _scan_pipeline(
         "status": status,
         "artifact_status": ARTIFACT_FOUND,
         "artifact_path": str(artifact_path),
-        "artifact_sha256": _sha256(artifact_path),
+        "artifact_sha256": sha256_path(artifact_path),
         "artifact_date": artifact_date.isoformat(),
         "age_days": age_days,
         "freshness_status": freshness_status,
@@ -1220,14 +1219,6 @@ def _markdown_bullets(values: list[str]) -> list[str]:
     if not values:
         return ["- None."]
     return [f"- {value}" for value in values]
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _isoformat_z(value: datetime) -> str:

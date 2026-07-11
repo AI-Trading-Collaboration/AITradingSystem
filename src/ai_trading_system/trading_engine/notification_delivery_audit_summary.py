@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "notification_delivery_audit_summary"
@@ -640,7 +640,7 @@ def _artifact_chain(
                 blocking.append(
                     "TRADING-031 preflight references a different TRADING-030 draft path."
                 )
-            draft_sha = _sha256_path(draft_path)
+            draft_sha = sha256_path(draft_path)
             ref_sha = _string_value(draft_ref.get("sha256"))
             if ref_sha and ref_sha != draft_sha:
                 draft_to_preflight_match = False
@@ -672,7 +672,7 @@ def _artifact_chain(
                 preflight_to_dispatch_match = False
                 blocking.append("TRADING-034 dispatch references a different preflight path.")
             ref_sha = _string_value(preflight_ref.get("sha256"))
-            if ref_sha and ref_sha != _sha256_path(preflight_path):
+            if ref_sha and ref_sha != sha256_path(preflight_path):
                 preflight_to_dispatch_match = False
                 hash_mismatch = True
                 blocking.append("TRADING-034 dispatch references a different preflight hash.")
@@ -689,7 +689,7 @@ def _artifact_chain(
                 preflight_to_dispatch_match = False
                 blocking.append("TRADING-034 dispatch references a different draft metadata path.")
             ref_sha = _string_value(draft_ref.get("sha256"))
-            if ref_sha and ref_sha != _sha256_path(draft_path):
+            if ref_sha and ref_sha != sha256_path(draft_path):
                 preflight_to_dispatch_match = False
                 draft_hash_match = False
                 hash_mismatch = True
@@ -1398,7 +1398,7 @@ def _artifact_record(path: Path, status: str, error: str = "") -> dict[str, Any]
     return {
         "status": status,
         "path": str(path),
-        "sha256": _sha256_path(path) if path.exists() and path.is_file() else "",
+        "sha256": sha256_path(path) if path.exists() and path.is_file() else "",
         "error": error,
     }
 
@@ -1579,14 +1579,6 @@ def _walk_mapping(value: object, prefix: str = "") -> list[tuple[str, str, objec
         for index, child in enumerate(value):
             records.extend(_walk_mapping(child, f"{prefix}[{index}]"))
     return records
-
-
-def _sha256_path(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _parse_iso_date(value: str) -> date | None:

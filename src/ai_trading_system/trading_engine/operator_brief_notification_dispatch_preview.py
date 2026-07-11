@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "operator_brief_notification_dispatch_preview"
@@ -854,7 +853,7 @@ def _load_draft_text(
     return {
         "status": status,
         "path": str(path),
-        "sha256": _sha256_path(path) if status == STATUS_FOUND else None,
+        "sha256": sha256_path(path) if status == STATUS_FOUND else None,
         "content": content,
     }
 
@@ -1259,7 +1258,7 @@ def _input_ref(path: Path, status: str) -> dict[str, Any]:
     return {
         "path": str(path),
         "status": status,
-        "sha256": _sha256_path(path) if status == STATUS_FOUND and path.is_file() else None,
+        "sha256": sha256_path(path) if status == STATUS_FOUND and path.is_file() else None,
     }
 
 
@@ -1303,14 +1302,6 @@ def _parse_iso_date(value: str) -> date | None:
         return date.fromisoformat(value)
     except ValueError:
         return None
-
-
-def _sha256_path(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _mapping(value: object) -> dict[str, Any]:

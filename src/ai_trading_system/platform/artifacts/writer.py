@@ -15,6 +15,8 @@ import yaml
 
 from ai_trading_system.contracts.artifact_envelope import ArtifactPointer
 
+DEFAULT_FILE_HASH_CHUNK_SIZE_BYTES = 1024 * 1024
+
 
 class ArtifactWriteError(OSError):
     def __init__(self, code: str, path: Path, message: str) -> None:
@@ -75,6 +77,21 @@ def capture_runtime_metadata(*, generated_at: datetime | None = None) -> Runtime
 
 def sha256_bytes(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def sha256_path(
+    path: Path,
+    *,
+    chunk_size: int = DEFAULT_FILE_HASH_CHUNK_SIZE_BYTES,
+) -> str:
+    """Return a streaming SHA-256 hex digest for a file path."""
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(chunk_size), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def canonical_json_bytes(
