@@ -27,6 +27,7 @@ from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as etf_data_quality_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as etf_operations_cli
+from ai_trading_system.interfaces.cli.etf_portfolio import reporting as etf_reporting_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -473,69 +474,69 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:3] == ["etf", "evidence-dashboard", "aggregate"]:
-        etf_cli.evidence_dashboard_aggregate_command(
+        etf_reporting_cli.evidence_dashboard_aggregate_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=(
                 _optional_path(args, "--config-path")
                 or _optional_path(args, "--config")
-                or etf_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
+                or etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
             ),
             report_index_path=_optional_path(args, "--report-index-path"),
             report_registry_path=_path_option_with_default(
                 args,
                 "--report-registry-path",
-                etf_cli.DEFAULT_REPORT_REGISTRY_PATH,
+                etf_reporting_cli.DEFAULT_REPORT_REGISTRY_PATH,
             ),
             root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_STRATEGY_EVIDENCE_AGGREGATION_DIR,
+                etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_AGGREGATION_DIR,
             ),
             json_path=_optional_path(args, "--json-path"),
         )
         return
     if args[:3] == ["etf", "evidence-dashboard", "report"]:
-        etf_cli.evidence_dashboard_report_command(
+        etf_reporting_cli.evidence_dashboard_report_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=(
                 _optional_path(args, "--config-path")
                 or _optional_path(args, "--config")
-                or etf_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
+                or etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
             ),
             report_index_path=_optional_path(args, "--report-index-path"),
             report_registry_path=_path_option_with_default(
                 args,
                 "--report-registry-path",
-                etf_cli.DEFAULT_REPORT_REGISTRY_PATH,
+                etf_reporting_cli.DEFAULT_REPORT_REGISTRY_PATH,
             ),
             root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR,
+                etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR,
             ),
             json_path=_optional_path(args, "--json-path"),
             markdown_path=_optional_path(args, "--markdown-path"),
         )
         return
     if args[:3] == ["etf", "evidence-dashboard", "validate"]:
-        etf_cli.evidence_dashboard_validate_command(
+        etf_reporting_cli.evidence_dashboard_validate_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=(
                 _optional_path(args, "--config-path")
                 or _optional_path(args, "--config")
-                or etf_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
+                or etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH
             ),
             report_registry_path=_path_option_with_default(
                 args,
                 "--report-registry-path",
-                etf_cli.DEFAULT_REPORT_REGISTRY_PATH,
+                etf_reporting_cli.DEFAULT_REPORT_REGISTRY_PATH,
             ),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_STRATEGY_EVIDENCE_VALIDATION_DIR,
+                etf_reporting_cli.DEFAULT_STRATEGY_EVIDENCE_VALIDATION_DIR,
             ),
             json_path=_optional_path(args, "--json-path"),
             markdown_path=_optional_path(args, "--markdown-path"),

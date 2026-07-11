@@ -52,6 +52,9 @@
 
 最新增量：
 
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3D evidence-dashboard slice `COMPLETE`，G2.3继续。最终focused=44、contract/policy=22、architecture=178、Ruff/contract PASS；generated=`807 modules / 1,114 tests / 860 direct writers / 0 violations`。Legacy root净减3 callback和190行，aggregation direct write迁canonical atomic writer且bytes parity保持，runtime 993 leaf不变。
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3D evidence-dashboard slice进入`VALIDATING`。3 callback及专属imports迁canonical `reporting.py`，legacy wrapper/import=0，`cli_direct`直接调用canonical。Root=`35,554 -> 35,364 lines / 1,036 -> 1,033 functions / 984 -> 981 decorators`；tree不变，focused=44，等待compatibility/generated/architecture门禁。
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3D选择evidence-dashboard aggregate/report/validate三个reporting callback；专属strategy-evidence imports迁canonical `reporting.py`，date parser与report registry复用既有contract，`cli_direct`同步转canonical，禁止wrapper。退出要求旧root callback/import=0，schema/path/exit/observe-only/no-production/tree及domain tests parity。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C operations slice `COMPLETE`，G2.3继续。最终focused=111、contract/policy=21、architecture=177、Ruff/contract PASS；generated=`806 modules / 1,114 tests / 861 direct writers / 0 violations`。Legacy root净减3 callback、1 parser、3目录常量和209行，runtime 993 leaf不变。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C operations slice进入`VALIDATING`。3 callback、1 cadence parser和3目录常量已迁canonical，legacy wrapper/重复定义=0，`cli_direct`直接调用canonical实现。Root=`35,763 -> 35,554 lines / 1,040 -> 1,036 functions / 987 -> 984 decorators`；tree不变，focused=111，等待compatibility/generated/architecture门禁。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C选择operations 3 callback、cadence parser和3目录常量；dynamic-shadow与`cli_direct`直接消费canonical定义，禁止wrapper/复制。退出要求旧root定义=0，调度/observe-only/no-production/exit/artifact/tree及domain tests parity。

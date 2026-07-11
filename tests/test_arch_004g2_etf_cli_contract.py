@@ -32,6 +32,9 @@ DATA_QUALITY_COMMANDS_PATH = (
 OPERATIONS_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/operations.py"
 )
+REPORTING_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/reporting.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -106,7 +109,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35554
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35364
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -169,6 +172,20 @@ def test_g2_3_operations_callbacks_and_parser_leave_legacy_root() -> None:
     }
     assert legacy_names.isdisjoint(callbacks | {"_parse_operations_graph_cadence"})
     assert callbacks | {"parse_operations_graph_cadence"} <= canonical_names
+
+
+def test_g2_3_evidence_dashboard_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(REPORTING_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "evidence_dashboard_aggregate_command",
+        "evidence_dashboard_report_command",
+        "evidence_dashboard_validate_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
 
 
 def __file_path() -> Path:
