@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4G_COMPLETE_G2_4H_VALIDATING
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4H_COMPLETE_G2_4I_VALIDATING
 as_of: 2026-07-11
-base_commit: 076900ce
+base_commit: e9484011
 production_effect: none
 
 arch_004_owned_paths:
@@ -160,6 +160,7 @@ arch_004_owned_paths:
   - tests/test_etf_dynamic_rescue.py
   - tests/test_etf_dynamic_v2_review.py
   - tests/test_etf_dynamic_v3_rescue.py
+  - tests/test_etf_dynamic_v3_real_evaluation.py
   - src/ai_trading_system/platform/architecture/cli_contract.py
   - scripts/architecture_etf_cli.py
   - inputs/architecture/arch_004g2_etf_cli_contract.yaml
@@ -177,9 +178,11 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v2_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rescue.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_real_evaluation.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_rescue.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_real_evaluation.py
   - src/ai_trading_system/etf_portfolio/dynamic_calibration.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/data.py
   - src/ai_trading_system/cli_commands/etf_compat.py

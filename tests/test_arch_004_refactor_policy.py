@@ -620,6 +620,28 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_eighth["legacy_root_command_decorators_after"] == 939
     assert g2_4_eighth["focused_validation"] == {"status": "PASS", "passed": 28}
     assert g2_4_eighth["architecture_fitness"]["passed"] == 191
+    g2_4_ninth = phase_g["g2_current_plan"]["g2_4_ninth_slice"]
+    assert g2_4_ninth["status"] == "COMPLETE"
+    assert g2_4_ninth["callback_count"] == 3
+    assert g2_4_ninth["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_ninth["cached_dq_gate_precedes_standard_price_validation"] is True
+    assert g2_4_ninth["standard_price_validation_precedes_pit_evaluation"] is True
+    assert g2_4_ninth["dq_failure_fail_closed"] is True
+    assert g2_4_ninth["pit_no_lookahead_preserved"] is True
+    assert g2_4_ninth["requested_range_and_ai_regime_separate"] is True
+    assert g2_4_ninth["pre_regime_primary_conclusion_allowed"] is False
+    assert g2_4_ninth["latest_report_mode_read_only"] is True
+    assert g2_4_ninth["promotion_gate_executes_promotion"] is False
+    assert g2_4_ninth["owner_approval_executed"] is False
+    assert g2_4_ninth["shadow_enrollment_allowed"] is False
+    assert g2_4_ninth["official_target_weights_mutation_allowed"] is False
+    assert g2_4_ninth["validation_uses_canonical_cli_owner"] is True
+    assert g2_4_ninth["direct_writer_calls_after"] == 858
+    assert g2_4_ninth["legacy_root_lines_after"] == 32166
+    assert g2_4_ninth["legacy_root_top_level_functions_after"] == 976
+    assert g2_4_ninth["legacy_root_command_decorators_after"] == 936
+    assert g2_4_ninth["focused_validation"] == {"status": "PASS", "passed": 28}
+    assert g2_4_ninth["architecture_fitness"]["passed"] == 192
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1516,6 +1538,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4h["validation"]["focused"] == {"status": "PASS", "passed": 28}
     assert phase_g2_4h["validation"]["architecture_fitness"]["passed"] == 191
     for source in phase_g2_4h["sources"]:
+        if source.get("historical_phase_g2_4h_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4I"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4i_etf_cli_dynamic_v3_real_evaluation.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4i = baseline["phase_g2_4i_etf_cli_dynamic_v3_real_evaluation"]
+    assert phase_g2_4i["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4i["migration"]["callback_count"] == 3
+    assert phase_g2_4i["migration"]["cached_dq_gate_precedes_standard_price_validation"] is True
+    assert phase_g2_4i["migration"]["standard_price_validation_precedes_pit_evaluation"] is True
+    assert phase_g2_4i["migration"]["dq_failure_fail_closed"] is True
+    assert phase_g2_4i["migration"]["requested_range_and_ai_regime_separate"] is True
+    assert phase_g2_4i["migration"]["pre_regime_primary_conclusion_allowed"] is False
+    assert phase_g2_4i["migration"]["promotion_gate_executes_promotion"] is False
+    assert phase_g2_4i["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4i["validation"]["focused"] == {"status": "PASS", "passed": 28}
+    assert phase_g2_4i["validation"]["architecture_fitness"]["passed"] == 192
+    for source in phase_g2_4i["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1538,7 +1581,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4G_COMPLETE_G2_4H_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4H_COMPLETE_G2_4I_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
