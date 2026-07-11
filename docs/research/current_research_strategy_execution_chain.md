@@ -449,6 +449,28 @@ Shortlist从observe pool按既有score/blocker选出人工复核集合；candida
 
 该链分开的原因是“候选更少、更有代表性”不等于“策略更有效”，monitor active也不等于position advisory或production。优化空间是给cluster增加缺失path的显式距离状态、为shortlist selection冻结policy checksum、让monitor记录真实forward outcome与数据质量证据；所有状态变化仍需人工owner review，不得自动生成仓位或broker动作。
 
+#### Position Advisory 链（TRADING-129 / G2.4AI）
+
+Position Advisory位于“observe-only candidate”与“owner人工仓位复核”之间。设置这一独立层的原因是：candidate target weights回答“每个研究候选想持有什么”，consensus回答“候选是否一致”，snapshot delta回答“与owner提供的当前组合相差多少”；三者都不回答“是否已批准调仓”。如果把它们与owner decision或execution合并，`small_adjustment`很容易被误读为交易指令。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | 阻断条件 |
+|---|---|---|---|---|
+| Source gate | 显式`shadow_shortlist_id/root`、`position_advisory_v1.yaml`、可选manual portfolio snapshot | 先调用同一`validate_shadow_shortlist_artifact`；读shortlist manifest/candidates；解析并验证policy metadata/execution safety与snapshot schema | source validation status | shadow shortlist非PASS、config非advisory-only、snapshot非法时在写件前fail closed |
+| Candidate target | 每个shadow candidate的daily weight path | 取可读path中最大date作为`as_of`，读取该日symbol weights；每个candidate都必须`COMPLETE`、candidate id唯一、source file存在，权重必须有限且位于[0,1]并在weight-path schema tolerance内加总为1 | `candidate_target_weights.jsonl` | 任一candidate缺path、id重复、空/非法/不守恒weights或source file不存在即阻断，不用空值继续生成“建议” |
+| Consensus | 全部candidate target rows、policy中agreement/dispersion阈值 | 按symbol计算mean、median、min、max；`dispersion=max-min`；`agreement=count(abs(w_i-median) <= max_symbol_dispersion)/candidate_count`；agreement低于阈值或dispersion超限则`DISAGREEMENT_REVIEW_REQUIRED` | `consensus_target_weights.csv`、consensus status | 无target rows为`MISSING_TARGET_WEIGHTS`；高分歧不阻断产生复核材料，但必须降为manual review |
+| Snapshot delta | owner manual snapshot的current weights、candidate targets、advisory limits | `delta_i=target_i-current_i`；`total_abs=sum(abs(delta_i))`；`max_symbol=max(abs(delta_i))`。全部delta低于`min_trade_threshold`为`no_trade`；total或single-symbol超限为`requires_manual_review`；否则`within_limits` | 有snapshot时写`candidate_position_deltas.jsonl`；无snapshot时为空 | snapshot未提供不是错误，但必须切换到`TARGET_ONLY`，不得暗示当前仓位delta |
+| Action classification | target/delta rows、snapshot presence、consensus status、reviewed limits | 优先级：无snapshot→`TARGET_ONLY/monitor`；任一delta超限→`manual_review`；全部低于min trade→`no_trade`；候选高分歧→`manual_review`；否则`small_adjustment`。有snapshot也始终为`READY_WITH_MANUAL_REVIEW` | `advisory_actions.json`、manifest derived fields、Markdown | 任何action都固定`owner_approval_required=true`、`broker_action_allowed=false`；不存在自动approval/execution分支 |
+| Lineage + validation | 上述sources和六类position-advisory files | Run冻结shortlist manifest/candidates、config、可选snapshot及每个candidate weight path的path/checksum，并记录output checksums；validator重读source，重算targets/consensus/deltas/actions/manifest/report | `position_advisory_manifest.json`、validation checks、latest pointer | source drift、path/id不属于指定shortlist、output内容或checksum篡改均FAIL |
+
+这些阈值不是代码中的临时数字，而是`config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`中带owner、version、status、rationale、intended effect、validation evidence和review condition的pilot policy。当前结果是：无snapshot只能生成candidate target/consensus的`TARGET_ONLY`观察材料；有合法snapshot可生成delta与review suggestion，但仍要进入独立owner review链。两种模式都固定`official_target_weights_generated=false`、`portfolio_mutated=false`、`order_ticket_generated=false`、`production_effect=none`和no broker。
+
+后续优化顺序：
+
+1. 先增加跨candidate的共同`as_of`与trading-calendar cutoff，避免将不同日期的latest weights直接做consensus；
+2. 再增加snapshot freshness/currency/source lineage、candidate target权重守恒与缺失symbol policy，并把config/snapshot/schema升级绑定canonical `ArtifactEnvelope`；
+3. 在有forward outcome和cost/slippage证据后，才能预注册校准agreement、dispersion、min-trade和adjustment limits；不能用本次已看到的advisory结果就地调阈值；
+4. 最后再评估candidate-quality-weighted consensus、稳健中心、置信区间与上一期delta。任何方法变更必须新建versioned hypothesis/policy和out-of-sample验证，不得扩展为自动调仓。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

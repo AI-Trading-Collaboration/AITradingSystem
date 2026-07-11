@@ -4044,10 +4044,20 @@ def run_position_advisory(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    source_validation = validate_shadow_shortlist_artifact(
+        shadow_shortlist_id=shadow_shortlist_id,
+        output_dir=shadow_shortlist_dir,
+    )
+    if source_validation.get("status") != "PASS":
+        raise DynamicV3ParameterResearchError(
+            "shadow shortlist validation must PASS before position advisory"
+        )
     config = load_position_advisory_config(config_path)
     source_dir = shadow_shortlist_dir / shadow_shortlist_id
-    shadow_manifest = _read_json(source_dir / "shadow_shortlist_manifest.json")
-    shadow_rows = _read_jsonl(source_dir / "shadow_shortlist_candidates.jsonl")
+    shadow_manifest_path = source_dir / "shadow_shortlist_manifest.json"
+    shadow_candidates_path = source_dir / "shadow_shortlist_candidates.jsonl"
+    shadow_manifest = _read_json(shadow_manifest_path)
+    shadow_rows = _read_jsonl(shadow_candidates_path)
     target_rows: list[dict[str, Any]] = []
     for row in shadow_rows:
         latest_weights = _candidate_latest_target_weights(row)
@@ -4061,6 +4071,15 @@ def run_position_advisory(
                 "source_weight_path_artifact": latest_weights["source_weight_path_artifact"],
                 "weight_path_status": latest_weights["status"],
             }
+        )
+    if not target_rows or any(
+        row.get("weight_path_status") != "COMPLETE" or not row.get("target_weights")
+        or not _text(row.get("source_weight_path_artifact"))
+        or not Path(_text(row.get("source_weight_path_artifact"))).is_file()
+        for row in target_rows
+    ) or not _position_advisory_target_rows_valid(target_rows):
+        raise DynamicV3ParameterResearchError(
+            "all shadow shortlist candidates require complete target-weight paths"
         )
     consensus_rows, consensus_status = _consensus_target_weights(target_rows, config)
     snapshot = _load_portfolio_snapshot(portfolio_snapshot_path) if portfolio_snapshot_path else {}
@@ -4081,8 +4100,29 @@ def run_position_advisory(
     )
     advisory_dir = _unique_dir(output_dir / advisory_id)
     advisory_dir.mkdir(parents=True, exist_ok=False)
-    status = "PASS" if target_rows else "PASS_WITH_WARNINGS"
+    status = "PASS"
     advisory_status = advisory_actions["position_advisory_status"]
+    source_artifact_paths = {
+        "shadow_shortlist_manifest": str(shadow_manifest_path),
+        "shadow_shortlist_candidates": str(shadow_candidates_path),
+        "position_advisory_config": str(config_path),
+        "portfolio_snapshot": (
+            "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
+        ),
+    }
+    source_artifact_checksums = {
+        key: "" if not path else _file_sha256_path(Path(path))
+        for key, path in source_artifact_paths.items()
+    }
+    source_candidate_weight_artifacts = [
+        {
+            "candidate_id": row.get("candidate_id"),
+            "path": row.get("source_weight_path_artifact"),
+            "sha256": _file_sha256_path(Path(_text(row.get("source_weight_path_artifact")))),
+        }
+        for row in target_rows
+    ]
+    policy_metadata = _mapping(config.get("policy_metadata"))
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_position_advisory_manifest",
@@ -4090,6 +4130,11 @@ def run_position_advisory(
         "source_shadow_shortlist_id": shadow_shortlist_id,
         "source_shortlist_id": shadow_manifest.get("source_shortlist_id", ""),
         "source_cluster_id": shadow_manifest.get("source_cluster_id", ""),
+        "source_shadow_shortlist_root": str(shadow_shortlist_dir),
+        "source_validation_status": source_validation.get("status"),
+        "source_artifact_paths": source_artifact_paths,
+        "source_artifact_checksums": source_artifact_checksums,
+        "source_candidate_weight_artifacts": source_candidate_weight_artifacts,
         "generated_at": generated.isoformat(),
         "status": status,
         "position_advisory_status": advisory_status,
@@ -4108,6 +4153,11 @@ def run_position_advisory(
         "advisory_actions_path": str(advisory_dir / "advisory_actions.json"),
         "position_advisory_report_path": str(advisory_dir / "position_advisory_report.md"),
         "config_path": str(config_path),
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -4126,6 +4176,17 @@ def run_position_advisory(
             advisory_actions,
         ),
     )
+    output_names = {
+        "candidate_target_weights.jsonl",
+        "candidate_position_deltas.jsonl",
+        "consensus_target_weights.csv",
+        "advisory_actions.json",
+        "position_advisory_report.md",
+    }
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(advisory_dir / name) for name in sorted(output_names)
+    }
+    _write_json(advisory_dir / "position_advisory_manifest.json", manifest)
     _update_latest_pointer(
         "latest_position_advisory",
         advisory_dir.name,
@@ -4169,6 +4230,9 @@ def validate_position_advisory_artifact(
     manifest = _read_optional_json(advisory_dir / "position_advisory_manifest.json") or {}
     actions = _read_optional_json(advisory_dir / "advisory_actions.json") or {}
     targets = _read_jsonl(advisory_dir / "candidate_target_weights.jsonl")
+    deltas = _read_jsonl(advisory_dir / "candidate_position_deltas.jsonl")
+    consensus_path = advisory_dir / "consensus_target_weights.csv"
+    report_path = advisory_dir / "position_advisory_report.md"
     required = [
         "position_advisory_manifest.json",
         "candidate_target_weights.jsonl",
@@ -4180,10 +4244,218 @@ def validate_position_advisory_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name) for name in required
     ]
+    source_paths = _mapping(manifest.get("source_artifact_paths"))
+    source_checksums = _mapping(manifest.get("source_artifact_checksums"))
+    shadow_shortlist_id = _text(manifest.get("source_shadow_shortlist_id"))
+    shadow_root = Path(_text(manifest.get("source_shadow_shortlist_root")))
+    expected_source_paths = {
+        "shadow_shortlist_manifest": str(
+            shadow_root / shadow_shortlist_id / "shadow_shortlist_manifest.json"
+        ),
+        "shadow_shortlist_candidates": str(
+            shadow_root / shadow_shortlist_id / "shadow_shortlist_candidates.jsonl"
+        ),
+        "position_advisory_config": _text(manifest.get("config_path")),
+        "portfolio_snapshot": _text(manifest.get("portfolio_snapshot_path")),
+    }
+    source_files_present = all(
+        not raw_path or Path(raw_path).is_file() for raw_path in expected_source_paths.values()
+    )
+    source_checksums_match = source_files_present and all(
+        _text(source_checksums.get(key))
+        == ("" if not raw_path else _file_sha256_path(Path(raw_path)))
+        for key, raw_path in expected_source_paths.items()
+    )
+    recorded_weight_sources = _records(manifest.get("source_candidate_weight_artifacts"))
+    weight_source_files_present = bool(recorded_weight_sources) and all(
+        _text(row.get("path")) and Path(_text(row.get("path"))).is_file()
+        for row in recorded_weight_sources
+    )
+    weight_source_checksums_match = weight_source_files_present and all(
+        _text(row.get("sha256")) == _file_sha256_path(Path(_text(row.get("path"))))
+        for row in recorded_weight_sources
+    )
+    source_validation_status = "FAIL"
+    expected_targets: list[dict[str, Any]] = []
+    expected_consensus: list[dict[str, Any]] = []
+    expected_deltas: list[dict[str, Any]] = []
+    expected_actions: dict[str, Any] = {}
+    expected_consensus_status = ""
+    expected_snapshot: dict[str, Any] = {}
+    expected_weight_sources: list[dict[str, Any]] = []
+    recomputation_error = ""
+    try:
+        source_validation = validate_shadow_shortlist_artifact(
+            shadow_shortlist_id=shadow_shortlist_id,
+            output_dir=shadow_root,
+        )
+        source_validation_status = _text(source_validation.get("status"), "FAIL")
+        config = load_position_advisory_config(
+            Path(expected_source_paths["position_advisory_config"])
+        )
+        shadow_rows = _read_jsonl(Path(expected_source_paths["shadow_shortlist_candidates"]))
+        for row in shadow_rows:
+            latest_weights = _candidate_latest_target_weights(row)
+            expected_targets.append(
+                {
+                    "candidate_id": row.get("candidate_id"),
+                    "cluster_id": row.get("cluster_id"),
+                    "cluster_label": row.get("cluster_label"),
+                    "as_of": latest_weights["as_of"],
+                    "target_weights": latest_weights["weights"],
+                    "source_weight_path_artifact": latest_weights[
+                        "source_weight_path_artifact"
+                    ],
+                    "weight_path_status": latest_weights["status"],
+                }
+            )
+        if not _position_advisory_target_rows_valid(expected_targets):
+            raise DynamicV3ParameterResearchError(
+                "position advisory target weights violate portfolio invariants"
+            )
+        expected_weight_sources = [
+            {
+                "candidate_id": row.get("candidate_id"),
+                "path": row.get("source_weight_path_artifact"),
+                "sha256": _file_sha256_path(
+                    Path(_text(row.get("source_weight_path_artifact")))
+                ),
+            }
+            for row in expected_targets
+        ]
+        expected_consensus, expected_consensus_status = _consensus_target_weights(
+            expected_targets, config
+        )
+        snapshot_path = expected_source_paths["portfolio_snapshot"]
+        expected_snapshot = _load_portfolio_snapshot(Path(snapshot_path)) if snapshot_path else {}
+        expected_deltas = (
+            _candidate_position_delta_rows(expected_targets, expected_snapshot, config)
+            if expected_snapshot
+            else []
+        )
+        expected_actions = _position_advisory_actions(
+            target_rows=expected_targets,
+            delta_rows=expected_deltas,
+            snapshot=expected_snapshot,
+            consensus_status=expected_consensus_status,
+            config=config,
+        )
+    except Exception as exc:  # noqa: BLE001
+        recomputation_error = str(exc)
+    output_names = {
+        "candidate_target_weights.jsonl",
+        "candidate_position_deltas.jsonl",
+        "consensus_target_weights.csv",
+        "advisory_actions.json",
+        "position_advisory_report.md",
+    }
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    expected_report = (
+        render_position_advisory_markdown(
+            manifest,
+            expected_targets,
+            expected_consensus,
+            expected_deltas,
+            expected_actions,
+        )
+        if not recomputation_error
+        else ""
+    )
+    policy_metadata = (
+        _mapping(
+            load_position_advisory_config(
+                Path(expected_source_paths["position_advisory_config"])
+            ).get("policy_metadata")
+        )
+        if not recomputation_error
+        else {}
+    )
     checks.extend(
         [
             _check("advisory_id_matches", manifest.get("advisory_id") == advisory_id, advisory_id),
             _check("target_weights_present", bool(targets), "candidate target weights required"),
+            _check(
+                "source_paths_match",
+                source_paths == expected_source_paths,
+                _canonical_json(expected_source_paths),
+            ),
+            _check(
+                "source_checksums_match",
+                source_checksums_match,
+                _canonical_json(source_checksums),
+            ),
+            _check(
+                "source_shadow_shortlist_validation_passes",
+                source_validation_status == "PASS"
+                and manifest.get("source_validation_status") == "PASS",
+                source_validation_status,
+            ),
+            _check(
+                "source_candidate_weight_checksums_match",
+                weight_source_checksums_match
+                and recorded_weight_sources == expected_weight_sources,
+                _canonical_json(recorded_weight_sources),
+            ),
+            _check(
+                "source_recomputation_succeeds",
+                not recomputation_error,
+                recomputation_error or "source inputs recomputed",
+            ),
+            _check(
+                "candidate_target_weights_content_matches",
+                targets == expected_targets,
+                f"actual={len(targets)} expected={len(expected_targets)}",
+            ),
+            _check(
+                "candidate_position_deltas_content_matches",
+                deltas == expected_deltas,
+                f"actual={len(deltas)} expected={len(expected_deltas)}",
+            ),
+            _check(
+                "consensus_target_weights_content_matches",
+                consensus_path.is_file()
+                and consensus_path.read_text(encoding="utf-8")
+                == _render_csv_text(expected_consensus).replace("\r\n", "\n"),
+                f"expected_rows={len(expected_consensus)}",
+            ),
+            _check(
+                "advisory_actions_content_matches",
+                actions == expected_actions,
+                _text(actions.get("recommended_action")),
+            ),
+            _check(
+                "manifest_derived_fields_match",
+                manifest.get("candidate_count") == len(expected_targets)
+                and manifest.get("consensus_target_weight_status")
+                == expected_consensus_status
+                and manifest.get("portfolio_snapshot_provided") is bool(expected_snapshot)
+                and manifest.get("position_advisory_status")
+                == expected_actions.get("position_advisory_status")
+                and manifest.get("recommended_action")
+                == expected_actions.get("recommended_action")
+                and manifest.get("policy_id") == _text(policy_metadata.get("policy_id"))
+                and manifest.get("policy_version") == _text(policy_metadata.get("version")),
+                "content-derived manifest fields",
+            ),
+            _check(
+                "position_advisory_report_content_matches",
+                report_path.is_file()
+                and report_path.read_text(encoding="utf-8") == expected_report,
+                str(report_path),
+            ),
+            _check(
+                "output_checksum_inventory_complete",
+                set(output_checksums) == output_names,
+                ",".join(sorted(output_checksums)),
+            ),
+            *[
+                _check(
+                    f"output_checksum_matches:{name}",
+                    _text(output_checksums.get(name)) == _file_sha256_path(advisory_dir / name),
+                    _text(output_checksums.get(name)),
+                )
+                for name in sorted(output_names)
+            ],
             _check(
                 "owner_approval_required",
                 manifest.get("owner_approval_required") is True
@@ -4206,6 +4478,13 @@ def validate_position_advisory_artifact(
                 "production_candidate_not_generated",
                 manifest.get("production_candidate_generated") is False,
                 "advisory is not production",
+            ),
+            _check(
+                "no_execution_effect",
+                manifest.get("official_target_weights_generated") is False
+                and manifest.get("portfolio_mutated") is False
+                and manifest.get("order_ticket_generated") is False,
+                "advisory evidence is not approval or execution",
             ),
         ]
     )
@@ -14693,6 +14972,24 @@ def _candidate_latest_target_weights(row: Mapping[str, Any]) -> dict[str, Any]:
         "weights": weights,
         "source_weight_path_artifact": path.get("path", ""),
     }
+
+
+def _position_advisory_target_rows_valid(rows: Sequence[Mapping[str, Any]]) -> bool:
+    candidate_ids = [_text(row.get("candidate_id")) for row in rows]
+    if not candidate_ids or any(not candidate_id for candidate_id in candidate_ids):
+        return False
+    if len(candidate_ids) != len(set(candidate_ids)):
+        return False
+    for row in rows:
+        weights = _mapping(row.get("target_weights"))
+        values = [_float(value) for value in weights.values()]
+        if not values or any(not isfinite(value) or value < 0.0 or value > 1.0 for value in values):
+            return False
+        # A target-weight row represents a fully invested portfolio; this is an invariant,
+        # not a tunable investment heuristic. Reuse the path schema's numerical tolerance.
+        if abs(sum(values) - 1.0) > WEIGHT_PATH_WEIGHT_SUM_TOLERANCE:
+            return False
+    return True
 
 
 def _candidate_clusters(

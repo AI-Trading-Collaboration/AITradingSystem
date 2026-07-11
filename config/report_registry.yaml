@@ -2120,14 +2120,16 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/position_advisory_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/candidate_target_weights.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/candidate_position_deltas.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/consensus_target_weights.csv
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/advisory_actions.json
       - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/position_advisory_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-129 converts candidate target weights into TARGET_ONLY or
-      manual-review snapshot-delta advisory, always requiring owner approval
-      and always forbidding broker action.
+      manual-review snapshot-delta advisory, freezes shortlist/config/snapshot
+      and candidate-weight source checksums, and requires source-recomputing
+      validation while always forbidding broker action.
     owner_action: owner_review_position_advisory_before_including_in_daily_report
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

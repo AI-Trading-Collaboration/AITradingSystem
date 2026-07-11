@@ -6,7 +6,7 @@ reader_brief:
   top_level_function_count: 367
 report_registry:
   path: config/report_registry.yaml
-  sha256: 6d661ab5bef4e11ce429dce18376429b4dd8f5c5e2794e5d6e190bb7bddde3d9
+  sha256: b02f6eba7cf576b5759d345d5c9212d7dfa20ba7e08e8fe3779ded933253f70c
   entry_count: 1358
   explicit_production_effect_count: 669
   missing_explicit_production_effect_count: 689
