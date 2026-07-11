@@ -476,6 +476,14 @@ G2.4AB把intake之后、owner decision之前的三个计算层迁到独立模块
 
 三层必须按intake PASS后由operator显式执行，且不会自动构建manual execution review。Exposure PASS只说明暴露分析可读，drift的`recommended_action`只表示复核优先级，guardrail cap/block只表示“若人工继续，应先受哪些限制”；三者都不等于order ticket、portfolio approval、official target weights或broker authorization。优化方向优先是lineage、checksum、content-derived validation和阈值治理，不是把三层合成一个自动执行流水线。
 
+#### Manual execution review 链
+
+G2.4AC把风险控制层的四类artifact汇总为单一owner-review入口。`pack`要求operator显式提供snapshot、exposure、drift和guardrail id/root；构建器读取这些artifact，汇总source evidence、风险限制、owner checklist和`manual_execution_decision`候选，写入manual review manifest/report/latest pointer。`report`仅按review id或显式latest读取已有pack；`validate-manual-execution-review`校验pack完整性并在非PASS时exit 1。
+
+这里的计算不是新的portfolio优化器：`recommended_action`来自既有drift/guardrail结论的汇总，`order_ticket_generated`必须为false，`owner_approval_required`必须为true。字段名`manual_execution_decision`表示“系统建议owner复核的决策材料”，不表示owner已经批准、拒绝或执行；真实owner decision必须由独立的owner-review journal/decision workflow记录。
+
+后续优化空间包括：冻结四类source artifact checksum和同一snapshot lineage；让validator从source重建checklist/decision而非只相信manifest；将owner decision id、reviewer、decision time和sign-off保留给独立治理contract；为Reader Brief增加source completeness和staleness披露。不能通过自动运行上游、自动记录approval、生成order ticket或修改portfolio来弥补证据缺口；pack PASS始终只等于“材料结构可供人工复核”。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：
