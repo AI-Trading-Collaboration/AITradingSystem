@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_COMPLETE
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F1_IN_PROGRESS
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -85,11 +85,15 @@ arch_004_owned_paths:
   - src/ai_trading_system/reports/engineering_closeout.py
   - tests/test_arch_004e_devex.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
+  - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/research/current_research_strategy_execution_chain.md
   - tests/test_arch_004f2_research_execution_chain.py
   - src/ai_trading_system/contracts/research_lifecycle.py
+  - src/ai_trading_system/contracts/operations.py
   - src/ai_trading_system/legacy/research_campaign_adapter.py
+  - src/ai_trading_system/legacy/scheduled_tasks_adapter.py
   - tests/test_arch_004f2_research_lifecycle.py
+  - tests/test_arch_004f1_operations_control_plane.py
 
 shared_but_attributable_paths:
   - path: docs/task_register.md
@@ -102,6 +106,7 @@ shared_but_attributable_paths:
       - ARCH-004D_REFERENCE_VERTICAL_SLICE
       - ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES
       - ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
+      - ARCH-004F1_OPERATIONS_CONTROL_PLANE
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW

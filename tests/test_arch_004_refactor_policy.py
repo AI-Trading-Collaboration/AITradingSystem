@@ -14,15 +14,15 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def test_arch_004_phase_f2_validating_policy_keeps_freeze_and_preserves_safety() -> None:
+def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_f2_complete"
-    assert policy["program"]["current_phase"] == "ARCH-004F2"
-    assert policy["program"]["current_phase_status"] == "COMPLETE"
-    assert policy["program"]["next_phase"] == "ARCH-004F1_OR_F3"
-    assert policy["program"]["next_phase_unblocked"] is True
+    assert policy["status"] == "phase_f1_in_progress"
+    assert policy["program"]["current_phase"] == "ARCH-004F1"
+    assert policy["program"]["current_phase_status"] == "IN_PROGRESS"
+    assert policy["program"]["next_phase"] == "ARCH-004F3"
+    assert policy["program"]["next_phase_unblocked"] is False
     assert policy["feature_freeze"]["active"] is True
     assert "NEW_TASK_SHAPED_RESEARCH_MODULE" in policy["feature_freeze"]["forbidden_change_classes"]
     assert (
@@ -150,6 +150,29 @@ def test_arch_004_phase_f2_validating_policy_keeps_freeze_and_preserves_safety()
     assert runtime_validation["contract_validation"]["passed"] == 197
     assert runtime_validation["full_parallel"]["passed"] == 5430
     assert runtime_validation["full_parallel"]["failed"] == 0
+    phase_f1 = policy["phase_f1_execution"]
+    assert phase_f1["status"] == "IN_PROGRESS"
+    assert phase_f1["stages"] == {
+        "F1_1_inventory_due_contract_and_compatibility_adapter": "COMPLETE",
+        "F1_2_shadow_plan_and_daily_parity": "IN_PROGRESS",
+        "F1_3_lock_retry_idempotency_and_resume": "NOT_STARTED",
+        "F1_4_daily_executor_adapter_cut_in": "NOT_STARTED",
+        "F1_5_non_daily_controlled_due_dispatch": "NOT_STARTED",
+        "F1_6_validation_and_closeout": "NOT_STARTED",
+    }
+    assert phase_f1["scheduled_task_inventory"] == {
+        "daily": 36,
+        "non_daily": 41,
+        "total": 77,
+    }
+    assert phase_f1["unified_external_trigger"] == "aits ops daily-run"
+    assert phase_f1["additional_external_scheduler_entry_allowed"] is False
+    assert phase_f1["non_daily_automatic_dispatch_enabled"] is False
+    assert phase_f1["legacy_dispatch_enabled_by_shadow_adapter"] is False
+    assert phase_f1["compatibility_findings"]["trading_day_daily_plan"] == "PASS"
+    assert phase_f1["compatibility_findings"]["closed_market_daily_plan"] == (
+        "LIMITED_LEGACY_ONLY_CONDITIONAL_STEP"
+    )
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -376,9 +399,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     for source in phase_f2["sources"]:
         if source.get("historical_phase_f2_documentation_hash"):
             assert source["superseded_by_phase"] == "ARCH-004F2_RUNTIME"
-            assert source["current_hash_tracked_in"] == (
-                "phase_f2_runtime_lifecycle.sources"
-            )
+            assert source["current_hash_tracked_in"] == ("phase_f2_runtime_lifecycle.sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -402,6 +423,26 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert runtime["validation"]["full_parallel"]["passed"] == 5430
     assert runtime["validation"]["full_parallel"]["failed"] == 0
     for source in runtime["sources"]:
+        if source.get("historical_phase_f2_runtime_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004F1"
+            assert source["current_hash_tracked_in"] == (
+                "phase_f1_operations_control_plane.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_f1 = baseline["phase_f1_operations_control_plane"]
+    assert phase_f1["status"] == "IN_PROGRESS_F1_1_COMPLETE_F1_2_IN_PROGRESS"
+    assert phase_f1["contracts"]["shadow_execution_enabled"] is False
+    assert phase_f1["contracts"]["non_daily_automatic_dispatch_enabled"] is False
+    assert phase_f1["scheduled_task_inventory"] == {
+        "daily": 36,
+        "non_daily": 41,
+        "total": 77,
+    }
+    assert phase_f1["parity"]["trading_day_fixture_1"] == "PASS"
+    assert phase_f1["parity"]["closed_market_fixture_1"] == ("LIMITED_LEGACY_ONLY_CONDITIONAL_STEP")
+    for source in phase_f1["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -423,7 +464,7 @@ def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F2_COMPLETE"
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F1_IN_PROGRESS"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

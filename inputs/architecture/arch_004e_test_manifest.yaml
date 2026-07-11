@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 test_root: tests
-test_file_count: 1109
-test_count: 1051
+test_file_count: 1110
+test_count: 1052
 support_file_count: 58
 orphan_count: 0
 specific_overlap_count: 0
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 71563311d9248fd4cfc1a6d85d68fba39859548a7771ab422d532359d38349f0
+  sha256: d363bc07881f73a2a32983b49c1d584709f561891b339aabdda0b4492cd7f3ff
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7516,6 +7516,24 @@ tests:
 - test_id: tests.test_arch_004e_devex
   path: tests/test_arch_004e_devex.py
   sha256: 677a82b8b62797390afc673144eee9e30a6d4d6cd841c525a7a1bc14722032d9
+  file_role: test
+  rule_id: architecture_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/contracts/
+  - src/ai_trading_system/platform/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.test_arch_004f1_operations_control_plane
+  path: tests/test_arch_004f1_operations_control_plane.py
+  sha256: 0b69bdfcdd891cafd48d83d251025af175e7004c964cf7712fe400f4d4590fb5
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_f2_complete
+status: phase_f1_in_progress
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,10 +30,10 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004F2
-  current_phase_status: COMPLETE
-  next_phase: ARCH-004F1_OR_F3
-  next_phase_unblocked: true
+  current_phase: ARCH-004F1
+  current_phase_status: IN_PROGRESS
+  next_phase: ARCH-004F3
+  next_phase_unblocked: false
   predecessor_task_ids:
     - ARCH-001
     - ARCH-002
@@ -426,6 +426,41 @@ phase_f2_execution:
       warnings: 643
       elapsed_seconds: 1044.02
       runtime_artifact: outputs/validation_runtime/full_20260711T001903Z/test_runtime_summary.json
+
+phase_f1_execution:
+  task_id: ARCH-004F1_OPERATIONS_CONTROL_PLANE
+  status: IN_PROGRESS
+  requirement_path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+  stages:
+    F1_1_inventory_due_contract_and_compatibility_adapter: COMPLETE
+    F1_2_shadow_plan_and_daily_parity: IN_PROGRESS
+    F1_3_lock_retry_idempotency_and_resume: NOT_STARTED
+    F1_4_daily_executor_adapter_cut_in: NOT_STARTED
+    F1_5_non_daily_controlled_due_dispatch: NOT_STARTED
+    F1_6_validation_and_closeout: NOT_STARTED
+  scheduled_task_inventory:
+    daily: 36
+    non_daily: 41
+    total: 77
+  unified_external_trigger: aits ops daily-run
+  additional_external_scheduler_entry_allowed: false
+  non_daily_automatic_dispatch_enabled: false
+  legacy_dispatch_enabled_by_shadow_adapter: false
+  periodic_research_review_may_auto_tune: false
+  compatibility_findings:
+    trading_day_daily_plan: PASS
+    closed_market_daily_plan: LIMITED_LEGACY_ONLY_CONDITIONAL_STEP
+    closed_market_legacy_only_step_ids:
+      - official_policy_sources
+  focused_validation:
+    status: PASS
+    passed: 23
+  scoped_mypy: PASS
+  contract_validation:
+    status: PASS
+    passed: 197
+    elapsed_seconds: 44.18
+    runtime_artifact: outputs/validation_runtime/contract-validation_20260711T005920Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

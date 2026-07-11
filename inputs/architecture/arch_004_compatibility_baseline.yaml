@@ -549,10 +549,16 @@ phase_f2_runtime_lifecycle:
       sha256: 06ec3de0e1528e7ddf0e98909880ab9580600bc7b46d1a159b283e95ef714fdf
     - path: src/ai_trading_system/contracts/__init__.py
       sha256: d6cf6d15543eb144e3ceb08baa849c2d1e82c2f2fdcb18aabfc2e6a394a6ae90
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: src/ai_trading_system/legacy/research_campaign_adapter.py
       sha256: a39b7d5672d0c0bf666213b110c04f25d3c8d508626eae3c353321eb69d0556f
     - path: src/ai_trading_system/legacy/__init__.py
       sha256: 84446e616b99724072c6c3414c2c402155d5b6e807510df1aed44eecffa93678
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: src/ai_trading_system/research_framework/plugins/__init__.py
       sha256: 13e6d94274fe2597b8e4196f16c39a2aa39767e4e93c6dd3093867c809082984
     - path: src/ai_trading_system/research_framework/__init__.py
@@ -571,18 +577,33 @@ phase_f2_runtime_lifecycle:
       sha256: 0afd56d0ce13dde1448443269d52e29696e1b60d8c3ff4f5d9d2e7e02b774a37
     - path: docs/system_flow.md
       sha256: 6c37ff47be127045f7074180599b3cac12287b51816740ebfd983e20b284ec2c
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: config/architecture/fragments/artifacts/growth_tilt_candidate_family_closure.yaml
       sha256: 68f27dd195707820e335df60e3ef72f8dc2a9ca7389b8f88c0b058329b0b66a4
     - path: config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
       sha256: a5f5d351c9e4d09e6145eb3ff687b126b689694e63ec51a170e0f179e89a2303
     - path: inputs/architecture/arch_004e_module_manifest.yaml
       sha256: e35ca7c2088a2ffcf6e7e327a47351d95fcf5889bdce684fd3455abf0d78b07d
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: 211075127d20d89473b4f20550ceb8804b2bf94ea6033ba1d18da4e125fbad60
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: c9796ba32fe48063f188f99f36d8daf434222c3426a0ad0ae559b2e03ccb7ed9
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: e1213dfb5b105cb322b1a366a367ebef14e4f1566f5f4ef792dbec6c8c52dec3
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004F1
+      current_hash_tracked_in: phase_f1_operations_control_plane.sources
   validation:
     focused:
       status: PASS
@@ -606,3 +627,67 @@ phase_f2_runtime_lifecycle:
       warnings: 643
       elapsed_seconds: 1044.02
       runtime_artifact: outputs/validation_runtime/full_20260711T001903Z/test_runtime_summary.json
+
+phase_f1_operations_control_plane:
+  status: IN_PROGRESS_F1_1_COMPLETE_F1_2_IN_PROGRESS
+  as_of: 2026-07-11
+  contracts:
+    due_policy_schema: operations_due_policy.v1
+    due_resolution_schema: operations_due_resolution.v1
+    shadow_plan_schema: operations_shadow_plan.v1
+    legacy_schedule_binding: EXPLICIT_ONLY
+    unknown_cadence_or_effect: BLOCKED
+    shadow_execution_enabled: false
+    non_daily_automatic_dispatch_enabled: false
+    unified_external_trigger: aits ops daily-run
+  repository_inventory:
+    python_module_count_including_ignored: 781
+    python_test_and_support_file_count: 1110
+  scheduled_task_inventory:
+    daily: 36
+    non_daily: 41
+    total: 77
+  parity:
+    trading_day_fixture_1: PASS
+    trading_day_fixture_2: PASS
+    closed_market_fixture_1: LIMITED_LEGACY_ONLY_CONDITIONAL_STEP
+    closed_market_fixture_2: LIMITED_LEGACY_ONLY_CONDITIONAL_STEP
+    closed_market_legacy_only_step: official_policy_sources
+  sources:
+    - path: src/ai_trading_system/contracts/operations.py
+      sha256: 990636f4f32706ca10e2cdc4fef86174fcc7496e58a15ffa5ed706b5aa4f2fb2
+    - path: src/ai_trading_system/contracts/__init__.py
+      sha256: 2fab85f87a725196b9003908efc58ec2a8015a680f8a16b82097d41fbda97bb9
+    - path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
+      sha256: ced94df7c229126c208394a159486533741ccb9badcafd39f9711359a7a80abf
+    - path: src/ai_trading_system/legacy/__init__.py
+      sha256: fbd61175562cb21d4d695b30c87c7e346b1e8b682e6aa5b046f1aa165bac7a1a
+    - path: tests/test_arch_004f1_operations_control_plane.py
+      sha256: 0b69bdfcdd891cafd48d83d251025af175e7004c964cf7712fe400f4d4590fb5
+    - path: tests/test_arch_004_refactor_policy.py
+      sha256: d363bc07881f73a2a32983b49c1d584709f561891b339aabdda0b4492cd7f3ff
+    - path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+      sha256: d61edda9cf3b23eb51f7830136c1297745af5923feb73f9f9f207d87586dcf51
+    - path: docs/system_flow.md
+      sha256: 0d3eec47226b87e936ce41e7f25e5940ef880a4b6e6bb8ad5933d8bc959bbee0
+    - path: config/architecture/arch_004_refactor_policy.yaml
+      sha256: 5e086fd1a64531b188d7ee9114a79403131836ce500623b61c7b18341fec5b11
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: e2a9d3fb5d7f92aabdfa5737772b0f24663e139b2c9ef142e04c98496c130a86
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: a1474f6e47d425504df20649477f32a807d8efeedca2b41136aba30b1b6a109b
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: cec5f1b53e93635d78c53cf0e205f0aa8f2e002031dce0a5689966a4483c7db9
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: 3c4a56da23412cb45fbff81bbf2acb4e3af5f1951d99905359033042779ba6a7
+  validation:
+    focused:
+      status: PASS
+      passed: 23
+    scoped_mypy:
+      status: PASS
+    contract_validation:
+      status: PASS
+      passed: 197
+      elapsed_seconds: 44.18
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T005920Z/test_runtime_summary.json

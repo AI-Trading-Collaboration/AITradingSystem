@@ -1,0 +1,104 @@
+# ARCH-004F1 Operations Control Plane
+
+## 基本信息
+
+- task id：`ARCH-004F1_OPERATIONS_CONTROL_PLANE`
+- parent：`ARCH-004`
+- priority：`P0`
+- status：`IN_PROGRESS`
+- owner：system operations / architecture governance
+- dependency：ARCH-004E、ARCH-004F2 `DONE`；最近 full parallel `5,430 passed / 0 failed`
+- production effect：`none`（本阶段先建立控制面、shadow plan 与 parity；不新增外部 scheduler，不自动执行 non-daily）
+
+## 为什么现在做
+
+当前周期运维已经有三个重要基础：
+
+1. `config/scheduled_tasks.yaml` 登记 daily / weekly / biweekly / monthly / ad hoc cadence；
+2. `aits ops daily-run` 是唯一外部入口，`ops_daily.py` 保持成熟的 daily/closed-market 行为；
+3. `WorkflowSpec`、`RunLedger` 已在 ARCH-004C 建立 pure contract。
+
+但三者尚未闭合为同一个运行控制面。当前盘点为 77 个登记任务，其中 daily 36、non-daily 41；daily 仍依赖 `ops_daily.py` 硬编码步骤与配置顺序校验，non-daily 多数只有自然语言 `date_gate` / `trigger_condition`，没有统一 typed due resolution、逐次 run ledger、lock/retry/idempotency 证据。继续在现有结构上加任务会放大语义漂移、重复 scheduler gate 和不可审计重跑风险。
+
+F1 不另建第二套 scheduler，也不立即自动执行 weekly/monthly。目标是让既有统一入口背后逐步收敛到 canonical typed DAG，同时以 shadow parity 证明行为未改变。
+
+## 权威边界
+
+- 外部 scheduler 入口仍只有 `aits ops daily-run`。
+- `config/scheduled_tasks.yaml` 在切换前仍是 cadence/legacy command source；canonical spec 由显式 adapter 生成，不复制一份手写任务清单。
+- `config/etf_portfolio/operations_schedule.yaml` 是 ETF workflow source config，不是外部 scheduler entry；其接入必须通过相同 due/dependency/DQ/owner gates。
+- `ops_daily.py` 在完成 parity 与 owner signoff 前仍是 daily executor；F1 shadow plan 不改变命令、顺序、closed-market 行为、artifact path/schema/status/bytes。
+- non-daily 自动 dispatch 在 F1.5 以前保持 disabled；manual plan 也不得绕过 DQ、owner 或 production safety gate。
+- legacy `local_cache_write` / `local_report_write` 必须由命名兼容表映射为 canonical production boundary，并保留原值；未知值 fail closed。
+
+## 分阶段实施
+
+### F1.1 Inventory、Due Contract 与 Compatibility Adapter
+
+- 建立 typed due policy/context/resolution；输入至少包含 cadence、`as_of`、交易日/周期末状态、daily upstream status、DQ evidence、owner/event trigger、previous ledger。
+- 从 `ScheduledTasksConfig` 生成 canonical `WorkflowSpec` shadow representation；不推断缺失 dependency、DQ、owner gate。
+- 对 cadence、legacy production effect、entrypoint 和缺失 binding 形成明确兼容性评估；未知语义 `BLOCKED`。
+- 输出 deterministic round-trip 与 spec/decision id。
+
+验收：77 个任务均可被 inventory；所有 cadence 有明确 disposition；未知 cadence/effect/due binding fail closed；不执行命令。
+
+### F1.2 Shadow Plan 与 Daily Parity
+
+- 用 due resolution 初始化 canonical `RunLedger`；将 due/not-due/blocked 原因写入 ledger。
+- 将 canonical shadow plan 与既有 `DailyOpsPlan` 比较 step id、顺序、command、closed-market 与 safety metadata。
+- 输出 additive shadow artifact；不改变既有 daily plan/run artifact。
+
+验收：至少两个 trading-day fixture 与两个 closed-market fixture exact parity；shadow artifact deterministic；旧 bytes/path/status 不变。
+
+### F1.3 Lock、Retry、Idempotency 与 Resume
+
+- 统一 lock ownership、stale lock 检测、attempt budget、idempotency key、resume decision 和 terminal ledger write。
+- non-idempotent step 必须有 lock 且 `max_attempts=1`；retry 只允许显式 policy。
+- crash/restart 不重复已 PASS 的同一 idempotency key；artifact/ledger 不允许部分写。
+
+验收：并发冲突、stale lock、retry exhausted、partial write、resume 与 duplicate trigger fixtures 全部 fail closed 或按 policy 恢复。
+
+### F1.4 Daily Executor Adapter Cut-in
+
+- 在不改变 CLI 的前提下，让 daily executor 消费 canonical plan/ledger；legacy `ops_daily.py` 保留为有 owner/sunset/parity 的 façade。
+- `aits validate-data` 及同一路径质量门禁保持可见；blocked dependency 不得运行。
+- daily plan/run/closed-market/Reader Brief final refresh 与现有行为 parity。
+
+验收：两个真实 cadence shadow parity、focused/integration/reproducibility/full gate PASS；无 production/broker/weight 边界变化。
+
+### F1.5 Non-daily Controlled Due Dispatch
+
+- weekly / biweekly / monthly / governance 只能由统一 daily trigger 的 date-and-condition gate 到达，或继续 manual 运行。
+- due 必须同时检查交易日历、周期规则、latest daily ledger、required artifacts、DQ、owner gate 和 safety boundary。
+- periodic research review 只触发 ARCH-004F2 review lifecycle，不自动 preregister、调参、改权重、promotion 或 adopt。
+
+验收：每个 periodic task 都有 due resolution 与 run ledger；not-due/blocked/limited 可审计；外部仍只有 daily unified trigger。
+
+### F1.6 Validation 与 Closeout
+
+- 更新 operations runbook、scheduled orchestration、artifact catalog 和 system flow。
+- 通过 architecture fitness、contract-validation、integration、reproducibility、full parallel pytest。
+- 明确 legacy façade sunset 与 ARCH-004G operations lane handoff。
+
+## 输入、输出与计算边界
+
+|环节|输入|计算|输出|失败语义|
+|---|---|---|---|---|
+|schedule inventory|scheduled tasks、ETF operations config|schema/owner/cadence/safety classification|inventory + compatibility assessment|未知字段/重复 id/unsafe action `BLOCKED`|
+|due resolution|policy、as_of、calendar、daily/DQ/artifact/owner state|纯布尔条件与 reason code 组合|`DUE/NOT_DUE/BLOCKED`|不猜测缺失日历、owner 或 DQ|
+|shadow plan|WorkflowSpec、DueResolution|topological/order-preserving plan + initial ledger|plan、ledger、parity diff|dependency/spec mismatch `BLOCKED`|
+|runtime|plan、lock、previous ledger|idempotency/retry/resume state transition|terminal ledger + artifact refs|并发、超次、partial write fail closed|
+|periodic review bridge|due periodic ledger、F2 lifecycle record|只触发 review event|review evidence / owner queue|不自动优化或 adoption|
+
+## 非目标
+
+- 不创建 Windows Task Scheduler / cron / GitHub Actions 条目。
+- 不在 F1.1/F1.2 自动执行 weekly、biweekly、monthly 或 ad hoc research。
+- 不改变 strategy、threshold、score、weight、backtest、promotion、paper-shadow、production 或 broker 行为。
+- 不把 `scheduled_tasks.yaml` 的自然语言 gate 静默翻译成新规则。
+- 不以 shadow plan 替代现有 runtime，直到 parity、validation 和 owner signoff 完成。
+
+## 当前进展
+
+- 2026-07-11：完整读取 `docs/operations/operations_runbook.md` 与 `docs/runbooks/scheduled_task_orchestration.md`；盘点 scheduled config 为 36 daily + 41 non-daily。确认 canonical WorkflowSpec/RunLedger 已存在但尚未接入 ops runtime；F1.1 开始，non-daily dispatch 继续 disabled。
+- 2026-07-11：F1.1 完成，F1.2 进入 `IN_PROGRESS`。新增 pure `operations_due_policy.v1` / `operations_due_resolution.v1` / non-executing `operations_shadow_plan.v1`，支持 daily/period-end/biweekly-anchor/explicit-trigger、daily/DQ/artifact/owner gate、deterministic round-trip 和 blocker propagation；legacy schedule 只有显式 owner/timezone/due binding 才生成 WorkflowSpec，未知 cadence/effect fail closed，dispatcher保持 disabled。77/77 tasks inventoryable；trading-day fixtures parity PASS。Closed-market fixtures 暴露 `official_policy_sources` 是未登记的 conditional legacy-only step，因此状态为 `LIMITED` 而非伪报 PASS；focused=23、scoped mypy PASS、contract-validation=197 PASS，下一步补条件步骤 contract。
