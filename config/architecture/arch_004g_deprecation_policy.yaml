@@ -1,0 +1,174 @@
+schema_version: arch_004g_deprecation_policy.v1
+policy_id: arch_004g_deprecation_policy_v1
+owner: architecture_governance
+version: 1.0.0
+status: active_g0
+policy_metadata:
+  rationale: >
+    ARCH-004 A-F established canonical contracts and reference paths while the
+    real domain surfaces remain large and reachable. G requires explicit,
+    evidence-backed migration and subtraction without permanent dual tracks.
+  intended_effect: >
+    Inventory each priority surface, freeze lifecycle and removal gates, then
+    allow a surface to move toward removal only when all reachability,
+    compatibility, reproducibility, safety, and owner gates pass.
+  validation_evidence: >
+    Deterministic inventory, lifecycle transition tests, drift checks,
+    architecture fitness, compatibility parity, and full parallel validation.
+  review_condition: >
+    Review before changing a lifecycle, replacement, compatibility window,
+    sunset condition, required removal gate, target scope, or safety boundary.
+lifecycle:
+  states: [EXPERIMENTAL, ACTIVE, DEPRECATED, FROZEN, REMOVED]
+  allowed_transitions:
+    EXPERIMENTAL: [ACTIVE]
+    ACTIVE: [DEPRECATED]
+    DEPRECATED: [FROZEN]
+    FROZEN: [REMOVED]
+    REMOVED: []
+removal_policy:
+  required_gate_ids:
+    - replacement_resolved
+    - usage_evidence_current
+    - runtime_reachability_zero_or_facade
+    - import_reachability_zero_or_facade
+    - cli_reachability_zero_or_facade
+    - report_registry_reachability_zero_or_facade
+    - docs_tests_runbooks_migrated
+    - historical_reproducibility_preserved
+    - safety_contracts_preserved
+    - compatibility_window_elapsed
+    - sunset_condition_met
+    - owner_signoff
+  permanent_dual_track_allowed: false
+  g0_runtime_removal_allowed: false
+  artifact_retention_separate_from_code_removal: true
+  unknown_reachability_is_removal_ready: false
+targets:
+  - surface_id: shared_direct_writer_calls
+    lane: shared_platform
+    scan_mode: repository_metric
+    path: inputs/architecture/arch_004c_direct_writer_baseline.yaml
+    owner: architecture_governance
+    replacement: ai_trading_system.platform.artifacts
+    replacement_status: PARTIAL
+    lifecycle: ACTIVE
+    migration_wave: G1
+    compatibility_window: through_G1_parity
+    sunset_condition: selected_helper_families_have_zero_legacy_callers
+    usage_evidence_ref: inputs/architecture/arch_004e_architecture_fitness.yaml
+    interpretation_sensitive: false
+  - surface_id: etf_portfolio_cli_god_module
+    lane: interfaces
+    scan_mode: python_file
+    path: src/ai_trading_system/cli_commands/etf_portfolio.py
+    owner: interface_platform
+    replacement: ai_trading_system.interfaces.cli.etf_portfolio
+    replacement_status: PLANNED_NOT_CUT_OVER
+    lifecycle: ACTIVE
+    migration_wave: G2
+    compatibility_window: command_parity_plus_two_daily_fixtures
+    sunset_condition: root_module_is_thin_registration_facade
+    usage_evidence_ref: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    interpretation_sensitive: true
+  - surface_id: reader_brief_legacy_builder_renderer
+    lane: reporting
+    scan_mode: python_file
+    path: src/ai_trading_system/reports/reader_brief.py
+    owner: reporting_governance
+    replacement: ai_trading_system.platform.reporting
+    replacement_status: PARTIAL_ADDITIVE_SIDECAR
+    lifecycle: DEPRECATED
+    migration_wave: G3
+    compatibility_window: through_G3_native_core_parity
+    sunset_condition: typed_provider_view_model_renderer_cover_legacy_core
+    usage_evidence_ref: inputs/architecture/arch_004f3_reporting_inventory.yaml
+    interpretation_sensitive: true
+  - surface_id: operations_daily_legacy_facade
+    lane: operations
+    scan_mode: python_file
+    path: src/ai_trading_system/ops_daily.py
+    owner: operations_platform
+    replacement: ai_trading_system.platform.operations
+    replacement_status: PARTIAL_CONTROLLED_CUT_IN
+    lifecycle: DEPRECATED
+    migration_wave: G4
+    compatibility_window: two_daily_two_weekly_one_monthly_parity
+    sunset_condition: all_runtime_consumers_use_canonical_workflow_and_ledger
+    usage_evidence_ref: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+    interpretation_sensitive: true
+  - surface_id: scheduled_tasks_legacy_facade
+    lane: operations
+    scan_mode: python_file
+    path: src/ai_trading_system/scheduled_tasks.py
+    owner: operations_platform
+    replacement: ai_trading_system.platform.operations
+    replacement_status: PARTIAL_TYPED_ADAPTER
+    lifecycle: DEPRECATED
+    migration_wave: G4
+    compatibility_window: two_daily_two_weekly_one_monthly_parity
+    sunset_condition: schedule_consumers_use_typed_due_policy_and_workflow_specs
+    usage_evidence_ref: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+    interpretation_sensitive: true
+  - surface_id: dynamic_strategy_task_wrappers
+    lane: research
+    scan_mode: python_glob
+    path: src/ai_trading_system/dynamic_strategy_*.py
+    owner: research_platform
+    replacement: ai_trading_system.research_framework
+    replacement_status: REFERENCE_ONLY_PARTIAL
+    lifecycle: ACTIVE
+    migration_wave: G5
+    compatibility_window: per_wrapper_artifact_parity_then_freeze
+    sunset_condition: selected_wave_has_zero_task_shaped_runtime_consumers
+    usage_evidence_ref: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    interpretation_sensitive: true
+  - surface_id: dynamic_v3_system_target_god_module
+    lane: portfolio_research
+    scan_mode: python_file
+    path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
+    owner: portfolio_research
+    replacement: ai_trading_system.research_framework
+    replacement_status: PLANNED_NOT_CUT_OVER
+    lifecycle: ACTIVE
+    migration_wave: G6
+    compatibility_window: full_characterization_plus_owner_signoff
+    sunset_condition: pure_compute_application_and_report_responsibilities_split
+    usage_evidence_ref: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    interpretation_sensitive: true
+  - surface_id: controlled_strategy_batch_god_module
+    lane: research
+    scan_mode: python_file
+    path: src/ai_trading_system/controlled_strategy_batch.py
+    owner: research_platform
+    replacement: ai_trading_system.research_framework
+    replacement_status: PLANNED_NOT_CUT_OVER
+    lifecycle: ACTIVE
+    migration_wave: G6
+    compatibility_window: full_characterization_plus_owner_signoff
+    sunset_condition: batch_specs_and_plugins_cover_all_runtime_consumers
+    usage_evidence_ref: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    interpretation_sensitive: true
+  - surface_id: dynamic_v3_parameter_research_god_module
+    lane: portfolio_research
+    scan_mode: python_file
+    path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
+    owner: portfolio_research
+    replacement: ai_trading_system.research_framework
+    replacement_status: PLANNED_NOT_CUT_OVER
+    lifecycle: ACTIVE
+    migration_wave: G6
+    compatibility_window: full_characterization_plus_owner_signoff
+    sunset_condition: lifecycle_specs_plugins_cover_parameter_research_without_policy_change
+    usage_evidence_ref: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    interpretation_sensitive: true
+safety_boundary:
+  strategy_logic_changed: false
+  threshold_changed: false
+  weight_changed: false
+  backtest_interpretation_changed: false
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none

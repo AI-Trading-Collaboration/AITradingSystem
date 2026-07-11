@@ -9,6 +9,12 @@ from ai_trading_system.contracts.data_quality import (
     DataQualityEvidence,
     DataQualityEvidenceError,
 )
+from ai_trading_system.contracts.deprecation import (
+    DeprecationContractError,
+    DeprecationRecord,
+    RemovalGateEvidence,
+    SurfaceLifecycle,
+)
 from ai_trading_system.contracts.operations import (
     DueRule,
     OperationsContractError,
@@ -104,6 +110,8 @@ __all__ = [
     "DataQualityContractRef",
     "DataQualityEvidence",
     "DataQualityEvidenceError",
+    "DeprecationContractError",
+    "DeprecationRecord",
     "DateRange",
     "DueRule",
     "EffectiveCoverage",
@@ -154,7 +162,9 @@ __all__ = [
     "RunLedger",
     "RunLedgerEntry",
     "ResultVisibility",
+    "RemovalGateEvidence",
     "UnknownLegacyStatusError",
+    "SurfaceLifecycle",
     "WorkflowCadence",
     "WorkflowContractError",
     "WorkflowSpec",

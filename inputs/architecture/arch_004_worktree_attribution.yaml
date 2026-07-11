@@ -1,12 +1,13 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F3_COMPLETE
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G0_IN_PROGRESS
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
 
 arch_004_owned_paths:
   - config/architecture/arch_004_refactor_policy.yaml
+  - config/architecture/arch_004g_deprecation_policy.yaml
   - config/scheduled_tasks.yaml
   - config/operations/runtime_control.yaml
   - config/operations/periodic_control.yaml
@@ -15,6 +16,7 @@ arch_004_owned_paths:
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -29,6 +31,7 @@ arch_004_owned_paths:
   - inputs/architecture/arch_004_compatibility_baseline.yaml
   - inputs/architecture/arch_004_predecessor_reconciliation.yaml
   - inputs/architecture/arch_004_worktree_attribution.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
   - inputs/architecture/arch_004f3_reporting_inventory.yaml
   - src/ai_trading_system/cli_commands/research_execution_common.py
   - src/ai_trading_system/contracts/__init__.py
@@ -36,6 +39,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/contracts/research_context.py
   - src/ai_trading_system/contracts/artifact_envelope.py
   - src/ai_trading_system/contracts/data_quality.py
+  - src/ai_trading_system/contracts/deprecation.py
   - src/ai_trading_system/contracts/workflow.py
   - src/ai_trading_system/contracts/report_spec.py
   - src/ai_trading_system/contracts/report_audit.py
@@ -68,6 +72,7 @@ arch_004_owned_paths:
   - config/architecture/fragments/flows/report_audit_index.yaml
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/dependency_gate.py
+  - src/ai_trading_system/platform/architecture/deprecation.py
   - src/ai_trading_system/config.py
   - src/ai_trading_system/dynamic_strategy_report_common.py
   - src/ai_trading_system/research_governance.py
@@ -108,6 +113,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/architecture/scaffold.py
   - src/ai_trading_system/reports/engineering_closeout.py
   - tests/test_arch_004e_devex.py
+  - tests/test_arch_004g_deprecation.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/requirements/ARCH-004F3_Reporting_Architecture.md
@@ -145,6 +151,7 @@ shared_but_attributable_paths:
       - ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
       - ARCH-004F1_OPERATIONS_CONTROL_PLANE
       - ARCH-004F3_REPORTING_ARCHITECTURE
+      - ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW

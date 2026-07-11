@@ -14,13 +14,13 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def test_arch_004_phase_g_ready_policy_keeps_freeze_and_preserves_safety() -> None:
+def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_g_ready"
+    assert policy["status"] == "phase_g_in_progress"
     assert policy["program"]["current_phase"] == "ARCH-004G"
-    assert policy["program"]["current_phase_status"] == "READY"
+    assert policy["program"]["current_phase_status"] == "IN_PROGRESS"
     assert policy["program"]["next_phase"] == "ARCH-004H"
     assert policy["program"]["next_phase_unblocked"] is False
     assert policy["feature_freeze"]["active"] is True
@@ -217,6 +217,34 @@ def test_arch_004_phase_g_ready_policy_keeps_freeze_and_preserves_safety() -> No
             "outputs/validation_runtime/full_20260711T040642Z/test_runtime_summary.json"
         ),
     }
+    phase_g = policy["phase_g_execution"]
+    assert phase_g["status"] == "IN_PROGRESS"
+    assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == (
+        "COMPLETE"
+    )
+    assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "IN_PROGRESS"
+    assert phase_g["permanent_dual_track_allowed"] is False
+    assert phase_g["runtime_removal_allowed_in_g0"] is False
+    assert phase_g["investment_semantics_change_allowed"] is False
+    assert phase_g["historical_artifact_deletion_allowed"] is False
+    assert phase_g["g0_evidence"] == {
+        "policy_path": "config/architecture/arch_004g_deprecation_policy.yaml",
+        "inventory_path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "module_count": 795,
+        "test_file_count": 1112,
+        "priority_target_count": 9,
+        "active_target_count": 6,
+        "deprecated_target_count": 3,
+        "removal_ready_count": 0,
+        "direct_writer_baseline": 894,
+        "direct_writer_current": 893,
+        "dynamic_strategy_wrapper_count": 99,
+        "matching_research_quality_implementation_count": 48,
+        "runtime_removal_performed": False,
+    }
+    assert phase_g["g0_validation"]["focused"] == {"status": "PASS", "passed": 6}
+    assert phase_g["g0_validation"]["architecture_fitness"]["passed"] == 156
+    assert phase_g["g0_validation"]["contract_validation"]["passed"] == 203
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -425,7 +453,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_e["validation"]["full_parallel"]["failed"] == 0
     for source in phase_e["sources"]:
         if source.get("historical_phase_e_hash"):
-            assert source["superseded_by_phase"] in {"ARCH-004F2", "ARCH-004F2_RUNTIME"}
+            assert source["superseded_by_phase"] in {
+                "ARCH-004F2",
+                "ARCH-004F2_RUNTIME",
+                "ARCH-004G",
+            }
             assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
@@ -536,6 +568,35 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f3["validation"]["full_parallel"]["passed"] == 5494
     assert phase_f3["validation"]["full_parallel"]["failed"] == 0
     for source in phase_f3["sources"]:
+        if source.get("historical_phase_f3_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g0_deprecation_inventory_and_policy.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g0 = baseline["phase_g0_deprecation_inventory_and_policy"]
+    assert phase_g0["status"] == "COMPLETE_G1_IN_PROGRESS"
+    assert phase_g0["contracts"] == {
+        "deprecation_record_schema": "deprecation_record.v1",
+        "lifecycle": ["EXPERIMENTAL", "ACTIVE", "DEPRECATED", "FROZEN", "REMOVED"],
+        "required_removal_gate_count": 12,
+        "permanent_dual_track_allowed": False,
+        "runtime_removal_allowed_in_g0": False,
+        "unknown_reachability_is_removal_ready": False,
+        "artifact_retention_separate_from_code_removal": True,
+    }
+    assert phase_g0["target_inventory"] == {
+        "target_count": 9,
+        "active_count": 6,
+        "deprecated_count": 3,
+        "removal_ready_count": 0,
+        "runtime_removal_performed": False,
+    }
+    assert phase_g0["validation"]["architecture_fitness"]["passed"] == 156
+    assert phase_g0["validation"]["contract_validation"]["passed"] == 203
+    for source in phase_g0["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -557,7 +618,7 @@ def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F3_COMPLETE"
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G0_IN_PROGRESS"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

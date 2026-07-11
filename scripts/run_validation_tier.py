@@ -59,6 +59,7 @@ TIER_SPECS: dict[str, TierSpec] = {
         slow_suite_allowed=False,
         paths=(
             "tests/test_validation_tier_script.py",
+            "tests/test_arch_004g_deprecation.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
             "tests/test_clean_clone_release_acceptance.py",
@@ -94,6 +95,7 @@ TIER_SPECS: dict[str, TierSpec] = {
         slow_suite_allowed=False,
         paths=(
             "tests/test_validation_tier_script.py",
+            "tests/test_arch_004g_deprecation.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
             "tests/test_clean_clone_release_acceptance.py",

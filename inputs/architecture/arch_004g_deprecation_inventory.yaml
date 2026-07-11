@@ -1,0 +1,204 @@
+schema_version: arch_004g_deprecation_inventory.v1
+status: FROZEN_G0_BASELINE
+as_of: 2026-07-11
+policy_id: arch_004g_deprecation_policy_v1
+production_effect: none
+runtime_removal_performed: false
+all_removal_gate_ids: &all_removal_gate_ids
+  - replacement_resolved
+  - usage_evidence_current
+  - runtime_reachability_zero_or_facade
+  - import_reachability_zero_or_facade
+  - cli_reachability_zero_or_facade
+  - report_registry_reachability_zero_or_facade
+  - docs_tests_runbooks_migrated
+  - historical_reproducibility_preserved
+  - safety_contracts_preserved
+  - compatibility_window_elapsed
+  - sunset_condition_met
+  - owner_signoff
+repository:
+  python_module_count: 795
+  python_test_file_count: 1112
+  direct_writer_baseline_count: 894
+  direct_writer_current_count: 893
+  direct_writer_violation_count: 0
+  legacy_adapter_file_count: 7
+  dynamic_strategy_wrapper_file_count: 99
+  research_quality_matching_wrapper_count: 48
+lifecycle_counts:
+  ACTIVE: 6
+  DEPRECATED: 3
+removal_ready_count: 0
+surfaces:
+  - surface_id: shared_direct_writer_calls
+    lane: shared_platform
+    lifecycle: ACTIVE
+    replacement_status: PARTIAL
+    migration_wave: G1
+    path: inputs/architecture/arch_004c_direct_writer_baseline.yaml
+    file_count: 1
+    line_count: 2658
+    byte_count: 97014
+    source_sha256: 1f459eca726d6c53c71f32ce9abdc4d578dde1cc06e03a40d6b55b65d4a93ab3
+    top_level_function_count: 0
+    top_level_class_count: 0
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 0
+    test_reference_file_count: 3
+    docs_config_reference_file_count: 3
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: etf_portfolio_cli_god_module
+    lane: interfaces
+    lifecycle: ACTIVE
+    replacement_status: PLANNED_NOT_CUT_OVER
+    migration_wave: G2
+    path: src/ai_trading_system/cli_commands/etf_portfolio.py
+    file_count: 1
+    line_count: 37604
+    byte_count: 1579334
+    source_sha256: dd889e8b77b1b7c62cc21f4c98b60dce29ed9f62032abb5142f6cddfd81ee63f
+    top_level_function_count: 1049
+    top_level_class_count: 0
+    cli_command_decorator_count: 993
+    static_import_reachability_file_count: 1
+    test_reference_file_count: 296
+    docs_config_reference_file_count: 113
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: reader_brief_legacy_builder_renderer
+    lane: reporting
+    lifecycle: DEPRECATED
+    replacement_status: PARTIAL_ADDITIVE_SIDECAR
+    migration_wave: G3
+    path: src/ai_trading_system/reports/reader_brief.py
+    file_count: 1
+    line_count: 29027
+    byte_count: 1277659
+    source_sha256: 2275c2d16787809b315650d459fb323da351acd984766e92b0f59d56696f1176
+    top_level_function_count: 366
+    top_level_class_count: 0
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 4
+    test_reference_file_count: 185
+    docs_config_reference_file_count: 90
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: operations_daily_legacy_facade
+    lane: operations
+    lifecycle: DEPRECATED
+    replacement_status: PARTIAL_CONTROLLED_CUT_IN
+    migration_wave: G4
+    path: src/ai_trading_system/ops_daily.py
+    file_count: 1
+    line_count: 2972
+    byte_count: 117740
+    source_sha256: 98816d17bb89065364ac04d7fc38ca92d6c79365883e02b1267ff5485e885736
+    top_level_function_count: 61
+    top_level_class_count: 10
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 4
+    test_reference_file_count: 4
+    docs_config_reference_file_count: 26
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: scheduled_tasks_legacy_facade
+    lane: operations
+    lifecycle: DEPRECATED
+    replacement_status: PARTIAL_TYPED_ADAPTER
+    migration_wave: G4
+    path: src/ai_trading_system/scheduled_tasks.py
+    file_count: 1
+    line_count: 310
+    byte_count: 11947
+    source_sha256: 4b475b18bbb12b2b9fe82036991cb9dd1f07acd1b8587cf4e906719fd364a60c
+    top_level_function_count: 8
+    top_level_class_count: 4
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 5
+    test_reference_file_count: 7
+    docs_config_reference_file_count: 22
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: dynamic_strategy_task_wrappers
+    lane: research
+    lifecycle: ACTIVE
+    replacement_status: REFERENCE_ONLY_PARTIAL
+    migration_wave: G5
+    path: src/ai_trading_system/dynamic_strategy_*.py
+    file_count: 99
+    line_count: 89805
+    byte_count: 3631105
+    source_sha256: 013f180d663950e791f666d5cec9581a07dfcce266b661b0a6e38b52a83fff3a
+    top_level_function_count: 2154
+    top_level_class_count: 0
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 3
+    test_reference_file_count: 101
+    docs_config_reference_file_count: 111
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: dynamic_v3_system_target_god_module
+    lane: portfolio_research
+    lifecycle: ACTIVE
+    replacement_status: PLANNED_NOT_CUT_OVER
+    migration_wave: G6
+    path: src/ai_trading_system/etf_portfolio/dynamic_v3_system_target.py
+    file_count: 1
+    line_count: 28805
+    byte_count: 1144542
+    source_sha256: 00c0b4b8ccdeb633c64df97631e3ba2cba98a2084636b53fcb7f3513c2993d61
+    top_level_function_count: 802
+    top_level_class_count: 1
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 0
+    test_reference_file_count: 78
+    docs_config_reference_file_count: 8
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: controlled_strategy_batch_god_module
+    lane: research
+    lifecycle: ACTIVE
+    replacement_status: PLANNED_NOT_CUT_OVER
+    migration_wave: G6
+    path: src/ai_trading_system/controlled_strategy_batch.py
+    file_count: 1
+    line_count: 19802
+    byte_count: 836611
+    source_sha256: 338c80eed9078e8886ee023b82b145b1d031e8d6f05a987c6b4dc2e0f352ffee
+    top_level_function_count: 490
+    top_level_class_count: 0
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 2
+    test_reference_file_count: 8
+    docs_config_reference_file_count: 22
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids
+  - surface_id: dynamic_v3_parameter_research_god_module
+    lane: portfolio_research
+    lifecycle: ACTIVE
+    replacement_status: PLANNED_NOT_CUT_OVER
+    migration_wave: G6
+    path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
+    file_count: 1
+    line_count: 19207
+    byte_count: 780020
+    source_sha256: b4eebd5ac469c9432817fb1366eb2302e0159e49bfb23544d0523ca2d03654e3
+    top_level_function_count: 538
+    top_level_class_count: 21
+    cli_command_decorator_count: 0
+    static_import_reachability_file_count: 11
+    test_reference_file_count: 43
+    docs_config_reference_file_count: 16
+    required_removal_gate_count: 12
+    removal_ready: false
+    open_gate_ids: *all_removal_gate_ids

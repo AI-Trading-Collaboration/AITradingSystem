@@ -4,6 +4,18 @@ from ai_trading_system.platform.architecture.dependency_gate import (
     capture_direct_writer_baseline,
     validate_architecture_dependencies,
 )
+from ai_trading_system.platform.architecture.deprecation import (
+    DEFAULT_DEPRECATION_INVENTORY_PATH,
+    DEFAULT_DEPRECATION_POLICY_PATH,
+    DeprecationArchitectureError,
+    DeprecationInventory,
+    DeprecationPolicy,
+    DeprecationSurfaceInventory,
+    DeprecationTargetPolicy,
+    assert_frozen_deprecation_inventory,
+    load_deprecation_policy,
+    scan_deprecation_inventory,
+)
 from ai_trading_system.platform.architecture.devex import (
     DevExArchitectureError,
     ImpactSelection,
@@ -23,6 +35,13 @@ from ai_trading_system.platform.architecture.scaffold import (
 __all__ = [
     "ArchitectureGateReport",
     "ArchitectureViolation",
+    "DEFAULT_DEPRECATION_INVENTORY_PATH",
+    "DEFAULT_DEPRECATION_POLICY_PATH",
+    "DeprecationArchitectureError",
+    "DeprecationInventory",
+    "DeprecationPolicy",
+    "DeprecationSurfaceInventory",
+    "DeprecationTargetPolicy",
     "DevExArchitectureError",
     "ImpactSelection",
     "ScaffoldKind",
@@ -33,6 +52,9 @@ __all__ = [
     "build_test_manifest",
     "capture_direct_writer_baseline",
     "create_scaffold",
+    "assert_frozen_deprecation_inventory",
+    "load_deprecation_policy",
+    "scan_deprecation_inventory",
     "select_impacted_tests",
     "validate_architecture_dependencies",
     "write_generated_architecture_artifact",

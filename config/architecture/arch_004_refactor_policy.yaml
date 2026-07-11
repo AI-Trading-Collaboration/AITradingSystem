@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_g_ready
+status: phase_g_in_progress
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -31,7 +31,7 @@ program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
   current_phase: ARCH-004G
-  current_phase_status: READY
+  current_phase_status: IN_PROGRESS
   next_phase: ARCH-004H
   next_phase_unblocked: false
   predecessor_task_ids:
@@ -595,6 +595,53 @@ phase_f3_execution:
       warnings: 642
       elapsed_seconds: 923.4
       runtime_artifact: outputs/validation_runtime/full_20260711T040642Z/test_runtime_summary.json
+
+phase_g_execution:
+  task_id: ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION
+  status: IN_PROGRESS
+  requirement_path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  stages:
+    G0_inventory_deprecation_policy_and_removal_gate: COMPLETE
+    G1_shared_platform_helper_migration: IN_PROGRESS
+    G2_interfaces_and_etf_cli_migration: NOT_STARTED
+    G3_reporting_native_migration: NOT_STARTED
+    G4_operations_consumer_migration: NOT_STARTED
+    G5_research_wrapper_migration: NOT_STARTED
+    G6_portfolio_decision_sensitive_migration: NOT_STARTED
+    G7_closeout_and_h_handoff: NOT_STARTED
+  lifecycle: [EXPERIMENTAL, ACTIVE, DEPRECATED, FROZEN, REMOVED]
+  permanent_dual_track_allowed: false
+  runtime_removal_allowed_in_g0: false
+  investment_semantics_change_allowed: false
+  historical_artifact_deletion_allowed: false
+  production_effect: none
+  next_phase_unblocked: false
+  g0_evidence:
+    policy_path: config/architecture/arch_004g_deprecation_policy.yaml
+    inventory_path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    module_count: 795
+    test_file_count: 1112
+    priority_target_count: 9
+    active_target_count: 6
+    deprecated_target_count: 3
+    removal_ready_count: 0
+    direct_writer_baseline: 894
+    direct_writer_current: 893
+    dynamic_strategy_wrapper_count: 99
+    matching_research_quality_implementation_count: 48
+    runtime_removal_performed: false
+  g0_validation:
+    focused: {status: PASS, passed: 6}
+    scoped_ruff: PASS
+    scoped_mypy: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 156
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T044540Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 203
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T044719Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true
