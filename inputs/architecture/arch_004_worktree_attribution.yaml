@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4M_COMPLETE_G2_4N_VALIDATING
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4O_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-11
-base_commit: 3fc4397d
+base_commit: c3dbf5de
 production_effect: none
 
 arch_004_owned_paths:
@@ -186,6 +186,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_audit.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_provenance.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
   - src/ai_trading_system/etf_portfolio/dynamic_v2_review.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_rescue.py

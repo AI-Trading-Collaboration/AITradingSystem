@@ -1672,6 +1672,39 @@ phase_g_execution:
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T130854Z/test_runtime_summary.json
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
+    g2_4_fifteenth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_window_audit]
+      callback_count: 4
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py
+      legacy_callback_definitions_remaining: 0
+      as_of_option_semantics: requested_start
+      configured_requested_actual_ranges_distinct: true
+      ai_regime_default_start: 2022-12-01
+      pre_regime_actual_range_inherently_invalid: false
+      research_window_role_automatically_validated: false
+      missing_or_invalid_range_fails_closed: true
+      late_start_or_early_end_blocks_promotion: true
+      report_and_inspect_read_only: true
+      candidate_or_backtest_execution_allowed: false
+      production_effect: none
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31379
+      legacy_root_lines_after: 31277
+      legacy_root_line_reduction: 102
+      legacy_root_top_level_functions_after: 952
+      legacy_root_command_decorators_after: 913
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 48}
+      architecture_fitness:
+        status: PASS
+        passed: 198
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T134512Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

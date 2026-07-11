@@ -918,6 +918,53 @@ def test_window_audit_detects_incomplete_actual_window(tmp_path: Path) -> None:
     )
 
 
+def test_window_audit_keeps_pre_regime_actual_range_distinct_from_configured_start(
+    tmp_path: Path,
+) -> None:
+    artifact_path = tmp_path / "pre_regime_evidence.json"
+    artifact_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_dynamic_v3_real_evaluation_report",
+                "status": "PASS",
+                "market_regime": {"default_backtest_start": "2022-12-01"},
+                "requested_range": {"start": "2021-02-22", "end": "2026-06-04"},
+                "daily_path_summary": {
+                    "first_signal_date": "2021-02-22",
+                    "last_signal_date": "2026-06-04",
+                    "row_count": 1320,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    inspected = inspect_window_artifact(artifact_path=artifact_path)
+    record = inspected["record"]
+
+    assert inspected["status"] == "PASS"
+    assert record["configured_backtest_start"] == "2022-12-01"
+    assert record["requested_start"] == "2021-02-22"
+    assert record["actual_evaluation_start"] == "2021-02-22"
+    assert record["promotion_blocking"] is False
+    assert record["window_mismatch_reasons"] == []
+
+    cli_result = CliRunner().invoke(
+        etf_app,
+        [
+            "dynamic-v3-rescue",
+            "window-audit",
+            "inspect-artifact",
+            "--artifact-path",
+            str(artifact_path),
+        ],
+    )
+    assert cli_result.exit_code == 0
+    assert "configured_backtest_start=2022-12-01" in cli_result.stdout
+    assert "actual_evaluation_start=2021-02-22" in cli_result.stdout
+    assert "promotion_blocking=false" in cli_result.stdout
+
+
 def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
     config_path = _tiny_config_path(tmp_path)
     profile_path = _profile_config_path(tmp_path, config_path)

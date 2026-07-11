@@ -76,6 +76,25 @@ flowchart TD
 
 ## 5. 逐环节输入、输出与计算逻辑
 
+后续每个正式研究 run 都应能按下表回答“为什么运行、消费了什么、计算了什么、产出了什么、为什么停下或继续”。某个 domain 暂无统一 canonical artifact 时，应标记 `LEGACY` 或 `PLANNED`，不能用报告文字假装链路已经统一。
+
+| # | 环节与设计理由 | 必需输入 | 核心计算/判断 | 固定输出 | Fail-closed 条件 | 后续优化入口 |
+|---:|---|---|---|---|---|---|
+| 1 | Intent：先把主观问题改写为可证伪问题 | owner question、现状/负结果、baseline capability | 拆 hypothesis、candidate delta、success/kill criteria | task + requirement/protocol | 问题不可证伪、无 owner/acceptance | failure taxonomy、问题模板 |
+| 2 | Preregistration：防止看结果后挑规则 | hypothesis、window、metric、threshold/cost policy | 冻结 selection checksum、版本与 result visibility | `ExperimentSpec`/protocol/policy refs | 结果已可见、阈值无治理依据 | immutable registry、single-access holdout ledger |
+| 3 | Evaluation context：消除窗口/时点歧义 | regime/window registry、requested/as-of、calendar | 解析 configured/requested/actual/effective/evaluation ranges | `research_evaluation_context.v1` | registry conflict、range 越界、unknown 被默认值填充 | 历史 artifact context migration |
+| 4 | Source/provenance：证明数据从哪里来 | provider、endpoint、params、download event、cache | schema/row/checksum/manifest linkage | cache + download/provenance manifest | source/available time 或 checksum 不可证明 | provider adapter、forward archive |
+| 5 | DQ/PIT：先证明输入可用且当时可见 | cache、universe、as-of、manifest、PIT time | completeness/freshness/duplicate/outlier + `available_time <= decision_time` | DQ report + PIT coverage/blocker | DQ FAIL、future visibility、lineage missing | common DQ service、PIT coverage repair |
+| 6 | Dataset：把 raw 输入变为可复现研究样本 | passed context/DQ、universe、feature/label spec | point-in-time join、missing/coverage classification | universe/feature/label artifact | label leakage、unknown 当 0、coverage 不足 | typed feature/label schema、feature graph |
+| 7 | Signal/candidate：只表达研究假设增量 | baseline capability、features、candidate spec | score/state/confidence 或 typed mutation delta | signal/candidate artifact | baseline 未真实消费、candidate delta 含糊 | capability graph、orthogonal generator |
+| 8 | Allocation/execution：把信号和交易机制分开 | signal、baseline weights、constraints、cost/execution policy | weight mapping、shrinkage、deadband、turnover cap、next-time execution | target path + trade/turnover/cost path | official/production 权重被写入、约束越界 | allocator contract、cost policy unification |
+| 9 | Backtest/metrics：重放真实可执行路径 | PIT dataset、target/trade path、benchmark | equity/return/drawdown/risk/cost metrics | backtest/replay artifact | same-day lookahead、actual range 缺失、DQ lineage断裂 | common engine、metric semantic parity |
+| 10 | Robustness/falsification：验证不是单窗偶然 | primary result、controls、stress、holdout | ablation、walk-forward、LOO regime、bootstrap、cost/lag stress | robustness/holdout evidence | holdout污染、control不对齐、证据不完整 | standardized control library |
+| 11 | Evidence/decision：区分工程成功和投资有效 | 所有上游 artifacts、threshold registry | 多轴状态、promotion blockers、KEEP/INVESTIGATE/RETIRE/OPEN_RESEARCH | evidence ledger + ReviewDecision | 单一PASS覆盖多轴状态、缺证据自动晋升 | canonical evidence/state service |
+| 12 | Report/lifecycle：只读展示并留下下一触发 | canonical artifact/envelope、run ledger、decision | 读模型、分层摘要、freshness/lineage link | Owner Brief/Research Pack/Audit Index | 报告重算指标、缺source link、过期仍声称current | 三层报告、自动freshness与定期复盘 |
+
+“后续优化入口”只产生 observation 或新的 preregistration，不得在同一个已经看到结果的 run 内直接修改参数并重跑。若要优化第 7～10 环节，必须回到第 1～2 环节建立新的 versioned hypothesis；若只是数据、契约或报告修复，则保留原 hypothesis 和 selection checksum，并在 lineage 中记录 repair 原因。
+
 ### 5.1 Research intent 与 preregistration
 
 | 字段 | 当前约束 |
@@ -122,6 +141,19 @@ flowchart TD
 | `requested_sgov_inception_range` | requested 2020-05-26；portfolio actual start 2020-05-28 | 不能计算 2020-05-26/27 组合收益 |
 
 `config/etf_portfolio/backtest.yaml` 的 2022-12-01 是 generic ETF backtest regime default；使用 QQQ/SGOV/TQQQ primary research evidence 时，caller 必须显式解析 research-window policy，不能依赖该默认值。
+
+任何 window-facing artifact 至少应分开披露：
+
+| 字段 | 谁决定 | 含义 | 当前审计能力 |
+|---|---|---|---|
+| `market_regime_id/start` | `config/market_regimes.yaml` | 项目归因口径；`ai_after_chatgpt`从2022-12-01开始 | policy/context校验，不由实际数据起点反推 |
+| `research_window_id/start/role` | research-window registry/policy | 某策略证据为何可使用2021或2020数据 | canonical context可校验；历史artifact覆盖尚不完整 |
+| `configured_backtest_start` | 运行policy/config | runner未显式覆盖时的配置起点 | Dynamic-v3 Window Audit可提取 |
+| `requested_start/end` | 本次run/spec；window-audit CLI的`--as-of/--end` | 本次要求评估的区间；这里`--as-of`是requested start，不是报告观察时点 | Dynamic-v3 Window Audit可提取/覆盖 |
+| `actual_evaluation_start/end` | 实际可计算path | 真正进入绩效计算的区间 | missing、倒序、晚开始、早结束会fail closed或blocking |
+| `effective_training/validation` | model/replay split | 训练和验证实际使用范围 | 字段已预留，但并非所有legacy artifact齐全 |
+
+特别注意：`actual_evaluation_start=2021-02-22`与`configured_backtest_start=2022-12-01`可以同时为真。前者说明artifact实际包含更早证据，后者说明AI-cycle默认配置仍是2022-12-01；只有`research_window_id/role/caveats`才能说明更早数据是QQQ/SGOV/TQQQ primary evidence、warm-up、stress、sensitivity还是regime comparison。当前Dynamic-v3 Window Audit不会自动验证这个evidence role，因此它只能发现range缺失/截短，不能单独证明2021证据的解释合法性。
 
 ### 5.4 数据、provenance 与 DQ/PIT gate
 

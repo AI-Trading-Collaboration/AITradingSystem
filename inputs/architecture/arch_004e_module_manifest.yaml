@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 825
+module_count: 826
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 91e784508ab54390265268ac40e2c3b25d84686054eaed43c0ac233d9328da0a
+  sha256: 81d528b7cc56ed92dac7970436fa07fdde2fb19222841d88ea5164082a8c2385
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 56bc7ab642e295751a6f95cfc8de9ef8e769cedb8902f34f4fae953b79ab2327
+  sha256: f1ec05790aa8eae5b02cdcfb3e2f623734d864a6f9b8afe4845d65a00987a34f
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9709,6 +9709,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_sweep_runtime
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py
   sha256: a105de79df0c37a318421b07a79f33bc3701330caacc4bb6d9dd4ed56b92a4ac
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_window_audit
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py
+  sha256: a668c9cb6e33654d506151e7e358d3545cf301b75b394d786d12cc539caad786
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
