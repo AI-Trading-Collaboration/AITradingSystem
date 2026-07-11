@@ -283,6 +283,30 @@ turnover = sum(abs(period_turnover))
 
 Transaction cost 至少包含 commission、spread、slippage、market impact、sell tax、FX 和适用的 delay term；不同 runner 当前仍有 contract 差异，必须以具体 policy/version 为准，不能跨报告直接比较未对齐的 cost proxy。
 
+#### Weight-path 证据链
+
+Backtest summary 只能说明最终指标，不能证明每天实际持有什么、约束何时生效或 metadata 是否与路径一致。Dynamic-v3 real evaluator 因此把候选路径拆成六类输入证据：
+
+| 文件 | 输入 | 计算/校验 | 输出语义 |
+|---|---|---|---|
+| `daily_weights.csv` | 每个 signal date 的 target weights、candidate id | 日期可解析；`(date,symbol,candidate_id)`唯一；weight为有限数且在`[0,1]`；每个日期权重和在浮点容差内等于1 | 可重放的逐日目标权重，不是 official target weights |
+| `rebalance_events.json` | rebalance decision、turnover、changed symbols | 顶层`events`必须为list；逐event校验date、event type、candidate id和非负turnover | 何时以及为什么发生再平衡 |
+| `constraint_events.json` | constraint diagnostics/reason codes | 校验date、constraint type、reason code、candidate id | 哪类约束介入；当前before/after/limit细节可能缺失 |
+| `rescue_events.json` | drawdown/risk reason codes与risk score | 校验date、trigger、candidate id | rescue触发摘要；当前post-rescue逐资产权重可能缺失 |
+| `turnover_by_rebalance.csv` | trade deltas、turnover、gross buy/sell | 校验schema、date、candidate id和有限非负turnover | 成本和执行审计的逐期换手输入 |
+| `weight_path_metadata.json` | exporter声明的range/count/detail/flags | count、start/end、symbol count、evaluation/candidate id和所有flags必须与上述文件重新计算结果一致 | 只是一份声明和索引，不能单独证明完整度 |
+
+`weight-path validate/report`共用同一只读inspection path，并分别披露`declared_attribution_completeness`与`observed_attribution_completeness`：
+
+```text
+core files/content/parity invalid -> observed INCOMPLETE -> validation FAIL
+core valid + detail=minimal or missing_fields non-empty -> observed PARTIAL -> validation may PASS
+core valid + detail=complete + required detail columns逐行可解析 + missing_fields empty + all file flags consistent -> observed COMPLETE
+declared != observed -> validation FAIL
+```
+
+当前 exporter 的真实结果是`minimal/PARTIAL`：已能解释daily target path、events和turnover，但缺`pre_constraint_weight`、`post_rescue_weight`、`constraint_limit`。后续优化空间不是把metadata改成`COMPLETE`，而是让真实计算链输出这些中间状态、增加constraint/rescue前后权重守恒测试、用独立replay核对return/cost，并在真实20-candidate run中验证不同参数的完整daily path差异。任何优化都必须保持evaluation目录唯一、source artifact不可变和no-promotion/no-production边界。
+
 ### 5.8 Parameter injection audit
 
 参数进入effective policy不等于已经影响回测结果，而“不同候选总体上存在hash差异”也不能证明每个参数都有效。Dynamic-v3 Injection Audit因此采用one-factor-at-a-time matched-pair设计：

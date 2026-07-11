@@ -256,6 +256,91 @@ def test_injection_audit_report_downgrades_legacy_summary_without_traceback(
     assert report["limitations"] == ["legacy_parameter_effect_summary_missing"]
 
 
+def test_weight_path_validation_derives_partial_completeness_from_files(tmp_path: Path) -> None:
+    evaluation_id = "evaluation_partial"
+    artifact_dir = _write_weight_path_fixture(tmp_path, evaluation_id=evaluation_id)
+
+    validation = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=tmp_path)
+    report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=tmp_path)
+
+    assert validation["status"] == "PASS"
+    assert validation["declared_attribution_completeness"] == "PARTIAL"
+    assert validation["observed_attribution_completeness"] == "PARTIAL"
+    assert report["status"] == "PARTIAL"
+    assert report["failed_check_count"] == 0
+    assert Path(report["daily_weights_path"]) == artifact_dir / "daily_weights.csv"
+
+
+def test_weight_path_validation_rejects_forged_complete_metadata(tmp_path: Path) -> None:
+    evaluation_id = "evaluation_forged_complete"
+    artifact_dir = _write_weight_path_fixture(tmp_path, evaluation_id=evaluation_id)
+    metadata_path = artifact_dir / "weight_path_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["attribution_completeness"] = "COMPLETE"
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    validation = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=tmp_path)
+    report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=tmp_path)
+
+    assert validation["status"] == "FAIL"
+    assert validation["observed_attribution_completeness"] == "PARTIAL"
+    assert report["status"] == "PARTIAL"
+    assert "declared_completeness_matches_observed" in {
+        check["check_id"] for check in validation["checks"] if not check["passed"]
+    }
+
+
+def test_weight_path_validation_rejects_forged_complete_detail_level(tmp_path: Path) -> None:
+    evaluation_id = "evaluation_forged_complete_detail"
+    artifact_dir = _write_weight_path_fixture(tmp_path, evaluation_id=evaluation_id)
+    metadata_path = artifact_dir / "weight_path_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["attribution_completeness"] = "COMPLETE"
+    metadata["weight_path_detail_level"] = "complete"
+    metadata["missing_fields"] = []
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    validation = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=tmp_path)
+
+    assert validation["status"] == "FAIL"
+    assert validation["observed_attribution_completeness"] == "INCOMPLETE"
+    assert "complete_detail_fields_supported" in {
+        check["check_id"] for check in validation["checks"] if not check["passed"]
+    }
+
+
+def test_weight_path_validation_rejects_invalid_weight_content(tmp_path: Path) -> None:
+    evaluation_id = "evaluation_invalid_weights"
+    artifact_dir = _write_weight_path_fixture(tmp_path, evaluation_id=evaluation_id)
+    daily_path = artifact_dir / "daily_weights.csv"
+    daily = pd.read_csv(daily_path)
+    daily.loc[0, "weight"] = 0.9
+    daily.to_csv(daily_path, index=False)
+
+    validation = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=tmp_path)
+    report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=tmp_path)
+
+    assert validation["status"] == "FAIL"
+    assert validation["observed_attribution_completeness"] == "INCOMPLETE"
+    assert report["status"] == "INCOMPLETE"
+    assert "daily_weights_sum_to_one_by_date" in {
+        check["check_id"] for check in validation["checks"] if not check["passed"]
+    }
+
+
+def test_weight_path_lookup_fails_closed_on_duplicate_evaluation_id(tmp_path: Path) -> None:
+    evaluation_id = "evaluation_duplicate"
+    _write_weight_path_fixture(tmp_path / "first", evaluation_id=evaluation_id)
+    _write_weight_path_fixture(tmp_path / "second", evaluation_id=evaluation_id)
+
+    validation = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=tmp_path)
+
+    assert validation["status"] == "FAIL"
+    assert validation["observed_attribution_completeness"] == "INCOMPLETE"
+    with pytest.raises(DynamicV3ParameterResearchError, match="ambiguous"):
+        weight_path_report_payload(evaluation_id=evaluation_id, search_root=tmp_path)
+
+
 def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
     config_path = _tiny_config_path(tmp_path)
     output_dir = tmp_path / "sweeps"
@@ -784,7 +869,10 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     )
     assert weight_validation["status"] == "PASS"
     assert weight_validation["attribution_completeness"] == "PARTIAL"
+    assert weight_validation["declared_attribution_completeness"] == "PARTIAL"
     weight_report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=output_dir)
+    assert weight_report["status"] == "PARTIAL"
+    assert weight_report["declared_attribution_completeness"] == "PARTIAL"
     assert Path(weight_report["daily_weights_path"]).exists()
     assert Path(weight_report["weight_path_metadata_path"]).exists()
     weight_metadata = json.loads(
@@ -2145,6 +2233,65 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["forward_next_due_scan_date"] == "2026-06-21"
     assert summary["forward_outcome_decision"] == str(decision_path)
     assert summary["production_candidate_generated"] is False
+
+
+def _write_weight_path_fixture(root: Path, *, evaluation_id: str) -> Path:
+    candidate_id = "candidate_fixture"
+    artifact_dir = root / "evaluations" / evaluation_id
+    artifact_dir.mkdir(parents=True)
+    pd.DataFrame(
+        [
+            {
+                "date": "2023-01-03",
+                "symbol": "QQQ",
+                "weight": 0.6,
+                "candidate_id": candidate_id,
+            },
+            {
+                "date": "2023-01-03",
+                "symbol": "SMH",
+                "weight": 0.4,
+                "candidate_id": candidate_id,
+            },
+        ]
+    ).to_csv(artifact_dir / "daily_weights.csv", index=False)
+    for name in ("rebalance_events", "constraint_events", "rescue_events"):
+        (artifact_dir / f"{name}.json").write_text(
+            json.dumps({"events": []}),
+            encoding="utf-8",
+        )
+    pd.DataFrame(
+        [
+            {
+                "date": "2023-01-03",
+                "candidate_id": candidate_id,
+                "turnover": 0.2,
+            }
+        ]
+    ).to_csv(artifact_dir / "turnover_by_rebalance.csv", index=False)
+    metadata = {
+        "schema_version": 1,
+        "report_type": "etf_dynamic_v3_weight_path_metadata",
+        "candidate_id": candidate_id,
+        "evaluation_id": evaluation_id,
+        "weight_path_start": "2023-01-03",
+        "weight_path_end": "2023-01-03",
+        "daily_weight_count": 2,
+        "symbol_count": 2,
+        "has_daily_weights": True,
+        "has_rebalance_events": True,
+        "has_constraint_events": True,
+        "has_rescue_events": True,
+        "has_turnover_by_rebalance": True,
+        "weight_path_detail_level": "minimal",
+        "attribution_completeness": "PARTIAL",
+        "missing_fields": ["pre_constraint_weight"],
+    }
+    (artifact_dir / "weight_path_metadata.json").write_text(
+        json.dumps(metadata),
+        encoding="utf-8",
+    )
+    return artifact_dir
 
 
 def _tiny_config_path(tmp_path: Path) -> Path:

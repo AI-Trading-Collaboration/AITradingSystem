@@ -188,6 +188,9 @@ WINDOW_PROMOTION_BLOCKING_STATUSES = {
 WEIGHT_PATH_COMPLETE = "COMPLETE"
 WEIGHT_PATH_PARTIAL = "PARTIAL"
 WEIGHT_PATH_INCOMPLETE = "INCOMPLETE"
+# Pure floating-point validation tolerances; these do not change investment policy.
+WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE = 1e-9
+WEIGHT_PATH_WEIGHT_SUM_TOLERANCE = 1e-6
 DATA_PROVENANCE_RECONSTRUCTED = "RECONSTRUCTED_MANIFEST"
 
 # TRADING-114 pilot evidence score policy. These weights and bands are
@@ -8008,18 +8011,35 @@ def weight_path_report_payload(
     evaluation_id: str,
     search_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
 ) -> dict[str, Any]:
-    weight_dir = _find_weight_path_dir(evaluation_id, search_root)
-    if weight_dir is None:
-        raise DynamicV3ParameterResearchError(f"weight path artifact not found: {evaluation_id}")
-    metadata = _read_json(weight_dir / "weight_path_metadata.json")
+    inspection = _inspect_weight_path_evidence(evaluation_id, search_root)
+    weight_dir = inspection["weight_path_dir"]
+    if inspection["matching_directory_count"] != 1:
+        if inspection["matching_directory_count"] == 0:
+            raise DynamicV3ParameterResearchError(
+                f"weight path artifact not found: {evaluation_id}"
+            )
+        raise DynamicV3ParameterResearchError(
+            "weight path artifact is ambiguous: "
+            f"{evaluation_id} matched {inspection['matching_directory_count']} directories"
+        )
+    metadata = inspection["metadata"]
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weight_path_report_view",
-        "status": metadata.get("attribution_completeness", WEIGHT_PATH_INCOMPLETE),
+        "status": inspection["observed_attribution_completeness"],
+        "declared_attribution_completeness": inspection[
+            "declared_attribution_completeness"
+        ],
+        "observed_attribution_completeness": inspection[
+            "observed_attribution_completeness"
+        ],
         "evaluation_id": evaluation_id,
         "candidate_id": metadata.get("candidate_id"),
-        "daily_weights_path": str(weight_dir / "daily_weights.csv"),
-        "weight_path_metadata_path": str(weight_dir / "weight_path_metadata.json"),
+        "daily_weights_path": str(Path(weight_dir) / "daily_weights.csv"),
+        "weight_path_metadata_path": str(Path(weight_dir) / "weight_path_metadata.json"),
+        "checks": inspection["checks"],
+        "failed_check_count": inspection["failed_check_count"],
+        "limitations": inspection["limitations"],
         "metadata": metadata,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -8031,62 +8051,32 @@ def validate_weight_path_artifact(
     evaluation_id: str,
     search_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
 ) -> dict[str, Any]:
-    weight_dir = _find_weight_path_dir(evaluation_id, search_root)
-    checks = [
-        _check("weight_path_dir_found", weight_dir is not None, evaluation_id),
-    ]
-    metadata: dict[str, Any] = {}
-    if weight_dir is not None:
-        required = [
-            "daily_weights.csv",
-            "rebalance_events.json",
-            "constraint_events.json",
-            "rescue_events.json",
-            "turnover_by_rebalance.csv",
-            "weight_path_metadata.json",
-        ]
-        checks.extend(
-            _check(f"artifact_exists:{name}", (weight_dir / name).exists(), name)
-            for name in required
-        )
-        metadata = _read_optional_json(weight_dir / "weight_path_metadata.json") or {}
-        daily_columns = _csv_columns(weight_dir / "daily_weights.csv")
-        required_columns = {"date", "symbol", "weight", "candidate_id"}
-        checks.append(
-            _check(
-                "daily_weights_required_columns",
-                required_columns <= set(daily_columns),
-                ",".join(daily_columns),
-            )
-        )
-        checks.append(
-            _check(
-                "attribution_completeness_explicit",
-                _text(metadata.get("attribution_completeness"))
-                in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
-                _text(metadata.get("attribution_completeness")),
-            )
-        )
-        checks.append(
-            _check(
-                "daily_weight_count_positive",
-                int(metadata.get("daily_weight_count") or 0) > 0,
-                str(metadata.get("daily_weight_count")),
-            )
-        )
-    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    inspection = _inspect_weight_path_evidence(evaluation_id, search_root)
+    metadata = inspection["metadata"]
+    checks = inspection["checks"]
+    status = (
+        "PASS"
+        if inspection["observed_attribution_completeness"] != WEIGHT_PATH_INCOMPLETE
+        and all(check["passed"] for check in checks)
+        else "FAIL"
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weight_path_validation",
         "evaluation_id": evaluation_id,
         "candidate_id": metadata.get("candidate_id", ""),
         "status": status,
-        "attribution_completeness": metadata.get(
-            "attribution_completeness", WEIGHT_PATH_INCOMPLETE
-        ),
+        "attribution_completeness": inspection["observed_attribution_completeness"],
+        "declared_attribution_completeness": inspection[
+            "declared_attribution_completeness"
+        ],
+        "observed_attribution_completeness": inspection[
+            "observed_attribution_completeness"
+        ],
         "missing_fields": metadata.get("missing_fields", []),
+        "limitations": inspection["limitations"],
         "checks": checks,
-        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "failed_check_count": inspection["failed_check_count"],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -17532,15 +17522,367 @@ def _missing_weight_path_metadata(*, candidate_id: str, evaluation_id: str) -> d
     }
 
 
-def _find_weight_path_dir(evaluation_id: str, search_root: Path) -> Path | None:
-    for path in search_root.glob("**/weight_path_metadata.json"):
-        payload = _read_optional_json(path) or {}
+def _matching_weight_path_dirs(evaluation_id: str, search_root: Path) -> list[Path]:
+    matches: list[Path] = []
+    for path in sorted(search_root.glob("**/weight_path_metadata.json"), key=str):
+        payload = _mapping(_read_optional_json(path))
         if (
             _text(payload.get("evaluation_id")) == evaluation_id
             or path.parent.name == evaluation_id
         ):
-            return path.parent
-    return None
+            matches.append(path.parent)
+    return matches
+
+
+def _find_weight_path_dir(evaluation_id: str, search_root: Path) -> Path | None:
+    matches = _matching_weight_path_dirs(evaluation_id, search_root)
+    return matches[0] if len(matches) == 1 else None
+
+
+def _inspect_weight_path_evidence(evaluation_id: str, search_root: Path) -> dict[str, Any]:
+    matches = _matching_weight_path_dirs(evaluation_id, search_root)
+    checks = [
+        _check("weight_path_dir_found", bool(matches), evaluation_id),
+        _check("weight_path_dir_unique", len(matches) == 1, str(len(matches))),
+    ]
+    empty_result = {
+        "weight_path_dir": "",
+        "matching_directory_count": len(matches),
+        "metadata": {},
+        "declared_attribution_completeness": WEIGHT_PATH_INCOMPLETE,
+        "observed_attribution_completeness": WEIGHT_PATH_INCOMPLETE,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "limitations": [
+            "weight_path_artifact_not_found" if not matches else "ambiguous_weight_path_artifacts"
+        ],
+    }
+    if len(matches) != 1:
+        return empty_result
+
+    weight_dir = matches[0]
+    required = [
+        "daily_weights.csv",
+        "rebalance_events.json",
+        "constraint_events.json",
+        "rescue_events.json",
+        "turnover_by_rebalance.csv",
+        "weight_path_metadata.json",
+    ]
+    checks.extend(
+        _check(f"artifact_exists:{name}", (weight_dir / name).is_file(), name)
+        for name in required
+    )
+    metadata = _mapping(_read_optional_json(weight_dir / "weight_path_metadata.json"))
+    checks.extend(
+        [
+            _check("metadata_is_object", bool(metadata), "weight_path_metadata.json"),
+            _check(
+                "metadata_evaluation_id_matches_request",
+                _text(metadata.get("evaluation_id")) == evaluation_id,
+                _text(metadata.get("evaluation_id")),
+            ),
+            _check(
+                "metadata_candidate_id_present",
+                bool(_text(metadata.get("candidate_id"))),
+                _text(metadata.get("candidate_id")),
+            ),
+        ]
+    )
+    candidate_id = _text(metadata.get("candidate_id"))
+
+    daily_path = weight_dir / "daily_weights.csv"
+    daily = _read_csv_as_text(daily_path)
+    daily_required = {"date", "symbol", "weight", "candidate_id"}
+    daily_columns_valid = daily is not None and daily_required <= set(daily.columns)
+    daily_nonempty = daily is not None and not daily.empty
+    checks.extend(
+        [
+            _check(
+                "daily_weights_readable",
+                daily is not None,
+                str(daily_path),
+            ),
+            _check(
+                "daily_weights_required_columns",
+                daily_columns_valid,
+                "" if daily is None else ",".join(daily.columns),
+            ),
+            _check(
+                "daily_weights_nonempty",
+                daily_nonempty,
+                "0" if daily is None else str(len(daily)),
+            ),
+        ]
+    )
+    daily_content_valid = False
+    daily_detail_fields_supported = False
+    if daily_columns_valid and daily_nonempty and daily is not None:
+        parsed_dates = pd.to_datetime(daily["date"], errors="coerce")
+        weights = pd.to_numeric(daily["weight"], errors="coerce")
+        weights_finite = weights.notna() & weights.abs().ne(float("inf"))
+        weight_bounds_valid = bool(
+            weights_finite.all()
+            and (weights >= -WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).all()
+            and (weights <= 1.0 + WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).all()
+        )
+        duplicate_count = int(daily.duplicated(["date", "symbol", "candidate_id"]).sum())
+        candidate_ids_match = bool(candidate_id) and bool(
+            daily["candidate_id"].eq(candidate_id).all()
+        )
+        sums_valid = False
+        if bool(weights_finite.all()):
+            daily_with_numbers = daily.assign(_weight=weights)
+            sums = daily_with_numbers.groupby("date", dropna=False)["_weight"].sum()
+            sums_valid = bool((sums.sub(1.0).abs() <= WEIGHT_PATH_WEIGHT_SUM_TOLERANCE).all())
+        valid_dates = bool(parsed_dates.notna().all())
+        actual_start = parsed_dates.min().date().isoformat() if valid_dates else ""
+        actual_end = parsed_dates.max().date().isoformat() if valid_dates else ""
+        actual_symbol_count = int(daily["symbol"].nunique())
+        checks.extend(
+            [
+                _check("daily_weights_dates_valid", valid_dates, actual_start or "invalid date"),
+                _check("daily_weights_numeric_finite", bool(weights_finite.all()), "weight"),
+                _check("daily_weights_within_bounds", weight_bounds_valid, "[0,1]"),
+                _check("daily_weights_unique_keys", duplicate_count == 0, str(duplicate_count)),
+                _check("daily_weights_candidate_ids_match", candidate_ids_match, candidate_id),
+                _check("daily_weights_sum_to_one_by_date", sums_valid, "daily sum ~= 1"),
+                _check(
+                    "metadata_daily_weight_count_matches",
+                    _safe_int(metadata.get("daily_weight_count")) == len(daily),
+                    f"declared={metadata.get('daily_weight_count')};actual={len(daily)}",
+                ),
+                _check(
+                    "metadata_weight_path_start_matches",
+                    _text(metadata.get("weight_path_start")) == actual_start,
+                    f"declared={metadata.get('weight_path_start')};actual={actual_start}",
+                ),
+                _check(
+                    "metadata_weight_path_end_matches",
+                    _text(metadata.get("weight_path_end")) == actual_end,
+                    f"declared={metadata.get('weight_path_end')};actual={actual_end}",
+                ),
+                _check(
+                    "metadata_symbol_count_matches",
+                    _safe_int(metadata.get("symbol_count")) == actual_symbol_count,
+                    f"declared={metadata.get('symbol_count')};actual={actual_symbol_count}",
+                ),
+            ]
+        )
+        daily_content_valid = all(check["passed"] for check in checks[-10:])
+        detail_columns = {
+            "target_weight",
+            "pre_constraint_weight",
+            "post_constraint_weight",
+            "post_rescue_weight",
+        }
+        if detail_columns <= set(daily.columns):
+            detail_values = daily[list(sorted(detail_columns))].apply(
+                pd.to_numeric,
+                errors="coerce",
+            )
+            daily_detail_fields_supported = bool(
+                detail_values.notna().all().all()
+                and detail_values.abs().ne(float("inf")).all().all()
+                and (detail_values >= -WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).all().all()
+                and (detail_values <= 1.0 + WEIGHT_PATH_WEIGHT_BOUND_TOLERANCE).all().all()
+            )
+
+    event_specs = {
+        "rebalance_events": ({"date", "event_type", "turnover", "candidate_id"}, "turnover"),
+        "constraint_events": (
+            {"date", "constraint_type", "reason_code", "candidate_id"},
+            None,
+        ),
+        "rescue_events": ({"date", "rescue_trigger", "candidate_id"}, None),
+    }
+    event_artifact_valid: dict[str, bool] = {}
+    for stem, (required_fields, nonnegative_field) in event_specs.items():
+        valid, event_checks = _inspect_weight_path_event_file(
+            weight_dir / f"{stem}.json",
+            stem=stem,
+            required_fields=required_fields,
+            candidate_id=candidate_id,
+            nonnegative_field=nonnegative_field,
+        )
+        event_artifact_valid[stem] = valid
+        checks.extend(event_checks)
+
+    turnover_path = weight_dir / "turnover_by_rebalance.csv"
+    turnover = _read_csv_as_text(turnover_path)
+    turnover_required = {"date", "candidate_id", "turnover"}
+    turnover_columns_valid = turnover is not None and turnover_required <= set(turnover.columns)
+    turnover_nonempty = turnover is not None and not turnover.empty
+    checks.extend(
+        [
+            _check("turnover_readable", turnover is not None, str(turnover_path)),
+            _check(
+                "turnover_required_columns",
+                turnover_columns_valid,
+                "" if turnover is None else ",".join(turnover.columns),
+            ),
+            _check(
+                "turnover_nonempty",
+                turnover_nonempty,
+                "0" if turnover is None else str(len(turnover)),
+            ),
+        ]
+    )
+    turnover_valid = False
+    if turnover_columns_valid and turnover_nonempty and turnover is not None:
+        turnover_values = pd.to_numeric(turnover["turnover"], errors="coerce")
+        turnover_values_valid = bool(
+            turnover_values.notna().all()
+            and turnover_values.abs().ne(float("inf")).all()
+            and (turnover_values >= 0).all()
+        )
+        turnover_dates_valid = bool(
+            pd.to_datetime(turnover["date"], errors="coerce").notna().all()
+        )
+        turnover_candidate_ids_match = bool(candidate_id) and bool(
+            turnover["candidate_id"].eq(candidate_id).all()
+        )
+        checks.extend(
+            [
+                _check("turnover_dates_valid", turnover_dates_valid, "date"),
+                _check("turnover_nonnegative_finite", turnover_values_valid, "turnover"),
+                _check(
+                    "turnover_candidate_ids_match",
+                    turnover_candidate_ids_match,
+                    candidate_id,
+                ),
+            ]
+        )
+        turnover_valid = all(check["passed"] for check in checks[-3:])
+
+    artifact_flags = {
+        "has_daily_weights": daily_content_valid,
+        "has_rebalance_events": event_artifact_valid.get("rebalance_events", False),
+        "has_constraint_events": event_artifact_valid.get("constraint_events", False),
+        "has_rescue_events": event_artifact_valid.get("rescue_events", False),
+        "has_turnover_by_rebalance": turnover_valid,
+    }
+    for field, observed in artifact_flags.items():
+        checks.append(
+            _check(
+                f"metadata_{field}_matches",
+                metadata.get(field) is observed,
+                f"declared={metadata.get(field)};observed={observed}",
+            )
+        )
+
+    declared = _text(metadata.get("attribution_completeness"), WEIGHT_PATH_INCOMPLETE)
+    detail_level = _text(metadata.get("weight_path_detail_level"))
+    checks.append(
+        _check(
+            "attribution_completeness_explicit",
+            declared in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
+            declared,
+        )
+    )
+    checks.append(
+        _check(
+            "complete_detail_fields_supported",
+            detail_level != "complete" or daily_detail_fields_supported,
+            detail_level or "missing",
+        )
+    )
+    core_valid = all(check["passed"] for check in checks)
+    missing_fields = _texts(metadata.get("missing_fields"))
+    if not core_valid:
+        observed = WEIGHT_PATH_INCOMPLETE
+    elif detail_level == "complete" and not missing_fields and all(artifact_flags.values()):
+        observed = WEIGHT_PATH_COMPLETE
+    else:
+        observed = WEIGHT_PATH_PARTIAL
+    checks.append(
+        _check(
+            "declared_completeness_matches_observed",
+            declared == observed,
+            f"declared={declared};observed={observed}",
+        )
+    )
+    failed_ids = [check["check_id"] for check in checks if not check["passed"]]
+    limitations = [f"missing_field:{field}" for field in missing_fields]
+    if detail_level != "complete":
+        limitations.append(f"weight_path_detail_level:{detail_level or 'missing'}")
+    limitations.extend(f"failed_check:{check_id}" for check_id in failed_ids)
+    return {
+        "weight_path_dir": str(weight_dir),
+        "matching_directory_count": len(matches),
+        "metadata": metadata,
+        "declared_attribution_completeness": declared,
+        "observed_attribution_completeness": observed,
+        "checks": checks,
+        "failed_check_count": len(failed_ids),
+        "limitations": limitations,
+    }
+
+
+def _read_csv_as_text(path: Path) -> pd.DataFrame | None:
+    if not path.is_file():
+        return None
+    try:
+        return pd.read_csv(path, dtype=str, keep_default_na=False)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _inspect_weight_path_event_file(
+    path: Path,
+    *,
+    stem: str,
+    required_fields: set[str],
+    candidate_id: str,
+    nonnegative_field: str | None,
+) -> tuple[bool, list[dict[str, Any]]]:
+    payload = _read_optional_json(path)
+    events_value = payload.get("events") if isinstance(payload, Mapping) else None
+    schema_valid = isinstance(events_value, list)
+    events = _records(events_value)
+    rows_are_objects = schema_valid and len(events) == len(events_value)
+    required_fields_present = rows_are_objects and all(
+        required_fields <= set(event) for event in events
+    )
+    dates_valid = required_fields_present and all(
+        _date_from_any(event.get("date")) is not None for event in events
+    )
+    candidate_ids_match = required_fields_present and all(
+        _text(event.get("candidate_id")) == candidate_id for event in events
+    )
+    nonnegative_valid = True
+    if nonnegative_field is not None and required_fields_present:
+        values = pd.to_numeric(
+            pd.Series([event.get(nonnegative_field) for event in events], dtype="object"),
+            errors="coerce",
+        )
+        nonnegative_valid = bool(
+            values.notna().all()
+            and values.abs().ne(float("inf")).all()
+            and (values >= 0).all()
+        )
+    checks = [
+        _check(f"{stem}_schema_valid", schema_valid and rows_are_objects, str(path)),
+        _check(
+            f"{stem}_required_fields",
+            required_fields_present,
+            ",".join(sorted(required_fields)),
+        ),
+        _check(f"{stem}_dates_valid", dates_valid, "date"),
+        _check(f"{stem}_candidate_ids_match", candidate_ids_match, candidate_id),
+    ]
+    if nonnegative_field is not None:
+        checks.append(
+            _check(f"{stem}_{nonnegative_field}_nonnegative", nonnegative_valid, nonnegative_field)
+        )
+    return all(check["passed"] for check in checks), checks
+
+
+def _safe_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _backtest_window_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:

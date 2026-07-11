@@ -41,6 +41,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sweep_runtime as dynamic_v3_sweep_runtime_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_weight_path as dynamic_v3_weight_path_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_window_audit as dynamic_v3_window_audit_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as operations_commands
@@ -76,6 +79,7 @@ __all__ = [
     "dynamic_v3_data_audit_commands",
     "dynamic_v3_data_provenance_commands",
     "dynamic_v3_window_audit_commands",
+    "dynamic_v3_weight_path_commands",
     "etf_app",
     "operations_commands",
     "parameter_review_commands",

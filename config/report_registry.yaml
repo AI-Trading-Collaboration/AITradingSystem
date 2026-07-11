@@ -1601,14 +1601,17 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/weight_path_metadata.json
       - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/daily_weights.csv
-      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/rebalance_events.csv
-      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/constraint_events.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/rebalance_events.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/constraint_events.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/rescue_events.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/turnover_by_rebalance.csv
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-112 exports per-candidate daily weights, rebalance events,
       constraint events, rescue events, and turnover path metadata from the real
       evaluator so attribution and promotion review do not rely only on summary
-      metrics.
+      metrics. Report and validation re-derive observed completeness from file
+      content; metadata declarations alone are not evidence.
     owner_action: review_weight_path_completeness_before_candidate_attribution_or_promotion
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true

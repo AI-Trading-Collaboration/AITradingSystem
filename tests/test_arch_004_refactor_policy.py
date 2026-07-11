@@ -1875,7 +1875,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4p["migration"]["direct_writer_calls_after"] == 858
     assert phase_g2_4p["validation"]["focused"] == {"status": "PASS", "passed": 53}
     assert phase_g2_4p["validation"]["architecture_fitness"]["passed"] == 199
+    superseded_g2_4p = set(phase_g2_4p["superseded_source_paths"])
     for source in phase_g2_4p["sources"]:
+        if source["path"] in superseded_g2_4p:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4q = baseline["phase_g2_4q_etf_cli_dynamic_v3_weight_path"]
+    assert phase_g2_4q["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    assert phase_g2_4q["migration"]["callback_count"] == 2
+    assert phase_g2_4q["migration"]["shared_read_only_content_inspection"] is True
+    assert phase_g2_4q["migration"]["metadata_declaration_alone_proves_completeness"] is False
+    assert phase_g2_4q["migration"]["unique_evaluation_directory_required"] is True
+    assert phase_g2_4q["migration"]["daily_weight_sum_validation_required"] is True
+    assert phase_g2_4q["migration"]["metadata_content_parity_required"] is True
+    assert phase_g2_4q["migration"]["event_and_turnover_content_validation_required"] is True
+    assert phase_g2_4q["migration"]["invalid_core_observed_status"] == "INCOMPLETE"
+    assert phase_g2_4q["migration"]["valid_minimal_observed_status"] == "PARTIAL"
+    assert phase_g2_4q["migration"]["complete_requires_no_missing_fields"] is True
+    assert phase_g2_4q["migration"]["complete_requires_parseable_detail_fields"] is True
+    assert phase_g2_4q["migration"]["declared_observed_mismatch_fails_validation"] is True
+    assert phase_g2_4q["migration"]["source_artifact_mutation_allowed"] is False
+    assert phase_g2_4q["migration"]["automatic_candidate_promotion_allowed"] is False
+    assert phase_g2_4q["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4q["validation"]["focused"] == {"status": "PASS", "passed": 59}
+    assert phase_g2_4q["validation"]["architecture_fitness"]["passed"] == 200
+    for source in phase_g2_4q["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
