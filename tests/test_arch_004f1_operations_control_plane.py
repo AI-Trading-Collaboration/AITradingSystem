@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from ai_trading_system.contracts.operations import (
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.workflow import (
     EntrypointRef,
+    RunLedger,
     WorkflowCadence,
     WorkflowSpec,
     WorkflowStepSpec,
@@ -29,11 +31,14 @@ from ai_trading_system.legacy.scheduled_tasks_adapter import (
     LegacyScheduledWorkflowBinding,
     assess_daily_shadow_parity,
     assess_scheduled_cadence,
+    build_daily_schedule_workflow_spec,
 )
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
     daily_ops_shadow_path_for_plan,
     render_daily_ops_plan,
+    run_daily_ops_plan,
+    run_daily_ops_plan_controlled,
     write_daily_ops_plan,
     write_daily_ops_shadow_plan,
 )
@@ -65,7 +70,9 @@ def _weekly_policy() -> OperationsDuePolicy:
     )
 
 
-def _runtime_policy(*, max_run_attempts: int = 2) -> OperationsRuntimeControlPolicy:
+def _runtime_policy(
+    *, max_run_attempts: int = 2, daily_cut_in: bool = False
+) -> OperationsRuntimeControlPolicy:
     return OperationsRuntimeControlPolicy(
         policy_id="test_runtime_control_v1",
         owner="test",
@@ -73,9 +80,49 @@ def _runtime_policy(*, max_run_attempts: int = 2) -> OperationsRuntimeControlPol
         lock_ttl_seconds=60,
         max_run_attempts=max_run_attempts,
         resume_idempotent_steps=True,
-        legacy_daily_executor_cut_in_enabled=False,
+        legacy_daily_executor_cut_in_enabled=daily_cut_in,
         non_daily_dispatch_enabled=False,
     )
+
+
+def _daily_env() -> dict[str, str]:
+    return {
+        "FMP_API_KEY": "present",
+        "MARKETSTACK_API_KEY": "present",
+        "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        "OPENAI_API_KEY": "",
+    }
+
+
+def _write_daily_pass_status_artifacts(plan) -> None:
+    indexes = {
+        "official_policy_sources": (2,),
+        "validate_data": (0,),
+        "pit_snapshots_fetch_fmp_forward": (2,),
+        "pit_snapshots_build_manifest": (1,),
+        "pit_snapshots_validate": (0,),
+        "sec_metrics": (0, 2),
+        "sec_metrics_validation": (0,),
+        "valuation_snapshots": (2, 3),
+        "score_daily": (2, 4),
+        "pipeline_health": (0,),
+        "secret_hygiene": (0,),
+    }
+    for step in plan.steps:
+        for index in indexes.get(step.step_id, ()):
+            path = step.produced_paths[index]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# Test\n\n- 状态：PASS\n", encoding="utf-8")
+
+
+def _execution_state_path(state_root: Path) -> Path:
+    return next(
+        path for path in state_root.glob("*.json") if not path.name.endswith(".run_ledger.json")
+    )
+
+
+def _execution_ledger_path(state_root: Path) -> Path:
+    return next(state_root.glob("*.run_ledger.json"))
 
 
 def _runtime_spec(*, first_idempotent: bool = True, second_max_attempts: int = 1) -> WorkflowSpec:
@@ -516,17 +563,17 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"
-    assert payload["runtime_control_policy"]["legacy_daily_executor_cut_in_enabled"] is False
+    assert payload["runtime_control_policy"]["legacy_daily_executor_cut_in_enabled"] is True
     assert payload["runtime_control_policy"]["non_daily_dispatch_enabled"] is False
 
 
-def test_runtime_control_policy_is_governed_and_keeps_cut_in_disabled() -> None:
+def test_runtime_control_policy_is_governed_and_enables_daily_only_cut_in() -> None:
     policy = load_operations_runtime_control_policy()
 
     assert policy.policy_id == "operations_runtime_control_v1"
     assert policy.max_run_attempts == 2
     assert policy.resume_idempotent_steps is True
-    assert policy.legacy_daily_executor_cut_in_enabled is False
+    assert policy.legacy_daily_executor_cut_in_enabled is True
     assert policy.non_daily_dispatch_enabled is False
 
 
@@ -680,9 +727,15 @@ def test_runtime_control_state_writes_are_atomic_and_owner_release_is_enforced(
     now = datetime(2026, 7, 11, tzinfo=UTC)
     acquired = control.acquire(spec=spec, as_of=date(2026, 7, 11), run_id="run_1", now=now)
     assert acquired.lease is not None
-    state_files = list((tmp_path / "states").glob("*.json"))
-    assert len(state_files) == 1
-    assert json.loads(state_files[0].read_text(encoding="utf-8"))["status"] == "RUNNING"
+    state_path = _execution_state_path(tmp_path / "states")
+    ledger_path = _execution_ledger_path(tmp_path / "states")
+    assert json.loads(state_path.read_text(encoding="utf-8"))["status"] == "RUNNING"
+    assert (
+        RunLedger.from_dict(json.loads(ledger_path.read_text(encoding="utf-8")))
+        .entry("first")
+        .status
+        is CanonicalStatus.DUE
+    )
     assert list(tmp_path.rglob("*.tmp")) == []
 
     owner_path = next((tmp_path / "locks").glob("*/owner.json"))
@@ -691,3 +744,301 @@ def test_runtime_control_state_writes_are_atomic_and_owner_release_is_enforced(
     owner_path.write_text(json.dumps(owner_payload), encoding="utf-8")
     with pytest.raises(OperationsRuntimeControlError, match="LOCK_OWNER_MISMATCH"):
         acquired.lease.release()
+
+
+@pytest.mark.parametrize("as_of", [date(2026, 5, 6), date(2026, 5, 10)])
+def test_controlled_daily_executor_writes_terminal_state_and_blocks_duplicate(
+    tmp_path: Path, as_of: date
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    calls: list[tuple[str, ...]] = []
+
+    def runner(command, **kwargs):
+        calls.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="controlled_1",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=tmp_path / "control",
+    )
+    first_call_count = len(calls)
+    duplicate = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="controlled_2",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=tmp_path / "control",
+    )
+
+    state_root = tmp_path / "control" / "states"
+    state_path = _execution_state_path(state_root)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert report.status in {"PASS", "PASS_WITH_SKIPS"}
+    assert state["status"] == "PASS"
+    assert state["current_step_id"] is None
+    assert set(state["completed_step_ids"]) | set(state["skipped_step_ids"]) == {
+        step.step_id for step in plan.steps
+    }
+    expected_ledger_statuses = {
+        step_id: CanonicalStatus.PASS for step_id in state["completed_step_ids"]
+    } | {step_id: CanonicalStatus.SKIPPED for step_id in state["skipped_step_ids"]}
+    assert {entry.step_id: entry.status for entry in ledger.entries} == expected_ledger_statuses
+    assert duplicate.status == "RUN_CONTROL_ALREADY_COMPLETE"
+    assert len(calls) == first_call_count
+
+
+def test_controlled_daily_executor_resumes_without_repeating_completed_step(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(daily_cut_in=True),
+    )
+    cadence = load_scheduled_tasks_config().cadence("daily_trading_day")
+    spec = build_daily_schedule_workflow_spec(cadence=cadence, is_trading_day=True)
+    prior = control.acquire(spec=spec, as_of=as_of, run_id="prior")
+    assert prior.lease is not None
+    prior.lease.start_step("download_data")
+    prior.lease.pass_step("download_data")
+    prior.lease.release()
+    calls: list[tuple[str, ...]] = []
+
+    def runner(command, **kwargs):
+        calls.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="resumed",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+
+    first = next(result for result in report.step_results if result.step_id == "download_data")
+    assert first.status == "SKIPPED"
+    assert "Canonical resume" in str(first.skip_reason)
+    assert not any("download-data" in " ".join(command) for command in calls)
+    state_root = tmp_path / "control" / "states"
+    state_path = _execution_state_path(state_root)
+    assert json.loads(state_path.read_text(encoding="utf-8"))["status"] == "PASS"
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert ledger.entry("download_data").status is CanonicalStatus.PASS
+    assert all(
+        entry.status in {CanonicalStatus.PASS, CanonicalStatus.SKIPPED} for entry in ledger.entries
+    )
+
+
+def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(daily_cut_in=True),
+    )
+    spec = build_daily_schedule_workflow_spec(
+        cadence=load_scheduled_tasks_config().cadence("daily_trading_day"),
+        is_trading_day=True,
+    )
+    active = control.acquire(spec=spec, as_of=as_of, run_id="active")
+    assert active.lease is not None
+    calls: list[tuple[str, ...]] = []
+
+    def runner(command, **kwargs):
+        calls.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    blocked = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="blocked",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+
+    assert blocked.status == "RUN_CONTROL_BLOCKED_CONCURRENT"
+    assert calls == []
+    active.lease.release()
+
+
+def test_controlled_daily_executor_failure_is_terminal_and_not_unsafely_retried(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(daily_cut_in=True),
+    )
+
+    def failing_runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, stdout="", stderr="failed")
+
+    failed = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=failing_runner,
+        run_id="failed",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+    retry = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=failing_runner,
+        run_id="retry",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+
+    assert failed.status == "FAIL"
+    assert retry.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
+    assert "STEP_ATTEMPT_BUDGET_EXHAUSTED:download_data" in str(retry.failed_step.error)
+
+
+@pytest.mark.parametrize("as_of", [date(2026, 5, 6), date(2026, 5, 10)])
+def test_controlled_daily_executor_preserves_legacy_step_result_contract(
+    tmp_path: Path, as_of: date
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+
+    def runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout="ok\n", stderr="")
+
+    common = {
+        "project_root": tmp_path,
+        "env": _daily_env(),
+        "runner": runner,
+        "visibility_check_date": as_of,
+        "visibility_latest_completed_trading_day": as_of,
+    }
+    legacy = run_daily_ops_plan(plan, run_id="legacy", **common)
+    controlled = run_daily_ops_plan_controlled(
+        plan,
+        run_id="controlled",
+        run_control_root=tmp_path / "control",
+        **common,
+    )
+
+    def contract(report):
+        return (
+            report.status,
+            tuple(
+                (
+                    result.step_id,
+                    result.status,
+                    result.command,
+                    result.return_code,
+                    result.blocks_downstream,
+                    result.skip_reason,
+                    result.error,
+                )
+                for result in report.step_results
+            ),
+        )
+
+    assert contract(controlled) == contract(legacy)
+
+
+def test_controlled_daily_executor_keeps_validate_data_fail_closed_boundary(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    calls: list[str] = []
+
+    def runner(command, **kwargs):
+        command_text = " ".join(command)
+        calls.append(command_text)
+        return subprocess.CompletedProcess(
+            command,
+            1 if "validate-data" in command_text else 0,
+            stdout="",
+            stderr="data invalid" if "validate-data" in command_text else "",
+        )
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="dq_failed",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=tmp_path / "control",
+    )
+
+    assert report.status == "FAIL"
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "validate_data"
+    assert not any("score-daily" in command for command in calls)
+    state_root = tmp_path / "control" / "states"
+    state_path = _execution_state_path(state_root)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state["status"] == "FAILED"
+    assert state["completed_step_ids"] == ["download_data"]
+    assert {row["step_id"]: row["attempts"] for row in state["step_attempts"]} == {
+        "download_data": 1,
+        "validate_data": 1,
+    }
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert ledger.entry("download_data").status is CanonicalStatus.PASS
+    assert ledger.entry("validate_data").status is CanonicalStatus.FAILED
+    assert ledger.entry("score_daily").status is CanonicalStatus.BLOCKED

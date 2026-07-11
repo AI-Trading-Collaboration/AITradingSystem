@@ -326,6 +326,7 @@ class OperationsExecutionState:
     updated_at: datetime
     finished_at: datetime | None = None
     completed_step_ids: tuple[str, ...] = ()
+    skipped_step_ids: tuple[str, ...] = ()
     current_step_id: str | None = None
     step_attempts: tuple[tuple[str, int], ...] = ()
     blocker_codes: tuple[str, ...] = ()
@@ -352,6 +353,15 @@ class OperationsExecutionState:
             sorted(set(_nonempty(item, "completed_step_id") for item in self.completed_step_ids))
         )
         object.__setattr__(self, "completed_step_ids", completed)
+        skipped = tuple(
+            sorted(set(_nonempty(item, "skipped_step_id") for item in self.skipped_step_ids))
+        )
+        object.__setattr__(self, "skipped_step_ids", skipped)
+        overlap = set(completed) & set(skipped)
+        if overlap:
+            raise OperationsContractError(
+                "RUN_STEP_COMPLETE_AND_SKIPPED", ",".join(sorted(overlap))
+            )
         blockers = tuple(
             sorted(set(_nonempty(item, "blocker_code") for item in self.blocker_codes))
         )
@@ -360,6 +370,8 @@ class OperationsExecutionState:
             _nonempty(self.current_step_id, "current_step_id")
             if self.current_step_id in completed:
                 raise OperationsContractError("RUN_CURRENT_STEP_ALREADY_COMPLETE", self.run_id)
+            if self.current_step_id in skipped:
+                raise OperationsContractError("RUN_CURRENT_STEP_ALREADY_SKIPPED", self.run_id)
         attempts: dict[str, int] = {}
         for step_id, count in self.step_attempts:
             _nonempty(step_id, "step_attempt_id")
@@ -386,6 +398,8 @@ class OperationsExecutionState:
             raise OperationsContractError("RUN_STEP_ALREADY_ACTIVE", self.current_step_id)
         if step_id in self.completed_step_ids:
             raise OperationsContractError("RUN_STEP_ALREADY_COMPLETE", step_id)
+        if step_id in self.skipped_step_ids:
+            raise OperationsContractError("RUN_STEP_ALREADY_SKIPPED", step_id)
         _aware_datetime(at, "step_started_at")
         attempts = dict(self.step_attempts)
         attempts[step_id] = attempts.get(step_id, 0) + 1
@@ -432,6 +446,22 @@ class OperationsExecutionState:
         _aware_datetime(at, "step_retry_at")
         return replace(self, current_step_id=None, updated_at=at)
 
+    def with_step_skipped(self, *, step_id: str, at: datetime) -> OperationsExecutionState:
+        if self.status is not CanonicalStatus.RUNNING:
+            raise OperationsContractError("RUN_NOT_RUNNING", self.run_id)
+        if self.current_step_id is not None:
+            raise OperationsContractError("RUN_STEP_ALREADY_ACTIVE", self.current_step_id)
+        if step_id in self.completed_step_ids:
+            raise OperationsContractError("RUN_STEP_ALREADY_COMPLETE", step_id)
+        if step_id in self.skipped_step_ids:
+            return self
+        _aware_datetime(at, "step_skipped_at")
+        return replace(
+            self,
+            skipped_step_ids=(*self.skipped_step_ids, _nonempty(step_id, "step_id")),
+            updated_at=at,
+        )
+
     def step_attempt_count(self, step_id: str) -> int:
         return dict(self.step_attempts).get(step_id, 0)
 
@@ -449,6 +479,7 @@ class OperationsExecutionState:
             "updated_at": self.updated_at.isoformat(),
             "finished_at": None if self.finished_at is None else self.finished_at.isoformat(),
             "completed_step_ids": list(self.completed_step_ids),
+            "skipped_step_ids": list(self.skipped_step_ids),
             "current_step_id": self.current_step_id,
             "step_attempts": [
                 {"step_id": step_id, "attempts": attempts}
@@ -471,6 +502,7 @@ class OperationsExecutionState:
             updated_at=_datetime_value(payload.get("updated_at"), "updated_at"),
             finished_at=_optional_datetime_value(payload.get("finished_at"), "finished_at"),
             completed_step_ids=tuple(str(item) for item in _list(payload, "completed_step_ids")),
+            skipped_step_ids=tuple(str(item) for item in _list(payload, "skipped_step_ids")),
             current_step_id=_optional_text(payload.get("current_step_id"), "current_step_id"),
             step_attempts=_step_attempts_value(payload.get("step_attempts", [])),
             blocker_codes=tuple(str(item) for item in _list(payload, "blocker_codes")),

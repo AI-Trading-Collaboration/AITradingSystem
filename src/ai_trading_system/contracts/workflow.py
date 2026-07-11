@@ -457,7 +457,7 @@ class RunLedger:
             unmet = [
                 dependency
                 for dependency in step.dependencies
-                if states.get(dependency) is not CanonicalStatus.PASS
+                if states.get(dependency) not in {CanonicalStatus.PASS, CanonicalStatus.SKIPPED}
             ]
             if unmet:
                 raise WorkflowContractError(

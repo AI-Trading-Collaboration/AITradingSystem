@@ -1137,7 +1137,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.ops
   path: src/ai_trading_system/cli_commands/ops.py
-  sha256: 925057151a551447315efebc810120f4cee7cb9ca95fbb88c663c678a9a869f5
+  sha256: e6871d7e87151a6e7ac473c564b3360c81db5f8ca58eddb81f07f53f5ffc668e
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2055,7 +2055,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.operations
   path: src/ai_trading_system/contracts/operations.py
-  sha256: b996f147ee29c26364d217d39aee836f76ca6739a2c27161442f1e6f92a950e4
+  sha256: 384e6f16c38be766f79e45715b8bc26624202e137d2344646a791cc1c46547c5
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2165,7 +2165,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.workflow
   path: src/ai_trading_system/contracts/workflow.py
-  sha256: 6245abf14ecbdd2d9989f20283fab12211791b31c5aa170ac58dfe0817232f3b
+  sha256: 49745997548b6c7d13a46ae4a7b04d2e182f33db821cf01f1241d19db7bb39dd
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -9450,7 +9450,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.legacy.scheduled_tasks_adapter
   path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
-  sha256: 4213ed2f8100fb42391b3b81ecdc831d9314b751c0a9ff96d703156f80eb7153
+  sha256: 8dc31e6a0c47678367e4c097e86721f7412a5108af9d8cc188339bc9dd48cee0
   rule_id: legacy
   owner_profile: architecture
   owners:
@@ -9692,7 +9692,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: d749e52f438494ab28de4a89a116256bebd711bd056dc3e0622048da65bd52a6
+  sha256: 5a29b697ed8d394a655625f3181daf61a757d729070cca71912d3218a456efce
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -10134,7 +10134,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.operations.runtime_control
   path: src/ai_trading_system/platform/operations/runtime_control.py
-  sha256: d50a8fd595d16c68d354b26bc72c737bb8d58a10967c3dbc2e83d014345f5d54
+  sha256: b4bc48f95fb75ee7e6952ce9f1f0267be423edd2070f2be34c494a73de40deef
   rule_id: platform
   owner_profile: platform
   owners:

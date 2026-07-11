@@ -156,8 +156,8 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
         "F1_1_inventory_due_contract_and_compatibility_adapter": "COMPLETE",
         "F1_2_shadow_plan_and_daily_parity": "COMPLETE",
         "F1_3_lock_retry_idempotency_and_resume": "COMPLETE",
-        "F1_4_daily_executor_adapter_cut_in": "IN_PROGRESS",
-        "F1_5_non_daily_controlled_due_dispatch": "NOT_STARTED",
+        "F1_4_daily_executor_adapter_cut_in": "COMPLETE",
+        "F1_5_non_daily_controlled_due_dispatch": "IN_PROGRESS",
         "F1_6_validation_and_closeout": "NOT_STARTED",
     }
     assert phase_f1["scheduled_task_inventory"] == {
@@ -177,7 +177,9 @@ def test_arch_004_phase_f1_policy_keeps_freeze_and_preserves_safety() -> None:
     assert runtime_control["duplicate_completed_trigger"] == "ALREADY_COMPLETE"
     assert runtime_control["step_attempt_budget_from_workflow_spec"] is True
     assert runtime_control["non_idempotent_partial_resume"] == "BLOCKED"
-    assert runtime_control["legacy_daily_executor_cut_in_enabled"] is False
+    assert runtime_control["legacy_daily_executor_cut_in_enabled"] is True
+    assert runtime_control["execution_ledger_schema"] == "run_ledger.v1"
+    assert runtime_control["validate_data_failure_blocks_downstream"] is True
     assert phase_f1["compatibility_findings"]["trading_day_daily_plan"] == "PASS"
     assert phase_f1["compatibility_findings"]["closed_market_daily_plan"] == "PASS"
     assert phase_f1["compatibility_findings"]["conditional_step_contract"] == {
@@ -443,12 +445,13 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
     phase_f1 = baseline["phase_f1_operations_control_plane"]
-    assert phase_f1["status"] == "IN_PROGRESS_F1_1_TO_F1_3_COMPLETE_F1_4_IN_PROGRESS"
+    assert phase_f1["status"] == "IN_PROGRESS_F1_1_TO_F1_4_COMPLETE_F1_5_IN_PROGRESS"
     assert phase_f1["contracts"]["shadow_execution_enabled"] is False
     assert phase_f1["contracts"]["additive_shadow_artifact_emission"] is True
     assert phase_f1["contracts"]["execution_state_schema"] == "operations_execution_state.v1"
     assert phase_f1["contracts"]["idempotent_only_resume"] is True
-    assert phase_f1["contracts"]["legacy_daily_executor_cut_in_enabled"] is False
+    assert phase_f1["contracts"]["legacy_daily_executor_cut_in_enabled"] is True
+    assert phase_f1["contracts"]["execution_ledger_schema"] == "run_ledger.v1"
     assert phase_f1["contracts"]["non_daily_automatic_dispatch_enabled"] is False
     assert phase_f1["scheduled_task_inventory"] == {
         "daily": 37,

@@ -52,10 +52,12 @@ from ai_trading_system.ops_daily import (
     default_daily_ops_run_metadata_path,
     default_daily_ops_run_report_path,
     resolve_daily_ops_default_as_of,
-    run_daily_ops_plan,
     write_daily_ops_plan,
     write_daily_ops_run_report,
     write_daily_ops_shadow_plan,
+)
+from ai_trading_system.ops_daily import (
+    run_daily_ops_plan_controlled as run_daily_ops_plan,
 )
 from ai_trading_system.order_intent_candidates import (
     default_order_intent_candidates_path,
@@ -727,6 +729,13 @@ def daily_ops_run_command(
         plan_date,
     )
     write_daily_ops_run_report(run_report, run_report_path, metadata_path=metadata_path)
+    if run_report.status.startswith("RUN_CONTROL_"):
+        console.print(f"Canonical run control：{run_report.status}")
+        console.print(f"Run ID：{resolved_run_id}")
+        console.print(f"执行报告：{run_report_path}")
+        if run_report.status == "RUN_CONTROL_ALREADY_COMPLETE":
+            return
+        raise typer.Exit(code=1)
     canonical_outputs = mirror_legacy_reports_to_run(
         as_of=plan_date,
         legacy_reports_dir=reports_dir,

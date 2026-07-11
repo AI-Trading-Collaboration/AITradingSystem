@@ -10,13 +10,15 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from ai_trading_system.alerts import (
     default_alert_report_path,
     default_pipeline_health_alert_report_path,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.operations import OperationsRunDecision
+from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.core import (
     ArtifactRef,
     ProductionEffect,
@@ -50,6 +52,7 @@ from ai_trading_system.fundamentals.sec_validation import (
 )
 from ai_trading_system.legacy.scheduled_tasks_adapter import (
     build_daily_schedule_shadow_payload,
+    build_daily_schedule_workflow_spec,
 )
 from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
@@ -60,6 +63,8 @@ from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_repo
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.platform.operations import (
     DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
+    OperationsRunControl,
+    OperationsRunControlLease,
     load_operations_runtime_control_policy,
 )
 from ai_trading_system.reports.artifact_lineage import (
@@ -269,6 +274,16 @@ class DailyOpsRunReport:
 
 
 DailyOpsCommandRunner = subprocess.run
+
+
+class DailyOpsExecutionObserver(Protocol):
+    def step_skipped(self, step: DailyOpsStep, *, at: datetime) -> None: ...
+
+    def step_started(self, step: DailyOpsStep, *, at: datetime) -> None: ...
+
+    def step_finished(self, result: DailyOpsStepResult, *, at: datetime) -> None: ...
+
+
 _DIAGNOSTIC_TEXT_MAX_CHARS = 60_000
 DAILY_OPS_PROVIDER_READY_POST_CLOSE_BUFFER = timedelta(hours=3)
 # TRADING-1087: daily ops must wait for late same-day provider artifacts such as
@@ -1507,6 +1522,7 @@ def run_daily_ops_plan(
     diagnostics_dir: Path | None = None,
     visibility_check_date: date | None = None,
     visibility_latest_completed_trading_day: date | None = None,
+    execution_observer: DailyOpsExecutionObserver | None = None,
 ) -> DailyOpsRunReport:
     started_at = datetime.now(tz=UTC)
     resolved_diagnostics_dir = (
@@ -1599,6 +1615,8 @@ def run_daily_ops_plan(
     results: list[DailyOpsStepResult] = []
     for step in plan.steps:
         if not step.enabled:
+            if execution_observer is not None:
+                execution_observer.step_skipped(step, at=datetime.now(tz=UTC))
             results.append(
                 DailyOpsStepResult(
                     step_id=step.step_id,
@@ -1626,6 +1644,8 @@ def run_daily_ops_plan(
             ),
         )
         step_started = datetime.now(tz=UTC)
+        if execution_observer is not None:
+            execution_observer.step_started(execution_step, at=step_started)
         try:
             completed = runner(
                 _execution_command(execution_step.command, project_root=project_root),
@@ -1701,6 +1721,8 @@ def run_daily_ops_plan(
                 diagnostic_path=diagnostic_path,
             )
         results.append(result)
+        if execution_observer is not None:
+            execution_observer.step_finished(result, at=step_ended)
         if result.status == "FAIL" and (stop_on_failure or step.blocks_downstream):
             break
 
@@ -1724,6 +1746,188 @@ def run_daily_ops_plan(
             pre_run_input_artifacts=pre_run_input_artifacts,
             run_id=run_id,
         ),
+    )
+
+
+class _DailyOpsLeaseObserver:
+    def __init__(
+        self,
+        *,
+        lease: OperationsRunControlLease,
+        resume_completed_step_ids: tuple[str, ...],
+    ) -> None:
+        self.lease = lease
+        self.resume_completed_step_ids = frozenset(resume_completed_step_ids)
+
+    def step_skipped(self, step: DailyOpsStep, *, at: datetime) -> None:
+        if step.step_id not in self.resume_completed_step_ids:
+            self.lease.skip_step(step.step_id, at=at)
+
+    def step_started(self, step: DailyOpsStep, *, at: datetime) -> None:
+        self.lease.start_step(step.step_id, at=at)
+
+    def step_finished(self, result: DailyOpsStepResult, *, at: datetime) -> None:
+        if result.status == "PASS":
+            self.lease.pass_step(result.step_id, at=at)
+            return
+        self.lease.fail_step(
+            result.step_id,
+            retryable=False,
+            blocker_code=f"DAILY_STEP_FAILED:{result.step_id}",
+            at=at,
+        )
+
+
+def run_daily_ops_plan_controlled(
+    plan: DailyOpsPlan,
+    *,
+    project_root: Path = PROJECT_ROOT,
+    env: Mapping[str, str] | None = None,
+    runner: Any = DailyOpsCommandRunner,
+    stop_on_failure: bool = True,
+    run_id: str | None = None,
+    diagnostics_dir: Path | None = None,
+    visibility_check_date: date | None = None,
+    visibility_latest_completed_trading_day: date | None = None,
+    runtime_control: OperationsRunControl | None = None,
+    run_control_root: Path | None = None,
+    scheduled_tasks_path: Path = DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
+    runtime_control_policy_path: Path = DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
+) -> DailyOpsRunReport:
+    policy = (
+        runtime_control.policy
+        if runtime_control is not None
+        else load_operations_runtime_control_policy(runtime_control_policy_path)
+    )
+    if not policy.legacy_daily_executor_cut_in_enabled:
+        return run_daily_ops_plan(
+            plan,
+            project_root=project_root,
+            env=env,
+            runner=runner,
+            stop_on_failure=stop_on_failure,
+            run_id=run_id,
+            diagnostics_dir=diagnostics_dir,
+            visibility_check_date=visibility_check_date,
+            visibility_latest_completed_trading_day=(visibility_latest_completed_trading_day),
+        )
+    if not stop_on_failure:
+        raise ValueError("canonical daily runtime control requires stop_on_failure=true")
+    scheduled = load_scheduled_tasks_config(scheduled_tasks_path)
+    spec = build_daily_schedule_workflow_spec(
+        cadence=scheduled.cadence("daily_trading_day"),
+        is_trading_day=plan.market_session.is_trading_day,
+    )
+    control = runtime_control or OperationsRunControl(
+        root=(
+            run_control_root
+            if run_control_root is not None
+            else project_root / "outputs" / "run_control" / "daily"
+        ),
+        policy=policy,
+    )
+    acquired_at = datetime.now(tz=UTC)
+    resolved_run_id = run_id or (
+        f"daily_control:{plan.as_of.isoformat()}:{acquired_at.strftime('%Y%m%dT%H%M%S%fZ')}"
+    )
+    acquisition = control.acquire(
+        spec=spec,
+        as_of=plan.as_of,
+        run_id=resolved_run_id,
+        now=acquired_at,
+    )
+    if acquisition.lease is None:
+        return _daily_run_control_nonexecution_report(
+            plan=plan,
+            decision=acquisition.resolution.decision,
+            blocker_codes=acquisition.resolution.blocker_codes,
+            at=acquired_at,
+        )
+
+    resumed = frozenset(acquisition.resolution.resume_completed_step_ids)
+    controlled_plan = replace(
+        plan,
+        steps=tuple(
+            (
+                replace(
+                    step,
+                    enabled=False,
+                    skip_reason="Canonical resume：相同 idempotency key 的步骤已 PASS。",
+                )
+                if step.step_id in resumed
+                else step
+            )
+            for step in plan.steps
+        ),
+    )
+    observer = _DailyOpsLeaseObserver(
+        lease=acquisition.lease,
+        resume_completed_step_ids=acquisition.resolution.resume_completed_step_ids,
+    )
+    try:
+        report = run_daily_ops_plan(
+            controlled_plan,
+            project_root=project_root,
+            env=env,
+            runner=runner,
+            stop_on_failure=True,
+            run_id=resolved_run_id,
+            diagnostics_dir=diagnostics_dir,
+            visibility_check_date=visibility_check_date,
+            visibility_latest_completed_trading_day=(visibility_latest_completed_trading_day),
+            execution_observer=observer,
+        )
+        if not acquisition.lease.released:
+            if report.status in {"PASS", "PASS_WITH_SKIPS"}:
+                acquisition.lease.finish(CanonicalStatus.PASS)
+            elif report.status.startswith("BLOCKED"):
+                acquisition.lease.finish(
+                    CanonicalStatus.BLOCKED,
+                    blocker_codes=(f"DAILY_RUN_{report.status}",),
+                )
+            else:
+                acquisition.lease.finish(
+                    CanonicalStatus.FAILED,
+                    blocker_codes=(f"DAILY_RUN_{report.status}",),
+                )
+        return report
+    except Exception:
+        if not acquisition.lease.released:
+            acquisition.lease.finish(
+                CanonicalStatus.FAILED,
+                blocker_codes=("UNHANDLED_DAILY_EXECUTOR_EXCEPTION",),
+            )
+        raise
+
+
+def _daily_run_control_nonexecution_report(
+    *,
+    plan: DailyOpsPlan,
+    decision: OperationsRunDecision,
+    blocker_codes: tuple[str, ...],
+    at: datetime,
+) -> DailyOpsRunReport:
+    already_complete = decision is OperationsRunDecision.ALREADY_COMPLETE
+    result = DailyOpsStepResult(
+        step_id="run_control",
+        title="Canonical daily runtime control",
+        command=(),
+        status="SKIPPED" if already_complete else "FAIL",
+        return_code=None,
+        started_at=at,
+        ended_at=at,
+        duration_seconds=0.0,
+        produced_paths=(),
+        blocks_downstream=not already_complete,
+        skip_reason=("相同 workflow/spec/as_of 已完成，未重复执行。" if already_complete else None),
+        error=None if already_complete else ",".join(blocker_codes),
+    )
+    return DailyOpsRunReport(
+        plan=plan,
+        started_at=at,
+        finished_at=at,
+        status=f"RUN_CONTROL_{decision.value}",
+        step_results=(result,),
     )
 
 

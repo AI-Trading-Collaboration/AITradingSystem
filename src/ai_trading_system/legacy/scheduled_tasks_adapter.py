@@ -220,6 +220,10 @@ def build_daily_schedule_shadow_payload(
     source_config_path: Path,
     source_config_sha256: str,
 ) -> dict[str, object]:
+    workflow_spec = build_daily_schedule_workflow_spec(
+        cadence=cadence,
+        is_trading_day=is_trading_day,
+    )
     binding = LegacyScheduledWorkflowBinding(
         owner="system_operations",
         timezone="America/New_York",
@@ -228,11 +232,6 @@ def build_daily_schedule_shadow_payload(
         preserve_sequential_order=True,
         is_trading_day=is_trading_day,
     )
-    compatibility = assess_scheduled_cadence(cadence, binding=binding)
-    if compatibility.status is not CanonicalStatus.PASS or compatibility.workflow_spec is None:
-        raise LegacyScheduledTaskDispatchBlocked(
-            "daily schedule compatibility assessment did not produce a canonical workflow"
-        )
     policy = OperationsDuePolicy(
         policy_id=binding.due_policy_id,
         owner=binding.owner,
@@ -246,20 +245,20 @@ def build_daily_schedule_shadow_payload(
         requires_owner_gate=False,
     )
     resolution = resolve_operations_due(
-        workflow_id=compatibility.workflow_spec.workflow_id,
+        workflow_id=workflow_spec.workflow_id,
         policy=policy,
         context=OperationsDueContext(as_of=as_of, is_trading_day=is_trading_day),
     )
     run_id = f"daily_shadow_{as_of.isoformat()}_{generated_at.strftime('%Y%m%dT%H%M%S%f%z')}"
     shadow_plan = build_operations_shadow_plan(
-        spec=compatibility.workflow_spec,
+        spec=workflow_spec,
         due_resolution=resolution,
         run_id=run_id,
         created_at=generated_at,
     )
     parity = assess_daily_shadow_parity(
         cadence=cadence,
-        workflow_spec=compatibility.workflow_spec,
+        workflow_spec=workflow_spec,
         observed_step_ids=observed_step_ids,
         observed_commands=observed_commands,
         observed_enabled=observed_enabled,
@@ -275,7 +274,7 @@ def build_daily_schedule_shadow_payload(
             "path": str(source_config_path),
             "sha256": source_config_sha256,
         },
-        "workflow_spec": compatibility.workflow_spec.to_dict(),
+        "workflow_spec": workflow_spec.to_dict(),
         "shadow_plan": shadow_plan.to_dict(),
         "parity": parity.to_dict(),
         "commands_executed": False,
@@ -283,6 +282,27 @@ def build_daily_schedule_shadow_payload(
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def build_daily_schedule_workflow_spec(
+    *, cadence: ScheduledCadence, is_trading_day: bool
+) -> WorkflowSpec:
+    assessment = assess_scheduled_cadence(
+        cadence,
+        binding=LegacyScheduledWorkflowBinding(
+            owner="system_operations",
+            timezone="America/New_York",
+            due_policy_id="daily_unified_trigger_v1",
+            trading_calendar="XNYS",
+            preserve_sequential_order=True,
+            is_trading_day=is_trading_day,
+        ),
+    )
+    if assessment.status is not CanonicalStatus.PASS or assessment.workflow_spec is None:
+        raise LegacyScheduledTaskDispatchBlocked(
+            "daily schedule compatibility assessment did not produce a canonical workflow"
+        )
+    return assessment.workflow_spec
 
 
 def _workflow_step(task: ScheduledTask, *, dependencies: tuple[str, ...]) -> WorkflowStepSpec:

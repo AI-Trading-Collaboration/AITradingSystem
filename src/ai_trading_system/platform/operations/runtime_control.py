@@ -14,7 +14,7 @@ from ai_trading_system.contracts.operations import (
     OperationsRunDecision,
 )
 from ai_trading_system.contracts.status import CanonicalStatus
-from ai_trading_system.contracts.workflow import WorkflowSpec, WorkflowStepSpec
+from ai_trading_system.contracts.workflow import RunLedger, WorkflowSpec, WorkflowStepSpec
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -108,6 +108,10 @@ class OperationsRunControlLease:
         self.state = state
         self._released = False
 
+    @property
+    def released(self) -> bool:
+        return self._released
+
     def heartbeat(self, *, at: datetime | None = None) -> None:
         timestamp = at or datetime.now(tz=UTC)
         self.lock_record = replace(
@@ -124,7 +128,7 @@ class OperationsRunControlLease:
         timestamp = at or datetime.now(tz=UTC)
         self.heartbeat(at=timestamp)
         self.state = self.state.with_step_started(step_id=step_id, at=timestamp)
-        self._control._write_state(self.state)
+        self._control._write_state(self.state, self.spec)
 
     def fail_step(
         self,
@@ -143,7 +147,7 @@ class OperationsRunControlLease:
         )
         if can_retry:
             self.state = self.state.with_step_retry_ready(step_id=step_id, at=timestamp)
-            self._control._write_state(self.state)
+            self._control._write_state(self.state, self.spec)
             return True
         self.finish(
             CanonicalStatus.FAILED,
@@ -155,7 +159,13 @@ class OperationsRunControlLease:
     def pass_step(self, step_id: str, *, at: datetime | None = None) -> None:
         timestamp = at or datetime.now(tz=UTC)
         self.state = self.state.with_step_passed(step_id=step_id, at=timestamp)
-        self._control._write_state(self.state)
+        self._control._write_state(self.state, self.spec)
+
+    def skip_step(self, step_id: str, *, at: datetime | None = None) -> None:
+        self._step(step_id)
+        timestamp = at or datetime.now(tz=UTC)
+        self.state = self.state.with_step_skipped(step_id=step_id, at=timestamp)
+        self._control._write_state(self.state, self.spec)
 
     def finish(
         self,
@@ -167,17 +177,18 @@ class OperationsRunControlLease:
         timestamp = at or datetime.now(tz=UTC)
         if status is CanonicalStatus.PASS:
             expected = {step.step_id for step in self.spec.steps}
-            if set(self.state.completed_step_ids) != expected:
+            resolved = set(self.state.completed_step_ids) | set(self.state.skipped_step_ids)
+            if resolved != expected:
                 raise OperationsRuntimeControlError(
                     "RUN_COMPLETE_STEPS_MISSING",
-                    ",".join(sorted(expected - set(self.state.completed_step_ids))),
+                    ",".join(sorted(expected - resolved)),
                 )
         self.state = self.state.terminal(
             status=status,
             at=timestamp,
             blocker_codes=blocker_codes,
         )
-        self._control._write_state(self.state)
+        self._control._write_state(self.state, self.spec)
         self.release()
 
     def release(self) -> None:
@@ -308,7 +319,7 @@ class OperationsRunControl:
                     current_step_id=None,
                     blocker_codes=(),
                 )
-            self._write_state(state)
+            self._write_state(state, spec)
             resolution = OperationsRunControlResolution(
                 decision=decision,
                 idempotency_key=key,
@@ -352,15 +363,24 @@ class OperationsRunControl:
     def _exhausted_resume_steps(
         self, *, spec: WorkflowSpec, prior: OperationsExecutionState | None
     ) -> tuple[str, ...]:
-        if prior is None or prior.current_step_id is None:
+        if prior is None:
             return ()
         step_by_id = {step.step_id: step for step in spec.steps}
-        step = step_by_id.get(prior.current_step_id)
-        if step is None:
-            raise OperationsRuntimeControlError("RUN_STATE_STEP_UNKNOWN", prior.current_step_id)
-        if prior.step_attempt_count(step.step_id) >= step.max_attempts:
-            return (step.step_id,)
-        return ()
+        unresolved_attempts = {
+            step_id: attempts
+            for step_id, attempts in prior.step_attempts
+            if step_id not in prior.completed_step_ids and step_id not in prior.skipped_step_ids
+        }
+        unknown = set(unresolved_attempts) - set(step_by_id)
+        if unknown:
+            raise OperationsRuntimeControlError("RUN_STATE_STEP_UNKNOWN", ",".join(sorted(unknown)))
+        return tuple(
+            sorted(
+                step_id
+                for step_id, attempts in unresolved_attempts.items()
+                if attempts >= step_by_id[step_id].max_attempts
+            )
+        )
 
     def _without_lease(
         self,
@@ -464,6 +484,9 @@ class OperationsRunControl:
     def _state_path(self, key: str) -> Path:
         return self.state_root / f"{key}.json"
 
+    def execution_ledger_path(self, key: str) -> Path:
+        return self.state_root / f"{key}.run_ledger.json"
+
     def _read_state(self, key: str) -> OperationsExecutionState | None:
         path = self._state_path(key)
         if not path.exists():
@@ -473,8 +496,114 @@ class OperationsRunControl:
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             raise OperationsRuntimeControlError("RUN_STATE_INVALID", str(exc)) from exc
 
-    def _write_state(self, state: OperationsExecutionState) -> None:
+    def _write_state(self, state: OperationsExecutionState, spec: WorkflowSpec) -> None:
+        if state.workflow_spec_id != spec.spec_id:
+            raise OperationsRuntimeControlError("RUN_STATE_SPEC_MISMATCH", state.workflow_spec_id)
+        ledger = _execution_ledger(state=state, spec=spec)
         write_json_atomic(self._state_path(state.idempotency_key), state.to_dict())
+        write_json_atomic(
+            self.execution_ledger_path(state.idempotency_key),
+            ledger.to_dict(),
+        )
+
+
+def _execution_ledger(*, state: OperationsExecutionState, spec: WorkflowSpec) -> RunLedger:
+    ledger = RunLedger.initialize(
+        spec,
+        run_id=state.run_id,
+        as_of=state.as_of,
+        created_at=state.started_at,
+    )
+    for step in spec.steps:
+        due = ledger.entry(step.step_id).transition(
+            CanonicalStatus.DUE,
+            at=state.started_at,
+        )
+        ledger = ledger.with_entry(spec, due)
+
+    completed = set(state.completed_step_ids)
+    skipped = set(state.skipped_step_ids)
+    failed_step_id = _failed_step_id(state=state, spec=spec)
+    terminal_blocker = state.blocker_codes or ("UPSTREAM_WORKFLOW_BLOCKED",)
+
+    for step in spec.steps:
+        entry = ledger.entry(step.step_id)
+        if step.step_id in skipped:
+            ledger = ledger.with_entry(
+                spec,
+                entry.transition(CanonicalStatus.SKIPPED, at=state.updated_at),
+            )
+            continue
+        if step.step_id in completed:
+            running = entry.transition(CanonicalStatus.RUNNING, at=state.started_at)
+            attempts = state.step_attempt_count(step.step_id)
+            if attempts:
+                running = replace(running, attempt=attempts)
+            ledger = ledger.with_entry(spec, running)
+            ledger = ledger.with_entry(
+                spec,
+                ledger.entry(step.step_id).transition(
+                    CanonicalStatus.PASS,
+                    at=state.updated_at,
+                ),
+            )
+            continue
+        if step.step_id == state.current_step_id:
+            running = entry.transition(CanonicalStatus.RUNNING, at=state.updated_at)
+            attempts = state.step_attempt_count(step.step_id)
+            ledger = ledger.with_entry(
+                spec,
+                replace(running, attempt=attempts) if attempts else running,
+            )
+            continue
+        if step.step_id == failed_step_id:
+            running = entry.transition(CanonicalStatus.RUNNING, at=state.started_at)
+            attempts = state.step_attempt_count(step.step_id)
+            if attempts:
+                running = replace(running, attempt=attempts)
+            ledger = ledger.with_entry(spec, running)
+            ledger = ledger.with_entry(
+                spec,
+                ledger.entry(step.step_id).transition(
+                    CanonicalStatus.FAILED,
+                    at=state.updated_at,
+                    blocker_codes=terminal_blocker,
+                ),
+            )
+            continue
+        if state.status in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}:
+            ledger = ledger.with_entry(
+                spec,
+                entry.transition(
+                    CanonicalStatus.BLOCKED,
+                    at=state.updated_at,
+                    blocker_codes=terminal_blocker,
+                ),
+            )
+    return ledger
+
+
+def _failed_step_id(*, state: OperationsExecutionState, spec: WorkflowSpec) -> str | None:
+    if state.status is not CanonicalStatus.FAILED:
+        return None
+    step_ids = {step.step_id for step in spec.steps}
+    for blocker in state.blocker_codes:
+        prefix = "DAILY_STEP_FAILED:"
+        if blocker.startswith(prefix):
+            step_id = blocker.removeprefix(prefix)
+            if step_id in step_ids:
+                return step_id
+    unresolved_attempted = {
+        step_id
+        for step_id, attempts in state.step_attempts
+        if attempts > 0
+        and step_id not in state.completed_step_ids
+        and step_id not in state.skipped_step_ids
+    }
+    for step in spec.steps:
+        if step.step_id in unresolved_attempted:
+            return step.step_id
+    return None
 
 
 def operations_idempotency_key(*, spec: WorkflowSpec, as_of: date) -> str:

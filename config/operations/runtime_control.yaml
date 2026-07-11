@@ -22,5 +22,5 @@ policy_metadata:
 lock_ttl_seconds: 21600
 max_run_attempts: 2
 resume_idempotent_steps: true
-legacy_daily_executor_cut_in_enabled: false
+legacy_daily_executor_cut_in_enabled: true
 non_daily_dispatch_enabled: false

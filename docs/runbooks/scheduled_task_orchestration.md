@@ -67,7 +67,7 @@ aits ops daily-run --as-of 2026-05-06
 
 两者还会在原计划Markdown旁写入 `daily_operations_shadow.v1` JSON sidecar，保存source config hash、market-session activated WorkflowSpec、DUE resolution、non-executing RunLedger和exact parity。该sidecar是additive审计证据，不执行命令、不启用non-daily dispatch、不改变原Markdown bytes/path。
 
-Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。F1.3只建立并验证atomic lock、idempotency、run/step attempt与idempotent-only resume能力；`legacy_daily_executor_cut_in_enabled=false`期间，既有`run_daily_ops_plan`仍是executor，不能声称daily run已经由canonical lease控制。F1.4必须完成executor adapter与terminal state parity后才允许切换。
+Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。F1.4后`legacy_daily_executor_cut_in_enabled=true`：`daily-run`先获取canonical workflow/date lease，再通过兼容façade执行原步骤；每步PASS/SKIPPED/FAILED与terminal状态同时写入`outputs/run_control/daily/states/<idempotency-key>.json`和相邻`*.run_ledger.json`。相同spec/as-of已PASS时不重复运行；active lock、unsafe resume或attempt exhausted在runner前阻断。`validate-data`失败必须在ledger中把该步记为FAILED、下游记为BLOCKED，且不得生成后续score/report。该切换不启用non-daily dispatch。
 
 ## Closed-Market Mode
 
