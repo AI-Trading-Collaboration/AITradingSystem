@@ -10,6 +10,10 @@ from ai_trading_system.research_framework.runner import (
     ExperimentRunResult,
     run_experiment,
 )
+from ai_trading_system.research_framework.runtime_metadata import (
+    PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS,
+    with_pit_replay_observe_only_runtime_metadata,
+)
 from ai_trading_system.research_framework.spec import (
     ExperimentInputSpec,
     ExperimentOutputSpec,
@@ -35,6 +39,7 @@ __all__ = [
     "LifecyclePlugin",
     "OutputArtifactKind",
     "OutputRoot",
+    "PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS",
     "PluginRef",
     "PluginRegistry",
     "ReportPlugin",
@@ -42,4 +47,5 @@ __all__ = [
     "ResolvedExperimentSpec",
     "resolve_experiment_spec",
     "run_experiment",
+    "with_pit_replay_observe_only_runtime_metadata",
 ]

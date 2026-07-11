@@ -254,7 +254,9 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "G1_3b_notification_retry_writer_migration": "COMPLETE",
         "G1_3c_next_shared_helper_family": "COMPLETE",
         "G1_3c_checksum_helper_migration": "COMPLETE",
-        "G1_3d_runtime_metadata_helper_inventory": "IN_PROGRESS",
+        "G1_3d_runtime_metadata_helper_inventory": "COMPLETE",
+        "G1_3d_pit_replay_observe_only_metadata_migration": "COMPLETE",
+        "G1_3e_data_quality_and_safety_helper_inventory": "IN_PROGRESS",
     }
     assert phase_g["g1_current_evidence"]["direct_writer_before"] == 893
     assert phase_g["g1_current_evidence"]["direct_writer_after"] == 861
@@ -295,6 +297,18 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "passed": 155,
     }
     assert phase_g["g1_fourth_family_plan"]["architecture_fitness"]["passed"] == 164
+    assert phase_g["g1_current_evidence"]["private_runtime_metadata_helpers_removed"] == 10
+    assert phase_g["g1_current_evidence"][
+        "canonical_runtime_metadata_helper"
+    ] == "with_pit_replay_observe_only_runtime_metadata"
+    assert phase_g["g1_fifth_family_plan"]["inventory_ast_field_group_count"] == 14
+    assert phase_g["g1_fifth_family_plan"]["canonical_safety_false_field_count"] == 39
+    assert phase_g["g1_fifth_family_plan"]["private_metadata_helper_remaining_count"] == 0
+    assert phase_g["g1_fifth_family_plan"]["focused_validation"] == {
+        "status": "PASS",
+        "passed": 182,
+    }
+    assert phase_g["g1_fifth_family_plan"]["architecture_fitness"]["passed"] == 166
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -554,10 +568,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert runtime["validation"]["full_parallel"]["failed"] == 0
     for source in runtime["sources"]:
         if source.get("historical_phase_f2_runtime_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004F1"
-            assert source["current_hash_tracked_in"] == (
-                "phase_f1_operations_control_plane.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004F1", "ARCH-004G1.3D"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -726,10 +738,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3b["validation"]["architecture_fitness"]["passed"] == 162
     for source in phase_g1_3b["sources"]:
         if source.get("historical_phase_g1_3b_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G1.3C"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g1_3c_streaming_checksum_helper_migration.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004G1.3C", "ARCH-004G1.3D"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -751,6 +761,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3c["validation"]["focused"] == {"status": "PASS", "passed": 155}
     assert phase_g1_3c["validation"]["architecture_fitness"]["passed"] == 164
     for source in phase_g1_3c["sources"]:
+        if source.get("historical_phase_g1_3c_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G1.3D"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g1_3d_pit_replay_runtime_metadata_migration.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g1_3d = baseline["phase_g1_3d_pit_replay_runtime_metadata_migration"]
+    assert phase_g1_3d["status"] == "FIFTH_FAMILY_COMPLETE_G1_CONTINUES"
+    assert phase_g1_3d["family"] == {
+        "canonical_helper": "with_pit_replay_observe_only_runtime_metadata",
+        "canonical_safety_constant": "PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS",
+        "inventory_file_count": 42,
+        "inventory_ast_field_group_count": 14,
+        "migrated_module_count": 10,
+        "migrated_caller_count": 10,
+        "removed_private_metadata_helper_count": 10,
+        "private_metadata_helper_remaining_count": 0,
+        "safety_false_field_count": 39,
+    }
+    assert phase_g1_3d["parity"]["field_order"] == "PASS"
+    assert phase_g1_3d["parity"]["module_safety_constant_alias"] == "PASS"
+    assert phase_g1_3d["parity"]["generic_extra_fields_allowed"] is False
+    assert phase_g1_3d["validation"]["focused"] == {"status": "PASS", "passed": 182}
+    assert phase_g1_3d["validation"]["architecture_fitness"]["passed"] == 166
+    for source in phase_g1_3d["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -773,7 +810,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3C_COMPLETE_G1_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3D_COMPLETE_G1_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

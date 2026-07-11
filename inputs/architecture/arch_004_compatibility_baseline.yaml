@@ -578,6 +578,9 @@ phase_f2_runtime_lifecycle:
       sha256: 13e6d94274fe2597b8e4196f16c39a2aa39767e4e93c6dd3093867c809082984
     - path: src/ai_trading_system/research_framework/__init__.py
       sha256: f1d8c11d84957bdd590e8deaf9f61a0203ae463bd27636c03eef38578736308e
+      historical_phase_f2_runtime_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: src/ai_trading_system/research_framework/runner.py
       sha256: 32e828b8f47fbd00b3e1e067fac9460717785f6e35b3ab2106763e96d6d8d8b6
     - path: src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
@@ -1376,8 +1379,14 @@ phase_g1_3b_notification_retry_writer_migration:
       current_hash_tracked_in: phase_g1_3c_streaming_checksum_helper_migration.sources
     - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
       sha256: 3b3a487a61a95171fa5f2dc53505cac114508e5adcca6c4698e53be15eca03a4
+      historical_phase_g1_3b_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: tests/test_arch_004g_deprecation.py
       sha256: e234953d98cd161f1853309bf343becf0d5193df8088ca680203b11ffde8744d
+      historical_phase_g1_3b_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: tests/test_arch_004_refactor_policy.py
       sha256: 8a1199e767f6d24a6bb89e6fbf6490a08c5e44bbbce9465cc0218802e2ee4863
       historical_phase_g1_3b_hash: true
@@ -1478,24 +1487,54 @@ phase_g1_3c_streaming_checksum_helper_migration:
       sha256: 1a1779a2873668f20f1521ad7f0739f0c5136f077bc89678bb7a84ed6c0382c1
     - path: tests/test_arch_004g_shared_writers.py
       sha256: cb9dd8e52cf758495cb8c50977d4ce528294657c4cbc44bf9036a7f942bbdc7e
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: tests/test_arch_004_refactor_policy.py
       sha256: 1c4325a707ca033906e884efe026727f305df72cf772c1be5765bd88e94e2286
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
       sha256: 725f062da1d4753910ef4cadad1631029746dd09447a827a092a7f64d48e5bd2
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: docs/system_flow.md
       sha256: e7da049a0e17ad832293531b9deaeb6d0899f3b3b01d362d3af56195fa76bc0d
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: config/architecture/arch_004_refactor_policy.yaml
       sha256: 5b200ac0f7c71a898e52009b1e183c066ac2400aa896320e4eb5fa4d487b8c9e
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: inputs/architecture/arch_004_worktree_attribution.yaml
       sha256: 9b0dc1311f0bc00c65a8ca14a7a2ffdbb814ef56ef1464ccfa1fadb75b9e91a4
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: inputs/architecture/arch_004e_module_manifest.yaml
       sha256: d533812b9cdd8bb69064618a5440d2affad5f655cace1be302b3e0672e88f6a0
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: 308330148e17753c810129a37ea2d95c5f9e5182d64a9585c6cfc0d676260073
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: 31cf36c527a2e28cbbb1aa9998a39cb9d00a9ae9e48b111640127c6e0fd021b2
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: 049261bde5adb342c6c33b564ca08e5e9b1ead0de19e8f4acf6adee50ba8d4d9
+      historical_phase_g1_3c_hash: true
+      superseded_by_phase: ARCH-004G1.3D
+      current_hash_tracked_in: phase_g1_3d_pit_replay_runtime_metadata_migration.sources
   validation:
     focused: {status: PASS, passed: 155}
     scoped_ruff: PASS
@@ -1505,3 +1544,87 @@ phase_g1_3c_streaming_checksum_helper_migration:
       current_direct_writer_calls: 861
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T055201Z/test_runtime_summary.json
+
+phase_g1_3d_pit_replay_runtime_metadata_migration:
+  status: FIFTH_FAMILY_COMPLETE_G1_CONTINUES
+  as_of: 2026-07-11
+  family:
+    canonical_helper: with_pit_replay_observe_only_runtime_metadata
+    canonical_safety_constant: PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS
+    inventory_file_count: 42
+    inventory_ast_field_group_count: 14
+    migrated_module_count: 10
+    migrated_caller_count: 10
+    removed_private_metadata_helper_count: 10
+    private_metadata_helper_remaining_count: 0
+    safety_false_field_count: 39
+  parity:
+    field_order: PASS
+    fixed_generated_at_format: PASS
+    as_of_fallback: PASS
+    ai_regime_fields: PASS
+    source_validation_errors: PASS
+    task_report_identity: PASS
+    module_safety_constant_alias: PASS
+    safety_fields_false: PASS
+    generic_extra_fields_allowed: false
+    workflow_decisions_changed: false
+    production_effect: none
+  sources:
+    - path: src/ai_trading_system/research_framework/runtime_metadata.py
+      sha256: 57d7da2cd0111796990426fa7214bd04ec1e4d56cee87420a8bdfba30d4bc609
+    - path: src/ai_trading_system/research_framework/__init__.py
+      sha256: 4347abbf8a830deffaaa77fe9f50a7bf25afa307e9a3929e55d05530ba3f6b27
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure.py
+      sha256: 7f39471de328fa2f0c268c255422ca6760e97f8adeb28493b6d60743866f6eca
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
+      sha256: dd536c37d952730458f71e6b330bc0fd4f492a03a574639b1667ae83db7e3711
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
+      sha256: bba6eee8daeb3cf66848d5b583f5be323f5b4a369075bcbeb2279b4f866f02b9
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
+      sha256: 08a065bdaa1efcb052e8fbdae02678d7ff9e8874c6f384dbd319e0efe11f66d0
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck.py
+      sha256: c319743421bd1e5088d72d187d618f507b1b69dee7e924c0cd845417bd87f0d7
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
+      sha256: 15b347e7c82149be9eca45d54ce60602d98606e58211476287c967f2f0a6b988
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
+      sha256: d08efb13f43975e686f0b6fce043b0dd820cf7226e0c465972181a693456c195
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
+      sha256: db23269539270951bd69c8b8a2bb6954bd200a3f59e345363b200dca96477259
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
+      sha256: 730f5d6ba47eb346ebf4d47638d9f66e614075499eeda574d292c322abfd33ed
+    - path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
+      sha256: fd38fb4361058e39f95cccd298274e25c64f5acff3994481dfa136862a669290
+    - path: tests/test_arch_004g_shared_writers.py
+      sha256: c34f3f156c8ef595e4f955e59b388816b58fbb8e1efb78418368ec85aa5531b0
+    - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+      sha256: 520e18ce4ad00797e847897709ec92c943bb2dce3b7709ed1a41d0531f86f050
+    - path: tests/test_arch_004g_deprecation.py
+      sha256: 43e5eb87328434f5e615dfcb39368372123de63214c11f62c13336e6d6fe797f
+    - path: tests/test_arch_004_refactor_policy.py
+      sha256: d65c29c9677f39a859916a629b6e47810b4fce360267b517ca7d48ecf98188d1
+    - path: docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+      sha256: eefcce9bddf34eed046f45239b1811b1f353c6185c66d48443a6a34f6c8a1d3d
+    - path: docs/system_flow.md
+      sha256: 9687b2e4448268e14f61838288616e7c37ae949560d9452176ee1bb30bfe6d38
+    - path: config/architecture/arch_004_refactor_policy.yaml
+      sha256: 00e1192f8204e86686c23fb5d80de6bd66c27c3a87fb8abbfeaac059a0ec7529
+    - path: inputs/architecture/arch_004_worktree_attribution.yaml
+      sha256: 93ab3efd3bbbe478668aae3f4a585f2e0187d85662bc5fcfff4af6a99ea4c8ab
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: 3d1d915e0c90c6577f4e360d8e08ecef6b7a903022481879b85864f106439afa
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: 68c1e5785447c466f6788eb55907087a3934343d15c0d172a74ba3e0c77772a4
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: af57c0e4c68570f40ee554ab5e3bade07fb4e5e2f796a613dee17c9e7effe145
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: cbe8bc882eede43ab890ebe7b4ff56b618ec758ee1f6924825b597de67154a8d
+  validation:
+    focused: {status: PASS, passed: 182}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 166
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T061534Z/test_runtime_summary.json

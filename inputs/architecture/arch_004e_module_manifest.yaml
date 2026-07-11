@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 795
+module_count: 796
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -3845,7 +3845,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure.py
-  sha256: 61b45df1b5ea1bbf560ec96a18d314a36367a68b1ffab1bd76999b838498d40c
+  sha256: 7f39471de328fa2f0c268c255422ca6760e97f8adeb28493b6d60743866f6eca
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -3905,7 +3905,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
-  sha256: 28fb87f0c14e8af3f9206590f07ff71ceba56c1f0a73cc98f975a530e2e065c1
+  sha256: dd536c37d952730458f71e6b330bc0fd4f492a03a574639b1667ae83db7e3711
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -3945,7 +3945,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
-  sha256: 1bd6d023d5e511e913f64b9a28715f3b9a6d1017d194de7ee8ba2cd34aafb56d
+  sha256: bba6eee8daeb3cf66848d5b583f5be323f5b4a369075bcbeb2279b4f866f02b9
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -3985,7 +3985,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
-  sha256: 961f2683e66ea651e39b1901bcbdacdd0357d111da1e3b28d5457654602c6587
+  sha256: 08a065bdaa1efcb052e8fbdae02678d7ff9e8874c6f384dbd319e0efe11f66d0
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4005,7 +4005,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck.py
-  sha256: c90a1b97f0908c57c8a4bddf1c81acb82b03500640035cbcd120c29c1443febc
+  sha256: c319743421bd1e5088d72d187d618f507b1b69dee7e924c0cd845417bd87f0d7
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4025,7 +4025,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
-  sha256: 576275f09344ed4d504e0c0049a77f3ef2e06e1238b4e699086ca534ddf41824
+  sha256: 15b347e7c82149be9eca45d54ce60602d98606e58211476287c967f2f0a6b988
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4045,7 +4045,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
-  sha256: 3bb534963dd059087bbdc4d545df963eed4d8267750869c2b26f116fc2b49ba5
+  sha256: d08efb13f43975e686f0b6fce043b0dd820cf7226e0c465972181a693456c195
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4065,7 +4065,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
-  sha256: 7ce2eecf0079cb3b1e8bec7ef22a5701b53b984bd52e7e2262b36e2ce9ca6548
+  sha256: db23269539270951bd69c8b8a2bb6954bd200a3f59e345363b200dca96477259
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4085,7 +4085,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
-  sha256: 6f71cf24989d4b525c75322e2bc5dede9b066f0fabf8ece60f801d4f29e1e8ae
+  sha256: 730f5d6ba47eb346ebf4d47638d9f66e614075499eeda574d292c322abfd33ed
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -4105,7 +4105,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure
   path: src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
-  sha256: 9553ae3e0ec4074f837e836847d4e271c6c2561e2f3373d6ef1a5a2e0157ad82
+  sha256: fd38fb4361058e39f95cccd298274e25c64f5acff3994481dfa136862a669290
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -11810,7 +11810,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_framework.__init__
   path: src/ai_trading_system/research_framework/__init__.py
-  sha256: f1d8c11d84957bdd590e8deaf9f61a0203ae463bd27636c03eef38578736308e
+  sha256: 4347abbf8a830deffaaa77fe9f50a7bf25afa307e9a3929e55d05530ba3f6b27
   rule_id: research_framework
   owner_profile: research
   owners:
@@ -11877,6 +11877,28 @@ modules:
 - module_id: src.ai_trading_system.research_framework.runner
   path: src/ai_trading_system/research_framework/runner.py
   sha256: 32e828b8f47fbd00b3e1e067fac9460717785f6e35b3ab2106763e96d6d8d8b6
+  rule_id: research_framework
+  owner_profile: research
+  owners:
+    code_owner: research_platform
+    policy_owner: research_governance
+    data_owner: research_data_governance
+    artifact_owner: research_governance
+    runtime_owner: research_operations
+  layer: application
+  category: research_experiment_platform
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004d_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.research_framework.runtime_metadata
+  path: src/ai_trading_system/research_framework/runtime_metadata.py
+  sha256: 57d7da2cd0111796990426fa7214bd04ec1e4d56cee87420a8bdfba30d4bc609
   rule_id: research_framework
   owner_profile: research
   owners:

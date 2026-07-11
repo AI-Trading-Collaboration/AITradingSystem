@@ -651,7 +651,9 @@ phase_g_execution:
     G1_3b_notification_retry_writer_migration: COMPLETE
     G1_3c_next_shared_helper_family: COMPLETE
     G1_3c_checksum_helper_migration: COMPLETE
-    G1_3d_runtime_metadata_helper_inventory: IN_PROGRESS
+    G1_3d_runtime_metadata_helper_inventory: COMPLETE
+    G1_3d_pit_replay_observe_only_metadata_migration: COMPLETE
+    G1_3e_data_quality_and_safety_helper_inventory: IN_PROGRESS
   g1_current_evidence:
     migrated_modules:
       - src/ai_trading_system/cache_catalog.py
@@ -683,6 +685,9 @@ phase_g_execution:
     canonical_checksum_helper: sha256_path
     private_checksum_helpers_removed: 8
     checksum_callers_using_canonical_helper: 13
+    canonical_runtime_metadata_helper: with_pit_replay_observe_only_runtime_metadata
+    private_runtime_metadata_helpers_removed: 10
+    runtime_metadata_callers_using_canonical_helper: 10
     runtime_removal_performed: false
     production_effect: none
   g1_first_family_validation:
@@ -778,6 +783,35 @@ phase_g_execution:
       current_direct_writer_calls: 861
       violation_count: 0
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T055201Z/test_runtime_summary.json
+    production_effect: none
+  g1_fifth_family_plan:
+    status: COMPLETE
+    family: pit_replay_observe_only_runtime_metadata
+    inventory_file_count: 42
+    inventory_ast_field_group_count: 14
+    migrated_module_target: 10
+    private_metadata_helper_removal_target: 10
+    real_caller_count: 10
+    canonical_helper: with_pit_replay_observe_only_runtime_metadata
+    canonical_safety_false_field_count: 39
+    preserve_field_order: true
+    preserve_generated_at_format: true
+    preserve_ai_regime_fields: true
+    preserve_module_safety_constant_alias: true
+    generic_extra_fields_allowed: false
+    inventory_module_count_after: 796
+    migrated_module_count: 10
+    removed_private_metadata_helper_count: 10
+    private_metadata_helper_remaining_count: 0
+    canonical_caller_count: 10
+    focused_validation: {status: PASS, passed: 182}
+    scoped_ruff: PASS
+    architecture_fitness:
+      status: PASS
+      passed: 166
+      current_direct_writer_calls: 861
+      violation_count: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T061534Z/test_runtime_summary.json
     production_effect: none
 
 safety_boundary:

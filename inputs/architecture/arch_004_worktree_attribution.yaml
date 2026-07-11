@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3C_COMPLETE_G1_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G1_3D_COMPLETE_G1_CONTINUES
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -97,9 +97,20 @@ arch_004_owned_paths:
   - src/ai_trading_system/research_framework/__init__.py
   - src/ai_trading_system/research_framework/spec.py
   - src/ai_trading_system/research_framework/runner.py
+  - src/ai_trading_system/research_framework/runtime_metadata.py
   - src/ai_trading_system/research_framework/plugins/__init__.py
   - src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
   - src/ai_trading_system/dynamic_strategy_growth_tilt_candidate_family_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
+  - src/ai_trading_system/dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
   - config/research/experiments/growth_tilt_candidate_family_closure.yaml
   - config/architecture/arch_004c_dependency_policy.yaml
   - inputs/architecture/arch_004c_direct_writer_baseline.yaml

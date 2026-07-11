@@ -2,16 +2,35 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
 
-from ai_trading_system import cache_catalog, data_refresh_audit, data_source_fallback_policy
+from ai_trading_system import (
+    cache_catalog,
+    data_refresh_audit,
+    data_source_fallback_policy,
+    dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure,
+    dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation,
+    dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure,
+)
 from ai_trading_system.platform.artifacts import (
     sha256_path,
     write_json_atomic,
     write_json_atomic_without_trailing_newline,
     write_text_atomic,
+)
+from ai_trading_system.research_framework.runtime_metadata import (
+    PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS,
+    with_pit_replay_observe_only_runtime_metadata,
 )
 from ai_trading_system.trading_engine import (
     data_freshness_summary,
@@ -138,3 +157,64 @@ def test_g1_3c_private_checksum_helpers_are_removed() -> None:
 
     assert all(not hasattr(module, "_sha256") for module in modules)
     assert all(not hasattr(module, "_sha256_path") for module in modules)
+
+
+def test_g1_3d_pit_replay_runtime_metadata_preserves_ordered_contract() -> None:
+    errors = ["source_a missing", "source_b invalid"]
+    result = with_pit_replay_observe_only_runtime_metadata(
+        {"existing": "value", "as_of": "legacy", "production_effect": "unsafe"},
+        source_validation_errors=errors,
+        as_of_date=date(2026, 7, 11),
+        task_register_id="TRADING-TEST",
+        report_type="pit_replay_test",
+        generated_at="2026-07-11T00:00:00Z",
+    )
+
+    assert list(result)[:14] == [
+        "existing",
+        "as_of",
+        "production_effect",
+        "generated_at",
+        "market_regime",
+        "market_regime_summary",
+        "source_validation_errors",
+        "source_validation_error_count",
+        "manual_review_required",
+        "manual_review_only",
+        "observe_only",
+        "task_register_id",
+        "report_type",
+        "broker_action",
+    ]
+    assert result["as_of"] == "2026-07-11"
+    assert result["generated_at"] == "2026-07-11T00:00:00Z"
+    assert result["source_validation_errors"] is errors
+    assert result["source_validation_error_count"] == 2
+    assert result["manual_review_required"] is True
+    assert result["manual_review_only"] is True
+    assert result["observe_only"] is True
+    assert result["production_effect"] == "none"
+    assert result["broker_action"] == "none"
+    assert all(result[field] is False for field in PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS)
+
+
+def test_g1_3d_private_metadata_helpers_are_removed_and_safety_alias_is_shared() -> None:
+    modules = (
+        dynamic_strategy_growth_tilt_pit_replay_engine_blocker_closure,
+        dynamic_strategy_growth_tilt_remaining_candidate_pit_replay_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_level_pit_replay_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_engine_remediation,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation,
+        dynamic_strategy_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure,
+    )
+
+    assert len(PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS) == 39
+    assert all(not hasattr(module, "_with_runtime_metadata") for module in modules)
+    assert all(
+        module.SAFETY_FALSE_FIELDS is PIT_REPLAY_OBSERVE_ONLY_SAFETY_FALSE_FIELDS
+        for module in modules
+    )

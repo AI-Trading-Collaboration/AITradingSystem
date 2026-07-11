@@ -18,7 +18,7 @@ all_removal_gate_ids: &all_removal_gate_ids
   - sunset_condition_met
   - owner_signoff
 repository:
-  python_module_count: 795
+  python_module_count: 796
   python_test_file_count: 1113
   direct_writer_baseline_count: 894
   direct_writer_current_count: 861
@@ -142,14 +142,14 @@ surfaces:
     migration_wave: G5
     path: src/ai_trading_system/dynamic_strategy_*.py
     file_count: 99
-    line_count: 89805
-    byte_count: 3631105
-    source_sha256: 013f180d663950e791f666d5cec9581a07dfcce266b661b0a6e38b52a83fff3a
-    top_level_function_count: 2154
+    line_count: 89155
+    byte_count: 3611145
+    source_sha256: 9b7a583c03b5333075ff764aad392dbac0d86442b962ad7a097df1e370584378
+    top_level_function_count: 2144
     top_level_class_count: 0
     cli_command_decorator_count: 0
     static_import_reachability_file_count: 3
-    test_reference_file_count: 101
+    test_reference_file_count: 102
     docs_config_reference_file_count: 111
     required_removal_gate_count: 12
     removal_ready: false
