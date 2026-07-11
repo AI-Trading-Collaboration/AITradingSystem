@@ -1,0 +1,10 @@
+schema_version: arch_004e_artifact_fragment.v1
+fragment_id: artifact.report_audit_index
+fragment_kind: artifact
+owner: reporting_governance
+target_id: artifact_catalog
+artifact_family: report_audit_index
+spec_path: config/reporting/reporting_architecture.yaml
+additive_sidecars: [report_audit_index_view_model.v1]
+compatibility_catalog_entry_required: false
+generated_source_of_truth_active: false

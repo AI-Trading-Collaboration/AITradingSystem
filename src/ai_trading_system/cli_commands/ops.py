@@ -89,6 +89,7 @@ from ai_trading_system.platform.operations import (
     load_periodic_operations_control_policy,
     write_periodic_operations_plan,
 )
+from ai_trading_system.platform.reporting import write_owner_daily_brief_sidecars
 from ai_trading_system.report_traceability import default_report_trace_bundle_path
 from ai_trading_system.reports.calculation_explainers import default_calculation_explainers_path
 from ai_trading_system.reports.market_panel import default_market_panel_json_path
@@ -567,6 +568,10 @@ def _refresh_reader_brief_from_daily_run_summary(
     )
     html_path = write_reader_brief_html(payload, reader_brief_html_path)
     json_path = write_reader_brief_json(payload, reader_brief_json_path)
+    owner_json_path, owner_html_path = write_owner_daily_brief_sidecars(
+        payload,
+        output_dir=reports_dir,
+    )
     quality_payload = build_reader_brief_quality_payload(
         reader_brief_payload=payload,
         reader_brief_json_path=json_path,
@@ -580,7 +585,14 @@ def _refresh_reader_brief_from_daily_run_summary(
         quality_payload,
         reader_brief_quality_md_path,
     )
-    return html_path, json_path, quality_json_path, quality_md_path
+    return (
+        html_path,
+        json_path,
+        quality_json_path,
+        quality_md_path,
+        owner_json_path,
+        owner_html_path,
+    )
 
 
 @ops_app.command("daily-run")

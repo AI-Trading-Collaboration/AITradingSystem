@@ -1,0 +1,62 @@
+schema_version: reporting_architecture_policy.v1
+policy_id: arch_004f3_reporting_architecture_v1
+owner: reporting_governance
+version: 1.0.0
+status: active_arch_004f3
+policy_metadata:
+  rationale: >
+    Owner daily reading, research review, and audit navigation currently share
+    one 29k-line Reader Brief builder/renderer. A fixed typed core is required
+    so new reports do not keep expanding the owner surface or recompute source
+    conclusions inside the reporting layer.
+  intended_effect: >
+    Establish three reader tiers, a maximum-ten-section Owner Daily Brief,
+    due-and-actionable-only owner queue, additive sidecars, and an explicit
+    limited disposition for unclassified legacy registry entries.
+  validation_evidence: >
+    ARCH-004F3 inventory, pure-contract, provider/view-model/renderer parity,
+    report-validation, architecture-fitness, and full parallel tests.
+  review_condition: >
+    Review before changing core section membership/order, queue eligibility,
+    legacy disposition, cut-in flags, source-key declarations, production
+    effect, or any report classification rule.
+owner_daily_brief:
+  max_core_sections: 10
+  core_sections:
+    - section_id: system_status
+      source_keys: [status, status_panel, run_context]
+    - section_id: today_decision
+      source_keys: [narrative_executive_summary, executive_decision, action_checklist]
+    - section_id: market_and_score_change
+      source_keys: [market_situation_snapshot, score_change_attribution_summary, score_change_narrative]
+    - section_id: position_and_binding_gates
+      source_keys: [score_to_position_funnel, component_score_explainability, binding_gate_ladder]
+    - section_id: data_quality_and_pit
+      source_keys: [data_quality_pit_safety, pit_source_manifest, data_refresh_audit]
+    - section_id: owner_action_queue
+      source_keys: [manual_review_queue, action_checklist]
+    - section_id: portfolio_and_shadow
+      source_keys: [backtest_shadow_governance, portfolio_control_research, portfolio_control_forward_aging]
+    - section_id: research_review_due
+      source_keys: [research_governance_summary, research_monthly_review_pack, research_roadmap_dashboard]
+    - section_id: operations_health
+      source_keys: [daily_task_dashboard, etf_operations_health, report_quality_gate]
+    - section_id: safety_and_navigation
+      source_keys: [production_effect, missing_limited_artifact_impact, report_navigation_groups, appendix_links]
+  owner_queue_requires_due: true
+  owner_queue_requires_actionable: true
+research_review_pack:
+  auto_tune_allowed: false
+  proposal_may_equal_adoption: false
+audit_index:
+  include_all_registry_entries: true
+  include_legacy_unclassified: true
+legacy_compatibility:
+  unclassified_disposition: AUDIT_INDEX_LIMITED_UNCLASSIFIED
+  reader_brief_cut_in_enabled: false
+  additive_sidecars_only: true
+  preserve_legacy_path_schema_status: true
+safety_boundary:
+  reporting_layer_recompute_allowed: false
+  production_effect: none
+  broker_action: none

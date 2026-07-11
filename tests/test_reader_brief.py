@@ -650,6 +650,14 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "不生成交易指令" in result.output
     assert html_path.exists()
     assert json_path.exists()
+    owner_json_path = tmp_path / "owner_daily_brief_2026-05-04.json"
+    owner_html_path = tmp_path / "owner_daily_brief_2026-05-04.html"
+    assert owner_json_path.exists()
+    assert owner_html_path.exists()
+    owner_payload = json.loads(owner_json_path.read_text(encoding="utf-8"))
+    assert len(owner_payload["sections"]) == 10
+    assert owner_payload["production_effect"] == "none"
+    assert owner_html_path.read_text(encoding="utf-8").count('data-section-id="') == 10
     html = html_path.read_text(encoding="utf-8")
     assert "Reader Brief" in html
     assert "Executive Summary" in html

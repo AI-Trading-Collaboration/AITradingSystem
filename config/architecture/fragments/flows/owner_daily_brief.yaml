@@ -1,0 +1,9 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.owner_daily_brief
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: legacy_reader_brief_payload
+stages: [section_provider, typed_view_model, json_html_renderer, additive_sidecar]
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

@@ -1,0 +1,46 @@
+schema_version: reporting_architecture_inventory.v1
+status: TRACKED_F3_CURRENT_WITH_HISTORICAL_BASELINE
+as_of: 2026-07-11
+reader_brief:
+  path: src/ai_trading_system/reports/reader_brief.py
+  sha256: b2a4a858d59250c0a726e010f27f41b04b1abffff6a3c39f45ee6b2e3a08234f
+  line_count: 29027
+  top_level_function_count: 366
+report_registry:
+  path: config/report_registry.yaml
+  sha256: d0a5fb68a6904965ed622116ab71e9b571bc8bf18a96805a3d58c576f62927b4
+  entry_count: 1358
+  explicit_production_effect_count: 669
+  missing_explicit_production_effect_count: 689
+  explicit_reader_tier_count: 0
+  explicit_actionable_count: 0
+  explicit_section_provider_count: 0
+  explicit_view_model_count: 0
+  explicit_renderer_count: 0
+  explicit_canonical_source_count: 0
+  cadence_counts:
+    ad_hoc: 949
+    daily: 83
+    event_driven: 1
+    manual: 236
+    monthly: 15
+    on_change: 10
+    weekly: 64
+  audience_counts:
+    daily_reader: 1
+    investor: 8
+    operator: 127
+    owner: 77
+    project_owner: 773
+    reviewer: 371
+    system: 1
+generated_report_fragments:
+  root: config/architecture/fragments/reports
+  fragment_count: 4
+  active_source_of_truth_count: 0
+historical_f3_1_generated_report_fragments:
+  fragment_count: 1
+  active_source_of_truth_count: 0
+legacy_unclassified_entry_count: 1358
+legacy_unclassified_disposition: AUDIT_INDEX_LIMITED_UNCLASSIFIED
+production_effect: none

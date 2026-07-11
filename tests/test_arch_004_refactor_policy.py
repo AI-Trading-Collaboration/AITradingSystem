@@ -14,14 +14,14 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def test_arch_004_phase_f3_ready_policy_keeps_freeze_and_preserves_safety() -> None:
+def test_arch_004_phase_g_ready_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
-    assert policy["status"] == "phase_f3_ready"
-    assert policy["program"]["current_phase"] == "ARCH-004F3"
+    assert policy["status"] == "phase_g_ready"
+    assert policy["program"]["current_phase"] == "ARCH-004G"
     assert policy["program"]["current_phase_status"] == "READY"
-    assert policy["program"]["next_phase"] == "ARCH-004G"
+    assert policy["program"]["next_phase"] == "ARCH-004H"
     assert policy["program"]["next_phase_unblocked"] is False
     assert policy["feature_freeze"]["active"] is True
     assert "NEW_TASK_SHAPED_RESEARCH_MODULE" in policy["feature_freeze"]["forbidden_change_classes"]
@@ -190,6 +190,33 @@ def test_arch_004_phase_f3_ready_policy_keeps_freeze_and_preserves_safety() -> N
         "official_policy_sources": "closed_market_only"
     }
     assert phase_f1["compatibility_findings"]["additive_shadow_artifact_emission"] == ("COMPLETE")
+    phase_f3 = policy["phase_f3_execution"]
+    assert phase_f3["status"] == "COMPLETE"
+    assert phase_f3["stages"] == {
+        "F3_1_inventory_policy_and_characterization": "COMPLETE",
+        "F3_2_pure_contracts_and_typed_catalog": "COMPLETE",
+        "F3_3_owner_daily_brief_reference_cut_in": "COMPLETE",
+        "F3_4_research_review_pack": "COMPLETE",
+        "F3_5_audit_index_and_generated_fragments": "COMPLETE",
+        "F3_6_cut_in_parity_and_closeout": "COMPLETE",
+    }
+    assert phase_f3["owner_daily_brief_core_section_limit"] == 10
+    assert phase_f3["owner_queue_requires_due_and_actionable"] is True
+    assert phase_f3["reporting_layer_may_recompute_investment_conclusion"] is False
+    assert phase_f3["legacy_unclassified_disposition"] == (
+        "AUDIT_INDEX_LIMITED_UNCLASSIFIED"
+    )
+    assert phase_f3["next_phase_unblocked"] is True
+    assert phase_f3["completion_validation"]["full_parallel"] == {
+        "status": "PASS",
+        "passed": 5494,
+        "failed": 0,
+        "warnings": 642,
+        "elapsed_seconds": 923.4,
+        "runtime_artifact": (
+            "outputs/validation_runtime/full_20260711T040642Z/test_runtime_summary.json"
+        ),
+    }
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -332,6 +359,12 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_c["validation"]["full_parallel"]["passed"] == 5404
     assert phase_c["validation"]["full_parallel"]["failed"] == 0
     for source in phase_c["sources"]:
+        if source.get("historical_phase_c_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004F3"
+            assert source["current_hash_tracked_in"] == (
+                "phase_f3_reporting_architecture.sources"
+            )
+            continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
     phase_d = baseline["phase_d_reference_vertical_slice"]
@@ -476,6 +509,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f1["parity"]["periodic_task_plan_count"] == 41
     assert phase_f1["parity"]["periodic_automatic_command_dispatch"] is False
     for source in phase_f1["sources"]:
+        if source.get("historical_phase_f1_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004F3"
+            assert source["current_hash_tracked_in"] == (
+                "phase_f3_reporting_architecture.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_f3 = baseline["phase_f3_reporting_architecture"]
+    assert phase_f3["status"] == "COMPLETE_G_READY"
+    assert phase_f3["contracts"]["owner_daily_core_section_count"] == 10
+    assert phase_f3["contracts"]["owner_queue_requires_due_and_actionable"] is True
+    assert phase_f3["contracts"]["reporting_layer_recompute_allowed"] is False
+    assert phase_f3["contracts"]["research_auto_tune_allowed"] is False
+    assert phase_f3["contracts"]["proposal_may_equal_adoption"] is False
+    assert phase_f3["contracts"]["reader_brief_native_cut_in_enabled"] is False
+    assert phase_f3["parity"]["report_registry_coverage_count"] == 1358
+    assert phase_f3["parity"]["report_registry_silent_drop_count"] == 0
+    assert phase_f3["repository_inventory"] == {
+        "python_module_count_including_ignored": 793,
+        "python_test_and_support_file_count": 1111,
+        "aggregate_fragment_count": 13,
+        "report_fragment_count": 4,
+    }
+    assert phase_f3["validation"]["full_parallel"]["passed"] == 5494
+    assert phase_f3["validation"]["full_parallel"]["failed"] == 0
+    for source in phase_f3["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -497,7 +557,7 @@ def test_arch_004c_dependency_policy_uses_count_ratchet_without_waiver() -> None
 def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> None:
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
-    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F1_IN_PROGRESS"
+    assert attribution["status"] == "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F3_COMPLETE"
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/research/growth_tilt_owner_decision_resolution.md",

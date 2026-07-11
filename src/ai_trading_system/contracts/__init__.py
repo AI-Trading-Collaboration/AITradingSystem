@@ -25,10 +25,21 @@ from ai_trading_system.contracts.operations import (
     build_operations_shadow_plan,
     resolve_operations_due,
 )
+from ai_trading_system.contracts.report_audit import (
+    ReportAuditContractError,
+    ReportAuditIndexViewModel,
+)
 from ai_trading_system.contracts.report_spec import (
+    OwnerActionItem,
+    OwnerDailyBriefViewModel,
     ReaderTier,
     ReportAudience,
+    ReportCatalogAssessment,
+    ReportCatalogDisposition,
+    ReportCatalogEntryAssessment,
     ReportContractError,
+    ReportSectionSpec,
+    ReportSectionViewModel,
     ReportSpec,
 )
 from ai_trading_system.contracts.research_context import (
@@ -55,6 +66,11 @@ from ai_trading_system.contracts.research_lifecycle import (
     ResearchReviewDecision,
     ResultVisibility,
     apply_periodic_research_review,
+)
+from ai_trading_system.contracts.research_review import (
+    ResearchReviewContractError,
+    ResearchReviewItem,
+    ResearchReviewPackViewModel,
 )
 from ai_trading_system.contracts.status import (
     CanonicalStatus,
@@ -108,10 +124,19 @@ __all__ = [
     "PeriodicOperationsPlanEntry",
     "PolicyRef",
     "PolicyRole",
+    "OwnerActionItem",
+    "OwnerDailyBriefViewModel",
     "ReaderTier",
+    "ReportCatalogAssessment",
+    "ReportCatalogDisposition",
+    "ReportCatalogEntryAssessment",
     "ReportAudience",
+    "ReportAuditContractError",
+    "ReportAuditIndexViewModel",
     "ReportContractError",
     "ReportSpec",
+    "ReportSectionSpec",
+    "ReportSectionViewModel",
     "ResearchContextError",
     "ResearchEvaluationContext",
     "ResearchLifecycleError",
@@ -121,6 +146,9 @@ __all__ = [
     "ResearchOwnerDecision",
     "ResearchPreregistration",
     "ResearchReviewDecision",
+    "ResearchReviewContractError",
+    "ResearchReviewItem",
+    "ResearchReviewPackViewModel",
     "ResearchWindowRole",
     "ResearchWindowSpec",
     "RunLedger",

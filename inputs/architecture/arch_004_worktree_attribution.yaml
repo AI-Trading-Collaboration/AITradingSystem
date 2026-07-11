@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F1_IN_PROGRESS
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_F3_COMPLETE
 as_of: 2026-07-11
 base_commit: 1f7cc3d00b3a3da51cc03633473f1ed0c326a668
 production_effect: none
@@ -10,6 +10,7 @@ arch_004_owned_paths:
   - config/scheduled_tasks.yaml
   - config/operations/runtime_control.yaml
   - config/operations/periodic_control.yaml
+  - config/reporting/reporting_architecture.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -28,6 +29,7 @@ arch_004_owned_paths:
   - inputs/architecture/arch_004_compatibility_baseline.yaml
   - inputs/architecture/arch_004_predecessor_reconciliation.yaml
   - inputs/architecture/arch_004_worktree_attribution.yaml
+  - inputs/architecture/arch_004f3_reporting_inventory.yaml
   - src/ai_trading_system/cli_commands/research_execution_common.py
   - src/ai_trading_system/contracts/__init__.py
   - src/ai_trading_system/contracts/status.py
@@ -36,6 +38,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/contracts/data_quality.py
   - src/ai_trading_system/contracts/workflow.py
   - src/ai_trading_system/contracts/report_spec.py
+  - src/ai_trading_system/contracts/report_audit.py
+  - src/ai_trading_system/contracts/research_review.py
   - src/ai_trading_system/legacy/__init__.py
   - src/ai_trading_system/legacy/research_context_adapter.py
   - src/ai_trading_system/legacy/platform_contract_adapters.py
@@ -48,6 +52,20 @@ arch_004_owned_paths:
   - src/ai_trading_system/platform/operations/__init__.py
   - src/ai_trading_system/platform/operations/runtime_control.py
   - src/ai_trading_system/platform/operations/periodic_control.py
+  - src/ai_trading_system/platform/reporting/__init__.py
+  - src/ai_trading_system/platform/reporting/inventory.py
+  - src/ai_trading_system/platform/reporting/owner_daily.py
+  - src/ai_trading_system/platform/reporting/research_review.py
+  - src/ai_trading_system/platform/reporting/audit_index.py
+  - config/architecture/fragments/reports/owner_daily_brief.yaml
+  - config/architecture/fragments/reports/research_review_pack.yaml
+  - config/architecture/fragments/reports/report_audit_index.yaml
+  - config/architecture/fragments/artifacts/owner_daily_brief.yaml
+  - config/architecture/fragments/artifacts/research_review_pack.yaml
+  - config/architecture/fragments/artifacts/report_audit_index.yaml
+  - config/architecture/fragments/flows/owner_daily_brief.yaml
+  - config/architecture/fragments/flows/research_review_pack.yaml
+  - config/architecture/fragments/flows/report_audit_index.yaml
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/dependency_gate.py
   - src/ai_trading_system/config.py
@@ -92,6 +110,7 @@ arch_004_owned_paths:
   - tests/test_arch_004e_devex.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+  - docs/requirements/ARCH-004F3_Reporting_Architecture.md
   - docs/operations/operations_runbook.md
   - docs/runbooks/scheduled_task_orchestration.md
   - docs/research/current_research_strategy_execution_chain.md
@@ -101,13 +120,16 @@ arch_004_owned_paths:
   - src/ai_trading_system/scheduled_tasks.py
   - src/ai_trading_system/ops_daily.py
   - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/cli_commands/reports.py
   - src/ai_trading_system/legacy/research_campaign_adapter.py
   - src/ai_trading_system/legacy/scheduled_tasks_adapter.py
   - src/ai_trading_system/legacy/periodic_operations_adapter.py
+  - src/ai_trading_system/legacy/reporting_catalog_adapter.py
   - tests/test_arch_004f2_research_lifecycle.py
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_scheduled_tasks.py
   - tests/test_ops_daily.py
+  - tests/test_reader_brief.py
   - tests/test_cli_direct.py
 
 shared_but_attributable_paths:
@@ -122,6 +144,7 @@ shared_but_attributable_paths:
       - ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES
       - ARCH-004F2_RESEARCH_LIFECYCLE_AND_EXECUTION_CHAIN
       - ARCH-004F1_OPERATIONS_CONTROL_PLANE
+      - ARCH-004F3_REPORTING_ARCHITECTURE
   - path: docs/task_register_completed.md
     attributable_tasks:
       - TRADING-2438P_CURRENT_RESEARCH_STRATEGY_AND_PERIODIC_OPTIMIZATION_REVIEW

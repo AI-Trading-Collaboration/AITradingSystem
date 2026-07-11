@@ -212,6 +212,9 @@ phase_c_platform_contracts:
       sha256: 49745997548b6c7d13a46ae4a7b04d2e182f33db821cf01f1241d19db7bb39dd
     - path: src/ai_trading_system/contracts/report_spec.py
       sha256: 4b658eb0f770bb4cf569372617331c3ede492e57c7bd403df0bf9506f1f3f63f
+      historical_phase_c_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: src/ai_trading_system/platform/artifacts/writer.py
       sha256: 8b8f3cb65ceef164ea7cc3add479737e8a27449a46de24c34074cdfbe0ad6461
     - path: src/ai_trading_system/platform/config/resolver.py
@@ -228,6 +231,9 @@ phase_c_platform_contracts:
       sha256: 33522d62a1cad4337d1aa11ce7c877b18af906b9d9caf7f8b5c5fbca96e6a062
     - path: src/ai_trading_system/run_artifacts.py
       sha256: de75dc16f262ca62f0bbbfc99a3c8b0a566d1fb5832a0799be092251b1e7193e
+      historical_phase_c_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: src/ai_trading_system/data/quality.py
       sha256: a28689602c7a2ff2542484557c11c5f317bd64a9888b3e0c163122e43b08cd7e
   parity:
@@ -717,6 +723,9 @@ phase_f1_operations_control_plane:
       sha256: 0213a833934cb942462d0131f2beaf6f61807ea360a9afcae9121c89827d4521
     - path: src/ai_trading_system/contracts/__init__.py
       sha256: 7fc86841d215a9e354f7ab3a3f998438def8f61ded3aea884110c67426b30f60
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
       sha256: 8dc31e6a0c47678367e4c097e86721f7412a5108af9d8cc188339bc9dd48cee0
     - path: src/ai_trading_system/legacy/__init__.py
@@ -725,12 +734,18 @@ phase_f1_operations_control_plane:
       sha256: 3c0a5ba9cc2720504475f7f762e7233d9e8a16b92ce4917c65734da9f5c9a151
     - path: tests/test_arch_004_refactor_policy.py
       sha256: 29daf794c64512ccb095b5ebbe60053db27550f91e7d00b1b5d1a19444e464cf
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: src/ai_trading_system/scheduled_tasks.py
       sha256: 86070baba8d0ec5d65de5fd616a13249074b3cf9c314ce12fd5e372372103052
     - path: src/ai_trading_system/ops_daily.py
       sha256: 5a29b697ed8d394a655625f3181daf61a757d729070cca71912d3218a456efce
     - path: src/ai_trading_system/cli_commands/ops.py
       sha256: 4c97a887cae3137dbd9f4d7b1ab0ba0e24e107022d9597729d69889a17b8b6a2
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: config/scheduled_tasks.yaml
       sha256: f1b001859686467d74d257bf022b67053c273f02f39f1ae69a7dfeaf3ed5f42c
     - path: config/operations/runtime_control.yaml
@@ -743,6 +758,9 @@ phase_f1_operations_control_plane:
       sha256: de4cc0d8f832919c46faf9dd1137a8809319b39182b9a99d73dab5b251434fdc
     - path: tests/test_ops_daily.py
       sha256: c639f03201195007baa03aa27646b8fd03ee585354aa51a5689749c3f7af29f9
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: tests/test_cli_direct.py
       sha256: 89f3386c3ea0b37f5d51867769d4b45a964a0276d3bf9cab9b7d3ec201f77532
     - path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md
@@ -753,20 +771,44 @@ phase_f1_operations_control_plane:
       sha256: 3703bac56c4f794a54e20c3e504bb901f318f1fdef9c22121161a3ebbaf1a653
     - path: docs/artifact_catalog.md
       sha256: bc8fc551f71ba70fb3ad56ac4d7d01fcf409cbe5d54cedb55330400738c3e892
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: docs/system_flow.md
       sha256: 230d67d8d5353285f19c6162585bb409398784a95aed465bc5935e780fc2a1a7
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: config/architecture/arch_004_refactor_policy.yaml
       sha256: 6826fc9a1444b3e3276b2156d409bfa58f1b9a5ee8874ca90a7ffa2df9850021
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: inputs/architecture/arch_004e_module_manifest.yaml
       sha256: f965ff39b5ad814a8216c60e9e51510381f182d8733a57082c3e8f310dcb9bbb
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: inputs/architecture/arch_004e_test_manifest.yaml
       sha256: 09ff7c2a0f86cea659789760b3e9a2c19da1efe3b05f17bdbec1cb2148ee101e
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
       sha256: 862f259013adc6cb98176a6211fe8f539b431e80499bf2642822b2ebea42e576
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: inputs/architecture/arch_004e_architecture_fitness.yaml
       sha256: b467c149e7e857239821eeb56b348de6ad9ddd4f34cfa023b15a56c3eacca010
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
     - path: inputs/architecture/arch_004_worktree_attribution.yaml
       sha256: 5a2cf2d7658970a4aeadc27acad3fc1413a901de94acd4eb6c6b8a257238e302
+      historical_phase_f1_hash: true
+      superseded_by_phase: ARCH-004F3
+      current_hash_tracked_in: phase_f3_reporting_architecture.sources
   validation:
     focused:
       status: PASS
@@ -805,3 +847,101 @@ phase_f1_operations_control_plane:
       warnings: 642
       elapsed_seconds: 1013.63
       runtime_artifact: outputs/validation_runtime/full_20260711T030639Z/test_runtime_summary.json
+
+phase_f3_reporting_architecture:
+  status: COMPLETE_G_READY
+  as_of: 2026-07-11
+  contracts:
+    reporting_policy_schema: reporting_architecture_policy.v1
+    owner_daily_view_model_schema: owner_daily_brief_view_model.v1
+    research_review_pack_schema: research_review_pack_view_model.v1
+    report_audit_index_schema: report_audit_index_view_model.v1
+    owner_daily_core_section_count: 10
+    owner_queue_requires_due_and_actionable: true
+    reporting_layer_recompute_allowed: false
+    research_auto_tune_allowed: false
+    proposal_may_equal_adoption: false
+    reader_brief_native_cut_in_enabled: false
+    additive_sidecars_only: true
+  repository_inventory:
+    python_module_count_including_ignored: 793
+    python_test_and_support_file_count: 1111
+    aggregate_fragment_count: 13
+    report_fragment_count: 4
+  parity:
+    legacy_reader_brief_path_schema_status: PASS
+    reports_cli_additive_sidecars: PASS
+    daily_run_additive_sidecars_and_mirror: PASS
+    owner_daily_fixed_ten_sections: PASS
+    owner_queue_due_and_actionable_only: PASS
+    research_proposal_not_adoption: PASS
+    report_registry_coverage_count: 1358
+    report_registry_silent_drop_count: 0
+    architecture_dependency_direction: PASS
+  sources:
+    - path: config/reporting/reporting_architecture.yaml
+      sha256: 0e1206d3f6e9c562666493c6fe483de790440f35898825158973da36066e4d4e
+    - path: inputs/architecture/arch_004f3_reporting_inventory.yaml
+      sha256: f80c179e59016f7f981e31ac77239405a89ba8c529e302032cd37075e149c1cb
+    - path: src/ai_trading_system/contracts/report_spec.py
+      sha256: 95d992af6dfb4a28bc16dfdf302649dfb06353b84333c023620007b191891cbd
+    - path: src/ai_trading_system/contracts/report_audit.py
+      sha256: 38ac297bca4464c411d47310dcd080188569b3933a5a8ae2ff53a326e93c7a3c
+    - path: src/ai_trading_system/contracts/research_review.py
+      sha256: 2e718bc871bb4ad8f055448f3cf89af05173248e912dbc42ce912d8fe73963bf
+    - path: src/ai_trading_system/contracts/__init__.py
+      sha256: 8c5fa3c3edb070614688281daf05424b876d276ff1bc46ec4e0bb7958b41c184
+    - path: src/ai_trading_system/platform/reporting/owner_daily.py
+      sha256: 6b4a64f110ac156f555ef9e2ca6affade0da51b921cf4f3681e2e341b11f6a6f
+    - path: src/ai_trading_system/platform/reporting/research_review.py
+      sha256: c6391c499fc0a124589f640f378600e6ba63c3b13daecc0cd06f352ff607c8dd
+    - path: src/ai_trading_system/platform/reporting/audit_index.py
+      sha256: 3e1bfa40b20969be366e04c709d6a59e2795872b6742dcc45934f0dfafe7dbef
+    - path: src/ai_trading_system/legacy/reporting_catalog_adapter.py
+      sha256: 834a3da43f7ac351c464508b4c32f4b284ea594ba0a6f4b2df4485579e010375
+    - path: src/ai_trading_system/cli_commands/ops.py
+      sha256: ba4f8d1432f217c9c97e36e99789ff45a10bd6b875d9b5c75d48eb6ff58fa3ea
+    - path: src/ai_trading_system/cli_commands/reports.py
+      sha256: a29759ad6d42e51c96335bb9016f5e9d5a8cc2646ea6b362338309c338a25916
+    - path: src/ai_trading_system/run_artifacts.py
+      sha256: a09141141fefc14fe67311193156fd05d06d626aef6cf71bb01b12f01d2d0da2
+    - path: tests/test_arch_004f3_reporting_architecture.py
+      sha256: 9827ef8976f7fa31d216d01307923a80f11af0183800de424a5e43862412fc22
+    - path: tests/test_arch_004_refactor_policy.py
+      sha256: e1e8eac01129c258e9e87323c8b7c13b940b901cffb73ae969dec4140d79dffa
+    - path: tests/test_ops_daily.py
+      sha256: a3b639813cbb303f5281227aa765882ad59c507f7dd868634599a79ec91fd02b
+    - path: tests/test_reader_brief.py
+      sha256: 78f62f5e764c3bf92c53859f0084ee329e5f8d085cb279e40beebd2b5fcd1901
+    - path: docs/requirements/ARCH-004F3_Reporting_Architecture.md
+      sha256: d10b9d60338cfff27552ca229e60f42faab9533bba04cf50c8ea05af92bab96f
+    - path: docs/artifact_catalog.md
+      sha256: dce42aeb4b4c6f4575b66a8d731476b201c8553ef402ce4e34aa61f29d336908
+    - path: docs/system_flow.md
+      sha256: 1f8084c0ade1bbb59dbb36b612691d66f9afdc92bc0fd36c1fe18760a8b0ea33
+    - path: config/architecture/arch_004_refactor_policy.yaml
+      sha256: 8ab863c2aad518b79bbb8eb65063a3347e98d4bba284c306c4716f557b3a8be8
+    - path: inputs/architecture/arch_004e_module_manifest.yaml
+      sha256: ff2ce8636bb269ccc905c2ac4b94ca580c44160dd68d666fde3da46435ad1323
+    - path: inputs/architecture/arch_004e_test_manifest.yaml
+      sha256: 066d42ba899d24c05519d21ecc60fb041a9a5d7b06b3fa63561f97415bf04bcf
+    - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      sha256: 678f3fa54dfce8a8e11d13a746a10240525f6728b2b01964699fe33298d294a7
+    - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+      sha256: 5cc2cf25fa8aa7403a69e0bac62b50469a755741507afef83b5e7a1956ce8083
+    - path: inputs/architecture/arch_004_worktree_attribution.yaml
+      sha256: f9823d3711eb668ddeaec3fdd59a92c4990091641e042b4d68688caf90af61be
+  validation:
+    focused: {status: PASS, passed: 14}
+    report_validation: {status: PASS, passed: 55}
+    contract_validation: {status: PASS, passed: 197}
+    architecture_fitness: {status: PASS, passed: 150}
+    integration: {status: PASS, passed: 983}
+    reproducibility: {status: PASS, passed: 23}
+    full_parallel:
+      status: PASS
+      passed: 5494
+      failed: 0
+      warnings: 642
+      elapsed_seconds: 923.4
+      runtime_artifact: outputs/validation_runtime/full_20260711T040642Z/test_runtime_summary.json

@@ -4,32 +4,41 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 4
+fragment_count: 13
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
   current_exists: true
   current_sha256: d0a5fb68a6904965ed622116ab71e9b571bc8bf18a96805a3d58c576f62927b4
   fragment_root: config/architecture/fragments/reports
-  fragment_count: 1
+  fragment_count: 4
   fragment_paths:
   - config/architecture/fragments/reports/growth_tilt_candidate_family_closure.yaml
+  - config/architecture/fragments/reports/owner_daily_brief.yaml
+  - config/architecture/fragments/reports/report_audit_index.yaml
+  - config/architecture/fragments/reports/research_review_pack.yaml
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: bc8fc551f71ba70fb3ad56ac4d7d01fcf409cbe5d54cedb55330400738c3e892
+  current_sha256: dce42aeb4b4c6f4575b66a8d731476b201c8553ef402ce4e34aa61f29d336908
   fragment_root: config/architecture/fragments/artifacts
-  fragment_count: 1
+  fragment_count: 4
   fragment_paths:
   - config/architecture/fragments/artifacts/growth_tilt_candidate_family_closure.yaml
+  - config/architecture/fragments/artifacts/owner_daily_brief.yaml
+  - config/architecture/fragments/artifacts/report_audit_index.yaml
+  - config/architecture/fragments/artifacts/research_review_pack.yaml
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 230d67d8d5353285f19c6162585bb409398784a95aed465bc5935e780fc2a1a7
+  current_sha256: 1f8084c0ade1bbb59dbb36b612691d66f9afdc92bc0fd36c1fe18760a8b0ea33
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 1
+  fragment_count: 4
   fragment_paths:
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
+  - config/architecture/fragments/flows/owner_daily_brief.yaml
+  - config/architecture/fragments/flows/report_audit_index.yaml
+  - config/architecture/fragments/flows/research_review_pack.yaml
 fragments:
 - fragment_id: artifact.growth_tilt_candidate_family_closure
   fragment_kind: artifact
@@ -38,12 +47,54 @@ fragments:
   path: config/architecture/fragments/artifacts/growth_tilt_candidate_family_closure.yaml
   sha256: 68f27dd195707820e335df60e3ef72f8dc2a9ca7389b8f88c0b058329b0b66a4
   generated_source_of_truth_active: false
+- fragment_id: artifact.owner_daily_brief
+  fragment_kind: artifact
+  owner: reporting_governance
+  target_id: artifact_catalog
+  path: config/architecture/fragments/artifacts/owner_daily_brief.yaml
+  sha256: ad83ebc4fa78e71270471b1c562db105f829b5bddc76eb8980f8f0461db2a5b1
+  generated_source_of_truth_active: false
+- fragment_id: artifact.report_audit_index
+  fragment_kind: artifact
+  owner: reporting_governance
+  target_id: artifact_catalog
+  path: config/architecture/fragments/artifacts/report_audit_index.yaml
+  sha256: 3950eeb14157250cc1fadfd18169e19a8ef4352002ebcaaf4314c6c3f6be0a6d
+  generated_source_of_truth_active: false
+- fragment_id: artifact.research_review_pack
+  fragment_kind: artifact
+  owner: research_governance
+  target_id: artifact_catalog
+  path: config/architecture/fragments/artifacts/research_review_pack.yaml
+  sha256: c3d13603584bda8c4467ac522b25ac3a9b2ded6ef90a36f201eb94f031187aa8
+  generated_source_of_truth_active: false
 - fragment_id: flow.growth_tilt_candidate_family_closure
   fragment_kind: flow
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   sha256: a5f5d351c9e4d09e6145eb3ff687b126b689694e63ec51a170e0f179e89a2303
+  generated_source_of_truth_active: false
+- fragment_id: flow.owner_daily_brief
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/owner_daily_brief.yaml
+  sha256: 8339d4efe7f02026bb8e3da5104104c9dda917f5133339c20a8364dbf715fd18
+  generated_source_of_truth_active: false
+- fragment_id: flow.report_audit_index
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/report_audit_index.yaml
+  sha256: 5e4bc61a34b80b6d6e964256671f9866ed835bb8b28631261e847c842c57f7f0
+  generated_source_of_truth_active: false
+- fragment_id: flow.research_review_pack
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/research_review_pack.yaml
+  sha256: a6f03c117d7b520c8e6a20f983e58f9fe2e2360b288d3c12088d1b04a865a859
   generated_source_of_truth_active: false
 - fragment_id: module.research_framework
   fragment_kind: module
@@ -58,4 +109,25 @@ fragments:
   target_id: report_registry
   path: config/architecture/fragments/reports/growth_tilt_candidate_family_closure.yaml
   sha256: 6682586f020079be8a49af0374eecb8fc59e6d84130dc3303b4bbb33f30961ca
+  generated_source_of_truth_active: false
+- fragment_id: report.owner_daily_brief
+  fragment_kind: report
+  owner: reporting_governance
+  target_id: report_registry
+  path: config/architecture/fragments/reports/owner_daily_brief.yaml
+  sha256: 05d306d6792998e1f32cf60f94f782d86f50678e54bb2c08efe16978a951c7fd
+  generated_source_of_truth_active: false
+- fragment_id: report.report_audit_index
+  fragment_kind: report
+  owner: reporting_governance
+  target_id: report_registry
+  path: config/architecture/fragments/reports/report_audit_index.yaml
+  sha256: 8b9d13c8ed468c088f20c3c991ba90e797501f56e80bb50101e8456d25ae9a01
+  generated_source_of_truth_active: false
+- fragment_id: report.research_review_pack
+  fragment_kind: report
+  owner: research_governance
+  target_id: report_registry
+  path: config/architecture/fragments/reports/research_review_pack.yaml
+  sha256: 13aabf2f42553f1ce41a4be5e6dca34c1775e21fdeddf2a7807576cdf2593e53
   generated_source_of_truth_active: false

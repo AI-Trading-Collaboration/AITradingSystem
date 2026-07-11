@@ -1,6 +1,6 @@
 schema_version: arch_004_refactor_policy.v1
 policy_id: arch_004_refactor_policy_v1
-status: phase_f3_ready
+status: phase_g_ready
 owner: architecture_governance
 policy_metadata:
   rationale: >
@@ -30,9 +30,9 @@ policy_metadata:
 program:
   task_id: ARCH-004
   program_name: post_freeze_architecture_v2
-  current_phase: ARCH-004F3
+  current_phase: ARCH-004G
   current_phase_status: READY
-  next_phase: ARCH-004G
+  next_phase: ARCH-004H
   next_phase_unblocked: false
   predecessor_task_ids:
     - ARCH-001
@@ -528,6 +528,73 @@ phase_f1_execution:
     warnings: 642
     elapsed_seconds: 1013.63
     runtime_artifact: outputs/validation_runtime/full_20260711T030639Z/test_runtime_summary.json
+
+phase_f3_execution:
+  task_id: ARCH-004F3_REPORTING_ARCHITECTURE
+  status: COMPLETE
+  requirement_path: docs/requirements/ARCH-004F3_Reporting_Architecture.md
+  stages:
+    F3_1_inventory_policy_and_characterization: COMPLETE
+    F3_2_pure_contracts_and_typed_catalog: COMPLETE
+    F3_3_owner_daily_brief_reference_cut_in: COMPLETE
+    F3_4_research_review_pack: COMPLETE
+    F3_5_audit_index_and_generated_fragments: COMPLETE
+    F3_6_cut_in_parity_and_closeout: COMPLETE
+  current_inventory:
+    reader_brief_lines: 29027
+    reader_brief_top_level_functions: 366
+    report_registry_entries: 1358
+    registry_entries_missing_explicit_production_effect: 689
+    generated_report_fragment_count: 4
+    generated_report_source_of_truth_active: false
+  owner_daily_brief_core_section_limit: 10
+  owner_queue_requires_due_and_actionable: true
+  reporting_layer_may_recompute_investment_conclusion: false
+  legacy_unclassified_disposition: AUDIT_INDEX_LIMITED_UNCLASSIFIED
+  reader_brief_legacy_path_schema_status_must_remain: true
+  strategy_or_threshold_change_allowed: false
+  production_effect: none
+  next_phase_unblocked: true
+  f3_1_validation:
+    focused:
+      status: PASS
+      passed: 4
+    inventory_deterministic: PASS
+    frozen_inventory_drift_detection: PASS
+    policy_core_section_limit: PASS
+    legacy_outputs_changed: false
+  completion_validation:
+    focused:
+      status: PASS
+      passed: 14
+    scoped_mypy: PASS
+    report_validation:
+      status: PASS
+      passed: 55
+      runtime_artifact: outputs/validation_runtime/report-validation_20260711T040001Z/test_runtime_summary.json
+    contract_validation:
+      status: PASS
+      passed: 197
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260711T040036Z/test_runtime_summary.json
+    architecture_fitness:
+      status: PASS
+      passed: 150
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T040432Z/test_runtime_summary.json
+    integration:
+      status: PASS
+      passed: 983
+      runtime_artifact: outputs/validation_runtime/integration_20260711T040534Z/test_runtime_summary.json
+    reproducibility:
+      status: PASS
+      passed: 23
+      runtime_artifact: outputs/validation_runtime/reproducibility_20260711T040534Z/test_runtime_summary.json
+    full_parallel:
+      status: PASS
+      passed: 5494
+      failed: 0
+      warnings: 642
+      elapsed_seconds: 923.4
+      runtime_artifact: outputs/validation_runtime/full_20260711T040642Z/test_runtime_summary.json
 
 safety_boundary:
   research_only: true

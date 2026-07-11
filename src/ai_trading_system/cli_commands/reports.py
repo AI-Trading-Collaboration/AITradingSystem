@@ -100,6 +100,7 @@ from ai_trading_system.periodic_investment_review import (
     default_periodic_investment_review_report_path,
     write_periodic_investment_review_report,
 )
+from ai_trading_system.platform.reporting import write_owner_daily_brief_sidecars
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PREDICTION_OUTCOMES_PATH,
 )
@@ -1856,10 +1857,16 @@ def reader_brief_command(
         raise typer.BadParameter(str(exc)) from exc
     html_path = write_reader_brief_html(payload, html_output)
     json_path = write_reader_brief_json(payload, json_output)
+    owner_json_path, owner_html_path = write_owner_daily_brief_sidecars(
+        payload,
+        output_dir=reports_dir,
+    )
     style = "green" if payload["status"] == "PASS" else "yellow"
     console.print(f"[{style}]Reader Brief：{payload['status']}[/{style}]")
     console.print(f"Reader Brief HTML：{html_path}")
     console.print(f"Reader Brief JSON：{json_path}")
+    console.print(f"Owner Daily Brief JSON：{owner_json_path}")
+    console.print(f"Owner Daily Brief HTML：{owner_html_path}")
     console.print(
         f"warnings：{len(payload['warnings'])}；"
         f"production_effect={payload['production_effect']}；"

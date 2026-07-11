@@ -140,6 +140,14 @@ def mirror_canonical_daily_ops_outputs_to_legacy(
             legacy_reports_dir / f"reader_brief_{as_of_text}.json",
         ),
         (
+            paths.reports_dir / f"owner_daily_brief_{as_of_text}.html",
+            legacy_reports_dir / f"owner_daily_brief_{as_of_text}.html",
+        ),
+        (
+            paths.reports_dir / f"owner_daily_brief_{as_of_text}.json",
+            legacy_reports_dir / f"owner_daily_brief_{as_of_text}.json",
+        ),
+        (
             paths.reports_dir / f"reader_brief_quality_{as_of_text}.json",
             legacy_reports_dir / f"reader_brief_quality_{as_of_text}.json",
         ),

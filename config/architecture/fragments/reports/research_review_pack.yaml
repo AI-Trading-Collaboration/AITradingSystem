@@ -1,0 +1,9 @@
+schema_version: arch_004e_report_fragment.v1
+fragment_id: report.research_review_pack
+fragment_kind: report
+owner: research_governance
+target_id: report_registry
+report_id: research_review_pack
+spec_path: config/reporting/reporting_architecture.yaml
+compatibility_registry_entry_required: false
+generated_source_of_truth_active: false
