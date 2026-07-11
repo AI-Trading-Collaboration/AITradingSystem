@@ -1565,6 +1565,43 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       runtime_behavior_changed: false
       production_effect: none
+    g2_4_twelfth_slice:
+      status: COMPLETE
+      command_groups: [dynamic_v3_sweep_runtime]
+      callback_count: 8
+      helper_count: 1
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py
+      legacy_callback_definitions_remaining: 0
+      legacy_helper_definitions_remaining: 0
+      profile_list_and_validate_read_only: true
+      research_runtime_artifact_write_allowed: true
+      real_evaluator_uses_dq_and_pit_path: true
+      tiny_fixture_not_for_investment_decision: true
+      resume_evaluator_mode_mutation_allowed: false
+      resume_worker_override_recorded: true
+      derived_leaderboard_or_report_materialization_allowed: true
+      production_candidate_generated: false
+      automatic_candidate_promotion_allowed: false
+      shadow_enrollment_allowed: false
+      official_target_weights_mutation_allowed: false
+      direct_writer_calls_before: 858
+      direct_writer_calls_after: 858
+      legacy_root_lines_before: 31833
+      legacy_root_lines_after: 31548
+      legacy_root_line_reduction: 285
+      legacy_root_top_level_functions_after: 962
+      legacy_root_command_decorators_after: 923
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 44}
+      architecture_fitness:
+        status: PASS
+        passed: 195
+        current_direct_writer_calls: 858
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T124347Z/test_runtime_summary.json
+      strategy_or_threshold_changed: false
+      runtime_behavior_changed: false
+      production_effect: none
     production_effect: none
 
 safety_boundary:

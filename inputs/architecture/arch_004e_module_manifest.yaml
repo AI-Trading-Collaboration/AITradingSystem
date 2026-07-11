@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 822
+module_count: 823
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 4c8e5c54a049768526b7cbb97aeb0fee2715978a71965e6b2aab5f9b2521fbfe
+  sha256: b7495674592b8a91eb42a9da93a6525547c8dad791b4905606c4838354a4fe04
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 68ce87fe2803a8819aca838609d5cf7a8f152eab78a073edccd6c3487fadb600
+  sha256: 4b72cff15956fb1552f3fec3cdc40663050f082849554bb62d00913a1ed4418c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9649,6 +9649,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_sweep_config
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_config.py
   sha256: dcc752c05135d26455443685175e53e104a459ade07e8961f5c842069efa5709
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_sweep_runtime
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py
+  sha256: a105de79df0c37a318421b07a79f33bc3701330caacc4bb6d9dd4ed56b92a4ac
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
