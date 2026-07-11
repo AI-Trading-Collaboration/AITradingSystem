@@ -664,11 +664,20 @@ def build_dynamic_v2_review_validation_report(
     / "ai_trading_system"
     / "reports"
     / "reader_brief.py",
-    cli_path: Path = PROJECT_ROOT
+    registration_path: Path = PROJECT_ROOT
     / "src"
     / "ai_trading_system"
-    / "cli_commands"
-    / "etf_portfolio.py",
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio"
+    / "registration.py",
+    command_owner_path: Path = PROJECT_ROOT
+    / "src"
+    / "ai_trading_system"
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio"
+    / "dynamic_v2_review.py",
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = _coerce_datetime(generated_at or datetime.now(UTC))
@@ -766,11 +775,13 @@ def build_dynamic_v2_review_validation_report(
         "Dynamic v0.2 Review" in reader_text and "_etf_dynamic_v2_review_summary" in reader_text,
         "Reader Brief has Dynamic v0.2 Review section",
     )
-    cli_text = _safe_read_text(cli_path)
+    registration_text = _safe_read_text(registration_path)
+    command_owner_text = _safe_read_text(command_owner_path)
     _append_check(
         checks,
         "cli_namespace_available",
-        "dynamic-v2-review" in cli_text and "dynamic_v2_review_app" in cli_text,
+        "dynamic-v2-review" in registration_text
+        and "dynamic_v2_review_app" in command_owner_text,
         "CLI exposes dynamic-v2-review namespace",
     )
     failed = [check for check in checks if check["status"] != "PASS"]

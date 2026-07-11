@@ -52,7 +52,7 @@
 
 最新增量：
 
-- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.4F Dynamic Rescue slice `COMPLETE`，G2.4继续：三callback迁canonical，validation改查canonical registration/owner；root 32,979→32,713行、988→985函数、948→945 decorators；rescue/contract组合37、architecture-fitness 189，generated 817 modules / 1,114 tests / 858 writers / 0 violations；DQ→price→bounded rescue、fail-closed、source lineage和no enrollment/approval/promotion/official target/broker保持通过。
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.4G Dynamic v0.2 Review slice `COMPLETE`，G2.4继续：三callback迁canonical，root 32,713→32,546行、985→982函数、945→942 decorators；review/contract组合39、architecture-fitness 190，generated 818 modules / 1,114 tests / 858 writers / 0 violations；mandatory source fail-closed、optional shadow warning、latest只读、source lineage和no backtest/approval/enrollment/promotion/official target/production/broker通过。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.4E Dynamic Robustness slice `COMPLETE`、G2.4继续：focused=24、architecture=188，generated=`816 modules / 1,114 tests / 858 direct writers / 0 violations`。DQ→price→robustness、fail-closed、latest只读及no-enrollment/production边界保持。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.4E Dynamic Robustness实现完成并进入`VALIDATING`：2 callback迁canonical，root=`33,199 -> 32,979 lines / 990 -> 988 functions / 950 -> 948 decorators`，focused=24；DQ→price→robustness、fail-closed、latest只读及no-enrollment/production边界保持，等待架构门禁。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.4E Dynamic Robustness contract freeze：迁`report/validate`两callback；严格保持cached DQ→ETF price validation→robustness计算顺序与fail-closed，latest只读；保留requested range、DQ lineage、candidate-only/no-enrollment/no-production/no-broker和tree parity。

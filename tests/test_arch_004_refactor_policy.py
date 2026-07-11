@@ -579,6 +579,27 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_sixth["legacy_root_command_decorators_after"] == 945
     assert g2_4_sixth["focused_validation"] == {"status": "PASS", "passed": 25}
     assert g2_4_sixth["architecture_fitness"]["passed"] == 189
+    g2_4_seventh = phase_g["g2_current_plan"]["g2_4_seventh_slice"]
+    assert g2_4_seventh["status"] == "COMPLETE"
+    assert g2_4_seventh["callback_count"] == 3
+    assert g2_4_seventh["legacy_callback_definitions_remaining"] == 0
+    assert g2_4_seventh["existing_rescue_and_robustness_artifacts_read_only"] is True
+    assert g2_4_seventh["market_backtest_reexecution_allowed"] is False
+    assert g2_4_seventh["mandatory_source_missing_fail_closed"] is True
+    assert g2_4_seventh["optional_shadow_missing_is_warning"] is True
+    assert g2_4_seventh["latest_report_mode_read_only"] is True
+    assert g2_4_seventh["review_artifact_write_allowed"] is True
+    assert g2_4_seventh["owner_approval_executed"] is False
+    assert g2_4_seventh["shadow_enrollment_allowed"] is False
+    assert g2_4_seventh["automatic_candidate_promotion_allowed"] is False
+    assert g2_4_seventh["official_target_weights_mutation_allowed"] is False
+    assert g2_4_seventh["validation_uses_canonical_cli_owner"] is True
+    assert g2_4_seventh["direct_writer_calls_after"] == 858
+    assert g2_4_seventh["legacy_root_lines_after"] == 32546
+    assert g2_4_seventh["legacy_root_top_level_functions_after"] == 982
+    assert g2_4_seventh["legacy_root_command_decorators_after"] == 942
+    assert g2_4_seventh["focused_validation"] == {"status": "PASS", "passed": 27}
+    assert g2_4_seventh["architecture_fitness"]["passed"] == 190
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -1433,6 +1454,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4f["validation"]["focused"] == {"status": "PASS", "passed": 25}
     assert phase_g2_4f["validation"]["architecture_fitness"]["passed"] == 189
     for source in phase_g2_4f["sources"]:
+        if source.get("historical_phase_g2_4f_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.4G"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_4g_etf_cli_dynamic_v2_review.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4g = baseline["phase_g2_4g_etf_cli_dynamic_v2_review"]
+    assert phase_g2_4g["status"] == "COMPLETE_G2_4_CONTINUES"
+    assert phase_g2_4g["migration"]["callback_count"] == 3
+    assert phase_g2_4g["migration"]["market_backtest_reexecution_allowed"] is False
+    assert phase_g2_4g["migration"]["mandatory_source_missing_fail_closed"] is True
+    assert phase_g2_4g["migration"]["optional_shadow_missing_is_warning"] is True
+    assert phase_g2_4g["migration"]["latest_report_mode_read_only"] is True
+    assert phase_g2_4g["migration"]["shadow_enrollment_allowed"] is False
+    assert phase_g2_4g["migration"]["owner_approval_executed"] is False
+    assert phase_g2_4g["migration"]["direct_writer_calls_after"] == 858
+    assert phase_g2_4g["validation"]["focused"] == {"status": "PASS", "passed": 27}
+    assert phase_g2_4g["validation"]["architecture_fitness"]["passed"] == 190
+    for source in phase_g2_4g["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1455,7 +1497,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4E_COMPLETE_G2_4F_VALIDATING"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4F_COMPLETE_G2_4G_VALIDATING"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
