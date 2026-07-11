@@ -380,6 +380,15 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_2["contract_characterization"] == {"status": "PASS", "passed": 6}
     assert g2_2["architecture_fitness"]["passed"] == 174
     assert g2_2["runtime_behavior_changed"] is False
+    g2_3_first = phase_g["g2_current_plan"]["g2_3_first_slice"]
+    assert g2_3_first["callback_count"] == 3
+    assert g2_3_first["legacy_callback_definitions_remaining"] == 0
+    assert g2_3_first["legacy_helper_definitions_remaining"] == 0
+    assert g2_3_first["compatibility_aliases_using_canonical_callbacks"] is True
+    assert g2_3_first["legacy_root_top_level_functions_after"] == 1043
+    assert g2_3_first["legacy_root_command_decorators_after"] == 990
+    assert g2_3_first["focused_validation"] == {"status": "PASS", "passed": 72}
+    assert g2_3_first["architecture_fitness"]["passed"] == 175
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -943,6 +952,24 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     }
     assert phase_g2_2["validation"]["architecture_fitness"]["passed"] == 174
     for source in phase_g2_2["sources"]:
+        if source.get("historical_phase_g2_2_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.3A"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_3a_etf_cli_data_features.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_3a = baseline["phase_g2_3a_etf_cli_data_features"]
+    assert phase_g2_3a["status"] == "COMPLETE_G2_3_CONTINUES"
+    assert phase_g2_3a["migration"]["callback_count"] == 3
+    assert phase_g2_3a["migration"]["shared_helper_count"] == 3
+    assert phase_g2_3a["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_3a["migration"]["compatibility_aliases_using_canonical_callbacks"] is True
+    assert phase_g2_3a["migration"]["data_quality_behavior_changed"] is False
+    assert phase_g2_3a["validation"]["focused"] == {"status": "PASS", "passed": 72}
+    assert phase_g2_3a["validation"]["architecture_fitness"]["passed"] == 175
+    for source in phase_g2_3a["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 

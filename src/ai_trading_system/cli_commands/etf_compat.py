@@ -3,6 +3,11 @@ from __future__ import annotations
 import typer
 
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
+from ai_trading_system.interfaces.cli.etf_portfolio.data import (
+    data_ingest_command,
+    data_validate_command,
+    features_build_command,
+)
 
 features_app = typer.Typer(help="ETF feature store compatibility aliases。", no_args_is_help=True)
 regime_app = typer.Typer(help="ETF market regime compatibility aliases。", no_args_is_help=True)
@@ -28,15 +33,15 @@ def register_etf_compatibility_aliases(
     data_app.command(
         "ingest",
         help="ETF compatibility alias for `aits etf data ingest`.",
-    )(etf_cli.data_ingest_command)
+    )(data_ingest_command)
     data_app.command(
         "validate",
         help="ETF compatibility alias for `aits etf data validate`.",
-    )(etf_cli.data_validate_command)
+    )(data_validate_command)
     features_app.command(
         "build",
         help="ETF compatibility alias for `aits etf features build`.",
-    )(etf_cli.features_build_command)
+    )(features_build_command)
     signals_app.command(
         "generate",
         help="ETF compatibility alias for `aits etf signals generate`.",

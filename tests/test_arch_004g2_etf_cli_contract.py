@@ -25,6 +25,8 @@ BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_004g2_etf_cli_contract.
 REGISTRATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py"
 )
+DATA_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data.py"
+COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
 def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
@@ -98,7 +100,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 36045
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35939
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -121,6 +123,18 @@ def test_g2_2_real_cli_help_fixtures_preserve_bytes(
     assert result.exit_code == 0
     assert result.exception is None
     assert hashlib.sha256(result.stdout.encode("utf-8")).hexdigest() == expected_sha256
+
+
+def test_g2_3_data_feature_callbacks_and_common_helpers_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    data_names = _function_names(ast.parse(DATA_COMMANDS_PATH.read_text(encoding="utf-8")))
+    common_names = _function_names(ast.parse(COMMON_PATH.read_text(encoding="utf-8")))
+
+    callbacks = {"data_ingest_command", "data_validate_command", "features_build_command"}
+    helpers = {"parse_date", "resolve_date", "satellite_symbols"}
+    assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in helpers})
+    assert callbacks <= data_names
+    assert helpers <= common_names
 
 
 def __file_path() -> Path:
@@ -147,3 +161,11 @@ def _add_typer_count(tree: ast.Module) -> int:
         and node.value.func.attr == "add_typer"
         for node in tree.body
     )
+
+
+def _function_names(tree: ast.Module) -> set[str]:
+    return {
+        node.name
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }

@@ -941,6 +941,31 @@ phase_g_execution:
         violation_count: 0
         runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T071517Z/test_runtime_summary.json
       runtime_behavior_changed: false
+    g2_3_first_slice:
+      status: COMPLETE
+      command_groups: [data, features]
+      callback_count: 3
+      callback_names: [data_ingest_command, data_validate_command, features_build_command]
+      canonical_module: src/ai_trading_system/interfaces/cli/etf_portfolio/data.py
+      canonical_common: src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
+      shared_helpers_moved: [parse_date, resolve_date, satellite_symbols]
+      legacy_callback_definitions_remaining: 0
+      legacy_helper_definitions_remaining: 0
+      compatibility_aliases_using_canonical_callbacks: true
+      legacy_root_lines_before: 36045
+      legacy_root_lines_after: 35939
+      legacy_root_top_level_functions_after: 1043
+      legacy_root_command_decorators_after: 990
+      tree_sha256_unchanged: afa0760c82cf347bb135ecb12ae133bc16238fb53e28b7a0cf3c699f6ba1cec2
+      focused_validation: {status: PASS, passed: 72}
+      architecture_fitness:
+        status: PASS
+        passed: 175
+        current_direct_writer_calls: 861
+        violation_count: 0
+        runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T073652Z/test_runtime_summary.json
+      data_quality_behavior_changed: false
+      runtime_behavior_changed: false
     production_effect: none
 
 safety_boundary:

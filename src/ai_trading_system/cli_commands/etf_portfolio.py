@@ -146,8 +146,6 @@ from ai_trading_system.etf_portfolio.credibility import (
     write_credibility_gate,
 )
 from ai_trading_system.etf_portfolio.data import (
-    ingest_yfinance_prices,
-    latest_price_date,
     load_standard_prices,
     read_price_frame,
     standardize_price_frame,
@@ -1178,6 +1176,15 @@ from ai_trading_system.etf_portfolio.weight_research_unblock import (
     write_b1_metric_semantics_audit,
     write_contract_validation,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio.common import (
+    parse_date as _parse_date,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio.common import (
+    resolve_date as _resolve_date,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio.common import (
+    satellite_symbols as _satellite_symbols,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     ai_attribution_app,
     ai_confirmation_app,
@@ -1186,7 +1193,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     baseline_review_app,
     confirmation_app,
     credibility_app,
-    data_app,
     data_quality_app,
     decision_journal_app,
     dynamic_allocation_app,
@@ -1450,7 +1456,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     events_app,
     evidence_dashboard_app,
     experiments_app,
-    features_app,
     forward_app,
     governance_app,
     ops_app,
@@ -29577,95 +29582,10 @@ def data_quality_validate_command(
         raise typer.Exit(code=1)
 
 
-@data_app.command("ingest")
-def data_ingest_command(
-    symbols: Annotated[list[str] | None, typer.Option("--symbols", help="ETF symbols。")] = None,
-    start: Annotated[str, typer.Option(help="开始日期 YYYY-MM-DD。")] = "2015-01-01",
-    end: Annotated[str | None, typer.Option(help="结束日期 YYYY-MM-DD，默认今天。")] = None,
-    output_path: Annotated[Path, typer.Option(help="输出价格缓存路径。")] = (
-        PROJECT_ROOT / "data" / "etf_portfolio" / "prices.csv"
-    ),
-) -> None:
-    """从 yfinance 下载 ETF P0 价格并写入标准缓存。"""
-    config = load_etf_config_bundle()
-    selected_symbols = symbols or list(config.assets.tradeable_symbols)
-    output = ingest_yfinance_prices(
-        symbols=selected_symbols,
-        start=_parse_date(start),
-        end=_parse_date(end) if end else date.today(),
-        output_path=output_path,
-    )
-    typer.echo(f"ETF 价格缓存已写入：{output}")
 
 
-@data_app.command("validate")
-def data_validate_command(
-    prices_path: Annotated[Path, typer.Option(help="ETF 标准价格 CSV/Parquet 路径。")] = (
-        DEFAULT_ETF_PRICE_PATH
-    ),
-    as_of: Annotated[str | None, typer.Option("--date", "--as-of", help="评估日期。")] = None,
-    output_path: Annotated[Path | None, typer.Option(help="质量报告输出路径。")] = None,
-) -> None:
-    """校验 ETF price cache。"""
-    config = load_etf_config_bundle()
-    run_date = _resolve_date(as_of, prices_path=prices_path)
-    raw = read_price_frame(prices_path)
-    prices, metadata_issues = standardize_price_frame(
-        raw,
-        assets=config.assets,
-        source_name=str(prices_path),
-    )
-    report = validate_price_data(
-        prices,
-        assets=config.assets,
-        strategy=config.strategy,
-        as_of=run_date,
-        extra_issues=metadata_issues,
-    )
-    report_path = output_path or DEFAULT_ETF_REPORT_DIR / f"data_quality_{run_date.isoformat()}.md"
-    write_quality_report(report, report_path)
-    typer.echo(f"ETF 数据质量状态：{report.status}")
-    typer.echo(f"报告：{report_path}")
-    if not report.passed:
-        raise typer.Exit(code=1)
 
 
-@features_app.command("build")
-def features_build_command(
-    prices_path: Annotated[Path, typer.Option(help="ETF 标准价格 CSV/Parquet 路径。")] = (
-        DEFAULT_ETF_PRICE_PATH
-    ),
-    output_path: Annotated[Path, typer.Option(help="Feature store 输出路径。")] = (
-        DEFAULT_ETF_FEATURE_PATH
-    ),
-    start: Annotated[str | None, typer.Option(help="特征构建开始日期。")] = None,
-    end: Annotated[str | None, typer.Option(help="特征构建结束日期。")] = None,
-    include_satellites: Annotated[
-        bool,
-        typer.Option("--include-satellites", help="包含 P1 satellite stock optional features。"),
-    ] = False,
-) -> None:
-    """构建 ETF feature store；先执行同一数据质量门禁。"""
-    config = load_etf_config_bundle()
-    prices, report = load_standard_prices(
-        prices_path,
-        config.assets,
-        config.strategy,
-        extra_symbols=_satellite_symbols(config) if include_satellites else None,
-    )
-    if not report.passed:
-        typer.echo(f"ETF 数据质量状态：{report.status}，已停止 feature build。")
-        raise typer.Exit(code=1)
-    features = build_feature_store(
-        prices,
-        assets=config.assets,
-        strategy=config.strategy,
-        start=_parse_date(start) if start else None,
-        end=_resolve_date(end, prices=prices) if end else None,
-    )
-    write_feature_store(features, output_path)
-    typer.echo(f"ETF feature store 已写入：{output_path}（{len(features)} 行）")
-    typer.echo(f"data_quality_status={report.status}")
 
 
 @relative_strength_app.command("report")
@@ -35678,21 +35598,6 @@ def _run_cached_data_quality_gate(
     return quality_output
 
 
-def _resolve_date(
-    value: str | None,
-    *,
-    prices_path: Path | None = None,
-    prices: pd.DataFrame | None = None,
-) -> date:
-    if value is not None and value != "latest":
-        return _parse_date(value)
-    if prices is None:
-        if prices_path is None:
-            raise typer.BadParameter("latest 需要 prices 或 prices_path")
-        config = load_etf_config_bundle()
-        raw = read_price_frame(prices_path)
-        prices, _ = standardize_price_frame(raw, assets=config.assets, source_name=str(prices_path))
-    return latest_price_date(prices)
 
 
 def _resolve_feature_date(value: str | None, features: pd.DataFrame) -> date:
@@ -35757,13 +35662,6 @@ def _resolve_p2_source_date(value: str | None, path: Path, as_of_column: str) ->
     return _resolve_frame_date("latest", frame, as_of_column)
 
 
-def _parse_date(value: str | None) -> date:
-    if value is None:
-        raise typer.BadParameter("日期不能为空")
-    try:
-        return date.fromisoformat(value)
-    except ValueError as exc:
-        raise typer.BadParameter("日期必须使用 YYYY-MM-DD 或 latest") from exc
 
 
 def _parse_datetime(value: str) -> datetime:
@@ -36017,10 +35915,6 @@ def _write_p2_frame(
     typer.echo(f"{title}：{md_path}")
 
 
-def _satellite_symbols(config) -> set[str]:
-    if config.p1 is None:
-        return set()
-    return set(config.p1.satellite_stocks)
 
 
 def _available_price_symbols(prices: pd.DataFrame, run_date: date) -> set[str]:
