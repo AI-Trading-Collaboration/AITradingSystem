@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 836
+module_count: 837
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: e26ef4c3462d21b270f9930a6f3feacd1746e277ed320a17318f40aa302b92bd
+  sha256: 24e58884989d560d773391a7d23c1cc9ff37cea44732b697bb82b25898aa76d6
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -9388,7 +9388,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: 577a7d6e06b2a7ff082e278e7d1087d2783a1a8f1f50d9a47aa00774b6bd5eb8
+  sha256: 76aa0263eff4c4f659556c6402f359a0ebe0be985adcebecd5ed49625c91b731
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9589,6 +9589,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_candidate_evidence
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_candidate_evidence.py
   sha256: 2998c1a2361dd9a939a074c26bf0c0763c867c917783caffce86c21c332cb44f
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_candidate_observation
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_candidate_observation.py
+  sha256: b77e59381bfbbfb3464011023e6a0fd417aaa7ac04e5fc45ce7ce6bbe183eba0
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
