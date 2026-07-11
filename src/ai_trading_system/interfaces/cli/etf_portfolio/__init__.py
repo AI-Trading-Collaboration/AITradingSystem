@@ -9,6 +9,7 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_calibration as dynamic_calibration_commands,
 )
+from ai_trading_system.interfaces.cli.etf_portfolio import dynamic_rescue as dynamic_rescue_commands
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_robustness as dynamic_robustness_commands,
 )
@@ -34,6 +35,7 @@ __all__ = [
     "dynamic_allocation_commands",
     "dynamic_calibration_commands",
     "dynamic_robustness_commands",
+    "dynamic_rescue_commands",
     "etf_app",
     "operations_commands",
     "parameter_review_commands",

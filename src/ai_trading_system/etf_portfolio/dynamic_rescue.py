@@ -884,13 +884,29 @@ def build_dynamic_rescue_validation_report(
         and "_etf_dynamic_rescue_summary" in reader_brief_text,
         "Reader Brief has Dynamic Strategy Rescue section",
     )
-    cli_text = (
-        PROJECT_ROOT / "src" / "ai_trading_system" / "cli_commands" / "etf_portfolio.py"
+    registration_text = (
+        PROJECT_ROOT
+        / "src"
+        / "ai_trading_system"
+        / "interfaces"
+        / "cli"
+        / "etf_portfolio"
+        / "registration.py"
+    ).read_text(encoding="utf-8")
+    command_owner_text = (
+        PROJECT_ROOT
+        / "src"
+        / "ai_trading_system"
+        / "interfaces"
+        / "cli"
+        / "etf_portfolio"
+        / "dynamic_rescue.py"
     ).read_text(encoding="utf-8")
     _append_check(
         checks,
         "cli_visibility",
-        "dynamic-rescue" in cli_text and "dynamic_rescue_app" in cli_text,
+        "dynamic-rescue" in registration_text
+        and "dynamic_rescue_app" in command_owner_text,
         "CLI exposes dynamic-rescue namespace",
     )
     failed = [check for check in checks if check["status"] != "PASS"]
