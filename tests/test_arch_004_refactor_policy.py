@@ -741,9 +741,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_fourteenth["reconstructed_source_label_required"] == (
         "cache_rebuild_from_existing_file"
     )
-    assert g2_4_fourteenth["reconstructed_provenance_status_required"] == (
-        "RECONSTRUCTED_MANIFEST"
-    )
+    assert g2_4_fourteenth["reconstructed_provenance_status_required"] == ("RECONSTRUCTED_MANIFEST")
     assert g2_4_fourteenth["original_download_event_unavailable_disclosed"] is True
     assert g2_4_fourteenth["provider_or_endpoint_invention_allowed"] is False
     assert g2_4_fourteenth["reconstructed_may_claim_primary_download_provenance"] is False
@@ -782,9 +780,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_4_sixteenth["parameter_effect_uses_matched_pairs_only"] is True
     assert g2_4_sixteenth["declared_mapping_alone_proves_consumption"] is False
     assert g2_4_sixteenth["independent_parameter_effect_artifact_required"] is True
-    assert g2_4_sixteenth["insufficient_pair_status"] == (
-        "INSUFFICIENT_MATCHED_PAIR_EVIDENCE"
-    )
+    assert g2_4_sixteenth["insufficient_pair_status"] == ("INSUFFICIENT_MATCHED_PAIR_EVIDENCE")
     assert g2_4_sixteenth["insufficient_pair_coverage_audit_status"] == "INCOMPLETE"
     assert g2_4_sixteenth["validation_fails_on_incomplete_pair_coverage"] is True
     assert g2_4_sixteenth["real_evaluation_uses_dq_and_pit_context"] is True
@@ -1919,9 +1915,9 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4r["migration"]["dynamic_v0_4_weights_may_be_inferred_from_summary"] is False
     assert phase_g2_4r["migration"]["current_attribution_method"] == "path_and_aggregate_v2"
     assert phase_g2_4r["migration"]["complete_attribution_allowed"] is False
-    assert phase_g2_4r["migration"][
-        "validation_recomputes_lineage_delta_status_and_checksums"
-    ] is True
+    assert (
+        phase_g2_4r["migration"]["validation_recomputes_lineage_delta_status_and_checksums"] is True
+    )
     assert phase_g2_4r["migration"]["sweep_or_real_evaluation_execution_allowed"] is False
     assert phase_g2_4r["migration"]["automatic_candidate_promotion_allowed"] is False
     assert phase_g2_4r["migration"]["direct_writer_calls_after"] == 858
@@ -1963,7 +1959,45 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4s["validation"]["focused"] == {"status": "PASS", "passed": 65}
     assert phase_g2_4s["validation"]["architecture_fitness"]["passed"] == 202
     assert phase_g2_4s["sources"]
+    superseded_g2_4s = set(phase_g2_4s["superseded_source_paths"])
     for source in phase_g2_4s["sources"]:
+        if source["path"] in superseded_g2_4s:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4t = baseline["phase_g2_4t_etf_cli_dynamic_v3_legacy_validation"]
+    assert phase_g2_4t["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4t = phase_g2_4t["migration"]
+    assert migration_g2_4t["callback_count"] == 6
+    assert migration_g2_4t["legacy_full_period_metrics_used_as_window_evidence"] is False
+    assert migration_g2_4t["legacy_stable_hash_used_as_window_evidence"] is False
+    assert migration_g2_4t["shared_real_daily_path_window_recomputation_required"] is True
+    assert migration_g2_4t["tiny_fixture_evidence_completeness"] == "PROXY_ONLY"
+    assert migration_g2_4t["tiny_fixture_walk_forward_pass_allowed"] is False
+    assert migration_g2_4t["source_and_output_checksums_required"] is True
+    assert migration_g2_4t["content_recomputation_validation_required"] is True
+    assert migration_g2_4t["real_neighbor_path_report_identity_required"] is True
+    assert migration_g2_4t["aggregate_stress_may_be_dedicated_bucket_pass"] is False
+    assert migration_g2_4t["regime_observation_may_be_stability_pass"] is False
+    assert migration_g2_4t["old_manifest_complete_shadow_basis_allowed"] is False
+    assert migration_g2_4t["validator_automatic_registry_repair_allowed"] is False
+    assert migration_g2_4t["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4t["automatic_shadow_enrollment_allowed"] is False
+    assert migration_g2_4t["direct_writer_calls_after"] == 858
+    assert migration_g2_4t["legacy_root_lines_after"] == 30762
+    assert migration_g2_4t["legacy_root_top_level_functions_after"] == 932
+    assert migration_g2_4t["legacy_root_command_decorators_after"] == 893
+    assert migration_g2_4t["parameter_research_g6_decomposition_debt_recorded"] is True
+    assert migration_g2_4t["python_module_count"] == 831
+    assert phase_g2_4t["real_smoke"]["walk_forward_validation"] == "PASS"
+    assert phase_g2_4t["real_smoke"]["walk_forward_result_row_count"] == 40
+    assert phase_g2_4t["real_smoke"]["robustness_validation"] == "PASS"
+    assert phase_g2_4t["real_smoke"]["superseded_walk_forward_validation"] == "FAIL"
+    assert phase_g2_4t["real_smoke"]["superseded_robustness_validation"] == "FAIL"
+    assert phase_g2_4t["real_smoke"]["current_shadow_registry_validation"] == "FAIL"
+    assert phase_g2_4t["real_smoke"]["automatic_registry_mutation_performed"] is False
+    assert phase_g2_4t["sources"]
+    for source in phase_g2_4t["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -1986,7 +2020,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4P_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4T_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

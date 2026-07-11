@@ -10,6 +10,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
+from io import StringIO
 from itertools import product
 from math import isfinite
 from pathlib import Path
@@ -1982,9 +1983,9 @@ def injection_audit_report_payload(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_injection_audit_report_view",
         "audit_id": resolved_id,
-        "status": "INCOMPLETE"
-        if legacy_effect_summary_missing
-        else manifest.get("status", "UNKNOWN"),
+        "status": (
+            "INCOMPLETE" if legacy_effect_summary_missing else manifest.get("status", "UNKNOWN")
+        ),
         "candidate_count": manifest.get("candidate_count"),
         "weight_path_diff_summary": weight_summary,
         "metric_diff_summary": metric_summary,
@@ -4478,9 +4479,7 @@ def run_shadow_shortlist_monitor(
     summary_recommendation = (
         "pause_monitoring"
         if active_count == 0
-        else "manual_review_required"
-        if downgrade_count
-        else "continue_monitoring"
+        else "manual_review_required" if downgrade_count else "continue_monitoring"
     )
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -4998,9 +4997,7 @@ def run_consensus_drift(
     implication = (
         "manual_review_required"
         if disagreement_status in {"HIGH_DISAGREEMENT", "INSUFFICIENT_DATA"}
-        else "monitor"
-        if disagreement_status == "MODERATE_DISAGREEMENT"
-        else "continue_monitoring"
+        else "monitor" if disagreement_status == "MODERATE_DISAGREEMENT" else "continue_monitoring"
     )
     drift_id = _stable_id(
         "consensus-drift",
@@ -7869,8 +7866,7 @@ def run_candidate_attribution(
     if (
         _text(candidate_report.get("candidate_id")) != candidate_id
         or _text(candidate_report.get("source_sweep_id")) != sweep_id
-        or _text(candidate_report.get("report_type"))
-        != "etf_dynamic_v3_parameter_candidate_report"
+        or _text(candidate_report.get("report_type")) != "etf_dynamic_v3_parameter_candidate_report"
     ):
         raise DynamicV3ParameterResearchError(
             f"candidate report lineage mismatch: {candidate_report_path}"
@@ -8184,9 +8180,7 @@ def _candidate_attribution_content_checks(
     expected_candidate_results_path = (
         None if sweep_dir is None else sweep_dir / "candidate_results.jsonl"
     )
-    candidate_result = (
-        _candidate_result(sweep_dir, candidate_id) if sweep_dir is not None else None
-    )
+    candidate_result = _candidate_result(sweep_dir, candidate_id) if sweep_dir is not None else None
     checks.append(
         _check(
             "candidate_report_checksum_matches",
@@ -8238,17 +8232,12 @@ def _candidate_attribution_content_checks(
     expected_real_dir: Path | None = None
     if sweep_dir is not None:
         try:
-            expected_real_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(
-                strict=False
-            )
+            expected_real_dir = (sweep_dir / "real_evaluation" / candidate_id).resolve(strict=False)
         except IndexError:
             expected_real_dir = None
-    real_path_owned = (
-        real_path is None
-        or (
-            expected_real_dir is not None
-            and real_path.resolve(strict=False).parent == expected_real_dir
-        )
+    real_path_owned = real_path is None or (
+        expected_real_dir is not None
+        and real_path.resolve(strict=False).parent == expected_real_dir
     )
     checks.extend(
         [
@@ -8260,10 +8249,7 @@ def _candidate_attribution_content_checks(
             ),
             _check(
                 "real_evaluation_checksum_matches",
-                (
-                    not real_path_raw
-                    and not _text(source_checksums.get("real_evaluation_sha256"))
-                )
+                (not real_path_raw and not _text(source_checksums.get("real_evaluation_sha256")))
                 or (
                     real_path is not None
                     and real_path.is_file()
@@ -8337,14 +8323,12 @@ def _candidate_attribution_content_checks(
         [
             _check(
                 "weight_path_observed_completeness_matches",
-                _text(manifest.get("weight_path_observed_completeness"))
-                == observed_weight_status,
+                _text(manifest.get("weight_path_observed_completeness")) == observed_weight_status,
                 observed_weight_status,
             ),
             _check(
                 "weight_path_declared_completeness_matches",
-                _text(manifest.get("weight_path_declared_completeness"))
-                == declared_weight_status,
+                _text(manifest.get("weight_path_declared_completeness")) == declared_weight_status,
                 declared_weight_status,
             ),
             _check(
@@ -8380,9 +8364,7 @@ def _candidate_attribution_content_checks(
         expected_incomplete_reasons.append("MISSING_DAILY_WEIGHT_PATH")
     if real_payload and observed_weight_status != WEIGHT_PATH_INCOMPLETE and not expected_delta:
         expected_incomplete_reasons.append("MISSING_WEIGHT_DELTA_EVIDENCE")
-    expected_status = (
-        WEIGHT_PATH_INCOMPLETE if expected_incomplete_reasons else WEIGHT_PATH_PARTIAL
-    )
+    expected_status = WEIGHT_PATH_INCOMPLETE if expected_incomplete_reasons else WEIGHT_PATH_PARTIAL
     checks.extend(
         [
             _check(
@@ -8439,8 +8421,7 @@ def _candidate_attribution_content_checks(
                 _check(
                     f"{component_name}_status_matches",
                     _text(component.get("status")) == expected_component_status
-                    and _text(component_statuses.get(component_name))
-                    == expected_component_status,
+                    and _text(component_statuses.get(component_name)) == expected_component_status,
                     expected_component_status,
                 ),
                 _check(
@@ -8511,11 +8492,12 @@ def _candidate_weight_delta_csv_matches(
                     return False
             except (TypeError, ValueError):
                 return False
-        if abs(
-            float(row["candidate_weight"])
-            - float(row["baseline_weight"])
-            - float(row["delta"])
-        ) > 1e-6:
+        if (
+            abs(
+                float(row["candidate_weight"]) - float(row["baseline_weight"]) - float(row["delta"])
+            )
+            > 1e-6
+        ):
             return False
     return True
 
@@ -8541,12 +8523,8 @@ def weight_path_report_payload(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weight_path_report_view",
         "status": inspection["observed_attribution_completeness"],
-        "declared_attribution_completeness": inspection[
-            "declared_attribution_completeness"
-        ],
-        "observed_attribution_completeness": inspection[
-            "observed_attribution_completeness"
-        ],
+        "declared_attribution_completeness": inspection["declared_attribution_completeness"],
+        "observed_attribution_completeness": inspection["observed_attribution_completeness"],
         "evaluation_id": evaluation_id,
         "candidate_id": metadata.get("candidate_id"),
         "daily_weights_path": str(Path(weight_dir) / "daily_weights.csv"),
@@ -8581,12 +8559,8 @@ def validate_weight_path_artifact(
         "candidate_id": metadata.get("candidate_id", ""),
         "status": status,
         "attribution_completeness": inspection["observed_attribution_completeness"],
-        "declared_attribution_completeness": inspection[
-            "declared_attribution_completeness"
-        ],
-        "observed_attribution_completeness": inspection[
-            "observed_attribution_completeness"
-        ],
+        "declared_attribution_completeness": inspection["declared_attribution_completeness"],
+        "observed_attribution_completeness": inspection["observed_attribution_completeness"],
         "missing_fields": metadata.get("missing_fields", []),
         "limitations": inspection["limitations"],
         "checks": checks,
@@ -8606,37 +8580,48 @@ def run_walk_forward_validation(
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     sweep_dir = sweep_output_dir / sweep_id
-    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
-    leaderboard = _read_json(sweep_dir / "leaderboard.json")
-    candidates = _records(leaderboard.get("top_eligible_candidates"))[:top_n]
+    evidence = _build_legacy_walk_forward_evidence(
+        sweep_dir=sweep_dir,
+        source_sweep_id=sweep_id,
+        top_n=top_n,
+    )
     wf_id = _stable_id("wf", sweep_id, top_n, generated.isoformat())
     wf_dir = _unique_dir(output_dir / wf_id)
     wf_dir.mkdir(parents=True, exist_ok=False)
-    windows = walk_forward_windows(config)
-    rows: list[dict[str, Any]] = []
-    for candidate in candidates:
-        for window in windows:
-            rows.append(_walk_forward_row(candidate, window, config))
-    candidate_summaries = _walk_forward_candidate_summaries(rows, config)
     wf_leaderboard = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_walk_forward_leaderboard",
         "walk_forward_id": wf_id,
         "source_sweep_id": sweep_id,
-        "candidates": candidate_summaries,
+        "status": evidence["status"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "candidates": evidence["candidate_summaries"],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
     manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_walk_forward_manifest",
         "walk_forward_id": wf_id,
         "source_sweep_id": sweep_id,
         "top_n": top_n,
-        "train_window_months": config.walk_forward.train_window_months,
-        "test_window_months": config.walk_forward.test_window_months,
-        "step_months": config.walk_forward.step_months,
-        "min_windows": config.walk_forward.min_windows,
-        "candidate_count": len(candidates),
-        "status": "completed",
+        "train_window_months": evidence["train_window_months"],
+        "test_window_months": evidence["test_window_months"],
+        "step_months": evidence["step_months"],
+        "min_windows": evidence["min_windows"],
+        "candidate_count": evidence["candidate_count"],
+        "window_count": len(evidence["windows"]),
+        "result_row_count": len(evidence["rows"]),
+        "status": evidence["status"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "source_artifacts": evidence["source_artifacts"],
+        "source_checksums": evidence["source_checksums"],
+        "real_artifact_sources": evidence["real_artifact_sources"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
         "started_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -8646,22 +8631,37 @@ def run_walk_forward_validation(
         "report_type": "etf_dynamic_v3_walk_forward_report",
         "walk_forward_id": wf_id,
         "source_sweep_id": sweep_id,
-        "status": "PASS" if candidate_summaries else "REVIEW_REQUIRED",
-        "holdout_start": config.out_of_sample.holdout_start.isoformat(),
-        "holdout_end": config.out_of_sample.holdout_end.isoformat(),
-        "oos_summary": _oos_summary(candidate_summaries, config),
-        "leaderboard": candidate_summaries,
+        "status": evidence["status"],
+        "holdout_start": evidence["holdout_start"],
+        "holdout_end": evidence["holdout_end"],
+        "evidence_method": evidence["evidence_method"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "not_for_investment_decision": evidence["not_for_investment_decision"],
+        "oos_summary": evidence["oos_summary"],
+        "leaderboard": evidence["candidate_summaries"],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
     _write_json(wf_dir / "wf_manifest.json", manifest)
-    _write_json(wf_dir / "wf_windows.json", {"windows": windows})
-    _write_jsonl(wf_dir / "wf_candidate_results.jsonl", rows)
+    _write_json(wf_dir / "wf_windows.json", {"windows": evidence["windows"]})
+    _write_jsonl(wf_dir / "wf_candidate_results.jsonl", evidence["rows"])
     _write_json(wf_dir / "wf_leaderboard.json", wf_leaderboard)
     _write_text(
         wf_dir / "wf_leaderboard.md", render_walk_forward_leaderboard_markdown(wf_leaderboard)
     )
     _write_text(wf_dir / "wf_report.md", render_walk_forward_report_markdown(report))
+    output_names = [
+        "wf_windows.json",
+        "wf_candidate_results.jsonl",
+        "wf_leaderboard.json",
+        "wf_leaderboard.md",
+        "wf_report.md",
+    ]
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(wf_dir / name) for name in output_names
+    }
+    _write_json(wf_dir / "wf_manifest.json", manifest)
     _update_latest_pointer("latest_walk_forward", wf_id, wf_dir / "wf_manifest.json")
     return {"walk_forward_id": wf_id, "walk_forward_dir": wf_dir, "report": report}
 
@@ -8920,9 +8920,7 @@ def _walk_forward_selection_content_checks(
             "real_artifact_sources": expected["real_artifact_sources"],
             "not_for_investment_decision": expected["not_for_investment_decision"],
         }
-        observed_manifest_fields = {
-            key: manifest.get(key) for key in expected_manifest_fields
-        }
+        observed_manifest_fields = {key: manifest.get(key) for key in expected_manifest_fields}
         checks.append(
             _check(
                 "manifest_content_matches_source_recomputation",
@@ -8978,7 +8976,8 @@ def _walk_forward_selection_content_checks(
                 ),
                 _check(
                     "partial_evidence_cannot_claim_pass",
-                    expected["evidence_completeness"] not in {
+                    expected["evidence_completeness"]
+                    not in {
                         "PATH_DERIVED_PARTIAL",
                         "INCOMPLETE",
                     }
@@ -9029,8 +9028,7 @@ def _walk_forward_selection_content_checks(
         checks.append(
             _check(
                 f"output_checksum_matches:{filename}",
-                _text(output_checksums.get(filename))
-                == _file_sha256_path(wf_dir / filename),
+                _text(output_checksums.get(filename)) == _file_sha256_path(wf_dir / filename),
                 _text(output_checksums.get(filename)),
             )
         )
@@ -9054,6 +9052,150 @@ def validate_walk_forward_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (wf_dir / name).exists(), name) for name in required
     ]
+    manifest = _read_optional_json(wf_dir / "wf_manifest.json") or {}
+    source_artifacts = _mapping(manifest.get("source_artifacts"))
+    normalized_config_path = Path(_text(source_artifacts.get("normalized_config_path")))
+    sweep_dir = normalized_config_path.parent
+    source_sweep_id = _text(manifest.get("source_sweep_id"))
+    expected: dict[str, Any] | None = None
+    try:
+        expected = _build_legacy_walk_forward_evidence(
+            sweep_dir=sweep_dir,
+            source_sweep_id=source_sweep_id,
+            top_n=int(manifest.get("top_n") or 0),
+        )
+        checks.append(_check("source_recomputation_succeeded", True, source_sweep_id))
+    except (DynamicV3ParameterResearchError, OSError, ValueError, TypeError) as exc:
+        checks.append(_check("source_recomputation_succeeded", False, str(exc)))
+    if expected is not None:
+        expected_paths = expected["source_artifacts"]
+        expected_checksums = expected["source_checksums"]
+        checks.extend(
+            [
+                _check(
+                    "walk_forward_id_matches_directory",
+                    _text(manifest.get("walk_forward_id")) == walk_forward_id,
+                    _text(manifest.get("walk_forward_id")),
+                ),
+                _check(
+                    "source_artifacts_match_recomputation",
+                    source_artifacts == expected_paths,
+                    _canonical_json(source_artifacts),
+                ),
+                _check(
+                    "source_checksums_match_recomputation",
+                    _mapping(manifest.get("source_checksums")) == expected_checksums,
+                    _canonical_json(_mapping(manifest.get("source_checksums"))),
+                ),
+                _check(
+                    "real_artifact_sources_match_recomputation",
+                    _records(manifest.get("real_artifact_sources"))
+                    == expected["real_artifact_sources"],
+                    str(len(_records(manifest.get("real_artifact_sources")))),
+                ),
+                _check(
+                    "status_matches_recomputation",
+                    _text(manifest.get("status")) == expected["status"],
+                    _text(manifest.get("status")),
+                ),
+                _check(
+                    "evidence_contract_matches_recomputation",
+                    _text(manifest.get("evidence_method")) == expected["evidence_method"]
+                    and _text(manifest.get("evidence_completeness"))
+                    == expected["evidence_completeness"]
+                    and _texts(manifest.get("limitations")) == expected["limitations"],
+                    _text(manifest.get("evidence_completeness")),
+                ),
+                _check(
+                    "windows_match_source_recomputation",
+                    _mapping(_read_optional_json(wf_dir / "wf_windows.json")).get("windows")
+                    == expected["windows"],
+                    str(len(expected["windows"])),
+                ),
+                _check(
+                    "candidate_results_match_source_recomputation",
+                    _read_jsonl(wf_dir / "wf_candidate_results.jsonl") == expected["rows"],
+                    str(len(expected["rows"])),
+                ),
+            ]
+        )
+        expected_leaderboard = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_walk_forward_leaderboard",
+            "walk_forward_id": walk_forward_id,
+            "source_sweep_id": source_sweep_id,
+            "status": expected["status"],
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "candidates": expected["candidate_summaries"],
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+            **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+        }
+        expected_report = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_walk_forward_report",
+            "walk_forward_id": walk_forward_id,
+            "source_sweep_id": source_sweep_id,
+            "status": expected["status"],
+            "holdout_start": expected["holdout_start"],
+            "holdout_end": expected["holdout_end"],
+            "evidence_method": expected["evidence_method"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "not_for_investment_decision": expected["not_for_investment_decision"],
+            "oos_summary": expected["oos_summary"],
+            "leaderboard": expected["candidate_summaries"],
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+            **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+        }
+        checks.extend(
+            [
+                _check(
+                    "leaderboard_matches_source_recomputation",
+                    _mapping(_read_optional_json(wf_dir / "wf_leaderboard.json"))
+                    == expected_leaderboard,
+                    str(wf_dir / "wf_leaderboard.json"),
+                ),
+                _check(
+                    "leaderboard_markdown_matches_source_recomputation",
+                    (wf_dir / "wf_leaderboard.md").is_file()
+                    and (wf_dir / "wf_leaderboard.md").read_text(encoding="utf-8")
+                    == render_walk_forward_leaderboard_markdown(expected_leaderboard),
+                    str(wf_dir / "wf_leaderboard.md"),
+                ),
+                _check(
+                    "report_markdown_matches_source_recomputation",
+                    (wf_dir / "wf_report.md").is_file()
+                    and (wf_dir / "wf_report.md").read_text(encoding="utf-8")
+                    == render_walk_forward_report_markdown(expected_report),
+                    str(wf_dir / "wf_report.md"),
+                ),
+            ]
+        )
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    expected_output_names = {
+        "wf_windows.json",
+        "wf_candidate_results.jsonl",
+        "wf_leaderboard.json",
+        "wf_leaderboard.md",
+        "wf_report.md",
+    }
+    checks.append(
+        _check(
+            "output_checksum_inventory_complete",
+            set(output_checksums) == expected_output_names,
+            ",".join(sorted(output_checksums)),
+        )
+    )
+    for filename in expected_output_names:
+        checks.append(
+            _check(
+                f"output_checksum_matches:{filename}",
+                _text(output_checksums.get(filename)) == _file_sha256_path(wf_dir / filename),
+                _text(output_checksums.get(filename)),
+            )
+        )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -9098,32 +9240,17 @@ def run_robustness_diagnostics(
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     sweep_dir = sweep_output_dir / sweep_id
-    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
-    results = _read_candidate_results(sweep_dir)
-    result = _candidate_result_from_rows(results, candidate_id)
-    if result is None:
-        raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
+    evidence = _build_legacy_robustness_evidence(
+        sweep_dir=sweep_dir,
+        source_sweep_id=sweep_id,
+        candidate_id=candidate_id,
+    )
     robustness_id = _stable_id("robustness", sweep_id, candidate_id, generated.isoformat())
     robustness_dir = _unique_dir(output_dir / robustness_id)
     robustness_dir.mkdir(parents=True, exist_ok=False)
-    evaluator = _robustness_evaluator_mode(result, config)
-    source_evidence, real_payload = _robustness_source_evidence(result, evaluator)
-    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
-        sensitivity = _real_sensitivity_rows(result, results, config)
-        stress = _real_stress_bucket_results(result, config, real_payload)
-        regime = _real_regime_bucket_results(real_payload)
-    else:
-        sensitivity = _sensitivity_rows(result, config)
-        stress = _stress_bucket_results(result, config)
-        regime = _regime_bucket_results(result)
-    overfit = _overfit_diagnostics(
-        sensitivity,
-        stress,
-        config,
-        evaluator_mode=evaluator,
-        source_evidence=source_evidence,
-        regime=regime,
-    )
+    source_evidence = evidence["source_evidence"]
+    overfit = evidence["overfit"]
+    evaluator = evidence["evaluator_mode"]
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_robustness_manifest",
@@ -9144,11 +9271,18 @@ def run_robustness_diagnostics(
             "source_real_evaluation_artifact_exists"
         ],
         "source_real_evaluation_report_id": source_evidence["source_real_evaluation_report_id"],
+        "source_real_evaluation_path_owned": source_evidence["source_real_evaluation_path_owned"],
+        "source_identity_status": source_evidence["source_identity_status"],
         "sensitivity_evidence_status": overfit["sensitivity_evidence_status"],
         "real_neighbor_count": overfit["real_neighbor_count"],
         "missing_real_neighbor_count": overfit["missing_real_neighbor_count"],
         "stress_evidence_status": overfit["stress_evidence_status"],
         "regime_evidence_status": overfit["regime_evidence_status"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
+        "source_artifacts": evidence["source_artifacts"],
+        "source_checksums": evidence["source_checksums"],
+        "neighbor_artifact_sources": evidence["neighbor_artifact_sources"],
         "started_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -9173,6 +9307,7 @@ def run_robustness_diagnostics(
             "source_real_evaluation_artifact_exists"
         ],
         "source_real_evaluation_report_id": source_evidence["source_real_evaluation_report_id"],
+        "source_identity_status": source_evidence["source_identity_status"],
         "overfit_status": overfit["overfit_status"],
         "parameter_sensitivity_status": overfit["parameter_sensitivity_status"],
         "sensitivity_evidence_status": overfit["sensitivity_evidence_status"],
@@ -9181,17 +9316,30 @@ def run_robustness_diagnostics(
         "stress_bucket_status": overfit["stress_bucket_status"],
         "stress_evidence_status": overfit["stress_evidence_status"],
         "regime_evidence_status": overfit["regime_evidence_status"],
+        "evidence_completeness": evidence["evidence_completeness"],
+        "limitations": evidence["limitations"],
         "multiple_testing_warning": overfit["multiple_testing_warning"],
         "optional_pbo_dsr_status": "NOT_RUN_REVIEW_NOTE",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
     _write_json(robustness_dir / "robustness_manifest.json", manifest)
-    _write_csv(robustness_dir / "sensitivity_matrix.csv", sensitivity)
-    _write_json(robustness_dir / "stress_bucket_results.json", stress)
-    _write_json(robustness_dir / "regime_bucket_results.json", regime)
+    _write_csv(robustness_dir / "sensitivity_matrix.csv", evidence["sensitivity"])
+    _write_json(robustness_dir / "stress_bucket_results.json", evidence["stress"])
+    _write_json(robustness_dir / "regime_bucket_results.json", evidence["regime"])
     _write_json(robustness_dir / "overfit_diagnostics.json", overfit)
     _write_text(robustness_dir / "robustness_report.md", render_robustness_report_markdown(report))
+    output_names = [
+        "sensitivity_matrix.csv",
+        "stress_bucket_results.json",
+        "regime_bucket_results.json",
+        "overfit_diagnostics.json",
+        "robustness_report.md",
+    ]
+    manifest["output_artifact_checksums"] = {
+        name: _file_sha256_path(robustness_dir / name) for name in output_names
+    }
+    _write_json(robustness_dir / "robustness_manifest.json", manifest)
     _update_latest_pointer(
         "latest_robustness", robustness_id, robustness_dir / "robustness_manifest.json"
     )
@@ -9252,9 +9400,7 @@ def run_overfit_review(
         "component_evidence_statuses": evidence["component_evidence_statuses"],
         "not_for_investment_decision": evidence["not_for_investment_decision"],
         "rank_stability": evidence["rank_stability"],
-        "parameter_neighborhood_stability": evidence[
-            "parameter_neighborhood_stability"
-        ],
+        "parameter_neighborhood_stability": evidence["parameter_neighborhood_stability"],
         "regime_stability": evidence["regime_stability"],
         "extreme_day_dependency": evidence["extreme_day_dependency"],
         "multiple_testing_warning": evidence["multiple_testing_warning"],
@@ -9270,12 +9416,8 @@ def run_overfit_review(
         evidence["parameter_neighborhood_stability"],
     )
     _write_json(overfit_dir / "regime_stability.json", evidence["regime_stability"])
-    _write_json(
-        overfit_dir / "extreme_day_dependency.json", evidence["extreme_day_dependency"]
-    )
-    _write_json(
-        overfit_dir / "multiple_testing_warning.json", evidence["multiple_testing_warning"]
-    )
+    _write_json(overfit_dir / "extreme_day_dependency.json", evidence["extreme_day_dependency"])
+    _write_json(overfit_dir / "multiple_testing_warning.json", evidence["multiple_testing_warning"])
     _write_text(overfit_dir / "overfit_report.md", render_overfit_markdown(report))
     output_names = [
         "rank_stability.json",
@@ -9384,9 +9526,7 @@ def _build_overfit_evidence(
         real_path is not None and real_path.resolve(strict=False).parent == expected_real_dir
     )
     real_payload = _mapping(_read_optional_json(real_path))
-    expected_report_id = _text(
-        _mapping(result.get("metrics")).get("real_evaluation_report_id")
-    )
+    expected_report_id = _text(_mapping(result.get("metrics")).get("real_evaluation_report_id"))
     observed_report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
     real_source_valid = (
         evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
@@ -9419,9 +9559,7 @@ def _build_overfit_evidence(
             "method": "real_neighbor_full_period_aggregate_v2",
             "neighbor_count": len(sensitivity),
             "real_neighbor_count": sensitivity_summary["real_neighbor_count"],
-            "missing_real_neighbor_count": sensitivity_summary[
-                "missing_real_neighbor_count"
-            ],
+            "missing_real_neighbor_count": sensitivity_summary["missing_real_neighbor_count"],
             "max_abs_score_delta": round(max_abs_delta, 6),
             "configured_pass_boundary": config.robustness.max_score_delta_for_pass,
             "rows": sensitivity,
@@ -9490,9 +9628,7 @@ def _build_overfit_evidence(
         limitations.append("real_evaluation_source_missing_or_invalid")
     else:
         evidence_completeness = "PATH_DERIVED_PARTIAL"
-    overfit_status = (
-        "HIGH_RISK" if _text(result.get("gate")) == GATE_REJECT else "REVIEW_REQUIRED"
-    )
+    overfit_status = "HIGH_RISK" if _text(result.get("gate")) == GATE_REJECT else "REVIEW_REQUIRED"
     source_artifacts = {
         "sweep_manifest_path": str(sweep_manifest_path),
         "normalized_config_path": str(normalized_config_path),
@@ -9513,9 +9649,7 @@ def _build_overfit_evidence(
         "evidence_completeness": evidence_completeness,
         "limitations": sorted(set(_texts(limitations))),
         "component_evidence_statuses": component_statuses,
-        "not_for_investment_decision": (
-            evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY
-        ),
+        "not_for_investment_decision": (evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY),
         "source_artifacts": source_artifacts,
         "source_checksums": source_checksums,
         **components,
@@ -9570,8 +9704,7 @@ def _overfit_content_checks(
         ),
         _check(
             "overfit_status_allowed",
-            _text(manifest.get("overfit_status"))
-            in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
+            _text(manifest.get("overfit_status")) in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
             _text(manifest.get("overfit_status")),
         ),
     ]
@@ -9604,12 +9737,8 @@ def _overfit_content_checks(
         raw_path = _text(source_artifacts.get(path_key))
         expected_checksum = _text(source_checksums.get(checksum_key))
         path = _resolve_project_path(Path(raw_path)) if raw_path else None
-        matches = (
-            not raw_path and not expected_checksum
-        ) or (
-            path is not None
-            and path.is_file()
-            and expected_checksum == _file_sha256_path(path)
+        matches = (not raw_path and not expected_checksum) or (
+            path is not None and path.is_file() and expected_checksum == _file_sha256_path(path)
         )
         checks.append(
             _check(
@@ -9700,9 +9829,7 @@ def _overfit_content_checks(
             "component_evidence_statuses": expected["component_evidence_statuses"],
             "not_for_investment_decision": expected["not_for_investment_decision"],
             "rank_stability": expected["rank_stability"],
-            "parameter_neighborhood_stability": expected[
-                "parameter_neighborhood_stability"
-            ],
+            "parameter_neighborhood_stability": expected["parameter_neighborhood_stability"],
             "regime_stability": expected["regime_stability"],
             "extreme_day_dependency": expected["extreme_day_dependency"],
             "multiple_testing_warning": expected["multiple_testing_warning"],
@@ -9731,8 +9858,7 @@ def _overfit_content_checks(
         checks.append(
             _check(
                 f"output_checksum_matches:{filename}",
-                _text(output_checksums.get(filename))
-                == _file_sha256_path(overfit_dir / filename),
+                _text(output_checksums.get(filename)) == _file_sha256_path(overfit_dir / filename),
                 _text(output_checksums.get(filename)),
             )
         )
@@ -9758,73 +9884,167 @@ def validate_robustness_artifact(
         for name in required
     ]
     manifest = _read_optional_json(robustness_dir / "robustness_manifest.json") or {}
-    diagnostics = _read_optional_json(robustness_dir / "overfit_diagnostics.json") or {}
     evaluator = _text(manifest.get("evaluator_mode"), EVALUATOR_TINY_FIXTURE_PROXY)
+    source_artifacts = _mapping(manifest.get("source_artifacts"))
+    normalized_config_path = Path(_text(source_artifacts.get("normalized_config_path")))
+    sweep_dir = normalized_config_path.parent
+    source_sweep_id = _text(manifest.get("source_sweep_id"))
+    candidate_id = _text(manifest.get("candidate_id"))
+    expected: dict[str, Any] | None = None
+    try:
+        expected = _build_legacy_robustness_evidence(
+            sweep_dir=sweep_dir,
+            source_sweep_id=source_sweep_id,
+            candidate_id=candidate_id,
+        )
+        checks.append(_check("source_recomputation_succeeded", True, candidate_id))
+    except (DynamicV3ParameterResearchError, OSError, ValueError, TypeError) as exc:
+        checks.append(_check("source_recomputation_succeeded", False, str(exc)))
+    if expected is not None:
+        source_evidence = expected["source_evidence"]
+        diagnostics = expected["overfit"]
+        checks.extend(
+            [
+                _check(
+                    "robustness_id_matches_directory",
+                    _text(manifest.get("robustness_id")) == robustness_id,
+                    _text(manifest.get("robustness_id")),
+                ),
+                _check(
+                    "evaluator_mode_matches_recomputation",
+                    evaluator == expected["evaluator_mode"],
+                    evaluator,
+                ),
+                _check(
+                    "status_matches_source_recomputation",
+                    _text(manifest.get("status")) == expected["status"],
+                    _text(manifest.get("status")),
+                ),
+                _check(
+                    "evidence_contract_matches_recomputation",
+                    _text(manifest.get("evidence_completeness"))
+                    == expected["evidence_completeness"]
+                    and _texts(manifest.get("limitations")) == expected["limitations"],
+                    _text(manifest.get("evidence_completeness")),
+                ),
+                _check(
+                    "source_artifacts_match_recomputation",
+                    source_artifacts == expected["source_artifacts"],
+                    _canonical_json(source_artifacts),
+                ),
+                _check(
+                    "source_checksums_match_recomputation",
+                    _mapping(manifest.get("source_checksums")) == expected["source_checksums"],
+                    _canonical_json(_mapping(manifest.get("source_checksums"))),
+                ),
+                _check(
+                    "neighbor_sources_match_recomputation",
+                    _records(manifest.get("neighbor_artifact_sources"))
+                    == expected["neighbor_artifact_sources"],
+                    str(len(_records(manifest.get("neighbor_artifact_sources")))),
+                ),
+                _check(
+                    "source_identity_matches_recomputation",
+                    _text(manifest.get("source_identity_status"))
+                    == source_evidence["source_identity_status"]
+                    and manifest.get("source_real_evaluation_path_owned")
+                    is source_evidence["source_real_evaluation_path_owned"],
+                    _text(manifest.get("source_identity_status")),
+                ),
+                _check(
+                    "sensitivity_matches_source_recomputation",
+                    (robustness_dir / "sensitivity_matrix.csv").is_file()
+                    and (robustness_dir / "sensitivity_matrix.csv").read_bytes().decode("utf-8")
+                    == _render_csv_text(expected["sensitivity"]),
+                    str(robustness_dir / "sensitivity_matrix.csv"),
+                ),
+                _check(
+                    "stress_matches_source_recomputation",
+                    _mapping(_read_optional_json(robustness_dir / "stress_bucket_results.json"))
+                    == expected["stress"],
+                    str(robustness_dir / "stress_bucket_results.json"),
+                ),
+                _check(
+                    "regime_matches_source_recomputation",
+                    _mapping(_read_optional_json(robustness_dir / "regime_bucket_results.json"))
+                    == expected["regime"],
+                    str(robustness_dir / "regime_bucket_results.json"),
+                ),
+                _check(
+                    "diagnostics_match_source_recomputation",
+                    _mapping(_read_optional_json(robustness_dir / "overfit_diagnostics.json"))
+                    == diagnostics,
+                    str(robustness_dir / "overfit_diagnostics.json"),
+                ),
+            ]
+        )
+        expected_report = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_robustness_report",
+            "robustness_id": robustness_id,
+            "source_sweep_id": source_sweep_id,
+            "candidate_id": candidate_id,
+            "status": diagnostics["robustness_status"],
+            "evaluator_mode": evaluator,
+            "evaluator_version": source_evidence["evaluator_version"],
+            "metrics_source": source_evidence["metrics_source"],
+            "not_for_investment_decision": source_evidence["not_for_investment_decision"],
+            "data_quality": source_evidence["data_quality"],
+            "real_evaluation_artifact_path": source_evidence["real_evaluation_artifact_path"],
+            "source_real_evaluation_artifact_path": source_evidence[
+                "source_real_evaluation_artifact_path"
+            ],
+            "source_real_evaluation_artifact_exists": source_evidence[
+                "source_real_evaluation_artifact_exists"
+            ],
+            "source_real_evaluation_report_id": source_evidence["source_real_evaluation_report_id"],
+            "source_identity_status": source_evidence["source_identity_status"],
+            "overfit_status": diagnostics["overfit_status"],
+            "parameter_sensitivity_status": diagnostics["parameter_sensitivity_status"],
+            "sensitivity_evidence_status": diagnostics["sensitivity_evidence_status"],
+            "real_neighbor_count": diagnostics["real_neighbor_count"],
+            "missing_real_neighbor_count": diagnostics["missing_real_neighbor_count"],
+            "stress_bucket_status": diagnostics["stress_bucket_status"],
+            "stress_evidence_status": diagnostics["stress_evidence_status"],
+            "regime_evidence_status": diagnostics["regime_evidence_status"],
+            "evidence_completeness": expected["evidence_completeness"],
+            "limitations": expected["limitations"],
+            "multiple_testing_warning": diagnostics["multiple_testing_warning"],
+            "optional_pbo_dsr_status": "NOT_RUN_REVIEW_NOTE",
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+            **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+        }
+        checks.append(
+            _check(
+                "markdown_matches_source_recomputation",
+                (robustness_dir / "robustness_report.md").is_file()
+                and (robustness_dir / "robustness_report.md").read_text(encoding="utf-8")
+                == render_robustness_report_markdown(expected_report),
+                str(robustness_dir / "robustness_report.md"),
+            )
+        )
+    output_checksums = _mapping(manifest.get("output_artifact_checksums"))
+    expected_output_names = {
+        "sensitivity_matrix.csv",
+        "stress_bucket_results.json",
+        "regime_bucket_results.json",
+        "overfit_diagnostics.json",
+        "robustness_report.md",
+    }
     checks.append(
         _check(
-            "robustness_status_allowed",
-            _text(manifest.get("status")) in {"PASS", "REVIEW_REQUIRED", "FAIL"},
-            _text(manifest.get("status")),
+            "output_checksum_inventory_complete",
+            set(output_checksums) == expected_output_names,
+            ",".join(sorted(output_checksums)),
         )
     )
-    checks.append(
-        _check(
-            "evaluator_mode_valid",
-            evaluator in EVALUATOR_VERSIONS,
-            evaluator,
-        )
-    )
-    checks.append(
-        _check(
-            "metrics_source_recorded",
-            bool(_text(manifest.get("metrics_source"))),
-            _text(manifest.get("metrics_source")),
-        )
-    )
-    if evaluator == EVALUATOR_TINY_FIXTURE_PROXY:
+    for filename in expected_output_names:
         checks.append(
             _check(
-                "tiny_fixture_not_for_investment_decision",
-                manifest.get("not_for_investment_decision") is True,
-                "tiny robustness artifact remains fixture-only",
-            )
-        )
-    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
-        artifact_path = _text(manifest.get("source_real_evaluation_artifact_path"))
-        missing_neighbors = int(_float(manifest.get("missing_real_neighbor_count")))
-        checks.append(
-            _check(
-                "real_evaluation_artifact_path_exists",
-                bool(artifact_path) and Path(artifact_path).exists(),
-                artifact_path,
-            )
-        )
-        checks.append(
-            _check(
-                "real_metrics_from_real_artifact",
-                manifest.get("metrics_source") == "real_evaluation_artifact",
-                _text(manifest.get("metrics_source")),
-            )
-        )
-        checks.append(
-            _check(
-                "real_evaluator_not_fixture_only",
-                manifest.get("not_for_investment_decision") is False,
-                "real evaluator robustness is not marked fixture-only",
-            )
-        )
-        checks.append(
-            _check(
-                "missing_real_neighbors_fail_closed",
-                missing_neighbors == 0 or manifest.get("status") != "PASS",
-                f"missing_real_neighbor_count={missing_neighbors}; status={manifest.get('status')}",
-            )
-        )
-        checks.append(
-            _check(
-                "real_sensitivity_not_fixture_proxy",
-                diagnostics.get("sensitivity_evidence_status") != "TINY_FIXTURE_PROXY",
-                _text(diagnostics.get("sensitivity_evidence_status")),
+                f"output_checksum_matches:{filename}",
+                _text(output_checksums.get(filename))
+                == _file_sha256_path(robustness_dir / filename),
+                _text(output_checksums.get(filename)),
             )
         )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -10213,6 +10433,7 @@ def validate_shadow_registry(
                 )
             )
         if source_walk_forward_id:
+            wf_manifest = _mapping(_read_optional_json(wf_manifest_path))
             checks.append(
                 _check(
                     f"{candidate_id}:source_walk_forward_exists",
@@ -10220,12 +10441,35 @@ def validate_shadow_registry(
                     str(wf_manifest_path),
                 )
             )
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_walk_forward_evidence_usable",
+                    _text(wf_manifest.get("status")) == "REVIEW_REQUIRED"
+                    and _text(wf_manifest.get("evidence_completeness")) == "PATH_DERIVED_PARTIAL"
+                    and wf_manifest.get("not_for_investment_decision") is False,
+                    _text(wf_manifest.get("evidence_completeness")),
+                )
+            )
         if source_robustness_id:
+            robustness_manifest = _mapping(_read_optional_json(robustness_manifest_path))
             checks.append(
                 _check(
                     f"{candidate_id}:source_robustness_exists",
                     robustness_manifest_path.exists(),
                     str(robustness_manifest_path),
+                )
+            )
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_robustness_evidence_usable",
+                    _text(robustness_manifest.get("status")) == "REVIEW_REQUIRED"
+                    and _text(robustness_manifest.get("evaluator_mode"))
+                    == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+                    and _text(robustness_manifest.get("source_identity_status")) == "PASS"
+                    and _text(robustness_manifest.get("evidence_completeness"))
+                    == "PATH_AND_AGGREGATE_PARTIAL"
+                    and robustness_manifest.get("not_for_investment_decision") is False,
+                    _text(robustness_manifest.get("evidence_completeness")),
                 )
             )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -11132,6 +11376,10 @@ def render_walk_forward_leaderboard_markdown(payload: Mapping[str, Any]) -> str:
     lines = [
         f"# Dynamic v3 Rescue Walk-forward Leaderboard {payload.get('walk_forward_id')}",
         "",
+        f"- Status: {payload.get('status')}",
+        f"- Evidence method: {payload.get('evidence_method')}",
+        f"- Evidence completeness: {payload.get('evidence_completeness')}",
+        "",
         "| Candidate | Status | Pass ratio | OOS gate |",
         "|---|---|---:|---|",
     ]
@@ -11140,6 +11388,8 @@ def render_walk_forward_leaderboard_markdown(payload: Mapping[str, Any]) -> str:
             f"| {row.get('candidate_id')} | {row.get('walk_forward_status')} | "
             f"{_fmt_num(row.get('pass_ratio'))} | {row.get('oos_gate')} |"
         )
+    lines.extend(["", "## Limitations"])
+    lines.extend(f"- {item}" for item in _texts(payload.get("limitations")))
     return "\n".join(lines) + "\n"
 
 
@@ -11150,11 +11400,16 @@ def render_walk_forward_report_markdown(payload: Mapping[str, Any]) -> str:
         f"- Source sweep: {payload.get('source_sweep_id')}",
         f"- Holdout: {payload.get('holdout_start')} to {payload.get('holdout_end')}",
         f"- Status: {payload.get('status')}",
+        f"- Evidence method: {payload.get('evidence_method')}",
+        f"- Evidence completeness: {payload.get('evidence_completeness')}",
+        f"- Not for investment decision: {payload.get('not_for_investment_decision')}",
         "",
         "## OOS Summary",
     ]
     for key, value in _mapping(payload.get("oos_summary")).items():
         lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Limitations"])
+    lines.extend(f"- {item}" for item in _texts(payload.get("limitations")))
     lines.extend(["", "## Safety", "- production_candidate_generated=false"])
     return "\n".join(lines) + "\n"
 
@@ -11166,8 +11421,10 @@ def render_robustness_report_markdown(payload: Mapping[str, Any]) -> str:
         f"- Robustness status: {payload.get('status')}\n"
         f"- Evaluator mode: {payload.get('evaluator_mode')}\n"
         f"- Metrics source: {payload.get('metrics_source')}\n"
+        f"- Source identity: {payload.get('source_identity_status')}\n"
         "- Source real evaluation artifact: "
         f"{payload.get('source_real_evaluation_artifact_path')}\n"
+        f"- Evidence completeness: {payload.get('evidence_completeness')}\n"
         f"- Overfit status: {payload.get('overfit_status')}\n"
         f"- Parameter sensitivity: {payload.get('parameter_sensitivity_status')}\n"
         f"- Sensitivity evidence: {payload.get('sensitivity_evidence_status')}\n"
@@ -11177,6 +11434,9 @@ def render_robustness_report_markdown(payload: Mapping[str, Any]) -> str:
         f"- Stress evidence: {payload.get('stress_evidence_status')}\n"
         f"- Regime evidence: {payload.get('regime_evidence_status')}\n"
         f"- Optional PBO/DSR: {payload.get('optional_pbo_dsr_status')}\n\n"
+        "## Limitations\n"
+        + "".join(f"- {item}\n" for item in _texts(payload.get("limitations")))
+        + "\n"
         "## Safety\n"
         "- production_candidate_generated=false\n"
     )
@@ -11410,9 +11670,9 @@ def render_candidate_attribution_markdown(payload: Mapping[str, Any]) -> str:
     lines.extend(f"- {name}: {status}" for name, status in sorted(component_statuses.items()))
     lines.extend(
         [
-        "",
-        "## Safety",
-        "- production_candidate_generated=false",
+            "",
+            "## Safety",
+            "- production_candidate_generated=false",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -17288,90 +17548,6 @@ def walk_forward_windows(config: DynamicV3ParameterSweepConfig) -> list[dict[str
     return windows
 
 
-def _walk_forward_row(
-    candidate: Mapping[str, Any],
-    window: Mapping[str, str],
-    config: DynamicV3ParameterSweepConfig,
-) -> dict[str, Any]:
-    metrics = dict(_mapping(candidate.get("metrics")))
-    candidate_id = _text(candidate.get("candidate_id"))
-    drift = (_stable_int(candidate_id, window.get("test_start")) % 9 - 4) / 1000.0
-    metrics["dynamic_vs_static_gap"] = round(
-        float(metrics.get("dynamic_vs_static_gap", 0)) + drift, 6
-    )
-    metrics["drawdown_degradation_pp"] = round(
-        float(metrics.get("drawdown_degradation_pp", 0)) + abs(drift) / 2,
-        6,
-    )
-    gate, reasons = gate_candidate(metrics, config)
-    return {
-        "candidate_id": candidate_id,
-        "train_start": window["train_start"],
-        "train_end": window["train_end"],
-        "test_start": window["test_start"],
-        "test_end": window["test_end"],
-        "selected_parameters": candidate.get("parameters", {}),
-        "test_metrics": metrics,
-        "gate": gate,
-        "reject_reasons": reasons,
-    }
-
-
-def _walk_forward_candidate_summaries(
-    rows: Sequence[Mapping[str, Any]],
-    config: DynamicV3ParameterSweepConfig,
-) -> list[dict[str, Any]]:
-    grouped: dict[str, list[Mapping[str, Any]]] = {}
-    for row in rows:
-        grouped.setdefault(_text(row.get("candidate_id")), []).append(row)
-    summaries = []
-    for candidate_id, candidate_rows in grouped.items():
-        pass_count = sum(1 for row in candidate_rows if row.get("gate") != GATE_REJECT)
-        pass_ratio = pass_count / max(1, len(candidate_rows))
-        oos_degradation = max(
-            float(_mapping(row.get("test_metrics")).get("drawdown_degradation_pp", 0))
-            for row in candidate_rows
-        )
-        oos_gate = (
-            "PASS"
-            if oos_degradation <= config.walk_forward.max_oos_degradation_pp
-            else "REVIEW_REQUIRED"
-        )
-        status = (
-            "PASS"
-            if pass_ratio >= config.walk_forward.min_pass_ratio and oos_gate == "PASS"
-            else "REVIEW_REQUIRED"
-        )
-        summaries.append(
-            {
-                "candidate_id": candidate_id,
-                "walk_forward_status": status,
-                "pass_ratio": round(pass_ratio, 6),
-                "oos_gate": oos_gate,
-                "oos_drawdown_degradation_pp": round(oos_degradation, 6),
-                "window_count": len(candidate_rows),
-            }
-        )
-    return sorted(
-        summaries,
-        key=lambda row: (row["walk_forward_status"] == "PASS", row["pass_ratio"]),
-        reverse=True,
-    )
-
-
-def _oos_summary(
-    summaries: Sequence[Mapping[str, Any]],
-    config: DynamicV3ParameterSweepConfig,
-) -> dict[str, Any]:
-    return {
-        "holdout_start": config.out_of_sample.holdout_start.isoformat(),
-        "holdout_end": config.out_of_sample.holdout_end.isoformat(),
-        "candidate_count": len(summaries),
-        "pass_count": sum(1 for row in summaries if row.get("oos_gate") == "PASS"),
-        "oos_recommendation": "continue_to_robustness" if summaries else "no_candidate",
-    }
-
-
 def _sensitivity_rows(
     result: Mapping[str, Any],
     config: DynamicV3ParameterSweepConfig,
@@ -17424,12 +17600,140 @@ def _robustness_evaluator_mode(
     return evaluator
 
 
+def _build_legacy_robustness_evidence(
+    *,
+    sweep_dir: Path,
+    source_sweep_id: str,
+    candidate_id: str,
+) -> dict[str, Any]:
+    if sweep_dir.name != source_sweep_id:
+        raise DynamicV3ParameterResearchError("robustness source sweep path does not match id")
+    base_paths = {
+        "sweep_manifest_path": sweep_dir / "sweep_manifest.json",
+        "normalized_config_path": sweep_dir / "sweep_config.normalized.yaml",
+        "candidate_results_path": sweep_dir / "candidate_results.jsonl",
+    }
+    for path in base_paths.values():
+        if not path.is_file():
+            raise DynamicV3ParameterResearchError(f"robustness source missing: {path}")
+    source_manifest = _read_json(base_paths["sweep_manifest_path"])
+    if _text(source_manifest.get("sweep_id")) != source_sweep_id:
+        raise DynamicV3ParameterResearchError("robustness source manifest sweep id mismatch")
+    config = load_parameter_sweep_config(base_paths["normalized_config_path"])
+    results = _read_candidate_results(sweep_dir)
+    result = _candidate_result_from_rows(results, candidate_id)
+    if result is None:
+        raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
+    evaluator = _robustness_evaluator_mode(result, config)
+    if _text(source_manifest.get("evaluator_mode")) != evaluator:
+        raise DynamicV3ParameterResearchError("robustness source evaluator mismatch")
+    source_evidence, real_payload = _robustness_source_evidence(
+        result,
+        evaluator,
+        source_sweep_id=source_sweep_id,
+        sweep_dir=sweep_dir,
+        candidate_id=candidate_id,
+    )
+    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        sensitivity = _real_sensitivity_rows(
+            result,
+            results,
+            config,
+            source_sweep_id=source_sweep_id,
+            sweep_dir=sweep_dir,
+        )
+        stress = _real_stress_bucket_results(result, config, real_payload)
+        regime = _real_regime_bucket_results(real_payload)
+    else:
+        sensitivity = _sensitivity_rows(result, config)
+        stress = _stress_bucket_results(result, config)
+        regime = _regime_bucket_results(result)
+    overfit = _overfit_diagnostics(
+        sensitivity,
+        stress,
+        config,
+        evaluator_mode=evaluator,
+        source_evidence=source_evidence,
+        regime=regime,
+    )
+    limitations: list[str] = []
+    if evaluator == EVALUATOR_TINY_FIXTURE_PROXY:
+        evidence_completeness = "PROXY_ONLY"
+        limitations.extend(
+            [
+                "tiny_fixture_sensitivity_stress_and_regime_are_contract_proxies",
+                "proxy_evidence_cannot_support_robustness_pass",
+            ]
+        )
+        overfit["robustness_status"] = "INCOMPLETE"
+        overfit["overfit_status"] = "REVIEW_REQUIRED"
+    else:
+        evidence_completeness = "PATH_AND_AGGREGATE_PARTIAL"
+        if source_evidence["source_identity_status"] != "PASS":
+            evidence_completeness = "INCOMPLETE"
+            limitations.append("candidate_real_evaluation_source_identity_invalid")
+        if overfit["sensitivity_evidence_status"] != "PASS":
+            limitations.append("real_neighbor_sensitivity_evidence_incomplete")
+        if overfit["stress_evidence_status"] != "DEDICATED_PATH_DERIVED_COMPLETE":
+            limitations.append("dedicated_stress_bucket_evidence_incomplete")
+        if overfit["regime_evidence_status"] != "DEDICATED_PATH_DERIVED_COMPLETE":
+            limitations.append("regime_observation_does_not_prove_regime_stability")
+        overfit["robustness_status"] = (
+            "INCOMPLETE" if evidence_completeness == "INCOMPLETE" else "REVIEW_REQUIRED"
+        )
+        overfit["overfit_status"] = "REVIEW_REQUIRED"
+    limitations = sorted(set(limitations))
+    overfit["evidence_completeness"] = evidence_completeness
+    overfit["limitations"] = limitations
+    source_paths = dict(base_paths)
+    real_path_text = _text(source_evidence.get("source_real_evaluation_artifact_path"))
+    if real_path_text:
+        source_paths["source_real_evaluation_artifact_path"] = Path(real_path_text)
+    source_artifacts = {name: str(path) for name, path in source_paths.items()}
+    source_checksums = {
+        name.removesuffix("_path") + "_sha256": _file_sha256_path(path)
+        for name, path in source_paths.items()
+    }
+    neighbor_sources = sorted(
+        [
+            {
+                "candidate_id": _text(row.get("neighbor_candidate_id")),
+                "path": _text(row.get("neighbor_real_evaluation_artifact_path")),
+                "sha256": _text(row.get("neighbor_real_evaluation_artifact_sha256")),
+                "report_id": _text(row.get("neighbor_real_evaluation_report_id")),
+                "status": _text(row.get("neighbor_evaluation_status")),
+            }
+            for row in sensitivity
+            if _text(row.get("neighbor_candidate_id"))
+        ],
+        key=lambda item: (item["candidate_id"], item["path"]),
+    )
+    return {
+        "status": overfit["robustness_status"],
+        "evaluator_mode": evaluator,
+        "evidence_completeness": evidence_completeness,
+        "limitations": limitations,
+        "source_evidence": source_evidence,
+        "source_artifacts": source_artifacts,
+        "source_checksums": source_checksums,
+        "neighbor_artifact_sources": neighbor_sources,
+        "sensitivity": sensitivity,
+        "stress": stress,
+        "regime": regime,
+        "overfit": overfit,
+    }
+
+
 def _robustness_source_evidence(
     result: Mapping[str, Any],
     evaluator_mode: str,
+    *,
+    source_sweep_id: str = "",
+    sweep_dir: Path | None = None,
+    candidate_id: str = "",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     real_artifact_path = _text(result.get("real_evaluation_artifact_path"))
-    real_artifact = Path(real_artifact_path) if real_artifact_path else None
+    real_artifact = _resolve_project_path(Path(real_artifact_path)) if real_artifact_path else None
     real_payload = _read_optional_json(real_artifact) or {}
     real_artifact_exists = bool(
         real_artifact_path and real_artifact is not None and real_artifact.exists()
@@ -17440,6 +17744,31 @@ def _robustness_source_evidence(
         metrics.get("real_evaluation_report_id"),
         _text(real_payload.get("dynamic_v3_real_evaluation_report_id")),
     )
+    observed_report_id = _text(real_payload.get("dynamic_v3_real_evaluation_report_id"))
+    expected_candidate_id = candidate_id or _text(result.get("candidate_id"))
+    observed_candidate_id = _text(
+        real_payload.get("source_sweep_candidate_id"),
+        _text(real_payload.get("candidate_id")),
+    )
+    path_owned = bool(
+        real_artifact is not None
+        and sweep_dir is not None
+        and real_artifact.resolve(strict=False).parent
+        == (sweep_dir / "real_evaluation" / expected_candidate_id).resolve(strict=False)
+    )
+    identity_checks = [
+        evaluator_mode != EVALUATOR_REAL_DYNAMIC_V3_RESCUE or real_artifact_exists,
+        evaluator_mode != EVALUATOR_REAL_DYNAMIC_V3_RESCUE or path_owned,
+        evaluator_mode != EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+        or _text(result.get("metrics_source")) == "real_evaluation_artifact",
+        evaluator_mode != EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+        or (
+            bool(report_id)
+            and observed_report_id == report_id
+            and observed_candidate_id == expected_candidate_id
+            and _text(real_payload.get("source_sweep_id")) == source_sweep_id
+        ),
+    ]
     evidence = {
         "evaluator_mode": evaluator_mode,
         "evaluator_version": _text(
@@ -17454,6 +17783,15 @@ def _robustness_source_evidence(
         "source_real_evaluation_artifact_exists": real_artifact_exists,
         "source_real_evaluation_report_id": report_id,
         "source_real_evaluation_status": _text(real_payload.get("status"), "UNKNOWN"),
+        "source_real_evaluation_path_owned": path_owned,
+        "source_real_evaluation_sha256": (
+            "" if real_artifact is None else _file_sha256_path(real_artifact)
+        ),
+        "source_identity_status": (
+            "NOT_APPLICABLE_PROXY"
+            if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY
+            else ("PASS" if all(identity_checks) else "FAIL")
+        ),
     }
     return evidence, real_payload
 
@@ -17462,6 +17800,9 @@ def _real_sensitivity_rows(
     result: Mapping[str, Any],
     results: Sequence[Mapping[str, Any]],
     config: DynamicV3ParameterSweepConfig,
+    *,
+    source_sweep_id: str = "",
+    sweep_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
     base_params = _mapping(result.get("parameters"))
     base_candidate_id = _text(result.get("candidate_id"))
@@ -17486,7 +17827,11 @@ def _real_sensitivity_rows(
                 target_params,
                 exclude_candidate_id=base_candidate_id,
             )
-            status = _real_neighbor_evaluation_status(neighbor_result)
+            status, neighbor_evidence = _real_neighbor_evaluation_status(
+                neighbor_result,
+                source_sweep_id=source_sweep_id,
+                sweep_dir=sweep_dir,
+            )
             metrics = _mapping(neighbor_result.get("metrics")) if neighbor_result else {}
             neighbor_score = neighbor_result.get("score") if neighbor_result else ""
             score_delta = (
@@ -17516,6 +17861,10 @@ def _real_sensitivity_rows(
                     "neighbor_real_evaluation_artifact_exists": (
                         status == "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
                     ),
+                    "neighbor_real_evaluation_artifact_sha256": neighbor_evidence["sha256"],
+                    "neighbor_real_evaluation_report_id": neighbor_evidence["report_id"],
+                    "neighbor_real_evaluation_path_owned": neighbor_evidence["path_owned"],
+                    "neighbor_source_identity_status": neighbor_evidence["identity_status"],
                     "neighbor_gate": (
                         "" if neighbor_result is None else neighbor_result.get("gate", "")
                     ),
@@ -17567,17 +17916,60 @@ def _canonical_parameter_value(value: Any) -> Any:
         return text
 
 
-def _real_neighbor_evaluation_status(neighbor_result: Mapping[str, Any] | None) -> str:
+def _real_neighbor_evaluation_status(
+    neighbor_result: Mapping[str, Any] | None,
+    *,
+    source_sweep_id: str = "",
+    sweep_dir: Path | None = None,
+) -> tuple[str, dict[str, Any]]:
+    evidence = {
+        "sha256": "",
+        "report_id": "",
+        "path_owned": False,
+        "identity_status": "FAIL",
+    }
     if neighbor_result is None:
-        return "MISSING_REAL_NEIGHBOR_EVALUATION"
+        return "MISSING_REAL_NEIGHBOR_EVALUATION", evidence
     if _text(neighbor_result.get("status")) != "completed":
-        return "REAL_NEIGHBOR_NOT_COMPLETED"
+        return "REAL_NEIGHBOR_NOT_COMPLETED", evidence
     if _text(neighbor_result.get("metrics_source")) != "real_evaluation_artifact":
-        return "REAL_NEIGHBOR_NOT_REAL_EVALUATION"
+        return "REAL_NEIGHBOR_NOT_REAL_EVALUATION", evidence
     artifact_path = _text(neighbor_result.get("real_evaluation_artifact_path"))
-    if not artifact_path or not Path(artifact_path).exists():
-        return "MISSING_REAL_NEIGHBOR_ARTIFACT"
-    return "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+    resolved_path = _resolve_project_path(Path(artifact_path)) if artifact_path else None
+    if not artifact_path or resolved_path is None or not resolved_path.exists():
+        return "MISSING_REAL_NEIGHBOR_ARTIFACT", evidence
+    neighbor_candidate_id = _text(neighbor_result.get("candidate_id"))
+    payload = _mapping(_read_optional_json(resolved_path))
+    report_id = _text(payload.get("dynamic_v3_real_evaluation_report_id"))
+    expected_report_id = _text(
+        _mapping(neighbor_result.get("metrics")).get("real_evaluation_report_id")
+    )
+    path_owned = bool(
+        sweep_dir is not None
+        and resolved_path.resolve(strict=False).parent
+        == (sweep_dir / "real_evaluation" / neighbor_candidate_id).resolve(strict=False)
+    )
+    identity_valid = (
+        bool(payload)
+        and bool(report_id)
+        and report_id == expected_report_id
+        and _text(payload.get("source_sweep_id")) == source_sweep_id
+        and _text(
+            payload.get("source_sweep_candidate_id"),
+            _text(payload.get("candidate_id")),
+        )
+        == neighbor_candidate_id
+        and (sweep_dir is None or path_owned)
+    )
+    evidence = {
+        "sha256": _file_sha256_path(resolved_path),
+        "report_id": report_id,
+        "path_owned": path_owned,
+        "identity_status": "PASS" if identity_valid else "FAIL",
+    }
+    if not identity_valid:
+        return "REAL_NEIGHBOR_SOURCE_IDENTITY_INVALID", evidence
+    return "AVAILABLE_REAL_NEIGHBOR_EVALUATION", evidence
 
 
 def _stress_bucket_results(
@@ -17644,7 +18036,9 @@ def _real_stress_bucket_results(
         "buckets": rows,
         "pass_ratio": round(pass_ratio, 6),
         "evidence_source": "real_evaluation_artifact",
-        "evidence_status": ("PASS" if unavailable_count == 0 else "PARTIAL_REAL_STRESS_EVIDENCE"),
+        "evidence_status": "AGGREGATE_OR_MISSING_STRESS_EVIDENCE",
+        "evidence_method": "aggregate_policy_diagnostics_not_dedicated_stress_v2",
+        "evidence_completeness": "PARTIAL",
         "missing_real_stress_bucket_count": unavailable_count,
     }
 
@@ -17671,25 +18065,38 @@ def _real_stress_bucket_status(
             "source real evaluation artifact lacks daily_path_summary",
         )
     if bucket == "high_drawdown":
-        return _status_from_real_analysis(
+        diagnostic_status, source, detail = _status_from_real_analysis(
             _mapping(real_payload.get("drawdown_preservation_analysis")),
             source="drawdown_preservation_analysis",
+        )
+        return (
+            "REVIEW_REQUIRED",
+            f"aggregate_proxy:{source}",
+            f"diagnostic_status={diagnostic_status}; {detail}",
         )
     if bucket == "constraint_heavy":
         hit_rate = _float(
             best_candidate.get("constraint_hit_rate"),
             _float(_mapping(result.get("metrics")).get("constraint_hit_rate")),
         )
-        status = "PASS" if hit_rate <= config.hard_constraints.max_constraint_hit_rate else "FAIL"
+        diagnostic_status = (
+            "PASS" if hit_rate <= config.hard_constraints.max_constraint_hit_rate else "FAIL"
+        )
         return (
-            status,
-            "best_candidate.constraint_hit_rate",
+            "REVIEW_REQUIRED",
+            "aggregate_policy_check:best_candidate.constraint_hit_rate",
+            f"diagnostic_status={diagnostic_status}; "
             f"{hit_rate} <= {config.hard_constraints.max_constraint_hit_rate}",
         )
     if bucket in {"fast_recovery", "high_volatility"}:
-        return _status_from_real_analysis(
+        diagnostic_status, source, detail = _status_from_real_analysis(
             _mapping(real_payload.get("overfit_analysis")),
             source="overfit_analysis",
+        )
+        return (
+            "REVIEW_REQUIRED",
+            f"aggregate_proxy:{source}",
+            f"diagnostic_status={diagnostic_status}; {detail}",
         )
     return (
         "REVIEW_REQUIRED",
@@ -17742,8 +18149,8 @@ def _real_regime_bucket_results(real_payload: Mapping[str, Any]) -> dict[str, An
         regimes.append(
             {
                 "regime": regime,
-                "status": "PASS",
-                "rank_stability": "REAL_DAILY_PATH_OBSERVED",
+                "status": "REVIEW_REQUIRED",
+                "rank_stability": "NOT_ESTABLISHED_BY_OBSERVATION",
                 "row_count": len(rows),
                 "strategy_return_sum": round(
                     sum(_float(row.get("strategy_return")) for row in rows),
@@ -17755,7 +18162,10 @@ def _real_regime_bucket_results(real_payload: Mapping[str, Any]) -> dict[str, An
         "regimes": regimes,
         "regime_count": len(regimes),
         "evidence_source": "real_evaluation_artifact_daily_path",
-        "evidence_status": "PASS",
+        "evidence_status": "PATH_DERIVED_REGIME_OBSERVATION_ONLY",
+        "evidence_method": "daily_path_grouped_by_selected_regime_v2",
+        "evidence_completeness": "PARTIAL",
+        "limitation": "observed regime returns do not prove per-regime rank stability",
         "regime_return_concentration": _mapping(real_payload.get("best_candidate")).get(
             "regime_return_concentration"
         ),
@@ -17874,8 +18284,22 @@ def _shadow_observation_basis(
 ) -> dict[str, str]:
     wf_manifest = _latest_walk_forward_manifest_for_candidate(candidate_id, walk_forward_dir)
     rob_manifest = _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
-    wf_id = _text(_mapping(_read_optional_json(wf_manifest)).get("walk_forward_id"))
-    rob_id = _text(_mapping(_read_optional_json(rob_manifest)).get("robustness_id"))
+    wf_payload = _mapping(_read_optional_json(wf_manifest))
+    rob_payload = _mapping(_read_optional_json(rob_manifest))
+    wf_ready = (
+        _text(wf_payload.get("status")) == "REVIEW_REQUIRED"
+        and _text(wf_payload.get("evidence_completeness")) == "PATH_DERIVED_PARTIAL"
+        and wf_payload.get("not_for_investment_decision") is False
+    )
+    rob_ready = (
+        _text(rob_payload.get("status")) == "REVIEW_REQUIRED"
+        and _text(rob_payload.get("evaluator_mode")) == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+        and _text(rob_payload.get("source_identity_status")) == "PASS"
+        and _text(rob_payload.get("evidence_completeness")) == "PATH_AND_AGGREGATE_PARTIAL"
+        and rob_payload.get("not_for_investment_decision") is False
+    )
+    wf_id = _text(wf_payload.get("walk_forward_id")) if wf_ready else ""
+    rob_id = _text(rob_payload.get("robustness_id")) if rob_ready else ""
     status = "complete" if wf_id and rob_id else "incomplete_observation_basis"
     return {
         "status": status,
@@ -18382,11 +18806,7 @@ def _cache_file_inventory(path: Path, *, file_role: str) -> dict[str, Any]:
     symbol_column = (
         "ticker"
         if "ticker" in frame
-        else "symbol"
-        if "symbol" in frame
-        else "series"
-        if "series" in frame
-        else ""
+        else "symbol" if "symbol" in frame else "series" if "series" in frame else ""
     )
     if symbol_column:
         summary["symbols"] = sorted(str(value) for value in frame[symbol_column].dropna().unique())
@@ -18726,8 +19146,7 @@ def _inspect_weight_path_evidence(evaluation_id: str, search_root: Path) -> dict
         "weight_path_metadata.json",
     ]
     checks.extend(
-        _check(f"artifact_exists:{name}", (weight_dir / name).is_file(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (weight_dir / name).is_file(), name) for name in required
     )
     metadata = _mapping(_read_optional_json(weight_dir / "weight_path_metadata.json"))
     checks.extend(
@@ -18892,9 +19311,7 @@ def _inspect_weight_path_evidence(evaluation_id: str, search_root: Path) -> dict
             and turnover_values.abs().ne(float("inf")).all()
             and (turnover_values >= 0).all()
         )
-        turnover_dates_valid = bool(
-            pd.to_datetime(turnover["date"], errors="coerce").notna().all()
-        )
+        turnover_dates_valid = bool(pd.to_datetime(turnover["date"], errors="coerce").notna().all())
         turnover_candidate_ids_match = bool(candidate_id) and bool(
             turnover["candidate_id"].eq(candidate_id).all()
         )
@@ -19026,9 +19443,7 @@ def _inspect_weight_path_event_file(
             errors="coerce",
         )
         nonnegative_valid = bool(
-            values.notna().all()
-            and values.abs().ne(float("inf")).all()
-            and (values >= 0).all()
+            values.notna().all() and values.abs().ne(float("inf")).all() and (values >= 0).all()
         )
     checks = [
         _check(f"{stem}_schema_valid", schema_valid and rows_are_objects, str(path)),
@@ -19913,6 +20328,225 @@ def _dynamic_vs_static_gap_attribution(
     }
 
 
+def _build_legacy_walk_forward_evidence(
+    *,
+    sweep_dir: Path,
+    source_sweep_id: str,
+    top_n: int,
+) -> dict[str, Any]:
+    if top_n <= 0:
+        raise DynamicV3ParameterResearchError("top_n must be positive")
+    if sweep_dir.name != source_sweep_id:
+        raise DynamicV3ParameterResearchError("walk-forward source sweep path does not match id")
+    source_paths = {
+        "sweep_manifest_path": sweep_dir / "sweep_manifest.json",
+        "normalized_config_path": sweep_dir / "sweep_config.normalized.yaml",
+        "leaderboard_path": sweep_dir / "leaderboard.json",
+        "candidate_results_path": sweep_dir / "candidate_results.jsonl",
+    }
+    for path in source_paths.values():
+        if not path.is_file():
+            raise DynamicV3ParameterResearchError(f"walk-forward source missing: {path}")
+    config = load_parameter_sweep_config(source_paths["normalized_config_path"])
+    manifest = _read_json(source_paths["sweep_manifest_path"])
+    if _text(manifest.get("sweep_id")) != source_sweep_id:
+        raise DynamicV3ParameterResearchError("walk-forward source manifest sweep id mismatch")
+    if _text(manifest.get("evaluator_mode")) != config.execution.evaluator:
+        raise DynamicV3ParameterResearchError("walk-forward source evaluator mismatch")
+    leaderboard = _read_json(source_paths["leaderboard_path"])
+    selected = _records(leaderboard.get("top_eligible_candidates"))[:top_n]
+    selected_ids = [_text(row.get("candidate_id")) for row in selected]
+    if any(not candidate_id for candidate_id in selected_ids):
+        raise DynamicV3ParameterResearchError("walk-forward leaderboard candidate id missing")
+    result_by_id = {
+        _text(row.get("candidate_id")): row
+        for row in _read_candidate_results(sweep_dir)
+        if _text(row.get("status")) == "completed" and _text(row.get("candidate_id"))
+    }
+    windows = walk_forward_windows(config)
+    rows: list[dict[str, Any]] = []
+    candidate_evidence: list[dict[str, Any]] = []
+    real_artifact_sources: list[dict[str, Any]] = []
+    limitations: list[str] = []
+    for candidate_id in selected_ids:
+        result = result_by_id.get(candidate_id)
+        if result is None:
+            limitations.append(f"{candidate_id}:completed_candidate_result_missing")
+            candidate_evidence.append(
+                {
+                    "candidate_id": candidate_id,
+                    "status": "FAIL",
+                    "evidence_method": "missing_candidate_result",
+                    "evidence_completeness": "INCOMPLETE",
+                    "limitations": [f"{candidate_id}:completed_candidate_result_missing"],
+                    "windows": {},
+                }
+            )
+            continue
+        if config.execution.evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+            observed = _real_walk_forward_candidate_evidence(
+                result=result,
+                source_sweep_id=source_sweep_id,
+                sweep_dir=sweep_dir,
+                windows=windows,
+                config=config,
+            )
+            real_artifact_sources.append(observed["source"])
+        else:
+            observed = _fixture_walk_forward_candidate_evidence(
+                result=result,
+                windows=windows,
+                config=config,
+            )
+        candidate_evidence.append(observed)
+        limitations.extend(_texts(observed.get("limitations")))
+        for index, window in enumerate(windows, start=1):
+            window_payload = _mapping(_mapping(observed.get("windows")).get(str(index)))
+            train_metrics = _mapping(window_payload.get("train_metrics"))
+            test_metrics = _mapping(window_payload.get("test_metrics"))
+            if not train_metrics or not test_metrics:
+                continue
+            rows.append(
+                {
+                    "window_index": index,
+                    "candidate_id": candidate_id,
+                    **dict(window),
+                    "selected_parameters": observed.get("parameters", {}),
+                    "train_metrics": train_metrics,
+                    "test_metrics": test_metrics,
+                    "gate": test_metrics.get("gate"),
+                    "reject_reasons": test_metrics.get("gate_reasons", []),
+                    "evidence_method": observed.get("evidence_method"),
+                    "evidence_completeness": observed.get("evidence_completeness"),
+                    "source_real_evaluation_artifact_path": observed.get(
+                        "real_evaluation_artifact_path", ""
+                    ),
+                }
+            )
+    candidate_summaries = _legacy_walk_forward_candidate_summaries(
+        candidate_evidence=candidate_evidence,
+        rows=rows,
+        expected_window_count=len(windows),
+        config=config,
+    )
+    proxy_only = config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+    complete_candidate_count = sum(
+        1
+        for item in candidate_evidence
+        if _text(item.get("status")) == "PASS"
+        and len(_mapping(item.get("windows"))) == len(windows)
+    )
+    if proxy_only:
+        status = "INCOMPLETE"
+        evidence_method = "tiny_fixture_aggregate_proxy_v1"
+        evidence_completeness = "PROXY_ONLY"
+        limitations.append("tiny_fixture_is_not_true_walk_forward_evidence")
+    elif not selected_ids or complete_candidate_count != len(selected_ids):
+        status = "INCOMPLETE"
+        evidence_method = "real_daily_path_window_v1"
+        evidence_completeness = "INCOMPLETE"
+        limitations.append("not_all_top_candidates_have_complete_real_window_paths")
+    else:
+        status = "REVIEW_REQUIRED"
+        evidence_method = "real_daily_path_window_v1"
+        evidence_completeness = "PATH_DERIVED_PARTIAL"
+        limitations.extend(
+            [
+                "window_false_risk_off_evidence_not_exported",
+                "window_robustness_evidence_not_exported",
+                "path_slicing_does_not_rerun_the_evaluator_per_window",
+            ]
+        )
+    limitations = sorted(set(_texts(limitations)))
+    non_reject_count = sum(1 for row in rows if _text(row.get("gate")) != GATE_REJECT)
+    oos_summary = {
+        "holdout_start": config.out_of_sample.holdout_start.isoformat(),
+        "holdout_end": config.out_of_sample.holdout_end.isoformat(),
+        "candidate_count": len(candidate_summaries),
+        "path_complete_candidate_count": complete_candidate_count,
+        "test_row_count": len(rows),
+        "non_reject_test_row_count": non_reject_count,
+        "pass_count": 0,
+        "oos_recommendation": (
+            "review_path_derived_partial_evidence"
+            if status == "REVIEW_REQUIRED"
+            else "insufficient_evidence"
+        ),
+    }
+    string_paths = {name: str(path) for name, path in source_paths.items()}
+    source_checksums = {
+        name.removesuffix("_path") + "_sha256": _file_sha256_path(path)
+        for name, path in source_paths.items()
+    }
+    return {
+        "status": status,
+        "evidence_method": evidence_method,
+        "evidence_completeness": evidence_completeness,
+        "limitations": limitations,
+        "not_for_investment_decision": proxy_only,
+        "candidate_count": len(selected_ids),
+        "train_window_months": config.walk_forward.train_window_months,
+        "test_window_months": config.walk_forward.test_window_months,
+        "step_months": config.walk_forward.step_months,
+        "min_windows": config.walk_forward.min_windows,
+        "holdout_start": config.out_of_sample.holdout_start.isoformat(),
+        "holdout_end": config.out_of_sample.holdout_end.isoformat(),
+        "windows": windows,
+        "rows": rows,
+        "candidate_summaries": candidate_summaries,
+        "oos_summary": oos_summary,
+        "source_artifacts": string_paths,
+        "source_checksums": source_checksums,
+        "real_artifact_sources": sorted(
+            real_artifact_sources,
+            key=lambda item: _text(item.get("candidate_id")),
+        ),
+    }
+
+
+def _legacy_walk_forward_candidate_summaries(
+    *,
+    candidate_evidence: Sequence[Mapping[str, Any]],
+    rows: Sequence[Mapping[str, Any]],
+    expected_window_count: int,
+    config: DynamicV3ParameterSweepConfig,
+) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for observed in candidate_evidence:
+        candidate_id = _text(observed.get("candidate_id"))
+        candidate_rows = [row for row in rows if _text(row.get("candidate_id")) == candidate_id]
+        non_reject_count = sum(1 for row in candidate_rows if _text(row.get("gate")) != GATE_REJECT)
+        pass_ratio = non_reject_count / max(1, expected_window_count)
+        degradations = [
+            _float(_mapping(row.get("test_metrics")).get("drawdown_degradation_pp"))
+            for row in candidate_rows
+        ]
+        complete = (
+            _text(observed.get("status")) == "PASS" and len(candidate_rows) == expected_window_count
+        )
+        proxy_only = _text(observed.get("evidence_completeness")) == "PROXY_ONLY"
+        summaries.append(
+            {
+                "candidate_id": candidate_id,
+                "walk_forward_status": (
+                    "REVIEW_REQUIRED" if complete and not proxy_only else "INCOMPLETE"
+                ),
+                "pass_ratio": round(pass_ratio, 6),
+                "configured_min_pass_ratio": config.walk_forward.min_pass_ratio,
+                "oos_gate": "REVIEW_REQUIRED" if complete and not proxy_only else "INCOMPLETE",
+                "oos_drawdown_degradation_pp": (
+                    round(max(degradations), 6) if degradations else None
+                ),
+                "window_count": len(candidate_rows),
+                "expected_window_count": expected_window_count,
+                "evidence_method": observed.get("evidence_method"),
+                "evidence_completeness": observed.get("evidence_completeness"),
+                "limitations": _texts(observed.get("limitations")),
+            }
+        )
+    return summaries
+
+
 def _build_walk_forward_selection_evidence(
     *,
     sweep_dir: Path,
@@ -20012,8 +20646,7 @@ def _build_walk_forward_selection_evidence(
             (
                 row
                 for row in leaderboard
-                if row.get("train_gate") != GATE_REJECT
-                and row.get("train_score") is not None
+                if row.get("train_gate") != GATE_REJECT and row.get("train_score") is not None
             ),
             None,
         )
@@ -20066,8 +20699,7 @@ def _build_walk_forward_selection_evidence(
     pass_count = sum(1 for row in test_rows if row.get("test_gate") == GATE_OBSERVE_ONLY)
     selection_status = (
         "PASS"
-        if test_rows
-        and pass_count / len(test_rows) >= source_config.walk_forward.min_pass_ratio
+        if test_rows and pass_count / len(test_rows) >= source_config.walk_forward.min_pass_ratio
         else "REVIEW_REQUIRED"
     )
     if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY:
@@ -20134,9 +20766,7 @@ def _build_walk_forward_selection_evidence(
         "limitations": limitations,
         "profile_binding_status": profile_binding["status"],
         "profile_binding_checks": profile_binding["checks"],
-        "not_for_investment_decision": (
-            evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY
-        ),
+        "not_for_investment_decision": (evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY),
         "windows": windows,
         "train_window_leaderboards": train_leaderboards,
         "selected_candidates": selected_rows,
@@ -20193,8 +20823,7 @@ def _walk_forward_profile_binding(
         ),
         _check(
             "manifest_evaluator_matches_source",
-            _text(source_manifest.get("evaluator_mode"))
-            == source_config.execution.evaluator,
+            _text(source_manifest.get("evaluator_mode")) == source_config.execution.evaluator,
             _text(source_manifest.get("evaluator_mode")),
         ),
         _check(
@@ -20386,9 +21015,7 @@ def _walk_forward_path_metrics(
     if not dynamic_by_date or set(dynamic_by_date) != set(static_by_date):
         return {}
     dates = sorted(
-        day
-        for day in set(dynamic_by_date) & set(static_by_date)
-        if start_date <= day <= end_date
+        day for day in set(dynamic_by_date) & set(static_by_date) if start_date <= day <= end_date
     )
     if not dates:
         return {}
@@ -20420,9 +21047,7 @@ def _walk_forward_path_metrics(
         "dynamic_vs_static_gap_improvement": round(dynamic_total - static_total, 10),
         "dynamic_max_drawdown": round(dynamic_drawdown, 10),
         "static_max_drawdown": round(static_drawdown, 10),
-        "drawdown_degradation_pp": round(
-            abs(dynamic_drawdown) - abs(static_drawdown), 10
-        ),
+        "drawdown_degradation_pp": round(abs(dynamic_drawdown) - abs(static_drawdown), 10),
         "turnover": round(turnover, 10),
         "turnover_reduction": 0.0,
         "constraint_hit_count": constraint_hit_count,
@@ -21408,6 +22033,16 @@ def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
+def _render_csv_text(rows: Sequence[Mapping[str, Any]]) -> str:
+    fieldnames = sorted({key for row in rows for key in row.keys()}) if rows else ["status"]
+    handle = StringIO(newline="")
+    writer = csv.DictWriter(handle, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({key: row.get(key, "") for key in fieldnames})
+    return handle.getvalue()
 
 
 def _unique_dir(path: Path) -> Path:

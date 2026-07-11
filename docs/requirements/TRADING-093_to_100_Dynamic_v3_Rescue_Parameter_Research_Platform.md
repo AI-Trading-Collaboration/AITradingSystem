@@ -1,6 +1,6 @@
 # TRADING-093 to TRADING-100: Dynamic v3 Rescue Parameter Research Platform
 
-最后更新：2026-06-09
+最后更新：2026-07-12
 
 ## 背景
 
@@ -15,9 +15,9 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|DONE|
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|DONE|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|DONE|
-|TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|DONE|
-|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|DONE|
-|TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|DONE|
+|TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
+|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
+|TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|DONE|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|DONE|
 
@@ -133,6 +133,8 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   status=`MIXED`，regime bucket evidence 为 `PASS` / regime_count=6。Focused
   tests 补充 data quality、stress/regime evidence 和删除 `robustness_report.md`
   后 validation fail-closed 断言。
+- 2026-07-12：ARCH-004G2.4T复核后，TRADING-096/097从`DONE`重开为`IN_PROGRESS`。TRADING-096的40行window results是全周期metrics复制加stable-hash drift，未按window重算；TRADING-097的regime“已观察”被等同于稳定性`PASS`，stress中存在aggregate analysis代替dedicated bucket evidence，两者validator都无法从source重算内容。验收改为real daily path window slicing、source/path/report-id/checksum ownership、component method/completeness/limitations和content-derived validation；proxy或缺失证据不得形成投资解释性`PASS`。旧walk-forward/robustness artifact降级为历史workflow记录，等待当前实现重算。
+- 2026-07-12：G2.4T实现与当前真实sweep重算完成。TRADING-096新artifact `7b6db671cbd67468`对20个top candidate×2 windows生成40行真实path切片结果，overall=`PATH_DERIVED_PARTIAL/REVIEW_REQUIRED`且validation PASS；TRADING-097新artifact `87b0fc81d6681368`绑定source identity PASS、8个有效real neighbor和1个missing neighbor，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、overall=`PATH_AND_AGGREGATE_PARTIAL/REVIEW_REQUIRED`且validation PASS。旧`c49f65c76e2b9b73`/`6df822e705e15a42`在新validator下均FAIL。TRADING-096/097转`VALIDATING`，等待逐fold evaluator/full gate/dedicated stress/per-regime comparator；TRADING-098同步转`VALIDATING`，因为现有runtime registry仍绑定旧basis并触发4项usable-evidence失败，必须由owner显式重新登记，不得自动改写registry。
 - 2026-06-09：`TRADING-098` 从 `VALIDATING` 改为 `DONE`。当前 canonical
   real candidate `a72139edcaef7d22` 已通过 `shadow register` 写入 observe-only
   registry，绑定 source sweep `sweep_20260607T102300Z_ae5ae1d8`、walk-forward

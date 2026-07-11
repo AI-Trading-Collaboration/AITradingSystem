@@ -1734,9 +1734,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/walk_forward/*/wf_leaderboard.json
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-096 validates top sweep candidates across rolling windows and OOS
-      holdout before any robustness, shadow, or promotion interpretation.
-    owner_action: review_walk_forward_report_before_robustness_or_promotion_pack
+      TRADING-096 recomputes top sweep candidate metrics from owned real daily
+      paths across rolling train/test windows. Current path slicing is partial,
+      tiny fixtures are proxy-only, and neither may be treated as a final
+      walk-forward PASS.
+    owner_action: review_evidence_completeness_and_validation_before_any_downstream_use
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
@@ -1752,10 +1754,10 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/robustness/*/robustness_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-097 checks neighbor sensitivity, stress buckets, regime buckets,
-      and overfit warnings; placeholders must remain REVIEW_REQUIRED and cannot
-      create a PASS for promotion.
-    owner_action: review_robustness_report_before_shadow_or_promotion_pack
+      TRADING-097 checks source-owned real neighbors and exposes stress/regime
+      method completeness. Aggregate stress diagnostics and observed regime
+      coverage remain REVIEW_REQUIRED and cannot create a robustness PASS.
+    owner_action: review_source_identity_component_methods_and_validation_before_downstream_use
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false

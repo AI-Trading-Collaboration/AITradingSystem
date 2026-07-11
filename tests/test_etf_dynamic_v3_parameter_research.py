@@ -511,7 +511,9 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
     assert wf["report"]["source_sweep_id"] == sweep_id
     assert wf["report"]["holdout_start"]
     assert wf["report"]["holdout_end"]
-    assert wf["report"]["oos_summary"]["oos_recommendation"] == "continue_to_robustness"
+    assert wf["report"]["status"] == "INCOMPLETE"
+    assert wf["report"]["evidence_completeness"] == "PROXY_ONLY"
+    assert wf["report"]["oos_summary"]["oos_recommendation"] == "insufficient_evidence"
     assert [row["candidate_id"] for row in wf_leaderboard["candidates"]] == [
         row["candidate_id"] for row in source_leaderboard["top_eligible_candidates"][:3]
     ]
@@ -522,6 +524,25 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         )["status"]
         == "PASS"
     )
+    wf_results_path = (
+        tmp_path / "walk_forward" / wf["walk_forward_id"] / "wf_candidate_results.jsonl"
+    )
+    wf_results_bytes = wf_results_path.read_bytes()
+    wf_rows = _jsonl(wf_results_path)
+    wf_rows[0]["test_metrics"]["dynamic_vs_static_gap"] = 999.0
+    wf_results_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in wf_rows) + "\n",
+        encoding="utf-8",
+    )
+    forged_wf = validate_walk_forward_artifact(
+        walk_forward_id=wf["walk_forward_id"],
+        output_dir=tmp_path / "walk_forward",
+    )
+    assert forged_wf["status"] == "FAIL"
+    assert "candidate_results_match_source_recomputation" in {
+        check["check_id"] for check in forged_wf["checks"] if not check["passed"]
+    }
+    wf_results_path.write_bytes(wf_results_bytes)
 
     robustness = run_robustness_diagnostics(
         sweep_id=sweep_id,
@@ -536,15 +557,30 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         )["status"]
         == "PASS"
     )
+    robustness_dir = tmp_path / "robustness" / robustness["robustness_id"]
+    regime_path = robustness_dir / "regime_bucket_results.json"
+    regime_bytes = regime_path.read_bytes()
+    regime_payload = json.loads(regime_bytes)
+    regime_payload["regimes"][0]["status"] = "FORGED"
+    regime_path.write_text(json.dumps(regime_payload), encoding="utf-8")
+    forged_robustness = validate_robustness_artifact(
+        robustness_id=robustness["robustness_id"],
+        output_dir=tmp_path / "robustness",
+    )
+    assert forged_robustness["status"] == "FAIL"
+    assert "regime_matches_source_recomputation" in {
+        check["check_id"] for check in forged_robustness["checks"] if not check["passed"]
+    }
+    regime_path.write_bytes(regime_bytes)
     robustness_manifest = json.loads(
-        (
-            tmp_path / "robustness" / robustness["robustness_id"] / "robustness_manifest.json"
-        ).read_text(encoding="utf-8")
+        (robustness_dir / "robustness_manifest.json").read_text(encoding="utf-8")
     )
     assert robustness_manifest["evaluator_mode"] == "tiny_fixture_proxy"
     assert robustness_manifest["metrics_source"] == "tiny_fixture_proxy_formula"
     assert robustness_manifest["not_for_investment_decision"] is True
     assert robustness_manifest["sensitivity_evidence_status"] == "TINY_FIXTURE_PROXY"
+    assert robustness_manifest["status"] == "INCOMPLETE"
+    assert robustness_manifest["evidence_completeness"] == "PROXY_ONLY"
 
     registry_path = tmp_path / DEFAULT_SHADOW_REGISTRY_PATH.name
     registered = register_shadow_candidate(
@@ -556,9 +592,9 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         robustness_dir=tmp_path / "robustness",
     )
     assert registered["status"] == "PASS"
-    assert registered["candidate"]["observation_basis_status"] == "complete"
-    assert registered["candidate"]["source_walk_forward_id"] == wf["walk_forward_id"]
-    assert registered["candidate"]["source_robustness_id"] == robustness["robustness_id"]
+    assert registered["candidate"]["observation_basis_status"] == "incomplete_observation_basis"
+    assert registered["candidate"]["source_walk_forward_id"] == ""
+    assert registered["candidate"]["source_robustness_id"] == ""
     assert (
         validate_shadow_registry(
             registry_path=registry_path,
@@ -881,17 +917,16 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     assert robustness_manifest["source_real_evaluation_artifact_exists"] is True
     assert robustness_manifest["real_neighbor_count"] >= 1
     assert robustness_manifest["missing_real_neighbor_count"] == 0
-    assert robustness_manifest["stress_evidence_status"] in {
-        "PASS",
-        "PARTIAL_REAL_STRESS_EVIDENCE",
-    }
-    assert robustness_manifest["regime_evidence_status"] == "PASS"
+    assert robustness_manifest["stress_evidence_status"] == "AGGREGATE_OR_MISSING_STRESS_EVIDENCE"
+    assert robustness_manifest["regime_evidence_status"] == "PATH_DERIVED_REGIME_OBSERVATION_ONLY"
     assert robustness_diagnostics["sensitivity_evidence_status"] == "PASS"
     assert (
         robustness_diagnostics["stress_evidence_status"]
         == robustness_manifest["stress_evidence_status"]
     )
-    assert robustness_diagnostics["regime_evidence_status"] == "PASS"
+    assert (
+        robustness_diagnostics["regime_evidence_status"] == "PATH_DERIVED_REGIME_OBSERVATION_ONLY"
+    )
     assert set(sensitivity["sensitivity_evidence_source"]) == {"real_evaluation_artifact"}
     assert "tiny_fixture_proxy" not in set(sensitivity["metrics_source"].astype(str))
     robustness_validation = validate_robustness_artifact(
@@ -966,11 +1001,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     assert weight_metadata["production_effect"] == "none"
 
     candidate_report_path = (
-        output_dir
-        / sweep_id
-        / "candidates"
-        / results[0]["candidate_id"]
-        / "candidate_report.json"
+        output_dir / sweep_id / "candidates" / results[0]["candidate_id"] / "candidate_report.json"
     )
     candidate_report_payload(
         sweep_id=sweep_id,
@@ -990,10 +1021,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     assert attribution["report"]["weight_path_observed_completeness"] == "PARTIAL"
     assert candidate_report_path.read_bytes() == candidate_report_before
     weight_delta = pd.read_csv(
-        tmp_path
-        / "candidate_attribution"
-        / results[0]["candidate_id"]
-        / "weight_path_delta.csv"
+        tmp_path / "candidate_attribution" / results[0]["candidate_id"] / "weight_path_delta.csv"
     )
     assert not weight_delta.empty
     assert {
@@ -1006,9 +1034,9 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
         "baseline_weight",
         "delta",
     } <= set(weight_delta.columns)
-    assert (
-        weight_delta["candidate_weight"] - weight_delta["baseline_weight"]
-    ).sub(weight_delta["delta"]).abs().max() <= 1e-9
+    assert (weight_delta["candidate_weight"] - weight_delta["baseline_weight"]).sub(
+        weight_delta["delta"]
+    ).abs().max() <= 1e-9
     assert (
         validate_candidate_attribution_artifact(
             candidate_id=results[0]["candidate_id"],
@@ -1018,10 +1046,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
     )
     weight_delta.loc[0, "delta"] = float(weight_delta.loc[0, "delta"]) + 0.1
     weight_delta.to_csv(
-        tmp_path
-        / "candidate_attribution"
-        / results[0]["candidate_id"]
-        / "weight_path_delta.csv",
+        tmp_path / "candidate_attribution" / results[0]["candidate_id"] / "weight_path_delta.csv",
         index=False,
     )
     broken_delta = validate_candidate_attribution_artifact(
@@ -1469,6 +1494,21 @@ def test_walk_forward_and_overfit_evidence_fail_closed_on_proxy_and_tampering(
         raise AssertionError("stable hash must not generate walk-forward evidence")
 
     monkeypatch.setattr(dynamic_v3_research, "_stable_int", reject_hash_evidence)
+    legacy = run_walk_forward_validation(
+        sweep_id=sweep_id,
+        top_n=3,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "legacy_walk_forward",
+    )
+    assert legacy["report"]["status"] == "INCOMPLETE"
+    assert legacy["report"]["evidence_completeness"] == "PROXY_ONLY"
+    assert (
+        validate_walk_forward_artifact(
+            walk_forward_id=legacy["walk_forward_id"],
+            output_dir=tmp_path / "legacy_walk_forward",
+        )["status"]
+        == "PASS"
+    )
     selection = run_walk_forward_selection(
         config_path=config_path,
         profile="tiny_fixture",
@@ -1675,15 +1715,13 @@ def test_real_walk_forward_selection_uses_window_daily_paths(
     assert selection["report"]["evidence_completeness"] == "PATH_DERIVED_PARTIAL"
     train_rows = [
         json.loads(line)
-        for line in (
-            selection["wf_selection_dir"] / "train_window_leaderboards.jsonl"
-        ).read_text(encoding="utf-8").splitlines()
+        for line in (selection["wf_selection_dir"] / "train_window_leaderboards.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
     ]
     assert train_rows[0]["leaderboard"]
     assert len(train_rows[0]["leaderboard"]) == len(source_rows)
-    assert all(
-        row["train_metrics"]["row_count"] > 0 for row in train_rows[0]["leaderboard"]
-    )
+    assert all(row["train_metrics"]["row_count"] > 0 for row in train_rows[0]["leaderboard"])
     assert all(
         row["train_metrics"]["evidence_method"] == "real_daily_path_window_v1"
         for row in train_rows[0]["leaderboard"]

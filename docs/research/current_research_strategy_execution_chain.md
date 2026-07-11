@@ -389,6 +389,22 @@ Train leaderboard只使用该train window重算的path metrics和冻结scoring w
 
 输出为`wf_windows.json`、`train_window_leaderboards.jsonl`、`selected_candidates.jsonl`、`test_window_results.jsonl`、Markdown和manifest。Manifest记录profile binding checks、source/output checksums、每个real artifact path/checksum、evidence method/completeness和limitations；validator重新读取所有source并复算windows、ranking、selection、test、summary、status和Markdown。Tiny fixture固定`PROXY_ONLY/INCOMPLETE/not_for_investment_decision=true`；real path完整时当前为`PATH_DERIVED_PARTIAL/REVIEW_REQUIRED`，因为path slicing尚未逐window重跑evaluator，且缺window false-risk-off/robustness。后续优化空间是导出window gate完整字段、实现逐fold evaluator rerun与purged/embargo policy、增加cost/lag/stress variants；这些完成前不得输出最终true walk-forward `PASS`。
 
+#### TRADING-096/097 兼容验证入口
+
+`walk-forward run`与`robustness run`是早期研究入口，CLI路径继续兼容，但G2.4T不再维护第二套计算公式：TRADING-096直接复用上节同一`real_daily_path_window_v1`切片函数，对source leaderboard的top-N每个candidate分别计算train/test path metrics；它与TRADING-106的区别是“不在train leaderboard中跨candidate选择赢家”，而不是允许复制全周期指标。
+
+| 环节 | 输入 | 计算与校验 | 输出 | 当前结论上限 |
+|---|---|---|---|---|
+| TRADING-096 top-N window evidence | source `sweep_manifest`、normalized config、leaderboard、candidate results、每个candidate的dynamic/static daily paths | source目录/sweep/evaluator/candidate/report id归属；逐window compound return、MDD、turnover、constraint-hit与受限gate/score；禁止hash drift | windows、每candidate-window train/test rows、candidate summary、OOS summary、Markdown、manifest | real path完整仍为`PATH_DERIVED_PARTIAL/REVIEW_REQUIRED`；tiny为`PROXY_ONLY/INCOMPLETE` |
+| TRADING-097 neighbor sensitivity | 同sweep candidate results及每个neighbor real artifact | 只接受completed、real metrics source、路径属于`<sweep>/real_evaluation/<neighbor>`且sweep/candidate/report id一致的相邻单轴candidate；score delta仍是full-period aggregate | `sensitivity_matrix.csv`与neighbor path/report/checksum inventory | 全neighbor有效可支持“邻域有真实结果”，不能证明fold-specific stability |
+| TRADING-097 stress diagnosis | candidate real aggregate analyses、daily path summary、reviewed hard constraint | 明确区分aggregate policy check、aggregate analysis proxy与missing dedicated bucket；不再把aggregate analysis的PASS改写为stress bucket PASS | `stress_bucket_results.json` | 当前`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`，不能形成robustness PASS |
+| TRADING-097 regime diagnosis | real `comparison_daily_paths.dynamic_candidate` | 按`selected_regime`分组，计算row count和strategy return sum；“观察到”只表示coverage，不代表rank/gate稳定 | `regime_bucket_results.json` | 当前`PATH_DERIVED_REGIME_OBSERVATION_ONLY`，每个regime均`REVIEW_REQUIRED` |
+| content-derived validation | 上述全部source与输出 | 重新生成windows/rows/summaries/sensitivity/stress/regime/diagnostics/Markdown并核对source/output checksums | validation checks | producer自报status、文件存在或同步修改checksum均不能绕过重算 |
+
+设计原因是兼容历史命令不应等于兼容历史错误语义。旧TRADING-096曾把full-period metrics复制到40个window rows后加入stable-hash drift；旧TRADING-097曾把regime observation和aggregate stress analysis包装成`PASS`。这些artifact现在只证明历史workflow执行过，不能继续作为证据充足性依据。Shadow observation basis也只接受当前real、source identity PASS、非fixture的`PATH_DERIVED_PARTIAL` walk-forward和`PATH_AND_AGGREGATE_PARTIAL` robustness；旧manifest或tiny fixture不会形成complete basis。
+
+后续优化顺序是：先让real evaluator导出逐window完整false-risk-off/robustness/cost/lag字段；再实现purged/embargo fold rerun和fold-specific real neighbors；随后定义有owner/version/rationale/validation的dedicated stress bucket与per-regime comparator/gate policy；最后才允许校准robustness PASS boundary。不能通过改状态名、把aggregate proxy重命名为bucket、或用观察行数替代稳定性统计来“优化”结论。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

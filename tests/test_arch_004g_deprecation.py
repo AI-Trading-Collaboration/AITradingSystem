@@ -46,7 +46,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
 
-    assert inventory.python_module_count == 830
+    assert inventory.python_module_count == 831
     assert inventory.python_test_file_count == 1114
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == 858
@@ -57,9 +57,9 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert dict(inventory.lifecycle_counts) == {"ACTIVE": 6, "DEPRECATED": 3}
     assert inventory.removal_ready_count == 0
     assert len(inventory.surfaces) == 9
-    assert surfaces["etf_portfolio_cli_god_module"].line_count == 30896
-    assert surfaces["etf_portfolio_cli_god_module"].top_level_function_count == 938
-    assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 899
+    assert surfaces["etf_portfolio_cli_god_module"].line_count == 30762
+    assert surfaces["etf_portfolio_cli_god_module"].top_level_function_count == 932
+    assert surfaces["etf_portfolio_cli_god_module"].cli_command_decorator_count == 893
     assert surfaces["reader_brief_legacy_builder_renderer"].line_count == 29027
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
     assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
@@ -89,9 +89,7 @@ def test_g0_policy_rejects_missing_replacement(tmp_path: Path) -> None:
     path = tmp_path / "invalid.yaml"
     path.write_text(invalid, encoding="utf-8")
 
-    with pytest.raises(
-        DeprecationArchitectureError, match="DEPRECATION_TARGET_FIELD_REQUIRED"
-    ):
+    with pytest.raises(DeprecationArchitectureError, match="DEPRECATION_TARGET_FIELD_REQUIRED"):
         load_deprecation_policy(path)
 
 

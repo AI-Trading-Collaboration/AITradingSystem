@@ -80,32 +80,27 @@ DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
 )
 DYNAMIC_V3_SWEEP_CONFIG_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_config.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_config.py"
 )
 DYNAMIC_V3_SWEEP_RUNTIME_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_sweep_runtime.py"
 )
 DYNAMIC_V3_DATA_AUDIT_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_audit.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_audit.py"
 )
 DYNAMIC_V3_DATA_PROVENANCE_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_data_provenance.py"
 )
 DYNAMIC_V3_WINDOW_AUDIT_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_window_audit.py"
 )
 DYNAMIC_V3_INJECTION_AUDIT_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_injection_audit.py"
 )
 DYNAMIC_V3_WEIGHT_PATH_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_path.py"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weight_path.py"
 )
 DYNAMIC_V3_CANDIDATE_EVIDENCE_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -114,6 +109,10 @@ DYNAMIC_V3_CANDIDATE_EVIDENCE_COMMANDS_PATH = (
 DYNAMIC_V3_VALIDATION_EVIDENCE_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_validation_evidence.py"
+)
+DYNAMIC_V3_LEGACY_VALIDATION_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_legacy_validation.py"
 )
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
@@ -189,7 +188,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 30896
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 30762
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -400,8 +399,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 30896
-    assert len(legacy_names) == 938
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 30762
+    assert len(legacy_names) == 932
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -688,6 +687,23 @@ def test_g2_4_dynamic_v3_validation_evidence_callbacks_leave_legacy_root() -> No
         "dynamic_v3_overfit_run_command",
         "dynamic_v3_overfit_report_command",
         "dynamic_v3_validate_overfit_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+
+
+def test_g2_4_dynamic_v3_legacy_validation_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_LEGACY_VALIDATION_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_walk_forward_run_command",
+        "dynamic_v3_walk_forward_report_command",
+        "dynamic_v3_validate_walk_forward_command",
+        "dynamic_v3_robustness_run_command",
+        "dynamic_v3_robustness_report_command",
+        "dynamic_v3_validate_robustness_command",
     }
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names

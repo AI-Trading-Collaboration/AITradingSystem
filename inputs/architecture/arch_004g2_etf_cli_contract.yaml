@@ -1,7 +1,7 @@
 schema_version: arch_004g2_cli_contract.v1
 source:
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 0123ba18f56d65dfac9f38f455809e21b65a12c495e29c506dde055183440d41
+  sha256: e8cffe66a7ce329c76a7eca245eea46c5a6a89a84f85c83ca1c610f7f045faea
 counts:
   root_command_count: 41
   group_count: 291
