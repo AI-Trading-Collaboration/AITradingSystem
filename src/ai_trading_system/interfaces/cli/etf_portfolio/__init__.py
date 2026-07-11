@@ -47,6 +47,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_observation_lifecycle as dynamic_v3_observation_lifecycle_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_portfolio_intake as dynamic_v3_portfolio_intake_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_real_evaluation as dynamic_v3_real_evaluation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -106,6 +109,7 @@ __all__ = [
     "dynamic_v3_injection_audit_commands",
     "dynamic_v3_legacy_validation_commands",
     "dynamic_v3_observation_lifecycle_commands",
+    "dynamic_v3_portfolio_intake_commands",
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_sweep_config_commands",
     "dynamic_v3_sweep_runtime_commands",

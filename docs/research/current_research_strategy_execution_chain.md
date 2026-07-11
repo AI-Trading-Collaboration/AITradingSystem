@@ -449,6 +449,21 @@ Shortlist从observe pool按既有score/blocker选出人工复核集合；candida
 
 该链分开的原因是“候选更少、更有代表性”不等于“策略更有效”，monitor active也不等于position advisory或production。优化空间是给cluster增加缺失path的显式距离状态、为shortlist selection冻结policy checksum、让monitor记录真实forward outcome与数据质量证据；所有状态变化仍需人工owner review，不得自动生成仓位或broker动作。
 
+#### Portfolio intake 链
+
+Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | 阻断条件与优化空间 |
+|---|---|---|---|---|
+| `portfolio-snapshot validate` | 显式`--snapshot` YAML、output root | 校验基础snapshot schema、日期、position字段、权重/市值一致性、重复或非法值及broker-import安全标志；失败以exit 1 fail closed | validation payload、snapshot id、failed checks、artifact path | 缺字段、非法权重或安全标志失败即阻断；后续可统一到canonical `ArtifactEnvelope`并冻结source checksum |
+| `portfolio-snapshot normalize` | 同一snapshot YAML | 仅把已解析positions标准化并写manifest；不推导缺失仓位、不读取broker账户 | normalized positions、manifest、status | normalize PASS只证明格式/约束可消费；后续可增加schema version migration与idempotency proof |
+| `portfolio-snapshot report` | 显式snapshot，或`latest/snapshot-id`已有artifact | 生成或只读展示snapshot validation summary，披露manual review状态 | owner-readable report、status、report path | latest必须保持显式且可追溯；后续可增加source/manifest checksum交叉验证 |
+| `manual-portfolio validate` | owner-maintained snapshot、reviewed schema config、output root | 按schema校验source、currency、positions、total weight/value、cash/risk split、重复symbol、负值和broker flags | hardened validation artifact、failed checks、snapshot id | schema或组合约束失败即阻断；后续可把subjective tolerance迁入带owner/version/review条件的policy manifest |
+| `manual-portfolio normalize/report` | snapshot或已存在snapshot id | 规范化symbol/weights并计算`total_weight`、`cash_weight`、`risk_asset_weight`；report展示已有结果 | normalized portfolio、summary report、latest pointer | 不补造缺失position，不把cash/risk split当风险建议；后续可增加position-level provenance与脱敏字段审计 |
+| `validate-manual-portfolio` | 已存在snapshot id | 从artifact内容复核status与failed-check count，非PASS退出1 | validation result | 只校验intake artifact，不自动触发exposure/drift/guardrail；后续可改为content-derived checksum重算并输出统一validation reference |
+
+设计上的关键分界是：intake回答“这份持仓描述是否结构化、完整且可供人工研究使用”，exposure回答“组合暴露是什么”，drift回答“当前与候选目标相差多少”，guardrail回答“哪些变化应被限制”，owner review才回答“是否继续人工处理”。任一intake `PASS`或normalized artifact都不等于portfolio approval、position advisory、official target weights、production state mutation或broker authorization。优化应优先增强provenance、content-derived validation、schema演进和隐私检查，不能通过自动补值或串行调用下游来制造表面完整性。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：

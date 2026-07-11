@@ -138,6 +138,10 @@ DYNAMIC_V3_CANDIDATE_OBSERVATION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_candidate_observation.py"
 )
+DYNAMIC_V3_PORTFOLIO_INTAKE_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_portfolio_intake.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -212,7 +216,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 28802
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 28604
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -423,8 +427,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 28802
-    assert len(legacy_names) == 861
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 28604
+    assert len(legacy_names) == 854
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -865,6 +869,24 @@ def test_g2_4_dynamic_v3_candidate_observation_callbacks_leave_legacy_root() -> 
         "dynamic_v3_shadow_monitor_run_from_shortlist_command",
         "dynamic_v3_shadow_monitor_run_report_command",
         "dynamic_v3_validate_shadow_monitor_run_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+
+
+def test_g2_4_dynamic_v3_portfolio_intake_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_PORTFOLIO_INTAKE_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_portfolio_snapshot_validate_command",
+        "dynamic_v3_portfolio_snapshot_report_command",
+        "dynamic_v3_portfolio_snapshot_normalize_command",
+        "dynamic_v3_manual_portfolio_validate_command",
+        "dynamic_v3_manual_portfolio_normalize_command",
+        "dynamic_v3_manual_portfolio_report_command",
+        "dynamic_v3_validate_manual_portfolio_command",
     }
     assert legacy_names.isdisjoint(callbacks)
     assert callbacks <= canonical_names
