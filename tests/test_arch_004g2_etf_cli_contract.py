@@ -26,6 +26,9 @@ REGISTRATION_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py"
 )
 DATA_COMMANDS_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data.py"
+DATA_QUALITY_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/data_quality.py"
+)
 COMMON_PATH = PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/common.py"
 
 
@@ -100,7 +103,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35939
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 35763
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -135,6 +138,20 @@ def test_g2_3_data_feature_callbacks_and_common_helpers_leave_legacy_root() -> N
     assert legacy_names.isdisjoint(callbacks | {f"_{name}" for name in helpers})
     assert callbacks <= data_names
     assert helpers <= common_names
+
+
+def test_g2_3_data_quality_callbacks_leave_legacy_root() -> None:
+    legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
+    canonical_names = _function_names(
+        ast.parse(DATA_QUALITY_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "data_quality_price_freshness_command",
+        "data_quality_report_command",
+        "data_quality_validate_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
 
 
 def __file_path() -> Path:

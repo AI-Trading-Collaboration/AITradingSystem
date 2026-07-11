@@ -25,6 +25,7 @@ from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
+from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as etf_data_quality_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -393,7 +394,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:3] == ["etf", "data-quality", "report"]:
-        etf_cli.data_quality_report_command(
+        etf_data_quality_cli.data_quality_report_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             prices_path=_path_option_with_default(
                 args,
@@ -421,7 +422,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:3] == ["etf", "data-quality", "validate"]:
-        etf_cli.data_quality_validate_command(
+        etf_data_quality_cli.data_quality_validate_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=(
                 _optional_path(args, "--config-path")

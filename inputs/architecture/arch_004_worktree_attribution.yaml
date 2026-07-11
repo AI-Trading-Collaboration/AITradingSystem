@@ -161,6 +161,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/data.py
   - src/ai_trading_system/cli_commands/etf_compat.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/data_quality.py
+  - src/ai_trading_system/cli_direct.py
   - docs/requirements/ARCH-004F2_Research_Lifecycle_and_Execution_Chain.md
   - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
   - docs/requirements/ARCH-004F3_Reporting_Architecture.md
