@@ -26,6 +26,7 @@ from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as etf_data_quality_cli
+from ai_trading_system.interfaces.cli.etf_portfolio import operations as etf_operations_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -351,7 +352,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:3] == ["etf", "ops", "dry-run"]:
-        etf_cli.ops_dry_run_command(
+        etf_operations_cli.ops_dry_run_command(
             cadence=_option(args, "--cadence", "daily") or "daily",
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
@@ -361,32 +362,32 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:3] == ["etf", "ops", "validate"]:
-        etf_cli.ops_validate_command(
+        etf_operations_cli.ops_validate_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
             config_path=(
                 _optional_path(args, "--config-path")
                 or _optional_path(args, "--config")
-                or etf_cli.DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH
+                or etf_operations_cli.DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH
             ),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_ETF_OPERATIONS_VALIDATION_DIR,
+                etf_operations_cli.DEFAULT_ETF_OPERATIONS_VALIDATION_DIR,
             ),
             json_path=_optional_path(args, "--json-path"),
             markdown_path=_optional_path(args, "--markdown-path"),
         )
         return
     if args[:3] == ["etf", "ops", "report"]:
-        etf_cli.ops_report_command(
+        etf_operations_cli.ops_report_command(
             cadence=_option(args, "--cadence", "daily") or "daily",
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                etf_cli.DEFAULT_ETF_OPERATIONS_REPORT_DIR,
+                etf_operations_cli.DEFAULT_ETF_OPERATIONS_REPORT_DIR,
             ),
             json_path=_optional_path(args, "--json-path"),
             markdown_path=_optional_path(args, "--markdown-path"),

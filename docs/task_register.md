@@ -52,6 +52,9 @@
 
 最新增量：
 
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C operations slice `COMPLETE`，G2.3继续。最终focused=111、contract/policy=21、architecture=177、Ruff/contract PASS；generated=`806 modules / 1,114 tests / 861 direct writers / 0 violations`。Legacy root净减3 callback、1 parser、3目录常量和209行，runtime 993 leaf不变。
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C operations slice进入`VALIDATING`。3 callback、1 cadence parser和3目录常量已迁canonical，legacy wrapper/重复定义=0，`cli_direct`直接调用canonical实现。Root=`35,763 -> 35,554 lines / 1,040 -> 1,036 functions / 987 -> 984 decorators`；tree不变，focused=111，等待compatibility/generated/architecture门禁。
+- 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3C选择operations 3 callback、cadence parser和3目录常量；dynamic-shadow与`cli_direct`直接消费canonical定义，禁止wrapper/复制。退出要求旧root定义=0，调度/observe-only/no-production/exit/artifact/tree及domain tests parity。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3B data-quality slice `COMPLETE`，G2.3继续。最终domain/direct=44、contract/policy=20、architecture=176、Ruff/contract PASS；generated=`805 modules / 1,114 tests / 861 direct writers / 0 violations`。Legacy root再净减3 callback和176行，runtime 993 leaf不变。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3B data-quality slice进入`VALIDATING`。3 callback迁canonical、无新增helper，`cli_direct`直接调用canonical callback，legacy wrapper=0。Root=`35,939 -> 35,763 lines / 1,043 -> 1,040 functions / 990 -> 987 decorators`；tree不变，focused=44、Ruff/contract PASS，等待compatibility/architecture。
 - 2026-07-11 / `ARCH-004G2_INTERFACES_AND_ETF_CLI_MIGRATION`：G2.3B选择data-quality三个callback；现有common helper直接复用，`cli_direct` report/validate caller同步迁canonical，禁止legacy wrapper。退出要求旧root callback/decorator=0，DQ BLOCKED/FAIL exit、tree、report schema/path/help及domain tests保持。

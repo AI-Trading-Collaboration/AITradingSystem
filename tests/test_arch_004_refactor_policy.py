@@ -398,6 +398,16 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_3_second["legacy_root_command_decorators_after"] == 987
     assert g2_3_second["focused_validation"] == {"status": "PASS", "passed": 44}
     assert g2_3_second["architecture_fitness"]["passed"] == 176
+    g2_3_third = phase_g["g2_current_plan"]["g2_3_third_slice"]
+    assert g2_3_third["callback_count"] == 3
+    assert g2_3_third["legacy_callback_definitions_remaining"] == 0
+    assert g2_3_third["legacy_parser_definitions_remaining"] == 0
+    assert g2_3_third["legacy_directory_constant_definitions_remaining"] == 0
+    assert g2_3_third["direct_dispatch_using_canonical_callbacks"] is True
+    assert g2_3_third["legacy_root_top_level_functions_after"] == 1036
+    assert g2_3_third["legacy_root_command_decorators_after"] == 984
+    assert g2_3_third["focused_validation"] == {"status": "PASS", "passed": 111}
+    assert g2_3_third["architecture_fitness"]["passed"] == 177
     assert policy["safety_boundary"] == {
         "research_only": True,
         "architecture_governance_only": True,
@@ -691,10 +701,8 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_f1["parity"]["periodic_automatic_command_dispatch"] is False
     for source in phase_f1["sources"]:
         if source.get("historical_phase_f1_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004F3"
-            assert source["current_hash_tracked_in"] == (
-                "phase_f3_reporting_architecture.sources"
-            )
+            assert source["superseded_by_phase"] in {"ARCH-004F3", "ARCH-004G2.3C"}
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -996,6 +1004,27 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_3b["validation"]["focused"] == {"status": "PASS", "passed": 44}
     assert phase_g2_3b["validation"]["architecture_fitness"]["passed"] == 176
     for source in phase_g2_3b["sources"]:
+        if source.get("historical_phase_g2_3b_hash"):
+            assert source["superseded_by_phase"] == "ARCH-004G2.3C"
+            assert source["current_hash_tracked_in"] == (
+                "phase_g2_3c_etf_cli_operations.sources"
+            )
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_3c = baseline["phase_g2_3c_etf_cli_operations"]
+    assert phase_g2_3c["status"] == "COMPLETE_G2_3_CONTINUES"
+    assert phase_g2_3c["migration"]["callback_count"] == 3
+    assert phase_g2_3c["migration"]["shared_parser_count"] == 1
+    assert phase_g2_3c["migration"]["directory_constant_count"] == 3
+    assert phase_g2_3c["migration"]["legacy_callback_definitions_remaining"] == 0
+    assert phase_g2_3c["migration"]["legacy_parser_definitions_remaining"] == 0
+    assert phase_g2_3c["migration"]["legacy_directory_constant_definitions_remaining"] == 0
+    assert phase_g2_3c["migration"]["direct_dispatch_using_canonical_callbacks"] is True
+    assert phase_g2_3c["migration"]["operations_behavior_changed"] is False
+    assert phase_g2_3c["validation"]["focused"] == {"status": "PASS", "passed": 111}
+    assert phase_g2_3c["validation"]["architecture_fitness"]["passed"] == 177
+    for source in phase_g2_3c["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 

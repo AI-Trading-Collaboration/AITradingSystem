@@ -186,7 +186,7 @@ def test_cli_direct_dispatches_etf_ops_dry_run(
         captured.update(kwargs)
 
     monkeypatch.setattr(
-        cli_direct.etf_cli,
+        cli_direct.etf_operations_cli,
         "ops_dry_run_command",
         fake_ops_dry_run_command,
     )
@@ -257,7 +257,7 @@ def test_cli_direct_dispatches_etf_ops_report(
         captured.update(kwargs)
 
     monkeypatch.setattr(
-        cli_direct.etf_cli,
+        cli_direct.etf_operations_cli,
         "ops_report_command",
         fake_ops_report_command,
     )
@@ -336,7 +336,7 @@ def test_cli_direct_dispatches_etf_ops_validate(
         captured.update(kwargs)
 
     monkeypatch.setattr(
-        cli_direct.etf_cli,
+        cli_direct.etf_operations_cli,
         "ops_validate_command",
         fake_ops_validate_command,
     )
