@@ -2023,7 +2023,31 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g2_4u["real_smoke"]["current_shadow_registry_validation"] == "FAIL"
     assert phase_g2_4u["real_smoke"]["automatic_registry_mutation_performed"] is False
     assert phase_g2_4u["sources"]
+    superseded_g2_4u = set(phase_g2_4u["superseded_source_paths"])
     for source in phase_g2_4u["sources"]:
+        if source["path"] in superseded_g2_4u:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4v = baseline["phase_g2_4v_etf_cli_dynamic_v3_research_control"]
+    assert phase_g2_4v["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4v = phase_g2_4v["migration"]
+    assert migration_g2_4v["callback_count"] == 11
+    assert migration_g2_4v["governance_diff_read_only"] is True
+    assert migration_g2_4v["research_query_compare_history_read_only"] is True
+    assert migration_g2_4v["research_index_rebuild_only"] is True
+    assert migration_g2_4v["artifact_latest_validate_stale_read_only"] is True
+    assert migration_g2_4v["repair_latest_is_only_pointer_writer"] is True
+    assert migration_g2_4v["repair_latest_canonical_root_only"] is True
+    assert migration_g2_4v["source_artifact_mutation_allowed"] is False
+    assert migration_g2_4v["research_or_candidate_execution_allowed"] is False
+    assert migration_g2_4v["automatic_candidate_promotion_allowed"] is False
+    assert migration_g2_4v["legacy_root_lines_after"] == 30391
+    assert migration_g2_4v["legacy_root_top_level_functions_after"] == 917
+    assert migration_g2_4v["legacy_root_command_decorators_after"] == 878
+    assert migration_g2_4v["python_module_count"] == 833
+    assert phase_g2_4v["sources"]
+    for source in phase_g2_4v["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2046,7 +2070,7 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     attribution = safe_load_yaml_path(ATTRIBUTION_PATH)
 
     assert attribution["status"] == (
-        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4U_COMPLETE_G2_4_CONTINUES"
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4V_COMPLETE_G2_4_CONTINUES"
     )
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

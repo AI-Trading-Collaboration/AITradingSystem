@@ -419,6 +419,12 @@ TRADING-098把candidate report、walk-forward和robustness证据连接成observe
 
 当前结果：真实candidate `a72139edcaef7d22`已有通过当前validator的walk-forward `7b6db671cbd67468`和robustness `87b0fc81d6681368`，但runtime registry仍绑定旧artifact，因此当前registry validation为FAIL；系统不会自动迁移。后续优化空间包括把登记动作写入独立owner decision ledger、为证据组合生成不可变selection checksum、让shadow report直接引用最新validation artifact，以及在完整逐fold/专用stress证据可用后版本化提升usable contract。任何优化都不能自动enroll、promotion、写official weights或产生broker action。
 
+#### Governance、研究索引与 artifact pointer 控制面
+
+这三个环节只负责“规则是否有效、已有结果在哪里、latest引用是否健康”，不计算新的候选绩效。Governance输入reviewed parameter-governance与sweep config，validate检查policy/search-space约束，report物化只读治理摘要，diff只列出两版配置差异并要求人工复核。Research index-build扫描既有sweep和shadow registry生成可查询索引；query/compare/history只消费索引，不回读市场数据或重跑评估。Artifact latest/validate/stale只读pointer与retention policy；`repair-latest`是唯一pointer写入口，只能扫描canonical Dynamic-v3 artifact root并重建pointer，不能复制、覆盖或修改source artifact。
+
+当前优化空间是给research index增加不可变source checksum和schema版本、让pointer repair记录选择排序与候选清单、把governance diff接入owner decision ledger。进入条件是保持CLI兼容、所有重建结果可由canonical source复算、缺失或歧义时fail closed；禁止把“latest pointer已修复”解释为研究证据更新、candidate晋升或生产状态变化。
+
 #### Dynamic-v3 overfit evidence
 
 Overfit review回答“当前候选的优势是否可能来自全周期排名、局部参数、少数regime/极端日期或多重试验”，不是把candidate gate改名。输入是同一sweep的normalized config、candidate results和归属一致的real evaluation；所有路径和checksum进入manifest。五类组件当前计算边界如下：
