@@ -911,6 +911,21 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前fixture只有一个selected refresh，因此结论严格为`INSUFFICIENT_HISTORY`，`available_sample_growth=null`，next action是`continue_tracking`。正向两行fixture只验证policy precedence与full-state增长公式，不代表真实策略已改善。下一步应先用显式RunLedger绑定至少两个不同as-of的真实COMMITTED refresh，再加入cohort composition、有效样本量、置信区间、regime和staleness；随后基于真实误判成本复核pilot policy。不得通过纳入legacy/rollback、把missing填0、降低history floor或自动调policy制造趋势结论。
 
+#### Forward Outcome Decision 链（TRADING-160 / G2.4BK）
+
+这一链回答“截至本周可见且同一lineage的forward证据，是否只够继续跟踪、需要人工风险复核，或已经足以进入owner人工规则校准证据复核”。它不是规则校准器，更不是自动调参入口。旧实现直接读取三个mutable latest摘要，把缺source解释成NO_DUE/INSUFFICIENT，把missing count写0；Update、Refresh、Trend可能来自不同时间或链，trend deterioration不参与gate，READY时仍输出固定continue/do-not-change actions，7日cadence和readiness门槛没有policy provenance。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Week/cutoff | `week_ending`、timezone-aware generated、reviewed policy | generated必须落在7日week window至reviewed post-week grace；evidence cutoff取generated与week-end UTC日末较早值 | week_start/end/cutoff | future week/source不进入；后续统一canonical calendar/week id |
+| Source selection | optional explicit Update/Refresh/Trend ids，或三个artifact roots | cutoff内semantic latest zero-or-one；所有eligible非legacy source都必须validator PASS，tie/invalid/PREPARED阻断；future/rollback/legacy显式排除 | selected full bundles、validations、selection inventory | 真正无source为MISSING，不冒充NO_DUE；后续用RunLedger ids完全取代目录扫描 |
+| Lineage | selected manifests与Trend source snapshot | Refresh的`outcome_update_id`必须等于selected Update；Trend selected refreshes必须包含selected Refresh | chain completeness | partial chain只允许Update without downstream；Refresh without Update或Trend without Refresh阻断 |
+| Comparable decision state | Update updated/skipped rows、Trend latest full-Dashboard row与summary | update status按真实rows推导；forward available/pending、Limited confidence、Consensus risk、trend status从同一frozen latest row读取；missing保持null | go/no-go matrix | 不使用Refresh selected-cohort delta替代full state；后续增加cohort composition/effective sample/regime |
+| Reviewed policy | 20-sample pilot floor、eligible confidence/consensus/trend、risk/trend manual route、recommendation precedence、7日due cadence | READY只表示可进入人工规则证据复核；deteriorating/high risk优先manual review；source/sample不足继续跟踪或等待 | readiness、recommended action、next actions | thresholds为PILOT_BASELINE而非promotion gate；后续用真实false-positive/negative cost与CI校准 |
+| Validator | snapshot、live selection/source/policy和全部views | 重跑semantic selection和三个validators，核对bundle/lineage/policy，从snapshot重算matrix/actions/manifest/Markdown/Reader Brief | PASS/FAIL；legacy只读warning | source/snapshot/policy/output drift FAIL；不运行upstream、不apply policy |
+
+当前完整fixture只有1个full-state forward AVAILABLE sample，Limited confidence与trend history不足，因此`evidence_status=COMPLETE`但`rule_calibration_readiness=NOT_READY`、recommended=`continue_tracking`；empty roots则明确`evidence_status=INCOMPLETE`、Update=`MISSING`、counts=null、recommended=`wait_for_more_outcomes`。20-sample/HIGH/PASS/STABLE frozen fixture只证明policy boundary可重算，READY时action仍是`review_rule_calibration_evidence + do_not_auto_apply_policy`；DETERIORATING优先manual review。下一步先积累真实多as-of committed chain并记录cohort/effective sample/CI/regime，再校准pilot policy和calendar cadence；不得通过填0、跨链latest、忽略trend/risk或把READY改写成自动calibration制造可行动结论。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

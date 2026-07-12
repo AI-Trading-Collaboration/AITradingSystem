@@ -300,11 +300,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_operations import (
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_CONSENSUS_RISK_DIR,
-    DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
     DEFAULT_LIMITED_VS_NOTRADE_DIR,
-    forward_outcome_decision_report_payload,
-    run_forward_outcome_decision,
-    validate_forward_outcome_decision_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_RATES_CACHE_PATH,
@@ -708,7 +704,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_formal_method_auto_plan_app,
     dynamic_v3_formal_research_method_contract_app,
     dynamic_v3_forward_confirmation_plan_app,
-    dynamic_v3_forward_outcome_decision_app,
     dynamic_v3_forward_pressure_capture_app,
     dynamic_v3_gate_calibrated_review_app,
     dynamic_v3_gate_calibration_review_app,
@@ -15219,88 +15214,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_forward_outcome_decision_app.command("run")
-def dynamic_v3_forward_outcome_decision_run_command(
-    week_ending: Annotated[str, typer.Option("--week-ending", help="周度结束日期 YYYY-MM-DD。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="forward outcome decision artifact root。"),
-    ] = DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
-) -> None:
-    """生成 weekly forward outcome decision pack。"""
-    week_ending_date = _parse_dynamic_v3_outcome_date(week_ending, "--week-ending")
-    result = run_forward_outcome_decision(week_ending=week_ending_date, output_dir=output_dir)
-    matrix = result["forward_go_no_go_matrix"]
-    actions = result["forward_next_actions"]["next_actions"]
-    next_due = next(
-        (row.get("target_date") for row in actions if row.get("action") == "run_next_due_scan"),
-        "",
-    )
-    typer.echo(f"decision_id={result['decision_id']}")
-    typer.echo(f"decision_dir={result['decision_dir']}")
-    typer.echo(f"recommended_action={matrix['recommended_action']}")
-    typer.echo(f"rule_calibration_readiness={matrix['rule_calibration_readiness']}")
-    typer.echo(f"next_due_scan_date={next_due}")
-    typer.echo("broker_action_allowed=false")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_forward_outcome_decision_app.command("report")
-def dynamic_v3_forward_outcome_decision_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest forward outcome decision。"),
-    ] = False,
-    decision_id: Annotated[
-        str | None,
-        typer.Option("--decision-id", help="decision id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="forward outcome decision artifact root。"),
-    ] = DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
-) -> None:
-    """展示 weekly forward outcome decision 摘要。"""
-    payload = forward_outcome_decision_report_payload(
-        decision_id=decision_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    matrix = payload["forward_go_no_go_matrix"]
-    actions = payload["forward_next_actions"]["next_actions"]
-    next_due = next(
-        (row.get("target_date") for row in actions if row.get("action") == "run_next_due_scan"),
-        "",
-    )
-    typer.echo(f"decision_id={payload['decision_id']}")
-    typer.echo(f"recommended_action={matrix['recommended_action']}")
-    typer.echo(f"rule_calibration_readiness={matrix['rule_calibration_readiness']}")
-    typer.echo(f"next_due_scan_date={next_due}")
-    typer.echo(f"report_path={payload['forward_outcome_decision_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-forward-outcome-decision")
-def dynamic_v3_validate_forward_outcome_decision_command(
-    decision_id: Annotated[str, typer.Option("--decision-id", help="decision id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="forward outcome decision artifact root。"),
-    ] = DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
-) -> None:
-    """校验 TRADING-160 forward outcome decision artifact。"""
-    payload = validate_forward_outcome_decision_artifact(
-        decision_id=decision_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_effect=none")
-    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

@@ -56,6 +56,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_failure_attribution as dynamic_v3_failure_attribution_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_forward_outcome_decision as dynamic_v3_forward_outcome_decision_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_historical_paper_sim as dynamic_v3_historical_paper_sim_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -214,6 +217,7 @@ __all__ = [
     "dynamic_v3_research_control_commands",
     "dynamic_v3_real_snapshot_paper_action_commands",
     "dynamic_v3_failure_attribution_commands",
+    "dynamic_v3_forward_outcome_decision_commands",
     "dynamic_v3_evidence_readiness_commands",
     "dynamic_v3_evidence_governance_commands",
     "dynamic_v3_evidence_trend_commands",

@@ -2994,6 +2994,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     if phase_g2_4bj["status"] == "COMPLETE_G2_4_CONTINUES":
         assert phase_g2_4bj["sources"]
         for source in phase_g2_4bj["sources"]:
+            if source["path"] in set(phase_g2_4bj.get("superseded_source_paths", [])):
+                continue
+            actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+            assert actual == source["sha256"], source["path"]
+    phase_g2_4bk = baseline["phase_g2_4bk_etf_cli_dynamic_v3_forward_outcome_decision"]
+    assert phase_g2_4bk["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4bk = phase_g2_4bk["migration"]
+    assert migration_g2_4bk["callback_count"] == 3
+    assert migration_g2_4bk["cutoff_bound_zero_or_one_source_selection"] is True
+    assert migration_g2_4bk["explicit_source_ids_supported"] is True
+    assert migration_g2_4bk["all_selected_sources_content_validated"] is True
+    assert migration_g2_4bk["update_refresh_trend_lineage_required"] is True
+    assert migration_g2_4bk["full_source_and_policy_snapshot_required"] is True
+    assert migration_g2_4bk["missing_and_invalid_sources_distinct"] is True
+    assert migration_g2_4bk["null_preserving_full_dashboard_state_required"] is True
+    assert migration_g2_4bk["reviewed_decision_policy_required"] is True
+    assert migration_g2_4bk["content_derived_all_views_validation"] is True
+    assert migration_g2_4bk["automatic_upstream_or_policy_apply_allowed"] is False
+    assert migration_g2_4bk["portfolio_or_execution_effect"] is False
+    assert migration_g2_4bk["legacy_root_lines_after"] == 24861
+    assert migration_g2_4bk["legacy_root_top_level_functions_after"] == 731
+    assert migration_g2_4bk["legacy_root_command_decorators_after"] == 692
+    assert migration_g2_4bk["python_module_count"] == 875
+    if phase_g2_4bk["status"] == "COMPLETE_G2_4_CONTINUES":
+        assert phase_g2_4bk["sources"]
+        for source in phase_g2_4bk["sources"]:
             actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
             assert actual == source["sha256"], source["path"]
 
@@ -3070,6 +3096,9 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
             "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BJ_IN_PROGRESS_G2_4_CONTINUES",
             "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BJ_VALIDATING_G2_4_CONTINUES",
             "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BJ_COMPLETE_G2_4_CONTINUES",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BK_IN_PROGRESS_G2_4_CONTINUES",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BK_VALIDATING_G2_4_CONTINUES",
+            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BK_COMPLETE_G2_4_CONTINUES",
         }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

@@ -6839,15 +6839,16 @@ reports:
     command: aits etf dynamic-v3-rescue forward-outcome-decision report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/forward_decision_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/forward_decision_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/forward_go_no_go_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/forward_next_actions.json
       - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/forward_outcome_decision_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-160 summarizes weekly forward outcome update, refreshed evidence,
-      trend status, calibration readiness, and next due scan while keeping
-      broker and production effects disabled.
+      TRADING-160 binds validated Outcome Update, Rolling Refresh, Evidence Trend
+      and reviewed decision policy at a week cutoff; it preserves missing evidence,
+      recomputes every decision view, and keeps broker and production effects disabled.
     owner_action: review_forward_outcome_decision_before_any_manual_policy_work
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

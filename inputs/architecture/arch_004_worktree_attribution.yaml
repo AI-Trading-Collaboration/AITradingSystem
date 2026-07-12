@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BJ_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BK_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 4b4a8d90
+base_commit: c9b673ba
 production_effect: none
 
 arch_004_owned_paths:
@@ -23,6 +23,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/consensus_risk_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/evidence_trend_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -195,6 +196,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_update.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rolling_evidence_refresh.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_trend.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_outcome_decision.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
@@ -286,6 +288,7 @@ arch_004_owned_paths:
   - tests/dynamic_v3_outcome_loop_helpers.py
   - tests/test_rolling_evidence_refresh.py
   - tests/test_evidence_trend.py
+  - tests/test_forward_outcome_decision.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py

@@ -1,0 +1,56 @@
+schema_version: etf_dynamic_v3_forward_outcome_decision_policy.v1
+policy_id: dynamic_v3_forward_outcome_decision_v1
+version: 1
+status: PILOT_BASELINE
+owner: research_governance
+rationale: >
+  将weekly decision pack的时间边界、人工规则复核最低证据、trend/risk路由、
+  recommended action与next due cadence从代码常量迁入可审计policy。READY只表示
+  可以进入owner人工规则复核，不授权自动校准、policy apply、portfolio或broker动作。
+week_window_days: 7
+maximum_post_week_generation_days: 2
+minimum_forward_available_for_rule_review: 20
+eligible_confidence:
+  - HIGH
+ready_consensus_statuses:
+  - PASS
+ready_with_warnings_consensus_statuses:
+  - PASS_WITH_WARNINGS
+eligible_trend_statuses:
+  - STABLE
+  - IMPROVING
+manual_review_consensus_statuses:
+  - REVIEW_REQUIRED
+  - HIGH_RISK
+manual_review_trend_statuses:
+  - DETERIORATING
+recommendation_precedence:
+  - manual_review
+  - wait_for_more_outcomes
+  - review_rule_calibration_evidence
+  - continue_tracking
+next_actions_by_recommendation:
+  manual_review:
+    - manual_review
+    - do_not_change_policy
+  wait_for_more_outcomes:
+    - continue_tracking
+    - do_not_change_policy
+  continue_tracking:
+    - continue_tracking
+    - do_not_change_policy
+  review_rule_calibration_evidence:
+    - review_rule_calibration_evidence
+    - do_not_auto_apply_policy
+next_due_scan_offset_days: 7
+review_condition: >
+  在至少两个不同as-of的真实COMMITTED refresh和20个full-Dashboard forward
+  AVAILABLE samples可用后复核；若Limited confidence、Consensus risk或Evidence Trend
+  taxonomy变化，必须升级policy version并重新验证历史decision artifacts。
+validation_plan: >
+  覆盖missing/invalid/future/duplicate source、explicit id、update-refresh-trend lineage、
+  week cutoff、null metrics、sample/confidence/risk/trend boundary、action precedence、
+  source/snapshot/policy/output tamper与legacy read-only compatibility。
+production_effect: none
+broker_action_allowed: false
+auto_policy_apply: false

@@ -85,6 +85,9 @@ DEFAULT_EVIDENCE_TREND_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/evidence_trend_v1.yaml"
 )
 DEFAULT_FORWARD_OUTCOME_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
+DEFAULT_FORWARD_OUTCOME_DECISION_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision_v1.yaml"
+)
 OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION = "outcome_due_source_snapshot.v2"
 REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION = "replay_sample_expansion_source_snapshot.v2"
 DEFAULT_REPLAY_SAMPLE_EXPANSION_POLICY_PATH = Path(
@@ -108,6 +111,7 @@ OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION = "outcome_update_transaction.v1"
 ROLLING_EVIDENCE_REFRESH_SNAPSHOT_SCHEMA_VERSION = "rolling_evidence_refresh_source_snapshot.v2"
 ROLLING_EVIDENCE_REFRESH_TRANSACTION_SCHEMA_VERSION = "rolling_evidence_refresh_transaction.v1"
 EVIDENCE_TREND_SNAPSHOT_SCHEMA_VERSION = "evidence_trend_source_snapshot.v2"
+FORWARD_OUTCOME_DECISION_SNAPSHOT_SCHEMA_VERSION = "forward_outcome_decision_source_snapshot.v2"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -3819,19 +3823,32 @@ def run_forward_outcome_decision(
     outcome_update_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR,
     rolling_refresh_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
     evidence_trend_dir: Path = DEFAULT_EVIDENCE_TREND_DIR,
+    outcome_update_id: str | None = None,
+    refresh_id: str | None = None,
+    trend_id: str | None = None,
+    policy_path: Path = DEFAULT_FORWARD_OUTCOME_DECISION_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    update = _latest_outcome_update_summary(outcome_update_dir)
-    refresh = _latest_refresh_summary(rolling_refresh_dir)
-    trend = _latest_evidence_trend_summary(evidence_trend_dir)
+    policy = _load_forward_outcome_decision_policy(policy_path)
+    snapshot = _build_forward_outcome_decision_snapshot(
+        week_ending=week_ending,
+        generated=generated,
+        outcome_update_dir=outcome_update_dir,
+        rolling_refresh_dir=rolling_refresh_dir,
+        evidence_trend_dir=evidence_trend_dir,
+        outcome_update_id=outcome_update_id,
+        refresh_id=refresh_id,
+        trend_id=trend_id,
+        policy_path=policy_path,
+        policy=policy,
+    )
     matrix = _forward_go_no_go_matrix(
         week_ending=week_ending,
-        update=update,
-        refresh=refresh,
-        trend=trend,
+        snapshot=snapshot,
+        policy=policy,
     )
-    next_actions = _forward_next_actions(matrix)
+    next_actions = _forward_next_actions(matrix, policy)
     decision_id = _stable_id(
         "forward-outcome-decision",
         week_ending.isoformat(),
@@ -3839,31 +3856,16 @@ def run_forward_outcome_decision(
     )
     decision_dir = _unique_dir(output_dir / decision_id)
     decision_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_forward_decision_manifest",
-        "decision_id": decision_dir.name,
-        "week_ending": week_ending.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "recommended_action": matrix["recommended_action"],
-        "rule_calibration_readiness": matrix["rule_calibration_readiness"],
-        "forward_decision_manifest_path": str(decision_dir / "forward_decision_manifest.json"),
-        "forward_go_no_go_matrix_path": str(decision_dir / "forward_go_no_go_matrix.json"),
-        "forward_next_actions_path": str(decision_dir / "forward_next_actions.json"),
-        "forward_outcome_decision_report_path": str(
-            decision_dir / "forward_outcome_decision_report.md"
-        ),
-        "reader_brief_section_path": str(decision_dir / "reader_brief_section.md"),
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "auto_policy_apply": False,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    snapshot_path = decision_dir / "forward_decision_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
+    manifest = _forward_outcome_decision_manifest(
+        decision_dir=decision_dir,
+        week_ending=week_ending,
+        generated=generated,
+        matrix=matrix,
+        policy=policy,
+        source_snapshot_checksum=_file_sha256(snapshot_path),
+    )
     _write_json(decision_dir / "forward_decision_manifest.json", manifest)
     _write_json(decision_dir / "forward_go_no_go_matrix.json", matrix)
     _write_json(decision_dir / "forward_next_actions.json", next_actions)
@@ -3884,6 +3886,7 @@ def run_forward_outcome_decision(
         "decision_id": decision_dir.name,
         "decision_dir": decision_dir,
         "manifest": manifest,
+        "source_snapshot": snapshot,
         "forward_go_no_go_matrix": matrix,
         "forward_next_actions": next_actions,
     }
@@ -3900,13 +3903,17 @@ def forward_outcome_decision_report_payload(
         artifact_id=decision_id if not latest else None,
         pointer_name="latest_forward_outcome_decision",
     )
-    return {
+    payload = {
         **_read_json(decision_dir / "forward_decision_manifest.json"),
         "forward_go_no_go_matrix": _read_json(decision_dir / "forward_go_no_go_matrix.json"),
         "forward_next_actions": _read_json(decision_dir / "forward_next_actions.json"),
         "reader_brief_section": _read_text(decision_dir / "reader_brief_section.md"),
         "decision_dir": str(decision_dir),
     }
+    snapshot_path = decision_dir / "forward_decision_source_snapshot.json"
+    if snapshot_path.exists():
+        payload["source_snapshot"] = _read_json(snapshot_path)
+    return payload
 
 
 def validate_forward_outcome_decision_artifact(
@@ -3915,10 +3922,80 @@ def validate_forward_outcome_decision_artifact(
     decision_dir = output_dir / decision_id
     manifest = _read_optional_json(decision_dir / "forward_decision_manifest.json") or {}
     matrix = _read_optional_json(decision_dir / "forward_go_no_go_matrix.json") or {}
+    snapshot_path = decision_dir / "forward_decision_source_snapshot.json"
+    if not snapshot_path.exists():
+        legacy_checks = [
+            _check("manifest_exists", bool(manifest), decision_id),
+            _check("decision_id_matches", manifest.get("decision_id") == decision_id, decision_id),
+            _check(
+                "legacy_safety",
+                manifest.get("production_effect") == "none"
+                and manifest.get("broker_action_allowed") is False
+                and matrix.get("production_effect") == "none"
+                and matrix.get("broker_action_allowed") is False,
+                "legacy forward outcome decision safety",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_forward_outcome_decision_validation",
+            artifact_id_key="decision_id",
+            artifact_id=decision_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+            payload["warning"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_json(snapshot_path)
+    next_actions = _read_optional_json(decision_dir / "forward_next_actions.json") or {}
+    snapshot_errors = _forward_outcome_decision_snapshot_errors(snapshot)
+    report_path = decision_dir / "forward_outcome_decision_report.md"
+    reader_path = decision_dir / "reader_brief_section.md"
+    actual_report = _read_text(report_path) if report_path.exists() else ""
+    actual_reader = _read_text(reader_path) if reader_path.exists() else ""
+    recompute_error = ""
+    try:
+        policy = _mapping(snapshot.get("policy"))
+        generated = _datetime_from_any(manifest.get("generated_at"))
+        week_ending = _date_from_any(manifest.get("week_ending"))
+        if generated is None or week_ending is None:
+            raise DynamicV3OutcomeAccumulationError("forward decision manifest time invalid")
+        expected_matrix = _forward_go_no_go_matrix(
+            week_ending=week_ending,
+            snapshot=snapshot,
+            policy=policy,
+        )
+        expected_actions = _forward_next_actions(expected_matrix, policy)
+        expected_manifest = _forward_outcome_decision_manifest(
+            decision_dir=decision_dir,
+            week_ending=week_ending,
+            generated=generated,
+            matrix=expected_matrix,
+            policy=policy,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        expected_report = render_forward_outcome_decision_report(
+            expected_manifest, expected_matrix, expected_actions
+        )
+        expected_reader = render_forward_decision_reader_brief(
+            expected_matrix, expected_actions
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_matrix = {}
+        expected_actions = {}
+        expected_manifest = {}
+        expected_report = ""
+        expected_reader = ""
     checks = [
         _check(
             "manifest_exists",
             (decision_dir / "forward_decision_manifest.json").exists(),
+            decision_id,
+        ),
+        _check(
+            "source_snapshot_exists",
+            snapshot_path.exists(),
             decision_id,
         ),
         _check(
@@ -3943,10 +4020,23 @@ def validate_forward_outcome_decision_artifact(
         ),
         _check("decision_id_matches", manifest.get("decision_id") == decision_id, decision_id),
         _check(
-            "not_ready_does_not_auto_calibrate",
-            matrix.get("rule_calibration_readiness") != "NOT_READY"
-            or matrix.get("recommended_action") != "calibrate_rules_later",
-            "rule calibration readiness",
+            "source_snapshot_valid",
+            not snapshot_errors,
+            ",".join(snapshot_errors),
+        ),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("matrix_recomputed", matrix == expected_matrix, "snapshot"),
+        _check("actions_recomputed", next_actions == expected_actions, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "report_recomputed",
+            actual_report == expected_report,
+            "Markdown",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            actual_reader == expected_reader,
+            "Reader Brief",
         ),
         _check(
             "broker_action_forbidden",
@@ -4339,6 +4429,10 @@ def render_forward_outcome_decision_report(
                 "",
                 f"- decision_id: `{manifest.get('decision_id')}`",
                 f"- week_ending: {matrix.get('week_ending')}",
+                f"- evidence_status: {matrix.get('evidence_status')}",
+                f"- outcome_update_id: {matrix.get('outcome_update_id')}",
+                f"- rolling_refresh_id: {matrix.get('rolling_refresh_id')}",
+                f"- evidence_trend_id: {matrix.get('evidence_trend_id')}",
                 f"- outcome_update_status: {matrix.get('outcome_update_status')}",
                 f"- forward_available: {matrix.get('forward_available')}",
                 f"- forward_pending: {matrix.get('forward_pending')}",
@@ -4347,6 +4441,8 @@ def render_forward_outcome_decision_report(
                 f"- evidence_trend_status: {matrix.get('evidence_trend_status')}",
                 f"- rule_calibration_readiness: {matrix.get('rule_calibration_readiness')}",
                 f"- recommended_action: {matrix.get('recommended_action')}",
+                f"- policy_id: {manifest.get('policy_id')}",
+                f"- policy_version: {manifest.get('policy_version')}",
                 f"- broker_action_allowed: {matrix.get('broker_action_allowed')}",
                 f"- production_effect: {matrix.get('production_effect')}",
                 "",
@@ -4376,6 +4472,7 @@ def render_forward_decision_reader_brief(
                 "## Dynamic Rescue Forward Outcome Decision",
                 "",
                 f"- week_ending: {matrix.get('week_ending')}",
+                f"- evidence_status: {matrix.get('evidence_status')}",
                 f"- forward_available: {matrix.get('forward_available')}",
                 f"- forward_pending: {matrix.get('forward_pending')}",
                 f"- limited_vs_notrade_confidence: {matrix.get('limited_vs_notrade_confidence')}",
@@ -5730,78 +5827,536 @@ def _confidence_change(before: str, after: str, confidence_order: Sequence[str])
     return "NO_CHANGE"
 
 
-def _latest_outcome_update_summary(output_dir: Path) -> dict[str, Any]:
-    try:
-        payload = outcome_update_report_payload(latest=True, output_dir=output_dir)
-    except DynamicV3OutcomeAccumulationError:
-        return {"updated_count": 0, "skipped_count": 0, "status": "NO_DUE_WINDOWS"}
-    delta = _mapping(payload.get("outcome_status_delta"))
-    after = _mapping(delta.get("after"))
+def _load_forward_outcome_decision_policy(path: Path) -> dict[str, Any]:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping) or payload.get("schema_version") != (
+        "etf_dynamic_v3_forward_outcome_decision_policy.v1"
+    ):
+        raise DynamicV3OutcomeAccumulationError("forward decision policy schema invalid")
+    policy = dict(payload)
+    required_text = (
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "review_condition",
+        "validation_plan",
+    )
+    recommendations = {
+        "manual_review",
+        "wait_for_more_outcomes",
+        "continue_tracking",
+        "review_rule_calibration_evidence",
+    }
+    action_map = _mapping(policy.get("next_actions_by_recommendation"))
+    allowed_actions = {
+        "manual_review",
+        "continue_tracking",
+        "do_not_change_policy",
+        "review_rule_calibration_evidence",
+        "do_not_auto_apply_policy",
+    }
+    confidence = _texts(policy.get("eligible_confidence"))
+    ready_consensus = _texts(policy.get("ready_consensus_statuses"))
+    warning_consensus = _texts(policy.get("ready_with_warnings_consensus_statuses"))
+    manual_consensus = _texts(policy.get("manual_review_consensus_statuses"))
+    eligible_trends = _texts(policy.get("eligible_trend_statuses"))
+    manual_trends = _texts(policy.get("manual_review_trend_statuses"))
+    if (
+        not all(_text(policy.get(key)) for key in required_text)
+        or _int(policy.get("week_window_days")) != 7
+        or not 0 <= _int(policy.get("maximum_post_week_generation_days")) <= 7
+        or _int(policy.get("minimum_forward_available_for_rule_review")) < 2
+        or not confidence
+        or not set(confidence).issubset({"LOW", "MEDIUM", "HIGH"})
+        or len(confidence) != len(set(confidence))
+        or not ready_consensus
+        or not set(ready_consensus).issubset({"PASS"})
+        or not warning_consensus
+        or not set(warning_consensus).issubset({"PASS_WITH_WARNINGS"})
+        or not manual_consensus
+        or not set(manual_consensus).issubset({"REVIEW_REQUIRED", "HIGH_RISK"})
+        or not eligible_trends
+        or not set(eligible_trends).issubset({"STABLE", "IMPROVING"})
+        or not manual_trends
+        or not set(manual_trends).issubset({"DETERIORATING"})
+        or set(_texts(policy.get("recommendation_precedence"))) != recommendations
+        or len(_texts(policy.get("recommendation_precedence"))) != len(recommendations)
+        or set(action_map) != recommendations
+        or any(
+            not _texts(actions)
+            or len(_texts(actions)) != len(set(_texts(actions)))
+            or not set(_texts(actions)).issubset(allowed_actions)
+            for actions in action_map.values()
+        )
+        or not 1 <= _int(policy.get("next_due_scan_offset_days")) <= 31
+        or policy.get("production_effect") != "none"
+        or policy.get("broker_action_allowed") is not False
+        or policy.get("auto_policy_apply") is not False
+    ):
+        raise DynamicV3OutcomeAccumulationError("forward decision policy contract invalid")
+    return policy
+
+
+def _forward_outcome_decision_manifest(
+    *,
+    decision_dir: Path,
+    week_ending: date,
+    generated: datetime,
+    matrix: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
     return {
-        "updated_count": _int(payload.get("updated_count")),
-        "skipped_count": _int(payload.get("skipped_count")),
-        "status": _text(payload.get("status")),
-        "forward_available": _int(after.get("forward_available")),
-        "forward_pending": _int(after.get("forward_pending")),
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_decision_manifest",
+        "decision_id": decision_dir.name,
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "evidence_status": matrix.get("evidence_status"),
+        "recommended_action": matrix.get("recommended_action"),
+        "rule_calibration_readiness": matrix.get("rule_calibration_readiness"),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
+        "source_snapshot_path": str(decision_dir / "forward_decision_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "forward_decision_manifest_path": str(decision_dir / "forward_decision_manifest.json"),
+        "forward_go_no_go_matrix_path": str(decision_dir / "forward_go_no_go_matrix.json"),
+        "forward_next_actions_path": str(decision_dir / "forward_next_actions.json"),
+        "forward_outcome_decision_report_path": str(
+            decision_dir / "forward_outcome_decision_report.md"
+        ),
+        "reader_brief_section_path": str(decision_dir / "reader_brief_section.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "auto_policy_apply": False,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
-def _latest_refresh_summary(output_dir: Path) -> dict[str, Any]:
-    try:
-        payload = rolling_evidence_refresh_report_payload(latest=True, output_dir=output_dir)
-    except DynamicV3OutcomeAccumulationError:
-        return {}
-    after = _mapping(_mapping(payload.get("evidence_delta_summary")).get("after"))
-    return dict(after)
+def _build_forward_outcome_decision_snapshot(
+    *,
+    week_ending: date,
+    generated: datetime,
+    outcome_update_dir: Path,
+    rolling_refresh_dir: Path,
+    evidence_trend_dir: Path,
+    outcome_update_id: str | None,
+    refresh_id: str | None,
+    trend_id: str | None,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3OutcomeAccumulationError(
+            "forward decision generated_at must be timezone-aware"
+        )
+    generated = generated.astimezone(UTC)
+    week_start = week_ending - timedelta(days=_int(policy.get("week_window_days")) - 1)
+    latest_generation_date = week_ending + timedelta(
+        days=_int(policy.get("maximum_post_week_generation_days"))
+    )
+    if generated.date() < week_start or generated.date() > latest_generation_date:
+        raise DynamicV3OutcomeAccumulationError(
+            "forward decision generated_at outside reviewed week window"
+        )
+    week_cutoff = datetime(
+        week_ending.year,
+        week_ending.month,
+        week_ending.day,
+        23,
+        59,
+        59,
+        999999,
+        tzinfo=UTC,
+    )
+    cutoff = min(generated, week_cutoff)
+    update = _select_forward_decision_source(
+        kind="outcome_update",
+        root=outcome_update_dir,
+        explicit_id=outcome_update_id,
+        manifest_name="outcome_update_manifest.json",
+        id_key="outcome_update_id",
+        cutoff=cutoff,
+        week_ending=week_ending,
+        validator=lambda artifact_id, root: validate_outcome_update_artifact(
+            update_id=artifact_id, output_dir=root
+        ),
+    )
+    refresh = _select_forward_decision_source(
+        kind="rolling_refresh",
+        root=rolling_refresh_dir,
+        explicit_id=refresh_id,
+        manifest_name="rolling_refresh_manifest.json",
+        id_key="refresh_id",
+        cutoff=cutoff,
+        week_ending=week_ending,
+        validator=lambda artifact_id, root: validate_rolling_evidence_refresh_artifact(
+            refresh_id=artifact_id, output_dir=root
+        ),
+    )
+    trend = _select_forward_decision_source(
+        kind="evidence_trend",
+        root=evidence_trend_dir,
+        explicit_id=trend_id,
+        manifest_name="evidence_trend_manifest.json",
+        id_key="trend_id",
+        cutoff=cutoff,
+        week_ending=week_ending,
+        validator=lambda artifact_id, root: validate_evidence_trend_artifact(
+            trend_id=artifact_id, output_dir=root
+        ),
+    )
+    update_selected = _mapping(update.get("selected"))
+    refresh_selected = _mapping(refresh.get("selected"))
+    trend_selected = _mapping(trend.get("selected"))
+    if refresh_selected and not update_selected:
+        raise DynamicV3OutcomeAccumulationError("rolling refresh requires selected outcome update")
+    if trend_selected and not refresh_selected:
+        raise DynamicV3OutcomeAccumulationError("evidence trend requires selected rolling refresh")
+    if refresh_selected:
+        refresh_manifest = _mapping(refresh_selected.get("manifest"))
+        if refresh_manifest.get("outcome_update_id") != update_selected.get("artifact_id"):
+            raise DynamicV3OutcomeAccumulationError("outcome update to refresh lineage mismatch")
+    if trend_selected:
+        trend_bundle = _mapping(trend_selected.get("source_bundle"))
+        trend_snapshot = _mapping(
+            _source_bundle_content(trend_bundle, "evidence_trend_source_snapshot.json")
+        )
+        trend_refresh_ids = {
+            _text(row.get("refresh_id"))
+            for row in _records(trend_snapshot.get("selected_refreshes"))
+        }
+        if refresh_selected.get("artifact_id") not in trend_refresh_ids:
+            raise DynamicV3OutcomeAccumulationError("rolling refresh to trend lineage mismatch")
+    return {
+        "schema_version": FORWARD_OUTCOME_DECISION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_outcome_decision_source_snapshot",
+        "generated_at": generated.isoformat(),
+        "week_start": week_start.isoformat(),
+        "week_ending": week_ending.isoformat(),
+        "evidence_cutoff": cutoff.isoformat(),
+        "sources": {
+            "outcome_update": update,
+            "rolling_refresh": refresh,
+            "evidence_trend": trend,
+        },
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
 
 
-def _latest_evidence_trend_summary(output_dir: Path) -> dict[str, Any]:
+def _select_forward_decision_source(
+    *,
+    kind: str,
+    root: Path,
+    explicit_id: str | None,
+    manifest_name: str,
+    id_key: str,
+    cutoff: datetime,
+    week_ending: date,
+    validator: Any,
+) -> dict[str, Any]:
+    selected_candidates: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    children = [root / explicit_id] if explicit_id else _artifact_children(root)
+    if explicit_id and not children[0].is_dir():
+        raise DynamicV3OutcomeAccumulationError(f"explicit {kind} not found: {explicit_id}")
+    for child in children:
+        transaction = _read_optional_json(child / "outcome_update_transaction.json") or (
+            _read_optional_json(child / "rolling_refresh_transaction.json") or {}
+        )
+        if transaction.get("status") == "ROLLED_BACK":
+            if explicit_id:
+                raise DynamicV3OutcomeAccumulationError(f"explicit {kind} is rolled back")
+            excluded.append({"artifact_id": child.name, "reason": "ROLLED_BACK"})
+            continue
+        if transaction.get("status") == "PREPARED":
+            raise DynamicV3OutcomeAccumulationError(f"prepared {kind} blocks decision")
+        manifest = _read_optional_json(child / manifest_name)
+        if not manifest:
+            raise DynamicV3OutcomeAccumulationError(f"{kind} manifest invalid: {child.name}")
+        artifact_id = _text(manifest.get(id_key))
+        source_generated = _datetime_from_any(manifest.get("generated_at"))
+        if artifact_id != child.name or source_generated is None:
+            raise DynamicV3OutcomeAccumulationError(f"{kind} identity/time invalid: {child.name}")
+        if source_generated > cutoff:
+            if explicit_id:
+                raise DynamicV3OutcomeAccumulationError(f"explicit {kind} exceeds decision cutoff")
+            excluded.append({"artifact_id": artifact_id, "reason": "FUTURE_GENERATED"})
+            continue
+        source_as_of = _date_from_any(manifest.get("as_of"))
+        if source_as_of is not None and source_as_of > week_ending:
+            raise DynamicV3OutcomeAccumulationError(f"{kind} as_of exceeds week ending")
+        validation = validator(artifact_id, root)
+        if validation.get("status") == "PASS_WITH_WARNINGS" and not explicit_id:
+            excluded.append({"artifact_id": artifact_id, "reason": "LEGACY_UNSNAPSHOTTED"})
+            continue
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"{kind} validation must PASS: {artifact_id}={validation.get('status')}"
+            )
+        selected_candidates.append(
+            {
+                "artifact_id": artifact_id,
+                "generated_at": source_generated.isoformat(),
+                "manifest": manifest,
+                "source_bundle": _immutable_source_bundle(child),
+                "validation": validation,
+            }
+        )
+    if not selected_candidates:
+        return {
+            "status": "MISSING",
+            "root": str(root),
+            "explicit_id": explicit_id,
+            "selected": {},
+            "excluded": excluded,
+        }
+    latest_time = max(_text(row.get("generated_at")) for row in selected_candidates)
+    latest = [row for row in selected_candidates if row.get("generated_at") == latest_time]
+    if len(latest) != 1:
+        raise DynamicV3OutcomeAccumulationError(f"ambiguous semantic latest {kind}")
+    return {
+        "status": "SELECTED",
+        "root": str(root),
+        "explicit_id": explicit_id,
+        "selected": latest[0],
+        "excluded": excluded,
+    }
+
+
+def _forward_outcome_decision_snapshot_errors(snapshot: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    cutoff = _datetime_from_any(snapshot.get("evidence_cutoff"))
+    week_start = _date_from_any(snapshot.get("week_start"))
+    week_ending = _date_from_any(snapshot.get("week_ending"))
+    if (
+        snapshot.get("schema_version") != FORWARD_OUTCOME_DECISION_SNAPSHOT_SCHEMA_VERSION
+        or generated is None
+        or cutoff is None
+        or cutoff > generated
+        or week_start is None
+        or week_ending is None
+        or week_start > week_ending
+        or cutoff.date() > week_ending
+        or snapshot.get("production_effect") != "none"
+        or snapshot.get("broker_action_taken") is not False
+    ):
+        errors.append("snapshot_contract_invalid")
+    policy_path = Path(_text(snapshot.get("policy_path")))
     try:
-        payload = evidence_trend_report_payload(latest=True, output_dir=output_dir)
-    except DynamicV3OutcomeAccumulationError:
-        return {"trend_status": "INSUFFICIENT_HISTORY"}
-    return _mapping(payload.get("confidence_trend_summary"))
+        policy_matches = (
+            _file_sha256(policy_path) == snapshot.get("policy_checksum")
+            and _load_forward_outcome_decision_policy(policy_path) == snapshot.get("policy")
+        )
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+    if not policy_matches:
+        errors.append("policy_snapshot_changed")
+    source_specs = {
+        "outcome_update": (
+            "outcome_update_manifest.json",
+            "outcome_update_id",
+            lambda artifact_id, root: validate_outcome_update_artifact(
+                update_id=artifact_id, output_dir=root
+            ),
+        ),
+        "rolling_refresh": (
+            "rolling_refresh_manifest.json",
+            "refresh_id",
+            lambda artifact_id, root: validate_rolling_evidence_refresh_artifact(
+                refresh_id=artifact_id, output_dir=root
+            ),
+        ),
+        "evidence_trend": (
+            "evidence_trend_manifest.json",
+            "trend_id",
+            lambda artifact_id, root: validate_evidence_trend_artifact(
+                trend_id=artifact_id, output_dir=root
+            ),
+        ),
+    }
+    selected: dict[str, dict[str, Any]] = {}
+    for kind, (manifest_name, id_key, validator) in source_specs.items():
+        row = _mapping(_mapping(snapshot.get("sources")).get(kind))
+        source_root = _text(row.get("root"))
+        if not source_root:
+            errors.append(f"{kind}_root_missing")
+        elif cutoff is not None and week_ending is not None:
+            try:
+                live_selection = _select_forward_decision_source(
+                    kind=kind,
+                    root=Path(source_root),
+                    explicit_id=_text(row.get("explicit_id")) or None,
+                    manifest_name=manifest_name,
+                    id_key=id_key,
+                    cutoff=cutoff,
+                    week_ending=week_ending,
+                    validator=validator,
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{kind}_selection_failed:{exc}")
+                live_selection = {}
+            if any(
+                live_selection.get(field) != row.get(field)
+                for field in ("status", "root", "explicit_id", "selected")
+            ):
+                errors.append(f"{kind}_selection_changed")
+        selected_row = _mapping(row.get("selected"))
+        if row.get("status") == "MISSING" and not selected_row:
+            selected[kind] = {}
+            continue
+        bundle = _mapping(selected_row.get("source_bundle"))
+        root = Path(_text(bundle.get("root")))
+        artifact_id = _text(selected_row.get("artifact_id"))
+        manifest = _mapping(_source_bundle_content(bundle, manifest_name))
+        source_generated = _datetime_from_any(selected_row.get("generated_at"))
+        source_as_of = _date_from_any(manifest.get("as_of"))
+        live_validation = validator(artifact_id, root.parent)
+        if (
+            row.get("status") != "SELECTED"
+            or not artifact_id
+            or manifest.get(id_key) != artifact_id
+            or root.name != artifact_id
+            or source_generated is None
+            or cutoff is None
+            or source_generated > cutoff
+            or (source_as_of is not None and week_ending is not None and source_as_of > week_ending)
+            or not _source_bundle_matches(bundle)
+            or live_validation.get("status") != "PASS"
+            or _mapping(selected_row.get("validation")) != live_validation
+        ):
+            errors.append(f"{kind}_source_changed")
+        selected[kind] = selected_row
+    update = selected.get("outcome_update") or {}
+    refresh = selected.get("rolling_refresh") or {}
+    trend = selected.get("evidence_trend") or {}
+    if refresh and (
+        not update
+        or _mapping(refresh.get("manifest")).get("outcome_update_id")
+        != update.get("artifact_id")
+    ):
+        errors.append("update_refresh_lineage_invalid")
+    if trend:
+        trend_snapshot = _mapping(
+            _source_bundle_content(
+                _mapping(trend.get("source_bundle")),
+                "evidence_trend_source_snapshot.json",
+            )
+        )
+        refresh_ids = {
+            _text(row.get("refresh_id"))
+            for row in _records(trend_snapshot.get("selected_refreshes"))
+        }
+        if not refresh or refresh.get("artifact_id") not in refresh_ids:
+            errors.append("refresh_trend_lineage_invalid")
+    return errors
 
 
 def _forward_go_no_go_matrix(
     *,
     week_ending: date,
-    update: Mapping[str, Any],
-    refresh: Mapping[str, Any],
-    trend: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    update_status = "UPDATED" if _int(update.get("updated_count")) else "NO_DUE_WINDOWS"
-    if _int(update.get("updated_count")) and _int(update.get("skipped_count")):
+    sources = _mapping(snapshot.get("sources"))
+    update_source = _mapping(_mapping(sources.get("outcome_update")).get("selected"))
+    refresh_source = _mapping(_mapping(sources.get("rolling_refresh")).get("selected"))
+    trend_source = _mapping(_mapping(sources.get("evidence_trend")).get("selected"))
+    updated_count: int | None = None
+    skipped_count: int | None = None
+    update_status = "MISSING"
+    if update_source:
+        update_bundle = _mapping(update_source.get("source_bundle"))
+        updated_count = len(
+            _records(_source_bundle_content(update_bundle, "updated_windows.jsonl"))
+        )
+        skipped_count = len(
+            _records(_source_bundle_content(update_bundle, "skipped_windows.jsonl"))
+        )
+        update_status = "UPDATED" if updated_count else "NO_DUE_WINDOWS"
+    if updated_count and skipped_count:
         update_status = "PARTIAL"
-    confidence = _text(refresh.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA")
-    consensus = _text(refresh.get("consensus_target_risk"), "INSUFFICIENT_DATA")
-    trend_status = _text(trend.get("trend_status"), "INSUFFICIENT_HISTORY")
+    trend_summary: dict[str, Any] = {}
+    latest: dict[str, Any] = {}
+    if trend_source:
+        trend_bundle = _mapping(trend_source.get("source_bundle"))
+        trend_summary = _mapping(
+            _source_bundle_content(trend_bundle, "confidence_trend_summary.json")
+        )
+        rows = _records(
+            _source_bundle_content(trend_bundle, "evidence_trend_timeseries.jsonl")
+        )
+        latest = rows[-1] if rows else {}
+    forward_available = latest.get("forward_available")
+    forward_pending = latest.get("forward_pending")
+    confidence = latest.get("limited_vs_notrade_confidence")
+    consensus = latest.get("consensus_target_risk")
+    trend_status = trend_summary.get("trend_status")
+    all_sources_selected = bool(update_source and refresh_source and trend_source)
     readiness = "NOT_READY"
-    if confidence == "HIGH" and consensus in {"PASS", "PASS_WITH_WARNINGS"}:
-        readiness = "READY_WITH_WARNINGS" if consensus == "PASS_WITH_WARNINGS" else "READY"
-    recommended = "continue_tracking"
-    if update_status == "NO_DUE_WINDOWS":
-        recommended = "wait_for_more_outcomes"
-    elif readiness == "NOT_READY":
-        recommended = "continue_tracking"
-    elif readiness == "READY_WITH_WARNINGS":
-        recommended = "manual_review"
+    enough_samples = isinstance(forward_available, int) and forward_available >= _int(
+        policy.get("minimum_forward_available_for_rule_review")
+    )
+    confidence_ready = confidence in set(_texts(policy.get("eligible_confidence")))
+    trend_ready = trend_status in set(_texts(policy.get("eligible_trend_statuses")))
+    consensus_ready = consensus in set(_texts(policy.get("ready_consensus_statuses")))
+    consensus_warning = consensus in set(
+        _texts(policy.get("ready_with_warnings_consensus_statuses"))
+    )
+    if all_sources_selected and enough_samples and confidence_ready and trend_ready:
+        if consensus_ready:
+            readiness = "READY"
+        elif consensus_warning:
+            readiness = "READY_WITH_WARNINGS"
+    candidates = {"continue_tracking"}
+    if (
+        consensus in set(_texts(policy.get("manual_review_consensus_statuses")))
+        or trend_status in set(_texts(policy.get("manual_review_trend_statuses")))
+        or readiness == "READY_WITH_WARNINGS"
+    ):
+        candidates.add("manual_review")
+    if not all_sources_selected or forward_available in {None, 0} or update_status == (
+        "NO_DUE_WINDOWS"
+    ):
+        candidates.add("wait_for_more_outcomes")
+    if readiness == "READY":
+        candidates.add("review_rule_calibration_evidence")
+    recommended = next(
+        value
+        for value in _texts(policy.get("recommendation_precedence"))
+        if value in candidates
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_forward_go_no_go_matrix",
         "week_ending": week_ending.isoformat(),
+        "evidence_status": "COMPLETE" if all_sources_selected else "INCOMPLETE",
+        "outcome_update_id": update_source.get("artifact_id") or "MISSING",
+        "rolling_refresh_id": refresh_source.get("artifact_id") or "MISSING",
+        "evidence_trend_id": trend_source.get("artifact_id") or "MISSING",
         "outcome_update_status": update_status,
-        "forward_available": _int(
-            refresh.get("forward_available"),
-            _int(update.get("forward_available")),
-        ),
-        "forward_pending": _int(
-            refresh.get("forward_pending"),
-            _int(update.get("forward_pending")),
-        ),
+        "updated_count": updated_count,
+        "skipped_count": skipped_count,
+        "forward_available": forward_available,
+        "forward_pending": forward_pending,
         "limited_vs_notrade_confidence": confidence,
         "consensus_target_risk": consensus,
         "evidence_trend_status": trend_status,
+        "minimum_forward_available_for_rule_review": policy.get(
+            "minimum_forward_available_for_rule_review"
+        ),
         "rule_calibration_readiness": readiness,
         "broker_action_allowed": False,
         "production_effect": "none",
@@ -5809,38 +6364,40 @@ def _forward_go_no_go_matrix(
     }
 
 
-def _forward_next_actions(matrix: Mapping[str, Any]) -> dict[str, Any]:
-    week_ending = _date_from_any(matrix.get("week_ending")) or date.today()
-    next_due_scan = week_ending + timedelta(days=7)
+def _forward_next_actions(
+    matrix: Mapping[str, Any], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    week_ending = _date_from_any(matrix.get("week_ending"))
+    if week_ending is None:
+        raise DynamicV3OutcomeAccumulationError("forward decision week ending invalid")
+    next_due_scan = week_ending + timedelta(
+        days=_int(policy.get("next_due_scan_offset_days"))
+    )
+    recommended = _text(matrix.get("recommended_action"))
+    configured_actions = _texts(
+        _mapping(policy.get("next_actions_by_recommendation")).get(recommended)
+    )
     actions = [
         {
-            "action": "continue_tracking",
+            "action": action,
             "priority": "HIGH",
-            "reason": "forward outcome sample still too small",
-        },
+            "reason": f"reviewed decision policy route: {recommended}",
+        }
+        for action in configured_actions
+    ]
+    actions.append(
         {
             "action": "run_next_due_scan",
             "priority": "HIGH",
             "target_date": next_due_scan.isoformat(),
-        },
-        {
-            "action": "do_not_change_policy",
-            "priority": "HIGH",
-            "reason": "limited_vs_notrade confidence remains below rule calibration readiness",
-        },
-    ]
-    if matrix.get("recommended_action") == "manual_review":
-        actions.append(
-            {
-                "action": "manual_review",
-                "priority": "HIGH",
-                "reason": "evidence trend or consensus risk requires owner review",
-            }
-        )
+        }
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_forward_next_actions",
         "next_actions": actions,
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
         "production_effect": "none",
         "broker_action_taken": False,
     }
