@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +65,9 @@ def cluster_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "cluster": cluster}
 
 
-def shadow_shortlist_fixture(tmp_path: Path) -> dict[str, Any]:
+def shadow_shortlist_fixture(
+    tmp_path: Path, *, generated_at: datetime | None = None
+) -> dict[str, Any]:
     fixture = cluster_fixture(tmp_path)
     shadow = build_shadow_shortlist_monitoring_pack(
         shortlist_id=fixture["shortlist"]["shortlist_id"],
@@ -72,6 +75,7 @@ def shadow_shortlist_fixture(tmp_path: Path) -> dict[str, Any]:
         shortlist_dir=tmp_path / "shortlist",
         cluster_dir=tmp_path / "candidate_cluster",
         output_dir=tmp_path / "shadow_shortlist",
+        generated_at=generated_at,
     )
     return {**fixture, "shadow": shadow}
 

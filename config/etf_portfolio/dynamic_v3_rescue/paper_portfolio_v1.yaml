@@ -59,6 +59,33 @@ promotion_clock_v2:
   outcome_aggregation: mean_available_windows_equal_weight
   require_consensus_drift_per_monitor: true
 
+weekly_review_v2:
+  policy_id: dynamic_v3_weekly_advisory_review_v2
+  owner: project_owner
+  version: 2026-07-12-pilot
+  status: pilot_baseline
+  rationale: >
+    Require one validated observation from every weekly evidence family before
+    continue_monitoring can be recommended; otherwise preserve missing evidence
+    as an explicit manual-review blocker rather than treating it as zero.
+  intended_effect: >
+    Prevent global-latest, post-week append, duplicate artifact, and null-to-zero
+    evidence from overstating weekly advisory readiness.
+  review_condition: >
+    Recalibrate only after at least eight owner-reviewed forward weeks with
+    AVAILABLE candidate-linked outcome windows across multiple market regimes.
+  minimum_shadow_monitor_run_count: 1
+  minimum_daily_advisory_count: 1
+  minimum_owner_review_count: 1
+  minimum_available_outcome_window_count: 1
+  require_active_paper_portfolio: true
+  require_shadow_aging: true
+  max_downgrade_recommended_count: 0
+  recommendation_precedence:
+    - reduce_shortlist
+    - manual_review_required
+    - continue_monitoring
+
 ledger:
   immutable_events: true
   allow_rebuild_from_events: true

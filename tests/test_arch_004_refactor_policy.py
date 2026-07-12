@@ -1311,10 +1311,11 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert phase_g1_3e["validation"]["architecture_fitness"]["passed"] == 168
     for source in phase_g1_3e["sources"]:
         if source.get("historical_phase_g1_3e_hash"):
-            assert source["superseded_by_phase"] == "ARCH-004G2.1"
-            assert source["current_hash_tracked_in"] == (
-                "phase_g2_1_etf_cli_contract_baseline.sources"
-            )
+            assert source["superseded_by_phase"] in {
+                "ARCH-004G2.1",
+                "ARCH-004G2.4AQ",
+            }
+            assert str(source["current_hash_tracked_in"]).endswith(".sources")
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
@@ -2516,7 +2517,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4ap["legacy_root_command_decorators_after"] == 756
     assert migration_g2_4ap["python_module_count"] == 854
     assert phase_g2_4ap["sources"]
+    superseded_g2_4ap = set(phase_g2_4ap["superseded_source_paths"])
     for source in phase_g2_4ap["sources"]:
+        if source["path"] in superseded_g2_4ap:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4aq = baseline["phase_g2_4aq_etf_cli_dynamic_v3_weekly_advisory_review"]
+    assert phase_g2_4aq["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4aq = phase_g2_4aq["migration"]
+    assert migration_g2_4aq["callback_count"] == 3
+    assert migration_g2_4aq["calendar_week_and_generated_cutoff_enforced"] is True
+    assert migration_g2_4aq["validated_daily_monitor_anchor"] is True
+    assert migration_g2_4aq["owner_paper_outcome_cutoff_prefix_replay"] is True
+    assert migration_g2_4aq["ambiguous_source_binding_allowed"] is False
+    assert migration_g2_4aq["immutable_source_snapshot"] is True
+    assert migration_g2_4aq["missing_outcome_metrics_are_null"] is True
+    assert migration_g2_4aq["reviewed_policy_coverage_and_precedence"] is True
+    assert migration_g2_4aq["content_derived_all_views_validation"] is True
+    assert migration_g2_4aq["independent_scheduler_added"] is False
+    assert migration_g2_4aq["portfolio_or_execution_effect"] is False
+    assert migration_g2_4aq["legacy_root_lines_after"] == 26802
+    assert migration_g2_4aq["legacy_root_top_level_functions_after"] == 792
+    assert migration_g2_4aq["legacy_root_command_decorators_after"] == 753
+    assert migration_g2_4aq["python_module_count"] == 855
+    assert phase_g2_4aq["sources"]
+    for source in phase_g2_4aq["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2549,13 +2575,16 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AO_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AP_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AP_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md",
-        "docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md",
         "docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md",
-        "docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md",
+        "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+        "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md",
+        "docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md",
         "docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md",
         "docs/research/growth_tilt_owner_decision_resolution.md",
         "docs/research/indicator_family_only_model_review.md",

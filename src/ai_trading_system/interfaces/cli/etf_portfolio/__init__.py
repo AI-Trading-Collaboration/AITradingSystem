@@ -113,6 +113,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_validation_evidence as dynamic_v3_validation_evidence_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_weekly_advisory_review as dynamic_v3_weekly_advisory_review_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_weekly_real_snapshot_review as dynamic_v3_weekly_real_snapshot_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -178,6 +181,7 @@ __all__ = [
     "dynamic_v3_consensus_drift_commands",
     "dynamic_v3_window_audit_commands",
     "dynamic_v3_weekly_real_snapshot_review_commands",
+    "dynamic_v3_weekly_advisory_review_commands",
     "dynamic_v3_weight_path_commands",
     "dynamic_v3_validation_evidence_commands",
     "etf_app",

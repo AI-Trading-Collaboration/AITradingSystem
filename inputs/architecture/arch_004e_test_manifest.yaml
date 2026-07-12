@@ -123,7 +123,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_paper_tracking_helpers
   path: tests/dynamic_v3_paper_tracking_helpers.py
-  sha256: fb1c288c00fbc592cbe4e2ad97bd71d66e4e3549f8685669957e5a1637af5d5e
+  sha256: 9a27e645269baba6ce7e0e29130c568313fa6748df5e4e23fb54e739fc68c0d3
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_position_readiness_helpers
   path: tests/dynamic_v3_position_readiness_helpers.py
-  sha256: a21dc321e1aeaa6e1f7b5fad6ca46d00c2c8d08b2d98207fb20b99d36127bbaf
+  sha256: c9c6ace42301dae44b8c28a2ee624de03aa2970fe92cd646ace546a0dad05409
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 0fc2e520606a0cec4bff7fd58b3f130def18135c9954dbdce6d27e78321e2211
+  sha256: 12797847c46d14b95d6e79bb2a88d640a521f0f86ce24cbd71006f9f2a5c2d46
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 3bf9803e108ae4fd5fc13bf3cd2dc971f59be7310cd6d679974c42709aaf37bb
+  sha256: 976564a0221ffeac1ff4845e938b19e4c5bd930f6bcbc80866ed34fd413be47f
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 861007cd32e5f7faa2135364bd555b604d371dcceeea0bd92adf12d652cc1363
+  sha256: 27520f9f163c331e050550a88b47d4de67791b52d1eca6776f2053caa751b45d
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -15221,7 +15221,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_weekly_advisory_review
   path: tests/test_weekly_advisory_review.py
-  sha256: 8219daaef9457e349e01e7fd56ac9a77b2087e9d713cb54e0b4677e20c566bdb
+  sha256: 404bf9fb6d0a724929d35068666d00d685ee6fc3c43a79e9c2572cdd0b277ce7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

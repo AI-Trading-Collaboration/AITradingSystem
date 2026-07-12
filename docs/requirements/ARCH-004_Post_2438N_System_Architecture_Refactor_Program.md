@@ -12,6 +12,7 @@
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`需求已`READY`，但S0实现必须等待整个G2 phase-level `arch_005_bootstrap_handoff.v1` PASS；handoff后`next_slice_unblocked=false`，ARCH-004停在G2.5之前
 
 ## Owner Intent
 
@@ -613,3 +614,4 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
 - 2026-07-11：登记 `ARCH-004D_REFERENCE_VERTICAL_SLICE` 并进入 D1。选择已关闭的 `TRADING-2438N1 growth_tilt_candidate_family_closure`，按 `ExperimentSpec -> Application Runner -> Evidence/Decision Artifact -> Report Plugin` 迁移；新增 envelope/run-ledger 仅作 additive sidecar，旧 CLI/options/exit、primary/ledger/Markdown path/schema/status/safety 必须 parity。详细 D1～D5 与 sunset 见 `docs/requirements/ARCH-004D_Reference_Vertical_Slice.md`；ARCH-004E 暂不解锁。
 - 2026-07-11：ARCH-004D 完成并归档。N1 reference slice 现在由 governed/deterministic ExperimentSpec、generic runner、versioned calculator/report plugins、canonical writer、ArtifactEnvelope 与 RunLedger 组成；旧 task wrapper 仅为有 sunset 的 CLI façade，原 primary/section/Markdown path/schema/status/bytes 和 strict semantics parity。Second same-plugin variant 只改 spec，不新增 Python module、CLI 或 report family。验证通过 focused 77、scoped mypy、architecture 775 files/0 violations、contract-validation 197、full parallel `5411 passed / 0 failed / 643 warnings`；ARCH-004E entry gate 解锁。
 - 2026-07-11：登记 `ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` 并进入 E1。现有 engineering surface inventory、validation tier 与 dependency gate继续复用；新增 file-level module/test ownership manifests、changed-file impact selection、combined architecture fitness、module/experiment/report scaffold 和 fragment-based aggregate shadow index。Phase E 不切换现有 registry/catalog/flow source-of-truth，也不允许 worker直接改 shared aggregates；详细 E1～E5 见 `docs/requirements/ARCH-004E_DevEx_Ownership_Generated_Indexes.md`。
+- 2026-07-12：owner确认ARCH-005需求READY不解锁实现；S0必须等待整个G2 callback/migration matrix、required validation、manifest/inventory/source-hash freshness和clean attribution通过，并产出`arch_005_bootstrap_handoff.v1` PASS。Handoff记录commit/branch/push、shared-path owner/lease count、known unrelated files与`production_effect=none`，固定`next_slice_unblocked=false`；随后ARCH-004停在G2.5之前，ARCH-005 S0/S1后只由新的显式指令恢复。

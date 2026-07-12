@@ -1,6 +1,6 @@
 # ARCH-004G Domain Migration 与减法波次
 
-最后更新：2026-07-11
+最后更新：2026-07-12
 
 ## 任务信息
 
@@ -82,6 +82,19 @@ G1于2026-07-11正式完成。六类canonical family共删除80个private helper
 
 退出：command registry全覆盖、0 duplicate command、2组真实CLI fixture parity；旧实现不可继续接收新命令。
 
+#### G2 phase-level exit 与 ARCH-005 bootstrap handoff
+
+Owner 于 2026-07-12 批准以下停止条件；它是整个 G2 的 phase gate，不是任一 G2.4 单切片的 closeout：
+
+1. 完成全部 G2.4 callback/migration matrix 和 G2 phase exit criteria，不得把单个 slice `COMPLETE` 写成 G2 完成。
+2. 通过 required focused/architecture/contract/full validation，并刷新、验证 module/test manifests、compatibility baseline、deprecation inventory 与全部 source hashes/freshness。
+3. 只提交和推送可归属的 ARCH-004 变更，保留用户其他工作，并记录 shared-path active owner/lease count 与 known unrelated worktree files。
+4. 写入并验证`arch_005_bootstrap_handoff.v1`证据，至少包含source phase、HEAD/base commit、branch/push status、migration matrix completeness、validation artifacts、manifest hashes/freshness、shared-path owner/lease count、unrelated files、`production_effect=none`。
+5. Handoff 必须明确`next_slice_unblocked=false`；完成后 ARCH-004 停在 G2.5 之前，不得自动进入 G2.5、G3/G4/G5 或选择任何下一 ARCH-004 slice。
+6. `ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` 需求状态可为`READY`，但 S0 实现必须等待上述 phase-level handoff `PASS`；ARCH-005 S0/S1 完成后，只能由新的显式指令恢复 ARCH-004 G2.5。
+
+该 handoff 是无 runtime/production/broker effect 的架构交接证据；不得用临时 workaround、口头说明或一个 slice 的 PASS 替代。
+
 ### G3 Reporting Native Migration
 
 - Reader Brief核心改为typed section provider/view model/renderer消费；
@@ -132,6 +145,7 @@ G1于2026-07-11正式完成。六类canonical family共删除80个private helper
 
 ## 状态记录
 
+- 2026-07-12：owner 批准 ARCH-004→ARCH-005 bootstrap handoff 停止条件。G2.4 继续直至全callback/migration matrix与phase-level exit gate完成；随后必须产出`arch_005_bootstrap_handoff.v1` PASS，记录clean attribution/validation/manifest/lease/unrelated-worktree证据，并保持`next_slice_unblocked=false`。ARCH-005需求READY不代表S0可立即实施；S0等待整个G2 phase handoff，ARCH-004在handoff后停在G2.5之前。
 - 2026-07-11：G1正式`COMPLETE`，G2 Interfaces/ETF CLI进入`IN_PROGRESS`。G1六类canonical family共删除80个private helper，selected-family legacy caller=0；direct writer=`893 -> 861`，dynamic wrapper=`89,805 -> 88,315 lines / 2,154 -> 2,114 functions`。29组safety assertion因语义不同明确不做强行抽象。最终focused=`254 passed`、architecture-fitness=`168 passed`、Ruff PASS、violation=0；production/broker effect=none。G2先冻结command registry和golden CLI contract，再按data/research/portfolio/shadow/operations/reporting拆分，当前尚未改ETF CLI runtime。
 - 2026-07-11：G1.3e实现完成并进入`VALIDATING`。新增专用growth-tilt required DQ gate，15个caller已迁移，15个private gate与15个secondary判断helper清零。Characterization覆盖validate全部kwargs、主/替代price的Marketstack条件、report write、8字段summary与异常传播；15模块回归=`242 passed`、Ruff PASS。Generator=`797 modules / 1,113 tests / 861 direct writers / 0 violations`，dynamic wrapper=`88,315 lines / 2,114 functions`；等待compatibility与正式architecture gate。
 - 2026-07-11：G1.3e growth-tilt DQ gate family进入`IN_PROGRESS`。Inventory=`106 helpers / 51 groups`；15个gate函数和secondary-price判断完全同构，15个模块都有独立测试。Canonical helper必须直接调用`validate_data_cache/write_data_quality_report`、异常fail-closed，不得绕过required data quality gate；characterization须验证全部kwargs、Marketstack条件、8-field summary、write调用与异常传播。

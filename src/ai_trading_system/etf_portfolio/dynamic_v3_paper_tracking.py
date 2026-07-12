@@ -5,7 +5,7 @@ import json
 import math
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -73,6 +73,7 @@ OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION = "advisory_outcome_update_ledger.v2"
 OUTCOME_UPDATE_EVENT_TYPE = "ADVISORY_OUTCOME_UPDATED"
 OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION = "owner_attribution_snapshot.v2"
 SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION = "shadow_aging_snapshot.v2"
+WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION = "weekly_advisory_review_snapshot.v2"
 OUTCOME_METRIC_FIELDS = (
     "paper_portfolio_return",
     "no_trade_return",
@@ -1872,93 +1873,58 @@ def run_weekly_advisory_review(
     paper_portfolio_dir: Path = DEFAULT_PAPER_PORTFOLIO_DIR,
     advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
     shadow_aging_dir: Path = DEFAULT_SHADOW_AGING_DIR,
+    config_path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
     week_start = week_ending - timedelta(days=6)
-    monitor_manifests = _manifest_rows_in_week(
-        shadow_monitor_run_dir,
-        "shadow_monitor_manifest.json",
-        week_start,
-        week_ending,
+    source_snapshot = _weekly_advisory_source_snapshot(
+        week_start=week_start,
+        week_ending=week_ending,
+        generated_at=generated,
+        config_path=config_path,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        owner_review_dir=owner_review_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        shadow_aging_dir=shadow_aging_dir,
     )
-    advisory_manifests = _manifest_rows_in_week(
-        daily_advisory_dir,
-        "daily_advisory_manifest.json",
-        week_start,
-        week_ending,
+    weekly_advisory_summary = _weekly_advisory_summary_from_snapshot(source_snapshot)
+    weekly_owner_decision_summary = _owner_decision_summary(
+        [
+            _mapping(item.get("review"))
+            for item in _records(source_snapshot.get("selected_owner_reviews"))
+        ]
     )
-    owner_records = [
-        row
-        for row in _read_jsonl(owner_review_dir / "owner_review_journal.jsonl")
-        if _date_in_range(row.get("as_of"), week_start, week_ending)
-    ]
-    latest_paper = _latest_paper_state_summary(paper_portfolio_dir)
-    latest_aging = _latest_shadow_aging_summary(shadow_aging_dir)
-    outcome_summary = _weekly_outcome_summary(advisory_outcome_dir, week_start, week_ending)
-    weekly_recommendation, next_actions = _weekly_recommendation(
-        latest_paper=latest_paper,
-        latest_aging=latest_aging,
-        outcome_summary=outcome_summary,
-        owner_records=owner_records,
+    weekly_paper_portfolio_summary = _weekly_paper_summary_from_snapshot(source_snapshot)
+    weekly_shadow_candidate_summary = _weekly_aging_summary_from_snapshot(source_snapshot)
+    source_validation_summary = _weekly_source_validation_summary(source_snapshot)
+    decision = _weekly_review_decision(
+        source_snapshot=source_snapshot,
+        advisory_summary=weekly_advisory_summary,
+        paper_summary=weekly_paper_portfolio_summary,
+        aging_summary=weekly_shadow_candidate_summary,
     )
     weekly_id = _stable_id("weekly-advisory-review", week_ending.isoformat(), generated.isoformat())
     artifact_dir = _unique_dir(output_dir / weekly_id)
     artifact_dir.mkdir(parents=True, exist_ok=False)
-    weekly_advisory_summary = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weekly_advisory_summary",
-        "week_start": week_start.isoformat(),
-        "week_ending": week_ending.isoformat(),
-        "shadow_monitor_run_count": len(monitor_manifests),
-        "daily_advisory_count": len(advisory_manifests),
-        "recommended_actions": dict(
-            Counter(_text(row.get("recommended_action"), "MISSING") for row in advisory_manifests)
-        ),
-        "outcome_summary": outcome_summary,
-    }
-    weekly_owner_decision_summary = _owner_decision_summary(owner_records)
-    weekly_paper_portfolio_summary = latest_paper
-    weekly_shadow_candidate_summary = latest_aging
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_weekly_advisory_review_manifest",
-        "weekly_review_id": artifact_dir.name,
-        "week_start": week_start.isoformat(),
-        "week_ending": week_ending.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": (
-            "PASS"
-            if monitor_manifests or advisory_manifests or owner_records
-            else "INSUFFICIENT_DATA"
-        ),
-        "weekly_recommendation": weekly_recommendation,
-        "next_actions": next_actions,
-        "paper_portfolio_status": latest_paper.get("state_status", "MISSING"),
-        "owner_review_count": len(owner_records),
-        "shadow_monitor_run_count": len(monitor_manifests),
-        "daily_advisory_count": len(advisory_manifests),
-        "weekly_advisory_summary_path": str(artifact_dir / "weekly_advisory_summary.json"),
-        "weekly_owner_decision_summary_path": str(
-            artifact_dir / "weekly_owner_decision_summary.json"
-        ),
-        "weekly_paper_portfolio_summary_path": str(
-            artifact_dir / "weekly_paper_portfolio_summary.json"
-        ),
-        "weekly_shadow_candidate_summary_path": str(
-            artifact_dir / "weekly_shadow_candidate_summary.json"
-        ),
-        "weekly_review_report_path": str(artifact_dir / "weekly_review_report.md"),
-        "reader_brief_section_path": str(artifact_dir / "reader_brief_section.md"),
-        "production_candidate_generated": False,
-        "automatic_candidate_promotion": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(artifact_dir / "weekly_review_manifest.json", manifest)
+    source_snapshot_path = artifact_dir / "weekly_review_source_snapshot.json"
+    source_validation_path = artifact_dir / "source_validation_summary.json"
+    _write_json(source_snapshot_path, source_snapshot)
+    _write_json(source_validation_path, source_validation_summary)
+    manifest = _weekly_review_manifest_payload(
+        artifact_dir=artifact_dir,
+        generated_at=generated,
+        source_snapshot=source_snapshot,
+        source_validation_summary=source_validation_summary,
+        advisory_summary=weekly_advisory_summary,
+        owner_summary=weekly_owner_decision_summary,
+        paper_summary=weekly_paper_portfolio_summary,
+        aging_summary=weekly_shadow_candidate_summary,
+        decision=decision,
+    )
     _write_json(artifact_dir / "weekly_advisory_summary.json", weekly_advisory_summary)
     _write_json(artifact_dir / "weekly_owner_decision_summary.json", weekly_owner_decision_summary)
     _write_json(
@@ -1967,6 +1933,7 @@ def run_weekly_advisory_review(
     _write_json(
         artifact_dir / "weekly_shadow_candidate_summary.json", weekly_shadow_candidate_summary
     )
+    _write_json(artifact_dir / "weekly_review_manifest.json", manifest)
     report = render_weekly_advisory_review_report(
         manifest,
         weekly_advisory_summary,
@@ -1994,6 +1961,8 @@ def run_weekly_advisory_review(
         "weekly_owner_decision_summary": weekly_owner_decision_summary,
         "weekly_paper_portfolio_summary": weekly_paper_portfolio_summary,
         "weekly_shadow_candidate_summary": weekly_shadow_candidate_summary,
+        "source_snapshot": source_snapshot,
+        "source_validation_summary": source_validation_summary,
     }
 
 
@@ -2010,6 +1979,12 @@ def weekly_advisory_review_report_payload(
     )
     return {
         **_read_json(artifact_dir / "weekly_review_manifest.json"),
+        "weekly_review_source_snapshot": _read_optional_json(
+            artifact_dir / "weekly_review_source_snapshot.json"
+        ),
+        "source_validation_summary": _read_optional_json(
+            artifact_dir / "source_validation_summary.json"
+        ),
         "weekly_advisory_summary": _read_json(artifact_dir / "weekly_advisory_summary.json"),
         "weekly_owner_decision_summary": _read_json(
             artifact_dir / "weekly_owner_decision_summary.json"
@@ -2030,70 +2005,218 @@ def validate_weekly_advisory_review_artifact(
     output_dir: Path = DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
 ) -> dict[str, Any]:
     artifact_dir = output_dir / weekly_review_id
-    manifest = _read_optional_json(artifact_dir / "weekly_review_manifest.json") or {}
+    paths = {
+        "manifest": artifact_dir / "weekly_review_manifest.json",
+        "source_snapshot": artifact_dir / "weekly_review_source_snapshot.json",
+        "source_validation": artifact_dir / "source_validation_summary.json",
+        "advisory_summary": artifact_dir / "weekly_advisory_summary.json",
+        "owner_summary": artifact_dir / "weekly_owner_decision_summary.json",
+        "paper_summary": artifact_dir / "weekly_paper_portfolio_summary.json",
+        "aging_summary": artifact_dir / "weekly_shadow_candidate_summary.json",
+        "report": artifact_dir / "weekly_review_report.md",
+        "reader_brief": artifact_dir / "reader_brief_section.md",
+    }
+    manifest = _read_optional_json(paths["manifest"]) or {}
+    if (
+        manifest.get("source_snapshot_schema_version")
+        != WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION
+    ):
+        legacy_checks = [
+            _check(
+                "legacy_required_files",
+                all(
+                    paths[key].is_file()
+                    for key in (
+                        "manifest",
+                        "advisory_summary",
+                        "owner_summary",
+                        "paper_summary",
+                        "aging_summary",
+                        "report",
+                        "reader_brief",
+                    )
+                ),
+                weekly_review_id,
+            ),
+            _check(
+                "weekly_review_id_matches",
+                manifest.get("weekly_review_id") == weekly_review_id,
+                weekly_review_id,
+            ),
+            _check(
+                "legacy_no_execution_effect",
+                manifest.get("production_candidate_generated") is False
+                and manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy weekly review remains manual-review-only evidence",
+            ),
+        ]
+        structural_pass = all(check["passed"] for check in legacy_checks)
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_weekly_advisory_review_validation",
+            artifact_id_key="weekly_review_id",
+            artifact_id=weekly_review_id,
+            status="PASS_WITH_WARNINGS" if structural_pass else "FAIL",
+            checks=legacy_checks,
+        )
+        payload.update(
+            {
+                "source_snapshot_status": "LEGACY_UNSNAPSHOTTED",
+                "warnings": [
+                    "LEGACY_UNSNAPSHOTTED: 旧weekly review缺少validated cutoff source snapshot"
+                ],
+            }
+        )
+        return payload
+    existence_checks = [
+        _check(f"{name}_exists", path.is_file(), str(path)) for name, path in paths.items()
+    ]
+    if not all(check["passed"] for check in existence_checks):
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_weekly_advisory_review_validation",
+            artifact_id_key="weekly_review_id",
+            artifact_id=weekly_review_id,
+            status="FAIL",
+            checks=existence_checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    try:
+        source_snapshot = _read_json(paths["source_snapshot"])
+        source_validation = _read_json(paths["source_validation"])
+        advisory_summary = _read_json(paths["advisory_summary"])
+        owner_summary = _read_json(paths["owner_summary"])
+        paper_summary = _read_json(paths["paper_summary"])
+        aging_summary = _read_json(paths["aging_summary"])
+        report = paths["report"].read_text(encoding="utf-8")
+        reader_brief = paths["reader_brief"].read_text(encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        checks = [*existence_checks, _check("artifact_parse", False, str(exc))]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_weekly_advisory_review_validation",
+            artifact_id_key="weekly_review_id",
+            artifact_id=weekly_review_id,
+            status="FAIL",
+            checks=checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    snapshot_errors = _weekly_advisory_snapshot_errors(source_snapshot)
+    expected_source_validation = _weekly_source_validation_summary(source_snapshot)
+    expected_advisory = _weekly_advisory_summary_from_snapshot(source_snapshot)
+    expected_owner = _owner_decision_summary(
+        [
+            _mapping(item.get("review"))
+            for item in _records(source_snapshot.get("selected_owner_reviews"))
+        ]
+    )
+    expected_paper = _weekly_paper_summary_from_snapshot(source_snapshot)
+    expected_aging = _weekly_aging_summary_from_snapshot(source_snapshot)
+    decision = _weekly_review_decision(
+        source_snapshot=source_snapshot,
+        advisory_summary=expected_advisory,
+        paper_summary=expected_paper,
+        aging_summary=expected_aging,
+    )
+    generated = _parse_datetime_text(_text(source_snapshot.get("generated_at")))
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    expected_reader_brief = ""
+    replay_error = ""
+    try:
+        if generated is None:
+            raise DynamicV3PaperTrackingError("weekly review generated_at is invalid")
+        expected_manifest = _weekly_review_manifest_payload(
+            artifact_dir=artifact_dir,
+            generated_at=generated,
+            source_snapshot=source_snapshot,
+            source_validation_summary=expected_source_validation,
+            advisory_summary=expected_advisory,
+            owner_summary=expected_owner,
+            paper_summary=expected_paper,
+            aging_summary=expected_aging,
+            decision=decision,
+        )
+        expected_report = render_weekly_advisory_review_report(
+            expected_manifest,
+            expected_advisory,
+            expected_owner,
+            expected_paper,
+            expected_aging,
+        )
+        expected_reader_brief = render_weekly_advisory_reader_brief(
+            expected_manifest, expected_owner, expected_aging
+        )
+    except Exception as exc:  # noqa: BLE001
+        replay_error = str(exc)
     checks = [
-        _check(
-            "manifest_exists",
-            (artifact_dir / "weekly_review_manifest.json").exists(),
-            weekly_review_id,
-        ),
-        _check(
-            "advisory_summary_exists",
-            (artifact_dir / "weekly_advisory_summary.json").exists(),
-            weekly_review_id,
-        ),
-        _check(
-            "owner_summary_exists",
-            (artifact_dir / "weekly_owner_decision_summary.json").exists(),
-            weekly_review_id,
-        ),
-        _check(
-            "paper_summary_exists",
-            (artifact_dir / "weekly_paper_portfolio_summary.json").exists(),
-            weekly_review_id,
-        ),
-        _check(
-            "shadow_summary_exists",
-            (artifact_dir / "weekly_shadow_candidate_summary.json").exists(),
-            weekly_review_id,
-        ),
-        _check(
-            "report_exists", (artifact_dir / "weekly_review_report.md").exists(), weekly_review_id
-        ),
-        _check(
-            "reader_brief_exists",
-            (artifact_dir / "reader_brief_section.md").exists(),
-            weekly_review_id,
-        ),
+        *existence_checks,
         _check(
             "weekly_review_id_matches",
             manifest.get("weekly_review_id") == weekly_review_id,
             weekly_review_id,
         ),
+        _check("source_snapshot_valid", not snapshot_errors, ";".join(snapshot_errors)),
         _check(
-            "weekly_recommendation_present",
-            bool(manifest.get("weekly_recommendation")),
-            "weekly recommendation",
+            "source_snapshot_checksum",
+            manifest.get("source_snapshot_checksum")
+            == _file_sha256(paths["source_snapshot"]),
+            str(paths["source_snapshot"]),
         ),
         _check(
-            "production_candidate_not_generated",
-            manifest.get("production_candidate_generated") is False,
-            "no production candidate",
+            "source_validation_matches",
+            source_validation == expected_source_validation,
+            "source validation replay",
+        ),
+        _check("advisory_summary_matches", advisory_summary == expected_advisory, "replay"),
+        _check("owner_summary_matches", owner_summary == expected_owner, "replay"),
+        _check("paper_summary_matches", paper_summary == expected_paper, "replay"),
+        _check("aging_summary_matches", aging_summary == expected_aging, "replay"),
+        _check(
+            "manifest_matches",
+            not replay_error and manifest == expected_manifest,
+            replay_error or "manifest replay",
         ),
         _check(
-            "broker_action_forbidden",
-            manifest.get("broker_action_allowed") is False,
-            "broker action forbidden",
+            "report_matches",
+            not replay_error and report == expected_report,
+            str(paths["report"]),
+        ),
+        _check(
+            "reader_brief_matches",
+            not replay_error and reader_brief == expected_reader_brief,
+            str(paths["reader_brief"]),
+        ),
+        _check(
+            "no_execution_effect",
+            _weekly_review_record_has_no_execution_effect(manifest),
+            "weekly manual-review evidence only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
-    return _validation_payload(
+    payload = _validation_payload(
         report_type="etf_dynamic_v3_weekly_advisory_review_validation",
         artifact_id_key="weekly_review_id",
         artifact_id=weekly_review_id,
         status=status,
         checks=checks,
     )
+    payload.update(
+        {
+            "source_snapshot_status": "PASS" if status == "PASS" else "FAIL",
+            "evidence_status": manifest.get("evidence_status", "MISSING"),
+            "selected_monitor_count": len(
+                _records(source_snapshot.get("selected_monitors"))
+            ),
+            "selected_daily_advisory_count": len(
+                _records(source_snapshot.get("selected_daily_advisories"))
+            ),
+            "selected_owner_review_count": len(
+                _records(source_snapshot.get("selected_owner_reviews"))
+            ),
+        }
+    )
+    return payload
 
 
 def render_paper_portfolio_report(
@@ -2318,23 +2441,36 @@ def render_weekly_advisory_review_report(
             "",
             f"- 状态：{manifest.get('status', 'UNKNOWN')}",
             f"- weekly_review_id：`{manifest.get('weekly_review_id', '')}`",
-            f"- week_ending：{manifest.get('week_ending', '')}",
+            f"- cadence：{manifest.get('cadence', 'MISSING')}",
+            f"- market_regime：{manifest.get('market_regime', 'MISSING')}",
+            f"- actual date range：{manifest.get('week_start', '')} 至 "
+            f"{manifest.get('week_ending', '')}",
+            f"- evidence_cutoff：{manifest.get('evidence_cutoff', '')}",
+            f"- evidence_status：{manifest.get('evidence_status', 'MISSING')}",
             f"- weekly_recommendation：{manifest.get('weekly_recommendation', '')}",
+            f"- blocking_reasons：{', '.join(_texts(manifest.get('blocking_reasons'))) or 'none'}",
             f"- shadow monitor runs：{advisory_summary.get('shadow_monitor_run_count', 0)}",
             f"- daily advisory count：{advisory_summary.get('daily_advisory_count', 0)}",
             f"- owner reviews：{owner_summary.get('total_reviews', 0)}",
             f"- paper_portfolio_status：{paper_summary.get('state_status', 'MISSING')}",
             "- outcome_status："
             f"{_mapping(advisory_summary.get('outcome_summary')).get('status', 'MISSING')}",
+            "- available outcome windows："
+            f"{_mapping(advisory_summary.get('outcome_summary')).get('available_window_count', 0)}",
+            "- avg relative to no-trade："
+            f"{_format_optional_metric(_mapping(advisory_summary.get('outcome_summary')).get('avg_relative_to_no_trade'))}",
             f"- eligible_for_review_count：{shadow_summary.get('eligible_for_review_count', 0)}",
             "- downgrade_recommended_count："
             f"{shadow_summary.get('downgrade_recommended_count', 0)}",
+            f"- data_quality_status：{manifest.get('data_quality_status', 'MISSING')}",
             f"- next_actions：{', '.join(_texts(manifest.get('next_actions')))}",
             "- broker_action_taken：false",
             "- production_candidate_generated：false",
             "",
-            "该 weekly review 是 owner 复盘材料；eligible_for_review "
-            "只表示人工 promotion review 候选，不自动进入 production。",
+            "该weekly review只消费截至week ending cutoff的validated source prefix；"
+            "后续owner/paper/outcome append不会倒灌本周。缺失outcome保持N/A，不解释为0。",
+            "eligible_for_review只表示人工promotion review候选，不自动进入production；"
+            "validation PASS只证明周报可重放，不证明策略有效。",
             "",
         ]
     )
@@ -2349,7 +2485,11 @@ def render_weekly_advisory_reader_brief(
         [
             "## Dynamic Rescue Weekly Advisory Review",
             "",
+            f"- evidence_status: {manifest.get('evidence_status', 'MISSING')}",
             f"- weekly_recommendation: {manifest.get('weekly_recommendation', 'MISSING')}",
+            f"- actual_date_range: {manifest.get('week_start', '')} to "
+            f"{manifest.get('week_ending', '')}",
+            f"- data_quality_status: {manifest.get('data_quality_status', 'MISSING')}",
             f"- paper_portfolio_status: {manifest.get('paper_portfolio_status', 'MISSING')}",
             "- owner_decision_summary: "
             f"{owner_summary.get('most_common_owner_decision', 'MISSING')}",
@@ -4268,6 +4408,7 @@ def _owner_attribution_outcome_snapshot(
         )
     selected_by_daily: dict[str, dict[str, Any]] = {}
     if outcome_dir.exists():
+        relevant_sources: dict[str, list[tuple[Path, dict[str, Any]]]] = {}
         for child in sorted(path for path in outcome_dir.iterdir() if path.is_dir()):
             manifest_path = child / "advisory_outcome_manifest.json"
             if not manifest_path.is_file():
@@ -4283,10 +4424,22 @@ def _owner_attribution_outcome_snapshot(
             daily_id = _text(manifest.get("daily_advisory_id"))
             if daily_id not in by_daily:
                 continue
-            if daily_id in selected_by_daily:
+            relevant_sources.setdefault(daily_id, []).append((child, manifest))
+        duplicate_daily_ids = sorted(
+            daily_id for daily_id, sources in relevant_sources.items() if len(sources) > 1
+        )
+        if duplicate_daily_ids:
+            raise DynamicV3PaperTrackingError(
+                "multiple advisory outcomes found for owner review daily id: "
+                + ",".join(duplicate_daily_ids)
+            )
+        for daily_id in sorted(relevant_sources):
+            sources = relevant_sources[daily_id]
+            if len(sources) != 1:
                 raise DynamicV3PaperTrackingError(
                     f"multiple advisory outcomes found for owner review daily id: {daily_id}"
                 )
+            child, manifest = sources[0]
             outcome_id = child.name
             validation = validate_advisory_outcome_artifact(
                 outcome_id=outcome_id,
@@ -5913,107 +6066,1046 @@ def _shadow_aging_source_inventory_errors(value: Any, label: str) -> list[str]:
     return errors
 
 
-def _manifest_rows_in_week(
-    output_dir: Path,
-    manifest_name: str,
-    start: date,
-    end: date,
+def _weekly_advisory_policy(config: Mapping[str, Any]) -> dict[str, Any]:
+    raw = _mapping(config.get("weekly_review_v2"))
+    required_text = (
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    )
+    missing = [field for field in required_text if not _text(raw.get(field))]
+    if missing:
+        raise DynamicV3PaperTrackingError(
+            "weekly review policy metadata is incomplete: " + ",".join(missing)
+        )
+    integer_fields = (
+        "minimum_shadow_monitor_run_count",
+        "minimum_daily_advisory_count",
+        "minimum_owner_review_count",
+        "minimum_available_outcome_window_count",
+        "max_downgrade_recommended_count",
+    )
+    normalized = {field: _text(raw.get(field)) for field in required_text}
+    for field in integer_fields:
+        value = _strict_finite_number(raw.get(field), field)
+        if value < 0 or not float(value).is_integer():
+            raise DynamicV3PaperTrackingError(
+                f"weekly review policy {field} must be a non-negative integer"
+            )
+        normalized[field] = int(value)
+    for field in ("require_active_paper_portfolio", "require_shadow_aging"):
+        if not isinstance(raw.get(field), bool):
+            raise DynamicV3PaperTrackingError(
+                f"weekly review policy {field} must be boolean"
+            )
+        normalized[field] = raw.get(field)
+    precedence = _texts(raw.get("recommendation_precedence"))
+    required_precedence = {
+        "reduce_shortlist",
+        "manual_review_required",
+        "continue_monitoring",
+    }
+    if len(precedence) != 3 or set(precedence) != required_precedence:
+        raise DynamicV3PaperTrackingError(
+            "weekly review recommendation precedence must contain each governed action once"
+        )
+    normalized["recommendation_precedence"] = precedence
+    return normalized
+
+
+def _weekly_advisory_source_snapshot(
+    *,
+    week_start: date,
+    week_ending: date,
+    generated_at: datetime,
+    config_path: Path,
+    shadow_monitor_run_dir: Path,
+    daily_advisory_dir: Path,
+    owner_review_dir: Path,
+    paper_portfolio_dir: Path,
+    advisory_outcome_dir: Path,
+    shadow_aging_dir: Path,
+) -> dict[str, Any]:
+    generated = generated_at.astimezone(UTC)
+    period_end = datetime.combine(week_ending, time.max, tzinfo=UTC)
+    cutoff = min(generated, period_end)
+    resolved_config = _resolve_project_path(config_path)
+    config = load_paper_portfolio_config(resolved_config)
+    policy = _weekly_advisory_policy(config)
+    advisories = _weekly_daily_advisory_sources(
+        root=daily_advisory_dir,
+        week_start=week_start,
+        week_ending=week_ending,
+        cutoff=cutoff,
+    )
+    monitors = _weekly_monitor_sources(
+        root=shadow_monitor_run_dir,
+        week_start=week_start,
+        week_ending=week_ending,
+        cutoff=cutoff,
+        advisories=advisories,
+    )
+    owner_prefix, owner_reviews, owner_inventory = _weekly_owner_review_sources(
+        root=owner_review_dir,
+        week_start=week_start,
+        week_ending=week_ending,
+        cutoff=cutoff,
+        advisories=advisories,
+    )
+    paper = _weekly_paper_source(
+        root=paper_portfolio_dir,
+        week_ending=week_ending,
+        cutoff=cutoff,
+    )
+    outcomes = _weekly_outcome_sources(
+        root=advisory_outcome_dir,
+        cutoff=cutoff,
+        advisories=advisories,
+    )
+    aging = _weekly_aging_source(root=shadow_aging_dir, cutoff=cutoff)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "snapshot_schema_version": WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_advisory_review_source_snapshot",
+        "cadence": "weekly_manual_or_controlled_date_gate",
+        "market_regime": "ai_after_chatgpt",
+        "week_start": week_start.isoformat(),
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "evidence_cutoff": cutoff.isoformat(),
+        "config_source": {
+            "path": str(resolved_config),
+            "checksum": _file_sha256(resolved_config),
+            "policy": policy,
+        },
+        "source_roots": {
+            "shadow_monitor_run": str(shadow_monitor_run_dir),
+            "daily_advisory": str(daily_advisory_dir),
+            "owner_review": str(owner_review_dir),
+            "paper_portfolio": str(paper_portfolio_dir),
+            "advisory_outcome": str(advisory_outcome_dir),
+            "shadow_aging": str(shadow_aging_dir),
+        },
+        "selected_monitors": monitors,
+        "selected_daily_advisories": advisories,
+        "owner_review_event_prefix": owner_prefix,
+        "selected_owner_reviews": owner_reviews,
+        "owner_review_source_files": owner_inventory,
+        "selected_paper_portfolio": paper,
+        "selected_outcomes": outcomes,
+        "selected_shadow_aging": aging,
+        "direct_cached_data_read": False,
+        "data_quality_gate_required": False,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _weekly_monitor_sources(
+    *,
+    root: Path,
+    week_start: date,
+    week_ending: date,
+    cutoff: datetime,
+    advisories: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    rows = []
-    for child in output_dir.glob("*"):
-        if not child.is_dir():
+    selected = []
+    required = {
+        _text(item.get("monitor_run_id")): _text(item.get("as_of"))
+        for item in advisories
+    }
+    if "" in required:
+        raise DynamicV3PaperTrackingError("weekly daily advisory monitor id is missing")
+    for monitor_id, expected_as_of in sorted(required.items()):
+        child = root / monitor_id
+        manifest_path = child / "shadow_monitor_manifest.json"
+        if not manifest_path.is_file():
+            raise DynamicV3PaperTrackingError(
+                f"weekly referenced monitor is missing: {monitor_id}"
+            )
+        manifest = _read_json(manifest_path)
+        as_of = _date_from_any(manifest.get("as_of"))
+        if (
+            as_of is None
+            or not week_start <= as_of <= week_ending
+            or as_of.isoformat() != expected_as_of
+        ):
+            raise DynamicV3PaperTrackingError(
+                f"weekly referenced monitor as-of mismatch: {monitor_id}"
+            )
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        if generated is None:
+            raise DynamicV3PaperTrackingError(
+                f"weekly monitor generated_at is invalid: {child.name}"
+            )
+        if generated > cutoff:
+            raise DynamicV3PaperTrackingError(
+                f"weekly referenced monitor exceeds evidence cutoff: {monitor_id}"
+            )
+        manifest_id = _text(manifest.get("monitor_run_id"))
+        if manifest_id != monitor_id:
+            raise DynamicV3PaperTrackingError("weekly monitor id/path mismatch")
+        validation = validate_shadow_monitor_run_artifact(
+            monitor_run_id=monitor_id, output_dir=root
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly monitor validation must PASS: {monitor_id}"
+            )
+        selected.append(
+            {
+                "monitor_run_id": monitor_id,
+                "as_of": as_of.isoformat(),
+                "generated_at": generated.isoformat(),
+                "manifest": manifest,
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, [path for path in child.rglob("*") if path.is_file()]
+                ),
+            }
+        )
+    ids = [_text(item.get("monitor_run_id")) for item in selected]
+    dates = [_text(item.get("as_of")) for item in selected]
+    if len(ids) != len(set(ids)) or len(dates) != len(set(dates)):
+        raise DynamicV3PaperTrackingError(
+            "weekly monitor ids and as-of dates must be unique"
+        )
+    return selected
+
+
+def _weekly_daily_advisory_sources(
+    *,
+    root: Path,
+    week_start: date,
+    week_ending: date,
+    cutoff: datetime,
+) -> list[dict[str, Any]]:
+    selected = []
+    for child in sorted(path for path in root.glob("*") if path.is_dir()):
+        manifest_path = child / "daily_advisory_manifest.json"
+        if not manifest_path.is_file():
             continue
-        manifest = _read_optional_json(child / manifest_name) or {}
-        if _date_in_range(manifest.get("as_of"), start, end):
-            rows.append(manifest)
-    return rows
+        manifest = _read_json(manifest_path)
+        as_of = _date_from_any(manifest.get("as_of"))
+        if as_of is None or not week_start <= as_of <= week_ending:
+            continue
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        if generated is None:
+            raise DynamicV3PaperTrackingError(
+                f"weekly daily advisory generated_at is invalid: {child.name}"
+            )
+        if generated > cutoff:
+            continue
+        daily_id = _text(manifest.get("daily_advisory_id"))
+        monitor_id = _text(manifest.get("source_shadow_monitor_run_id"))
+        if daily_id != child.name or not monitor_id:
+            raise DynamicV3PaperTrackingError(
+                "weekly daily advisory id or monitor lineage is missing"
+            )
+        validation = validate_position_advisory_daily_artifact(
+            daily_advisory_id=daily_id, output_dir=root
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly daily advisory validation must PASS: {daily_id}"
+            )
+        actions = _read_json(child / "daily_advisory_actions.json")
+        selected.append(
+            {
+                "daily_advisory_id": daily_id,
+                "monitor_run_id": monitor_id,
+                "as_of": as_of.isoformat(),
+                "generated_at": generated.isoformat(),
+                "manifest": manifest,
+                "actions": actions,
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, [path for path in child.rglob("*") if path.is_file()]
+                ),
+            }
+        )
+    ids = [_text(item.get("daily_advisory_id")) for item in selected]
+    dates = [_text(item.get("as_of")) for item in selected]
+    if len(ids) != len(set(ids)) or len(dates) != len(set(dates)):
+        raise DynamicV3PaperTrackingError(
+            "weekly daily advisory ids and as-of dates must be unique"
+        )
+    return selected
 
 
-def _latest_paper_state_summary(output_dir: Path) -> dict[str, Any]:
-    try:
-        portfolio_dir = _paper_portfolio_dir(paper_portfolio_id=None, output_dir=output_dir)
-    except DynamicV3PaperTrackingError:
-        return {"status": "MISSING", "state_status": "MISSING", "broker_action_taken": False}
-    state = _read_json(portfolio_dir / "paper_portfolio_state.json")
+def _weekly_owner_review_sources(
+    *,
+    root: Path,
+    week_start: date,
+    week_ending: date,
+    cutoff: datetime,
+    advisories: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    events_path = root / "owner_review_events.jsonl"
+    if not events_path.is_file():
+        return [], [], {}
+    events = _read_jsonl(events_path)
+    full_records, full_errors = replay_owner_review_records(events)
+    if full_errors:
+        raise DynamicV3PaperTrackingError(
+            "weekly owner review event chain is invalid: " + ",".join(full_errors)
+        )
+    journal_path = root / "owner_review_journal.jsonl"
+    if not journal_path.is_file() or _read_jsonl(journal_path) != full_records:
+        raise DynamicV3PaperTrackingError(
+            "weekly owner review journal does not match event replay"
+        )
+    prefix = []
+    for event in events:
+        event_at = _parse_datetime_text(_text(event.get("event_at")))
+        if event_at is None:
+            raise DynamicV3PaperTrackingError("weekly owner event time is invalid")
+        if event_at <= cutoff:
+            prefix.append(event)
+    prefix_records, prefix_errors = replay_owner_review_records(prefix)
+    if prefix_errors:
+        raise DynamicV3PaperTrackingError(
+            "weekly owner event prefix is invalid: " + ",".join(prefix_errors)
+        )
+    advisory_by_id = {
+        _text(item.get("daily_advisory_id")): item for item in advisories
+    }
+    selected = []
+    daily_ids: set[str] = set()
+    for record in prefix_records:
+        as_of = _date_from_any(record.get("as_of"))
+        if as_of is None or not week_start <= as_of <= week_ending:
+            continue
+        review_id = _text(record.get("review_id"))
+        daily_id = _text(record.get("daily_advisory_id"))
+        daily = _mapping(advisory_by_id.get(daily_id))
+        if not daily or daily.get("as_of") != as_of.isoformat() or daily_id in daily_ids:
+            raise DynamicV3PaperTrackingError(
+                "weekly owner review daily lineage must be unique and selected"
+            )
+        validation = validate_owner_review_artifact(review_id=review_id, output_dir=root)
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly owner review validation must PASS: {review_id}"
+            )
+        daily_ids.add(daily_id)
+        selected.append(
+            {
+                "review_id": review_id,
+                "daily_advisory_id": daily_id,
+                "as_of": as_of.isoformat(),
+                "review": record,
+                "validation_status": "PASS",
+            }
+        )
+    source_paths = [path for path in root.glob("*") if path.is_file()]
+    return prefix, selected, _source_file_inventory(root, source_paths)
+
+
+def _weekly_paper_source(
+    *, root: Path, week_ending: date, cutoff: datetime
+) -> dict[str, Any]:
+    candidates = []
+    for child in sorted(path for path in root.glob("*") if path.is_dir()):
+        manifest_path = child / "paper_portfolio_manifest.json"
+        if not manifest_path.is_file():
+            continue
+        manifest = _read_json(manifest_path)
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        initial_as_of = _date_from_any(manifest.get("initial_as_of"))
+        if generated is None or initial_as_of is None:
+            raise DynamicV3PaperTrackingError("weekly paper manifest time is invalid")
+        if generated > cutoff or initial_as_of > week_ending:
+            continue
+        paper_id = _text(manifest.get("paper_portfolio_id"))
+        if paper_id != child.name:
+            raise DynamicV3PaperTrackingError("weekly paper id/path mismatch")
+        validation = validate_paper_portfolio_artifact(
+            paper_portfolio_id=paper_id, output_dir=root
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly paper portfolio validation must PASS: {paper_id}"
+            )
+        events = _read_jsonl(child / "paper_action_ledger.jsonl")
+        prefix = []
+        for event in events:
+            created = _parse_datetime_text(_text(event.get("created_at")))
+            if created is None:
+                raise DynamicV3PaperTrackingError("weekly paper event time is invalid")
+            if created <= cutoff:
+                prefix.append(event)
+        config = load_paper_portfolio_config(Path(_text(manifest.get("config_path"))))
+        state, history, errors = _replay_paper_action_events(
+            manifest=manifest,
+            events=prefix,
+            config=config,
+            validate_sources=True,
+        )
+        if errors:
+            raise DynamicV3PaperTrackingError(
+                "weekly paper event prefix replay failed: " + ",".join(errors)
+            )
+        candidates.append(
+            {
+                "paper_portfolio_id": paper_id,
+                "generated_at": generated.isoformat(),
+                "manifest": manifest,
+                "event_prefix": prefix,
+                "state": state,
+                "history": history,
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, [path for path in child.rglob("*") if path.is_file()]
+                ),
+            }
+        )
+    if len(candidates) > 1:
+        raise DynamicV3PaperTrackingError(
+            "weekly review found ambiguous paper portfolio lineages"
+        )
+    return candidates[0] if candidates else {}
+
+
+def _weekly_outcome_sources(
+    *,
+    root: Path,
+    cutoff: datetime,
+    advisories: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    daily_by_id = {
+        _text(item.get("daily_advisory_id")): item for item in advisories
+    }
+    selected: dict[str, dict[str, Any]] = {}
+    for child in sorted(path for path in root.glob("*") if path.is_dir()):
+        manifest_path = child / "advisory_outcome_manifest.json"
+        event_path = child / "advisory_event.json"
+        if not manifest_path.is_file() or not event_path.is_file():
+            continue
+        manifest = _read_json(manifest_path)
+        daily_id = _text(manifest.get("daily_advisory_id"))
+        if daily_id not in daily_by_id:
+            continue
+        event = _read_json(event_path)
+        tracked = _parse_datetime_text(_text(event.get("tracked_at")))
+        if tracked is None:
+            raise DynamicV3PaperTrackingError("weekly outcome tracked_at is invalid")
+        if tracked > cutoff:
+            continue
+        if daily_id in selected:
+            raise DynamicV3PaperTrackingError(
+                f"weekly review found duplicate outcomes for daily advisory: {daily_id}"
+            )
+        outcome_id = child.name
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id, output_dir=root
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly outcome validation must PASS: {outcome_id}"
+            )
+        daily = _mapping(daily_by_id.get(daily_id))
+        if (
+            event.get("daily_advisory_id") != daily_id
+            or event.get("as_of") != daily.get("as_of")
+            or manifest.get("as_of") != daily.get("as_of")
+        ):
+            raise DynamicV3PaperTrackingError("weekly outcome daily lineage mismatch")
+        updates = _read_jsonl(child / "outcome_update_events.jsonl")
+        prefix = []
+        for update in updates:
+            event_at = _parse_datetime_text(_text(update.get("event_at")))
+            if event_at is None:
+                raise DynamicV3PaperTrackingError("weekly outcome update time is invalid")
+            if event_at <= cutoff:
+                prefix.append(update)
+        if prefix:
+            windows = _records(prefix[-1].get("outcome_windows"))
+        else:
+            frozen_config = _mapping(
+                _mapping(event.get("frozen_track_sources")).get("outcome_config")
+            )
+            frozen_path = Path(_text(frozen_config.get("path")))
+            outcome_config = load_paper_portfolio_config(frozen_path)
+            windows = [
+                _pending_outcome_window(
+                    daily_advisory_id=daily_id,
+                    window_days=window,
+                    start_date=_text(event.get("as_of")),
+                )
+                for window in _configured_outcome_windows(outcome_config)
+            ]
+        selected[daily_id] = {
+            "outcome_id": outcome_id,
+            "daily_advisory_id": daily_id,
+            "as_of": daily.get("as_of"),
+            "tracked_at": tracked.isoformat(),
+            "manifest": manifest,
+            "advisory_event": event,
+            "update_event_prefix": prefix,
+            "outcome_windows": windows,
+            "validation_status": "PASS",
+            "source_root": str(child),
+            "source_files": _source_file_inventory(
+                child, [path for path in child.rglob("*") if path.is_file()]
+            ),
+        }
+    return [selected[key] for key in sorted(selected)]
+
+
+def _weekly_aging_source(*, root: Path, cutoff: datetime) -> dict[str, Any]:
+    candidates = []
+    for child in sorted(path for path in root.glob("*") if path.is_dir()):
+        manifest_path = child / "shadow_aging_manifest.json"
+        if not manifest_path.is_file():
+            continue
+        manifest = _read_json(manifest_path)
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        if generated is None:
+            raise DynamicV3PaperTrackingError("weekly aging generated_at is invalid")
+        if generated > cutoff:
+            continue
+        aging_id = _text(manifest.get("aging_id"))
+        if aging_id != child.name:
+            raise DynamicV3PaperTrackingError("weekly aging id/path mismatch")
+        validation = validate_shadow_aging_artifact(aging_id=aging_id, output_dir=root)
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"weekly shadow aging validation must PASS: {aging_id}"
+            )
+        candidates.append(
+            {
+                "aging_id": aging_id,
+                "generated_at": generated.isoformat(),
+                "manifest": manifest,
+                "summary": _read_json(child / "promotion_clock_v2_summary.json"),
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, [path for path in child.rglob("*") if path.is_file()]
+                ),
+            }
+        )
+    if not candidates:
+        return {}
+    candidates.sort(key=lambda item: (_text(item.get("generated_at")), _text(item.get("aging_id"))))
+    latest_time = _text(candidates[-1].get("generated_at"))
+    if sum(_text(item.get("generated_at")) == latest_time for item in candidates) > 1:
+        raise DynamicV3PaperTrackingError(
+            "weekly review found ambiguous latest shadow aging artifacts"
+        )
+    return candidates[-1]
+
+
+def _weekly_advisory_summary_from_snapshot(
+    source_snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    monitors = _records(source_snapshot.get("selected_monitors"))
+    advisories = _records(source_snapshot.get("selected_daily_advisories"))
+    outcomes = _records(source_snapshot.get("selected_outcomes"))
+    rows = [
+        row
+        for outcome in outcomes
+        for row in _records(outcome.get("outcome_windows"))
+    ]
+    available = [row for row in rows if row.get("outcome_status") == "AVAILABLE"]
+
+    def optional_average(field: str) -> float | None:
+        values = [float(row[field]) for row in available if _is_finite_number(row.get(field))]
+        return round(sum(values) / len(values), 6) if values else None
+
+    pending = sum(row.get("outcome_status") == "PENDING" for row in rows)
+    insufficient = sum(row.get("outcome_status") == "INSUFFICIENT_DATA" for row in rows)
+    outcome_status = (
+        "AVAILABLE"
+        if available
+        else "PENDING"
+        if pending
+        else "INSUFFICIENT_DATA"
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_advisory_summary",
+        "week_start": source_snapshot.get("week_start"),
+        "week_ending": source_snapshot.get("week_ending"),
+        "shadow_monitor_run_count": len(monitors),
+        "daily_advisory_count": len(advisories),
+        "recommended_actions": dict(
+            sorted(
+                Counter(
+                    _text(_mapping(item.get("actions")).get("recommended_action"), "MISSING")
+                    for item in advisories
+                ).items()
+            )
+        ),
+        "outcome_summary": {
+            "status": outcome_status,
+            "linked_outcome_count": len(outcomes),
+            "window_count": len(rows),
+            "available_window_count": len(available),
+            "pending_window_count": pending,
+            "insufficient_window_count": insufficient,
+            "avg_relative_to_no_trade": optional_average("relative_to_no_trade"),
+            "avg_relative_to_baseline": optional_average("relative_to_baseline"),
+        },
+    }
+
+
+def _weekly_paper_summary_from_snapshot(source_snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    paper = _mapping(source_snapshot.get("selected_paper_portfolio"))
+    if not paper:
+        return {
+            "status": "MISSING",
+            "state_status": "MISSING",
+            "paper_portfolio_count": 0,
+            "broker_action_taken": False,
+            "production_effect": "none",
+        }
+    state = _mapping(paper.get("state"))
     return {
         "status": "AVAILABLE",
-        "paper_portfolio_id": state.get("paper_portfolio_id", ""),
+        "paper_portfolio_count": 1,
+        "paper_portfolio_id": paper.get("paper_portfolio_id"),
         "state_status": state.get("state_status", "UNKNOWN"),
         "as_of": state.get("as_of", ""),
         "positions": state.get("positions", {}),
         "total_weight": state.get("total_weight", 0.0),
+        "event_prefix_count": len(_records(paper.get("event_prefix"))),
         "broker_action_taken": False,
+        "production_effect": "none",
     }
 
 
-def _latest_shadow_aging_summary(output_dir: Path) -> dict[str, Any]:
-    try:
-        artifact_dir = _artifact_dir_from_latest(
-            output_dir=output_dir,
-            artifact_id=None,
-            pointer_name="latest_shadow_aging",
-        )
-    except DynamicV3PaperTrackingError:
+def _weekly_aging_summary_from_snapshot(source_snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    aging = _mapping(source_snapshot.get("selected_shadow_aging"))
+    if not aging:
         return {
             "status": "MISSING",
+            "aging_artifact_count": 0,
             "eligible_for_review_count": 0,
             "downgrade_recommended_count": 0,
             "broker_action_taken": False,
+            "production_effect": "none",
         }
-    return _read_json(artifact_dir / "promotion_clock_v2_summary.json")
-
-
-def _weekly_outcome_summary(output_dir: Path, start: date, end: date) -> dict[str, Any]:
-    rows = []
-    for child in output_dir.glob("*"):
-        if not child.is_dir():
-            continue
-        manifest = _read_optional_json(child / "advisory_outcome_manifest.json") or {}
-        if _date_in_range(manifest.get("as_of"), start, end):
-            rows.extend(_read_jsonl(child / "outcome_windows.jsonl"))
-    available = [row for row in rows if row.get("outcome_status") == "AVAILABLE"]
     return {
-        "status": "AVAILABLE" if available else ("PENDING" if rows else "INSUFFICIENT_DATA"),
-        "window_count": len(rows),
-        "available_window_count": len(available),
-        "avg_relative_to_no_trade": round(
-            _avg([_float(row.get("relative_to_no_trade")) for row in available]), 6
-        ),
-        "avg_relative_to_baseline": round(
-            _avg([_float(row.get("relative_to_baseline")) for row in available]), 6
-        ),
+        **_mapping(aging.get("summary")),
+        "aging_artifact_count": 1,
+        "selected_aging_id": aging.get("aging_id"),
     }
 
 
-def _weekly_recommendation(
+def _weekly_source_validation_summary(source_snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    monitors = _records(source_snapshot.get("selected_monitors"))
+    advisories = _records(source_snapshot.get("selected_daily_advisories"))
+    reviews = _records(source_snapshot.get("selected_owner_reviews"))
+    outcomes = _records(source_snapshot.get("selected_outcomes"))
+    paper = _mapping(source_snapshot.get("selected_paper_portfolio"))
+    aging = _mapping(source_snapshot.get("selected_shadow_aging"))
+    dq_statuses = sorted(
+        {
+            _text(event.get("data_quality_status"))
+            for outcome in outcomes
+            for event in _records(outcome.get("update_event_prefix"))
+            if _text(event.get("data_quality_status"))
+        }
+    )
+    selected = [*monitors, *advisories, *reviews, *outcomes]
+    if paper:
+        selected.append(paper)
+    if aging:
+        selected.append(aging)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_advisory_source_validation_summary",
+        "snapshot_schema_version": WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "week_start": source_snapshot.get("week_start"),
+        "week_ending": source_snapshot.get("week_ending"),
+        "evidence_cutoff": source_snapshot.get("evidence_cutoff"),
+        "selected_monitor_count": len(monitors),
+        "selected_daily_advisory_count": len(advisories),
+        "selected_owner_review_count": len(reviews),
+        "selected_paper_portfolio_count": int(bool(paper)),
+        "selected_outcome_count": len(outcomes),
+        "selected_shadow_aging_count": int(bool(aging)),
+        "all_selected_sources_validated": all(
+            item.get("validation_status") == "PASS" for item in selected
+        ),
+        "direct_cached_data_read": False,
+        "data_quality_gate_required": False,
+        "data_quality_status": (
+            "INHERITED_FROM_VALIDATED_OUTCOME_SOURCES"
+            if dq_statuses
+            else "NOT_REQUIRED_NO_DIRECT_CACHE_READ"
+        ),
+        "source_data_quality_statuses": dq_statuses,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _weekly_review_decision(
     *,
-    latest_paper: Mapping[str, Any],
-    latest_aging: Mapping[str, Any],
-    outcome_summary: Mapping[str, Any],
-    owner_records: Sequence[Mapping[str, Any]],
-) -> tuple[str, list[str]]:
-    next_actions = ["continue_monitoring"]
-    if latest_paper.get("status") == "MISSING" or latest_paper.get("state_status") != "ACTIVE":
+    source_snapshot: Mapping[str, Any],
+    advisory_summary: Mapping[str, Any],
+    paper_summary: Mapping[str, Any],
+    aging_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy = _mapping(_mapping(source_snapshot.get("config_source")).get("policy"))
+    owner_count = len(_records(source_snapshot.get("selected_owner_reviews")))
+    available_windows = _int(
+        _mapping(advisory_summary.get("outcome_summary")).get("available_window_count")
+    )
+    downgrade_count = _int(aging_summary.get("downgrade_recommended_count"))
+    blockers = []
+    if _int(advisory_summary.get("shadow_monitor_run_count")) < _int(
+        policy.get("minimum_shadow_monitor_run_count")
+    ):
+        blockers.append("INSUFFICIENT_SHADOW_MONITOR_RUNS")
+    if _int(advisory_summary.get("daily_advisory_count")) < _int(
+        policy.get("minimum_daily_advisory_count")
+    ):
+        blockers.append("INSUFFICIENT_DAILY_ADVISORIES")
+    if owner_count < _int(policy.get("minimum_owner_review_count")):
+        blockers.append("INSUFFICIENT_OWNER_REVIEWS")
+    if available_windows < _int(policy.get("minimum_available_outcome_window_count")):
+        blockers.append("INSUFFICIENT_AVAILABLE_OUTCOME_WINDOWS")
+    if policy.get("require_active_paper_portfolio") is True and paper_summary.get(
+        "state_status"
+    ) != "ACTIVE":
+        blockers.append("ACTIVE_PAPER_PORTFOLIO_MISSING")
+    if policy.get("require_shadow_aging") is True and _int(
+        aging_summary.get("aging_artifact_count")
+    ) != 1:
+        blockers.append("SHADOW_AGING_MISSING")
+    downgrade = downgrade_count > _int(policy.get("max_downgrade_recommended_count"))
+    if downgrade:
+        blockers.append("DOWNGRADE_RECOMMENDED_COUNT_EXCEEDED")
+    active = {
+        "reduce_shortlist": downgrade,
+        "manual_review_required": bool(blockers),
+        "continue_monitoring": not blockers,
+    }
+    recommendation = next(
+        action
+        for action in _texts(policy.get("recommendation_precedence"))
+        if active[action]
+    )
+    evidence_status = (
+        "DOWNGRADE_REVIEW_REQUIRED"
+        if downgrade
+        else "INSUFFICIENT_EVIDENCE"
+        if blockers
+        else "COMPLETE_EVIDENCE"
+    )
+    next_actions = [recommendation]
+    if paper_summary.get("state_status") != "ACTIVE":
         next_actions.append("update_position_snapshot")
-    if outcome_summary.get("status") in {"INSUFFICIENT_DATA", "PENDING"}:
+    if blockers and "manual_review_required" not in next_actions:
         next_actions.append("manual_review_required")
-    if _int(latest_aging.get("downgrade_recommended_count")) > 0:
-        next_actions.append("reduce_shortlist")
-    if _int(latest_aging.get("eligible_for_review_count")) > 0:
-        next_actions.append("manual_review_required")
-    if not owner_records:
-        next_actions.append("manual_review_required")
-    if "reduce_shortlist" in next_actions:
-        recommendation = "reduce_shortlist"
-    elif "manual_review_required" in next_actions:
-        recommendation = "manual_review_required"
-    else:
-        recommendation = "continue_monitoring"
-    ordered = []
-    for action in next_actions:
-        if action not in ordered:
-            ordered.append(action)
-    return recommendation, ordered
+    return {
+        "evidence_status": evidence_status,
+        "weekly_recommendation": recommendation,
+        "blocking_reasons": blockers,
+        "next_actions": next_actions,
+    }
+
+
+def _weekly_review_manifest_payload(
+    *,
+    artifact_dir: Path,
+    generated_at: datetime,
+    source_snapshot: Mapping[str, Any],
+    source_validation_summary: Mapping[str, Any],
+    advisory_summary: Mapping[str, Any],
+    owner_summary: Mapping[str, Any],
+    paper_summary: Mapping[str, Any],
+    aging_summary: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    source_snapshot_path = artifact_dir / "weekly_review_source_snapshot.json"
+    source_validation_path = artifact_dir / "source_validation_summary.json"
+    policy = _mapping(_mapping(source_snapshot.get("config_source")).get("policy"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "source_snapshot_schema_version": WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_advisory_review_manifest",
+        "weekly_review_id": artifact_dir.name,
+        "cadence": source_snapshot.get("cadence"),
+        "market_regime": source_snapshot.get("market_regime"),
+        "week_start": source_snapshot.get("week_start"),
+        "week_ending": source_snapshot.get("week_ending"),
+        "requested_date_range": {
+            "start": source_snapshot.get("week_start"),
+            "end": source_snapshot.get("week_ending"),
+        },
+        "actual_date_range": {
+            "start": source_snapshot.get("week_start"),
+            "end": source_snapshot.get("week_ending"),
+        },
+        "generated_at": generated_at.astimezone(UTC).isoformat(),
+        "evidence_cutoff": source_snapshot.get("evidence_cutoff"),
+        "status": "PASS",
+        "evidence_status": decision.get("evidence_status"),
+        "weekly_recommendation": decision.get("weekly_recommendation"),
+        "blocking_reasons": _texts(decision.get("blocking_reasons")),
+        "next_actions": _texts(decision.get("next_actions")),
+        "paper_portfolio_status": paper_summary.get("state_status", "MISSING"),
+        "owner_review_count": owner_summary.get("total_reviews", 0),
+        "shadow_monitor_run_count": advisory_summary.get("shadow_monitor_run_count", 0),
+        "daily_advisory_count": advisory_summary.get("daily_advisory_count", 0),
+        "linked_outcome_count": _mapping(advisory_summary.get("outcome_summary")).get(
+            "linked_outcome_count", 0
+        ),
+        "available_outcome_window_count": _mapping(
+            advisory_summary.get("outcome_summary")
+        ).get("available_window_count", 0),
+        "weekly_policy_id": policy.get("policy_id"),
+        "weekly_policy_version": policy.get("version"),
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": _file_sha256(source_snapshot_path),
+        "source_validation_summary_path": str(source_validation_path),
+        "source_validation_summary_checksum": _file_sha256(source_validation_path),
+        "data_quality_status": source_validation_summary.get("data_quality_status"),
+        "source_data_quality_statuses": source_validation_summary.get(
+            "source_data_quality_statuses", []
+        ),
+        "weekly_advisory_summary_path": str(artifact_dir / "weekly_advisory_summary.json"),
+        "weekly_owner_decision_summary_path": str(
+            artifact_dir / "weekly_owner_decision_summary.json"
+        ),
+        "weekly_paper_portfolio_summary_path": str(
+            artifact_dir / "weekly_paper_portfolio_summary.json"
+        ),
+        "weekly_shadow_candidate_summary_path": str(
+            artifact_dir / "weekly_shadow_candidate_summary.json"
+        ),
+        "weekly_review_report_path": str(artifact_dir / "weekly_review_report.md"),
+        "reader_brief_section_path": str(artifact_dir / "reader_brief_section.md"),
+        "direct_cached_data_read": False,
+        "data_quality_gate_required": False,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "manual_review_required": True,
+        "production_effect": "none",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _weekly_review_record_has_no_execution_effect(record: Mapping[str, Any]) -> bool:
+    return (
+        record.get("production_candidate_generated") is False
+        and record.get("automatic_candidate_promotion") is False
+        and record.get("official_target_weights_generated") is False
+        and record.get("portfolio_mutated") is False
+        and record.get("order_ticket_generated") is False
+        and record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
+def _weekly_advisory_snapshot_errors(source_snapshot: Mapping[str, Any]) -> list[str]:
+    errors = []
+    try:
+        if (
+            source_snapshot.get("snapshot_schema_version")
+            != WEEKLY_ADVISORY_REVIEW_SNAPSHOT_SCHEMA_VERSION
+        ):
+            errors.append("snapshot_schema_invalid")
+        week_start = _date_from_any(source_snapshot.get("week_start"))
+        week_ending = _date_from_any(source_snapshot.get("week_ending"))
+        generated = _parse_datetime_text(_text(source_snapshot.get("generated_at")))
+        cutoff = _parse_datetime_text(_text(source_snapshot.get("evidence_cutoff")))
+        if (
+            week_start is None
+            or week_ending is None
+            or (week_ending - week_start).days != 6
+            or generated is None
+            or cutoff is None
+            or cutoff > generated
+            or cutoff > datetime.combine(week_ending, time.max, tzinfo=UTC)
+        ):
+            errors.append("week_or_cutoff_invalid")
+        config_source = _mapping(source_snapshot.get("config_source"))
+        config_checksum = _text(config_source.get("checksum"))
+        frozen_policy = _mapping(config_source.get("policy"))
+        if (
+            not _text(config_source.get("path"))
+            or len(config_checksum) != 64
+            or any(character not in "0123456789abcdef" for character in config_checksum)
+            or _weekly_advisory_policy({"weekly_review_v2": frozen_policy})
+            != frozen_policy
+        ):
+            errors.append("weekly_policy_snapshot_invalid")
+        monitor_dates = []
+        monitor_ids = set()
+        for item in _records(source_snapshot.get("selected_monitors")):
+            monitor_id = _text(item.get("monitor_run_id"))
+            root = Path(_text(item.get("source_root"))).parent
+            validation = validate_shadow_monitor_run_artifact(
+                monitor_run_id=monitor_id, output_dir=root
+            )
+            current_manifest = _read_json(
+                Path(_text(item.get("source_root"))) / "shadow_monitor_manifest.json"
+            )
+            if validation.get("status") != "PASS" or current_manifest != item.get("manifest"):
+                errors.append(f"monitor_source_drift:{monitor_id}")
+            monitor_ids.add(monitor_id)
+            monitor_dates.append(_text(item.get("as_of")))
+        if len(monitor_ids) != len(monitor_dates) or len(monitor_dates) != len(
+            set(monitor_dates)
+        ):
+            errors.append("monitor_duplicate_id_or_as_of")
+        daily_ids = set()
+        daily_dates = []
+        for item in _records(source_snapshot.get("selected_daily_advisories")):
+            daily_id = _text(item.get("daily_advisory_id"))
+            root = Path(_text(item.get("source_root"))).parent
+            validation = validate_position_advisory_daily_artifact(
+                daily_advisory_id=daily_id, output_dir=root
+            )
+            current_manifest = _read_json(
+                Path(_text(item.get("source_root"))) / "daily_advisory_manifest.json"
+            )
+            if (
+                validation.get("status") != "PASS"
+                or current_manifest != item.get("manifest")
+                or _text(item.get("monitor_run_id")) not in monitor_ids
+            ):
+                errors.append(f"daily_source_or_lineage_drift:{daily_id}")
+            daily_ids.add(daily_id)
+            daily_dates.append(_text(item.get("as_of")))
+        if len(daily_ids) != len(daily_dates) or len(daily_dates) != len(
+            set(daily_dates)
+        ):
+            errors.append("daily_duplicate_id_or_as_of")
+        owner_prefix = _records(source_snapshot.get("owner_review_event_prefix"))
+        selected_reviews = _records(source_snapshot.get("selected_owner_reviews"))
+        owner_root = Path(_text(_mapping(source_snapshot.get("source_roots")).get("owner_review")))
+        if owner_prefix or selected_reviews:
+            current_events = _read_jsonl(owner_root / "owner_review_events.jsonl")
+            if current_events[: len(owner_prefix)] != owner_prefix:
+                errors.append("owner_event_prefix_drift")
+            replayed, replay_errors = replay_owner_review_records(owner_prefix)
+            selected_records = [_mapping(item.get("review")) for item in selected_reviews]
+            replayed_selected = [
+                record
+                for record in replayed
+                if _text(record.get("review_id"))
+                in {_text(item.get("review_id")) for item in selected_reviews}
+            ]
+            if replay_errors or replayed_selected != selected_records:
+                errors.append("owner_event_prefix_replay_mismatch")
+            for item in selected_reviews:
+                review_id = _text(item.get("review_id"))
+                if (
+                    validate_owner_review_artifact(
+                        review_id=review_id, output_dir=owner_root
+                    ).get("status")
+                    != "PASS"
+                    or _text(item.get("daily_advisory_id")) not in daily_ids
+                ):
+                    errors.append(f"owner_review_source_or_lineage_drift:{review_id}")
+        paper = _mapping(source_snapshot.get("selected_paper_portfolio"))
+        if paper:
+            paper_root = Path(_text(paper.get("source_root")))
+            paper_id = _text(paper.get("paper_portfolio_id"))
+            if validate_paper_portfolio_artifact(
+                paper_portfolio_id=paper_id, output_dir=paper_root.parent
+            ).get("status") != "PASS":
+                errors.append("paper_portfolio_source_invalid")
+            current_events = _read_jsonl(paper_root / "paper_action_ledger.jsonl")
+            prefix = _records(paper.get("event_prefix"))
+            config = load_paper_portfolio_config(
+                Path(_text(_mapping(paper.get("manifest")).get("config_path")))
+            )
+            state, history, replay_errors = _replay_paper_action_events(
+                manifest=_mapping(paper.get("manifest")),
+                events=prefix,
+                config=config,
+                validate_sources=True,
+            )
+            if (
+                current_events[: len(prefix)] != prefix
+                or replay_errors
+                or state != paper.get("state")
+                or history != paper.get("history")
+            ):
+                errors.append("paper_event_prefix_replay_mismatch")
+        outcome_daily_ids = set()
+        for outcome in _records(source_snapshot.get("selected_outcomes")):
+            outcome_id = _text(outcome.get("outcome_id"))
+            outcome_root = Path(_text(outcome.get("source_root")))
+            daily_id = _text(outcome.get("daily_advisory_id"))
+            if daily_id in outcome_daily_ids:
+                errors.append(f"outcome_duplicate_daily:{daily_id}")
+            outcome_daily_ids.add(daily_id)
+            if (
+                daily_id not in daily_ids
+                or validate_advisory_outcome_artifact(
+                    outcome_id=outcome_id, output_dir=outcome_root.parent
+                ).get("status")
+                != "PASS"
+                or _read_json(outcome_root / "advisory_event.json")
+                != outcome.get("advisory_event")
+            ):
+                errors.append(f"outcome_source_or_lineage_drift:{outcome_id}")
+            current_updates = _read_jsonl(outcome_root / "outcome_update_events.jsonl")
+            prefix = _records(outcome.get("update_event_prefix"))
+            if current_updates[: len(prefix)] != prefix:
+                errors.append(f"outcome_update_prefix_drift:{outcome_id}")
+            for row in _records(outcome.get("outcome_windows")):
+                status = row.get("outcome_status")
+                if status not in OUTCOME_WINDOW_STATUSES:
+                    errors.append(f"outcome_window_status_invalid:{outcome_id}")
+                elif status == "AVAILABLE" and not all(
+                    _is_finite_number(row.get(field)) for field in OUTCOME_METRIC_FIELDS
+                ):
+                    errors.append(f"outcome_available_metric_invalid:{outcome_id}")
+                elif status != "AVAILABLE" and not all(
+                    row.get(field) is None for field in OUTCOME_METRIC_FIELDS
+                ):
+                    errors.append(f"outcome_nonavailable_metric_not_null:{outcome_id}")
+        aging = _mapping(source_snapshot.get("selected_shadow_aging"))
+        if aging:
+            aging_root = Path(_text(aging.get("source_root")))
+            aging_id = _text(aging.get("aging_id"))
+            if (
+                validate_shadow_aging_artifact(
+                    aging_id=aging_id, output_dir=aging_root.parent
+                ).get("status")
+                != "PASS"
+                or _read_json(aging_root / "shadow_aging_manifest.json")
+                != aging.get("manifest")
+                or _read_json(aging_root / "promotion_clock_v2_summary.json")
+                != aging.get("summary")
+            ):
+                errors.append("shadow_aging_source_drift")
+        if not _weekly_review_record_has_no_execution_effect(source_snapshot):
+            errors.append("snapshot_execution_effect_forbidden")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"snapshot_replay_error:{exc}")
+    return sorted(set(errors))
 
 
 def _paper_portfolio_dir(*, paper_portfolio_id: str | None, output_dir: Path) -> Path:

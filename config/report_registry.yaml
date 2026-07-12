@@ -6355,6 +6355,8 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue weekly-advisory-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_review_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/source_validation_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_review_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_advisory_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_owner_decision_summary.json
@@ -6364,9 +6366,10 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-140 aggregates shadow monitoring, daily advisory, owner review,
-      paper portfolio, outcome, and shadow aging evidence into a weekly manual
-      review package.
+      TRADING-140 freezes validated weekly monitor, daily advisory, owner-event,
+      paper-action, outcome-update, and shadow-aging prefixes at an explicit
+      evidence cutoff. Missing outcomes remain null, policy coverage is
+      versioned, and the package remains manual-review-only with no execution.
     owner_action: review_weekly_advisory_summary_before_next_shadow_or_snapshot_action
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

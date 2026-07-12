@@ -105,6 +105,27 @@ def paper_config_path(
                     "outcome_aggregation": "mean_available_windows_equal_weight",
                     "require_consensus_drift_per_monitor": True,
                 },
+                "weekly_review_v2": {
+                    "policy_id": "dynamic_v3_weekly_advisory_review_v2_test",
+                    "owner": "tests",
+                    "version": "v1",
+                    "status": "test",
+                    "rationale": "Focused weekly review evidence coverage tests.",
+                    "intended_effect": "No production or execution effect.",
+                    "review_condition": "Test fixture only.",
+                    "minimum_shadow_monitor_run_count": 1,
+                    "minimum_daily_advisory_count": 1,
+                    "minimum_owner_review_count": 1,
+                    "minimum_available_outcome_window_count": 1,
+                    "require_active_paper_portfolio": True,
+                    "require_shadow_aging": False,
+                    "max_downgrade_recommended_count": 0,
+                    "recommendation_precedence": [
+                        "reduce_shortlist",
+                        "manual_review_required",
+                        "continue_monitoring",
+                    ],
+                },
                 "ledger": {"immutable_events": True, "allow_rebuild_from_events": True},
             },
             sort_keys=False,
@@ -266,7 +287,7 @@ def write_validated_daily_advisory(
     base = generated_at or datetime.combine(as_of, datetime.min.time(), tzinfo=UTC).replace(
         hour=10
     )
-    fixture = shadow_shortlist_fixture(tmp_path)
+    fixture = shadow_shortlist_fixture(tmp_path, generated_at=base.replace(hour=9))
     monitor = run_shadow_shortlist_monitor(
         shadow_shortlist_id=fixture["shadow"]["shadow_shortlist_id"],
         as_of=as_of,
