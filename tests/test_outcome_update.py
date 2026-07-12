@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,13 +12,17 @@ from dynamic_v3_outcome_loop_helpers import (
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
+from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
+    validate_advisory_outcome_artifact,
+)
 
 
 def test_outcome_update_updates_ready_window_and_audits_skips(
     tmp_path: Path,
     monkeypatch: Any,
 ) -> None:
-    result = run_safe_update_fixture(tmp_path, monkeypatch)["update"]
+    fixture = run_safe_update_fixture(tmp_path, monkeypatch)
+    result = fixture["update"]
     delta = result["outcome_status_delta"]
 
     assert result["manifest"]["updated_count"] == 1
@@ -29,6 +34,26 @@ def test_outcome_update_updates_ready_window_and_audits_skips(
     assert delta["after"]["forward_available"] == 1
     assert delta["before"]["forward_pending"] == 4
     assert delta["after"]["forward_pending"] == 3
+    outcome_id = fixture["outcome"]["outcome_id"]
+    event_rows = [
+        json.loads(line)
+        for line in (
+            tmp_path
+            / "advisory_outcome"
+            / outcome_id
+            / "outcome_update_events.jsonl"
+        )
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    assert event_rows[-1]["allowed_window_days"] == [1]
+    assert (
+        validate_advisory_outcome_artifact(
+            outcome_id=outcome_id,
+            output_dir=tmp_path / "advisory_outcome",
+        )["status"]
+        == "PASS"
+    )
     assert (
         accumulation.validate_outcome_update_artifact(
             update_id=result["outcome_update_id"],

@@ -6,10 +6,9 @@ from typing import Any
 
 from dynamic_v3_paper_tracking_helpers import (
     paper_config_path,
-    write_daily_advisory,
     write_market_cache,
-    write_owner_review,
     write_shadow_shortlist_and_monitoring,
+    write_validated_owner_review,
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
@@ -23,20 +22,24 @@ from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
 def build_ready_outcome_update_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
     monkeypatch.setattr(accumulation, "DEFAULT_LATEST_POINTER_DIR", tmp_path / "latest")
     config_path = paper_config_path(tmp_path)
-    init_paper_portfolio(config_path=config_path, output_dir=tmp_path / "paper_portfolio")
-    advisory = write_daily_advisory(tmp_path, daily_advisory_id="daily-ready", as_of="2026-06-08")
-    review = write_owner_review(
-        tmp_path,
-        daily_advisory_id=advisory["daily_advisory_id"],
-        owner_decision="paper_adjustment",
-        as_of="2026-06-08",
+    init_paper_portfolio(
+        config_path=config_path,
+        output_dir=tmp_path / "paper_portfolio",
+        generated_at=datetime(2026, 6, 8, 9, tzinfo=UTC),
     )
+    review = write_validated_owner_review(
+        tmp_path,
+        owner_decision="paper_adjustment",
+        as_of=date(2026, 6, 8),
+    )
+    advisory = {"daily_advisory_id": review["daily_advisory_id"]}
     apply_owner_review_to_paper_portfolio(
         review_id=review["review_id"],
         config_path=config_path,
         output_dir=tmp_path / "paper_portfolio",
         owner_review_dir=tmp_path / "owner_review_journal",
         daily_advisory_dir=tmp_path / "position_advisory_daily",
+        generated_at=datetime(2026, 6, 8, 14, tzinfo=UTC),
     )
     outcome = track_advisory_outcome(
         daily_advisory_id=advisory["daily_advisory_id"],
@@ -44,6 +47,7 @@ def build_ready_outcome_update_fixture(tmp_path: Path, monkeypatch: Any) -> dict
         output_dir=tmp_path / "advisory_outcome",
         daily_advisory_dir=tmp_path / "position_advisory_daily",
         paper_portfolio_dir=tmp_path / "paper_portfolio",
+        generated_at=datetime(2026, 6, 8, 15, tzinfo=UTC),
     )
     prices_path, rates_path = write_market_cache(tmp_path / "market_cache", start="2026-06-08")
     update_prices_path, update_rates_path = write_market_cache(

@@ -33,8 +33,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     SCHEMA_VERSION,
     STRATEGY_FAMILY,
     replay_owner_review_records,
+    validate_consensus_drift_artifact,
     validate_owner_review_artifact,
     validate_position_advisory_daily_artifact,
+    validate_shadow_monitor_run_artifact,
+    validate_shadow_shortlist_artifact,
 )
 from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_ASSETS_CONFIG_PATH,
@@ -69,6 +72,7 @@ OUTCOME_MANIFEST_STATUSES = {"PENDING", "AVAILABLE", "PARTIAL", "INSUFFICIENT_DA
 OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION = "advisory_outcome_update_ledger.v2"
 OUTCOME_UPDATE_EVENT_TYPE = "ADVISORY_OUTCOME_UPDATED"
 OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION = "owner_attribution_snapshot.v2"
+SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION = "shadow_aging_snapshot.v2"
 OUTCOME_METRIC_FIELDS = (
     "paper_portfolio_return",
     "no_trade_return",
@@ -870,6 +874,7 @@ def update_advisory_outcome(
     prices_path: Path = DEFAULT_ETF_PRICE_PATH,
     rates_path: Path = DEFAULT_RATES_CACHE_PATH,
     generated_at: datetime | None = None,
+    allowed_window_days: set[int] | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
@@ -969,7 +974,7 @@ def update_advisory_outcome(
         data_quality_report_checksum = _file_sha256(quality_report_path)
         prices_source_checksum = _file_sha256(prices_path)
         rates_source_checksum = _file_sha256(rates_path)
-    rows = _compute_outcome_window_rows(
+    computed_rows = _compute_outcome_window_rows(
         advisory_event=event,
         config=config,
         paper_binding=paper_binding,
@@ -977,6 +982,31 @@ def update_advisory_outcome(
         updated_as_of=as_of,
         data_gate_ran=as_of <= today,
     )
+    rows = computed_rows
+    effective_allowed_window_days = {
+        int(row.get("window_days") or 0) for row in computed_rows
+    }
+    if allowed_window_days is not None:
+        allowed = {int(value) for value in allowed_window_days}
+        prior_rows = _read_jsonl(outcome_dir / "outcome_windows.jsonl")
+        prior_by_window = {
+            int(row.get("window_days") or 0): dict(row) for row in prior_rows
+        }
+        computed_by_window = {
+            int(row.get("window_days") or 0): dict(row) for row in computed_rows
+        }
+        configured_windows = set(computed_by_window)
+        if not allowed or not allowed <= configured_windows:
+            raise DynamicV3PaperTrackingError(
+                "allowed outcome update windows must be a non-empty configured subset"
+            )
+        rows = [
+            computed_by_window[window_days]
+            if window_days in allowed
+            else prior_by_window[window_days]
+            for window_days in sorted(configured_windows)
+        ]
+        effective_allowed_window_days = allowed
     status = _rollup_outcome_status(rows)
     update_event = {
         "schema_version": SCHEMA_VERSION,
@@ -999,6 +1029,7 @@ def update_advisory_outcome(
         "price_snapshot_path": price_snapshot_path,
         "price_snapshot_checksum": price_snapshot_checksum,
         "paper_action_binding": paper_binding,
+        "allowed_window_days": sorted(effective_allowed_window_days),
         "outcome_windows": rows,
         "previous_event_checksum": (
             _text(update_events[-1].get("event_checksum")) if update_events else "GENESIS"
@@ -1590,66 +1621,40 @@ def run_shadow_aging(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    config = load_paper_portfolio_config(config_path)
-    policy = _mapping(config.get("promotion_clock_v2"))
-    candidate_ids = _shadow_shortlist_candidate_ids(shadow_shortlist_id, shadow_shortlist_dir)
-    monitor_rows = _monitor_rows_for_shortlist(shadow_shortlist_id, shadow_monitor_run_dir)
-    drift_rows = _drift_rows_for_shortlist(
-        shadow_shortlist_id, shadow_monitor_run_dir, consensus_drift_dir
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    source_snapshot = _shadow_aging_source_snapshot(
+        shadow_shortlist_id=shadow_shortlist_id,
+        config_path=config_path,
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        generated_at=generated,
     )
-    outcome_score = _average_available_outcome_score(advisory_outcome_dir)
-    rows = [
-        _candidate_aging_status(
-            candidate_id=candidate_id,
-            monitor_rows=monitor_rows.get(candidate_id, []),
-            drift_rows=drift_rows,
-            outcome_score=outcome_score,
-            policy=policy,
-        )
-        for candidate_id in candidate_ids
-    ]
-    aging_id = _stable_id("shadow-aging", shadow_shortlist_id, generated.isoformat())
+    rows = _shadow_aging_candidate_rows(source_snapshot)
+    summary = _shadow_aging_summary(source_snapshot=source_snapshot, rows=rows)
+    source_validation = _shadow_aging_source_validation_summary(source_snapshot)
+    aging_id = _stable_id(
+        "shadow-aging-v2",
+        shadow_shortlist_id,
+        generated.isoformat(),
+        sha256(_canonical_json(source_snapshot).encode("utf-8")).hexdigest(),
+    )
     artifact_dir = _unique_dir(output_dir / aging_id)
     artifact_dir.mkdir(parents=True, exist_ok=False)
-    summary = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_promotion_clock_v2_summary",
-        "aging_id": artifact_dir.name,
-        "shadow_shortlist_id": shadow_shortlist_id,
-        "candidate_count": len(rows),
-        "eligible_for_review_count": sum(
-            1 for row in rows if row["promotion_clock_status"] == "eligible_for_review"
-        ),
-        "downgrade_recommended_count": sum(
-            1 for row in rows if row["promotion_clock_status"] == "downgrade_recommended"
-        ),
-        "warming_up_count": sum(1 for row in rows if row["promotion_clock_status"] == "warming_up"),
-        "blocked_count": sum(1 for row in rows if row["promotion_clock_status"] == "blocked"),
-        "production_candidate_generated": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_shadow_aging_manifest",
-        "aging_id": artifact_dir.name,
-        "shadow_shortlist_id": shadow_shortlist_id,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if rows else "INSUFFICIENT_DATA",
-        "candidate_count": len(rows),
-        "candidate_aging_status_path": str(artifact_dir / "candidate_aging_status.jsonl"),
-        "promotion_clock_v2_summary_path": str(artifact_dir / "promotion_clock_v2_summary.json"),
-        "shadow_aging_report_path": str(artifact_dir / "shadow_aging_report.md"),
-        "automatic_candidate_promotion": False,
-        "production_candidate_generated": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    source_snapshot_path = artifact_dir / "shadow_aging_source_snapshot.json"
+    source_validation_path = artifact_dir / "source_validation_summary.json"
+    _write_json(source_snapshot_path, source_snapshot)
+    _write_json(source_validation_path, source_validation)
+    summary = {**summary, "aging_id": artifact_dir.name}
+    manifest = _shadow_aging_manifest_payload(
+        aging_dir=artifact_dir,
+        aging_id=artifact_dir.name,
+        generated_at=generated,
+        source_snapshot=source_snapshot,
+        rows=rows,
+        summary=summary,
+    )
     _write_json(artifact_dir / "shadow_aging_manifest.json", manifest)
     _write_jsonl(artifact_dir / "candidate_aging_status.jsonl", rows)
     _write_json(artifact_dir / "promotion_clock_v2_summary.json", summary)
@@ -1665,6 +1670,8 @@ def run_shadow_aging(
         "manifest": manifest,
         "candidate_aging_status": rows,
         "promotion_clock_v2_summary": summary,
+        "shadow_aging_source_snapshot": source_snapshot,
+        "source_validation_summary": source_validation,
     }
 
 
@@ -1693,44 +1700,166 @@ def validate_shadow_aging_artifact(
     output_dir: Path = DEFAULT_SHADOW_AGING_DIR,
 ) -> dict[str, Any]:
     artifact_dir = output_dir / aging_id
-    manifest = _read_optional_json(artifact_dir / "shadow_aging_manifest.json") or {}
-    rows = _read_jsonl(artifact_dir / "candidate_aging_status.jsonl")
+    paths = {
+        "manifest": artifact_dir / "shadow_aging_manifest.json",
+        "source_snapshot": artifact_dir / "shadow_aging_source_snapshot.json",
+        "source_validation": artifact_dir / "source_validation_summary.json",
+        "candidate_status": artifact_dir / "candidate_aging_status.jsonl",
+        "summary": artifact_dir / "promotion_clock_v2_summary.json",
+        "report": artifact_dir / "shadow_aging_report.md",
+    }
+    manifest = _read_optional_json(paths["manifest"]) or {}
+    if manifest.get("source_snapshot_schema_version") != SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION:
+        legacy_rows = _read_jsonl(paths["candidate_status"])
+        legacy_checks = [
+            _check(
+                "legacy_required_files",
+                all(
+                    paths[key].is_file()
+                    for key in ("manifest", "candidate_status", "summary", "report")
+                ),
+                aging_id,
+            ),
+            _check("aging_id_matches", manifest.get("aging_id") == aging_id, aging_id),
+            _check(
+                "legacy_promotion_status_valid",
+                all(
+                    row.get("promotion_clock_status") in PROMOTION_CLOCK_STATUSES
+                    for row in legacy_rows
+                ),
+                "promotion statuses",
+            ),
+            _check(
+                "legacy_no_execution_effect",
+                manifest.get("production_candidate_generated") is False
+                and manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy aging remains manual-review-only evidence",
+            ),
+        ]
+        structural_pass = all(check["passed"] for check in legacy_checks)
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_shadow_aging_validation",
+            artifact_id_key="aging_id",
+            artifact_id=aging_id,
+            status="PASS_WITH_WARNINGS" if structural_pass else "FAIL",
+            checks=legacy_checks,
+        )
+        payload.update(
+            {
+                "source_snapshot_status": "LEGACY_UNSNAPSHOTTED",
+                "warnings": [
+                    "LEGACY_UNSNAPSHOTTED: 旧shadow aging缺少validated source snapshot"
+                ],
+            }
+        )
+        return payload
+    existence_checks = [
+        _check(f"{name}_exists", path.is_file(), str(path)) for name, path in paths.items()
+    ]
+    if not all(check["passed"] for check in existence_checks):
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_shadow_aging_validation",
+            artifact_id_key="aging_id",
+            artifact_id=aging_id,
+            status="FAIL",
+            checks=existence_checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    try:
+        source_snapshot = _read_json(paths["source_snapshot"])
+        source_validation = _read_json(paths["source_validation"])
+        rows = _read_jsonl(paths["candidate_status"])
+        summary = _read_json(paths["summary"])
+        report = paths["report"].read_text(encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        checks = [*existence_checks, _check("artifact_parse", False, str(exc))]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_shadow_aging_validation",
+            artifact_id_key="aging_id",
+            artifact_id=aging_id,
+            status="FAIL",
+            checks=checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    snapshot_errors = _shadow_aging_snapshot_errors(source_snapshot)
+    expected_rows = _shadow_aging_candidate_rows(source_snapshot)
+    expected_summary = {
+        **_shadow_aging_summary(source_snapshot=source_snapshot, rows=expected_rows),
+        "aging_id": aging_id,
+    }
+    expected_source_validation = _shadow_aging_source_validation_summary(source_snapshot)
+    generated = _parse_datetime_text(_text(source_snapshot.get("generated_cutoff")))
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    manifest_error = ""
+    try:
+        if generated is None:
+            raise DynamicV3PaperTrackingError("shadow aging cutoff is invalid")
+        expected_manifest = _shadow_aging_manifest_payload(
+            aging_dir=artifact_dir,
+            aging_id=aging_id,
+            generated_at=generated,
+            source_snapshot=source_snapshot,
+            rows=expected_rows,
+            summary=expected_summary,
+        )
+        expected_report = render_shadow_aging_report(
+            expected_manifest, expected_summary, expected_rows
+        )
+    except Exception as exc:  # noqa: BLE001
+        manifest_error = str(exc)
     checks = [
-        _check("manifest_exists", (artifact_dir / "shadow_aging_manifest.json").exists(), aging_id),
-        _check(
-            "candidate_status_exists",
-            (artifact_dir / "candidate_aging_status.jsonl").exists(),
-            aging_id,
-        ),
-        _check(
-            "summary_exists", (artifact_dir / "promotion_clock_v2_summary.json").exists(), aging_id
-        ),
-        _check("report_exists", (artifact_dir / "shadow_aging_report.md").exists(), aging_id),
+        *existence_checks,
         _check("aging_id_matches", manifest.get("aging_id") == aging_id, aging_id),
+        _check("source_snapshot_valid", not snapshot_errors, ";".join(snapshot_errors)),
         _check(
-            "promotion_status_valid",
-            all(row.get("promotion_clock_status") in PROMOTION_CLOCK_STATUSES for row in rows),
-            "promotion statuses",
+            "source_snapshot_checksum",
+            manifest.get("source_snapshot_checksum") == _file_sha256(paths["source_snapshot"]),
+            str(paths["source_snapshot"]),
         ),
         _check(
-            "production_candidate_not_generated",
-            manifest.get("production_candidate_generated") is False,
-            "no production candidate",
+            "source_validation_matches",
+            source_validation == expected_source_validation,
+            "source validation replay",
+        ),
+        _check("candidate_status_matches", rows == expected_rows, "candidate formula replay"),
+        _check("summary_matches", summary == expected_summary, "summary replay"),
+        _check(
+            "manifest_matches",
+            not manifest_error and manifest == expected_manifest,
+            manifest_error or "manifest replay",
         ),
         _check(
-            "broker_action_forbidden",
-            manifest.get("broker_action_allowed") is False,
-            "broker action forbidden",
+            "report_matches",
+            not manifest_error and report == expected_report,
+            str(paths["report"]),
+        ),
+        _check(
+            "no_execution_effect",
+            _shadow_aging_record_has_no_execution_effect(manifest),
+            "manual review evidence only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
-    return _validation_payload(
+    payload = _validation_payload(
         report_type="etf_dynamic_v3_shadow_aging_validation",
         artifact_id_key="aging_id",
         artifact_id=aging_id,
         status=status,
         checks=checks,
     )
+    payload.update(
+        {
+            "source_snapshot_status": "PASS" if status == "PASS" else "FAIL",
+            "selected_monitor_count": len(_records(source_snapshot.get("selected_monitors"))),
+            "selected_drift_count": len(_records(source_snapshot.get("selected_drifts"))),
+            "selected_outcome_count": len(_records(source_snapshot.get("selected_outcomes"))),
+        }
+    )
+    return payload
 
 
 def run_weekly_advisory_review(
@@ -2123,26 +2252,56 @@ def render_shadow_aging_report(
     lines = [
         "# Dynamic Rescue Shadow Aging v2",
         "",
-        f"- 状态：{manifest.get('status', 'UNKNOWN')}",
+        f"- 工程状态：{manifest.get('status', 'UNKNOWN')}",
+        f"- 证据状态：{manifest.get('evidence_status', 'UNKNOWN')}",
         f"- aging_id：`{manifest.get('aging_id', '')}`",
+        f"- policy：{manifest.get('policy_id', '')}@{manifest.get('policy_version', '')}",
+        f"- selected monitors：{summary.get('selected_monitor_count', 0)}",
+        f"- selected drifts：{summary.get('selected_drift_count', 0)}",
+        f"- selected outcomes：{summary.get('selected_outcome_count', 0)}",
         f"- eligible_for_review_count：{summary.get('eligible_for_review_count', 0)}",
         f"- downgrade_recommended_count：{summary.get('downgrade_recommended_count', 0)}",
         "- production_candidate_generated：false",
         "- broker_action_taken：false",
         "",
-        "| Candidate | Days | Rebalances | Status | Blocking reasons |",
-        "|---|---:|---:|---|---|",
+        "| Candidate | Calendar span | Observation days | Monitor runs | True rebalances | "
+        "Drift evidence/missing | Outcome windows | Outcome score | Status | Reasons |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---|---|",
     ]
     for row in rows:
+        reasons = [
+            *_texts(row.get("blocking_reasons")),
+            *_texts(row.get("downgrade_reasons")),
+        ]
         lines.append(
             "| "
             f"{row.get('candidate_id')} | "
-            f"{row.get('days_observed')} | "
-            f"{row.get('rebalance_count_observed')} | "
+            f"{row.get('calendar_span_days')} | "
+            f"{row.get('unique_observation_day_count')} | "
+            f"{row.get('monitor_run_count')} | "
+            f"{row.get('true_rebalance_count')} | "
+            f"{row.get('consensus_drift_evidence_count')}/"
+            f"{row.get('missing_consensus_drift_count')} | "
+            f"{row.get('candidate_outcome_available_window_count')} | "
+            f"{_format_optional_metric(row.get('outcome_score'))} | "
             f"{row.get('promotion_clock_status')} | "
-            f"{', '.join(_texts(row.get('blocking_reasons'))) or 'none'} |"
+            f"{', '.join(reasons) or 'none'} |"
         )
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## 阅读口径",
+            "",
+            "Calendar span、unique observation days、monitor runs 与 true rebalances "
+            "是不同样本单位；true rebalance 仅在相邻日期target weights实际变化时增加。",
+            "Outcome score只使用与candidate id绑定、已验证且AVAILABLE的窗口，按policy等权平均；"
+            "缺少candidate outcome显示N/A并阻断资格，不解释为0。",
+            "Consensus drift是shortlist级共享证据，缺失单独披露，不能由重复artifact加权。",
+            "`eligible_for_review`只进入人工复核队列，不是promotion、official weights、"
+            "portfolio approval、order或broker authorization。普通checksum不是数字签名。",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -3129,6 +3288,14 @@ def _replay_outcome_update_events(
     previous_checksum = "GENESIS"
     previous_as_of: date | None = None
     previous_event_at: datetime | None = None
+    previous_rows = [
+        _pending_outcome_window(
+            daily_advisory_id=_text(advisory_event.get("daily_advisory_id")),
+            window_days=window,
+            start_date=_text(advisory_event.get("as_of")),
+        )
+        for window in _configured_outcome_windows(config)
+    ]
     paper_root = Path(
         _text(
             _mapping(advisory_event.get("paper_portfolio_source")).get(
@@ -3215,7 +3382,7 @@ def _replay_outcome_update_events(
                         "future-as-of update must not claim data quality evidence"
                     )
                 snapshot = None
-            expected_rows = _compute_outcome_window_rows(
+            computed_rows = _compute_outcome_window_rows(
                 advisory_event=advisory_event,
                 config=config,
                 paper_binding=expected_binding,
@@ -3223,12 +3390,38 @@ def _replay_outcome_update_events(
                 updated_as_of=updated_as_of,
                 data_gate_ran=data_gate_ran,
             )
+            configured_windows = {
+                int(row.get("window_days") or 0) for row in computed_rows
+            }
+            raw_allowed = event.get("allowed_window_days")
+            allowed = (
+                {int(value) for value in raw_allowed}
+                if isinstance(raw_allowed, list)
+                else configured_windows
+            )
+            if not allowed or not allowed <= configured_windows:
+                raise DynamicV3PaperTrackingError(
+                    "update allowed windows are not a configured subset"
+                )
+            computed_by_window = {
+                int(row.get("window_days") or 0): row for row in computed_rows
+            }
+            previous_by_window = {
+                int(row.get("window_days") or 0): row for row in previous_rows
+            }
+            expected_rows = [
+                computed_by_window[window]
+                if window in allowed
+                else previous_by_window[window]
+                for window in sorted(configured_windows)
+            ]
             if _mapping(event.get("paper_action_binding")) != expected_binding:
                 errors.append(f"paper_action_binding_mismatch:{index}")
             if _records(event.get("outcome_windows")) != expected_rows:
                 errors.append(f"outcome_windows_content_mismatch:{index}")
             if event.get("status") != _rollup_outcome_status(expected_rows):
                 errors.append(f"rollup_status_mismatch:{index}")
+            previous_rows = expected_rows
         except Exception as exc:  # noqa: BLE001
             errors.append(f"update_recomputation_failed:{index}:{exc}")
         if not _outcome_record_has_no_execution_effect(event):
@@ -4661,175 +4854,1063 @@ def _optional_avg_metric(
     return round(sum(values) / len(values), 6) if values else None
 
 
-def _shadow_shortlist_candidate_ids(
-    shadow_shortlist_id: str, shadow_shortlist_dir: Path
-) -> list[str]:
-    rows = _read_jsonl(
-        shadow_shortlist_dir / shadow_shortlist_id / "shadow_shortlist_candidates.jsonl"
-    )
-    return [_text(row.get("candidate_id")) for row in rows if _text(row.get("candidate_id"))]
+def _shadow_aging_policy(config: Mapping[str, Any]) -> dict[str, Any]:
+    raw = _mapping(config.get("promotion_clock_v2"))
+
+    def integer(name: str, *aliases: str) -> int:
+        value = next((raw.get(key) for key in (name, *aliases) if key in raw), None)
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise DynamicV3PaperTrackingError(f"promotion_clock_v2.{name} must be an integer")
+        return value
+
+    def number(name: str, *aliases: str) -> float:
+        value = next((raw.get(key) for key in (name, *aliases) if key in raw), None)
+        return _strict_finite_number(value, f"promotion_clock_v2.{name}")
+
+    policy = {
+        "minimum_days_observed": integer("minimum_days_observed", "min_days_observed"),
+        "minimum_rebalance_count": integer(
+            "minimum_rebalance_count", "min_rebalance_count"
+        ),
+        "max_drift_warning_count": integer("max_drift_warning_count"),
+        "max_high_disagreement_count": integer("max_high_disagreement_count"),
+        "max_downgrade_warning_count": integer("max_downgrade_warning_count"),
+        "minimum_outcome_score": number("minimum_outcome_score", "min_outcome_score"),
+        "downgrade_outcome_score_floor": number(
+            "downgrade_outcome_score_floor", "downgrade_outcome_score"
+        ),
+        "minimum_outcome_available_window_count": integer(
+            "minimum_outcome_available_window_count"
+        ),
+        "outcome_aggregation": _text(raw.get("outcome_aggregation")),
+        "require_consensus_drift_per_monitor": raw.get(
+            "require_consensus_drift_per_monitor"
+        ),
+    }
+    for field in (
+        "minimum_days_observed",
+        "minimum_rebalance_count",
+        "max_drift_warning_count",
+        "max_high_disagreement_count",
+        "max_downgrade_warning_count",
+        "minimum_outcome_available_window_count",
+    ):
+        if int(policy[field]) < 0:
+            raise DynamicV3PaperTrackingError(f"promotion_clock_v2.{field} must be nonnegative")
+    if policy["outcome_aggregation"] != "mean_available_windows_equal_weight":
+        raise DynamicV3PaperTrackingError(
+            "promotion_clock_v2.outcome_aggregation must be "
+            "mean_available_windows_equal_weight"
+        )
+    if policy["require_consensus_drift_per_monitor"] is not True:
+        raise DynamicV3PaperTrackingError(
+            "promotion_clock_v2.require_consensus_drift_per_monitor must be true"
+        )
+    if float(policy["downgrade_outcome_score_floor"]) > float(
+        policy["minimum_outcome_score"]
+    ):
+        raise DynamicV3PaperTrackingError(
+            "downgrade outcome floor cannot exceed minimum outcome score"
+        )
+    return policy
 
 
-def _monitor_rows_for_shortlist(
+def _shadow_aging_source_snapshot(
+    *,
     shadow_shortlist_id: str,
-    output_dir: Path,
-) -> dict[str, list[dict[str, Any]]]:
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for child in output_dir.glob("*"):
-        if not child.is_dir():
-            continue
-        manifest = _read_optional_json(child / "shadow_monitor_manifest.json") or {}
+    config_path: Path,
+    shadow_shortlist_dir: Path,
+    shadow_monitor_run_dir: Path,
+    consensus_drift_dir: Path,
+    advisory_outcome_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    config = load_paper_portfolio_config(config_path)
+    policy = _shadow_aging_policy(config)
+    shortlist_root = shadow_shortlist_dir / shadow_shortlist_id
+    shortlist_validation = validate_shadow_shortlist_artifact(
+        shadow_shortlist_id=shadow_shortlist_id,
+        output_dir=shadow_shortlist_dir,
+    )
+    if shortlist_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "shadow shortlist validation must PASS before shadow aging"
+        )
+    shortlist_manifest = _read_json(shortlist_root / "shadow_shortlist_manifest.json")
+    shortlist_generated = _parse_datetime_text(_text(shortlist_manifest.get("generated_at")))
+    if shortlist_generated is None or shortlist_generated > generated_at:
+        raise DynamicV3PaperTrackingError(
+            "shadow shortlist generated_at must be valid and not exceed aging cutoff"
+        )
+    shortlist_rows = _read_jsonl(shortlist_root / "shadow_shortlist_candidates.jsonl")
+    candidate_ids = [_text(row.get("candidate_id")) for row in shortlist_rows]
+    if (
+        not candidate_ids
+        or any(not value for value in candidate_ids)
+        or len(candidate_ids) != len(set(candidate_ids))
+        or int(shortlist_manifest.get("candidate_count") or 0) != len(candidate_ids)
+    ):
+        raise DynamicV3PaperTrackingError(
+            "shadow shortlist candidate ids must be non-empty, unique, and count-bound"
+        )
+    candidate_set = set(candidate_ids)
+    selected_monitors: list[dict[str, Any]] = []
+    seen_monitor_ids: set[str] = set()
+    seen_as_of: set[str] = set()
+    for child in sorted(path for path in shadow_monitor_run_dir.glob("*") if path.is_dir()):
+        manifest_path = child / "shadow_monitor_manifest.json"
+        if not manifest_path.is_file():
+            raise DynamicV3PaperTrackingError(f"monitor directory is missing manifest: {child}")
+        manifest = _read_json(manifest_path)
         if _text(manifest.get("shadow_shortlist_id")) != shadow_shortlist_id:
             continue
-        for row in _read_jsonl(child / "shadow_candidate_daily_results.jsonl"):
-            candidate_id = _text(row.get("candidate_id"))
-            if candidate_id:
-                grouped[candidate_id].append(row)
-    return grouped
-
-
-def _drift_rows_for_shortlist(
-    shadow_shortlist_id: str,
-    monitor_dir: Path,
-    drift_dir: Path,
-) -> list[dict[str, Any]]:
-    monitor_ids = set()
-    for child in monitor_dir.glob("*"):
-        if not child.is_dir():
+        as_of = _date_from_any(manifest.get("as_of"))
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        if as_of is None or generated is None:
+            raise DynamicV3PaperTrackingError("selected monitor requires valid as_of/generated_at")
+        if as_of > generated_at.date() or generated > generated_at:
             continue
-        manifest = _read_optional_json(child / "shadow_monitor_manifest.json") or {}
-        if _text(manifest.get("shadow_shortlist_id")) == shadow_shortlist_id:
-            monitor_ids.add(_text(manifest.get("monitor_run_id")))
-    rows = []
-    for child in drift_dir.glob("*"):
-        if not child.is_dir():
+        monitor_id = _text(manifest.get("monitor_run_id"))
+        if not monitor_id or monitor_id in seen_monitor_ids or as_of.isoformat() in seen_as_of:
+            raise DynamicV3PaperTrackingError(
+                "selected monitors require unique monitor id and unique as_of"
+            )
+        validation = validate_shadow_monitor_run_artifact(
+            monitor_run_id=monitor_id,
+            output_dir=shadow_monitor_run_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"shadow monitor validation must PASS for aging: {monitor_id}"
+            )
+        rows = _read_jsonl(child / "shadow_candidate_daily_results.jsonl")
+        row_ids = [_text(row.get("candidate_id")) for row in rows]
+        if len(row_ids) != len(set(row_ids)) or set(row_ids) != candidate_set:
+            raise DynamicV3PaperTrackingError(
+                f"monitor candidate set must exactly match shortlist: {monitor_id}"
+            )
+        normalized_rows = []
+        for row in rows:
+            if _date_from_any(row.get("as_of")) != as_of:
+                raise DynamicV3PaperTrackingError(
+                    f"monitor candidate row as_of mismatch: {monitor_id}"
+                )
+            normalized_rows.append(
+                {
+                    **row,
+                    "target_weights": _validated_outcome_weights(
+                        _mapping(row.get("target_weights")),
+                        f"monitor_target_weights:{monitor_id}:{row.get('candidate_id')}",
+                    ),
+                }
+            )
+        source_paths = sorted(path for path in child.iterdir() if path.is_file())
+        selected_monitors.append(
+            {
+                "monitor_run_id": monitor_id,
+                "as_of": as_of.isoformat(),
+                "generated_at": generated.isoformat(),
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(child, source_paths),
+                "manifest": manifest,
+                "candidate_rows": sorted(
+                    normalized_rows, key=lambda row: _text(row.get("candidate_id"))
+                ),
+            }
+        )
+        seen_monitor_ids.add(monitor_id)
+        seen_as_of.add(as_of.isoformat())
+    selected_monitors.sort(key=lambda item: (item["as_of"], item["monitor_run_id"]))
+    monitor_by_id = {item["monitor_run_id"]: item for item in selected_monitors}
+    selected_drifts: list[dict[str, Any]] = []
+    seen_drift_monitors: set[str] = set()
+    for child in sorted(path for path in consensus_drift_dir.glob("*") if path.is_dir()):
+        manifest_path = child / "consensus_drift_manifest.json"
+        if not manifest_path.is_file():
+            raise DynamicV3PaperTrackingError(f"drift directory is missing manifest: {child}")
+        manifest = _read_json(manifest_path)
+        monitor_id = _text(
+            manifest.get("source_shadow_monitor_run_id"),
+            _text(manifest.get("monitor_run_id")),
+        )
+        if monitor_id not in monitor_by_id:
             continue
-        summary = _read_optional_json(child / "consensus_drift_summary.json") or {}
-        if _text(summary.get("shadow_monitor_run_id")) in monitor_ids:
-            rows.append(summary)
-    return rows
-
-
-def _candidate_aging_status(
-    *,
-    candidate_id: str,
-    monitor_rows: Sequence[Mapping[str, Any]],
-    drift_rows: Sequence[Mapping[str, Any]],
-    outcome_score: float,
-    policy: Mapping[str, Any],
-) -> dict[str, Any]:
-    dates = sorted(
-        {
-            _date_from_any(row.get("as_of"))
-            for row in monitor_rows
-            if _date_from_any(row.get("as_of"))
-        }
-    )
-    days_observed = (dates[-1] - dates[0]).days + 1 if len(dates) >= 2 else len(dates)
-    weights_seen = [_canonical_json(_mapping(row.get("target_weights"))) for row in monitor_rows]
-    rebalance_count = max(0, len([item for item in weights_seen if item]) - 1)
-    drift_warning_count = sum(
-        1
-        for row in monitor_rows
-        if _text(_mapping(row.get("live_vs_backtest_drift")).get("status"))
-        not in {"", "PASS", "UNKNOWN"}
-    )
-    downgrade_warning_count = sum(
-        1
-        for row in monitor_rows
-        if _text(row.get("recommendation")) in {"required_downgrade", "remove_from_shadow"}
-    )
-    high_disagreement_count = sum(
-        1 for row in drift_rows if row.get("disagreement_status") == "HIGH_DISAGREEMENT"
-    )
-    stability_score = round(
-        max(
-            0.0,
-            1.0
-            - (drift_warning_count + high_disagreement_count + downgrade_warning_count)
-            / max(1, len(monitor_rows) + len(drift_rows)),
-        ),
-        6,
-    )
-    blocking = []
-    min_days = int(
-        policy.get(
-            "min_days_observed",
-            policy.get("minimum_days_observed", 30),
+        if monitor_id in seen_drift_monitors:
+            raise DynamicV3PaperTrackingError(
+                f"multiple consensus drift artifacts found for monitor: {monitor_id}"
+            )
+        generated = _parse_datetime_text(_text(manifest.get("generated_at")))
+        as_of = _date_from_any(manifest.get("as_of"))
+        if generated is None or as_of is None or generated > generated_at:
+            raise DynamicV3PaperTrackingError(
+                f"selected consensus drift exceeds aging cutoff: {monitor_id}"
+            )
+        if as_of.isoformat() != monitor_by_id[monitor_id]["as_of"]:
+            raise DynamicV3PaperTrackingError(
+                f"consensus drift as_of does not match monitor: {monitor_id}"
+            )
+        drift_id = _text(manifest.get("drift_id"), child.name)
+        validation = validate_consensus_drift_artifact(
+            drift_id=drift_id,
+            output_dir=consensus_drift_dir,
         )
-    )
-    min_rebalances = int(
-        policy.get(
-            "min_rebalance_count",
-            policy.get("minimum_rebalance_count", 3),
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"consensus drift validation must PASS for aging: {drift_id}"
+            )
+        summary = _read_json(child / "consensus_drift_summary.json")
+        selected_drifts.append(
+            {
+                "drift_id": drift_id,
+                "monitor_run_id": monitor_id,
+                "as_of": as_of.isoformat(),
+                "generated_at": generated.isoformat(),
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, sorted(path for path in child.iterdir() if path.is_file())
+                ),
+                "manifest": manifest,
+                "summary": summary,
+            }
         )
+        seen_drift_monitors.add(monitor_id)
+    selected_drifts.sort(key=lambda item: (item["as_of"], item["drift_id"]))
+    selected_outcomes = _shadow_aging_outcome_snapshot(
+        candidate_ids=candidate_set,
+        advisory_outcome_dir=advisory_outcome_dir,
+        generated_at=generated_at,
     )
-    max_drift = int(policy.get("max_drift_warning_count", 1))
-    max_high_disagreement = int(policy.get("max_high_disagreement_count", 1))
-    outcome_floor = _float(
-        policy.get(
-            "min_outcome_score",
-            policy.get("minimum_outcome_score", -0.01),
-        )
-    )
-    if days_observed < min_days:
-        blocking.append("insufficient_days_observed")
-    if rebalance_count < min_rebalances:
-        blocking.append("insufficient_rebalance_count")
-    if drift_warning_count > max_drift:
-        blocking.append("drift_warning_count_too_high")
-    if high_disagreement_count > max_high_disagreement:
-        blocking.append("high_disagreement_count_too_high")
-    if downgrade_warning_count > 0:
-        blocking.append("downgrade_warning_present")
-    if outcome_score < outcome_floor:
-        blocking.append("outcome_score_below_floor")
-    if downgrade_warning_count or outcome_score < outcome_floor:
-        status = "downgrade_recommended"
-    elif not monitor_rows:
-        status = "not_started"
-    elif blocking:
-        status = (
-            "warming_up"
-            if set(blocking) <= {"insufficient_days_observed", "insufficient_rebalance_count"}
-            else "blocked"
-        )
-    else:
-        status = "eligible_for_review"
-    next_review_date = (
-        (dates[-1] + timedelta(days=max(0, min_days - days_observed))).isoformat()
-        if dates
-        else None
-    )
+    config_metadata = _mapping(config.get("policy_metadata"))
     return {
         "schema_version": SCHEMA_VERSION,
-        "candidate_id": candidate_id,
-        "days_observed": days_observed,
-        "rebalance_count_observed": rebalance_count,
-        "monitor_runs_count": len(monitor_rows),
-        "advisory_participation_count": len(monitor_rows),
-        "drift_warning_count": drift_warning_count,
-        "high_disagreement_count": high_disagreement_count,
-        "downgrade_warning_count": downgrade_warning_count,
-        "outcome_score": round(outcome_score, 6),
-        "stability_score": stability_score,
-        "promotion_clock_status": status,
-        "blocking_reasons": blocking,
-        "next_review_date": next_review_date,
+        "snapshot_schema_version": SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_aging_source_snapshot",
+        "generated_cutoff": generated_at.isoformat(),
+        "shadow_shortlist_id": shadow_shortlist_id,
+        "config": {
+            "path": str(config_path),
+            "checksum": _file_sha256(config_path),
+            "policy_id": config_metadata.get("policy_id"),
+            "policy_version": config_metadata.get("version"),
+            "promotion_clock_v2": policy,
+            "simulation_cost_rate": _outcome_cost_rate(config),
+        },
+        "shortlist": {
+            "validation_status": "PASS",
+            "source_root": str(shortlist_root),
+            "source_files": _source_file_inventory(
+                shortlist_root,
+                sorted(path for path in shortlist_root.iterdir() if path.is_file()),
+            ),
+            "manifest": shortlist_manifest,
+            "candidate_rows": sorted(
+                shortlist_rows, key=lambda row: _text(row.get("candidate_id"))
+            ),
+        },
+        "candidate_ids": sorted(candidate_ids),
+        "selected_monitor_count": len(selected_monitors),
+        "selected_monitors": selected_monitors,
+        "selected_drift_count": len(selected_drifts),
+        "selected_drifts": selected_drifts,
+        "selected_outcome_count": len(selected_outcomes),
+        "selected_outcomes": selected_outcomes,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "automatic_candidate_promotion": False,
         "production_candidate_generated": False,
+        "broker_action_allowed": False,
         "broker_action_taken": False,
+        "production_effect": "none",
     }
 
 
-def _average_available_outcome_score(output_dir: Path) -> float:
-    values = []
-    for child in output_dir.glob("*"):
-        if not child.is_dir():
+def _shadow_aging_outcome_snapshot(
+    *,
+    candidate_ids: set[str],
+    advisory_outcome_dir: Path,
+    generated_at: datetime,
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    seen_daily: set[str] = set()
+    if not advisory_outcome_dir.exists():
+        return selected
+    for child in sorted(path for path in advisory_outcome_dir.glob("*") if path.is_dir()):
+        manifest_path = child / "advisory_outcome_manifest.json"
+        event_path = child / "advisory_event.json"
+        if not manifest_path.is_file() or not event_path.is_file():
+            raise DynamicV3PaperTrackingError(
+                f"advisory outcome directory is incomplete: {child}"
+            )
+        manifest = _read_json(manifest_path)
+        event = _read_json(event_path)
+        frozen_daily = _mapping(_mapping(event.get("frozen_track_sources")).get("daily"))
+        target_entry = _mapping(frozen_daily.get("daily_candidate_targets"))
+        target_path = Path(_text(target_entry.get("path")))
+        if not target_path.is_file():
             continue
-        for row in _read_jsonl(child / "outcome_windows.jsonl"):
-            if row.get("outcome_status") == "AVAILABLE":
-                values.append(_float(row.get("relative_to_no_trade")))
-    return round(_avg(values), 6) if values else 0.0
+        target_rows = _read_jsonl(target_path)
+        target_ids = {_text(row.get("candidate_id")) for row in target_rows}
+        if not (candidate_ids & target_ids):
+            continue
+        tracked_at = _parse_datetime_text(_text(event.get("tracked_at")))
+        if tracked_at is None:
+            raise DynamicV3PaperTrackingError("candidate-linked outcome tracked_at is invalid")
+        if tracked_at > generated_at:
+            continue
+        outcome_id = _text(manifest.get("outcome_id"), child.name)
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id,
+            output_dir=advisory_outcome_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"advisory outcome validation must PASS for aging: {outcome_id}"
+            )
+        daily_id = _text(event.get("daily_advisory_id"))
+        if not daily_id or daily_id in seen_daily:
+            raise DynamicV3PaperTrackingError(
+                f"candidate-linked outcomes require unique daily advisory id: {daily_id}"
+            )
+        updates = _read_jsonl(child / "outcome_update_events.jsonl")
+        update_times = [
+            _parse_datetime_text(_text(update.get("event_at"))) for update in updates
+        ]
+        if any(value is None or value > generated_at for value in update_times):
+            raise DynamicV3PaperTrackingError(
+                f"candidate-linked outcome update exceeds aging cutoff: {outcome_id}"
+            )
+        normalized_targets = []
+        seen_candidates: set[str] = set()
+        for row in target_rows:
+            candidate_id = _text(row.get("candidate_id"))
+            if candidate_id not in candidate_ids:
+                continue
+            if candidate_id in seen_candidates:
+                raise DynamicV3PaperTrackingError(
+                    f"duplicate candidate target in outcome source: {candidate_id}"
+                )
+            normalized_targets.append(
+                {
+                    "candidate_id": candidate_id,
+                    "target_weights": _validated_outcome_weights(
+                        _mapping(row.get("target_weights")),
+                        f"outcome_candidate_target:{outcome_id}:{candidate_id}",
+                    ),
+                }
+            )
+            seen_candidates.add(candidate_id)
+        windows = _read_jsonl(child / "outcome_windows.jsonl")
+        price_rows: list[dict[str, Any]] = []
+        if updates:
+            snapshot_path = Path(_text(updates[-1].get("price_snapshot_path")))
+            if snapshot_path.is_file():
+                snapshot_prices = _read_outcome_price_snapshot(snapshot_path)
+                price_rows = [
+                    {
+                        "date": value["_date"].isoformat(),
+                        "symbol": _text(value["symbol"]),
+                        "adj_close": _float(value["_adj_close"]),
+                    }
+                    for value in snapshot_prices.to_dict(orient="records")
+                ]
+        frozen_config = _mapping(_mapping(event.get("frozen_track_sources")).get("outcome_config"))
+        frozen_config_path = Path(_text(frozen_config.get("path")))
+        if not frozen_config_path.is_file():
+            raise DynamicV3PaperTrackingError(
+                f"candidate-linked outcome frozen config is missing: {outcome_id}"
+            )
+        selected.append(
+            {
+                "outcome_id": outcome_id,
+                "daily_advisory_id": daily_id,
+                "as_of": event.get("as_of"),
+                "tracked_at": tracked_at.isoformat(),
+                "validation_status": "PASS",
+                "source_root": str(child),
+                "source_files": _source_file_inventory(
+                    child, sorted(path for path in child.rglob("*") if path.is_file())
+                ),
+                "manifest": manifest,
+                "advisory_event": event,
+                "update_events": updates,
+                "outcome_windows": windows,
+                "candidate_targets_path": str(target_path),
+                "candidate_targets_checksum": _file_sha256(target_path),
+                "candidate_targets": sorted(
+                    normalized_targets, key=lambda row: row["candidate_id"]
+                ),
+                "latest_price_rows": price_rows,
+                "cost_rate": _outcome_cost_rate(
+                    load_paper_portfolio_config(frozen_config_path)
+                ),
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+                "production_effect": "none",
+            }
+        )
+        seen_daily.add(daily_id)
+    return sorted(selected, key=lambda item: (item["as_of"], item["outcome_id"]))
+
+
+def _shadow_aging_candidate_outcome_evidence(
+    source_snapshot: Mapping[str, Any], candidate_id: str
+) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    for outcome in _records(source_snapshot.get("selected_outcomes")):
+        target = next(
+            (
+                _mapping(item.get("target_weights"))
+                for item in _records(outcome.get("candidate_targets"))
+                if item.get("candidate_id") == candidate_id
+            ),
+            {},
+        )
+        if not target:
+            continue
+        price_rows = _records(outcome.get("latest_price_rows"))
+        prices = pd.DataFrame(price_rows)
+        if not prices.empty:
+            prices["_date"] = pd.to_datetime(prices["date"], errors="coerce").dt.date
+            prices["_adj_close"] = pd.to_numeric(prices["adj_close"], errors="coerce")
+        no_trade = _mapping(_mapping(outcome.get("advisory_event")).get("no_trade_weights"))
+        for window in _records(outcome.get("outcome_windows")):
+            if window.get("outcome_status") != "AVAILABLE":
+                continue
+            base = {
+                "outcome_id": outcome.get("outcome_id"),
+                "daily_advisory_id": outcome.get("daily_advisory_id"),
+                "window_days": window.get("window_days"),
+                "start_date": window.get("start_date"),
+                "end_date": window.get("end_date"),
+            }
+            start = _date_from_any(window.get("start_date"))
+            end = _date_from_any(window.get("end_date"))
+            try:
+                if start is None or end is None or prices.empty:
+                    raise DynamicV3PaperTrackingError("MISSING_CANDIDATE_PRICE_SNAPSHOT")
+                no_trade_return, _daily, _cost = _static_counterfactual_path(
+                    prices=prices,
+                    weights=no_trade,
+                    reference_weights=no_trade,
+                    start=start,
+                    end=end,
+                    cost_rate=0.0,
+                )
+                candidate_return, _candidate_daily, candidate_cost = (
+                    _static_counterfactual_path(
+                        prices=prices,
+                        weights=target,
+                        reference_weights=no_trade,
+                        start=start,
+                        end=end,
+                        cost_rate=_float(outcome.get("cost_rate")),
+                    )
+                )
+                evidence.append(
+                    {
+                        **base,
+                        "status": "AVAILABLE",
+                        "candidate_return": round(candidate_return, 6),
+                        "no_trade_return": round(no_trade_return, 6),
+                        "relative_to_no_trade": round(
+                            candidate_return - no_trade_return, 6
+                        ),
+                        "candidate_transaction_cost": round(candidate_cost, 8),
+                        "insufficient_reason": "",
+                    }
+                )
+            except DynamicV3PaperTrackingError as exc:
+                evidence.append(
+                    {
+                        **base,
+                        "status": "INSUFFICIENT_DATA",
+                        "candidate_return": None,
+                        "no_trade_return": None,
+                        "relative_to_no_trade": None,
+                        "candidate_transaction_cost": None,
+                        "insufficient_reason": str(exc),
+                    }
+                )
+    return evidence
+
+
+def _shadow_aging_candidate_rows(source_snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    policy = _mapping(_mapping(source_snapshot.get("config")).get("promotion_clock_v2"))
+    monitors = _records(source_snapshot.get("selected_monitors"))
+    drifts = _records(source_snapshot.get("selected_drifts"))
+    rows = []
+    for candidate_id in _texts(source_snapshot.get("candidate_ids")):
+        observations = []
+        for monitor in monitors:
+            row = next(
+                (
+                    item
+                    for item in _records(monitor.get("candidate_rows"))
+                    if item.get("candidate_id") == candidate_id
+                ),
+                None,
+            )
+            if row is not None:
+                observations.append(
+                    {
+                        **row,
+                        "monitor_run_id": monitor.get("monitor_run_id"),
+                        "as_of": monitor.get("as_of"),
+                    }
+                )
+        observations.sort(key=lambda item: (item["as_of"], item["monitor_run_id"]))
+        dates = [_date_from_any(item.get("as_of")) for item in observations]
+        valid_dates = [value for value in dates if value is not None]
+        calendar_span = (
+            (valid_dates[-1] - valid_dates[0]).days + 1 if valid_dates else 0
+        )
+        rebalance_count = sum(
+            not _weights_equal(
+                _mapping(left.get("target_weights")),
+                _mapping(right.get("target_weights")),
+            )
+            for left, right in zip(observations, observations[1:], strict=False)
+        )
+        drift_warning_count = sum(
+            _text(_mapping(item.get("live_vs_backtest_drift")).get("status"))
+            not in {"", "PASS", "UNKNOWN"}
+            for item in observations
+        )
+        downgrade_warning_count = sum(
+            _text(item.get("recommendation"))
+            in {"required_downgrade", "remove_from_shadow"}
+            for item in observations
+        )
+        monitor_ids = {item["monitor_run_id"] for item in observations}
+        candidate_drifts = [item for item in drifts if item.get("monitor_run_id") in monitor_ids]
+        high_disagreement_count = sum(
+            _mapping(item.get("summary")).get("disagreement_status")
+            == "HIGH_DISAGREEMENT"
+            for item in candidate_drifts
+        )
+        missing_drift_count = len(monitor_ids) - len(candidate_drifts)
+        outcome_evidence = _shadow_aging_candidate_outcome_evidence(
+            source_snapshot, candidate_id
+        )
+        available_evidence = [
+            item for item in outcome_evidence if item.get("status") == "AVAILABLE"
+        ]
+        available_values = [
+            _float(item.get("relative_to_no_trade")) for item in available_evidence
+        ]
+        outcome_score = (
+            round(sum(available_values) / len(available_values), 6)
+            if available_values
+            else None
+        )
+        linked_outcomes = {
+            _text(item.get("outcome_id")) for item in outcome_evidence if item.get("outcome_id")
+        }
+        blockers: list[str] = []
+        downgrade_reasons: list[str] = []
+        if calendar_span < int(policy.get("minimum_days_observed") or 0):
+            blockers.append("insufficient_calendar_span")
+        if rebalance_count < int(policy.get("minimum_rebalance_count") or 0):
+            blockers.append("insufficient_true_rebalance_count")
+        if drift_warning_count > int(policy.get("max_drift_warning_count") or 0):
+            blockers.append("drift_warning_count_too_high")
+        if high_disagreement_count > int(
+            policy.get("max_high_disagreement_count") or 0
+        ):
+            blockers.append("high_disagreement_count_too_high")
+        if missing_drift_count and policy.get("require_consensus_drift_per_monitor") is True:
+            blockers.append("missing_consensus_drift_evidence")
+        if len(available_evidence) < int(
+            policy.get("minimum_outcome_available_window_count") or 0
+        ):
+            blockers.append("insufficient_candidate_outcome_evidence")
+        elif outcome_score is not None:
+            if outcome_score < _float(policy.get("downgrade_outcome_score_floor")):
+                downgrade_reasons.append("outcome_score_below_downgrade_floor")
+            elif outcome_score < _float(policy.get("minimum_outcome_score")):
+                blockers.append("outcome_score_below_minimum")
+        if downgrade_warning_count > int(
+            policy.get("max_downgrade_warning_count") or 0
+        ):
+            downgrade_reasons.append("downgrade_warning_count_too_high")
+        if downgrade_reasons:
+            status = "downgrade_recommended"
+        elif not observations:
+            status = "not_started"
+        elif blockers:
+            warmup_only = {
+                "insufficient_calendar_span",
+                "insufficient_true_rebalance_count",
+            }
+            status = "warming_up" if set(blockers) <= warmup_only else "blocked"
+        else:
+            status = "eligible_for_review"
+        stability_score = round(
+            max(
+                0.0,
+                1.0
+                - (drift_warning_count + high_disagreement_count + downgrade_warning_count)
+                / max(1, len(observations) + len(candidate_drifts)),
+            ),
+            6,
+        )
+        next_review_date = (
+            (
+                valid_dates[-1]
+                + timedelta(
+                    days=max(
+                        0,
+                        int(policy.get("minimum_days_observed") or 0) - calendar_span,
+                    )
+                )
+            ).isoformat()
+            if valid_dates
+            else None
+        )
+        rows.append(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "candidate_id": candidate_id,
+                "calendar_span_days": calendar_span,
+                "unique_observation_day_count": len(valid_dates),
+                "monitor_run_count": len(observations),
+                "true_rebalance_count": rebalance_count,
+                "days_observed": calendar_span,
+                "rebalance_count_observed": rebalance_count,
+                "advisory_participation_count": len(observations),
+                "drift_warning_count": drift_warning_count,
+                "consensus_drift_evidence_count": len(candidate_drifts),
+                "missing_consensus_drift_count": missing_drift_count,
+                "high_disagreement_count": high_disagreement_count,
+                "downgrade_warning_count": downgrade_warning_count,
+                "linked_outcome_count": len(linked_outcomes),
+                "candidate_outcome_available_window_count": len(available_evidence),
+                "candidate_outcome_insufficient_window_count": len(outcome_evidence)
+                - len(available_evidence),
+                "outcome_score_scope": "candidate_specific_available_windows",
+                "outcome_aggregation": policy.get("outcome_aggregation"),
+                "outcome_score": outcome_score,
+                "outcome_evidence": outcome_evidence,
+                "stability_score": stability_score,
+                "promotion_clock_status": status,
+                "blocking_reasons": sorted(set(blockers)),
+                "downgrade_reasons": sorted(set(downgrade_reasons)),
+                "next_review_date": next_review_date,
+                "manual_review_required": True,
+                "automatic_candidate_promotion": False,
+                "official_target_weights_generated": False,
+                "portfolio_mutated": False,
+                "order_ticket_generated": False,
+                "production_candidate_generated": False,
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+                "production_effect": "none",
+            }
+        )
+    return rows
+
+
+def _shadow_aging_summary(
+    *, source_snapshot: Mapping[str, Any], rows: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
+    status_counts = Counter(_text(row.get("promotion_clock_status")) for row in rows)
+    config = _mapping(source_snapshot.get("config"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_promotion_clock_v2_summary",
+        "aging_id": "",
+        "shadow_shortlist_id": source_snapshot.get("shadow_shortlist_id"),
+        "policy_id": config.get("policy_id"),
+        "policy_version": config.get("policy_version"),
+        "candidate_count": len(rows),
+        "selected_monitor_count": source_snapshot.get("selected_monitor_count", 0),
+        "selected_drift_count": source_snapshot.get("selected_drift_count", 0),
+        "selected_outcome_count": source_snapshot.get("selected_outcome_count", 0),
+        "candidate_outcome_available_window_count": sum(
+            int(row.get("candidate_outcome_available_window_count") or 0) for row in rows
+        ),
+        "candidate_outcome_missing_count": sum(row.get("outcome_score") is None for row in rows),
+        "not_started_count": status_counts["not_started"],
+        "eligible_for_review_count": status_counts["eligible_for_review"],
+        "downgrade_recommended_count": status_counts["downgrade_recommended"],
+        "warming_up_count": status_counts["warming_up"],
+        "blocked_count": status_counts["blocked"],
+        "eligible_is_automatic_promotion": False,
+        "automatic_candidate_promotion": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _shadow_aging_source_validation_summary(
+    source_snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    monitors = _records(source_snapshot.get("selected_monitors"))
+    drifts = _records(source_snapshot.get("selected_drifts"))
+    outcomes = _records(source_snapshot.get("selected_outcomes"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_aging_source_validation_summary",
+        "snapshot_schema_version": SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION,
+        "generated_cutoff": source_snapshot.get("generated_cutoff"),
+        "shadow_shortlist_validation_status": _mapping(
+            source_snapshot.get("shortlist")
+        ).get("validation_status"),
+        "selected_monitor_count": len(monitors),
+        "selected_monitor_validation_pass_count": sum(
+            item.get("validation_status") == "PASS" for item in monitors
+        ),
+        "selected_drift_count": len(drifts),
+        "selected_drift_validation_pass_count": sum(
+            item.get("validation_status") == "PASS" for item in drifts
+        ),
+        "selected_outcome_count": len(outcomes),
+        "selected_outcome_validation_pass_count": sum(
+            item.get("validation_status") == "PASS" for item in outcomes
+        ),
+        "all_selected_sources_validated": _mapping(
+            source_snapshot.get("shortlist")
+        ).get("validation_status")
+        == "PASS"
+        and all(item.get("validation_status") == "PASS" for item in monitors)
+        and all(item.get("validation_status") == "PASS" for item in drifts)
+        and all(item.get("validation_status") == "PASS" for item in outcomes),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _shadow_aging_manifest_payload(
+    *,
+    aging_dir: Path,
+    aging_id: str,
+    generated_at: datetime,
+    source_snapshot: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _mapping(source_snapshot.get("config"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "source_snapshot_schema_version": SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_aging_manifest",
+        "aging_id": aging_id,
+        "shadow_shortlist_id": source_snapshot.get("shadow_shortlist_id"),
+        "generated_at": generated_at.isoformat(),
+        "status": "PASS" if rows else "INSUFFICIENT_DATA",
+        "evidence_status": (
+            "MANUAL_REVIEW_CANDIDATES_AVAILABLE"
+            if int(summary.get("eligible_for_review_count") or 0)
+            else "OBSERVATION_CONTINUES"
+        ),
+        "candidate_count": len(rows),
+        "policy_id": config.get("policy_id"),
+        "policy_version": config.get("policy_version"),
+        "config_path": config.get("path"),
+        "config_checksum": config.get("checksum"),
+        "selected_monitor_count": source_snapshot.get("selected_monitor_count", 0),
+        "selected_drift_count": source_snapshot.get("selected_drift_count", 0),
+        "selected_outcome_count": source_snapshot.get("selected_outcome_count", 0),
+        "source_snapshot_path": str(aging_dir / "shadow_aging_source_snapshot.json"),
+        "source_snapshot_checksum": _file_sha256(
+            aging_dir / "shadow_aging_source_snapshot.json"
+        ),
+        "source_validation_summary_path": str(aging_dir / "source_validation_summary.json"),
+        "source_validation_summary_checksum": _file_sha256(
+            aging_dir / "source_validation_summary.json"
+        ),
+        "candidate_aging_status_path": str(aging_dir / "candidate_aging_status.jsonl"),
+        "promotion_clock_v2_summary_path": str(aging_dir / "promotion_clock_v2_summary.json"),
+        "shadow_aging_report_path": str(aging_dir / "shadow_aging_report.md"),
+        "eligible_for_review_is_manual_queue_only": True,
+        "automatic_candidate_promotion": False,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "manual_review_required": True,
+        "production_effect": "none",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _shadow_aging_record_has_no_execution_effect(record: Mapping[str, Any]) -> bool:
+    return (
+        record.get("automatic_candidate_promotion") is False
+        and record.get("official_target_weights_generated") is False
+        and record.get("portfolio_mutated") is False
+        and record.get("order_ticket_generated") is False
+        and record.get("production_candidate_generated") is False
+        and record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
+def _shadow_aging_snapshot_errors(source_snapshot: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if source_snapshot.get("snapshot_schema_version") != SHADOW_AGING_SNAPSHOT_SCHEMA_VERSION:
+        errors.append("snapshot_schema_invalid")
+    cutoff = _parse_datetime_text(_text(source_snapshot.get("generated_cutoff")))
+    if cutoff is None:
+        errors.append("generated_cutoff_invalid")
+    config_snapshot = _mapping(source_snapshot.get("config"))
+    try:
+        config_path = Path(_text(config_snapshot.get("path")))
+        current_config = load_paper_portfolio_config(config_path)
+        if (
+            config_snapshot.get("checksum") != _file_sha256(config_path)
+            or config_snapshot.get("promotion_clock_v2")
+            != _shadow_aging_policy(current_config)
+            or config_snapshot.get("simulation_cost_rate")
+            != _outcome_cost_rate(current_config)
+        ):
+            errors.append("config_snapshot_source_mismatch")
+        _shadow_aging_policy(
+            {
+                "promotion_clock_v2": _mapping(
+                    config_snapshot.get("promotion_clock_v2")
+                )
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"policy_invalid:{exc}")
+    candidate_ids = _texts(source_snapshot.get("candidate_ids"))
+    if not candidate_ids or len(candidate_ids) != len(set(candidate_ids)):
+        errors.append("candidate_ids_invalid_or_duplicate")
+    shortlist = _mapping(source_snapshot.get("shortlist"))
+    shortlist_rows = _records(shortlist.get("candidate_rows"))
+    if (
+        shortlist.get("validation_status") != "PASS"
+        or sorted(_text(row.get("candidate_id")) for row in shortlist_rows)
+        != sorted(candidate_ids)
+    ):
+        errors.append("shortlist_snapshot_invalid")
+    try:
+        shortlist_root = Path(_text(shortlist.get("source_root")))
+        shortlist_generated = _parse_datetime_text(
+            _text(_mapping(shortlist.get("manifest")).get("generated_at"))
+        )
+        if (
+            shortlist_generated is None
+            or (cutoff is not None and shortlist_generated > cutoff)
+            or _read_json(shortlist_root / "shadow_shortlist_manifest.json")
+            != _mapping(shortlist.get("manifest"))
+            or _read_jsonl(shortlist_root / "shadow_shortlist_candidates.jsonl")
+            != shortlist_rows
+        ):
+            errors.append("shortlist_snapshot_source_mismatch")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"shortlist_snapshot_source_unreadable:{exc}")
+    errors.extend(_shadow_aging_source_inventory_errors(shortlist.get("source_files"), "shortlist"))
+    monitors = _records(source_snapshot.get("selected_monitors"))
+    if source_snapshot.get("selected_monitor_count") != len(monitors):
+        errors.append("monitor_count_mismatch")
+    monitor_ids: set[str] = set()
+    monitor_dates: set[str] = set()
+    for index, monitor in enumerate(monitors, start=1):
+        monitor_id = _text(monitor.get("monitor_run_id"))
+        as_of = _text(monitor.get("as_of"))
+        generated = _parse_datetime_text(_text(monitor.get("generated_at")))
+        row_ids = [
+            _text(row.get("candidate_id"))
+            for row in _records(monitor.get("candidate_rows"))
+        ]
+        if (
+            not monitor_id
+            or monitor_id in monitor_ids
+            or not as_of
+            or as_of in monitor_dates
+            or monitor.get("validation_status") != "PASS"
+            or generated is None
+            or (cutoff is not None and generated > cutoff)
+            or sorted(row_ids) != sorted(candidate_ids)
+        ):
+            errors.append(f"monitor_snapshot_invalid:{index}")
+        for row in _records(monitor.get("candidate_rows")):
+            try:
+                if _text(row.get("as_of")) != as_of:
+                    raise DynamicV3PaperTrackingError("row as_of mismatch")
+                _validated_outcome_weights(
+                    _mapping(row.get("target_weights")), "snapshot monitor weights"
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"monitor_candidate_row_invalid:{index}:{exc}")
+        try:
+            monitor_root = Path(_text(monitor.get("source_root")))
+            current_monitor_rows = [
+                {
+                    **row,
+                    "target_weights": _validated_outcome_weights(
+                        _mapping(row.get("target_weights")), "current monitor weights"
+                    ),
+                }
+                for row in _read_jsonl(
+                    monitor_root / "shadow_candidate_daily_results.jsonl"
+                )
+            ]
+            if (
+                _read_json(monitor_root / "shadow_monitor_manifest.json")
+                != _mapping(monitor.get("manifest"))
+                or current_monitor_rows != _records(monitor.get("candidate_rows"))
+            ):
+                errors.append(f"monitor_snapshot_source_mismatch:{index}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"monitor_snapshot_source_unreadable:{index}:{exc}")
+        errors.extend(
+            _shadow_aging_source_inventory_errors(
+                monitor.get("source_files"), f"monitor:{index}"
+            )
+        )
+        monitor_ids.add(monitor_id)
+        monitor_dates.add(as_of)
+    drifts = _records(source_snapshot.get("selected_drifts"))
+    if source_snapshot.get("selected_drift_count") != len(drifts):
+        errors.append("drift_count_mismatch")
+    drift_monitors: set[str] = set()
+    for index, drift in enumerate(drifts, start=1):
+        monitor_id = _text(drift.get("monitor_run_id"))
+        generated = _parse_datetime_text(_text(drift.get("generated_at")))
+        if (
+            monitor_id not in monitor_ids
+            or monitor_id in drift_monitors
+            or drift.get("validation_status") != "PASS"
+            or generated is None
+            or (cutoff is not None and generated > cutoff)
+        ):
+            errors.append(f"drift_snapshot_invalid:{index}")
+        try:
+            drift_root = Path(_text(drift.get("source_root")))
+            if (
+                _read_json(drift_root / "consensus_drift_manifest.json")
+                != _mapping(drift.get("manifest"))
+                or _read_json(drift_root / "consensus_drift_summary.json")
+                != _mapping(drift.get("summary"))
+            ):
+                errors.append(f"drift_snapshot_source_mismatch:{index}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"drift_snapshot_source_unreadable:{index}:{exc}")
+        errors.extend(
+            _shadow_aging_source_inventory_errors(
+                drift.get("source_files"), f"drift:{index}"
+            )
+        )
+        drift_monitors.add(monitor_id)
+    outcomes = _records(source_snapshot.get("selected_outcomes"))
+    if source_snapshot.get("selected_outcome_count") != len(outcomes):
+        errors.append("outcome_count_mismatch")
+    daily_ids: set[str] = set()
+    for index, outcome in enumerate(outcomes, start=1):
+        daily_id = _text(outcome.get("daily_advisory_id"))
+        tracked = _parse_datetime_text(_text(outcome.get("tracked_at")))
+        updates = _records(outcome.get("update_events"))
+        previous_checksum = "GENESIS"
+        if (
+            not daily_id
+            or daily_id in daily_ids
+            or outcome.get("validation_status") != "PASS"
+            or tracked is None
+            or (cutoff is not None and tracked > cutoff)
+        ):
+            errors.append(f"outcome_snapshot_invalid:{index}")
+        for sequence, update in enumerate(updates, start=1):
+            event_at = _parse_datetime_text(_text(update.get("event_at")))
+            if (
+                update.get("event_sequence") != sequence
+                or update.get("previous_event_checksum") != previous_checksum
+                or update.get("event_checksum") != _outcome_update_event_checksum(update)
+                or event_at is None
+                or (cutoff is not None and event_at > cutoff)
+            ):
+                errors.append(f"outcome_update_chain_invalid:{index}:{sequence}")
+            previous_checksum = _text(update.get("event_checksum"))
+        target_ids = [
+            _text(row.get("candidate_id")) for row in _records(outcome.get("candidate_targets"))
+        ]
+        if len(target_ids) != len(set(target_ids)) or not set(target_ids) <= set(candidate_ids):
+            errors.append(f"outcome_candidate_targets_invalid:{index}")
+        for target in _records(outcome.get("candidate_targets")):
+            try:
+                _validated_outcome_weights(
+                    _mapping(target.get("target_weights")), "snapshot candidate target"
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"outcome_candidate_weights_invalid:{index}:{exc}")
+        try:
+            outcome_root = Path(_text(outcome.get("source_root")))
+            current_targets = [
+                {
+                    "candidate_id": _text(row.get("candidate_id")),
+                    "target_weights": _validated_outcome_weights(
+                        _mapping(row.get("target_weights")), "current outcome target"
+                    ),
+                }
+                for row in _read_jsonl(Path(_text(outcome.get("candidate_targets_path"))))
+                if _text(row.get("candidate_id")) in set(candidate_ids)
+            ]
+            if (
+                _read_json(outcome_root / "advisory_outcome_manifest.json")
+                != _mapping(outcome.get("manifest"))
+                or _read_json(outcome_root / "advisory_event.json")
+                != _mapping(outcome.get("advisory_event"))
+                or _read_jsonl(outcome_root / "outcome_update_events.jsonl")
+                != updates
+                or _read_jsonl(outcome_root / "outcome_windows.jsonl")
+                != _records(outcome.get("outcome_windows"))
+                or sorted(current_targets, key=lambda row: row["candidate_id"])
+                != _records(outcome.get("candidate_targets"))
+            ):
+                errors.append(f"outcome_snapshot_source_mismatch:{index}")
+            expected_price_rows: list[dict[str, Any]] = []
+            if updates:
+                current_price_path = Path(_text(updates[-1].get("price_snapshot_path")))
+                if current_price_path.is_file():
+                    current_prices = _read_outcome_price_snapshot(current_price_path)
+                    expected_price_rows = [
+                        {
+                            "date": value["_date"].isoformat(),
+                            "symbol": _text(value["symbol"]),
+                            "adj_close": _float(value["_adj_close"]),
+                        }
+                        for value in current_prices.to_dict(orient="records")
+                    ]
+            if expected_price_rows != _records(outcome.get("latest_price_rows")):
+                errors.append(f"outcome_price_snapshot_mismatch:{index}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"outcome_snapshot_source_unreadable:{index}:{exc}")
+        errors.extend(
+            _shadow_aging_source_inventory_errors(
+                outcome.get("source_files"), f"outcome:{index}"
+            )
+        )
+        daily_ids.add(daily_id)
+    if not _shadow_aging_record_has_no_execution_effect(source_snapshot):
+        errors.append("snapshot_execution_effect_forbidden")
+    return sorted(set(errors))
+
+
+def _shadow_aging_source_inventory_errors(value: Any, label: str) -> list[str]:
+    inventory = _mapping(value)
+    if not inventory:
+        return [f"source_inventory_missing:{label}"]
+    errors = _source_inventory_errors(inventory, label)
+    for relative, raw in inventory.items():
+        entry = _mapping(raw)
+        path = Path(_text(entry.get("path")))
+        if not path.is_file() or entry.get("checksum") != _file_sha256(path):
+            errors.append(f"source_inventory_drift:{label}:{relative}")
+    return errors
 
 
 def _manifest_rows_in_week(

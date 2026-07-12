@@ -125,7 +125,7 @@ def test_weekly_advisory_review_aggregates_and_flows_to_reader_brief(
     assert summary["paper_portfolio_status"] == "ACTIVE"
     assert summary["advisory_outcome_status"] == "PENDING"
     assert summary["owner_attribution_total_reviews"] == 1
-    assert summary["shadow_aging_eligible_for_review_count"] == 2
+    assert summary["shadow_aging_eligible_for_review_count"] == 0
     assert summary["weekly_advisory_recommendation"] == weekly["manifest"]["weekly_recommendation"]
     assert summary["paper_portfolio_broker_action_taken"] is False
 

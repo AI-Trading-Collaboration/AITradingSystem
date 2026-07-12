@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AO_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AP_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: bf8685e9
+base_commit: 0f470262
 production_effect: none
 
 arch_004_owned_paths:
@@ -13,6 +13,7 @@ arch_004_owned_paths:
   - config/operations/periodic_control.yaml
   - config/reporting/reporting_architecture.yaml
   - config/report_registry.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/paper_portfolio_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -216,8 +217,10 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_paper_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_advisory_outcome.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_owner_attribution.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_shadow_aging.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_outcome_accumulation.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_real_snapshot.py
   - src/ai_trading_system/etf_portfolio/owner_review_privacy.py
   - tests/test_consensus_drift.py
@@ -227,7 +230,10 @@ arch_004_owned_paths:
   - tests/test_outcome_due.py
   - tests/test_outcome_dashboard.py
   - tests/test_owner_attribution.py
+  - tests/test_shadow_aging.py
   - tests/test_weekly_advisory_review.py
+  - tests/test_outcome_update.py
+  - tests/dynamic_v3_outcome_loop_helpers.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
@@ -301,6 +307,11 @@ prior_completed_owned_paths_not_part_of_arch_runtime_change:
   - docs/research/current_research_strategy_and_periodic_optimization_review_2026-07-10.md
 
 excluded_user_or_other_task_paths:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
   - docs/research/growth_tilt_owner_decision_resolution.md
   - docs/research/indicator_family_only_model_review.md
   - docs/research/layer1_selector_pause_or_continue_owner_pack.md

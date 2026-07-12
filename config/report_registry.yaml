@@ -6332,14 +6332,17 @@ reports:
     command: aits etf dynamic-v3-rescue shadow-aging report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/shadow_aging_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/shadow_aging_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/source_validation_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/candidate_aging_status.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/promotion_clock_v2_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/shadow_aging_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-139 combines observation age, rebalance count, drift warnings,
-      disagreement, downgrade warnings, and outcome score into manual
-      promotion-review or downgrade guidance only.
+      TRADING-139 freezes validated shortlist/monitor/drift/outcome sources at a
+      generated cutoff, counts only actual weight changes, and computes
+      candidate-bound AVAILABLE-window outcomes without converting missing
+      evidence to zero. Results are manual review or downgrade guidance only.
     owner_action: review_shadow_aging_before_manual_promotion_or_downgrade_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

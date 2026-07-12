@@ -52,8 +52,12 @@ promotion_clock_v2:
   minimum_rebalance_count: 3
   max_drift_warning_count: 1
   max_high_disagreement_count: 1
+  max_downgrade_warning_count: 0
   minimum_outcome_score: -0.01
   downgrade_outcome_score_floor: -0.02
+  minimum_outcome_available_window_count: 1
+  outcome_aggregation: mean_available_windows_equal_weight
+  require_consensus_drift_per_monitor: true
 
 ledger:
   immutable_events: true

@@ -37,7 +37,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_SHADOW_AGING_DIR,
     DEFAULT_SHADOW_SHORTLIST_DIR,
     DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
-    render_advisory_outcome_report,
     run_owner_attribution,
     run_shadow_aging,
     run_weekly_advisory_review,
@@ -1259,8 +1258,6 @@ def run_outcome_update(
         (_text(row.get("outcome_id")), _int(row.get("window_days"))) for row in ready_rows
     }
     for outcome_id in ready_outcome_ids:
-        outcome_dir = advisory_outcome_dir / outcome_id
-        prior_windows = _read_jsonl(outcome_dir / "outcome_windows.jsonl")
         update_advisory_outcome(
             as_of=as_of,
             outcome_id=outcome_id,
@@ -1273,12 +1270,11 @@ def run_outcome_update(
             prices_path=prices_path,
             rates_path=rates_path,
             generated_at=generated,
-        )
-        _restore_non_ready_outcome_windows(
-            outcome_dir=outcome_dir,
-            outcome_id=outcome_id,
-            ready_keys=ready_keys,
-            prior_windows=prior_windows,
+            allowed_window_days={
+                window_days
+                for selected_outcome_id, window_days in ready_keys
+                if selected_outcome_id == outcome_id
+            },
         )
     after_rows = _forward_outcome_rows(advisory_outcome_dir)
     after_by_window = _forward_rows_by_outcome_window(after_rows)
@@ -2536,37 +2532,6 @@ def _skipped_outcome_update_row(
         "review_status": _text(review.get("review_status")),
         "broker_action_taken": False,
     }
-
-
-def _restore_non_ready_outcome_windows(
-    *,
-    outcome_dir: Path,
-    outcome_id: str,
-    ready_keys: set[tuple[str, int]],
-    prior_windows: Sequence[Mapping[str, Any]],
-) -> None:
-    manifest = _read_json(outcome_dir / "advisory_outcome_manifest.json")
-    event = _read_json(outcome_dir / "advisory_event.json")
-    updated_windows = {
-        _int(row.get("window_days")): dict(row)
-        for row in _read_jsonl(outcome_dir / "outcome_windows.jsonl")
-    }
-    merged = []
-    for prior in prior_windows:
-        window_days = _int(prior.get("window_days"))
-        if (outcome_id, window_days) in ready_keys:
-            merged.append(updated_windows.get(window_days, dict(prior)))
-        else:
-            merged.append(dict(prior))
-    manifest["status"] = _rollup_forward_rows_status(merged)
-    manifest["broker_action_allowed"] = False
-    manifest["broker_action_taken"] = False
-    _write_json(outcome_dir / "advisory_outcome_manifest.json", manifest)
-    _write_jsonl(outcome_dir / "outcome_windows.jsonl", merged)
-    _write_text(
-        outcome_dir / "advisory_outcome_report.md",
-        render_advisory_outcome_report(manifest, event, merged),
-    )
 
 
 def _rollup_forward_rows_status(rows: Sequence[Mapping[str, Any]]) -> str:

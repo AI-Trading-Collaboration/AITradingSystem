@@ -101,6 +101,9 @@ def paper_config_path(
                     "max_downgrade_warning_count": 0,
                     "min_outcome_score": -0.02,
                     "downgrade_outcome_score": -0.05,
+                    "minimum_outcome_available_window_count": 1,
+                    "outcome_aggregation": "mean_available_windows_equal_weight",
+                    "require_consensus_drift_per_monitor": True,
                 },
                 "ledger": {"immutable_events": True, "allow_rebuild_from_events": True},
             },
@@ -330,18 +333,22 @@ def write_shadow_shortlist_and_monitoring(
     tmp_path: Path,
     *,
     degraded: bool = False,
+    candidate_ids: tuple[str, ...] = ("candidate-a", "candidate-b"),
 ) -> dict[str, Any]:
     shortlist_dir = tmp_path / "shadow_shortlist" / "shadow-shortlist-1"
     shortlist_dir.mkdir(parents=True, exist_ok=True)
-    candidates = ["candidate-a", "candidate-b"]
+    candidates = list(candidate_ids)
     (shortlist_dir / "shadow_shortlist_manifest.json").write_text(
         json.dumps(
             {
                 "schema_version": SCHEMA_VERSION,
                 "shadow_shortlist_id": "shadow-shortlist-1",
+                "generated_at": "2026-04-30T12:00:00+00:00",
                 "status": "PASS",
                 "candidate_count": len(candidates),
                 "production_candidate_generated": False,
+                "broker_action": "none",
+                "broker_action_allowed": False,
                 "broker_action_taken": False,
             },
             sort_keys=True,
@@ -349,8 +356,29 @@ def write_shadow_shortlist_and_monitoring(
         encoding="utf-8",
     )
     (shortlist_dir / "shadow_shortlist_candidates.jsonl").write_text(
-        "\n".join(json.dumps({"candidate_id": item}, sort_keys=True) for item in candidates) + "\n",
+        "\n".join(
+            json.dumps(
+                {
+                    "candidate_id": item,
+                    "monitoring_requirements": {"cadence": "daily"},
+                    "monitoring_start_after_owner_review": True,
+                },
+                sort_keys=True,
+            )
+            for item in candidates
+        )
+        + "\n",
         encoding="utf-8",
+    )
+    (shortlist_dir / "shadow_shortlist_monitoring_plan.json").write_text(
+        json.dumps({"shadow_shortlist_id": "shadow-shortlist-1"}, sort_keys=True),
+        encoding="utf-8",
+    )
+    (shortlist_dir / "shadow_shortlist_report.md").write_text(
+        "# Shadow Shortlist\n", encoding="utf-8"
+    )
+    (shortlist_dir / "reader_brief_section.md").write_text(
+        "## Shadow Shortlist\n", encoding="utf-8"
     )
     monitor_root = tmp_path / "shadow_monitor_runs"
     drift_root = tmp_path / "consensus_drift"
@@ -365,6 +393,7 @@ def write_shadow_shortlist_and_monitoring(
                     "monitor_run_id": run_id,
                     "shadow_shortlist_id": "shadow-shortlist-1",
                     "as_of": day_value.date().isoformat(),
+                    "generated_at": f"{day_value.date().isoformat()}T12:00:00+00:00",
                     "status": "PASS",
                     "candidate_count": len(candidates),
                     "broker_action_allowed": False,
@@ -402,50 +431,25 @@ def write_shadow_shortlist_and_monitoring(
             "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
             encoding="utf-8",
         )
-        drift_dir = drift_root / f"drift-{index:02d}"
-        drift_dir.mkdir(parents=True, exist_ok=True)
-        (drift_dir / "consensus_drift_manifest.json").write_text(
+        (run_dir / "shadow_candidate_weekly_summary.jsonl").write_text(
+            "", encoding="utf-8"
+        )
+        (run_dir / "shadow_monitor_summary.json").write_text(
             json.dumps(
                 {
-                    "schema_version": SCHEMA_VERSION,
-                    "drift_id": f"drift-{index:02d}",
                     "monitor_run_id": run_id,
-                    "shadow_shortlist_id": "shadow-shortlist-1",
-                    "as_of": day_value.date().isoformat(),
-                    "status": "PASS",
+                    "broker_action_allowed": False,
+                    "broker_action_taken": False,
                 },
                 sort_keys=True,
             ),
             encoding="utf-8",
         )
-        (drift_dir / "candidate_drift_status.jsonl").write_text(
-            "\n".join(
-                json.dumps(
-                    {
-                        "candidate_id": candidate,
-                        "disagreement_status": "CONSENSUS",
-                    },
-                    sort_keys=True,
-                )
-                for candidate in candidates
-            )
-            + "\n",
-            encoding="utf-8",
+        (run_dir / "shadow_monitor_report.md").write_text(
+            "# Shadow Monitor\n", encoding="utf-8"
         )
-        (drift_dir / "consensus_drift_summary.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": SCHEMA_VERSION,
-                    "drift_id": f"drift-{index:02d}",
-                    "monitor_run_id": run_id,
-                    "shadow_shortlist_id": "shadow-shortlist-1",
-                    "as_of": day_value.date().isoformat(),
-                    "disagreement_status": "CONSENSUS",
-                    "position_advisory_implication": "continue_monitoring",
-                },
-                sort_keys=True,
-            ),
-            encoding="utf-8",
+        (run_dir / "reader_brief_section.md").write_text(
+            "## Shadow Monitor\n", encoding="utf-8"
         )
     return {
         "shadow_shortlist_id": "shadow-shortlist-1",

@@ -133,6 +133,11 @@ DYNAMIC_V3_OWNER_ATTRIBUTION_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_owner_attribution.py"
 )
+DYNAMIC_V3_SHADOW_AGING_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_shadow_aging.py"
+)
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
@@ -282,7 +287,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27004
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26911
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -493,8 +498,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27004
-    assert len(legacy_names) == 798
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26911
+    assert len(legacy_names) == 795
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1200,6 +1205,29 @@ def test_g2_4_dynamic_v3_owner_attribution_callbacks_leave_legacy_root() -> None
             "owner_attribution_report_payload",
             "run_owner_attribution",
             "validate_owner_attribution_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_shadow_aging_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_SHADOW_AGING_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_shadow_aging_run_command",
+        "dynamic_v3_shadow_aging_report_command",
+        "dynamic_v3_validate_shadow_aging_command",
+    }
+    legacy_imported_names = _imported_names(legacy_tree)
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert legacy_imported_names.isdisjoint(
+        {
+            "run_shadow_aging",
+            "shadow_aging_report_payload",
+            "validate_shadow_aging_artifact",
         }
     )
 
