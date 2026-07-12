@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, date, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+import pytest
+import yaml
 from dynamic_v3_historical_replay_helpers import (
     build_replay_inventory,
     prepare_replay_test_environment,
@@ -13,6 +17,8 @@ from dynamic_v3_historical_replay_helpers import (
 )
 
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
+    DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH,
+    DynamicV3HistoricalReplayError,
     run_backfill_outcome,
     run_historical_paper_sim,
     run_historical_replay,
@@ -20,6 +26,84 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     validate_replay_performance_review_artifact,
 )
 from ai_trading_system.reports import reader_brief
+
+
+def _build_review_chain(
+    paths: dict[str, Path],
+    *,
+    policy_path: Path | None = None,
+    review_generated_at: datetime = datetime(2026, 7, 15, tzinfo=UTC),
+) -> dict[str, Any]:
+    for daily_id, as_of, target in (
+        (
+            "first",
+            "2026-06-03",
+            {"QQQ": 0.45, "SMH": 0.30, "SOXX": 0.10, "CASH": 0.15},
+        ),
+        (
+            "second",
+            "2026-06-10",
+            {"QQQ": 0.40, "SMH": 0.35, "SOXX": 0.10, "CASH": 0.15},
+        ),
+    ):
+        write_replay_daily_advisory(
+            paths["daily_advisory_dir"],
+            daily_advisory_id=daily_id,
+            as_of=as_of,
+            target_weights=target,
+        )
+    write_owner_reviews(paths["owner_review_dir"], ["first", "second"])
+    inventory = build_replay_inventory(
+        paths,
+        start=date(2026, 6, 1),
+        end=date(2026, 6, 30),
+    )
+    replay = run_historical_replay(
+        inventory_id=inventory["inventory_id"],
+        inventory_dir=paths["inventory_dir"],
+        output_dir=paths["historical_replay_dir"],
+        generated_at=datetime(2026, 6, 30, tzinfo=UTC),
+    )
+    backfill = run_backfill_outcome(
+        replay_id=replay["replay_id"],
+        replay_dir=paths["historical_replay_dir"],
+        output_dir=paths["backfill_dir"],
+        prices_path=paths["prices_path"],
+        rates_path=paths["rates_path"],
+        config_path=paths["config_path"],
+        enforce_data_quality_gate=False,
+        generated_at=datetime(2026, 7, 15, tzinfo=UTC),
+    )
+    sim = run_historical_paper_sim(
+        replay_id=replay["replay_id"],
+        variant="limited_adjustment",
+        replay_dir=paths["historical_replay_dir"],
+        output_dir=paths["paper_sim_dir"],
+        prices_path=paths["prices_path"],
+        rates_path=paths["rates_path"],
+        config_path=paths["config_path"],
+        enforce_data_quality_gate=False,
+        generated_at=datetime(2026, 7, 15, tzinfo=UTC),
+    )
+    kwargs: dict[str, Any] = {}
+    if policy_path is not None:
+        kwargs["policy_path"] = policy_path
+    review = run_replay_performance_review(
+        backfill_id=backfill["backfill_id"],
+        sim_id=sim["sim_id"],
+        backfill_dir=paths["backfill_dir"],
+        sim_dir=paths["paper_sim_dir"],
+        output_dir=paths["performance_review_dir"],
+        generated_at=review_generated_at,
+        **kwargs,
+    )
+    return {
+        "inventory": inventory,
+        "replay": replay,
+        "backfill": backfill,
+        "sim": sim,
+        "review": review,
+    }
 
 
 def test_replay_performance_review_feeds_reader_brief_without_promotion(
@@ -144,3 +228,131 @@ def test_replay_performance_review_feeds_reader_brief_without_promotion(
     )
     assert "Dynamic Rescue Historical Replay Performance" in html
     assert review["review_id"] in html
+
+
+def test_replay_performance_review_preserves_null_semantics_and_sample_gate(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    paths = prepare_replay_test_environment(tmp_path, monkeypatch)
+    artifacts = _build_review_chain(paths)
+    review = artifacts["review"]
+
+    assert review["manifest"]["directional_evidence_ready"] is False
+    assert review["manifest"]["distinct_replay_event_count"] == 1
+    assert review["calibration_recommendations"]["recommendations"][0]["type"] == (
+        "continue_forward_tracking"
+    )
+    for row in review["advisory_rule_effectiveness"]["recommendation_effectiveness"]:
+        assert row["false_alarm_rate"] is None
+        assert row["missed_opportunity_rate"] is None
+        assert row["classification_metric_status"] == ("NOT_IDENTIFIED_FROM_RELATIVE_RETURN_ONLY")
+        if row["available_5d_window_count"]:
+            assert row["positive_rate_vs_no_trade_5d"] + row[
+                "nonpositive_rate_vs_no_trade_5d"
+            ] == pytest.approx(1.0)
+    assert (
+        validate_replay_performance_review_artifact(
+            review_id=review["review_id"],
+            output_dir=paths["performance_review_dir"],
+        )["status"]
+        == "PASS"
+    )
+
+
+def test_replay_performance_review_fails_before_output_for_time_or_invalid_source(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    paths = prepare_replay_test_environment(tmp_path, monkeypatch)
+    artifacts = _build_review_chain(paths)
+    original_review_dir = Path(artifacts["review"]["review_dir"])
+    original_review_dir.rename(tmp_path / "completed_review")
+    paths["performance_review_dir"].rmdir()
+
+    with pytest.raises(DynamicV3HistoricalReplayError, match="must not precede"):
+        run_replay_performance_review(
+            backfill_id=artifacts["backfill"]["backfill_id"],
+            sim_id=artifacts["sim"]["sim_id"],
+            backfill_dir=paths["backfill_dir"],
+            sim_dir=paths["paper_sim_dir"],
+            output_dir=paths["performance_review_dir"],
+            generated_at=datetime(2026, 7, 14, tzinfo=UTC),
+        )
+    assert not paths["performance_review_dir"].exists()
+
+    sim_summary = Path(artifacts["sim"]["sim_dir"]) / "simulated_performance_summary.json"
+    tampered_summary = json.loads(sim_summary.read_text(encoding="utf-8"))
+    tampered_summary["total_return"] = 99.0
+    sim_summary.write_text(
+        json.dumps(tampered_summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(DynamicV3HistoricalReplayError, match="simulation validation must PASS"):
+        run_replay_performance_review(
+            backfill_id=artifacts["backfill"]["backfill_id"],
+            sim_id=artifacts["sim"]["sim_id"],
+            backfill_dir=paths["backfill_dir"],
+            sim_dir=paths["paper_sim_dir"],
+            output_dir=paths["performance_review_dir"],
+            generated_at=datetime(2026, 7, 16, tzinfo=UTC),
+        )
+    assert not paths["performance_review_dir"].exists()
+
+
+@pytest.mark.parametrize(
+    "tamper_target", ["snapshot", "effectiveness", "report", "source", "policy"]
+)
+def test_replay_performance_review_validator_recomputes_all_views(
+    tmp_path: Path,
+    monkeypatch: Any,
+    tamper_target: str,
+) -> None:
+    paths = prepare_replay_test_environment(tmp_path, monkeypatch)
+    policy_path = tmp_path / "replay_performance_review_v1.yaml"
+    policy_path.write_text(
+        DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    artifacts = _build_review_chain(paths, policy_path=policy_path)
+    review = artifacts["review"]
+    review_dir = Path(review["review_dir"])
+    if tamper_target == "snapshot":
+        snapshot_path = review_dir / "replay_performance_review_source_snapshot.json"
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        snapshot["replay_id"] = "tampered"
+        snapshot_path.write_text(
+            json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        manifest_path = review_dir / "replay_performance_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["source_snapshot_checksum"] = sha256(snapshot_path.read_bytes()).hexdigest()
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    elif tamper_target == "effectiveness":
+        path = review_dir / "advisory_rule_effectiveness.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["recommendation_effectiveness"][0]["false_alarm_rate"] = 0.0
+        path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    elif tamper_target == "report":
+        path = review_dir / "replay_performance_review.md"
+        path.write_text(path.read_text(encoding="utf-8") + "tamper", encoding="utf-8")
+    elif tamper_target == "source":
+        path = Path(artifacts["backfill"]["backfill_dir"]) / "variant_performance_summary.json"
+        path.write_text(path.read_text(encoding="utf-8") + " ", encoding="utf-8")
+    else:
+        policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+        policy["evidence_gate"]["minimum_distinct_replay_event_count"] = 1
+        policy_path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
+
+    validation = validate_replay_performance_review_artifact(
+        review_id=review["review_id"],
+        output_dir=paths["performance_review_dir"],
+    )
+    assert validation["status"] == "FAIL"

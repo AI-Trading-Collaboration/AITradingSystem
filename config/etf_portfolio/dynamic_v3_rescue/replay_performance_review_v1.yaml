@@ -1,0 +1,38 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_replay_performance_review_v1
+  owner: project_owner
+  version: 2026-07-12-pilot
+  status: pilot_baseline
+  rationale: >
+    Prevent sparse historical replay windows and null metrics from being
+    interpreted as calibrated evidence for changing advisory rules.
+  intended_effect: >
+    Permit a directional manual-review proposal only after multiple distinct
+    replay events and enough comparable 5-day variant windows are available.
+  validation_evidence: ARCH-004G2.4AV focused source, policy, and tamper tests
+  review_condition: >
+    Replace these pilot floors only through a preregistered review after at
+    least eight owner-reviewed forward weeks across multiple market regimes;
+    historical replay alone must not auto-calibrate the advisory policy.
+
+evidence_gate:
+  comparison_window_trading_days: 5
+  minimum_distinct_replay_event_count: 3
+  minimum_available_variant_window_count: 10
+  positive_relative_return_boundary: 0.0
+  require_historical_paper_sim_available: true
+
+recommendation_precedence:
+  - continue_forward_tracking
+  - keep_current_rules
+  - tighten_adjustment
+
+safety:
+  manual_review_required: true
+  requires_owner_approval: true
+  automatic_config_update: false
+  automatic_candidate_promotion: false
+  production_effect: none
+  broker_action_taken: false

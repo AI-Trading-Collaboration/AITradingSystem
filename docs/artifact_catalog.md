@@ -16,6 +16,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/<sim_id>/historical_paper_sim_source_snapshot.json`<br/>`historical_paper_sim_manifest.json`<br/>`simulated_paper_state_history.jsonl`<br/>`simulated_trade_ledger.jsonl`<br/>`simulated_performance_summary.json`<br/>`historical_paper_sim_report.md`|`aits etf dynamic-v3-rescue historical-paper-sim run --replay-id <id>`、`report --latest`、`validate-historical-paper-sim --sim-id <id>`|full-PASS Historical Replay、reviewed cost policy、cached ETF prices/rates与统一DQ|event interval用fixed-share value path；event target reset按simulated before→target one-way L1及cost进入net equity；缺价/少样本为INSUFFICIENT且metrics null；snapshot冻结全部bindings，validator重算全部views；`production_effect=none`|研究用variant path accounting与后续人工review|否，historical paper evidence only|不是real/paper runtime account、不是order fill或PIT production backtest；AVAILABLE/relative也不批准policy、weights、portfolio、production或broker|
 
+## ARCH-004G2.4AV Replay Performance Review 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/<review_id>/replay_performance_review_source_snapshot.json`<br/>`replay_performance_manifest.json`<br/>`advisory_rule_effectiveness.json`<br/>`calibration_recommendations.json`<br/>`replay_performance_review.md`<br/>`reader_brief_section.md`|`aits etf dynamic-v3-rescue replay-performance-review run --backfill-id <id> --sim-id <id>`、`report --latest`、`validate-replay-performance-review --review-id <id>`|同一replay lineage的full-PASS Backfilled Outcome与Historical Paper Simulation、reviewed `replay_performance_review_v1.yaml`|snapshot冻结全部source/policy；null不转0；relative sign仅形成positive/nonpositive rate，unsupported false-alarm/missed-opportunity为null；distinct-event/window/sim门槛未满足只允许continue tracking；validator重算全部views；`production_effect=none`|历史证据质量与人工规则复核材料|否，manual proposal only|Directional ready也不是统计显著、owner批准或自动calibration；不得据此自动改config、promotion、weights、portfolio、production或broker|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

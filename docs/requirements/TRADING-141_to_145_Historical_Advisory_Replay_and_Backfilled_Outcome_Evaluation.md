@@ -50,6 +50,8 @@
 5. `TRADING-145` Replay Performance Review & Advisory Rule Calibration
    - 新增 `replay-performance-review run/report` 和 `validate-replay-performance-review`
    - 汇总 advisory rule effectiveness、variant effectiveness、calibration recommendations 和 Reader Brief section
+   - full-PASS backfill/simulation必须绑定同一replay并冻结source/policy；missing metrics保持null
+   - relative return正负不能冒充false alarm/missed opportunity；方向性建议受versioned sample floors约束
    - 只输出建议，不自动修改 `position_advisory_v1.yaml` 或任何 production config
 
 ## PIT Safety 规则
@@ -91,6 +93,8 @@ approximated、optional metadata reconstructed 等 non-hard warning。
 
 ## 进展记录
 
+- 2026-07-12：G2.4AV完成TRADING-145 hardening与CLI迁移；focused 91、architecture 231、contract 203全部PASS。当前fixture只有1个可比distinct event，低于3-event/10-window pilot gate，因此明确输出`directional_evidence_ready=false/continue_forward_tracking`；这不是失败，而是防止稀疏历史结果被误解释为规则校准依据。G2.4继续，尚未触发ARCH-005 handoff。
+- 2026-07-12：ARCH-004G2.4AV对TRADING-145执行source-derived hardening。新增reviewed `replay_performance_review_v1.yaml`、source/time/lineage preflight与`replay_performance_review_source_snapshot.json`；effectiveness只输出证据可支持的positive/nonpositive rate，unsupported false-alarm/missed-opportunity和missing metrics保持null。Pilot evidence gate要求至少3个distinct replay events、10个available 5日variant windows且simulation AVAILABLE；当前fixture只有1个可比distinct event，因此诚实输出`directional_evidence_ready=false/continue_forward_tracking`。Validator重验两个live source与policy并重算全部JSON/Markdown/Reader Brief；任何建议仍为manual-only，不修改config、promotion、weights、portfolio、production或broker。
 - 2026-06-09：新增任务登记和需求文档，进入实现阶段。
 - 2026-06-09：实现完成并转入 VALIDATING。真实链路输出 replay
   inventory `4cd60c43a04b2288`、historical replay `0f407af36295acf9`、

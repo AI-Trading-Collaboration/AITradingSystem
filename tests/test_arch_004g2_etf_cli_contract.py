@@ -84,84 +84,72 @@ DYNAMIC_V3_REAL_SNAPSHOT_DRY_RUN_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_real_snapshot_dry_run.py"
 )
 DYNAMIC_V3_REAL_EXECUTION_OWNER_REVIEW_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_real_execution_owner_review.py"
 )
 DYNAMIC_V3_REAL_SNAPSHOT_PAPER_ACTION_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_real_snapshot_paper_action.py"
 )
 DYNAMIC_V3_WEEKLY_REAL_SNAPSHOT_REVIEW_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_weekly_real_snapshot_review.py"
 )
 DYNAMIC_V3_POSITION_ADVISORY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_position_advisory.py"
 )
 DYNAMIC_V3_POSITION_ADVISORY_DAILY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_position_advisory_daily.py"
 )
 DYNAMIC_V3_CONSENSUS_DRIFT_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_consensus_drift.py"
 )
 DYNAMIC_V3_OWNER_REVIEW_JOURNAL_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_owner_review_journal.py"
 )
 DYNAMIC_V3_PAPER_PORTFOLIO_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_paper_portfolio.py"
 )
 DYNAMIC_V3_ADVISORY_OUTCOME_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_advisory_outcome.py"
 )
 DYNAMIC_V3_OWNER_ATTRIBUTION_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_owner_attribution.py"
 )
 DYNAMIC_V3_SHADOW_AGING_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_shadow_aging.py"
 )
 DYNAMIC_V3_WEEKLY_ADVISORY_REVIEW_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_weekly_advisory_review.py"
 )
 DYNAMIC_V3_REPLAY_INVENTORY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_replay_inventory.py"
 )
 DYNAMIC_V3_HISTORICAL_REPLAY_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_historical_replay.py"
 )
 DYNAMIC_V3_BACKFILLED_OUTCOME_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_backfilled_outcome.py"
 )
 DYNAMIC_V3_HISTORICAL_PAPER_SIM_COMMANDS_PATH = (
-    PROJECT_ROOT
-    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_historical_paper_sim.py"
+)
+DYNAMIC_V3_REPLAY_PERFORMANCE_REVIEW_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_replay_performance_review.py"
 )
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
@@ -312,7 +300,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26414
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26322
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -523,8 +511,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26414
-    assert len(legacy_names) == 780
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26322
+    assert len(legacy_names) == 777
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1055,9 +1043,7 @@ def test_g2_4_dynamic_v3_real_snapshot_dry_run_callbacks_leave_legacy_root() -> 
 def test_g2_4_dynamic_v3_real_execution_owner_review_callbacks_leave_legacy_root() -> None:
     legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
     canonical_names = _function_names(
-        ast.parse(
-            DYNAMIC_V3_REAL_EXECUTION_OWNER_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8")
-        )
+        ast.parse(DYNAMIC_V3_REAL_EXECUTION_OWNER_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
     )
     callbacks = {
         "dynamic_v3_real_execution_owner_review_create_command",
@@ -1072,9 +1058,7 @@ def test_g2_4_dynamic_v3_real_execution_owner_review_callbacks_leave_legacy_root
 def test_g2_4_dynamic_v3_real_snapshot_paper_action_callbacks_leave_legacy_root() -> None:
     legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
     canonical_names = _function_names(
-        ast.parse(
-            DYNAMIC_V3_REAL_SNAPSHOT_PAPER_ACTION_COMMANDS_PATH.read_text(encoding="utf-8")
-        )
+        ast.parse(DYNAMIC_V3_REAL_SNAPSHOT_PAPER_ACTION_COMMANDS_PATH.read_text(encoding="utf-8"))
     )
     callbacks = {
         "dynamic_v3_real_snapshot_paper_action_apply_command",
@@ -1088,9 +1072,7 @@ def test_g2_4_dynamic_v3_real_snapshot_paper_action_callbacks_leave_legacy_root(
 def test_g2_4_dynamic_v3_weekly_real_snapshot_review_callbacks_leave_legacy_root() -> None:
     legacy_names = _function_names(ast.parse(SOURCE_PATH.read_text(encoding="utf-8")))
     canonical_names = _function_names(
-        ast.parse(
-            DYNAMIC_V3_WEEKLY_REAL_SNAPSHOT_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8")
-        )
+        ast.parse(DYNAMIC_V3_WEEKLY_REAL_SNAPSHOT_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
     )
     callbacks = {
         "dynamic_v3_weekly_real_snapshot_review_run_command",
@@ -1261,9 +1243,7 @@ def test_g2_4_dynamic_v3_weekly_advisory_review_callbacks_leave_legacy_root() ->
     legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
     legacy_names = _function_names(legacy_tree)
     canonical_names = _function_names(
-        ast.parse(
-            DYNAMIC_V3_WEEKLY_ADVISORY_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8")
-        )
+        ast.parse(DYNAMIC_V3_WEEKLY_ADVISORY_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
     )
     callbacks = {
         "dynamic_v3_weekly_advisory_review_run_command",
@@ -1371,6 +1351,28 @@ def test_g2_4_dynamic_v3_historical_paper_sim_callbacks_leave_legacy_root() -> N
     )
 
 
+def test_g2_4_dynamic_v3_replay_performance_review_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_REPLAY_PERFORMANCE_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_replay_performance_review_run_command",
+        "dynamic_v3_replay_performance_review_report_command",
+        "dynamic_v3_validate_replay_performance_review_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "replay_performance_review_report_payload",
+            "run_replay_performance_review",
+            "validate_replay_performance_review_artifact",
+        }
+    )
+
+
 def __file_path() -> Path:
     return Path(__file__).resolve()
 
@@ -1413,8 +1415,5 @@ def _imported_modules(tree: ast.Module) -> set[str]:
 
 def _imported_names(tree: ast.Module) -> set[str]:
     return {
-        alias.name
-        for node in tree.body
-        if isinstance(node, ast.ImportFrom)
-        for alias in node.names
+        alias.name for node in tree.body if isinstance(node, ast.ImportFrom) for alias in node.names
     }

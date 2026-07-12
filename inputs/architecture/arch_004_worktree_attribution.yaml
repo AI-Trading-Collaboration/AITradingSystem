@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AV_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 3bb5cd52
+base_commit: 907e80c5
 production_effect: none
 
 arch_004_owned_paths:
@@ -14,6 +14,7 @@ arch_004_owned_paths:
   - config/reporting/reporting_architecture.yaml
   - config/report_registry.yaml
   - config/etf_portfolio/dynamic_v3_rescue/paper_portfolio_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -22,6 +23,7 @@ arch_004_owned_paths:
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/TRADING-093_to_100_Dynamic_v3_Rescue_Parameter_Research_Platform.md
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
+  - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -223,6 +225,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_historical_replay.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backfilled_outcome.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_historical_paper_sim.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_performance_review.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
@@ -242,6 +245,7 @@ arch_004_owned_paths:
   - tests/test_dynamic_v3_historical_replay.py
   - tests/test_backfill_outcome.py
   - tests/test_historical_paper_sim.py
+  - tests/test_replay_performance_review.py
   - tests/dynamic_v3_historical_replay_helpers.py
   - tests/test_outcome_update.py
   - tests/dynamic_v3_outcome_loop_helpers.py

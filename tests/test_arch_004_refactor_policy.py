@@ -2252,9 +2252,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
-    phase_g2_4af = baseline[
-        "phase_g2_4af_etf_cli_dynamic_v3_real_execution_owner_review"
-    ]
+    phase_g2_4af = baseline["phase_g2_4af_etf_cli_dynamic_v3_real_execution_owner_review"]
     assert phase_g2_4af["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
     migration_g2_4af = phase_g2_4af["migration"]
     assert migration_g2_4af["callback_count"] == 4
@@ -2274,9 +2272,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
-    phase_g2_4ag = baseline[
-        "phase_g2_4ag_etf_cli_dynamic_v3_real_snapshot_paper_action"
-    ]
+    phase_g2_4ag = baseline["phase_g2_4ag_etf_cli_dynamic_v3_real_snapshot_paper_action"]
     assert phase_g2_4ag["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
     migration_g2_4ag = phase_g2_4ag["migration"]
     assert migration_g2_4ag["callback_count"] == 3
@@ -2297,9 +2293,7 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
             continue
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
-    phase_g2_4ah = baseline[
-        "phase_g2_4ah_etf_cli_dynamic_v3_weekly_real_snapshot_review"
-    ]
+    phase_g2_4ah = baseline["phase_g2_4ah_etf_cli_dynamic_v3_weekly_real_snapshot_review"]
     assert phase_g2_4ah["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
     migration_g2_4ah = phase_g2_4ah["migration"]
     assert migration_g2_4ah["callback_count"] == 3
@@ -2639,7 +2633,30 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4au["legacy_root_command_decorators_after"] == 741
     assert migration_g2_4au["python_module_count"] == 859
     assert phase_g2_4au["sources"]
+    superseded_g2_4au = set(phase_g2_4au.get("superseded_source_paths", []))
     for source in phase_g2_4au["sources"]:
+        if source["path"] in superseded_g2_4au:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4av = baseline["phase_g2_4av_etf_cli_dynamic_v3_replay_performance_review"]
+    assert phase_g2_4av["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4av = phase_g2_4av["migration"]
+    assert migration_g2_4av["callback_count"] == 3
+    assert migration_g2_4av["requires_full_validated_backfill_and_simulation"] is True
+    assert migration_g2_4av["same_replay_and_time_ordering_enforced"] is True
+    assert migration_g2_4av["unsupported_classification_metrics_are_null"] is True
+    assert migration_g2_4av["reviewed_sample_floor_policy_required"] is True
+    assert migration_g2_4av["automatic_config_or_promotion_allowed"] is False
+    assert migration_g2_4av["immutable_source_snapshot"] is True
+    assert migration_g2_4av["content_derived_all_views_validation"] is True
+    assert migration_g2_4av["portfolio_or_execution_effect"] is False
+    assert migration_g2_4av["legacy_root_lines_after"] == 26322
+    assert migration_g2_4av["legacy_root_top_level_functions_after"] == 777
+    assert migration_g2_4av["legacy_root_command_decorators_after"] == 738
+    assert migration_g2_4av["python_module_count"] == 860
+    assert phase_g2_4av["sources"]
+    for source in phase_g2_4av["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2672,17 +2689,19 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AO_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AP_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AP_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AR_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AR_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AS_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AS_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AT_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AT_COMPLETE_G2_4_CONTINUES",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_IN_PROGRESS",
-            "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_COMPLETE_G2_4_CONTINUES",
-        }
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AQ_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AR_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AR_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AS_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AS_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AT_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AT_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AV_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AV_COMPLETE_G2_4_CONTINUES",
+    }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
         "docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md",

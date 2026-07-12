@@ -6477,6 +6477,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue replay-performance-review report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/*/replay_performance_review_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/*/replay_performance_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/*/advisory_rule_effectiveness.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/*/calibration_recommendations.json
@@ -6484,9 +6485,10 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-145 replay performance review should summarize historical advisory
-      rule effectiveness and calibration recommendations while keeping owner
-      approval, config mutation, promotion, and broker execution disabled.
+      TRADING-145 freezes full-PASS backfill and simulation sources plus a
+      versioned pilot evidence policy, preserves null metrics, and only permits
+      directional manual-review proposals after distinct-event/window floors;
+      config mutation, promotion, and broker execution remain disabled.
     owner_action: review_replay_performance_before_any_manual_policy_or_calibration_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

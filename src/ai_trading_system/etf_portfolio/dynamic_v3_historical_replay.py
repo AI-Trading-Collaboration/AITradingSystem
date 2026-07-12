@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from ai_trading_system.config import (
     configured_price_tickers,
@@ -56,6 +57,10 @@ REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION = "replay_inventory_source_snapshot.v2"
 HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION = "historical_replay_source_snapshot.v2"
 BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backfilled_outcome_source_snapshot.v2"
 HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION = "historical_paper_sim_source_snapshot.v2"
+REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "replay_performance_review_source_snapshot.v2"
+DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
+)
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
@@ -1795,6 +1800,99 @@ def validate_historical_paper_sim_artifact(
     )
 
 
+def _load_replay_performance_review_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3HistoricalReplayError(f"review policy is missing: {path}")
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(loaded, dict):
+        raise DynamicV3HistoricalReplayError("review policy must be a mapping")
+    metadata = _mapping(loaded.get("policy_metadata"))
+    gate = _mapping(loaded.get("evidence_gate"))
+    safety = _mapping(loaded.get("safety"))
+    required_metadata = (
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    )
+    if any(not _text(metadata.get(field)) for field in required_metadata):
+        raise DynamicV3HistoricalReplayError("review policy metadata is incomplete")
+    if metadata.get("status") != "pilot_baseline":
+        raise DynamicV3HistoricalReplayError("review policy status must be pilot_baseline")
+    window = _int(gate.get("comparison_window_trading_days"))
+    minimum_events = _int(gate.get("minimum_distinct_replay_event_count"))
+    minimum_windows = _int(gate.get("minimum_available_variant_window_count"))
+    boundary = gate.get("positive_relative_return_boundary")
+    if window not in OUTCOME_WINDOWS or minimum_events <= 0 or minimum_windows <= 0:
+        raise DynamicV3HistoricalReplayError("review evidence gate is invalid")
+    if isinstance(boundary, bool) or not isinstance(boundary, (int, float)):
+        raise DynamicV3HistoricalReplayError("positive relative return boundary is invalid")
+    if not math.isfinite(float(boundary)):
+        raise DynamicV3HistoricalReplayError("positive relative return boundary must be finite")
+    if (
+        not all(
+            safety.get(field) is expected
+            for field, expected in (
+                ("manual_review_required", True),
+                ("requires_owner_approval", True),
+                ("automatic_config_update", False),
+                ("automatic_candidate_promotion", False),
+                ("broker_action_taken", False),
+            )
+        )
+        or safety.get("production_effect") != "none"
+    ):
+        raise DynamicV3HistoricalReplayError("review policy safety boundary is invalid")
+    return loaded
+
+
+def _review_source_bundle(root: Path, names: Sequence[str]) -> dict[str, Any]:
+    bundle: dict[str, Any] = {}
+    for name in names:
+        path = root / name
+        if not path.is_file():
+            raise DynamicV3HistoricalReplayError(f"review source is missing: {path}")
+        if name.endswith(".jsonl"):
+            content: Any = _read_jsonl(path)
+        elif name.endswith(".json"):
+            content = _read_json(path)
+        else:
+            content = path.read_text(encoding="utf-8")
+        bundle[name] = {
+            "path": str(path),
+            "checksum": _sha256_file(path),
+            "content": content,
+        }
+    return bundle
+
+
+def _review_bundle_matches(bundle: Mapping[str, Any]) -> bool:
+    try:
+        for name, raw in bundle.items():
+            entry = _mapping(raw)
+            path = Path(_text(entry.get("path")))
+            if not path.is_file() or entry.get("checksum") != _sha256_file(path):
+                return False
+            if name.endswith(".jsonl"):
+                live: Any = _read_jsonl(path)
+            elif name.endswith(".json"):
+                live = _read_json(path)
+            else:
+                live = path.read_text(encoding="utf-8")
+            if live != entry.get("content"):
+                return False
+    except Exception:  # noqa: BLE001
+        return False
+    return True
+
+
+def _review_bundle_content(bundle: Mapping[str, Any], name: str) -> Any:
+    return _mapping(bundle.get(name)).get("content")
+
+
 def run_replay_performance_review(
     *,
     backfill_id: str,
@@ -1802,44 +1900,134 @@ def run_replay_performance_review(
     backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
     sim_dir: Path = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
     output_dir: Path = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+    policy_path: Path = DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_backfill_dir = backfill_dir / backfill_id
     source_sim_dir = sim_dir / sim_id
+    backfill_validation = validate_backfill_outcome_artifact(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    if backfill_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            f"source backfill validation must PASS: {backfill_validation.get('status')}"
+        )
+    sim_validation = validate_historical_paper_sim_artifact(
+        sim_id=sim_id,
+        output_dir=sim_dir,
+    )
+    if sim_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            f"source historical paper simulation validation must PASS: "
+            f"{sim_validation.get('status')}"
+        )
     backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
     outcome_rows = _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
     variant_summary = _read_json(source_backfill_dir / "variant_performance_summary.json")
+    sim_manifest = _read_json(source_sim_dir / "historical_paper_sim_manifest.json")
     sim_summary = _read_json(source_sim_dir / "simulated_performance_summary.json")
+    replay_id = _text(backfill_manifest.get("replay_id"))
+    if not replay_id or replay_id != _text(sim_manifest.get("replay_id")):
+        raise DynamicV3HistoricalReplayError("backfill and simulation must share one replay_id")
+    source_times = [
+        _datetime_from_any(backfill_manifest.get("generated_at")),
+        _datetime_from_any(sim_manifest.get("generated_at")),
+    ]
+    if any(value is None for value in source_times):
+        raise DynamicV3HistoricalReplayError("source generated_at must be timezone-aware")
+    if any(generated < value for value in source_times if value is not None):
+        raise DynamicV3HistoricalReplayError(
+            "review generated_at must not precede source artifacts"
+        )
+    policy = _load_replay_performance_review_policy(policy_path)
+    backfill_bundle = _review_source_bundle(
+        source_backfill_dir,
+        (
+            "backfilled_outcome_source_snapshot.json",
+            "backfill_manifest.json",
+            "replay_outcome_windows.jsonl",
+            "variant_performance_summary.json",
+            "backfill_outcome_report.md",
+        ),
+    )
+    sim_bundle = _review_source_bundle(
+        source_sim_dir,
+        (
+            "historical_paper_sim_source_snapshot.json",
+            "historical_paper_sim_manifest.json",
+            "simulated_paper_state_history.jsonl",
+            "simulated_trade_ledger.jsonl",
+            "simulated_performance_summary.json",
+            "historical_paper_sim_report.md",
+        ),
+    )
+    effectiveness = _advisory_rule_effectiveness(outcome_rows, sim_summary, policy)
+    recommendations = _calibration_recommendations(
+        outcome_rows,
+        variant_summary,
+        sim_summary,
+        policy,
+    )
     review_id = _stable_id("replay-performance-review", backfill_id, sim_id, generated.isoformat())
     review_dir = _unique_dir(output_dir / review_id)
-    review_dir.mkdir(parents=True, exist_ok=False)
-    effectiveness = _advisory_rule_effectiveness(outcome_rows, variant_summary, sim_summary)
-    recommendations = _calibration_recommendations(variant_summary, sim_summary)
     available_outcome_count = _int(backfill_manifest.get("available_count"))
     status = (
         "AVAILABLE"
         if available_outcome_count
         else _text(backfill_manifest.get("status"), "INSUFFICIENT_DATA")
     )
+    policy_metadata = _mapping(policy.get("policy_metadata"))
+    primary = _records(recommendations.get("recommendations"))[0]
+    source_snapshot = {
+        "schema_version": REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "review_id": review_dir.name,
+        "generated_at": generated.isoformat(),
+        "replay_id": replay_id,
+        "backfill_id": backfill_id,
+        "sim_id": sim_id,
+        "backfill_root": str(source_backfill_dir),
+        "sim_root": str(source_sim_dir),
+        "backfill_files": backfill_bundle,
+        "sim_files": sim_bundle,
+        "backfill_validation_status": "PASS",
+        "sim_validation_status": "PASS",
+        "policy_path": str(policy_path),
+        "policy_checksum": _sha256_file(policy_path),
+        "policy": policy,
+        "policy_id": policy_metadata.get("policy_id"),
+        "policy_version": policy_metadata.get("version"),
+        "source_role": "historical_replay_evaluation_only",
+    }
+    review_dir.mkdir(parents=True, exist_ok=False)
+    source_snapshot_path = review_dir / "replay_performance_review_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_replay_performance_manifest",
         "review_id": review_dir.name,
         "backfill_id": backfill_id,
         "sim_id": sim_id,
+        "replay_id": replay_id,
         "generated_at": generated.isoformat(),
         "status": status,
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
         "replay_event_count": backfill_manifest.get("replay_event_count", 0),
         "available_outcome_count": available_outcome_count,
         "best_variant": variant_summary.get("best_variant", "MISSING"),
-        "limited_adjustment_vs_no_trade": variant_summary.get(
-            "limited_adjustment_vs_no_trade_5d",
-            0.0,
-        ),
-        "calibration_recommendation": recommendations["recommendations"][0]["type"],
-        "next_action": recommendations["recommendations"][0]["type"],
+        "limited_adjustment_vs_no_trade": variant_summary.get("limited_adjustment_vs_no_trade_5d"),
+        "calibration_recommendation": primary["type"],
+        "next_action": primary["type"],
+        "directional_evidence_ready": recommendations["directional_evidence_ready"],
+        "distinct_replay_event_count": recommendations["distinct_replay_event_count"],
+        "available_comparison_window_count": recommendations["available_comparison_window_count"],
+        "policy_id": policy_metadata.get("policy_id"),
+        "policy_version": policy_metadata.get("version"),
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": _sha256_file(source_snapshot_path),
+        "source_backfill_validation_status": "PASS",
+        "source_sim_validation_status": "PASS",
         "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
         "source_sim_path": str(source_sim_dir / "historical_paper_sim_manifest.json"),
         "replay_performance_manifest_path": str(review_dir / "replay_performance_manifest.json"),
@@ -1881,6 +2069,7 @@ def run_replay_performance_review(
         "advisory_rule_effectiveness": effectiveness,
         "calibration_recommendations": recommendations,
         "simulated_performance_summary": sim_summary,
+        "source_snapshot": source_snapshot,
     }
 
 
@@ -1910,11 +2099,12 @@ def validate_replay_performance_review_artifact(
 ) -> dict[str, Any]:
     review_dir = output_dir / review_id
     manifest = _read_optional_json(review_dir / "replay_performance_manifest.json") or {}
+    effectiveness = _read_optional_json(review_dir / "advisory_rule_effectiveness.json") or {}
     recommendations = _read_optional_json(review_dir / "calibration_recommendations.json") or {}
-    checks = [
+    shallow_checks = [
         _check(
             "manifest_exists",
-            (review_dir / "replay_performance_manifest.json").exists(),
+            (review_dir / "replay_performance_manifest.json").is_file(),
             review_id,
         ),
         _check(
@@ -1951,6 +2141,187 @@ def validate_replay_performance_review_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+    ]
+    snapshot_path = review_dir / "replay_performance_review_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_replay_performance_review_validation",
+            artifact_id_key="review_id",
+            artifact_id=review_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    backfill_bundle = _mapping(snapshot.get("backfill_files"))
+    sim_bundle = _mapping(snapshot.get("sim_files"))
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    try:
+        policy = _load_replay_performance_review_policy(policy_path)
+        policy_valid = (
+            snapshot.get("policy_checksum") == _sha256_file(policy_path)
+            and snapshot.get("policy") == policy
+        )
+    except Exception:  # noqa: BLE001
+        policy = {}
+        policy_valid = False
+    try:
+        backfill_root = Path(_text(snapshot.get("backfill_root")))
+        sim_root = Path(_text(snapshot.get("sim_root")))
+        backfill_validation = validate_backfill_outcome_artifact(
+            backfill_id=_text(snapshot.get("backfill_id")),
+            output_dir=backfill_root.parent,
+        )
+        sim_validation = validate_historical_paper_sim_artifact(
+            sim_id=_text(snapshot.get("sim_id")),
+            output_dir=sim_root.parent,
+        )
+    except Exception as exc:  # noqa: BLE001
+        backfill_validation = {"status": "FAIL", "error": str(exc)}
+        sim_validation = {"status": "FAIL", "error": str(exc)}
+    try:
+        backfill_manifest = _mapping(
+            _review_bundle_content(backfill_bundle, "backfill_manifest.json")
+        )
+        outcome_rows = _records(
+            _review_bundle_content(backfill_bundle, "replay_outcome_windows.jsonl")
+        )
+        variant_summary = _mapping(
+            _review_bundle_content(backfill_bundle, "variant_performance_summary.json")
+        )
+        sim_manifest = _mapping(
+            _review_bundle_content(sim_bundle, "historical_paper_sim_manifest.json")
+        )
+        sim_summary = _mapping(
+            _review_bundle_content(sim_bundle, "simulated_performance_summary.json")
+        )
+        expected_effectiveness = _advisory_rule_effectiveness(outcome_rows, sim_summary, policy)
+        expected_recommendations = _calibration_recommendations(
+            outcome_rows,
+            variant_summary,
+            sim_summary,
+            policy,
+        )
+        available_count = _int(backfill_manifest.get("available_count"))
+        expected_status = (
+            "AVAILABLE"
+            if available_count
+            else _text(backfill_manifest.get("status"), "INSUFFICIENT_DATA")
+        )
+        primary = _records(expected_recommendations.get("recommendations"))[0]
+        metadata = _mapping(policy.get("policy_metadata"))
+        expected_manifest_fields = {
+            "review_id": review_id,
+            "backfill_id": snapshot.get("backfill_id"),
+            "sim_id": snapshot.get("sim_id"),
+            "replay_id": snapshot.get("replay_id"),
+            "generated_at": snapshot.get("generated_at"),
+            "status": expected_status,
+            "replay_event_count": backfill_manifest.get("replay_event_count", 0),
+            "available_outcome_count": available_count,
+            "best_variant": variant_summary.get("best_variant", "MISSING"),
+            "limited_adjustment_vs_no_trade": variant_summary.get(
+                "limited_adjustment_vs_no_trade_5d"
+            ),
+            "calibration_recommendation": primary.get("type"),
+            "next_action": primary.get("type"),
+            "directional_evidence_ready": expected_recommendations.get(
+                "directional_evidence_ready"
+            ),
+            "distinct_replay_event_count": expected_recommendations.get(
+                "distinct_replay_event_count"
+            ),
+            "available_comparison_window_count": expected_recommendations.get(
+                "available_comparison_window_count"
+            ),
+            "policy_id": metadata.get("policy_id"),
+            "policy_version": metadata.get("version"),
+            "source_backfill_validation_status": "PASS",
+            "source_sim_validation_status": "PASS",
+        }
+        lineage_valid = backfill_manifest.get("replay_id") == snapshot.get(
+            "replay_id"
+        ) and sim_manifest.get("replay_id") == snapshot.get("replay_id")
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_effectiveness = {}
+        expected_recommendations = {}
+        expected_manifest_fields = {}
+        sim_summary = {}
+        lineage_valid = False
+        recompute_error = str(exc)
+    expected_report = render_replay_performance_review(
+        manifest,
+        expected_effectiveness,
+        expected_recommendations,
+        sim_summary,
+    )
+    expected_reader = render_replay_performance_reader_brief(
+        manifest,
+        expected_recommendations,
+    )
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+            REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "review source snapshot",
+        ),
+        _check(
+            "backfill_source_validation_passes", backfill_validation.get("status") == "PASS", ""
+        ),
+        _check("simulation_source_validation_passes", sim_validation.get("status") == "PASS", ""),
+        _check("source_lineage_matches", lineage_valid, _text(snapshot.get("replay_id"))),
+        _check(
+            "source_files_unchanged",
+            _review_bundle_matches(backfill_bundle) and _review_bundle_matches(sim_bundle),
+            "backfill and simulation bundles",
+        ),
+        _check("review_policy_valid_and_unchanged", policy_valid, _text(snapshot.get("policy_id"))),
+        _check(
+            "effectiveness_recomputed",
+            not recompute_error and effectiveness == expected_effectiveness,
+            recompute_error,
+        ),
+        _check(
+            "recommendations_recomputed",
+            not recompute_error and recommendations == expected_recommendations,
+            recompute_error,
+        ),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            "manifest",
+        ),
+        _check(
+            "unsupported_classification_metrics_are_null",
+            all(
+                row.get("false_alarm_rate") is None and row.get("missed_opportunity_rate") is None
+                for row in _records(effectiveness.get("recommendation_effectiveness"))
+            ),
+            "labels are not identified from relative return alone",
+        ),
+        _check(
+            "report_recomputed",
+            (review_dir / "replay_performance_review.md").is_file()
+            and (review_dir / "replay_performance_review.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (review_dir / "reader_brief_section.md").is_file()
+            and (review_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+            == expected_reader,
+            "Reader Brief section",
         ),
     ]
     return _validation_payload(
@@ -3091,11 +3462,19 @@ def render_replay_performance_review(
             f"- limited_adjustment_vs_no_trade：{manifest.get('limited_adjustment_vs_no_trade')}",
             f"- simulation_variant：{sim_summary.get('variant')}",
             f"- simulation_total_return：{sim_summary.get('total_return')}",
+            f"- policy：{manifest.get('policy_id')}@{manifest.get('policy_version')}",
+            f"- directional_evidence_ready：{manifest.get('directional_evidence_ready')}",
+            f"- distinct_replay_event_count：{manifest.get('distinct_replay_event_count')}",
+            f"- available_comparison_window_count："
+            f"{manifest.get('available_comparison_window_count')}",
             f"- primary_recommendation：{top.get('type')}",
             f"- reason：{top.get('reason')}",
             f"- requires_owner_approval：{top.get('requires_owner_approval')}",
             f"- recommendation_effectiveness_count："
             f"{len(_records(effectiveness.get('recommendation_effectiveness')))}",
+            "- relative return只能支持相对no_trade的正/非正率；没有独立标签时，"
+            "false alarm与missed opportunity保持null。",
+            "- 未通过distinct-event/window样本门槛时只允许continue_forward_tracking。",
             "- 不自动修改 position_advisory_v1.yaml 或 production config。",
             "- production_effect=none；broker_action_taken=false。",
             "",
@@ -3115,6 +3494,9 @@ def render_replay_performance_reader_brief(
             f"- available_outcome_count: {manifest.get('available_outcome_count')}",
             f"- best_variant: {manifest.get('best_variant')}",
             f"- limited_adjustment_vs_no_trade: {manifest.get('limited_adjustment_vs_no_trade')}",
+            f"- directional_evidence_ready: {manifest.get('directional_evidence_ready')}",
+            f"- evidence_events/windows: {manifest.get('distinct_replay_event_count')} / "
+            f"{manifest.get('available_comparison_window_count')}",
             f"- calibration_recommendation: {top.get('type')}",
             f"- next_action: {manifest.get('next_action')}",
             "- production_effect: none",
@@ -4550,73 +4932,145 @@ def _simulate_variant_history(
 
 def _advisory_rule_effectiveness(
     rows: Sequence[Mapping[str, Any]],
-    variant_summary: Mapping[str, Any],
     sim_summary: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
     available = [row for row in rows if row.get("outcome_status") == "AVAILABLE"]
+    comparison_window = _int(
+        _mapping(policy.get("evidence_gate")).get("comparison_window_trading_days")
+    )
     by_action: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     for row in available:
         by_action[_text(row.get("recommended_action"), "MISSING")].append(row)
     recommendation_effectiveness = []
     for action, action_rows in sorted(by_action.items()):
-        rel_5 = _window_values(action_rows, 5, "relative_to_no_trade")
-        rel_20 = _window_values(action_rows, 20, "relative_to_no_trade")
+        rel_5 = _finite_window_values(action_rows, 5, "relative_to_no_trade")
+        rel_20 = _finite_window_values(action_rows, 20, "relative_to_no_trade")
         recommendation_effectiveness.append(
             {
                 "recommended_action": action,
                 "event_count": len({_text(row.get("replay_event_id")) for row in action_rows}),
-                "avg_relative_to_no_trade_5d": round(_avg(rel_5), 6),
-                "avg_relative_to_no_trade_20d": round(_avg(rel_20), 6),
-                "false_alarm_rate": (
-                    round(sum(1 for value in rel_5 if value <= 0) / len(rel_5), 6) if rel_5 else 0.0
+                "available_5d_window_count": len(rel_5),
+                "available_20d_window_count": len(rel_20),
+                "avg_relative_to_no_trade_5d": _rounded_avg_or_none(rel_5),
+                "avg_relative_to_no_trade_20d": _rounded_avg_or_none(rel_20),
+                "nonpositive_rate_vs_no_trade_5d": (
+                    round(sum(1 for value in rel_5 if value <= 0) / len(rel_5), 6)
+                    if rel_5
+                    else None
                 ),
-                "missed_opportunity_rate": (
-                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else 0.0
+                "positive_rate_vs_no_trade_5d": (
+                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else None
+                ),
+                "false_alarm_rate": None,
+                "missed_opportunity_rate": None,
+                "classification_metric_status": "NOT_IDENTIFIED_FROM_RELATIVE_RETURN_ONLY",
+            }
+        )
+    by_variant: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in available:
+        by_variant[_text(row.get("variant"), "MISSING")].append(row)
+    variant_effectiveness = []
+    for variant, variant_rows in sorted(by_variant.items()):
+        rel = _finite_window_values(
+            variant_rows,
+            comparison_window,
+            "relative_to_no_trade",
+        )
+        drawdown = _finite_window_values(variant_rows, 20, "max_drawdown")
+        turnover = [
+            float(row["turnover"])
+            for row in variant_rows
+            if isinstance(row.get("turnover"), (int, float))
+            and not isinstance(row.get("turnover"), bool)
+            and math.isfinite(float(row["turnover"]))
+        ]
+        variant_effectiveness.append(
+            {
+                "variant": variant,
+                "event_count": len({_text(row.get("replay_event_id")) for row in variant_rows}),
+                "available_comparison_window_count": len(rel),
+                "win_rate_vs_no_trade": (
+                    round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else None
+                ),
+                "avg_return_delta": _rounded_avg_or_none(rel),
+                "avg_max_drawdown_20d": _rounded_avg_or_none(drawdown),
+                "avg_turnover": _rounded_avg_or_none(turnover),
+                "simulated_total_turnover": (
+                    sim_summary.get("turnover") if variant == sim_summary.get("variant") else None
                 ),
             }
         )
-    variant_effectiveness = [
-        {
-            "variant": row.get("variant"),
-            "win_rate_vs_no_trade": row.get("win_rate_vs_no_trade_5d", 0.0),
-            "avg_return_delta": row.get("avg_relative_to_no_trade_5d", 0.0),
-            "drawdown_delta": row.get("avg_max_drawdown_20d", 0.0),
-            "turnover": (
-                sim_summary.get("turnover", 0.0)
-                if row.get("variant") == sim_summary.get("variant")
-                else row.get("avg_turnover", 0.0)
-            ),
-        }
-        for row in _records(variant_summary.get("summary"))
-    ]
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_advisory_rule_effectiveness",
         "recommendation_effectiveness": recommendation_effectiveness,
         "variant_effectiveness": variant_effectiveness,
+        "comparison_window_trading_days": comparison_window,
+        "metric_semantics": (
+            "relative return signs support positive/nonpositive rates only; "
+            "false alarm and missed opportunity require independent labels"
+        ),
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
 def _calibration_recommendations(
-    variant_summary: Mapping[str, Any], sim_summary: Mapping[str, Any]
+    rows: Sequence[Mapping[str, Any]],
+    variant_summary: Mapping[str, Any],
+    sim_summary: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    available = _int(variant_summary.get("available_count"))
+    gate = _mapping(policy.get("evidence_gate"))
+    metadata = _mapping(policy.get("policy_metadata"))
+    comparison_window = _int(gate.get("comparison_window_trading_days"))
+    available_rows = [
+        row
+        for row in rows
+        if row.get("outcome_status") == "AVAILABLE"
+        and _int(row.get("window_days")) == comparison_window
+        and isinstance(row.get("relative_to_no_trade"), (int, float))
+        and not isinstance(row.get("relative_to_no_trade"), bool)
+        and math.isfinite(float(row["relative_to_no_trade"]))
+    ]
+    distinct_events = len({_text(row.get("replay_event_id")) for row in available_rows})
+    required_events = _int(gate.get("minimum_distinct_replay_event_count"))
+    required_windows = _int(gate.get("minimum_available_variant_window_count"))
+    sim_available = sim_summary.get("simulation_status") == "AVAILABLE"
+    directional_ready = (
+        distinct_events >= required_events
+        and len(available_rows) >= required_windows
+        and (sim_available or gate.get("require_historical_paper_sim_available") is not True)
+    )
     best = _text(variant_summary.get("best_variant"), "MISSING")
-    limited_delta = _float(variant_summary.get("limited_adjustment_vs_no_trade_5d"))
+    limited_raw = variant_summary.get("limited_adjustment_vs_no_trade_5d")
+    limited_delta = (
+        float(limited_raw)
+        if isinstance(limited_raw, (int, float))
+        and not isinstance(limited_raw, bool)
+        and math.isfinite(float(limited_raw))
+        else None
+    )
+    boundary = float(gate.get("positive_relative_return_boundary"))
     recommendations = []
-    if available == 0:
+    if not directional_ready:
         recommendations.append(
             {
                 "type": "continue_forward_tracking",
                 "priority": "HIGH",
-                "reason": "historical replay outcome has no AVAILABLE windows yet",
+                "reason": (
+                    "directional evidence gate not met: "
+                    f"events={distinct_events}/{required_events}, "
+                    f"windows={len(available_rows)}/{required_windows}, "
+                    f"simulation_available={sim_available}"
+                ),
                 "affected_config": "position_advisory_v1.yaml",
                 "requires_owner_approval": True,
+                "manual_review_required": True,
             }
         )
-    elif best == "limited_adjustment" and limited_delta > 0:
+    elif best == "limited_adjustment" and limited_delta is not None and limited_delta > boundary:
         recommendations.append(
             {
                 "type": "keep_current_rules",
@@ -4624,6 +5078,7 @@ def _calibration_recommendations(
                 "reason": "limited_adjustment ranks best and is positive versus no_trade",
                 "affected_config": "position_advisory_v1.yaml",
                 "requires_owner_approval": True,
+                "manual_review_required": True,
             }
         )
     elif best == "no_trade":
@@ -4634,6 +5089,7 @@ def _calibration_recommendations(
                 "reason": "no_trade ranks best in available historical replay windows",
                 "affected_config": "position_advisory_v1.yaml",
                 "requires_owner_approval": True,
+                "manual_review_required": True,
             }
         )
     else:
@@ -4644,6 +5100,7 @@ def _calibration_recommendations(
                 "reason": f"best historical replay variant is {best}; owner review required",
                 "affected_config": "position_advisory_v1.yaml",
                 "requires_owner_approval": True,
+                "manual_review_required": True,
             }
         )
     recommendations.append(
@@ -4653,12 +5110,21 @@ def _calibration_recommendations(
             "reason": "FORWARD_OUTCOME remains higher confidence than backfilled replay",
             "affected_config": "paper_portfolio_v1.yaml",
             "requires_owner_approval": True,
+            "manual_review_required": True,
         }
     )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_calibration_recommendations",
         "recommendations": recommendations,
+        "policy_id": metadata.get("policy_id"),
+        "policy_version": metadata.get("version"),
+        "comparison_window_trading_days": comparison_window,
+        "directional_evidence_ready": directional_ready,
+        "distinct_replay_event_count": distinct_events,
+        "available_comparison_window_count": len(available_rows),
+        "minimum_distinct_replay_event_count": required_events,
+        "minimum_available_variant_window_count": required_windows,
         "simulation_status": sim_summary.get("simulation_status", "MISSING"),
         "production_effect": "none",
         "broker_action_taken": False,
@@ -5434,6 +5900,21 @@ def _normalize_weights(weights: Mapping[str, Any]) -> dict[str, float]:
 
 def _window_values(rows: Sequence[Mapping[str, Any]], window: int, key: str) -> list[float]:
     return [_float(row.get(key)) for row in rows if _int(row.get("window_days")) == window]
+
+
+def _finite_window_values(rows: Sequence[Mapping[str, Any]], window: int, key: str) -> list[float]:
+    return [
+        float(row[key])
+        for row in rows
+        if _int(row.get("window_days")) == window
+        and isinstance(row.get(key), (int, float))
+        and not isinstance(row.get(key), bool)
+        and math.isfinite(float(row[key]))
+    ]
+
+
+def _rounded_avg_or_none(values: Sequence[float]) -> float | None:
+    return round(sum(values) / len(values), 6) if values else None
 
 
 def _avg(values: Sequence[float]) -> float:
