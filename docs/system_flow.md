@@ -4168,6 +4168,10 @@ flowchart TD
 
 `backtest-sim outcome-run`只接受content-derived PASS且不晚于generated cutoff的variant artifact，并在创建output前执行cached DQ。`outcome_input_snapshot.json`（schema=`backtest_sim_outcome_input_snapshot.v2`）冻结完整variant/event/config/validation bundle、price/rate full-file与requested-end cutoff rows和DQ report evidence。每个event×variant×window identity必须唯一，只有AVAILABLE metrics可为finite number；PENDING/INSUFFICIENT未知收益、相对收益、回撤和波动保持null且不进入summary/best ranking。`validate-backtest-sim-outcome`重验live variant/cache/DQ并逐字节重算snapshot、windows、summary、manifest和Markdown；任一drift阻断paper/regime/sensitivity。该链路固定`SIMULATION_NOT_PIT`、`not_for_production=true`和`production_effect=none`。
 
+### Backtest Simulation Paper 可复算边界（TRADING-164 / ARCH-004G2.4BO）
+
+`backtest-sim paper-run`只接受content-derived PASS且不晚于generated cutoff的variant artifact，并在创建output前执行cached DQ。`paper_input_snapshot.json`（schema=`backtest_sim_paper_input_snapshot.v2`）冻结完整variant/event/config/validation bundle、price/rate full-file与requested-end cutoff rows和DQ evidence。Selected variant与no_trade按event顺序重建state、区间value、trade ledger、turnover、drawdown和relative performance；无READY或必要区间不可计算时metrics为null且status=`INSUFFICIENT_DATA`。当前无reviewed cost model，return明确为`GROSS_BEFORE_COSTS`/`NOT_CONFIGURED`，不得冒充net。Validator重验live variant/cache/DQ并逐字节重算所有views；任一drift阻断calibration。固定non-PIT/no-production/no-broker。
+
 ## 文件和命令责任表
 
 |层级|命令或文件|责任|当前状态|

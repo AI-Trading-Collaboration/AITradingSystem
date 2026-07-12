@@ -157,6 +157,8 @@
 - 默认市场 regime 为 `ai_after_chatgpt`，anchor event 为 ChatGPT public launch on 2022-11-30，默认回测结论窗口从 2022-12-01 开始。任何回测、weekly review 或 monthly governance 报告都必须写明实际日期范围。
 - Reader Brief、dashboard、report index、report quality gate、documentation contract、research governance、SEC PIT shadow monitor、weight feedback 和 scheduler validation 默认 `production_effect=none`。它们不得写 production weights、active shadow weights、broker action 或 trading action。
 
+- G2.4BO开始，`backtest-sim paper-run`必须在创建artifact目录前要求Variant validator PASS、source generated/requested-end cutoff和cached price/rate DQ；随后将full variant/event/config/validation、cache full-file/requested-end rows和DQ evidence冻结到`backtest_sim_paper_input_snapshot.v2`。Selected variant与no_trade的state/history/ledger/summary必须从snapshot重算，无READY/不可计算metrics为null/`INSUFFICIENT_DATA`。当前无reviewed cost model，return只能标`GROSS_BEFORE_COSTS`/`NOT_CONFIGURED`，不能作为net evidence。运行后必须用`validate-backtest-sim-paper`重验live variant/cache/DQ并逐字节重算全部views；FAIL时不得进入calibration。Focused tests只能显式跳过真实DQ。该链固定non-PIT/no-production/no-broker，不修改任何真实或official portfolio。
+
 ## Unified Daily Trigger
 
 标准外部调度入口：

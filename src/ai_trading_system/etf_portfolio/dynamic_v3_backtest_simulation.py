@@ -89,6 +89,7 @@ REPORT_LABEL_BACKTEST_SIMULATION = "BACKTEST_SIMULATION_NOT_PIT"
 BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_event_input_snapshot.v2"
 BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_variant_input_snapshot.v2"
 BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_outcome_input_snapshot.v2"
+BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_paper_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -1611,70 +1612,149 @@ def run_backtest_sim_paper(
     variant_dir: Path = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
     event_dir: Path = DEFAULT_BACKTEST_SIM_EVENT_DIR,
     output_dir: Path = DEFAULT_BACKTEST_SIM_PAPER_DIR,
+    enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     source_dir = variant_dir / variant_set_id
-    variant_manifest = _read_json(source_dir / "variant_set_manifest.json")
+    variant_validation = validate_backtest_sim_variants_artifact(
+        variant_set_id=variant_set_id, output_dir=variant_dir
+    )
+    if variant_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError(
+            "backtest simulation variant artifact validation failed"
+        )
+    variant_bundle = _backtest_sim_variant_bundle(source_dir)
+    variant_manifest = _mapping(variant_bundle.get("manifest"))
+    variant_generated = _datetime_from_any(variant_manifest.get("generated_at"))
+    if variant_generated is None or variant_generated > generated:
+        raise DynamicV3BacktestSimulationError("variant source generated after paper cutoff")
     event_set_id = _text(variant_manifest.get("event_set_id"))
-    event_snapshot = _read_json(event_dir / event_set_id / "simulation_input_snapshot.json")
-    config = _mapping(event_snapshot.get("config"))
+    variant_snapshot = _mapping(variant_bundle.get("input_snapshot"))
+    event_bundle = _mapping(variant_snapshot.get("event_bundle"))
+    event_snapshot = _mapping(event_bundle.get("input_snapshot"))
+    frozen_event_dir = Path(_text(event_bundle.get("event_set_dir")))
+    if frozen_event_dir.name != event_set_id or frozen_event_dir.parent != event_dir:
+        raise DynamicV3BacktestSimulationError("variant event source binding invalid")
+    config = _mapping(variant_snapshot.get("config"))
+    if config != _mapping(event_snapshot.get("config")):
+        raise DynamicV3BacktestSimulationError("variant config binding invalid")
+    requested_end = _date_from_any(_mapping(config.get("date_range")).get("end"))
+    if requested_end is None or requested_end > generated.date():
+        raise DynamicV3BacktestSimulationError("requested end exceeds paper cutoff")
     prices_path = _resolve_project_path(
         Path(_text(_mapping(config.get("source")).get("price_cache_path")))
     )
-    rows = _read_jsonl(source_dir / "simulated_variant_weights.jsonl")
+    rates_path = _resolve_project_path(
+        Path(_text(_mapping(config.get("source")).get("rates_cache_path")))
+    )
+    quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    quality_report_content = ""
+    if enforce_data_quality_gate:
+        with tempfile.TemporaryDirectory(prefix="backtest-sim-paper-dq-") as temp_dir:
+            quality_path = Path(temp_dir) / "validate_data_quality_report.md"
+            quality = _run_cached_quality_gate(
+                as_of=requested_end,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                report_path=quality_path,
+            )
+            quality_report_content = (
+                quality_path.read_text(encoding="utf-8") if quality_path.is_file() else ""
+            )
+        quality_status = quality.status
+        if not quality.passed:
+            raise DynamicV3BacktestSimulationError(
+                f"backtest simulation paper data quality gate failed: {quality.status}"
+            )
+    rows = _records(variant_bundle.get("weights"))
     selected = [row for row in rows if row.get("variant") == variant]
-    if not selected:
+    baseline_rows = [row for row in rows if row.get("variant") == "no_trade"]
+    if not selected or not baseline_rows:
         raise DynamicV3BacktestSimulationError(f"unsupported simulation variant: {variant}")
+    if any(
+        (_date_from_any(row.get("as_of")) or date.max) > requested_end
+        for row in selected + baseline_rows
+    ):
+        raise DynamicV3BacktestSimulationError("variant row exceeds paper requested end")
     prices = _load_prices(prices_path, extra_symbols=_weights_symbols(selected))
     state_history, ledger, summary = _paper_history(selected, variant=variant, prices=prices)
     baseline_history, _, baseline_summary = _paper_history(
-        [row for row in rows if row.get("variant") == "no_trade"],
+        baseline_rows,
         variant="no_trade",
         prices=prices,
     )
-    summary["relative_to_no_trade"] = round(
-        _float(summary.get("total_return")) - _float(baseline_summary.get("total_return")),
-        6,
+    relative = (
+        round(float(summary["total_return"]) - float(baseline_summary["total_return"]), 6)
+        if _finite_number(summary.get("total_return"))
+        and _finite_number(baseline_summary.get("total_return"))
+        else None
     )
-    summary["relative_to_baseline"] = summary["relative_to_no_trade"]
+    summary["relative_to_no_trade"] = relative
+    summary["relative_to_baseline"] = relative
+    summary["return_basis"] = "GROSS_BEFORE_COSTS"
+    summary["cost_model_status"] = "NOT_CONFIGURED"
     sim_paper_id = _stable_id("backtest-sim-paper", variant_set_id, variant, generated.isoformat())
     paper_dir = _unique_dir(output_dir / sim_paper_id)
-    paper_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_backtest_sim_paper_manifest",
-        "sim_paper_id": paper_dir.name,
-        "variant_set_id": variant_set_id,
-        "event_set_id": event_set_id,
+    final_quality_path = (
+        str(paper_dir / "validate_data_quality_report.md") if enforce_data_quality_gate else ""
+    )
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_paper_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": summary.get("simulation_status", "INSUFFICIENT_DATA"),
+        "variant_set_id": variant_set_id,
+        "variant_set_dir": str(source_dir),
+        "variant_bundle": variant_bundle,
+        "variant_validation": variant_validation,
+        "event_set_id": event_set_id,
+        "event_set_dir": str(frozen_event_dir),
+        "config": config,
+        "variant": variant,
+        "requested_end": requested_end.isoformat(),
+        "price_source": _price_source_snapshot(prices_path),
+        "rate_source": _price_source_snapshot(rates_path),
+        "price_cutoff_snapshot": _csv_cutoff_snapshot(prices_path, end=requested_end),
+        "rate_cutoff_snapshot": _csv_cutoff_snapshot(rates_path, end=requested_end),
+        "data_quality_enforced": enforce_data_quality_gate,
+        "data_quality_status": quality_status,
+        "data_quality_report_content": quality_report_content,
+        "data_quality_report_checksum": (
+            sha256(quality_report_content.encode("utf-8")).hexdigest()
+            if quality_report_content
+            else ""
+        ),
+        "return_basis": "GROSS_BEFORE_COSTS",
+        "cost_model_status": "NOT_CONFIGURED",
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
         "not_for_production": True,
-        "variant": variant,
-        "state_row_count": len(state_history),
-        "trade_count": len(ledger),
-        "baseline_state_row_count": len(baseline_history),
-        "sim_paper_manifest_path": str(paper_dir / "sim_paper_manifest.json"),
-        "sim_paper_state_history_path": str(paper_dir / "sim_paper_state_history.jsonl"),
-        "sim_trade_ledger_path": str(paper_dir / "sim_trade_ledger.jsonl"),
-        "sim_paper_performance_summary_path": str(paper_dir / "sim_paper_performance_summary.json"),
-        "backtest_sim_paper_report_path": str(paper_dir / "backtest_sim_paper_report.md"),
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    manifest = _backtest_sim_paper_manifest(
+        paper_dir=paper_dir,
+        generated=generated,
+        variant_set_id=variant_set_id,
+        event_set_id=event_set_id,
+        variant=variant,
+        history=state_history,
+        ledger=ledger,
+        baseline_history=baseline_history,
+        summary=summary,
+        quality_status=quality_status,
+        quality_report_path=final_quality_path,
+    )
+    paper_dir.mkdir(parents=True, exist_ok=False)
     _write_json(paper_dir / "sim_paper_manifest.json", manifest)
     _write_jsonl(paper_dir / "sim_paper_state_history.jsonl", state_history)
     _write_jsonl(paper_dir / "sim_trade_ledger.jsonl", ledger)
     _write_json(paper_dir / "sim_paper_performance_summary.json", summary)
+    _write_json(paper_dir / "paper_input_snapshot.json", input_snapshot)
     _write_text(paper_dir / "backtest_sim_paper_report.md", render_paper_report(manifest, summary))
+    if quality_report_content:
+        _write_text(paper_dir / "validate_data_quality_report.md", quality_report_content)
     _update_latest_pointer(
         "latest_backtest_sim_paper",
         paper_dir.name,
@@ -1687,6 +1767,57 @@ def run_backtest_sim_paper(
         "state_history": state_history,
         "trade_ledger": ledger,
         "performance_summary": summary,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_paper_manifest(
+    *,
+    paper_dir: Path,
+    generated: datetime,
+    variant_set_id: str,
+    event_set_id: str,
+    variant: str,
+    history: Sequence[Mapping[str, Any]],
+    ledger: Sequence[Mapping[str, Any]],
+    baseline_history: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+    quality_status: str,
+    quality_report_path: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_paper_manifest",
+        "sim_paper_id": paper_dir.name,
+        "variant_set_id": variant_set_id,
+        "event_set_id": event_set_id,
+        "generated_at": generated.isoformat(),
+        "status": summary.get("simulation_status", "INSUFFICIENT_DATA"),
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+        "variant": variant,
+        "state_row_count": len(history),
+        "trade_count": len(ledger),
+        "baseline_state_row_count": len(baseline_history),
+        "return_basis": "GROSS_BEFORE_COSTS",
+        "cost_model_status": "NOT_CONFIGURED",
+        "data_quality_status": quality_status,
+        "data_quality_report_path": quality_report_path,
+        "sim_paper_manifest_path": str(paper_dir / "sim_paper_manifest.json"),
+        "sim_paper_state_history_path": str(paper_dir / "sim_paper_state_history.jsonl"),
+        "sim_trade_ledger_path": str(paper_dir / "sim_trade_ledger.jsonl"),
+        "sim_paper_performance_summary_path": str(paper_dir / "sim_paper_performance_summary.json"),
+        "paper_input_snapshot_path": str(paper_dir / "paper_input_snapshot.json"),
+        "backtest_sim_paper_report_path": str(paper_dir / "backtest_sim_paper_report.md"),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -1708,6 +1839,7 @@ def backtest_sim_paper_report_payload(
         "sim_paper_performance_summary": _read_json(
             paper_dir / "sim_paper_performance_summary.json"
         ),
+        "paper_input_snapshot": _read_json(paper_dir / "paper_input_snapshot.json"),
         "sim_paper_dir": str(paper_dir),
     }
 
@@ -1719,13 +1851,219 @@ def validate_backtest_sim_paper_artifact(
     manifest = _read_optional_json(paper_dir / "sim_paper_manifest.json") or {}
     history = _read_jsonl(paper_dir / "sim_paper_state_history.jsonl")
     ledger = _read_jsonl(paper_dir / "sim_trade_ledger.jsonl")
+    summary = _read_optional_json(paper_dir / "sim_paper_performance_summary.json") or {}
+    snapshot = _read_optional_json(paper_dir / "paper_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        if snapshot.get("schema_version") != BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("snapshot_schema_invalid")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        variant_set_id = _text(snapshot.get("variant_set_id"))
+        variant_set_dir = Path(_text(snapshot.get("variant_set_dir")))
+        event_set_id = _text(snapshot.get("event_set_id"))
+        event_set_dir = Path(_text(snapshot.get("event_set_dir")))
+        requested_end = _date_from_any(snapshot.get("requested_end"))
+        variant = _text(snapshot.get("variant"))
+        if (
+            generated is None
+            or requested_end is None
+            or requested_end > generated.date()
+            or variant_set_dir.name != variant_set_id
+            or event_set_dir.name != event_set_id
+            or not variant
+        ):
+            raise DynamicV3BacktestSimulationError("paper source identity/time invalid")
+        live_validation = validate_backtest_sim_variants_artifact(
+            variant_set_id=variant_set_id, output_dir=variant_set_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("variant_validation_failed")
+        if live_validation != snapshot.get("variant_validation"):
+            source_errors.append("variant_validation_changed")
+        live_bundle = _backtest_sim_variant_bundle(variant_set_dir)
+        if live_bundle != snapshot.get("variant_bundle"):
+            source_errors.append("variant_bundle_changed")
+        variant_snapshot = _mapping(live_bundle.get("input_snapshot"))
+        frozen_event_bundle = _mapping(variant_snapshot.get("event_bundle"))
+        if Path(_text(frozen_event_bundle.get("event_set_dir"))) != event_set_dir:
+            source_errors.append("event_binding_changed")
+        config = _mapping(snapshot.get("config"))
+        if config != _mapping(variant_snapshot.get("config")):
+            source_errors.append("config_binding_changed")
+        source = _mapping(config.get("source"))
+        prices_path = _resolve_project_path(Path(_text(source.get("price_cache_path"))))
+        rates_path = _resolve_project_path(Path(_text(source.get("rates_cache_path"))))
+        if _price_source_snapshot(prices_path) != snapshot.get("price_source"):
+            source_errors.append("price_source_changed")
+        if _price_source_snapshot(rates_path) != snapshot.get("rate_source"):
+            source_errors.append("rate_source_changed")
+        if _csv_cutoff_snapshot(prices_path, end=requested_end) != snapshot.get(
+            "price_cutoff_snapshot"
+        ):
+            source_errors.append("price_cutoff_rows_changed")
+        if _csv_cutoff_snapshot(rates_path, end=requested_end) != snapshot.get(
+            "rate_cutoff_snapshot"
+        ):
+            source_errors.append("rate_cutoff_rows_changed")
+        quality_status = _text(snapshot.get("data_quality_status"))
+        quality_content = _text(snapshot.get("data_quality_report_content"))
+        quality_checksum = _text(snapshot.get("data_quality_report_checksum"))
+        quality_enforced = snapshot.get("data_quality_enforced") is True
+        if bool(quality_content) != quality_enforced:
+            source_errors.append("data_quality_evidence_missing")
+        if (
+            quality_content
+            and sha256(quality_content.encode("utf-8")).hexdigest() != quality_checksum
+        ):
+            source_errors.append("data_quality_evidence_checksum_invalid")
+        quality_path = paper_dir / "validate_data_quality_report.md"
+        if quality_content and (
+            not quality_path.is_file()
+            or quality_path.read_text(encoding="utf-8") != quality_content
+        ):
+            source_errors.append("data_quality_report_changed")
+        if quality_enforced:
+            with tempfile.TemporaryDirectory(prefix="backtest-sim-paper-validate-dq-") as temp_dir:
+                quality = _run_cached_quality_gate(
+                    as_of=requested_end,
+                    prices_path=prices_path,
+                    rates_path=rates_path,
+                    report_path=Path(temp_dir) / "validate_data_quality_report.md",
+                )
+            if not quality.passed or quality.status != quality_status:
+                source_errors.append("data_quality_changed")
+        variant_rows = _records(live_bundle.get("weights"))
+        selected = [row for row in variant_rows if row.get("variant") == variant]
+        baseline_rows = [row for row in variant_rows if row.get("variant") == "no_trade"]
+        if not selected or not baseline_rows:
+            raise DynamicV3BacktestSimulationError("paper variant coverage invalid")
+        prices = _load_prices(prices_path, extra_symbols=_weights_symbols(selected))
+        expected_history, expected_ledger, expected_summary = _paper_history(
+            selected, variant=variant, prices=prices
+        )
+        baseline_history, _, baseline_summary = _paper_history(
+            baseline_rows, variant="no_trade", prices=prices
+        )
+        relative = (
+            round(
+                float(expected_summary["total_return"]) - float(baseline_summary["total_return"]),
+                6,
+            )
+            if _finite_number(expected_summary.get("total_return"))
+            and _finite_number(baseline_summary.get("total_return"))
+            else None
+        )
+        expected_summary["relative_to_no_trade"] = relative
+        expected_summary["relative_to_baseline"] = relative
+        expected_summary["return_basis"] = "GROSS_BEFORE_COSTS"
+        expected_summary["cost_model_status"] = "NOT_CONFIGURED"
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_paper_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "variant_set_id": variant_set_id,
+            "variant_set_dir": str(variant_set_dir),
+            "variant_bundle": live_bundle,
+            "variant_validation": live_validation,
+            "event_set_id": event_set_id,
+            "event_set_dir": str(event_set_dir),
+            "config": config,
+            "variant": variant,
+            "requested_end": requested_end.isoformat(),
+            "price_source": _price_source_snapshot(prices_path),
+            "rate_source": _price_source_snapshot(rates_path),
+            "price_cutoff_snapshot": _csv_cutoff_snapshot(prices_path, end=requested_end),
+            "rate_cutoff_snapshot": _csv_cutoff_snapshot(rates_path, end=requested_end),
+            "data_quality_enforced": quality_enforced,
+            "data_quality_status": quality_status,
+            "data_quality_report_content": quality_content,
+            "data_quality_report_checksum": quality_checksum,
+            "return_basis": "GROSS_BEFORE_COSTS",
+            "cost_model_status": "NOT_CONFIGURED",
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_paper_manifest(
+            paper_dir=paper_dir,
+            generated=generated,
+            variant_set_id=variant_set_id,
+            event_set_id=event_set_id,
+            variant=variant,
+            history=expected_history,
+            ledger=expected_ledger,
+            baseline_history=baseline_history,
+            summary=expected_summary,
+            quality_status=quality_status,
+            quality_report_path=str(quality_path) if quality_enforced else "",
+        )
+        expected_report = render_paper_report(expected_manifest, expected_summary)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_history = []
+        expected_ledger = []
+        expected_summary = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
+    report_path = paper_dir / "backtest_sim_paper_report.md"
     checks = [
         _check("manifest_exists", (paper_dir / "sim_paper_manifest.json").exists(), ""),
         _check("history_exists", (paper_dir / "sim_paper_state_history.jsonl").exists(), ""),
         _check("ledger_exists", (paper_dir / "sim_trade_ledger.jsonl").exists(), ""),
         _check("summary_exists", (paper_dir / "sim_paper_performance_summary.json").exists(), ""),
+        _check("snapshot_exists", (paper_dir / "paper_input_snapshot.json").exists(), ""),
         _check("report_exists", (paper_dir / "backtest_sim_paper_report.md").exists(), ""),
         _check("sim_paper_id_matches", manifest.get("sim_paper_id") == sim_paper_id, ""),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source"),
+        _check("history_recomputed", history == expected_history, "snapshot"),
+        _check("ledger_recomputed", ledger == expected_ledger, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "snapshot_bytes_recomputed",
+            (paper_dir / "paper_input_snapshot.json").is_file()
+            and (paper_dir / "paper_input_snapshot.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_snapshot),
+            "canonical JSON",
+        ),
+        _check(
+            "history_bytes_recomputed",
+            (paper_dir / "sim_paper_state_history.jsonl").is_file()
+            and (paper_dir / "sim_paper_state_history.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_history),
+            "canonical JSONL",
+        ),
+        _check(
+            "ledger_bytes_recomputed",
+            (paper_dir / "sim_trade_ledger.jsonl").is_file()
+            and (paper_dir / "sim_trade_ledger.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_ledger),
+            "canonical JSONL",
+        ),
+        _check(
+            "summary_bytes_recomputed",
+            (paper_dir / "sim_paper_performance_summary.json").is_file()
+            and (paper_dir / "sim_paper_performance_summary.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_summary),
+            "canonical JSON",
+        ),
+        _check(
+            "manifest_bytes_recomputed",
+            (paper_dir / "sim_paper_manifest.json").is_file()
+            and (paper_dir / "sim_paper_manifest.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_manifest),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown",
+        ),
+        _check("paper_contract_valid", _paper_rows_contract_valid(history, ledger, summary), ""),
         _check(
             "broker_action_forbidden",
             manifest.get("broker_action_taken") is False
@@ -1737,6 +2075,11 @@ def validate_backtest_sim_paper_artifact(
             "outcome_mode_backtest_simulation",
             manifest.get("outcome_mode") == OUTCOME_MODE_BACKTEST_SIMULATION,
             OUTCOME_MODE_BACKTEST_SIMULATION,
+        ),
+        _check(
+            "not_for_production",
+            manifest.get("not_for_production") is True,
+            "not for production",
         ),
     ]
     return _validation_payload(
@@ -3241,6 +3584,9 @@ def render_paper_report(manifest: Mapping[str, Any], summary: Mapping[str, Any])
             f"- max_drawdown：{summary.get('max_drawdown')}",
             f"- turnover：{summary.get('turnover')}",
             f"- relative_to_no_trade：{summary.get('relative_to_no_trade')}",
+            f"- return_basis：{summary.get('return_basis')}",
+            f"- cost_model_status：{summary.get('cost_model_status')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
             "- broker_action_taken=false；production_effect=none。",
         ]
     )
@@ -4680,7 +5026,7 @@ def _outcome_rows(
 def _paper_history(
     rows: Sequence[Mapping[str, Any]], *, variant: str, prices: pd.DataFrame
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
-    if not rows:
+    if not rows or not any(row.get("variant_status") == "READY" for row in rows):
         return [], [], _empty_paper_summary(variant)
     selected = sorted(rows, key=lambda row: _text(row.get("as_of")))
     current = _normalize_weights(_mapping(selected[0].get("before_weights")))
@@ -4700,7 +5046,9 @@ def _paper_history(
         period_return = 0.0
         if event_date > previous_date:
             metrics = _portfolio_metrics(prices, current, previous_date, event_date)
-            period_return = metrics["return"] if metrics["status"] == "AVAILABLE" else 0.0
+            if metrics["status"] != "AVAILABLE" or not _finite_number(metrics.get("return")):
+                return [], [], _empty_paper_summary(variant)
+            period_return = float(metrics["return"])
             value = round(value * (1.0 + period_return), 8)
             daily_returns.append(period_return)
             peak = max(peak, value)
@@ -5718,18 +6066,77 @@ def _empty_paper_summary(variant: str) -> dict[str, Any]:
         "variant": variant,
         "start_date": "",
         "end_date": "",
-        "total_return": 0.0,
-        "annualized_return": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
-        "turnover": 0.0,
+        "total_return": None,
+        "annualized_return": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
+        "turnover": None,
         "trade_count": 0,
-        "relative_to_no_trade": 0.0,
-        "relative_to_baseline": 0.0,
+        "relative_to_no_trade": None,
+        "relative_to_baseline": None,
         "simulation_status": "INSUFFICIENT_DATA",
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "broker_action_taken": False,
     }
+
+
+def _paper_rows_contract_valid(
+    history: Sequence[Mapping[str, Any]],
+    ledger: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> bool:
+    status = _text(summary.get("simulation_status"))
+    if status == "INSUFFICIENT_DATA":
+        metrics = (
+            "total_return",
+            "annualized_return",
+            "max_drawdown",
+            "realized_volatility",
+            "turnover",
+            "relative_to_no_trade",
+            "relative_to_baseline",
+        )
+        return not history and not ledger and all(summary.get(key) is None for key in metrics)
+    if status != "PASS" or not history:
+        return False
+    dates = [_text(row.get("date")) for row in history]
+    if dates != sorted(dates) or len(dates) != len(set(dates)):
+        return False
+    for row in history:
+        if not _normalized_finite_weights(_mapping(row.get("weights"))):
+            return False
+        if not all(
+            _finite_number(row.get(key))
+            for key in ("portfolio_value", "daily_return", "drawdown", "turnover")
+        ):
+            return False
+    for row in ledger:
+        before = _mapping(row.get("before_weights"))
+        after = _mapping(row.get("after_weights"))
+        deltas = _mapping(row.get("deltas"))
+        if (
+            not _normalized_finite_weights(before)
+            or not _normalized_finite_weights(after)
+            or deltas != _weight_deltas(before, after)
+            or not _finite_number(row.get("turnover"), minimum=0.0)
+        ):
+            return False
+    return (
+        all(
+            _finite_number(summary.get(key))
+            for key in (
+                "total_return",
+                "annualized_return",
+                "max_drawdown",
+                "realized_volatility",
+                "turnover",
+                "relative_to_no_trade",
+                "relative_to_baseline",
+            )
+        )
+        and summary.get("return_basis") == "GROSS_BEFORE_COSTS"
+        and summary.get("cost_model_status") == "NOT_CONFIGURED"
+    )
 
 
 def _realized_volatility(values: Sequence[float]) -> float:

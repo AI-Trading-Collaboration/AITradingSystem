@@ -6938,11 +6938,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_paper_state_history.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_trade_ledger.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_paper_performance_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/paper_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/backtest_sim_paper_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/validate_data_quality_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-164 reconstructs historical paper-only state and trade ledger for
-      the selected simulation variant without real portfolio mutation.
+      the selected simulation variant with immutable lineage/cache/DQ binding;
+      returns are disclosed as gross-before-costs because no cost model is configured.
     owner_action: review_sim_paper_performance_before_any_forward_confirmation_plan
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

@@ -1088,6 +1088,8 @@ TRADING-162 variant层在此基础上再加一道边界：只接受BL event vali
 
 TRADING-163 outcome层只接受BM variant validator PASS且generated不早于source的bundle，在任何output前执行cached DQ。`backtest_sim_outcome_input_snapshot.v2`冻结完整variant/event/config/validation、price/rate full-file与requested-end cutoff rows和DQ evidence；每个event×variant×window唯一，只有AVAILABLE收益/相对收益/回撤/波动为finite，PENDING/INSUFFICIENT未知值保持null且不进入汇总或best ranking。Validator重验live variant/cache/DQ并逐字节重算snapshot、windows、summary、manifest和Markdown。当前结果只证明non-PIT outcome计算可复现，不证明best variant具备forward或production有效性；优化空间是将window calculator、nullable metric schema和artifact envelope拆为typed pure services，并为后续paper/regime消费建立相同source-validation contract。
 
+TRADING-164 paper层同样从validated/cutoff-safe variant bundle出发，在output前执行cached DQ，并冻结full variant/event/config/validation、price/rate full-file与requested-end cutoff rows、DQ evidence到`backtest_sim_paper_input_snapshot.v2`。Selected variant和no_trade分别按event时间顺序重建before/after state、区间组合价值、drawdown、turnover与trade ledger，再计算relative；无READY或任一必要区间不可计算时，history/ledger为空且performance为null/`INSUFFICIENT_DATA`，不能写0继续。当前config没有受治理的transaction/slippage cost model，因此return固定披露`GROSS_BEFORE_COSTS`/`NOT_CONFIGURED`，不得解释为net。Validator重验live variant/cache/DQ并逐字节重算全部views。优化空间是把fixed-share interval engine、cost policy和typed state/ledger contract抽出共享；cost model进入reviewed config前不能以硬编码bps补齐。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |

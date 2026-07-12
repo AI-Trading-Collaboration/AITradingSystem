@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BN_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BO_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: b3279eaa
+base_commit: 79d8db2c
 production_effect: none
 
 arch_004_owned_paths:

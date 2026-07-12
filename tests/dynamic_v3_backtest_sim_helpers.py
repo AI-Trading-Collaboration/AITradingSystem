@@ -94,6 +94,7 @@ def run_paper_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
         variant_dir=fixture["variant_dir"],
         event_dir=fixture["event_dir"],
         output_dir=fixture["paper_dir"],
+        enforce_data_quality_gate=False,
         generated_at=datetime(2026, 7, 31, 3, tzinfo=UTC),
     )
     return {**fixture, "paper": paper}
