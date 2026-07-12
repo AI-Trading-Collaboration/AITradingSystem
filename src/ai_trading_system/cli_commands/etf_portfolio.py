@@ -308,17 +308,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_EVIDENCE_TREND_DIR,
     DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
     DEFAULT_LIMITED_VS_NOTRADE_DIR,
-    DEFAULT_OUTCOME_DASHBOARD_DIR,
     DEFAULT_OUTCOME_DUE_DIR,
     DEFAULT_OUTCOME_UPDATE_DIR,
     DEFAULT_OUTCOME_UPDATE_REVIEW_DIR,
     DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
-    build_outcome_dashboard,
     consensus_risk_report_payload,
     evidence_trend_report_payload,
     forward_outcome_decision_report_payload,
     limited_vs_notrade_report_payload,
-    outcome_dashboard_report_payload,
     outcome_update_report_payload,
     outcome_update_review_report_payload,
     rolling_evidence_refresh_report_payload,
@@ -333,7 +330,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     validate_evidence_trend_artifact,
     validate_forward_outcome_decision_artifact,
     validate_limited_vs_notrade_artifact,
-    validate_outcome_dashboard_artifact,
     validate_outcome_update_artifact,
     validate_outcome_update_review_artifact,
     validate_rolling_evidence_refresh_artifact,
@@ -768,7 +764,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_next_research_direction_app,
     dynamic_v3_no_promotion_review_app,
     dynamic_v3_normal_paper_shadow_resumption_gate_app,
-    dynamic_v3_outcome_dashboard_app,
     dynamic_v3_outcome_update_app,
     dynamic_v3_outcome_update_review_app,
     dynamic_v3_owner_filtered_candidate_review_app,
@@ -15261,98 +15256,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_outcome_dashboard_app.command("build")
-def dynamic_v3_outcome_dashboard_build_command(
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
-    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
-    advisory_outcome_dir: Annotated[
-        Path,
-        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
-    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
-    backfill_dir: Annotated[
-        Path,
-        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
-    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
-    repair_dir: Annotated[
-        Path,
-        typer.Option("--repair-dir", help="backfill repair artifact root。"),
-    ] = DEFAULT_BACKFILL_REPAIR_DIR,
-) -> None:
-    """构建 outcome availability dashboard。"""
-    result = build_outcome_dashboard(
-        output_dir=output_dir,
-        advisory_outcome_dir=advisory_outcome_dir,
-        backfill_dir=backfill_dir,
-        repair_dir=repair_dir,
-    )
-    matrix = result["outcome_availability_matrix"]["summary"]
-    typer.echo(f"dashboard_id={result['dashboard_id']}")
-    typer.echo(f"dashboard_dir={result['dashboard_dir']}")
-    typer.echo(f"status={result['manifest']['status']}")
-    typer.echo(f"forward_outcome={matrix['forward_outcome']}")
-    typer.echo(f"historical_replay={matrix['historical_replay']}")
-    typer.echo(f"backtest_simulation={matrix['backtest_simulation']}")
-    typer.echo(f"top_pending_reason={result['reader_brief']['top_pending_reason']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_outcome_dashboard_app.command("report")
-def dynamic_v3_outcome_dashboard_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest outcome dashboard。"),
-    ] = False,
-    dashboard_id: Annotated[
-        str | None,
-        typer.Option("--dashboard-id", help="dashboard id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
-    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
-) -> None:
-    """展示 outcome dashboard 摘要。"""
-    payload = outcome_dashboard_report_payload(
-        dashboard_id=dashboard_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    matrix = payload["outcome_availability_matrix"]["summary"]
-    pending = payload["pending_reason_dashboard"]
-    top = pending["top_pending_reasons"][0] if pending["top_pending_reasons"] else {}
-    typer.echo(f"dashboard_id={payload['dashboard_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"forward_outcome={matrix['forward_outcome']}")
-    typer.echo(f"historical_replay={matrix['historical_replay']}")
-    typer.echo(f"backtest_simulation={matrix['backtest_simulation']}")
-    typer.echo(f"top_pending_reason={top.get('reason', 'MISSING')}")
-    typer.echo(f"report_path={payload['outcome_dashboard_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-outcome-dashboard")
-def dynamic_v3_validate_outcome_dashboard_command(
-    dashboard_id: Annotated[str, typer.Option("--dashboard-id", help="dashboard id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
-    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
-) -> None:
-    """校验 TRADING-153 outcome dashboard artifact。"""
-    payload = validate_outcome_dashboard_artifact(
-        dashboard_id=dashboard_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_effect=none")
-    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

@@ -1,0 +1,29 @@
+schema_version: outcome_dashboard_policy.v1
+policy_id: dynamic_v3_outcome_dashboard
+version: v1
+status: pilot
+owner: research_governance
+rationale: >-
+  The dashboard is a deterministic projection of validated outcome evidence. Pending reason
+  routing must be reviewed policy rather than directory order or an implicit code default.
+intended_effect: >-
+  Keep mode counts and next actions auditable without running upstream workflows or changing
+  investment policy.
+review_condition: >-
+  Review after canonical RunLedger adoption or when pending reason taxonomy changes.
+pending_reason_actions:
+  future_window_not_reached: wait_for_due_window_or_use_older_replay_events
+  missing_price_data: refresh_price_cache
+  no_available_outcome_windows: expand_replay_samples_or_wait_for_forward_outcomes
+  review_waiting_for_backfill: run_backfill_repair_or_outcome_due_update
+  insufficient_replay_events: run_replay_sample_expansion
+  none: continue_forward_tracking
+pending_reason_precedence:
+  - missing_price_data
+  - review_waiting_for_backfill
+  - insufficient_replay_events
+  - no_available_outcome_windows
+  - future_window_not_reached
+  - none
+automatic_upstream_run_allowed: false
+production_effect: none

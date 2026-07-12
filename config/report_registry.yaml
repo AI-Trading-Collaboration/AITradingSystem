@@ -6673,12 +6673,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_availability_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_mode_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/pending_reason_dashboard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_dashboard_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_dashboard_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-153 aggregates forward, historical replay, and simulation outcome
-      availability without running upstream jobs or masking pending reasons.
+      TRADING-153 aggregates validated, cutoff-bound forward, historical replay, and simulation
+      outcome evidence from an immutable source/policy snapshot. It does not run upstream jobs,
+      mix every historical directory, or mask missing and pending reasons.
     owner_action: review_outcome_availability_before_interpreting_replay_or_advisory_results
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

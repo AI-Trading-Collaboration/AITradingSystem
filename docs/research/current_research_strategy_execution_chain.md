@@ -809,6 +809,21 @@ Replay Sample Expansion回答“在明确range与generated cutoff下，哪些既
 
 当前validated fixture只有一个Daily/Owner event；Daily本身是`TARGET_ONLY`且没有decision-time current weights，因此它被如实分类为`PIT_UNSAFE/INELIGIBLE`，而不是因为upstream validator PASS就自动成为可回放样本。这个结果验证了source技术完整性与PIT replay资格是两件事，也说明当前“样本扩张”仍没有增加一个合格样本。优化顺序应先补齐具有真实current weights的PIT-safe historical events、明确Replay Inventory显式选择与supersession，再用unique event cohort评估coverage/missingness；不得通过放宽PIT policy、把缺价格写0、重复计算同一event或自动运行replay来提高样本数。
 
+#### Outcome Dashboard 链（TRADING-153 / G2.4BD）
+
+Outcome Dashboard回答“当前冻结证据中，forward、historical replay与simulation分别有多少AVAILABLE/PENDING/INSUFFICIENT_DATA样本，以及人工下一步应处理哪类pending原因”。它只做projection，不补跑上游。旧build混合全目录mutable artifacts，repair只要存在就遮蔽backfill，simulation只凭status字符串可计AVAILABLE，Diagnosis/Due又全目录累加，因而dashboard count无法证明来自同一cutoff或唯一链。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source gate | generated cutoff、Advisory Outcome、Repair/Backfill、Paper Sim、Diagnosis、Outcome Due roots | Forward sources逐个content-derived PASS；其他mode按semantic generated time选择唯一latest PASS artifact；Repair存在合格latest时才替代Backfill；future、tie、无可验证候选但已有cutoff source均阻断 | selected source set | 不使用mtime/目录顺序。后续由RunLedger显式传source ids，减少latest选择 |
+| Immutable snapshot | selected full bundles、validation evidence、`outcome_dashboard_policy.v1` | 冻结每文件content/path/size/checksum、generated cutoff与pending reason action/precedence policy | `outcome_dashboard_source_snapshot.json` | 普通checksum不是签名。后续接ArtifactEnvelope、trusted time与supersession |
+| Mode rows | forward outcome windows；historical event×variant×window；simulation run | 每类使用独立sample identity与duplicate gate；missing source产生0 count，不造AVAILABLE；status仅在validated source内容上解释 | frozen rows_by_mode | artifact数不等于outcome数。后续披露unique event/date/regime与effective sample size |
+| Pending routing | frozen PENDING rows、selected Diagnosis summary、selected Outcome Due inventory、reviewed policy | 只累加selected sources；未知reason未在policy注册则fail closed；next action按reviewed precedence物化 | pending dashboard | 不制造unknown/manual fallback。后续给action增加due、owner和completion criteria |
+| Projection/render | rows_by_mode、pending dashboard | 计算三mode/四window status counts、source artifact counts、manifest status、Markdown与Reader Brief | matrix、mode summary、manifest/report/Reader Brief | PASS/AVAILABLE是证据状态，不是策略有效或production readiness |
+| Validator | snapshot、live sources/policy、所有derived files | 重跑全部source validators与policy equality，从snapshot重算matrix/mode/pending/manifest/Markdown/Reader Brief | PASS/FAIL；legacy warning | 任一source/snapshot/policy/output drift FAIL；后续增加跨run delta与staleness proof |
+
+当前focused fixture只有一个validated forward outcome，4个windows均PENDING，historical/simulation均为0，因此dashboard为PENDING、available count=0、top reason=`future_window_not_reached`。这证明缺source不会被填成AVAILABLE，也不证明forward strategy无效。优化顺序应先把source ids从latest选择改为显式RunLedger binding，再加入cohort/date/regime/effective-sample-size与staleness披露，最后接typed ReportSpec；不得通过扫描更多旧目录、重复pending reason或自动运行upstream让dashboard看起来更完整。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

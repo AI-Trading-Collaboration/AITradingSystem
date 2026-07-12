@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BC_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BD_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: fe50a91c
+base_commit: b180bfbe
 production_effect: none
 
 arch_004_owned_paths:
@@ -19,6 +19,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/rule_calibration_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/outcome_dashboard_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -239,6 +240,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_forward_bridge.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_due.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_dashboard.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py

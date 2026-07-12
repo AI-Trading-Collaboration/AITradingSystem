@@ -173,6 +173,10 @@ DYNAMIC_V3_REPLAY_FORWARD_BRIDGE_COMMANDS_PATH = (
 DYNAMIC_V3_OUTCOME_DUE_COMMANDS_PATH = (
     PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_due.py"
 )
+DYNAMIC_V3_OUTCOME_DASHBOARD_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_dashboard.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -272,7 +276,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "3032d1654338f81ef3d4571fdbea851f2ac229d260da77f95c0586d274f7e516"
+        "4abbbdca67f1d8c554f934dc121511cb4c7eb16bb8b9c47919a15fd96a401422"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -326,7 +330,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25589
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25492
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -537,8 +541,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25589
-    assert len(legacy_names) == 755
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25492
+    assert len(legacy_names) == 752
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1553,6 +1557,28 @@ def test_g2_4_dynamic_v3_replay_sample_expansion_callbacks_leave_legacy_root() -
             "replay_sample_expansion_report_payload",
             "run_replay_sample_expansion",
             "validate_replay_sample_expansion_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_outcome_dashboard_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_OUTCOME_DASHBOARD_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_outcome_dashboard_build_command",
+        "dynamic_v3_outcome_dashboard_report_command",
+        "dynamic_v3_validate_outcome_dashboard_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "build_outcome_dashboard",
+            "outcome_dashboard_report_payload",
+            "validate_outcome_dashboard_artifact",
         }
     )
 

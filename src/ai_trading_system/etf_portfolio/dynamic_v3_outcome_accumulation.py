@@ -29,6 +29,10 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_HISTORICAL_REPLAY_DIR,
     DEFAULT_REPLAY_DIAGNOSIS_DIR,
     DEFAULT_REPLAY_INVENTORY_DIR,
+    validate_backfill_outcome_artifact,
+    validate_backfill_repair_artifact,
+    validate_historical_paper_sim_artifact,
+    validate_replay_diagnosis_artifact,
     validate_replay_inventory_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
@@ -75,6 +79,10 @@ OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION = "outcome_due_source_snapshot.v2"
 REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION = "replay_sample_expansion_source_snapshot.v2"
 DEFAULT_REPLAY_SAMPLE_EXPANSION_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion_v1.yaml"
+)
+OUTCOME_DASHBOARD_SNAPSHOT_SCHEMA_VERSION = "outcome_dashboard_source_snapshot.v2"
+DEFAULT_OUTCOME_DASHBOARD_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/outcome_dashboard_v1.yaml"
 )
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
@@ -1015,28 +1023,37 @@ def build_outcome_dashboard(
     paper_sim_dir: Path = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
     diagnosis_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
     outcome_due_dir: Path = DEFAULT_OUTCOME_DUE_DIR,
+    policy_path: Path = DEFAULT_OUTCOME_DASHBOARD_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    forward_rows = _forward_outcome_rows(advisory_outcome_dir)
-    historical_rows = _historical_outcome_rows(backfill_dir=backfill_dir, repair_dir=repair_dir)
-    simulation_rows = _simulation_outcome_rows(paper_sim_dir)
-    rows_by_mode = {
-        "FORWARD_OUTCOME": forward_rows,
-        "HISTORICAL_REPLAY": historical_rows,
-        "BACKTEST_SIMULATION": simulation_rows,
-    }
-    matrix = _outcome_availability_matrix(rows_by_mode)
-    mode_summary = _outcome_mode_summary(rows_by_mode)
-    pending_dashboard = _pending_reason_dashboard(
-        rows_by_mode=rows_by_mode,
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    policy = _load_outcome_dashboard_policy(policy_path)
+    snapshot = _build_outcome_dashboard_snapshot(
+        generated=generated,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        paper_sim_dir=paper_sim_dir,
         diagnosis_dir=diagnosis_dir,
         outcome_due_dir=outcome_due_dir,
+        policy_path=policy_path,
+        policy=policy,
+    )
+    rows_by_mode, selected_pending_sources = _outcome_dashboard_rows_from_snapshot(snapshot)
+    matrix = _outcome_availability_matrix(rows_by_mode)
+    mode_summary = _outcome_mode_summary(rows_by_mode)
+    pending_dashboard = _pending_reason_dashboard_from_rows(
+        rows_by_mode=rows_by_mode,
+        selected_sources=selected_pending_sources,
+        policy=policy,
     )
     reader_brief = _outcome_dashboard_reader_brief(matrix, pending_dashboard)
     dashboard_id = _stable_id("outcome-dashboard", generated.isoformat())
     dashboard_dir = _unique_dir(output_dir / dashboard_id)
     dashboard_dir.mkdir(parents=True, exist_ok=False)
+    snapshot["dashboard_id"] = dashboard_dir.name
+    snapshot_path = dashboard_dir / "outcome_dashboard_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     total_available = sum(item["available"] for item in matrix["summary"].values())
     total_pending = sum(item["pending"] for item in matrix["summary"].values())
     status = "PASS" if total_available else "INSUFFICIENT_DATA"
@@ -1048,6 +1065,11 @@ def build_outcome_dashboard(
         "dashboard_id": dashboard_dir.name,
         "generated_at": generated.isoformat(),
         "status": status,
+        "market_regime": "ai_after_chatgpt",
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _file_sha256(snapshot_path),
+        "policy_id": policy["policy_id"],
+        "policy_version": policy["version"],
         "available_count": total_available,
         "pending_count": total_pending,
         "insufficient_data_count": sum(
@@ -1059,6 +1081,7 @@ def build_outcome_dashboard(
         "pending_reason_dashboard_path": str(dashboard_dir / "pending_reason_dashboard.json"),
         "outcome_dashboard_report_path": str(dashboard_dir / "outcome_dashboard_report.md"),
         "reader_brief_section_path": str(dashboard_dir / "reader_brief_section.md"),
+        "source_snapshot_artifact_path": str(snapshot_path),
         "production_effect": "none",
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -1091,6 +1114,7 @@ def build_outcome_dashboard(
         "outcome_mode_summary": mode_summary,
         "pending_reason_dashboard": pending_dashboard,
         "reader_brief": reader_brief,
+        "source_snapshot": snapshot,
     }
 
 
@@ -1125,6 +1149,107 @@ def validate_outcome_dashboard_artifact(
     dashboard_dir = output_dir / dashboard_id
     manifest = _read_optional_json(dashboard_dir / "outcome_dashboard_manifest.json") or {}
     matrix = _read_optional_json(dashboard_dir / "outcome_availability_matrix.json") or {}
+    mode_summary = _read_optional_json(dashboard_dir / "outcome_mode_summary.json") or {}
+    pending = _read_optional_json(dashboard_dir / "pending_reason_dashboard.json") or {}
+    snapshot_path = dashboard_dir / "outcome_dashboard_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (dashboard_dir / "outcome_dashboard_manifest.json").is_file(),
+                dashboard_id,
+            ),
+            _check(
+                "matrix_exists",
+                (dashboard_dir / "outcome_availability_matrix.json").is_file(),
+                dashboard_id,
+            ),
+            _check(
+                "required_modes_present",
+                set(_mapping(matrix.get("summary")))
+                == {"forward_outcome", "historical_replay", "backtest_simulation"},
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_outcome_dashboard_validation",
+            artifact_id_key="dashboard_id",
+            artifact_id=dashboard_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    recompute_error = ""
+    try:
+        expected_rows_by_mode, selected_pending_sources = (
+            _outcome_dashboard_rows_from_snapshot(snapshot)
+        )
+        expected_matrix = _outcome_availability_matrix(expected_rows_by_mode)
+        expected_mode_summary = _outcome_mode_summary(expected_rows_by_mode)
+        expected_pending = _pending_reason_dashboard_from_rows(
+            rows_by_mode=expected_rows_by_mode,
+            selected_sources=selected_pending_sources,
+            policy=_mapping(snapshot.get("policy")),
+        )
+        expected_reader_brief = _outcome_dashboard_reader_brief(
+            expected_matrix, expected_pending
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_matrix = {}
+        expected_mode_summary = {}
+        expected_pending = {}
+        expected_reader_brief = {}
+    total_available = sum(
+        _int(item.get("available"))
+        for item in _mapping(expected_matrix.get("summary")).values()
+    )
+    total_pending = sum(
+        _int(item.get("pending"))
+        for item in _mapping(expected_matrix.get("summary")).values()
+    )
+    expected_status = "PASS" if total_available else "INSUFFICIENT_DATA"
+    if total_pending:
+        expected_status = "PASS_WITH_WARNINGS" if total_available else "PENDING"
+    expected_manifest_fields = {
+        "dashboard_id": dashboard_id,
+        "generated_at": snapshot.get("generated_at"),
+        "status": expected_status,
+        "market_regime": "ai_after_chatgpt",
+        "policy_id": _mapping(snapshot.get("policy")).get("policy_id"),
+        "policy_version": _mapping(snapshot.get("policy")).get("version"),
+        "available_count": total_available,
+        "pending_count": total_pending,
+        "insufficient_data_count": sum(
+            _int(item.get("insufficient_data"))
+            for item in _mapping(expected_matrix.get("summary")).values()
+        ),
+    }
+    expected_report = render_outcome_dashboard_report(
+        manifest, expected_matrix, expected_pending
+    )
+    expected_reader_brief_text = render_reader_brief_section(expected_reader_brief)
+    bundles = (
+        _records(snapshot.get("forward_sources"))
+        + _records(snapshot.get("historical_sources"))
+        + _records(snapshot.get("simulation_sources"))
+        + _records(snapshot.get("diagnosis_sources"))
+        + _records(snapshot.get("due_sources"))
+    )
+    source_bundles_match = all(_source_bundle_matches(bundle) for bundle in bundles)
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    try:
+        policy_matches = (
+            _file_sha256(policy_path) == snapshot.get("policy_checksum")
+            and _load_outcome_dashboard_policy(policy_path) == snapshot.get("policy")
+        )
+        live_source_validation_passes = _outcome_dashboard_live_source_validation(snapshot)
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+        live_source_validation_passes = False
     checks = [
         _check(
             "manifest_exists",
@@ -1155,6 +1280,49 @@ def validate_outcome_dashboard_artifact(
             dashboard_id,
         ),
         _check("dashboard_id_matches", manifest.get("dashboard_id") == dashboard_id, dashboard_id),
+        _check(
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == OUTCOME_DASHBOARD_SNAPSHOT_SCHEMA_VERSION,
+            "v2 source snapshot",
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "source snapshot",
+        ),
+        _check("source_files_unchanged", source_bundles_match, "selected source bundles"),
+        _check(
+            "live_source_validation_passes",
+            live_source_validation_passes,
+            "outcome/backfill/sim/diagnosis/due validators",
+        ),
+        _check("policy_snapshot_matches", policy_matches, "reviewed dashboard policy"),
+        _check("matrix_recomputed", matrix == expected_matrix, recompute_error),
+        _check(
+            "mode_summary_recomputed",
+            mode_summary == expected_mode_summary,
+            recompute_error,
+        ),
+        _check("pending_dashboard_recomputed", pending == expected_pending, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            recompute_error,
+        ),
+        _check(
+            "report_recomputed",
+            (dashboard_dir / "outcome_dashboard_report.md").is_file()
+            and (dashboard_dir / "outcome_dashboard_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (dashboard_dir / "reader_brief_section.md").is_file()
+            and (dashboard_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+            == expected_reader_brief_text,
+            "Reader Brief projection",
+        ),
         _check(
             "required_modes_present",
             set(_mapping(matrix.get("summary")))
@@ -4009,6 +4177,424 @@ def _dedupe_expanded_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str,
     return sorted(
         result.values(), key=lambda row: (_text(row.get("as_of")), _text(row.get("source_type")))
     )
+
+
+def _load_outcome_dashboard_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3OutcomeAccumulationError(f"outcome dashboard policy not found: {path}")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    policy = dict(payload) if isinstance(payload, Mapping) else {}
+    for key in (
+        "schema_version",
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    ):
+        if not _text(policy.get(key)):
+            raise DynamicV3OutcomeAccumulationError(
+                "outcome dashboard policy metadata is incomplete"
+            )
+    actions = _mapping(policy.get("pending_reason_actions"))
+    precedence = _texts(policy.get("pending_reason_precedence"))
+    if not actions or set(precedence) != set(actions) or len(precedence) != len(set(precedence)):
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome dashboard pending reason policy is inconsistent"
+        )
+    if policy.get("automatic_upstream_run_allowed") is not False:
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome dashboard policy must prohibit automatic upstream runs"
+        )
+    if policy.get("production_effect") != "none":
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome dashboard policy production_effect must be none"
+        )
+    policy["pending_reason_actions"] = dict(actions)
+    policy["pending_reason_precedence"] = precedence
+    return policy
+
+
+def _build_outcome_dashboard_snapshot(
+    *,
+    generated: datetime,
+    advisory_outcome_dir: Path,
+    backfill_dir: Path,
+    repair_dir: Path,
+    paper_sim_dir: Path,
+    diagnosis_dir: Path,
+    outcome_due_dir: Path,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    forward_sources: list[dict[str, Any]] = []
+    forward_identities: set[str] = set()
+    for child in _artifact_children(advisory_outcome_dir):
+        manifest = _read_optional_json(child / "advisory_outcome_manifest.json")
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome manifest invalid: {child}"
+            )
+        outcome_id = _text(manifest.get("outcome_id"), child.name)
+        source_time = _datetime_from_any(manifest.get("updated_at") or manifest.get("generated_at"))
+        if source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome source time invalid or future: {outcome_id}"
+            )
+        if outcome_id in forward_identities:
+            raise DynamicV3OutcomeAccumulationError("duplicate advisory outcome id")
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id, output_dir=advisory_outcome_dir
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome validation must PASS: {outcome_id}"
+            )
+        forward_identities.add(outcome_id)
+        forward_sources.append(_immutable_source_bundle(child))
+
+    repair_sources = _latest_dashboard_source_bundle(
+        root=repair_dir,
+        manifest_name="backfill_repair_manifest.json",
+        id_field="repair_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_backfill_repair_artifact(
+            repair_id=artifact_id, output_dir=repair_dir
+        ),
+    )
+    backfill_sources: list[dict[str, Any]] = []
+    if not repair_sources:
+        backfill_sources = _latest_dashboard_source_bundle(
+            root=backfill_dir,
+            manifest_name="backfill_manifest.json",
+            id_field="backfill_id",
+            generated=generated,
+            validator=lambda artifact_id: validate_backfill_outcome_artifact(
+                backfill_id=artifact_id, output_dir=backfill_dir
+            ),
+        )
+    simulation_sources = _latest_dashboard_source_bundle(
+        root=paper_sim_dir,
+        manifest_name="historical_paper_sim_manifest.json",
+        id_field="sim_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_historical_paper_sim_artifact(
+            sim_id=artifact_id, output_dir=paper_sim_dir
+        ),
+    )
+    diagnosis_sources = _latest_dashboard_source_bundle(
+        root=diagnosis_dir,
+        manifest_name="replay_diagnosis_manifest.json",
+        id_field="diagnosis_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_replay_diagnosis_artifact(
+            diagnosis_id=artifact_id, output_dir=diagnosis_dir
+        ),
+    )
+    due_sources = _latest_dashboard_source_bundle(
+        root=outcome_due_dir,
+        manifest_name="outcome_due_manifest.json",
+        id_field="due_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_outcome_due_artifact(
+            due_id=artifact_id, output_dir=outcome_due_dir
+        ),
+    )
+    return {
+        "schema_version": OUTCOME_DASHBOARD_SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": generated.isoformat(),
+        "generated_cutoff": generated.isoformat(),
+        "advisory_outcome_dir": str(advisory_outcome_dir),
+        "forward_sources": forward_sources,
+        "backfill_dir": str(backfill_dir),
+        "repair_dir": str(repair_dir),
+        "historical_sources": repair_sources or backfill_sources,
+        "historical_source_type": "repair" if repair_sources else "backfill",
+        "paper_sim_dir": str(paper_sim_dir),
+        "simulation_sources": simulation_sources,
+        "diagnosis_dir": str(diagnosis_dir),
+        "diagnosis_sources": diagnosis_sources,
+        "outcome_due_dir": str(outcome_due_dir),
+        "due_sources": due_sources,
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "production_effect": "none",
+    }
+
+
+def _latest_dashboard_source_bundle(
+    *,
+    root: Path,
+    manifest_name: str,
+    id_field: str,
+    generated: datetime,
+    validator: Any,
+) -> list[dict[str, Any]]:
+    manifest_paths = sorted(root.glob(f"*/{manifest_name}"))
+    if not manifest_paths:
+        return []
+    candidates: list[tuple[datetime, str, dict[str, Any]]] = []
+    eligible_seen = False
+    for manifest_path in manifest_paths:
+        manifest = _read_optional_json(manifest_path)
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"dashboard source manifest invalid: {manifest_path}"
+            )
+        source_time = _datetime_from_any(
+            manifest.get("updated_at") or manifest.get("generated_at")
+        )
+        if source_time is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"dashboard source time missing: {manifest_path}"
+            )
+        if source_time > generated:
+            continue
+        eligible_seen = True
+        artifact_id = _text(manifest.get(id_field), manifest_path.parent.name)
+        validation = validator(artifact_id)
+        if validation.get("status") != "PASS":
+            continue
+        candidates.append(
+            (source_time, artifact_id, _immutable_source_bundle(manifest_path.parent))
+        )
+    if not candidates:
+        if eligible_seen:
+            raise DynamicV3OutcomeAccumulationError(
+                f"no validated {manifest_name} source at dashboard cutoff"
+            )
+        return []
+    candidates.sort(key=lambda row: (row[0], row[1]))
+    latest_time = candidates[-1][0]
+    latest = [row for row in candidates if row[0] == latest_time]
+    if len(latest) != 1:
+        raise DynamicV3OutcomeAccumulationError(
+            f"ambiguous latest {manifest_name} source at dashboard cutoff"
+        )
+    return [latest[0][2]]
+
+
+def _outcome_dashboard_rows_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, list[dict[str, Any]]]]:
+    generated = _datetime_from_any(snapshot.get("generated_cutoff"))
+    if generated is None:
+        raise DynamicV3OutcomeAccumulationError("dashboard snapshot cutoff invalid")
+    forward_rows: list[dict[str, Any]] = []
+    identities: set[tuple[str, int]] = set()
+    for bundle in _records(snapshot.get("forward_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        outcome_id = _text(manifest.get("outcome_id"))
+        source_time = _datetime_from_any(manifest.get("updated_at") or manifest.get("generated_at"))
+        if source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError("forward outcome escaped dashboard cutoff")
+        for row in _records(_source_bundle_content(bundle, "outcome_windows.jsonl")):
+            identity = (outcome_id, _int(row.get("window_days")))
+            if not outcome_id or identity[1] not in OUTCOME_WINDOWS or identity in identities:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate or invalid forward dashboard sample"
+                )
+            identities.add(identity)
+            forward_rows.append(
+                {
+                    **row,
+                    "source_mode": "FORWARD_OUTCOME",
+                    "outcome_mode": "FORWARD_OUTCOME",
+                    "outcome_id": outcome_id,
+                    "source_artifact_path": _bundle_primary_path(
+                        bundle, "advisory_outcome_manifest.json"
+                    ),
+                }
+            )
+    historical_rows: list[dict[str, Any]] = []
+    historical_type = _text(snapshot.get("historical_source_type"))
+    historical_filename = (
+        "repaired_outcome_windows.jsonl"
+        if historical_type == "repair"
+        else "replay_outcome_windows.jsonl"
+    )
+    historical_manifest = (
+        "backfill_repair_manifest.json"
+        if historical_type == "repair"
+        else "backfill_manifest.json"
+    )
+    historical_identities: set[tuple[str, str, int]] = set()
+    for bundle in _records(snapshot.get("historical_sources")):
+        for row in _records(_source_bundle_content(bundle, historical_filename)):
+            identity = (
+                _text(row.get("replay_event_id")),
+                _text(row.get("variant")),
+                _int(row.get("window_days")),
+            )
+            if not identity[0] or not identity[1] or identity[2] not in OUTCOME_WINDOWS:
+                raise DynamicV3OutcomeAccumulationError("invalid historical dashboard sample")
+            if identity in historical_identities:
+                raise DynamicV3OutcomeAccumulationError("duplicate historical dashboard sample")
+            historical_identities.add(identity)
+            historical_rows.append(
+                {
+                    **row,
+                    "source_mode": "HISTORICAL_REPLAY",
+                    "outcome_mode": "HISTORICAL_REPLAY",
+                    "source_artifact_path": _bundle_primary_path(bundle, historical_manifest),
+                }
+            )
+    simulation_rows: list[dict[str, Any]] = []
+    for bundle in _records(snapshot.get("simulation_sources")):
+        manifest = _mapping(
+            _source_bundle_content(bundle, "historical_paper_sim_manifest.json")
+        )
+        summary = _mapping(
+            _source_bundle_content(bundle, "simulated_performance_summary.json")
+        )
+        status = _text(summary.get("simulation_status") or manifest.get("status"))
+        outcome_status = "INSUFFICIENT_DATA"
+        if status in {"PASS", "AVAILABLE"}:
+            outcome_status = "AVAILABLE"
+        elif status == "PENDING":
+            outcome_status = "PENDING"
+        simulation_rows.append(
+            {
+                "sample_id": _text(manifest.get("sim_id")),
+                "source_mode": "BACKTEST_SIMULATION",
+                "outcome_mode": "BACKTEST_SIMULATION",
+                "window_days": 0,
+                "outcome_status": outcome_status,
+                "source_artifact_path": _bundle_primary_path(
+                    bundle, "historical_paper_sim_manifest.json"
+                ),
+            }
+        )
+    pending_sources = {"diagnosis": [], "due": []}
+    for bundle in _records(snapshot.get("diagnosis_sources")):
+        summary = _mapping(
+            _source_bundle_content(bundle, "replay_pending_reason_summary.json")
+        )
+        pending_sources["diagnosis"].extend(_records(summary.get("pending_reasons")))
+    for bundle in _records(snapshot.get("due_sources")):
+        pending_sources["due"].extend(
+            _records(_source_bundle_content(bundle, "due_window_inventory.jsonl"))
+        )
+    return (
+        {
+            "FORWARD_OUTCOME": forward_rows,
+            "HISTORICAL_REPLAY": historical_rows,
+            "BACKTEST_SIMULATION": simulation_rows,
+        },
+        pending_sources,
+    )
+
+
+def _pending_reason_dashboard_from_rows(
+    *,
+    rows_by_mode: Mapping[str, Sequence[Mapping[str, Any]]],
+    selected_sources: Mapping[str, Sequence[Mapping[str, Any]]],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    reasons = Counter()
+    for row in selected_sources.get("diagnosis", []):
+        reasons[_text(row.get("reason"), "none")] += _int(row.get("count"), 0)
+    for row in selected_sources.get("due", []):
+        if _text(row.get("current_outcome_status")) == "PENDING":
+            reasons[_text(row.get("reason"), "future_window_not_reached")] += 1
+    for rows in rows_by_mode.values():
+        for row in rows:
+            if _text(row.get("outcome_status")) == "PENDING":
+                reasons[_text(row.get("pending_reason"), "future_window_not_reached")] += 1
+    if not reasons:
+        reasons["none"] = 0
+    actions = _mapping(policy.get("pending_reason_actions"))
+    precedence = _texts(policy.get("pending_reason_precedence"))
+    unknown = set(reasons) - set(actions)
+    if unknown:
+        raise DynamicV3OutcomeAccumulationError(
+            f"pending reason is not governed by dashboard policy: {sorted(unknown)}"
+        )
+    top = [
+        {"reason": reason, "count": reasons[reason], "action": _text(actions.get(reason))}
+        for reason in precedence
+        if reason in reasons
+    ]
+    actionable = [
+        row for row in top if row["reason"] in {"missing_price_data", "review_waiting_for_backfill"}
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_pending_reason_dashboard",
+        "top_pending_reasons": top,
+        "actionable_pending_reasons": actionable,
+        "next_action": top[0]["action"] if top else "continue_forward_tracking",
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _outcome_dashboard_live_source_validation(snapshot: Mapping[str, Any]) -> bool:
+    forward_root = Path(_text(snapshot.get("advisory_outcome_dir")))
+    for bundle in _records(snapshot.get("forward_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        if (
+            validate_advisory_outcome_artifact(
+                outcome_id=_text(manifest.get("outcome_id")), output_dir=forward_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    historical_type = _text(snapshot.get("historical_source_type"))
+    historical_root = Path(
+        _text(snapshot.get("repair_dir" if historical_type == "repair" else "backfill_dir"))
+    )
+    for bundle in _records(snapshot.get("historical_sources")):
+        if historical_type == "repair":
+            manifest = _mapping(_source_bundle_content(bundle, "backfill_repair_manifest.json"))
+            status = validate_backfill_repair_artifact(
+                repair_id=_text(manifest.get("repair_id")), output_dir=historical_root
+            ).get("status")
+        else:
+            manifest = _mapping(_source_bundle_content(bundle, "backfill_manifest.json"))
+            status = validate_backfill_outcome_artifact(
+                backfill_id=_text(manifest.get("backfill_id")), output_dir=historical_root
+            ).get("status")
+        if status != "PASS":
+            return False
+    sim_root = Path(_text(snapshot.get("paper_sim_dir")))
+    for bundle in _records(snapshot.get("simulation_sources")):
+        manifest = _mapping(
+            _source_bundle_content(bundle, "historical_paper_sim_manifest.json")
+        )
+        if (
+            validate_historical_paper_sim_artifact(
+                sim_id=_text(manifest.get("sim_id")), output_dir=sim_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    diagnosis_root = Path(_text(snapshot.get("diagnosis_dir")))
+    for bundle in _records(snapshot.get("diagnosis_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "replay_diagnosis_manifest.json"))
+        if (
+            validate_replay_diagnosis_artifact(
+                diagnosis_id=_text(manifest.get("diagnosis_id")), output_dir=diagnosis_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    due_root = Path(_text(snapshot.get("outcome_due_dir")))
+    for bundle in _records(snapshot.get("due_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "outcome_due_manifest.json"))
+        if (
+            validate_outcome_due_artifact(
+                due_id=_text(manifest.get("due_id")), output_dir=due_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    return True
 
 
 def _forward_outcome_rows(advisory_outcome_dir: Path) -> list[dict[str, Any]]:
