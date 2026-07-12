@@ -7594,6 +7594,13 @@ def _replay_owner_review_events(
     return [records[review_id] for review_id in order], sorted(set(errors))
 
 
+def replay_owner_review_records(
+    events: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Replay an immutable owner-review event snapshot for downstream consumers."""
+    return _replay_owner_review_events(events)
+
+
 def _owner_review_state(
     *,
     output_dir: Path,

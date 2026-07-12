@@ -32,6 +32,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     OWNER_REVIEW_DECISIONS,
     SCHEMA_VERSION,
     STRATEGY_FAMILY,
+    replay_owner_review_records,
     validate_owner_review_artifact,
     validate_position_advisory_daily_artifact,
 )
@@ -67,6 +68,7 @@ OUTCOME_WINDOW_STATUSES = {"PENDING", "AVAILABLE", "INSUFFICIENT_DATA"}
 OUTCOME_MANIFEST_STATUSES = {"PENDING", "AVAILABLE", "PARTIAL", "INSUFFICIENT_DATA"}
 OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION = "advisory_outcome_update_ledger.v2"
 OUTCOME_UPDATE_EVENT_TYPE = "ADVISORY_OUTCOME_UPDATED"
+OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION = "owner_attribution_snapshot.v2"
 OUTCOME_METRIC_FIELDS = (
     "paper_portfolio_return",
     "no_trade_return",
@@ -1290,34 +1292,49 @@ def run_owner_attribution(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    records = _read_jsonl(owner_review_dir / "owner_review_journal.jsonl")
-    outcomes = _outcome_rows_by_advisory(outcome_dir)
-    attribution_id = _stable_id("owner-attribution", len(records), generated.isoformat())
-    artifact_dir = _unique_dir(output_dir / attribution_id)
-    artifact_dir.mkdir(parents=True, exist_ok=False)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    owner_snapshot = _owner_attribution_owner_snapshot(
+        owner_review_dir=owner_review_dir,
+        generated_at=generated,
+    )
+    records = [
+        _mapping(item.get("review"))
+        for item in _records(owner_snapshot.get("selected_reviews"))
+    ]
+    outcome_snapshot = _owner_attribution_outcome_snapshot(
+        records=records,
+        outcome_dir=outcome_dir,
+        generated_at=generated,
+    )
+    outcomes = _records(outcome_snapshot.get("selected_outcomes"))
+    source_validation_summary = _owner_attribution_source_validation_summary(
+        owner_snapshot=owner_snapshot,
+        outcome_snapshot=outcome_snapshot,
+    )
     summary = _owner_decision_summary(records)
     matrix = _advisory_acceptance_matrix(records)
     comparison = _decision_outcome_comparison(records, outcomes)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_owner_attribution_manifest",
-        "attribution_id": artifact_dir.name,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if records else "INSUFFICIENT_DATA",
-        "total_reviews": len(records),
-        "linked_outcome_count": sum(
-            1 for row in records if _text(row.get("daily_advisory_id")) in outcomes
-        ),
-        "owner_decision_summary_path": str(artifact_dir / "owner_decision_summary.json"),
-        "advisory_acceptance_matrix_path": str(artifact_dir / "advisory_acceptance_matrix.json"),
-        "decision_outcome_comparison_path": str(artifact_dir / "decision_outcome_comparison.json"),
-        "owner_attribution_report_path": str(artifact_dir / "owner_attribution_report.md"),
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    attribution_id = _stable_id(
+        "owner-attribution-v2",
+        generated.isoformat(),
+        sha256(_canonical_json(owner_snapshot).encode("utf-8")).hexdigest(),
+        sha256(_canonical_json(outcome_snapshot).encode("utf-8")).hexdigest(),
+    )
+    artifact_dir = _unique_dir(output_dir / attribution_id)
+    artifact_dir.mkdir(parents=True, exist_ok=False)
+    owner_snapshot_path = artifact_dir / "owner_review_source_snapshot.json"
+    outcome_snapshot_path = artifact_dir / "advisory_outcome_source_snapshot.json"
+    source_validation_path = artifact_dir / "source_validation_summary.json"
+    _write_json(owner_snapshot_path, owner_snapshot)
+    _write_json(outcome_snapshot_path, outcome_snapshot)
+    _write_json(source_validation_path, source_validation_summary)
+    manifest = _owner_attribution_manifest_payload(
+        attribution_dir=artifact_dir,
+        generated_at=generated,
+        owner_snapshot=owner_snapshot,
+        outcome_snapshot=outcome_snapshot,
+        comparison=comparison,
+    )
     _write_json(artifact_dir / "owner_attribution_manifest.json", manifest)
     _write_json(artifact_dir / "owner_decision_summary.json", summary)
     _write_json(artifact_dir / "advisory_acceptance_matrix.json", matrix)
@@ -1338,6 +1355,9 @@ def run_owner_attribution(
         "owner_decision_summary": summary,
         "advisory_acceptance_matrix": matrix,
         "decision_outcome_comparison": comparison,
+        "owner_review_source_snapshot": owner_snapshot,
+        "advisory_outcome_source_snapshot": outcome_snapshot,
+        "source_validation_summary": source_validation_summary,
     }
 
 
@@ -1369,52 +1389,193 @@ def validate_owner_attribution_artifact(
     output_dir: Path = DEFAULT_OWNER_ATTRIBUTION_DIR,
 ) -> dict[str, Any]:
     artifact_dir = output_dir / attribution_id
-    manifest = _read_optional_json(artifact_dir / "owner_attribution_manifest.json") or {}
-    comparison = _read_optional_json(artifact_dir / "decision_outcome_comparison.json") or {}
+    paths = {
+        "manifest": artifact_dir / "owner_attribution_manifest.json",
+        "owner_snapshot": artifact_dir / "owner_review_source_snapshot.json",
+        "outcome_snapshot": artifact_dir / "advisory_outcome_source_snapshot.json",
+        "source_validation": artifact_dir / "source_validation_summary.json",
+        "decision_summary": artifact_dir / "owner_decision_summary.json",
+        "acceptance_matrix": artifact_dir / "advisory_acceptance_matrix.json",
+        "comparison": artifact_dir / "decision_outcome_comparison.json",
+        "report": artifact_dir / "owner_attribution_report.md",
+    }
+    manifest = _read_optional_json(paths["manifest"]) or {}
+    required_legacy_paths = (
+        paths["manifest"],
+        paths["decision_summary"],
+        paths["acceptance_matrix"],
+        paths["comparison"],
+        paths["report"],
+    )
+    if manifest.get("source_snapshot_schema_version") != (
+        OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION
+    ):
+        legacy_checks = [
+            _check(
+                "legacy_required_files",
+                all(path.is_file() for path in required_legacy_paths),
+                attribution_id,
+            ),
+            _check(
+                "attribution_id_matches",
+                manifest.get("attribution_id") == attribution_id,
+                attribution_id,
+            ),
+            _check(
+                "legacy_no_execution_effect",
+                manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy attribution remains read-only evidence",
+            ),
+        ]
+        structural_pass = all(check["passed"] for check in legacy_checks)
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_owner_attribution_validation",
+            artifact_id_key="attribution_id",
+            artifact_id=attribution_id,
+            status="PASS_WITH_WARNINGS" if structural_pass else "FAIL",
+            checks=legacy_checks,
+        )
+        payload.update(
+            {
+                "source_snapshot_status": "LEGACY_UNSNAPSHOTTED",
+                "warnings": [
+                    "LEGACY_UNSNAPSHOTTED: 旧归因报告缺少不可变source snapshots"
+                ],
+            }
+        )
+        return payload
+    existence_checks = [
+        _check(f"{name}_exists", path.is_file(), str(path))
+        for name, path in paths.items()
+    ]
+    if not all(check["passed"] for check in existence_checks):
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_owner_attribution_validation",
+            artifact_id_key="attribution_id",
+            artifact_id=attribution_id,
+            status="FAIL",
+            checks=existence_checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    try:
+        owner_snapshot = _read_json(paths["owner_snapshot"])
+        outcome_snapshot = _read_json(paths["outcome_snapshot"])
+        source_validation = _read_json(paths["source_validation"])
+        summary = _read_json(paths["decision_summary"])
+        matrix = _read_json(paths["acceptance_matrix"])
+        comparison = _read_json(paths["comparison"])
+        report = paths["report"].read_text(encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        checks = [*existence_checks, _check("artifact_parse", False, str(exc))]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_owner_attribution_validation",
+            artifact_id_key="attribution_id",
+            artifact_id=attribution_id,
+            status="FAIL",
+            checks=checks,
+        )
+        payload["source_snapshot_status"] = "FAIL"
+        return payload
+    snapshot_errors = _owner_attribution_snapshot_errors(
+        owner_snapshot=owner_snapshot,
+        outcome_snapshot=outcome_snapshot,
+    )
+    records = [
+        _mapping(item.get("review"))
+        for item in _records(owner_snapshot.get("selected_reviews"))
+    ]
+    outcomes = _records(outcome_snapshot.get("selected_outcomes"))
+    expected_summary = _owner_decision_summary(records)
+    expected_matrix = _advisory_acceptance_matrix(records)
+    expected_comparison = _decision_outcome_comparison(records, outcomes)
+    expected_source_validation = _owner_attribution_source_validation_summary(
+        owner_snapshot=owner_snapshot,
+        outcome_snapshot=outcome_snapshot,
+    )
+    generated = _parse_datetime_text(_text(owner_snapshot.get("generated_cutoff")))
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    manifest_error = ""
+    try:
+        if generated is None:
+            raise DynamicV3PaperTrackingError("owner attribution cutoff is invalid")
+        expected_manifest = _owner_attribution_manifest_payload(
+            attribution_dir=artifact_dir,
+            generated_at=generated,
+            owner_snapshot=owner_snapshot,
+            outcome_snapshot=outcome_snapshot,
+            comparison=expected_comparison,
+        )
+        expected_report = render_owner_attribution_report(
+            expected_manifest,
+            expected_summary,
+            expected_matrix,
+            expected_comparison,
+        )
+    except Exception as exc:  # noqa: BLE001
+        manifest_error = str(exc)
     checks = [
-        _check(
-            "manifest_exists",
-            (artifact_dir / "owner_attribution_manifest.json").exists(),
-            attribution_id,
-        ),
-        _check(
-            "decision_summary_exists",
-            (artifact_dir / "owner_decision_summary.json").exists(),
-            attribution_id,
-        ),
-        _check(
-            "acceptance_matrix_exists",
-            (artifact_dir / "advisory_acceptance_matrix.json").exists(),
-            attribution_id,
-        ),
-        _check(
-            "outcome_comparison_exists",
-            (artifact_dir / "decision_outcome_comparison.json").exists(),
-            attribution_id,
-        ),
-        _check(
-            "report_exists", (artifact_dir / "owner_attribution_report.md").exists(), attribution_id
-        ),
+        *existence_checks,
         _check(
             "attribution_id_matches",
             manifest.get("attribution_id") == attribution_id,
             attribution_id,
         ),
-        _check("comparison_status_present", bool(comparison.get("status")), "comparison status"),
+        _check("snapshot_content_valid", not snapshot_errors, ";".join(snapshot_errors)),
         _check(
-            "broker_action_forbidden",
-            manifest.get("broker_action_allowed") is False,
-            "broker action forbidden",
+            "owner_snapshot_checksum",
+            manifest.get("owner_review_source_snapshot_checksum")
+            == _file_sha256(paths["owner_snapshot"]),
+            str(paths["owner_snapshot"]),
+        ),
+        _check(
+            "outcome_snapshot_checksum",
+            manifest.get("advisory_outcome_source_snapshot_checksum")
+            == _file_sha256(paths["outcome_snapshot"]),
+            str(paths["outcome_snapshot"]),
+        ),
+        _check(
+            "source_validation_matches_snapshots",
+            source_validation == expected_source_validation,
+            "source validation materialized from snapshots",
+        ),
+        _check("decision_summary_matches", summary == expected_summary, "owner records"),
+        _check("acceptance_matrix_matches", matrix == expected_matrix, "owner records"),
+        _check("outcome_comparison_matches", comparison == expected_comparison, "outcome windows"),
+        _check(
+            "manifest_matches_snapshots",
+            not manifest_error and manifest == expected_manifest,
+            manifest_error or "manifest replay",
+        ),
+        _check(
+            "report_matches_snapshots",
+            not manifest_error and report == expected_report,
+            str(paths["report"]),
+        ),
+        _check(
+            "no_execution_effect",
+            _owner_attribution_record_has_no_execution_effect(manifest),
+            "owner attribution evidence only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
-    return _validation_payload(
+    payload = _validation_payload(
         report_type="etf_dynamic_v3_owner_attribution_validation",
         artifact_id_key="attribution_id",
         artifact_id=attribution_id,
         status=status,
         checks=checks,
     )
+    payload.update(
+        {
+            "source_snapshot_status": "PASS" if status == "PASS" else "FAIL",
+            "selected_review_count": len(records),
+            "selected_outcome_count": len(outcomes),
+        }
+    )
+    return payload
 
 
 def run_shadow_aging(
@@ -1895,18 +2056,44 @@ def render_owner_attribution_report(
     matrix: Mapping[str, Any],
     comparison: Mapping[str, Any],
 ) -> str:
-    return "\n".join(
+    lines = [
+        "# Dynamic Rescue Owner Attribution",
+        "",
+        f"- 工程状态：{manifest.get('status', 'UNKNOWN')}",
+        f"- 证据状态：{manifest.get('evidence_status', 'UNKNOWN')}",
+        f"- attribution_id：`{manifest.get('attribution_id', '')}`",
+        f"- total_reviews：{summary.get('total_reviews', 0)}",
+        f"- final_reviews：{summary.get('final_review_count', 0)}",
+        f"- linked_outcomes：{comparison.get('linked_outcome_count', 0)}",
+        f"- available_outcomes：{comparison.get('available_outcome_count', 0)}",
+        f"- available_windows：{comparison.get('available_window_count', 0)}",
+        f"- most_common_owner_decision：{summary.get('most_common_owner_decision', 'MISSING')}",
+        f"- outcome_comparison_status：{comparison.get('status', 'UNKNOWN')}",
+        "- source_snapshot_status：PASS",
+        "- broker_action_taken：false",
+        "",
+        "## Decision / Outcome Evidence",
+        "",
+        "| Owner decision | Reviews | Linked outcomes | Available outcomes | "
+        "Available windows | Avg 5d vs no-trade | Avg 20d vs no-trade | Reason |",
+        "|---|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in _records(comparison.get("decision_groups")):
+        lines.append(
+            "| "
+            f"{row.get('owner_decision')} | "
+            f"{row.get('review_count')} | "
+            f"{row.get('linked_outcome_count')} | "
+            f"{row.get('available_outcome_count')} | "
+            f"{row.get('available_window_count')} | "
+            f"{_format_optional_metric(row.get('avg_5d_relative_to_no_trade'))} | "
+            f"{_format_optional_metric(row.get('avg_20d_relative_to_no_trade'))} | "
+            f"{row.get('insufficient_reason') or '-'} |"
+        )
+    lines.extend(
         [
-            "# Dynamic Rescue Owner Attribution",
             "",
-            f"- 状态：{manifest.get('status', 'UNKNOWN')}",
-            f"- attribution_id：`{manifest.get('attribution_id', '')}`",
-            f"- total_reviews：{summary.get('total_reviews', 0)}",
-            f"- most_common_owner_decision：{summary.get('most_common_owner_decision', 'MISSING')}",
-            f"- outcome_comparison_status：{comparison.get('status', 'UNKNOWN')}",
-            "- broker_action_taken：false",
-            "",
-            "## Advisory Acceptance",
+            "## Advisory / Owner Decision Matrix",
             "",
             json.dumps(
                 matrix.get("by_recommended_action", {}),
@@ -1915,10 +2102,17 @@ def render_owner_attribution_report(
                 sort_keys=True,
             ),
             "",
-            "数据不足时保持 INSUFFICIENT_DATA，不把 owner decision 或 advisory rule 写成生产结论。",
+            "## 阅读口径",
+            "",
+            "review、linked outcome、available outcome 与 available window 是不同样本单位，"
+            "不得混用。缺少 5d/20d 证据显示为 N/A，不解释为 0。",
+            "`accepted_monitor` 仅为兼容字段，语义等于 monitor_count，不代表接受或批准建议。",
+            "该报告只做 owner 决策与已验证 outcome 的事后归因；普通 checksum 不是数字签名，"
+            "PASS 也不是 policy adoption、portfolio approval、order 或 broker authorization。",
             "",
         ]
     )
+    return "\n".join(lines)
 
 
 def render_shadow_aging_report(
@@ -3795,6 +3989,505 @@ def _rollup_outcome_status(rows: Sequence[Mapping[str, Any]]) -> str:
     return "INSUFFICIENT_DATA"
 
 
+def _owner_attribution_owner_snapshot(
+    *,
+    owner_review_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    events_path = owner_review_dir / "owner_review_events.jsonl"
+    journal_path = owner_review_dir / "owner_review_journal.jsonl"
+    report_path = owner_review_dir / "owner_review_report.md"
+    required = (events_path, journal_path, report_path)
+    if not all(path.is_file() for path in required):
+        raise DynamicV3PaperTrackingError(
+            "owner attribution requires the event-chain owner review artifacts"
+        )
+    events = _read_jsonl(events_path)
+    records, replay_errors = replay_owner_review_records(events)
+    if replay_errors:
+        raise DynamicV3PaperTrackingError(
+            "owner review event replay failed: " + ",".join(replay_errors)
+        )
+    if _read_jsonl(journal_path) != records:
+        raise DynamicV3PaperTrackingError(
+            "owner review journal does not match the event-chain replay"
+        )
+    for event in events:
+        event_at = _parse_datetime_text(_text(event.get("event_at")))
+        if event_at is None or event_at > generated_at:
+            raise DynamicV3PaperTrackingError(
+                "owner review event time must be valid and not later than attribution cutoff"
+            )
+    selected_reviews = []
+    for record in records:
+        review_id = _text(record.get("review_id"))
+        validation = validate_owner_review_artifact(
+            review_id=review_id,
+            output_dir=owner_review_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3PaperTrackingError(
+                f"owner review validation must PASS for attribution: {review_id}"
+            )
+        selected_reviews.append(
+            {
+                "review": record,
+                "validation_status": "PASS",
+                "validation_failed_check_count": validation.get("failed_check_count", 0),
+            }
+        )
+    source_paths = [*required]
+    for optional_name in ("latest_owner_review.json", "paper_action_log.jsonl"):
+        optional_path = owner_review_dir / optional_name
+        if optional_path.is_file():
+            source_paths.append(optional_path)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "snapshot_schema_version": OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_review_source_snapshot",
+        "generated_cutoff": generated_at.isoformat(),
+        "source_root": str(owner_review_dir),
+        "source_files": _source_file_inventory(owner_review_dir, source_paths),
+        "event_chain_status": "PASS",
+        "event_count": len(events),
+        "last_event_checksum": (
+            _text(events[-1].get("event_checksum")) if events else "GENESIS"
+        ),
+        "owner_review_events": events,
+        "selected_review_count": len(selected_reviews),
+        "selected_reviews": selected_reviews,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _owner_attribution_outcome_snapshot(
+    *,
+    records: Sequence[Mapping[str, Any]],
+    outcome_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    by_daily = {_text(record.get("daily_advisory_id")): record for record in records}
+    if len(by_daily) != len(records) or "" in by_daily:
+        raise DynamicV3PaperTrackingError(
+            "owner attribution requires unique non-empty daily advisory ids"
+        )
+    selected_by_daily: dict[str, dict[str, Any]] = {}
+    if outcome_dir.exists():
+        for child in sorted(path for path in outcome_dir.iterdir() if path.is_dir()):
+            manifest_path = child / "advisory_outcome_manifest.json"
+            if not manifest_path.is_file():
+                raise DynamicV3PaperTrackingError(
+                    f"advisory outcome directory is missing manifest: {child}"
+                )
+            try:
+                manifest = _read_json(manifest_path)
+            except Exception as exc:  # noqa: BLE001
+                raise DynamicV3PaperTrackingError(
+                    f"advisory outcome manifest is unreadable: {manifest_path}: {exc}"
+                ) from exc
+            daily_id = _text(manifest.get("daily_advisory_id"))
+            if daily_id not in by_daily:
+                continue
+            if daily_id in selected_by_daily:
+                raise DynamicV3PaperTrackingError(
+                    f"multiple advisory outcomes found for owner review daily id: {daily_id}"
+                )
+            outcome_id = child.name
+            validation = validate_advisory_outcome_artifact(
+                outcome_id=outcome_id,
+                output_dir=outcome_dir,
+            )
+            if validation.get("status") != "PASS":
+                raise DynamicV3PaperTrackingError(
+                    f"advisory outcome validation must PASS for attribution: {outcome_id}"
+                )
+            event = _read_json(child / "advisory_event.json")
+            updates = _read_jsonl(child / "outcome_update_events.jsonl")
+            tracked_at = _parse_datetime_text(_text(event.get("tracked_at")))
+            event_times = [
+                _parse_datetime_text(_text(update.get("event_at"))) for update in updates
+            ]
+            if (
+                tracked_at is None
+                or tracked_at > generated_at
+                or any(value is None or value > generated_at for value in event_times)
+            ):
+                raise DynamicV3PaperTrackingError(
+                    "advisory outcome tracking/update time cannot exceed attribution cutoff"
+                )
+            review = by_daily[daily_id]
+            if (
+                event.get("daily_advisory_id") != daily_id
+                or event.get("as_of") != review.get("as_of")
+                or manifest.get("as_of") != review.get("as_of")
+            ):
+                raise DynamicV3PaperTrackingError(
+                    f"owner review and advisory outcome lineage mismatch: {daily_id}"
+                )
+            windows = _read_jsonl(child / "outcome_windows.jsonl")
+            selected_by_daily[daily_id] = {
+                "review_id": review.get("review_id"),
+                "daily_advisory_id": daily_id,
+                "review_as_of": review.get("as_of"),
+                "owner_decision": review.get("owner_decision"),
+                "outcome_id": outcome_id,
+                "outcome_as_of": manifest.get("as_of"),
+                "outcome_status": manifest.get("status"),
+                "outcome_validation_status": "PASS",
+                "outcome_validation_failed_check_count": validation.get(
+                    "failed_check_count", 0
+                ),
+                "latest_update_event_id": manifest.get("latest_update_event_id", ""),
+                "latest_update_event_checksum": manifest.get(
+                    "latest_update_event_checksum", ""
+                ),
+                "advisory_event": event,
+                "outcome_manifest": manifest,
+                "outcome_update_events": updates,
+                "source_artifact_root": str(child),
+                "source_files": _source_file_inventory(
+                    child,
+                    sorted(path for path in child.rglob("*") if path.is_file()),
+                ),
+                "outcome_windows": windows,
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+                "production_effect": "none",
+            }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "snapshot_schema_version": OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_advisory_outcome_source_snapshot",
+        "generated_cutoff": generated_at.isoformat(),
+        "source_root": str(outcome_dir),
+        "selected_outcome_count": len(selected_by_daily),
+        "selected_outcomes": [selected_by_daily[key] for key in sorted(selected_by_daily)],
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _source_file_inventory(root: Path, paths: Sequence[Path]) -> dict[str, Any]:
+    return {
+        path.relative_to(root).as_posix(): {
+            "path": str(path),
+            "checksum": _file_sha256(path),
+        }
+        for path in sorted(set(paths))
+    }
+
+
+def _owner_attribution_source_validation_summary(
+    *,
+    owner_snapshot: Mapping[str, Any],
+    outcome_snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    reviews = _records(owner_snapshot.get("selected_reviews"))
+    outcomes = _records(outcome_snapshot.get("selected_outcomes"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_attribution_source_validation_summary",
+        "snapshot_schema_version": OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION,
+        "generated_cutoff": owner_snapshot.get("generated_cutoff"),
+        "owner_review_source_root": owner_snapshot.get("source_root"),
+        "owner_review_event_chain_status": owner_snapshot.get("event_chain_status"),
+        "owner_review_event_count": owner_snapshot.get("event_count"),
+        "selected_review_count": len(reviews),
+        "selected_review_validation_pass_count": sum(
+            item.get("validation_status") == "PASS" for item in reviews
+        ),
+        "advisory_outcome_source_root": outcome_snapshot.get("source_root"),
+        "selected_outcome_count": len(outcomes),
+        "selected_outcome_validation_pass_count": sum(
+            item.get("outcome_validation_status") == "PASS" for item in outcomes
+        ),
+        "all_selected_sources_validated": all(
+            item.get("validation_status") == "PASS" for item in reviews
+        )
+        and all(item.get("outcome_validation_status") == "PASS" for item in outcomes),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+
+
+def _owner_attribution_manifest_payload(
+    *,
+    attribution_dir: Path,
+    generated_at: datetime,
+    owner_snapshot: Mapping[str, Any],
+    outcome_snapshot: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+) -> dict[str, Any]:
+    reviews = _records(owner_snapshot.get("selected_reviews"))
+    outcomes = _records(outcome_snapshot.get("selected_outcomes"))
+    owner_snapshot_path = attribution_dir / "owner_review_source_snapshot.json"
+    outcome_snapshot_path = attribution_dir / "advisory_outcome_source_snapshot.json"
+    source_validation_path = attribution_dir / "source_validation_summary.json"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "source_snapshot_schema_version": OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_attribution_manifest",
+        "attribution_id": attribution_dir.name,
+        "generated_at": generated_at.isoformat(),
+        "status": "PASS",
+        "evidence_status": comparison.get("status"),
+        "total_reviews": len(reviews),
+        "pending_review_count": sum(
+            _mapping(item.get("review")).get("owner_decision") == "pending"
+            for item in reviews
+        ),
+        "final_review_count": sum(
+            _mapping(item.get("review")).get("owner_decision") != "pending"
+            for item in reviews
+        ),
+        "linked_outcome_count": len(outcomes),
+        "available_outcome_count": comparison.get("available_outcome_count", 0),
+        "available_window_count": comparison.get("available_window_count", 0),
+        "owner_review_source_snapshot_path": str(owner_snapshot_path),
+        "owner_review_source_snapshot_checksum": _file_sha256(owner_snapshot_path),
+        "advisory_outcome_source_snapshot_path": str(outcome_snapshot_path),
+        "advisory_outcome_source_snapshot_checksum": _file_sha256(
+            outcome_snapshot_path
+        ),
+        "source_validation_summary_path": str(source_validation_path),
+        "source_validation_summary_checksum": _file_sha256(source_validation_path),
+        "owner_decision_summary_path": str(
+            attribution_dir / "owner_decision_summary.json"
+        ),
+        "advisory_acceptance_matrix_path": str(
+            attribution_dir / "advisory_acceptance_matrix.json"
+        ),
+        "decision_outcome_comparison_path": str(
+            attribution_dir / "decision_outcome_comparison.json"
+        ),
+        "owner_attribution_report_path": str(
+            attribution_dir / "owner_attribution_report.md"
+        ),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "manual_review_required": True,
+        "production_effect": "none",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _owner_attribution_record_has_no_execution_effect(
+    record: Mapping[str, Any],
+) -> bool:
+    return (
+        record.get("official_target_weights_generated") is False
+        and record.get("portfolio_mutated") is False
+        and record.get("order_ticket_generated") is False
+        and record.get("production_candidate_generated") is False
+        and record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
+def _owner_attribution_snapshot_errors(
+    *,
+    owner_snapshot: Mapping[str, Any],
+    outcome_snapshot: Mapping[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    if (
+        owner_snapshot.get("snapshot_schema_version")
+        != OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION
+        or outcome_snapshot.get("snapshot_schema_version")
+        != OWNER_ATTRIBUTION_SNAPSHOT_SCHEMA_VERSION
+    ):
+        errors.append("snapshot_schema_invalid")
+    if owner_snapshot.get("generated_cutoff") != outcome_snapshot.get(
+        "generated_cutoff"
+    ):
+        errors.append("snapshot_cutoff_mismatch")
+    if owner_snapshot.get("event_chain_status") != "PASS":
+        errors.append("owner_event_chain_not_pass")
+    reviews = _records(owner_snapshot.get("selected_reviews"))
+    records = [_mapping(item.get("review")) for item in reviews]
+    owner_events = _records(owner_snapshot.get("owner_review_events"))
+    replay_records, replay_errors = replay_owner_review_records(owner_events)
+    if replay_errors or replay_records != records:
+        errors.append("owner_snapshot_event_replay_mismatch")
+    if (
+        owner_snapshot.get("event_count") != len(owner_events)
+        or owner_snapshot.get("selected_review_count") != len(reviews)
+        or owner_snapshot.get("last_event_checksum")
+        != (
+            _text(owner_events[-1].get("event_checksum"))
+            if owner_events
+            else "GENESIS"
+        )
+    ):
+        errors.append("owner_snapshot_counts_or_last_checksum_mismatch")
+    cutoff = _parse_datetime_text(_text(owner_snapshot.get("generated_cutoff")))
+    if cutoff is None:
+        errors.append("snapshot_cutoff_invalid")
+    elif any(
+        (event_at := _parse_datetime_text(_text(event.get("event_at")))) is None
+        or event_at > cutoff
+        for event in owner_events
+    ):
+        errors.append("owner_snapshot_event_after_cutoff")
+    review_ids = [_text(record.get("review_id")) for record in records]
+    daily_ids = [_text(record.get("daily_advisory_id")) for record in records]
+    if (
+        len(review_ids) != len(set(review_ids))
+        or len(daily_ids) != len(set(daily_ids))
+        or any(not value for value in [*review_ids, *daily_ids])
+    ):
+        errors.append("owner_review_identity_invalid_or_duplicate")
+    allowed_decisions = {"pending", *OWNER_REVIEW_DECISIONS}
+    for index, (item, record) in enumerate(zip(reviews, records, strict=True), start=1):
+        if item.get("validation_status") != "PASS":
+            errors.append(f"owner_review_validation_not_pass:{index}")
+        if record.get("owner_decision") not in allowed_decisions:
+            errors.append(f"owner_decision_invalid:{index}")
+        if not _owner_review_record_has_no_execution_effect(record):
+            errors.append(f"owner_review_execution_effect_forbidden:{index}")
+    errors.extend(_source_inventory_errors(owner_snapshot.get("source_files"), "owner"))
+    by_daily = {daily_id: record for daily_id, record in zip(daily_ids, records, strict=True)}
+    outcomes = _records(outcome_snapshot.get("selected_outcomes"))
+    if outcome_snapshot.get("selected_outcome_count") != len(outcomes):
+        errors.append("outcome_snapshot_count_mismatch")
+    outcome_daily_ids = [_text(item.get("daily_advisory_id")) for item in outcomes]
+    if len(outcome_daily_ids) != len(set(outcome_daily_ids)):
+        errors.append("duplicate_outcome_daily_id")
+    for index, item in enumerate(outcomes, start=1):
+        daily_id = _text(item.get("daily_advisory_id"))
+        review = by_daily.get(daily_id, {})
+        if (
+            not review
+            or item.get("review_id") != review.get("review_id")
+            or item.get("owner_decision") != review.get("owner_decision")
+            or item.get("review_as_of") != review.get("as_of")
+            or item.get("outcome_as_of") != review.get("as_of")
+        ):
+            errors.append(f"outcome_review_binding_mismatch:{index}")
+        if item.get("outcome_validation_status") != "PASS":
+            errors.append(f"outcome_validation_not_pass:{index}")
+        if not _owner_attribution_snapshot_outcome_has_no_execution_effect(item):
+            errors.append(f"outcome_execution_effect_forbidden:{index}")
+        window_rows = _records(item.get("outcome_windows"))
+        advisory_event = _mapping(item.get("advisory_event"))
+        outcome_manifest = _mapping(item.get("outcome_manifest"))
+        update_events = _records(item.get("outcome_update_events"))
+        if (
+            advisory_event.get("outcome_id") != item.get("outcome_id")
+            or advisory_event.get("daily_advisory_id") != daily_id
+            or advisory_event.get("as_of") != item.get("outcome_as_of")
+            or outcome_manifest.get("outcome_id") != item.get("outcome_id")
+            or outcome_manifest.get("daily_advisory_id") != daily_id
+            or outcome_manifest.get("as_of") != item.get("outcome_as_of")
+            or outcome_manifest.get("status") != item.get("outcome_status")
+            or outcome_manifest.get("update_event_count") != len(update_events)
+        ):
+            errors.append(f"outcome_snapshot_manifest_event_mismatch:{index}")
+        previous_checksum = "GENESIS"
+        for sequence, update in enumerate(update_events, start=1):
+            update_at = _parse_datetime_text(_text(update.get("event_at")))
+            if (
+                update.get("event_sequence") != sequence
+                or update.get("previous_event_checksum") != previous_checksum
+                or update.get("event_checksum") != _outcome_update_event_checksum(update)
+                or update_at is None
+                or (cutoff is not None and update_at > cutoff)
+                or not _outcome_record_has_no_execution_effect(update)
+            ):
+                errors.append(f"outcome_snapshot_update_chain_invalid:{index}:{sequence}")
+            previous_checksum = _text(update.get("event_checksum"))
+        expected_latest_id = (
+            _text(update_events[-1].get("update_event_id")) if update_events else ""
+        )
+        expected_latest_checksum = previous_checksum if update_events else ""
+        expected_windows = (
+            _records(update_events[-1].get("outcome_windows"))
+            if update_events
+            else window_rows
+        )
+        tracked_at = _parse_datetime_text(_text(advisory_event.get("tracked_at")))
+        if (
+            item.get("latest_update_event_id") != expected_latest_id
+            or item.get("latest_update_event_checksum") != expected_latest_checksum
+            or outcome_manifest.get("latest_update_event_id") != expected_latest_id
+            or outcome_manifest.get("latest_update_event_checksum")
+            != expected_latest_checksum
+            or window_rows != expected_windows
+            or tracked_at is None
+            or (cutoff is not None and tracked_at > cutoff)
+            or not _outcome_record_has_no_execution_effect(advisory_event)
+        ):
+            errors.append(f"outcome_snapshot_latest_binding_invalid:{index}")
+        if not window_rows:
+            errors.append(f"outcome_windows_missing:{index}")
+        for row_index, row in enumerate(window_rows, start=1):
+            status = row.get("outcome_status")
+            if status not in OUTCOME_WINDOW_STATUSES:
+                errors.append(f"outcome_window_status_invalid:{index}:{row_index}")
+            elif status == "AVAILABLE":
+                if not all(
+                    _is_finite_number(row.get(field)) for field in OUTCOME_METRIC_FIELDS
+                ):
+                    errors.append(
+                        f"available_outcome_metric_invalid:{index}:{row_index}"
+                    )
+            elif not all(row.get(field) is None for field in OUTCOME_METRIC_FIELDS):
+                errors.append(
+                    f"non_available_outcome_metric_not_null:{index}:{row_index}"
+                )
+        errors.extend(
+            _source_inventory_errors(item.get("source_files"), f"outcome:{index}")
+        )
+    return sorted(set(errors))
+
+
+def _source_inventory_errors(value: Any, label: str) -> list[str]:
+    inventory = _mapping(value)
+    if not inventory:
+        return [f"source_inventory_missing:{label}"]
+    errors = []
+    for relative, raw in inventory.items():
+        entry = _mapping(raw)
+        checksum = _text(entry.get("checksum"))
+        if not _text(relative) or not _text(entry.get("path")) or (
+            len(checksum) != 64
+            or any(character not in "0123456789abcdef" for character in checksum)
+        ):
+            errors.append(f"source_inventory_entry_invalid:{label}:{relative}")
+    return errors
+
+
+def _owner_review_record_has_no_execution_effect(record: Mapping[str, Any]) -> bool:
+    return (
+        record.get("official_target_weights_generated") is False
+        and record.get("portfolio_mutated") is False
+        and record.get("order_ticket_generated") is False
+        and record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
+def _owner_attribution_snapshot_outcome_has_no_execution_effect(
+    record: Mapping[str, Any],
+) -> bool:
+    return (
+        record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
 def _owner_decision_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     counter = Counter(_text(row.get("owner_decision"), "pending") for row in records)
     decisions = [
@@ -3806,14 +4499,27 @@ def _owner_decision_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, A
         "reject_advisory",
         "needs_more_data",
     ]
-    most_common = counter.most_common(1)[0][0] if counter else "MISSING"
+    max_count = max(counter.values(), default=0)
+    most_common_decisions = sorted(
+        decision for decision, count in counter.items() if count == max_count
+    )
+    most_common = most_common_decisions[0] if most_common_decisions else "MISSING"
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_owner_decision_summary",
         "total_reviews": len(records),
         **{decision: counter.get(decision, 0) for decision in decisions},
         "most_common_owner_decision": most_common,
+        "most_common_owner_decisions": most_common_decisions,
+        "pending_review_count": counter.get("pending", 0),
+        "final_review_count": len(records) - counter.get("pending", 0),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
         "broker_action_taken": False,
+        "production_effect": "none",
     }
 
 
@@ -3828,62 +4534,131 @@ def _advisory_acceptance_matrix(records: Sequence[Mapping[str, Any]]) -> dict[st
         grouped[_text(row.get("recommended_action"), "MISSING")].append(row)
     for action, rows in sorted(grouped.items()):
         decisions = Counter(_text(row.get("owner_decision"), "pending") for row in rows)
+        final_count = len(rows) - decisions.get("pending", 0)
         matrix["by_recommended_action"][action] = {
             "count": len(rows),
             "accepted_monitor": decisions.get("monitor", 0),
+            "accepted_monitor_legacy_field_semantics": "monitor_count_only",
+            "monitor_count": decisions.get("monitor", 0),
             "rejected": decisions.get("reject_advisory", 0),
             "paper_adjustment": decisions.get("paper_adjustment", 0),
+            "pending_count": decisions.get("pending", 0),
+            "final_decision_count": final_count,
+            "monitor_rate_of_final": (
+                round(decisions.get("monitor", 0) / final_count, 6)
+                if final_count
+                else None
+            ),
+            "paper_adjustment_rate_of_final": (
+                round(decisions.get("paper_adjustment", 0) / final_count, 6)
+                if final_count
+                else None
+            ),
             "owner_decisions": dict(decisions),
         }
+    matrix.update(
+        {
+            "total_reviews": len(records),
+            "broker_action_allowed": False,
+            "broker_action_taken": False,
+            "production_effect": "none",
+        }
+    )
     return matrix
 
 
 def _decision_outcome_comparison(
     records: Sequence[Mapping[str, Any]],
-    outcomes: Mapping[str, Sequence[Mapping[str, Any]]],
+    outcomes: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
+    outcome_by_daily = {
+        _text(item.get("daily_advisory_id")): item for item in outcomes
+    }
     groups: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     for record in records:
-        daily_id = _text(record.get("daily_advisory_id"))
-        for row in outcomes.get(daily_id, []):
-            if row.get("outcome_status") == "AVAILABLE":
-                groups[_text(record.get("owner_decision"), "pending")].append(row)
+        groups[_text(record.get("owner_decision"), "pending")].append(record)
     decision_groups = []
-    for decision, rows in sorted(groups.items()):
+    available_outcome_count = 0
+    available_window_count = 0
+    for decision, decision_records in sorted(groups.items()):
+        linked = [
+            outcome_by_daily[_text(record.get("daily_advisory_id"))]
+            for record in decision_records
+            if _text(record.get("daily_advisory_id")) in outcome_by_daily
+        ]
+        available_by_outcome = [
+            [
+                row
+                for row in _records(item.get("outcome_windows"))
+                if row.get("outcome_status") == "AVAILABLE"
+            ]
+            for item in linked
+        ]
+        available = [row for rows in available_by_outcome for row in rows]
+        group_available_outcomes = sum(bool(rows) for rows in available_by_outcome)
+        available_outcome_count += group_available_outcomes
+        available_window_count += len(available)
+        avg_5d = _optional_avg_window(available, 5, "relative_to_no_trade")
+        avg_20d = _optional_avg_window(available, 20, "relative_to_no_trade")
         decision_groups.append(
             {
                 "owner_decision": decision,
-                "count": len(rows),
-                "avg_5d_relative_to_no_trade": _avg_window(rows, 5, "relative_to_no_trade"),
-                "avg_20d_relative_to_no_trade": _avg_window(rows, 20, "relative_to_no_trade"),
-                "avg_max_drawdown": round(
-                    _avg([_float(row.get("max_drawdown")) for row in rows]), 6
+                "review_count": len(decision_records),
+                "linked_outcome_count": len(linked),
+                "available_outcome_count": group_available_outcomes,
+                "available_window_count": len(available),
+                "avg_5d_relative_to_no_trade": avg_5d,
+                "avg_5d_evidence_status": "AVAILABLE" if avg_5d is not None else "MISSING",
+                "avg_20d_relative_to_no_trade": avg_20d,
+                "avg_20d_evidence_status": "AVAILABLE" if avg_20d is not None else "MISSING",
+                "avg_available_window_max_drawdown": _optional_avg_metric(
+                    available, "max_drawdown"
+                ),
+                "insufficient_reason": (
+                    "" if available else "NO_AVAILABLE_OUTCOME_WINDOW"
                 ),
             }
         )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_decision_outcome_comparison",
-        "status": "AVAILABLE" if decision_groups else "INSUFFICIENT_DATA",
+        "status": "AVAILABLE" if available_window_count else "INSUFFICIENT_DATA",
+        "review_count": len(records),
+        "linked_outcome_count": len(outcomes),
+        "unlinked_review_count": len(records) - len(outcomes),
+        "available_outcome_count": available_outcome_count,
+        "available_window_count": available_window_count,
+        "insufficient_reason": (
+            "" if available_window_count else "NO_AVAILABLE_OUTCOME_WINDOW"
+        ),
         "decision_groups": decision_groups,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
     }
 
 
-def _avg_window(rows: Sequence[Mapping[str, Any]], window: int, key: str) -> float:
-    values = [_float(row.get(key)) for row in rows if int(row.get("window_days") or 0) == window]
-    return round(_avg(values), 6)
+def _optional_avg_window(
+    rows: Sequence[Mapping[str, Any]], window: int, key: str
+) -> float | None:
+    values = [
+        float(row[key])
+        for row in rows
+        if int(row.get("window_days") or 0) == window
+        and _is_finite_number(row.get(key))
+    ]
+    return round(sum(values) / len(values), 6) if values else None
 
 
-def _outcome_rows_by_advisory(output_dir: Path) -> dict[str, list[dict[str, Any]]]:
-    result: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for child in output_dir.glob("*"):
-        if not child.is_dir():
-            continue
-        manifest = _read_optional_json(child / "advisory_outcome_manifest.json") or {}
-        daily_id = _text(manifest.get("daily_advisory_id"))
-        if daily_id:
-            result[daily_id].extend(_read_jsonl(child / "outcome_windows.jsonl"))
-    return result
+def _optional_avg_metric(
+    rows: Sequence[Mapping[str, Any]], key: str
+) -> float | None:
+    values = [float(row[key]) for row in rows if _is_finite_number(row.get(key))]
+    return round(sum(values) / len(values), 6) if values else None
 
 
 def _shadow_shortlist_candidate_ids(

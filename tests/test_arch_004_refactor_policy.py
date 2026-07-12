@@ -2463,7 +2463,33 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4an["legacy_root_command_decorators_after"] == 762
     assert migration_g2_4an["python_module_count"] == 852
     assert phase_g2_4an["sources"]
+    superseded_g2_4an = set(phase_g2_4an["superseded_source_paths"])
     for source in phase_g2_4an["sources"]:
+        if source["path"] in superseded_g2_4an:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4ao = baseline["phase_g2_4ao_etf_cli_dynamic_v3_owner_attribution"]
+    assert phase_g2_4ao["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4ao = phase_g2_4ao["migration"]
+    assert migration_g2_4ao["callback_count"] == 3
+    assert migration_g2_4ao["requires_validated_owner_reviews"] is True
+    assert migration_g2_4ao["requires_validated_advisory_outcomes"] is True
+    assert migration_g2_4ao["generated_cutoff_enforced"] is True
+    assert migration_g2_4ao["one_daily_zero_or_one_outcome"] is True
+    assert migration_g2_4ao["immutable_source_snapshots"] is True
+    assert migration_g2_4ao["review_outcome_window_units_separated"] is True
+    assert migration_g2_4ao["missing_horizon_metrics_are_null"] is True
+    assert migration_g2_4ao["content_derived_snapshot_validation"] is True
+    assert migration_g2_4ao["legacy_unsnapshotted_is_current_evidence"] is False
+    assert migration_g2_4ao["attribution_is_causal_evidence"] is False
+    assert migration_g2_4ao["portfolio_or_execution_effect"] is False
+    assert migration_g2_4ao["legacy_root_lines_after"] == 27004
+    assert migration_g2_4ao["legacy_root_top_level_functions_after"] == 798
+    assert migration_g2_4ao["legacy_root_command_decorators_after"] == 759
+    assert migration_g2_4ao["python_module_count"] == 853
+    assert phase_g2_4ao["sources"]
+    for source in phase_g2_4ao["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2492,6 +2518,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AM_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AN_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AN_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AO_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AO_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

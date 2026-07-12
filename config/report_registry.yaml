@@ -6307,15 +6307,18 @@ reports:
     command: aits etf dynamic-v3-rescue owner-attribution report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_review_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/advisory_outcome_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/source_validation_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_decision_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/advisory_acceptance_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/decision_outcome_comparison.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_attribution_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-138 attributes owner decisions against advisory recommendations
-      and available outcome windows without fabricating conclusions when
-      outcomes are pending.
+      TRADING-138 freezes validated owner/outcome sources at a generated cutoff,
+      distinguishes review/outcome/window sample units, and keeps unavailable
+      5d/20d evidence null instead of fabricating zero-valued conclusions.
     owner_action: review_owner_attribution_before_rule_or_process_changes
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
