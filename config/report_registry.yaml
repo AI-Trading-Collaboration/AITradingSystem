@@ -6621,15 +6621,18 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue outcome-due report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/outcome_due_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/outcome_due_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/due_window_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/pending_window_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/update_ready_list.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/update_ready_execution.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/outcome_due_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-151 identifies forward outcome windows that are due, not due,
-      price-missing, or update-ready after the cached data quality gate.
+      TRADING-151 validates and freezes every advisory outcome plus cutoff price
+      dates and cached-data quality evidence before classifying due, not-due,
+      price-missing, or update-ready windows. Execution is explicit and single-use.
     owner_action: review_update_ready_list_before_any_outcome_update_execution
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

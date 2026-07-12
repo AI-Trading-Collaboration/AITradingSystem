@@ -41,6 +41,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     run_shadow_aging,
     run_weekly_advisory_review,
     update_advisory_outcome,
+    validate_advisory_outcome_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CONSENSUS_DRIFT_DIR,
@@ -69,6 +70,7 @@ DEFAULT_EVIDENCE_TREND_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_trend"
 DEFAULT_FORWARD_OUTCOME_DECISION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
 )
+OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION = "outcome_due_source_snapshot.v2"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -148,31 +150,56 @@ def run_outcome_due_scan(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    if as_of > generated.date():
+        raise DynamicV3OutcomeAccumulationError("outcome due as_of cannot be in the future")
     due_id = _stable_id("outcome-due", as_of.isoformat(), generated.isoformat())
-    due_dir = _unique_dir(output_dir / due_id)
-    due_dir.mkdir(parents=True, exist_ok=False)
-    quality_status, quality_report_path = _quality_gate_for_cached_data(
-        as_of=as_of,
-        generated=generated,
-        prices_path=prices_path,
-        rates_path=rates_path,
-        report_path=due_dir / "validate_data_quality_report.md",
-        enforce=enforce_data_quality_gate,
-    )
-    price_index = _price_availability_index(prices_path)
+    price_index = {
+        symbol: {item for item in dates if item <= as_of}
+        for symbol, dates in _price_availability_index(prices_path).items()
+    }
     latest_price_date = _latest_price_date_on_or_before(price_index, as_of)
     price_dates = _all_price_dates(price_index)
+    quality = _cached_data_quality_result(
+        as_of=as_of,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        enforce=enforce_data_quality_gate,
+    )
+    source_bundles: dict[str, Any] = {}
+    identities: set[tuple[str, int]] = set()
     inventory: list[dict[str, Any]] = []
     for outcome_dir in _artifact_children(advisory_outcome_dir):
-        manifest = _read_optional_json(outcome_dir / "advisory_outcome_manifest.json") or {}
-        event = _read_optional_json(outcome_dir / "advisory_event.json") or {}
-        if not manifest:
-            continue
-        for row in _read_jsonl(outcome_dir / "outcome_windows.jsonl"):
+        outcome_id = outcome_dir.name
+        validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id, output_dir=advisory_outcome_dir
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome validation must PASS: {outcome_id}"
+            )
+        bundle = _immutable_source_bundle(outcome_dir)
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        event = _mapping(_source_bundle_content(bundle, "advisory_event.json"))
+        windows = _records(_source_bundle_content(bundle, "outcome_windows.jsonl"))
+        source_time = _datetime_from_any(manifest.get("updated_at") or manifest.get("generated_at"))
+        if source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome source time is invalid or future: {outcome_id}"
+            )
+        for row in windows:
+            identity = (
+                _text(row.get("daily_advisory_id") or manifest.get("daily_advisory_id")),
+                _int(row.get("window_days")),
+            )
+            if not identity[0] or identity[1] not in OUTCOME_WINDOWS or identity in identities:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate or invalid daily-advisory outcome window identity"
+                )
+            identities.add(identity)
             inventory.append(
                 _due_inventory_row(
-                    outcome_id=_text(manifest.get("outcome_id"), outcome_dir.name),
+                    outcome_id=_text(manifest.get("outcome_id"), outcome_id),
                     manifest=manifest,
                     event=event,
                     window=row,
@@ -181,6 +208,7 @@ def run_outcome_due_scan(
                     latest_price_date=latest_price_date,
                 )
             )
+        source_bundles[outcome_id] = bundle
     inventory = sorted(
         inventory,
         key=lambda row: (
@@ -201,6 +229,41 @@ def run_outcome_due_scan(
         status = "INSUFFICIENT_DATA"
     elif summary["price_missing_windows"]:
         status = "PASS_WITH_WARNINGS"
+    due_dir = _unique_dir(output_dir / due_id)
+    due_dir.mkdir(parents=True, exist_ok=False)
+    quality_report_path = ""
+    if quality is not None:
+        quality_report = due_dir / "validate_data_quality_report.md"
+        write_data_quality_report(quality, quality_report)
+        quality_report_path = str(quality_report)
+        quality_status = quality.status
+    else:
+        quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    snapshot = {
+        "schema_version": OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION,
+        "due_id": due_dir.name,
+        "generated_at": generated.isoformat(),
+        "as_of": as_of.isoformat(),
+        "advisory_outcome_dir": str(advisory_outcome_dir),
+        "source_bundles": source_bundles,
+        "source_validation_statuses": {outcome_id: "PASS" for outcome_id in source_bundles},
+        "prices_path": str(prices_path),
+        "prices_checksum": _file_sha256(prices_path),
+        "rates_path": str(rates_path),
+        "rates_checksum": _file_sha256(rates_path),
+        "price_date_availability": {
+            symbol: [item.isoformat() for item in sorted(dates) if item <= as_of]
+            for symbol, dates in sorted(price_index.items())
+        },
+        "data_quality_status": quality_status,
+        "data_quality_report_path": quality_report_path,
+        "data_quality_report_checksum": (
+            _file_sha256(Path(quality_report_path)) if quality_report_path else ""
+        ),
+        "production_effect": "none",
+    }
+    snapshot_path = due_dir / "outcome_due_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_outcome_due_manifest",
@@ -211,6 +274,8 @@ def run_outcome_due_scan(
         "latest_price_date": "" if latest_price_date is None else latest_price_date.isoformat(),
         "data_quality_status": quality_status,
         "data_quality_report_path": quality_report_path,
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _file_sha256(snapshot_path),
         "advisory_outcome_dir": str(advisory_outcome_dir),
         "prices_path": str(prices_path),
         "outcome_due_manifest_path": str(due_dir / "outcome_due_manifest.json"),
@@ -218,6 +283,7 @@ def run_outcome_due_scan(
         "pending_window_summary_path": str(due_dir / "pending_window_summary.json"),
         "update_ready_list_path": str(due_dir / "update_ready_list.json"),
         "outcome_due_report_path": str(due_dir / "outcome_due_report.md"),
+        "update_ready_execution_path": str(due_dir / "update_ready_execution.json"),
         "update_ready_count": summary["update_ready_count"],
         "production_effect": "none",
         "broker_action_allowed": False,
@@ -258,9 +324,21 @@ def outcome_due_update_ready(
     rates_path: Path = DEFAULT_RATES_CACHE_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
     due_dir = output_dir / due_id
+    if (due_dir / "update_ready_execution.json").exists():
+        raise DynamicV3OutcomeAccumulationError("outcome due update-ready already executed")
+    due_validation = validate_outcome_due_artifact(due_id=due_id, output_dir=output_dir)
+    if due_validation.get("status") != "PASS":
+        raise DynamicV3OutcomeAccumulationError(
+            f"outcome due validation must PASS before update: {due_validation.get('status')}"
+        )
     manifest = _read_json(due_dir / "outcome_due_manifest.json")
+    source_generated = _datetime_from_any(manifest.get("generated_at"))
+    if source_generated is None or generated < source_generated:
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome due update generated_at must not precede scan"
+        )
     as_of = _date_from_any(manifest.get("as_of"))
     if as_of is None:
         raise DynamicV3OutcomeAccumulationError("outcome due manifest missing as_of")
@@ -268,13 +346,17 @@ def outcome_due_update_ready(
     ready_rows = [
         row for row in _records(ready_payload.get("update_ready")) if row.get("can_update")
     ]
-    updated = []
-    seen: set[str] = set()
+    windows_by_outcome: dict[str, set[int]] = defaultdict(set)
     for row in ready_rows:
+        if row.get("due_status") != "DUE":
+            raise DynamicV3OutcomeAccumulationError("update-ready contains non-DUE row")
         outcome_id = _text(row.get("outcome_id"))
-        if not outcome_id or outcome_id in seen:
-            continue
-        seen.add(outcome_id)
+        window_days = _int(row.get("window_days"))
+        if not outcome_id or window_days not in OUTCOME_WINDOWS:
+            raise DynamicV3OutcomeAccumulationError("update-ready identity is invalid")
+        windows_by_outcome[outcome_id].add(window_days)
+    updated = []
+    for outcome_id, allowed_windows in sorted(windows_by_outcome.items()):
         result = update_advisory_outcome(
             as_of=as_of,
             outcome_id=outcome_id,
@@ -287,7 +369,15 @@ def outcome_due_update_ready(
             prices_path=prices_path,
             rates_path=rates_path,
             generated_at=generated,
+            allowed_window_days=allowed_windows,
         )
+        post_validation = validate_advisory_outcome_artifact(
+            outcome_id=outcome_id, output_dir=advisory_outcome_dir
+        )
+        if post_validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"updated advisory outcome validation failed: {outcome_id}"
+            )
         rows = result["outcome_windows"]
         updated.append(
             {
@@ -303,6 +393,8 @@ def outcome_due_update_ready(
                     1 for item in rows if item.get("outcome_status") == "INSUFFICIENT_DATA"
                 ),
                 "updated_at": generated.isoformat(),
+                "allowed_window_days": sorted(allowed_windows),
+                "post_update_validation_status": "PASS",
             }
         )
     execution = {
@@ -315,6 +407,7 @@ def outcome_due_update_ready(
         "updated_outcome_count": len(updated),
         "updated_outcomes": updated,
         "not_due_windows_updated": False,
+        "source_due_validation_status": "PASS",
         "production_effect": "none",
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -352,10 +445,11 @@ def validate_outcome_due_artifact(
     due_dir = output_dir / due_id
     manifest = _read_optional_json(due_dir / "outcome_due_manifest.json") or {}
     rows = _read_jsonl(due_dir / "due_window_inventory.jsonl")
+    summary = _read_optional_json(due_dir / "pending_window_summary.json") or {}
     ready = _records(
         (_read_optional_json(due_dir / "update_ready_list.json") or {}).get("update_ready")
     )
-    checks = [
+    shallow_checks = [
         _check("manifest_exists", (due_dir / "outcome_due_manifest.json").exists(), due_id),
         _check("inventory_exists", (due_dir / "due_window_inventory.jsonl").exists(), due_id),
         _check("summary_exists", (due_dir / "pending_window_summary.json").exists(), due_id),
@@ -377,6 +471,154 @@ def validate_outcome_due_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+    ]
+    snapshot_path = due_dir / "outcome_due_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_outcome_due_validation",
+            artifact_id_key="due_id",
+            artifact_id=due_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    bundles = _mapping(snapshot.get("source_bundles"))
+    try:
+        as_of = _date_from_any(snapshot.get("as_of"))
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if as_of is None or generated is None or as_of > generated.date():
+            raise DynamicV3OutcomeAccumulationError("snapshot time fields are invalid")
+        price_index = {
+            symbol: {
+                parsed
+                for value in _texts(values)
+                if (parsed := _date_from_any(value)) is not None
+            }
+            for symbol, values in _mapping(snapshot.get("price_date_availability")).items()
+        }
+        latest_price_date = _latest_price_date_on_or_before(price_index, as_of)
+        price_dates = _all_price_dates(price_index)
+        expected_rows: list[dict[str, Any]] = []
+        identities: set[tuple[str, int]] = set()
+        for outcome_id, raw_bundle in sorted(bundles.items()):
+            bundle = _mapping(raw_bundle)
+            source_manifest = _mapping(
+                _source_bundle_content(bundle, "advisory_outcome_manifest.json")
+            )
+            event = _mapping(_source_bundle_content(bundle, "advisory_event.json"))
+            windows = _records(_source_bundle_content(bundle, "outcome_windows.jsonl"))
+            for window in windows:
+                identity = (
+                    _text(
+                        window.get("daily_advisory_id")
+                        or source_manifest.get("daily_advisory_id")
+                    ),
+                    _int(window.get("window_days")),
+                )
+                if not identity[0] or identity[1] not in OUTCOME_WINDOWS or identity in identities:
+                    raise DynamicV3OutcomeAccumulationError("snapshot outcome identity is invalid")
+                identities.add(identity)
+                expected_rows.append(
+                    _due_inventory_row(
+                        outcome_id=outcome_id,
+                        manifest=source_manifest,
+                        event=event,
+                        window=window,
+                        price_index=price_index,
+                        price_dates=price_dates,
+                        latest_price_date=latest_price_date,
+                    )
+                )
+        expected_rows = sorted(
+            expected_rows,
+            key=lambda row: (
+                _text(row.get("as_of")),
+                _text(row.get("daily_advisory_id")),
+                _int(row.get("window_days")),
+                _text(row.get("outcome_id")),
+            ),
+        )
+        expected_ready = [row for row in expected_rows if row.get("can_update") is True]
+        expected_summary = _pending_window_summary(
+            expected_rows, as_of=as_of, latest_price_date=latest_price_date
+        )
+        expected_status = "PASS"
+        if not expected_rows:
+            expected_status = "INSUFFICIENT_DATA"
+        elif expected_summary["price_missing_windows"]:
+            expected_status = "PASS_WITH_WARNINGS"
+        expected_manifest_fields = {
+            "due_id": due_id,
+            "generated_at": snapshot.get("generated_at"),
+            "as_of": snapshot.get("as_of"),
+            "status": expected_status,
+            "latest_price_date": (
+                "" if latest_price_date is None else latest_price_date.isoformat()
+            ),
+            "data_quality_status": snapshot.get("data_quality_status"),
+            "update_ready_count": expected_summary["update_ready_count"],
+        }
+        expected_report = render_outcome_due_report(
+            {**manifest, **expected_manifest_fields}, expected_summary, expected_ready
+        )
+        live_sources_match = all(
+            _source_bundle_matches(_mapping(bundle)) for bundle in bundles.values()
+        )
+        prices_path = Path(_text(snapshot.get("prices_path")))
+        rates_path = Path(_text(snapshot.get("rates_path")))
+        input_checksums_match = (
+            prices_path.is_file()
+            and rates_path.is_file()
+            and snapshot.get("prices_checksum") == _file_sha256(prices_path)
+            and snapshot.get("rates_checksum") == _file_sha256(rates_path)
+        )
+        report_path = Path(_text(snapshot.get("data_quality_report_path")))
+        dq_evidence_matches = (
+            snapshot.get("data_quality_status") == "SKIPPED_EXPLICIT_TEST_FIXTURE"
+            or (
+                report_path.is_file()
+                and snapshot.get("data_quality_report_checksum") == _file_sha256(report_path)
+            )
+        )
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_rows, expected_ready, expected_summary = [], [], {}
+        expected_manifest_fields, expected_report = {}, ""
+        live_sources_match = input_checksums_match = dq_evidence_matches = False
+        recompute_error = str(exc)
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION,
+            OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "outcome due snapshot",
+        ),
+        _check("source_files_unchanged", live_sources_match, "advisory outcome bundles"),
+        _check("cached_inputs_unchanged", input_checksums_match, "prices and rates"),
+        _check("data_quality_evidence_matches", dq_evidence_matches, "DQ report"),
+        _check("inventory_recomputed", rows == expected_rows, recompute_error),
+        _check("summary_recomputed", summary == expected_summary, recompute_error),
+        _check("update_ready_recomputed", ready == expected_ready, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            recompute_error,
+        ),
+        _check(
+            "report_recomputed",
+            (due_dir / "outcome_due_report.md").is_file()
+            and (due_dir / "outcome_due_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
@@ -2907,10 +3149,10 @@ def _due_inventory_row(
     if current_status == "AVAILABLE":
         due_status = "ALREADY_AVAILABLE"
         reason = "outcome_window_already_available"
-    elif start is None or window_days <= 0 or expected_end is None or latest_price_date is None:
+    elif start is None or window_days <= 0 or latest_price_date is None:
         due_status = "INSUFFICIENT_DATA"
         reason = "missing_advisory_id_as_of_window_or_price_calendar"
-    elif expected_end > latest_price_date:
+    elif expected_end is None or expected_end > latest_price_date:
         due_status = "NOT_DUE"
         reason = "future_window_not_reached"
     elif not _has_required_prices(symbols, start, expected_end, price_index):
@@ -3673,6 +3915,30 @@ def _quality_gate_for_cached_data(
     return quality.status, str(report_path)
 
 
+def _cached_data_quality_result(
+    *, as_of: date, prices_path: Path, rates_path: Path, enforce: bool
+) -> Any | None:
+    if not enforce:
+        return None
+    universe = load_universe()
+    quality = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(universe),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=load_data_quality(),
+        as_of=as_of,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    if not quality.passed:
+        raise DynamicV3OutcomeAccumulationError(
+            f"cached data quality gate failed: {quality.status}"
+        )
+    return quality
+
+
 def _run_cached_data_quality_gate(
     *, as_of: date, prices_path: Path, rates_path: Path, report_path: Path
 ) -> Any:
@@ -3964,6 +4230,64 @@ def _validation_payload(
 
 def _check(check_id: str, passed: bool, detail: str) -> dict[str, Any]:
     return {"check_id": check_id, "passed": bool(passed), "detail": detail}
+
+
+def _aware_utc(value: datetime, field: str) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise DynamicV3OutcomeAccumulationError(f"{field} must be timezone-aware")
+    return value.astimezone(UTC)
+
+
+def _datetime_from_any(value: Any) -> datetime | None:
+    text = _text(value)
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed.astimezone(UTC)
+
+
+def _file_sha256(path: Path) -> str:
+    if not path.is_file():
+        return ""
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def _immutable_source_bundle(root: Path) -> dict[str, Any]:
+    files: dict[str, Any] = {}
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = path.relative_to(root).as_posix()
+        if path.suffix == ".json":
+            content: Any = _read_json(path)
+        elif path.suffix == ".jsonl":
+            content = _read_jsonl(path)
+        else:
+            content = path.read_text(encoding="utf-8")
+        files[relative] = {
+            "path": str(path),
+            "size_bytes": path.stat().st_size,
+            "sha256": _file_sha256(path),
+            "content": content,
+        }
+    return {"root": str(root), "files": files}
+
+
+def _source_bundle_content(bundle: Mapping[str, Any], relative_path: str) -> Any:
+    return _mapping(_mapping(bundle.get("files")).get(relative_path)).get("content")
+
+
+def _source_bundle_matches(bundle: Mapping[str, Any]) -> bool:
+    files = _mapping(bundle.get("files"))
+    return bool(files) and all(
+        (path := Path(_text(_mapping(row).get("path")))).is_file()
+        and _mapping(row).get("sha256") == _file_sha256(path)
+        and _mapping(row).get("size_bytes") == path.stat().st_size
+        for row in files.values()
+    )
 
 
 def _read_json(path: Path) -> dict[str, Any]:

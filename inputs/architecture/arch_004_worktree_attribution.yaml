@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BA_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BB_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 79f78871
+base_commit: 1da6a72d
 production_effect: none
 
 arch_004_owned_paths:
@@ -28,6 +28,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
   - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
   - docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md
+  - docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -235,6 +236,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_variant_comparison.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_calibration.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_forward_bridge.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_due.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
@@ -260,6 +262,7 @@ arch_004_owned_paths:
   - tests/test_variant_comparison.py
   - tests/test_rule_calibration.py
   - tests/test_replay_forward_bridge.py
+  - tests/test_outcome_due.py
   - tests/dynamic_v3_historical_replay_helpers.py
   - tests/test_outcome_update.py
   - tests/dynamic_v3_outcome_loop_helpers.py

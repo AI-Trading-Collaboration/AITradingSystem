@@ -780,6 +780,20 @@ Replay-to-Forward Bridge回答“历史链已经确认了什么证据缺口，fo
 
 当前fixture三源技术完整，但comparison与calibration均明确INSUFFICIENT_DATA；bridge因此保持INSUFFICIENT_DATA，best=MISSING，next action=`require_more_forward_data`且`policy_change_allowed=false`。这表示forward链路知道该收集什么，不表示10个未来event一定足以校准。优化顺序应先把每个evidence action变成带due、样本单位、regime覆盖和completion criteria的可审计observation plan，再用真实forward结果复核pilot event target，最后才考虑与统一scheduler/ReportSpec集成；不得让bridge自动运行上游、降低证据门槛或把Reader Brief投影误作policy批准。
 
+#### Outcome Due 链（TRADING-151 / G2.4BB）
+
+Outcome Due回答“截至明确as-of，哪些已登记forward outcome windows真正到期且具备更新所需价格日期”，并在显式调用时把这些窗口追加为outcome evidence。它不是自动scheduler。旧scan在DQ前先创建目录，读取未验证且可能重复/未来生成的mutable outcomes；旧validator也无法证明ready list来自这些source。更危险的是旧`update-ready`不验证due artifact或source freshness，按outcome调用全window update且可重复执行。BB把scan decision snapshot和受限mutation gate拆开。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Pre-output preflight | as-of、timezone-aware generated、price/rate cache、Advisory Outcome root | `as_of<=generated date`；cached DQ必须PASS；每个selected outcome content-derived validator PASS且source time不晚于generated；daily-advisory×window identity唯一 | 无due output的PASS/exception | DQ/invalid/future/duplicate先阻断，不留半成品目录。后续采用统一transactional preflight/run ledger |
+| Immutable scan input | outcome manifest/event/windows/update ledger/source snapshots；price/rate files | 冻结完整递归source bundle、每文件content/checksum/size；冻结price/rate checksum、DQ evidence及`date<=as_of`的symbol/date availability | `outcome_due_source_snapshot.json` | future cache row不进入due判断；live source/cache/DQ drift可检测。后续用canonical trading calendar snapshot替代union price dates |
+| Due classification | frozen event/window、cutoff price dates | AVAILABLE→ALREADY_AVAILABLE；elapsed sessions不足→NOT_DUE；到期但required symbol start/end缺价→PRICE_MISSING；到期、价格齐全且current=PENDING→DUE/can_update；其他→INSUFFICIENT_DATA。Missing不写0 | inventory、summary、ready list | 样本单位是daily-advisory×window，非outcome目录数。后续披露holiday calendar provenance和per-symbol gap diagnostics |
+| Content-derived validator | snapshot、live inputs和全部derived files | 从frozen bundles与cutoff dates重算inventory/summary/ready/manifest/Markdown；核对snapshot/DQ/cache/source checksums | PASS/FAIL | source/snapshot/DQ/cache/view/report tamper FAIL；legacy只读warning。后续签名与retention lock |
+| Explicit update-ready | validated due id、generated、live outcome/cache/paper root | due必须PASS、time ordered、无既有execution；按outcome聚合DUE windows并显式传`allowed_window_days`；每个updated outcome post-validator PASS | `update_ready_execution.json`与Advisory Outcome append-only update event | single-use；NOT_DUE/PRICE_MISSING不能更新；失败不得被包装为部分PASS。后续用transaction/compensation ledger消除多outcome中途失败风险 |
+
+当前fixture在2026-06-15 cutoff下，1d/5d窗口为DUE，10d/20d仍NOT_DUE；移除required symbol price后相同行变为PRICE_MISSING而不是0或DUE。显式update只把[1,5]传给outcome writer，post-update chain验证PASS，第二次执行被拒绝。这个结果证明到期判定和mutation scope可审计，不证明outcome表现好坏。下一步应优先接入canonical exchange calendar、跨outcome原子execution/compensation与execution validator，再讨论自动date-gated orchestration；在此之前不得把scan命令注册成独立scheduler、更新未到期窗口或从due count推导投资结论。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

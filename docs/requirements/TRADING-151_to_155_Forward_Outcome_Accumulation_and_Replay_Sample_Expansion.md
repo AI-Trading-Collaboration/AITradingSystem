@@ -1,6 +1,10 @@
 # TRADING-151 to TRADING-155: Forward Outcome Accumulation and Replay Sample Expansion
 
-最后更新：2026-06-10
+最后更新：2026-07-12
+
+## ARCH-004G2.4BB 进展
+
+- 2026-07-12：Outcome Due完成source-derived hardening与CLI迁移。Scan在任何due output前执行time/as-of、cached DQ和所有Advisory Outcome validators，冻结完整outcome bundles、DQ、price/rate checksums及cutoff price-date availability；duplicate daily×window阻断，validator重算全部scan views并检测tamper。`update-ready`先要求due PASS/live freshness/time/single-use，按outcome显式传DUE `allowed_window_days`，post-update outcome validation PASS并记录execution。NOT_DUE/PRICE_MISSING不更新，无自动后续链或policy/production/broker effect。
 
 ## 背景
 

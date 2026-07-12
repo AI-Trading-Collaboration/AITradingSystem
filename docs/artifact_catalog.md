@@ -52,6 +52,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/<bridge_id>/replay_forward_bridge_source_snapshot.json`及manifest/focus/weekly-updates/Markdown/Reader-Brief section|`aits etf dynamic-v3-rescue replay-forward-bridge run --diagnosis-id <id> --comparison-id <id> --calibration-id <id>`、`report --latest`、`validate-replay-forward-bridge`|full content-derived PASS Diagnosis、Variant Comparison、Rule Calibration；reviewed `replay_forward_bridge_v1.yaml`|pre-output三源validation/lineage/time；冻结完整source bundles和policy；proposal与evidence action分离，INSUFFICIENT_DATA继承`require_more_forward_data`且`policy_change_allowed=false`；无pending reason保持none；required events/windows/focus/questions均来自policy；validator重算全部views|把历史证据缺口接到可审计forward observation和weekly review|否，observation guidance only|bridge不是scheduler、policy approval或production handoff；10 events是pilot observation target而非统计充分性；不得自动运行上游或修改policy/portfolio/order/broker|
 
+## ARCH-004G2.4BB Outcome Due 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/outcome_due/<due_id>/outcome_due_source_snapshot.json`及manifest/inventory/summary/ready-list/optional execution/DQ/Markdown|`aits etf dynamic-v3-rescue outcome-due scan --as-of YYYY-MM-DD`、`report --latest`、`update-ready --due-id <id>`、`validate-outcome-due`|所有selected Advisory Outcome content-derived PASS；cached price/rate DQ；as-of cutoff price-date availability|任何due output前完成timezone/as-of/DQ/source validators；冻结完整outcome bundles、DQ、price/rate checksum和cutoff dates；daily×window duplicate阻断；validator从snapshot重算全部scan views；update-ready先due PASS/live-match/time/no-existing-execution，按outcome传明确`allowed_window_days`，post-update outcome PASS|识别并显式执行已经到期且证据完整的forward outcome window|仅受限写Advisory Outcome append-only evidence；production effect none|scan不是scheduler；NOT_DUE/PRICE_MISSING不更新；合法update不是policy/portfolio/production/order/broker mutation，execution单次且可审计|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

@@ -170,6 +170,9 @@ DYNAMIC_V3_REPLAY_FORWARD_BRIDGE_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_forward_bridge.py"
 )
+DYNAMIC_V3_OUTCOME_DUE_COMMANDS_PATH = (
+    PROJECT_ROOT / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_due.py"
+)
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
@@ -319,7 +322,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25823
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25692
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -530,8 +533,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25823
-    assert len(legacy_names) == 762
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25692
+    assert len(legacy_names) == 758
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1498,6 +1501,30 @@ def test_g2_4_dynamic_v3_replay_forward_bridge_callbacks_leave_legacy_root() -> 
             "replay_forward_bridge_report_payload",
             "run_replay_forward_bridge",
             "validate_replay_forward_bridge_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_outcome_due_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_OUTCOME_DUE_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_outcome_due_scan_command",
+        "dynamic_v3_outcome_due_report_command",
+        "dynamic_v3_outcome_due_update_ready_command",
+        "dynamic_v3_validate_outcome_due_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "outcome_due_report_payload",
+            "outcome_due_update_ready",
+            "run_outcome_due_scan",
+            "validate_outcome_due_artifact",
         }
     )
 
