@@ -1301,6 +1301,8 @@ snapshot id、real/proxy/fallback/missing signal count、coverage 和 artifact l
 download、shadow backtest、scoring、broker、replay 或 trading execution，也不修改
 production 参数或 promotion criteria。
 
+ARCH-004G2.4BS 补充：`backtest_sim_forward_bridge/<bridge_id>/` 必须包含 `forward_bridge_input_snapshot.json`（schema=`backtest_sim_forward_bridge_input_snapshot.v2`），冻结validated Calibration full bundle/validation/lineage、reviewed forward policy及governance metadata。`forward_confirmation_targets.json`只能表达`TRACKING_REQUIRED`/`TRACKING_PLAN_ONLY`，阈值和windows不得fallback或硬编码；`validate-backtest-sim-forward-bridge`重验live Calibration并逐字节重算全部JSON/Markdown/Reader Brief，PASS不代表forward success或production readiness。
+
 ## Trading engine / paper trading 产物
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

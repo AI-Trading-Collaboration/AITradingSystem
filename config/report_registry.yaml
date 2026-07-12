@@ -7037,12 +7037,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/sim_forward_bridge_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/forward_confirmation_targets.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/weekly_review_questions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/forward_bridge_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/sim_forward_bridge_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-168 bridge turns simulation findings into forward confirmation
-      targets and weekly review questions without production effects.
+      TRADING-168 bridge accepts only validated calibration evidence, freezes the
+      full source bundle and reviewed forward policy, and emits tracking-only
+      targets/questions without a forward-success or production claim.
     owner_action: review_forward_confirmation_targets_before_next_weekly_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

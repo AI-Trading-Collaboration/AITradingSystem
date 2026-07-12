@@ -93,6 +93,9 @@ BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_paper_input_snapshot.
 BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_regime_input_snapshot.v2"
 BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_sensitivity_input_snapshot.v2"
 BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_calibration_input_snapshot.v2"
+BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = (
+    "backtest_sim_forward_bridge_input_snapshot.v2"
+)
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -3371,50 +3374,73 @@ def run_backtest_sim_forward_bridge(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     source_dir = calibration_dir / calibration_pack_id
-    calibration_manifest = _read_json(source_dir / "sim_calibration_manifest.json")
-    evidence = _read_json(source_dir / "simulation_evidence_summary.json")
-    proposals = _read_json(source_dir / "proposed_advisory_rule_changes.json")
-    targets = _forward_confirmation_targets(evidence, proposals)
-    questions = _weekly_review_questions()
+    calibration_validation = validate_backtest_sim_calibration_artifact(
+        calibration_pack_id=calibration_pack_id,
+        output_dir=calibration_dir,
+    )
+    if calibration_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError("forward bridge calibration validation failed")
+    calibration_bundle = _backtest_sim_forward_bridge_source_bundle(source_dir)
+    calibration_manifest = _mapping(
+        _mapping(calibration_bundle.get("json")).get("sim_calibration_manifest.json")
+    )
+    evidence = _mapping(
+        _mapping(calibration_bundle.get("json")).get("simulation_evidence_summary.json")
+    )
+    proposals = _mapping(
+        _mapping(calibration_bundle.get("json")).get("proposed_advisory_rule_changes.json")
+    )
+    calibration_generated = _datetime_from_any(calibration_manifest.get("generated_at"))
+    if calibration_generated is None or calibration_generated > generated:
+        raise DynamicV3BacktestSimulationError("calibration source generated after bridge cutoff")
+    policy, policy_metadata = _backtest_sim_forward_bridge_policy(calibration_bundle)
+    targets = _forward_confirmation_targets(evidence, proposals, policy=policy)
+    questions = _weekly_review_questions(policy=policy, policy_metadata=policy_metadata)
     bridge_id = _stable_id(
         "backtest-sim-forward-bridge", calibration_pack_id, generated.isoformat()
     )
     bridge_dir = _unique_dir(output_dir / bridge_id)
-    bridge_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_backtest_sim_forward_bridge_manifest",
-        "bridge_id": bridge_dir.name,
-        "calibration_pack_id": calibration_pack_id,
-        "sim_outcome_id": calibration_manifest.get("sim_outcome_id"),
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_forward_bridge_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": "PASS",
+        "calibration_dir": str(source_dir),
+        "calibration_bundle": calibration_bundle,
+        "calibration_validation": calibration_validation,
+        "forward_confirmation_policy": policy,
+        "policy_metadata": policy_metadata,
+        "lineage": {
+            "calibration_pack_id": calibration_pack_id,
+            "sim_outcome_id": calibration_manifest.get("sim_outcome_id"),
+            "sim_paper_id": calibration_manifest.get("sim_paper_id"),
+            "regime_review_id": calibration_manifest.get("regime_review_id"),
+            "sensitivity_id": calibration_manifest.get("sensitivity_id"),
+        },
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
         "not_for_production": True,
-        "next_action": "continue_forward_tracking",
-        "sim_forward_bridge_manifest_path": str(bridge_dir / "sim_forward_bridge_manifest.json"),
-        "forward_confirmation_targets_path": str(bridge_dir / "forward_confirmation_targets.json"),
-        "weekly_review_questions_path": str(bridge_dir / "weekly_review_questions.json"),
-        "sim_forward_bridge_report_path": str(bridge_dir / "sim_forward_bridge_report.md"),
-        "reader_brief_section_path": str(bridge_dir / "reader_brief_section.md"),
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    manifest = _backtest_sim_forward_bridge_manifest(
+        bridge_dir=bridge_dir,
+        generated=generated,
+        calibration_pack_id=calibration_pack_id,
+        calibration_manifest=calibration_manifest,
+        evidence=evidence,
+        targets=targets,
+    )
+    report = render_forward_bridge_report(manifest, targets, questions)
+    reader_brief = render_forward_bridge_reader_brief(manifest, targets, questions)
+    bridge_dir.mkdir(parents=True, exist_ok=False)
     _write_json(bridge_dir / "sim_forward_bridge_manifest.json", manifest)
     _write_json(bridge_dir / "forward_confirmation_targets.json", targets)
     _write_json(bridge_dir / "weekly_review_questions.json", questions)
-    _write_text(
-        bridge_dir / "sim_forward_bridge_report.md", render_forward_bridge_report(manifest, targets)
-    )
-    _write_text(bridge_dir / "reader_brief_section.md", render_forward_bridge_reader_brief(targets))
+    _write_json(bridge_dir / "forward_bridge_input_snapshot.json", input_snapshot)
+    _write_text(bridge_dir / "sim_forward_bridge_report.md", report)
+    _write_text(bridge_dir / "reader_brief_section.md", reader_brief)
     _update_latest_pointer(
         "latest_backtest_sim_forward_bridge",
         bridge_dir.name,
@@ -3426,6 +3452,64 @@ def run_backtest_sim_forward_bridge(
         "manifest": manifest,
         "forward_confirmation_targets": targets,
         "weekly_review_questions": questions,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_forward_bridge_source_bundle(source_dir: Path) -> dict[str, Any]:
+    return _backtest_sim_calibration_source_bundle(
+        source_dir,
+        json_files=(
+            "sim_calibration_manifest.json",
+            "simulation_evidence_summary.json",
+            "proposed_advisory_rule_changes.json",
+            "simulation_limitations.json",
+            "calibration_input_snapshot.json",
+        ),
+        text_files=("backtest_sim_calibration_report.md", "reader_brief_section.md"),
+    )
+
+
+def _backtest_sim_forward_bridge_manifest(
+    *,
+    bridge_dir: Path,
+    generated: datetime,
+    calibration_pack_id: str,
+    calibration_manifest: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    targets: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_forward_bridge_manifest",
+        "bridge_id": bridge_dir.name,
+        "calibration_pack_id": calibration_pack_id,
+        "sim_outcome_id": calibration_manifest.get("sim_outcome_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+        "next_action": "continue_forward_tracking",
+        "bridge_semantics": "TRACKING_PLAN_ONLY",
+        "source_calibration_readiness": evidence.get("calibration_readiness"),
+        "target_count": len(_records(targets.get("targets"))),
+        "sim_forward_bridge_manifest_path": str(bridge_dir / "sim_forward_bridge_manifest.json"),
+        "forward_confirmation_targets_path": str(bridge_dir / "forward_confirmation_targets.json"),
+        "weekly_review_questions_path": str(bridge_dir / "weekly_review_questions.json"),
+        "forward_bridge_input_snapshot_path": str(
+            bridge_dir / "forward_bridge_input_snapshot.json"
+        ),
+        "sim_forward_bridge_report_path": str(bridge_dir / "sim_forward_bridge_report.md"),
+        "reader_brief_section_path": str(bridge_dir / "reader_brief_section.md"),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -3446,6 +3530,9 @@ def backtest_sim_forward_bridge_report_payload(
             bridge_dir / "forward_confirmation_targets.json"
         ),
         "weekly_review_questions": _read_json(bridge_dir / "weekly_review_questions.json"),
+        "forward_bridge_input_snapshot": _read_json(
+            bridge_dir / "forward_bridge_input_snapshot.json"
+        ),
         "reader_brief_section": _read_text(bridge_dir / "reader_brief_section.md"),
         "bridge_dir": str(bridge_dir),
     }
@@ -3457,14 +3544,154 @@ def validate_backtest_sim_forward_bridge_artifact(
     bridge_dir = output_dir / bridge_id
     manifest = _read_optional_json(bridge_dir / "sim_forward_bridge_manifest.json") or {}
     targets = _read_optional_json(bridge_dir / "forward_confirmation_targets.json") or {}
+    questions = _read_optional_json(bridge_dir / "weekly_review_questions.json") or {}
+    snapshot = _read_optional_json(bridge_dir / "forward_bridge_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        source_dir = Path(_text(snapshot.get("calibration_dir")))
+        lineage = _mapping(snapshot.get("lineage"))
+        calibration_pack_id = _text(lineage.get("calibration_pack_id"))
+        if (
+            snapshot.get("schema_version")
+            != BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION
+            or generated is None
+            or source_dir.name != calibration_pack_id
+        ):
+            raise DynamicV3BacktestSimulationError("forward bridge snapshot identity/time invalid")
+        live_validation = validate_backtest_sim_calibration_artifact(
+            calibration_pack_id=calibration_pack_id,
+            output_dir=source_dir.parent,
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("calibration_validation_failed")
+        if live_validation != snapshot.get("calibration_validation"):
+            source_errors.append("calibration_validation_changed")
+        live_bundle = _backtest_sim_forward_bridge_source_bundle(source_dir)
+        if live_bundle != snapshot.get("calibration_bundle"):
+            source_errors.append("calibration_bundle_changed")
+        source_manifest = _mapping(
+            _mapping(live_bundle.get("json")).get("sim_calibration_manifest.json")
+        )
+        source_evidence = _mapping(
+            _mapping(live_bundle.get("json")).get("simulation_evidence_summary.json")
+        )
+        source_proposals = _mapping(
+            _mapping(live_bundle.get("json")).get("proposed_advisory_rule_changes.json")
+        )
+        source_generated = _datetime_from_any(source_manifest.get("generated_at"))
+        if source_generated is None or source_generated > generated:
+            source_errors.append("calibration_after_cutoff")
+        live_policy, live_policy_metadata = _backtest_sim_forward_bridge_policy(live_bundle)
+        if live_policy != snapshot.get("forward_confirmation_policy"):
+            source_errors.append("forward_policy_changed")
+        if live_policy_metadata != snapshot.get("policy_metadata"):
+            source_errors.append("policy_metadata_changed")
+        expected_lineage = {
+            "calibration_pack_id": calibration_pack_id,
+            "sim_outcome_id": source_manifest.get("sim_outcome_id"),
+            "sim_paper_id": source_manifest.get("sim_paper_id"),
+            "regime_review_id": source_manifest.get("regime_review_id"),
+            "sensitivity_id": source_manifest.get("sensitivity_id"),
+        }
+        if dict(lineage) != expected_lineage:
+            source_errors.append("calibration_lineage_changed")
+        expected_targets = _forward_confirmation_targets(
+            source_evidence, source_proposals, policy=live_policy
+        )
+        expected_questions = _weekly_review_questions(
+            policy=live_policy, policy_metadata=live_policy_metadata
+        )
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_forward_bridge_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "calibration_dir": str(source_dir),
+            "calibration_bundle": live_bundle,
+            "calibration_validation": live_validation,
+            "forward_confirmation_policy": live_policy,
+            "policy_metadata": live_policy_metadata,
+            "lineage": expected_lineage,
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_forward_bridge_manifest(
+            bridge_dir=bridge_dir,
+            generated=generated,
+            calibration_pack_id=calibration_pack_id,
+            calibration_manifest=source_manifest,
+            evidence=source_evidence,
+            targets=expected_targets,
+        )
+        expected_report = render_forward_bridge_report(
+            expected_manifest, expected_targets, expected_questions
+        )
+        expected_reader = render_forward_bridge_reader_brief(
+            expected_manifest, expected_targets, expected_questions
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_targets = {}
+        expected_questions = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
+        expected_reader = ""
     checks = [
         _check("manifest_exists", (bridge_dir / "sim_forward_bridge_manifest.json").exists(), ""),
         _check("targets_exists", (bridge_dir / "forward_confirmation_targets.json").exists(), ""),
         _check("questions_exists", (bridge_dir / "weekly_review_questions.json").exists(), ""),
+        _check(
+            "snapshot_exists", (bridge_dir / "forward_bridge_input_snapshot.json").exists(), ""
+        ),
         _check("report_exists", (bridge_dir / "sim_forward_bridge_report.md").exists(), ""),
         _check("reader_brief_exists", (bridge_dir / "reader_brief_section.md").exists(), ""),
         _check("bridge_id_matches", manifest.get("bridge_id") == bridge_id, ""),
-        _check("targets_present", bool(_records(targets.get("targets"))), "targets"),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live calibration"),
+        _check("targets_recomputed", targets == expected_targets, "frozen policy/evidence"),
+        _check("questions_recomputed", questions == expected_questions, "frozen policy"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (bridge_dir / "forward_bridge_input_snapshot.json", expected_snapshot),
+                    (bridge_dir / "forward_confirmation_targets.json", expected_targets),
+                    (bridge_dir / "weekly_review_questions.json", expected_questions),
+                    (bridge_dir / "sim_forward_bridge_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            (bridge_dir / "sim_forward_bridge_report.md").is_file()
+            and (bridge_dir / "sim_forward_bridge_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (bridge_dir / "reader_brief_section.md").is_file()
+            and (bridge_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+            == expected_reader,
+            "Reader Brief",
+        ),
+        _check(
+            "tracking_only_targets",
+            bool(_records(targets.get("targets")))
+            and all(
+                row.get("tracking_status") == "TRACKING_REQUIRED"
+                for row in _records(targets.get("targets"))
+            )
+            and manifest.get("bridge_semantics") == "TRACKING_PLAN_ONLY",
+            "not a forward success conclusion",
+        ),
         _check(
             "no_auto_production",
             manifest.get("production_effect") == "none"
@@ -4472,7 +4699,11 @@ def render_calibration_reader_brief(
     )
 
 
-def render_forward_bridge_report(manifest: Mapping[str, Any], targets: Mapping[str, Any]) -> str:
+def render_forward_bridge_report(
+    manifest: Mapping[str, Any],
+    targets: Mapping[str, Any],
+    questions: Mapping[str, Any],
+) -> str:
     target_ids = [row.get("target") for row in _records(targets.get("targets"))]
     return "\n".join(
         [
@@ -4480,21 +4711,48 @@ def render_forward_bridge_report(manifest: Mapping[str, Any], targets: Mapping[s
             "",
             f"- bridge_id：{manifest.get('bridge_id')}",
             f"- next_action：{manifest.get('next_action')}",
+            f"- bridge_semantics：{manifest.get('bridge_semantics')}",
+            f"- source_calibration_readiness：{manifest.get('source_calibration_readiness')}",
             f"- targets：{target_ids}",
-            "- 下周 / 下月 review 继续比较 limited、defensive 与 no_trade。",
-            "- no broker / no production：true。",
+            f"- review_cadence：{questions.get('review_cadence')}",
+            "- 设计原因：历史simulation不是PIT/forward证据，因此只把冻结阈值转成未来观察计划。",
+            (
+                "- 输入：validated Calibration full bundle、evidence、proposal"
+                "与reviewed forward policy。"
+            ),
+            (
+                "- 计算：从policy原样取events/windows/criteria，并标记"
+                "source metric availability；不对missing填默认值。"
+            ),
+            "- 输出仅为TRACKING_REQUIRED targets与weekly review questions，不是forward success。",
+            (
+                "- 优化空间：随新forward events积累，定期检查样本量、窗口稳定性、"
+                "风险情景与policy校准，但任何改动均需owner review。"
+            ),
+            "- outcome_mode=BACKTEST_SIMULATION；pit_safety_status=SIMULATION_NOT_PIT。",
+            "- broker_action_allowed=false；production_effect=none。",
         ]
     )
 
 
-def render_forward_bridge_reader_brief(targets: Mapping[str, Any]) -> str:
+def render_forward_bridge_reader_brief(
+    manifest: Mapping[str, Any],
+    targets: Mapping[str, Any],
+    questions: Mapping[str, Any],
+) -> str:
     target_ids = ", ".join(row.get("target", "") for row in _records(targets.get("targets")))
     return "\n".join(
         [
             "## Dynamic v3 Simulation-to-Forward Bridge",
             "",
             f"- forward_confirmation_targets：{target_ids}",
-            "- next_action：continue_forward_tracking",
+            f"- source_calibration_readiness：{manifest.get('source_calibration_readiness')}",
+            f"- review_cadence：{questions.get('review_cadence')}",
+            f"- next_action：{manifest.get('next_action')}",
+            (
+                "- conclusion_boundary：TRACKING_PLAN_ONLY，尚未构成forward success"
+                "或production candidate。"
+            ),
             "- broker_action_allowed=false；production_effect=none。",
         ]
     )
@@ -6465,67 +6723,130 @@ def _simulation_limitations() -> dict[str, Any]:
     }
 
 
+def _backtest_sim_forward_bridge_policy(
+    calibration_bundle: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    json_payloads = _mapping(calibration_bundle.get("json"))
+    evidence = _mapping(json_payloads.get("simulation_evidence_summary.json"))
+    policy = dict(_mapping(evidence.get("forward_confirmation_policy")))
+    calibration_snapshot = _mapping(json_payloads.get("calibration_input_snapshot.json"))
+    outcome_bundle = _mapping(_mapping(calibration_snapshot.get("source_bundles")).get("outcome"))
+    outcome_snapshot = _mapping(outcome_bundle.get("input_snapshot"))
+    config = _mapping(outcome_snapshot.get("config"))
+    policy_metadata = dict(_mapping(config.get("policy_metadata")))
+    required_metadata = (
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "validation_evidence",
+        "review_condition",
+    )
+    raw_windows = policy.get("windows")
+    windows = (
+        list(raw_windows)
+        if isinstance(raw_windows, list)
+        and all(isinstance(item, int) and not isinstance(item, bool) for item in raw_windows)
+        else []
+    )
+    if (
+        not all(_text(policy_metadata.get(key)) for key in required_metadata)
+        or not isinstance(policy.get("required_forward_events"), int)
+        or isinstance(policy.get("required_forward_events"), bool)
+        or _int(policy.get("required_forward_events")) <= 0
+        or not _finite_number(policy.get("win_rate_vs_no_trade_min"), minimum=0.0)
+        or _float(policy.get("win_rate_vs_no_trade_min")) > 1.0
+        or not _finite_number(policy.get("min_relative_return"))
+        or not _finite_number(policy.get("avg_drawdown_delta_max"))
+        or not windows
+        or len(windows) != len(set(windows))
+        or any(item <= 0 for item in windows)
+        or not _text(policy.get("review_cadence"))
+    ):
+        raise DynamicV3BacktestSimulationError(
+            "forward confirmation policy is incomplete or invalid"
+        )
+    return policy, policy_metadata
+
+
 def _forward_confirmation_targets(
-    evidence: Mapping[str, Any], proposals: Mapping[str, Any]
+    evidence: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+    *,
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    policy = _mapping(evidence.get("forward_confirmation_policy"))
-    min_events = _int(
-        policy.get("min_new_forward_events") or policy.get("required_forward_events"),
-        10,
-    )
-    min_win_rate = _float(
-        policy.get("min_limited_vs_notrade_win_rate") or policy.get("win_rate_vs_no_trade_min"),
-        0.55,
-    )
-    min_relative_return = _float(policy.get("min_relative_return"), 0.0)
-    max_drawdown_delta = _float(
-        policy.get("max_drawdown_delta") or policy.get("avg_drawdown_delta_max"),
-        0.0,
-    )
+    min_events = _int(policy.get("required_forward_events"))
+    min_win_rate = _float(policy.get("win_rate_vs_no_trade_min"))
+    min_relative_return = _float(policy.get("min_relative_return"))
+    max_drawdown_delta = _float(policy.get("avg_drawdown_delta_max"))
+    windows = list(policy.get("windows", []))
+    proposal_ids = [
+        _text(row.get("proposal_id")) for row in _records(proposals.get("proposals"))
+    ]
+    source_readiness = evidence.get("calibration_readiness")
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_forward_confirmation_targets",
+        "bridge_semantics": "TRACKING_PLAN_ONLY",
+        "source_calibration_readiness": source_readiness,
+        "review_cadence": policy.get("review_cadence"),
         "targets": [
             {
                 "target": "limited_adjustment_vs_no_trade",
                 "priority": "HIGH",
+                "tracking_status": "TRACKING_REQUIRED",
                 "reason": "simulation suggests potential benefit but requires forward confirmation",
                 "required_forward_events": min_events,
-                "windows": [1, 5, 10, 20],
+                "windows": windows,
                 "success_criteria": {
                     "win_rate_vs_no_trade_min": min_win_rate,
                     "avg_relative_return_min": min_relative_return,
                     "avg_drawdown_delta_max": max_drawdown_delta,
                 },
                 "source_best_variant": evidence.get("best_variant"),
-                "source_proposals": [
-                    row.get("proposal_id") for row in _records(proposals.get("proposals"))
-                ],
+                "source_metric_available": _finite_number(
+                    evidence.get("limited_adjustment_vs_no_trade_5d")
+                ),
+                "source_proposals": proposal_ids,
             },
             {
                 "target": "defensive_limited_adjustment_drawdown",
                 "priority": "MEDIUM",
+                "tracking_status": "TRACKING_REQUIRED",
                 "reason": "simulation should be checked in future risk-off windows",
                 "required_forward_events": min_events,
-                "windows": [5, 10, 20],
+                "windows": [item for item in windows if item != min(windows)],
                 "success_criteria": {"avg_drawdown_delta_max": max_drawdown_delta},
+                "source_metric_available": _finite_number(
+                    evidence.get("defensive_limited_avg_drawdown_20d")
+                ),
             },
         ],
+        "forward_success_claimed": False,
+        "production_candidate_generated": False,
         "broker_action_allowed": False,
         "production_effect": "none",
     }
 
 
-def _weekly_review_questions() -> dict[str, Any]:
+def _weekly_review_questions(
+    *, policy: Mapping[str, Any], policy_metadata: Mapping[str, Any]
+) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_weekly_review_questions",
+        "review_cadence": policy.get("review_cadence"),
+        "policy_id": policy_metadata.get("policy_id"),
+        "policy_version": policy_metadata.get("version"),
         "questions": [
             "Did limited_adjustment outperform no_trade in new forward outcomes?",
             "Did defensive_limited_adjustment reduce drawdown in risk-off windows?",
             "Did consensus_target produce excess drawdown?",
             "Did high consensus remain predictive?",
         ],
+        "owner_review_required": True,
         "broker_action_allowed": False,
         "production_effect": "none",
     }

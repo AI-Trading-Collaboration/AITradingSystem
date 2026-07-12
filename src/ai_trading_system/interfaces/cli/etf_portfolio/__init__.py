@@ -32,6 +32,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_backtest_sim_events as dynamic_v3_backtest_sim_events_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_backtest_sim_forward_bridge as dynamic_v3_backtest_sim_forward_bridge_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_backtest_sim_outcome as dynamic_v3_backtest_sim_outcome_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -269,6 +272,7 @@ __all__ = [
     "dynamic_v3_backfill_repair_commands",
     "dynamic_v3_backtest_sim_calibration_commands",
     "dynamic_v3_backtest_sim_events_commands",
+    "dynamic_v3_backtest_sim_forward_bridge_commands",
     "dynamic_v3_backtest_sim_outcome_commands",
     "dynamic_v3_backtest_sim_paper_commands",
     "dynamic_v3_backtest_sim_regime_commands",

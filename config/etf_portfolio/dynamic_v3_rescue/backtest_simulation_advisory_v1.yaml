@@ -108,6 +108,7 @@ forward_confirmation:
   min_relative_return: 0.0
   avg_drawdown_delta_max: 0.0
   windows: [1, 5, 10, 20]
+  review_cadence: weekly
 
 safety:
   broker_action_allowed: false

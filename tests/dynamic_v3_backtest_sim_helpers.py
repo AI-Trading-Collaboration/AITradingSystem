@@ -361,6 +361,7 @@ def _write_config(
             "win_rate_vs_no_trade_min": 0.55,
             "min_relative_return": 0.0,
             "avg_drawdown_delta_max": 0.0,
+            "windows": [1, 5, 10, 20],
             "review_cadence": "weekly",
         },
         "safety": {

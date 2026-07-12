@@ -941,6 +941,10 @@ CLI 包括 `backtest-sim config-validate`、`event-generate/report`、
 `production_effect=none`。该链路评估 current shadow shortlist/manual advisory 规则，
 不是 PIT replay，不是 production evidence；calibration pack 只生成 owner review
 proposal，forward bridge 只生成 confirmation targets 和 Reader Brief section。
+Forward bridge 在写入前必须要求Calibration validator PASS，并以
+`backtest_sim_forward_bridge_input_snapshot.v2`冻结full Calibration bundle/validation、
+lineage与reviewed policy；targets仅为`TRACKING_REQUIRED`，不是forward success或
+production candidate。
 TRADING-169 到 TRADING-173 在上述 simulation 结果之上新增 interpretation / advisory
 review 层。CLI 包括 `sim-interpretation run/report`、`sim-risk-return run/report`、
 `sim-defensive-validation run/report`、`advisory-proposal-review run/report` 和
