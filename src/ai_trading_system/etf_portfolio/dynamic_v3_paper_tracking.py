@@ -36,7 +36,13 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_position_advisory_daily_artifact,
 )
 from ai_trading_system.etf_portfolio.models import (
+    DEFAULT_ETF_ASSETS_CONFIG_PATH,
+    DEFAULT_ETF_BACKTEST_CONFIG_PATH,
+    DEFAULT_ETF_P1_CONFIG_PATH,
+    DEFAULT_ETF_P2_CONFIG_PATH,
     DEFAULT_ETF_PRICE_PATH,
+    DEFAULT_ETF_RISK_CONFIG_PATH,
+    DEFAULT_ETF_STRATEGY_CONFIG_PATH,
     load_etf_config_bundle,
 )
 from ai_trading_system.platform.artifacts.writer import write_text_atomic
@@ -58,6 +64,24 @@ PAPER_ACTION_LEDGER_SCHEMA_VERSION = "paper_action_ledger.v2"
 PAPER_ACTION_EVENT_TYPE = "PAPER_PORTFOLIO_REVIEW_APPLIED"
 PAPER_WEIGHT_TOLERANCE = 0.000001
 OUTCOME_WINDOW_STATUSES = {"PENDING", "AVAILABLE", "INSUFFICIENT_DATA"}
+OUTCOME_MANIFEST_STATUSES = {"PENDING", "AVAILABLE", "PARTIAL", "INSUFFICIENT_DATA"}
+OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION = "advisory_outcome_update_ledger.v2"
+OUTCOME_UPDATE_EVENT_TYPE = "ADVISORY_OUTCOME_UPDATED"
+OUTCOME_METRIC_FIELDS = (
+    "paper_portfolio_return",
+    "no_trade_return",
+    "baseline_return",
+    "target_weight_return",
+    "limited_adjustment_return",
+    "relative_to_no_trade",
+    "relative_to_baseline",
+    "max_drawdown",
+    "realized_volatility",
+    "paper_transaction_cost",
+    "baseline_transaction_cost",
+    "target_transaction_cost",
+    "limited_transaction_cost",
+)
 PROMOTION_CLOCK_STATUSES = {
     "not_started",
     "warming_up",
@@ -148,6 +172,10 @@ def load_paper_portfolio_config(path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH
         raise DynamicV3PaperTrackingError(
             "min_trade_threshold cannot exceed max_single_symbol_adjustment"
         )
+    for field in ("transaction_cost_bps", "slippage_bps"):
+        value = _strict_finite_number(simulation.get(field), field)
+        if value < 0 or value > 10_000:
+            raise DynamicV3PaperTrackingError(f"{field} must be within [0,10000]")
     return dict(raw)
 
 
@@ -656,82 +684,164 @@ def track_advisory_outcome(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    config = load_paper_portfolio_config(config_path)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    resolved_config_path = _resolve_project_path(config_path)
+    config = load_paper_portfolio_config(resolved_config_path)
     windows = _configured_outcome_windows(config)
+    _ensure_no_duplicate_outcome_tracker(
+        daily_advisory_id=daily_advisory_id,
+        output_dir=output_dir,
+    )
+    daily_source = _validated_outcome_daily_source(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    daily_generated = _parse_datetime_text(
+        _text(daily_source["manifest"].get("generated_at"))
+    )
+    if daily_generated is None or daily_generated > generated:
+        raise DynamicV3PaperTrackingError(
+            "daily advisory generated_at must be valid and not later than outcome tracking"
+        )
+    paper_source = _validated_outcome_paper_source(paper_portfolio_dir)
     advisory_dir = daily_advisory_dir / daily_advisory_id
-    manifest = _read_json(advisory_dir / "daily_advisory_manifest.json")
-    actions = _read_json(advisory_dir / "daily_advisory_actions.json")
-    no_trade = _advisory_current_weights(advisory_dir) or _latest_paper_weights(paper_portfolio_dir)
-    target = _advisory_consensus_weights(advisory_dir)
-    baseline = _baseline_weights()
+    no_trade = _advisory_current_weights(advisory_dir)
+    no_trade_source = "daily_advisory_current_weights"
+    if not no_trade:
+        no_trade = _mapping(paper_source["state"].get("positions"))
+        no_trade_source = "selected_paper_portfolio_state"
+    no_trade = _validated_outcome_weights(no_trade, "no_trade_weights")
+    target = _validated_outcome_weights(
+        _advisory_consensus_weights(advisory_dir), "target_weights"
+    )
+    baseline_source = _outcome_baseline_source()
+    baseline = _validated_outcome_weights(
+        _baseline_weights(), "baseline_weights"
+    )
+    proposed_limited = {
+        symbol: round(_float(target.get(symbol)) - _float(no_trade.get(symbol)), 6)
+        for symbol in sorted(set(target) | set(no_trade))
+        if round(_float(target.get(symbol)) - _float(no_trade.get(symbol)), 6)
+    }
+    limited_deltas = _limit_paper_deltas(
+        proposed_limited,
+        config,
+        before_weights=no_trade,
+    )
+    limited = _apply_weight_deltas(no_trade, limited_deltas)
     outcome_id = _stable_id("advisory-outcome", daily_advisory_id, generated.isoformat())
     outcome_dir = _unique_dir(output_dir / outcome_id)
     outcome_dir.mkdir(parents=True, exist_ok=False)
+    frozen_sources = _freeze_outcome_track_sources(
+        outcome_dir=outcome_dir,
+        outcome_config_path=resolved_config_path,
+        daily_source=daily_source,
+        baseline_source=baseline_source,
+        paper_source=paper_source,
+    )
     advisory_event = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_advisory_event",
         "outcome_id": outcome_dir.name,
         "daily_advisory_id": daily_advisory_id,
-        "as_of": _text(manifest.get("as_of")),
-        "recommended_action": _text(actions.get("recommended_action")),
-        "mode": _text(actions.get("mode"), _text(manifest.get("mode"))),
+        "tracked_at": generated.isoformat(),
+        "as_of": _text(daily_source["manifest"].get("as_of")),
+        "recommended_action": _text(daily_source["actions"].get("recommended_action")),
+        "mode": _text(
+            daily_source["actions"].get("mode"),
+            _text(daily_source["manifest"].get("mode")),
+        ),
+        "outcome_config_path": str(resolved_config_path),
+        "outcome_config_checksum": _file_sha256(resolved_config_path),
+        "outcome_config_policy_id": _text(
+            _mapping(config.get("policy_metadata")).get("policy_id")
+        ),
+        "outcome_config_policy_version": _text(
+            _mapping(config.get("policy_metadata")).get("version")
+        ),
+        "source_daily_advisory_root": str(daily_advisory_dir),
+        "source_daily_advisory_validation_status": "PASS",
+        "source_artifact_paths": daily_source["source_paths"],
+        "source_artifact_checksums": daily_source["source_checksums"],
+        "baseline_source_paths": baseline_source["source_paths"],
+        "baseline_source_checksums": baseline_source["source_checksums"],
+        "baseline_config_hash": baseline_source["config_hash"],
+        "paper_portfolio_source": paper_source["binding"],
+        "frozen_track_sources": frozen_sources,
+        "no_trade_source": no_trade_source,
         "no_trade_weights": no_trade,
-        "paper_action_weights": no_trade,
+        "paper_action_status": "PENDING",
+        "paper_action_weights": {},
         "baseline_weights": baseline,
         "target_weights": target,
+        "limited_adjustment_weights": limited,
+        "limited_adjustment_deltas": limited_deltas,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
         "broker_action_allowed": False,
         "broker_action_taken": False,
+        "production_effect": "none",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    advisory_event["event_checksum"] = _advisory_event_checksum(advisory_event)
     window_rows = [
         _pending_outcome_window(
             daily_advisory_id=daily_advisory_id,
             window_days=window,
-            start_date=_text(manifest.get("as_of")),
+            start_date=_text(daily_source["manifest"].get("as_of")),
         )
         for window in windows
     ]
-    counterfactuals = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_advisory_counterfactuals",
-        "counterfactuals": [
-            {"name": "no_trade", "description": "Keep current portfolio snapshot unchanged"},
-            {"name": "paper_action", "description": "Apply owner-approved paper action"},
-            {
-                "name": "candidate_consensus_target",
-                "description": "Move fully to consensus target weights",
-            },
-            {"name": "limited_adjustment", "description": "Apply capped advisory deltas"},
-        ],
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-    }
+    counterfactuals = _outcome_counterfactuals_payload()
     outcome_manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_advisory_outcome_manifest",
         "outcome_id": outcome_dir.name,
         "daily_advisory_id": daily_advisory_id,
-        "as_of": _text(manifest.get("as_of")),
+        "as_of": _text(daily_source["manifest"].get("as_of")),
         "generated_at": generated.isoformat(),
         "status": "PENDING",
         "tracked_windows": windows,
+        "update_ledger_schema_version": OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION,
+        "update_chain_status": "PASS",
+        "update_event_count": 0,
+        "latest_update_event_id": "",
+        "latest_update_event_checksum": "",
+        "updated_at": "",
+        "updated_as_of": "",
         "data_quality_status": "NOT_RUN_PENDING_ONLY",
         "data_quality_report_path": "",
+        "paper_action_status": "PENDING",
+        "available_window_count": 0,
+        "pending_window_count": len(windows),
+        "insufficient_window_count": 0,
         "advisory_event_path": str(outcome_dir / "advisory_event.json"),
+        "advisory_event_checksum": advisory_event["event_checksum"],
         "outcome_windows_path": str(outcome_dir / "outcome_windows.jsonl"),
+        "outcome_update_events_path": str(outcome_dir / "outcome_update_events.jsonl"),
+        "source_snapshots_root": str(outcome_dir / "source_snapshots"),
         "advisory_counterfactuals_path": str(outcome_dir / "advisory_counterfactuals.json"),
+        "advisory_counterfactuals_checksum": sha256(
+            _canonical_json(counterfactuals).encode("utf-8")
+        ).hexdigest(),
         "advisory_outcome_report_path": str(outcome_dir / "advisory_outcome_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "owner_approval_required": True,
         "manual_review_required": True,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_effect": "none",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
     _write_json(outcome_dir / "advisory_outcome_manifest.json", outcome_manifest)
     _write_json(outcome_dir / "advisory_event.json", advisory_event)
     _write_jsonl(outcome_dir / "outcome_windows.jsonl", window_rows)
+    _write_jsonl(outcome_dir / "outcome_update_events.jsonl", [])
     _write_json(outcome_dir / "advisory_counterfactuals.json", counterfactuals)
     _write_text(
         outcome_dir / "advisory_outcome_report.md",
@@ -760,24 +870,76 @@ def update_advisory_outcome(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
     outcome_dir = _outcome_dir(outcome_id=outcome_id, output_dir=output_dir)
+    resolved_outcome_id = outcome_dir.name
+    current_validation = validate_advisory_outcome_artifact(
+        outcome_id=resolved_outcome_id,
+        output_dir=output_dir,
+    )
+    if current_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "advisory outcome validation must PASS before update; "
+            f"status={current_validation.get('status')}"
+        )
     manifest = _read_json(outcome_dir / "advisory_outcome_manifest.json")
     event = _read_json(outcome_dir / "advisory_event.json")
     start = _date_from_any(event.get("as_of"))
     if start is None:
         raise DynamicV3PaperTrackingError("advisory outcome event missing as_of")
-    event["paper_action_weights"] = _paper_action_weights_for_advisory(
-        daily_advisory_id=_text(event.get("daily_advisory_id")),
-        fallback_weights=_mapping(event.get("no_trade_weights")),
+    if as_of < start:
+        raise DynamicV3PaperTrackingError("outcome update as_of cannot precede advisory as_of")
+    tracked_at = _parse_datetime_text(_text(event.get("tracked_at")))
+    if tracked_at is None or generated < tracked_at:
+        raise DynamicV3PaperTrackingError(
+            "outcome update generated_at cannot precede tracking time"
+        )
+    update_events = _read_jsonl(outcome_dir / "outcome_update_events.jsonl")
+    if update_events:
+        previous = update_events[-1]
+        previous_as_of = _date_from_any(previous.get("updated_as_of"))
+        previous_generated = _parse_datetime_text(_text(previous.get("event_at")))
+        if previous_as_of is None or as_of < previous_as_of:
+            raise DynamicV3PaperTrackingError("outcome update as_of cannot move backward")
+        if previous_generated is None or generated < previous_generated:
+            raise DynamicV3PaperTrackingError(
+                "outcome update generated_at cannot move backward"
+            )
+    configured_paper_root = Path(
+        _text(_mapping(event.get("paper_portfolio_source")).get("paper_portfolio_root"))
+    )
+    if not _paths_equal(configured_paper_root, paper_portfolio_dir):
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio root must match the outcome tracking source"
+        )
+    config_path = Path(_text(event.get("outcome_config_path")))
+    config = load_paper_portfolio_config(config_path)
+    paper_binding = _paper_action_binding_for_outcome(
+        advisory_event=event,
         paper_portfolio_dir=paper_portfolio_dir,
+        updated_as_of=as_of,
+        known_at=generated,
+    )
+    sequence = len(update_events) + 1
+    update_event_id = _stable_id(
+        "advisory-outcome-update",
+        resolved_outcome_id,
+        sequence,
+        as_of.isoformat(),
+        generated.isoformat(),
     )
     today = generated.date()
     data_quality_status = "NOT_RUN_FUTURE_AS_OF" if as_of > today else ""
     data_quality_report_path = ""
-    prices: pd.DataFrame | None = None
-    price_dates: list[date] = []
+    data_quality_report_checksum = ""
+    price_snapshot_path = ""
+    price_snapshot_checksum = ""
+    prices_source_checksum = ""
+    rates_source_checksum = ""
+    snapshot_prices: pd.DataFrame | None = None
     if as_of <= today:
-        quality_report_path = outcome_dir / "validate_data_quality_report.md"
+        source_snapshot_dir = outcome_dir / "source_snapshots" / update_event_id
+        quality_report_path = source_snapshot_dir / "validate_data_quality_report.md"
         quality = _run_cached_data_quality_gate(
             as_of=as_of,
             prices_path=prices_path,
@@ -790,69 +952,93 @@ def update_advisory_outcome(
             raise DynamicV3PaperTrackingError(
                 f"advisory outcome data quality gate failed: {quality.status}"
             )
-        prices = _load_outcome_prices(prices_path, event)
-        price_dates = _available_price_dates(prices)
-    rows = []
-    for existing in _read_jsonl(outcome_dir / "outcome_windows.jsonl"):
-        window_days = int(existing.get("window_days") or 0)
-        end = _nth_trading_date_after(price_dates, start, window_days) if price_dates else None
-        if end is None:
-            status = "PENDING" if as_of > today else "INSUFFICIENT_DATA"
-            if as_of > today:
-                status = "PENDING"
-            row = {**existing, "outcome_status": status}
-            rows.append(row)
-            continue
-        if as_of < end:
-            rows.append({**existing, "end_date": end.isoformat(), "outcome_status": "PENDING"})
-            continue
-        assert prices is not None
-        metrics = _outcome_window_metrics(
-            prices=prices,
+        loaded_prices = _load_outcome_prices(prices_path, event, paper_binding)
+        snapshot_prices = _outcome_price_snapshot(
+            prices=loaded_prices,
+            advisory_event=event,
+            paper_binding=paper_binding,
             start=start,
-            end=end,
-            event=event,
+            as_of=as_of,
         )
-        rows.append(
-            {
-                "daily_advisory_id": event["daily_advisory_id"],
-                "window_days": window_days,
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat(),
-                **metrics,
-                "outcome_status": (
-                    "AVAILABLE" if metrics["status"] == "AVAILABLE" else "INSUFFICIENT_DATA"
-                ),
-            }
-        )
-    status = _rollup_outcome_status(rows)
-    manifest.update(
-        {
-            "status": status,
-            "updated_at": generated.isoformat(),
-            "updated_as_of": as_of.isoformat(),
-            "data_quality_status": data_quality_status,
-            "data_quality_report_path": data_quality_report_path,
-            "broker_action_allowed": False,
-            "broker_action_taken": False,
-        }
+        snapshot_path = source_snapshot_dir / "required_symbol_prices.csv"
+        _write_outcome_price_snapshot(snapshot_path, snapshot_prices)
+        price_snapshot_path = str(snapshot_path)
+        price_snapshot_checksum = _file_sha256(snapshot_path)
+        data_quality_report_checksum = _file_sha256(quality_report_path)
+        prices_source_checksum = _file_sha256(prices_path)
+        rates_source_checksum = _file_sha256(rates_path)
+    rows = _compute_outcome_window_rows(
+        advisory_event=event,
+        config=config,
+        paper_binding=paper_binding,
+        prices=snapshot_prices,
+        updated_as_of=as_of,
+        data_gate_ran=as_of <= today,
     )
-    _write_json(outcome_dir / "advisory_outcome_manifest.json", manifest)
-    _write_json(outcome_dir / "advisory_event.json", event)
-    _write_jsonl(outcome_dir / "outcome_windows.jsonl", rows)
-    _write_text(
-        outcome_dir / "advisory_outcome_report.md",
-        render_advisory_outcome_report(manifest, event, rows),
+    status = _rollup_outcome_status(rows)
+    update_event = {
+        "schema_version": SCHEMA_VERSION,
+        "ledger_schema_version": OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION,
+        "event_type": OUTCOME_UPDATE_EVENT_TYPE,
+        "event_sequence": sequence,
+        "update_event_id": update_event_id,
+        "outcome_id": resolved_outcome_id,
+        "daily_advisory_id": event.get("daily_advisory_id"),
+        "updated_as_of": as_of.isoformat(),
+        "event_at": generated.isoformat(),
+        "status": status,
+        "data_quality_status": data_quality_status,
+        "data_quality_report_path": data_quality_report_path,
+        "data_quality_report_checksum": data_quality_report_checksum,
+        "prices_source_path": str(prices_path) if as_of <= today else "",
+        "prices_source_checksum": prices_source_checksum,
+        "rates_source_path": str(rates_path) if as_of <= today else "",
+        "rates_source_checksum": rates_source_checksum,
+        "price_snapshot_path": price_snapshot_path,
+        "price_snapshot_checksum": price_snapshot_checksum,
+        "paper_action_binding": paper_binding,
+        "outcome_windows": rows,
+        "previous_event_checksum": (
+            _text(update_events[-1].get("event_checksum")) if update_events else "GENESIS"
+        ),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+    }
+    update_event["event_checksum"] = _outcome_update_event_checksum(update_event)
+    _append_jsonl_atomic(
+        outcome_dir / "outcome_update_events.jsonl",
+        update_event,
+        sequence_field="event_sequence",
+        checksum_field="event_checksum",
+        previous_field="previous_event_checksum",
+    )
+    materialized_manifest = _materialize_advisory_outcome(
+        outcome_dir=outcome_dir,
+        manifest=manifest,
+        advisory_event=event,
+        update_events=[*update_events, update_event],
     )
     _update_latest_pointer(
-        "latest_advisory_outcome", outcome_dir.name, outcome_dir / "advisory_outcome_manifest.json"
+        "latest_advisory_outcome",
+        resolved_outcome_id,
+        outcome_dir / "advisory_outcome_manifest.json",
     )
+    advisory_event_view = {
+        **event,
+        "paper_action_status": paper_binding["status"],
+        "paper_action_weights": paper_binding.get("after_weights", {}),
+    }
     return {
-        "outcome_id": outcome_dir.name,
+        "outcome_id": resolved_outcome_id,
         "outcome_dir": outcome_dir,
-        "manifest": manifest,
-        "advisory_event": event,
+        "manifest": materialized_manifest,
+        "advisory_event": advisory_event_view,
         "outcome_windows": rows,
+        "update_event": update_event,
     }
 
 
@@ -880,46 +1066,220 @@ def validate_advisory_outcome_artifact(
     output_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
 ) -> dict[str, Any]:
     outcome_dir = output_dir / outcome_id
-    manifest = _read_optional_json(outcome_dir / "advisory_outcome_manifest.json") or {}
-    rows = _read_jsonl(outcome_dir / "outcome_windows.jsonl")
+    paths = {
+        "manifest": outcome_dir / "advisory_outcome_manifest.json",
+        "event": outcome_dir / "advisory_event.json",
+        "windows": outcome_dir / "outcome_windows.jsonl",
+        "updates": outcome_dir / "outcome_update_events.jsonl",
+        "counterfactuals": outcome_dir / "advisory_counterfactuals.json",
+        "report": outcome_dir / "advisory_outcome_report.md",
+    }
+    existence_checks = [
+        _check(f"{name}_exists", path.is_file(), str(path))
+        for name, path in paths.items()
+    ]
+    if not all(check["passed"] for check in existence_checks):
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_advisory_outcome_validation",
+            artifact_id_key="outcome_id",
+            artifact_id=outcome_id,
+            status="FAIL",
+            checks=existence_checks,
+        )
+        payload.update(
+            {"update_chain_status": "FAIL", "mutation_allowed": False, "event_count": 0}
+        )
+        return payload
+    try:
+        manifest = _read_json(paths["manifest"])
+        advisory_event = _read_json(paths["event"])
+        rows = _read_jsonl(paths["windows"])
+        update_events = _read_jsonl(paths["updates"])
+        counterfactuals = _read_json(paths["counterfactuals"])
+        report = paths["report"].read_text(encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        checks = [*existence_checks, _check("artifact_parse", False, str(exc))]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_advisory_outcome_validation",
+            artifact_id_key="outcome_id",
+            artifact_id=outcome_id,
+            status="FAIL",
+            checks=checks,
+        )
+        payload.update(
+            {"update_chain_status": "FAIL", "mutation_allowed": False, "event_count": 0}
+        )
+        return payload
+    if manifest.get("update_ledger_schema_version") != OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION:
+        checks = [
+            *existence_checks,
+            _check("outcome_id_matches", manifest.get("outcome_id") == outcome_id, outcome_id),
+            _check("windows_present", bool(rows), "outcome windows required"),
+            _check(
+                "window_status_valid",
+                all(row.get("outcome_status") in OUTCOME_WINDOW_STATUSES for row in rows),
+                "legacy window statuses",
+            ),
+            _check(
+                "legacy_no_execution_effect",
+                _outcome_record_has_no_execution_effect(manifest),
+                "legacy artifact remains advisory only",
+            ),
+        ]
+        structural_pass = all(check["passed"] for check in checks)
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_advisory_outcome_validation",
+            artifact_id_key="outcome_id",
+            artifact_id=outcome_id,
+            status="PASS_WITH_WARNINGS" if structural_pass else "FAIL",
+            checks=checks,
+        )
+        payload.update(
+            {
+                "update_chain_status": "LEGACY_UNCHAINED",
+                "mutation_allowed": False,
+                "event_count": len(update_events),
+                "warnings": ["LEGACY_UNCHAINED: 旧产物不可继续 update，请重新 track"],
+            }
+        )
+        return payload
+    replay_errors: list[str] = []
+    config: dict[str, Any] = {}
+    try:
+        config = _validate_outcome_initial_context(advisory_event)
+        replay_errors = _replay_outcome_update_events(
+            advisory_event=advisory_event,
+            config=config,
+            events=update_events,
+        )
+    except Exception as exc:  # noqa: BLE001
+        replay_errors = [f"initial_context_invalid:{exc}"]
+    configured_windows = _configured_outcome_windows(config) if config else []
+    expected_rows = (
+        _records(update_events[-1].get("outcome_windows"))
+        if update_events
+        else [
+            _pending_outcome_window(
+                daily_advisory_id=_text(advisory_event.get("daily_advisory_id")),
+                window_days=window,
+                start_date=_text(advisory_event.get("as_of")),
+            )
+            for window in configured_windows
+        ]
+    )
+    expected_manifest = _outcome_manifest_materialized_payload(
+        manifest=manifest,
+        update_events=update_events,
+    )
+    expected_counterfactuals = _outcome_counterfactuals_payload()
+    latest_binding = (
+        _mapping(update_events[-1].get("paper_action_binding")) if update_events else {}
+    )
+    event_view = {
+        **advisory_event,
+        **(
+            {
+                "paper_action_status": latest_binding.get("status"),
+                "paper_action_weights": latest_binding.get("after_weights", {}),
+            }
+            if update_events
+            else {}
+        ),
+    }
+    expected_report = render_advisory_outcome_report(
+        expected_manifest, event_view, expected_rows
+    )
+    dynamic_keys = (
+        "status",
+        "update_ledger_schema_version",
+        "update_chain_status",
+        "update_event_count",
+        "latest_update_event_id",
+        "latest_update_event_checksum",
+        "updated_at",
+        "updated_as_of",
+        "data_quality_status",
+        "data_quality_report_path",
+        "paper_action_status",
+        "available_window_count",
+        "pending_window_count",
+        "insufficient_window_count",
+    )
+    row_content_valid = all(
+        row.get("outcome_status") in OUTCOME_WINDOW_STATUSES
+        and (
+            all(_is_finite_number(row.get(field)) for field in OUTCOME_METRIC_FIELDS)
+            if row.get("outcome_status") == "AVAILABLE"
+            else all(row.get(field) is None for field in OUTCOME_METRIC_FIELDS)
+            and bool(_text(row.get("insufficient_reason")))
+        )
+        for row in rows
+    )
     checks = [
-        _check(
-            "manifest_exists", (outcome_dir / "advisory_outcome_manifest.json").exists(), outcome_id
-        ),
-        _check("event_exists", (outcome_dir / "advisory_event.json").exists(), outcome_id),
-        _check("windows_exists", (outcome_dir / "outcome_windows.jsonl").exists(), outcome_id),
-        _check(
-            "counterfactuals_exists",
-            (outcome_dir / "advisory_counterfactuals.json").exists(),
-            outcome_id,
-        ),
-        _check("report_exists", (outcome_dir / "advisory_outcome_report.md").exists(), outcome_id),
+        *existence_checks,
         _check("outcome_id_matches", manifest.get("outcome_id") == outcome_id, outcome_id),
-        _check("windows_present", bool(rows), "outcome windows required"),
         _check(
-            "window_status_valid",
-            all(row.get("outcome_status") in OUTCOME_WINDOW_STATUSES for row in rows),
-            "window statuses",
+            "manifest_event_binding",
+            manifest.get("daily_advisory_id") == advisory_event.get("daily_advisory_id")
+            and manifest.get("as_of") == advisory_event.get("as_of")
+            and manifest.get("generated_at") == advisory_event.get("tracked_at")
+            and manifest.get("tracked_windows") == configured_windows
+            and manifest.get("advisory_event_checksum") == advisory_event.get("event_checksum")
+            and manifest.get("advisory_event_path") == str(paths["event"])
+            and manifest.get("outcome_windows_path") == str(paths["windows"])
+            and manifest.get("outcome_update_events_path") == str(paths["updates"])
+            and manifest.get("advisory_counterfactuals_path")
+            == str(paths["counterfactuals"])
+            and manifest.get("advisory_outcome_report_path") == str(paths["report"])
+            and manifest.get("source_snapshots_root")
+            == str(outcome_dir / "source_snapshots")
+            and manifest.get("status") in OUTCOME_MANIFEST_STATUSES,
+            "manifest immutable event binding",
+        ),
+        _check("source_and_update_replay", not replay_errors, "; ".join(replay_errors)),
+        _check("materialized_windows_match", rows == expected_rows, "latest replay rows"),
+        _check(
+            "manifest_dynamic_fields_match",
+            all(manifest.get(key) == expected_manifest.get(key) for key in dynamic_keys),
+            "latest update-derived manifest fields",
         ),
         _check(
-            "broker_action_forbidden",
-            manifest.get("broker_action_allowed") is False,
-            "broker action forbidden",
+            "counterfactual_policy_matches",
+            counterfactuals == expected_counterfactuals
+            and manifest.get("advisory_counterfactuals_checksum")
+            == sha256(_canonical_json(expected_counterfactuals).encode("utf-8")).hexdigest(),
+            "canonical counterfactual definitions",
         ),
         _check(
-            "broker_action_not_taken",
-            manifest.get("broker_action_taken") is False,
-            "broker action not taken",
+            "window_metric_semantics",
+            bool(rows) and row_content_valid,
+            "null vs finite metrics",
+        ),
+        _check("report_matches_replay", report == expected_report, str(paths["report"])),
+        _check(
+            "no_execution_effect",
+            _outcome_record_has_no_execution_effect(manifest)
+            and _outcome_record_has_no_execution_effect(advisory_event)
+            and all(_outcome_record_has_no_execution_effect(item) for item in update_events),
+            "advisory simulation only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
-    return _validation_payload(
+    payload = _validation_payload(
         report_type="etf_dynamic_v3_advisory_outcome_validation",
         artifact_id_key="outcome_id",
         artifact_id=outcome_id,
         status=status,
         checks=checks,
     )
+    payload.update(
+        {
+            "update_chain_status": "PASS" if status == "PASS" else "FAIL",
+            "mutation_allowed": status == "PASS",
+            "event_count": len(update_events),
+        }
+    )
+    return payload
 
 
 def run_owner_attribution(
@@ -1488,19 +1848,26 @@ def render_advisory_outcome_report(
         f"- daily_advisory_id：`{event.get('daily_advisory_id', '')}`",
         f"- recommended_action：{event.get('recommended_action', '')}",
         f"- data_quality_status：{manifest.get('data_quality_status', 'UNKNOWN')}",
+        f"- update_chain_status：{manifest.get('update_chain_status', 'UNKNOWN')}",
+        f"- update_event_count：{manifest.get('update_event_count', 0)}",
+        f"- paper_action_status：{manifest.get('paper_action_status', 'PENDING')}",
         "- broker_action_taken：false",
         "",
-        "| Window | Status | Paper vs no_trade | Paper vs baseline | End |",
-        "|---:|---|---:|---:|---|",
+        "| Window | Status | Paper vs no_trade | Paper vs baseline | "
+        "Limited return | Paper effective | End | Reason |",
+        "|---:|---|---:|---:|---:|---|---|---|",
     ]
     for row in rows:
         lines.append(
             "| "
             f"{row.get('window_days')} | "
             f"{row.get('outcome_status')} | "
-            f"{_float(row.get('relative_to_no_trade')):.6f} | "
-            f"{_float(row.get('relative_to_baseline')):.6f} | "
-            f"{row.get('end_date', '')} |"
+            f"{_format_optional_metric(row.get('relative_to_no_trade'))} | "
+            f"{_format_optional_metric(row.get('relative_to_baseline'))} | "
+            f"{_format_optional_metric(row.get('limited_adjustment_return'))} | "
+            f"{row.get('paper_action_effective_date', '') or 'N/A'} | "
+            f"{row.get('end_date', '') or 'N/A'} | "
+            f"{row.get('insufficient_reason', '') or '-'} |"
         )
     lines.extend(
         [
@@ -1509,11 +1876,17 @@ def render_advisory_outcome_report(
             "",
             "AVAILABLE 只表示该窗口已有足够价格数据完成纸面评估；"
             "PENDING 和 INSUFFICIENT_DATA 不得解释为收益为 0。",
+            "静态反事实采用起点固定份额；paper_action 只在 action 已知后首个完整交易日生效，"
+            "并按换手率一次性扣除 transaction cost 与 slippage，避免未来信息穿越。",
             "该报告不生成交易指令，不触发 broker action。",
             "",
         ]
     )
     return "\n".join(lines)
+
+
+def _format_optional_metric(value: Any) -> str:
+    return f"{float(value):.6f}" if _is_finite_number(value) else "N/A"
 
 
 def render_owner_attribution_report(
@@ -2222,6 +2595,725 @@ def _paper_event_has_no_execution_effect(event: Mapping[str, Any]) -> bool:
     )
 
 
+def _outcome_daily_source_paths(
+    *, daily_advisory_id: str, daily_advisory_dir: Path
+) -> dict[str, str]:
+    source_dir = daily_advisory_dir / daily_advisory_id
+    return {
+        "daily_advisory_manifest": str(source_dir / "daily_advisory_manifest.json"),
+        "daily_candidate_targets": str(source_dir / "daily_candidate_targets.jsonl"),
+        "daily_consensus_weights": str(source_dir / "daily_consensus_weights.csv"),
+        "daily_position_deltas": str(source_dir / "daily_position_deltas.jsonl"),
+        "daily_advisory_actions": str(source_dir / "daily_advisory_actions.json"),
+        "daily_position_advisory_report": str(
+            source_dir / "daily_position_advisory_report.md"
+        ),
+        "daily_reader_brief": str(source_dir / "reader_brief_section.md"),
+    }
+
+
+def _validated_outcome_daily_source(
+    *, daily_advisory_id: str, daily_advisory_dir: Path
+) -> dict[str, Any]:
+    validation = validate_position_advisory_daily_artifact(
+        daily_advisory_id=daily_advisory_id,
+        output_dir=daily_advisory_dir,
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "daily advisory validation must PASS before outcome tracking"
+        )
+    source_dir = daily_advisory_dir / daily_advisory_id
+    manifest = _read_json(source_dir / "daily_advisory_manifest.json")
+    actions = _read_json(source_dir / "daily_advisory_actions.json")
+    if (
+        manifest.get("daily_advisory_id") != daily_advisory_id
+        or actions.get("daily_advisory_id") != daily_advisory_id
+    ):
+        raise DynamicV3PaperTrackingError("daily advisory ids must match tracking request")
+    paths = _outcome_daily_source_paths(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    checksums = {key: _file_sha256(Path(path)) for key, path in paths.items()}
+    return {
+        "manifest": manifest,
+        "actions": actions,
+        "source_paths": paths,
+        "source_checksums": checksums,
+    }
+
+
+def _outcome_baseline_source() -> dict[str, Any]:
+    paths = {
+        "assets": str(DEFAULT_ETF_ASSETS_CONFIG_PATH),
+        "strategy": str(DEFAULT_ETF_STRATEGY_CONFIG_PATH),
+        "risk": str(DEFAULT_ETF_RISK_CONFIG_PATH),
+        "backtest": str(DEFAULT_ETF_BACKTEST_CONFIG_PATH),
+        "p1": str(DEFAULT_ETF_P1_CONFIG_PATH),
+        "p2": str(DEFAULT_ETF_P2_CONFIG_PATH),
+    }
+    bundle = load_etf_config_bundle()
+    return {
+        "source_paths": paths,
+        "source_checksums": {
+            key: _file_sha256(Path(path)) for key, path in paths.items()
+        },
+        "config_hash": bundle.config_hash,
+    }
+
+
+def _validated_outcome_paper_source(output_dir: Path) -> dict[str, Any]:
+    portfolio_dir = _paper_portfolio_dir(paper_portfolio_id=None, output_dir=output_dir)
+    validation = validate_paper_portfolio_artifact(
+        paper_portfolio_id=portfolio_dir.name,
+        output_dir=output_dir,
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio validation must PASS before outcome tracking"
+        )
+    manifest = _read_json(portfolio_dir / "paper_portfolio_manifest.json")
+    state = _read_json(portfolio_dir / "paper_portfolio_state.json")
+    events = _read_jsonl(portfolio_dir / "paper_action_ledger.jsonl")
+    return {
+        "manifest": manifest,
+        "state": state,
+        "events": events,
+        "binding": {
+            "paper_portfolio_root": str(output_dir),
+            "paper_portfolio_id": portfolio_dir.name,
+            "initial_snapshot_path": manifest.get("initial_snapshot_path"),
+            "initial_snapshot_checksum": manifest.get("initial_snapshot_checksum"),
+            "config_path": manifest.get("config_path"),
+            "config_checksum": manifest.get("config_checksum"),
+            "event_count_at_track": len(events),
+            "last_event_checksum_at_track": (
+                _text(events[-1].get("event_checksum")) if events else "GENESIS"
+            ),
+            "last_action_id_at_track": state.get("last_action_id", ""),
+            "validation_status": "PASS",
+        },
+    }
+
+
+def _validated_outcome_weights(
+    weights: Mapping[str, Any], label: str
+) -> dict[str, float]:
+    if not weights:
+        raise DynamicV3PaperTrackingError(f"{label} cannot be empty")
+    clean: dict[str, float] = {}
+    for symbol, value in weights.items():
+        clean_symbol = _text(symbol)
+        if not clean_symbol:
+            raise DynamicV3PaperTrackingError(f"{label} contains an empty symbol")
+        number = _strict_finite_number(value, f"{label}:{clean_symbol}")
+        if number < 0 or number > 1:
+            raise DynamicV3PaperTrackingError(f"{label} values must be within [0,1]")
+        if number:
+            clean[clean_symbol] = number
+    if abs(sum(clean.values()) - 1.0) > PAPER_WEIGHT_TOLERANCE:
+        raise DynamicV3PaperTrackingError(f"{label} must sum to one")
+    return _normalize_weights(clean)
+
+
+def _freeze_outcome_track_sources(
+    *,
+    outcome_dir: Path,
+    outcome_config_path: Path,
+    daily_source: Mapping[str, Any],
+    baseline_source: Mapping[str, Any],
+    paper_source: Mapping[str, Any],
+) -> dict[str, Any]:
+    root = outcome_dir / "source_snapshots" / "TRACK"
+
+    def freeze_text(source: Path, target: Path) -> dict[str, str]:
+        write_text_atomic(target, source.read_text(encoding="utf-8"))
+        return {"path": str(target), "checksum": _file_sha256(target)}
+
+    frozen_daily = {
+        key: freeze_text(Path(_text(path)), root / "daily" / Path(_text(path)).name)
+        for key, path in _mapping(daily_source.get("source_paths")).items()
+    }
+    frozen_baseline = {
+        key: freeze_text(Path(_text(path)), root / "baseline" / Path(_text(path)).name)
+        for key, path in _mapping(baseline_source.get("source_paths")).items()
+    }
+    paper_manifest_path = root / "paper" / "paper_portfolio_manifest.json"
+    paper_state_path = root / "paper" / "paper_portfolio_state.json"
+    paper_events_path = root / "paper" / "paper_action_event_prefix.jsonl"
+    _write_json(paper_manifest_path, _mapping(paper_source.get("manifest")))
+    _write_json(paper_state_path, _mapping(paper_source.get("state")))
+    _write_jsonl(paper_events_path, _records(paper_source.get("events")))
+    return {
+        "outcome_config": freeze_text(
+            outcome_config_path,
+            root / "outcome_config" / outcome_config_path.name,
+        ),
+        "daily": frozen_daily,
+        "baseline": frozen_baseline,
+        "paper": {
+            "manifest": {
+                "path": str(paper_manifest_path),
+                "checksum": _file_sha256(paper_manifest_path),
+            },
+            "state": {
+                "path": str(paper_state_path),
+                "checksum": _file_sha256(paper_state_path),
+            },
+            "event_prefix": {
+                "path": str(paper_events_path),
+                "checksum": _file_sha256(paper_events_path),
+            },
+        },
+    }
+
+
+def _validate_frozen_outcome_track_sources(advisory_event: Mapping[str, Any]) -> None:
+    frozen = _mapping(advisory_event.get("frozen_track_sources"))
+    entries = [
+        _mapping(frozen.get("outcome_config")),
+        *[_mapping(value) for value in _mapping(frozen.get("daily")).values()],
+        *[_mapping(value) for value in _mapping(frozen.get("baseline")).values()],
+        *[_mapping(value) for value in _mapping(frozen.get("paper")).values()],
+    ]
+    if not entries or any(
+        not Path(_text(entry.get("path"))).is_file()
+        or entry.get("checksum") != _file_sha256(Path(_text(entry.get("path"))))
+        for entry in entries
+    ):
+        raise DynamicV3PaperTrackingError("frozen outcome tracking source checksum mismatch")
+
+
+def _validate_outcome_initial_context(
+    advisory_event: Mapping[str, Any],
+) -> dict[str, Any]:
+    _validate_frozen_outcome_track_sources(advisory_event)
+    if advisory_event.get("event_checksum") != _advisory_event_checksum(advisory_event):
+        raise DynamicV3PaperTrackingError("advisory event checksum mismatch")
+    config_path = Path(_text(advisory_event.get("outcome_config_path")))
+    config = load_paper_portfolio_config(config_path)
+    policy = _mapping(config.get("policy_metadata"))
+    if (
+        advisory_event.get("outcome_config_checksum") != _file_sha256(config_path)
+        or advisory_event.get("outcome_config_policy_id") != policy.get("policy_id")
+        or advisory_event.get("outcome_config_policy_version") != policy.get("version")
+    ):
+        raise DynamicV3PaperTrackingError("outcome config source binding mismatch")
+    daily_id = _text(advisory_event.get("daily_advisory_id"))
+    daily_root = Path(_text(advisory_event.get("source_daily_advisory_root")))
+    daily = _validated_outcome_daily_source(
+        daily_advisory_id=daily_id,
+        daily_advisory_dir=daily_root,
+    )
+    if (
+        _mapping(advisory_event.get("source_artifact_paths")) != daily["source_paths"]
+        or _mapping(advisory_event.get("source_artifact_checksums"))
+        != daily["source_checksums"]
+        or advisory_event.get("as_of") != daily["manifest"].get("as_of")
+        or advisory_event.get("recommended_action")
+        != daily["actions"].get("recommended_action")
+        or advisory_event.get("mode")
+        != _text(daily["actions"].get("mode"), _text(daily["manifest"].get("mode")))
+    ):
+        raise DynamicV3PaperTrackingError("daily advisory source binding mismatch")
+    baseline = _outcome_baseline_source()
+    if (
+        _mapping(advisory_event.get("baseline_source_paths")) != baseline["source_paths"]
+        or _mapping(advisory_event.get("baseline_source_checksums"))
+        != baseline["source_checksums"]
+        or advisory_event.get("baseline_config_hash") != baseline["config_hash"]
+    ):
+        raise DynamicV3PaperTrackingError("baseline config source binding mismatch")
+    paper_source = _mapping(advisory_event.get("paper_portfolio_source"))
+    paper_root = Path(_text(paper_source.get("paper_portfolio_root")))
+    paper_id = _text(paper_source.get("paper_portfolio_id"))
+    paper_validation = validate_paper_portfolio_artifact(
+        paper_portfolio_id=paper_id,
+        output_dir=paper_root,
+    )
+    if paper_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError("paper portfolio source validation did not PASS")
+    frozen_paper = _mapping(
+        _mapping(advisory_event.get("frozen_track_sources")).get("paper")
+    )
+    frozen_manifest = _read_json(
+        Path(_text(_mapping(frozen_paper.get("manifest")).get("path")))
+    )
+    frozen_state = _read_json(
+        Path(_text(_mapping(frozen_paper.get("state")).get("path")))
+    )
+    frozen_events = _read_jsonl(
+        Path(_text(_mapping(frozen_paper.get("event_prefix")).get("path")))
+    )
+    if (
+        len(frozen_events) != int(paper_source.get("event_count_at_track") or 0)
+        or paper_source.get("last_event_checksum_at_track")
+        != (_text(frozen_events[-1].get("event_checksum")) if frozen_events else "GENESIS")
+        or paper_source.get("initial_snapshot_checksum")
+        != frozen_manifest.get("initial_snapshot_checksum")
+        or paper_source.get("config_checksum") != frozen_manifest.get("config_checksum")
+    ):
+        raise DynamicV3PaperTrackingError("frozen paper source lineage mismatch")
+    frozen_config = load_paper_portfolio_config(
+        Path(_text(frozen_manifest.get("config_path")))
+    )
+    replay_state, _history, replay_errors = _replay_paper_action_events(
+        manifest=frozen_manifest,
+        events=frozen_events,
+        config=frozen_config,
+        validate_sources=False,
+    )
+    if replay_errors or replay_state != frozen_state:
+        raise DynamicV3PaperTrackingError(
+            "frozen paper source state does not match event prefix"
+        )
+    advisory_dir = daily_root / daily_id
+    expected_no_trade = _advisory_current_weights(advisory_dir)
+    expected_source = "daily_advisory_current_weights"
+    if not expected_no_trade:
+        expected_no_trade = _mapping(frozen_state.get("positions"))
+        expected_source = "selected_paper_portfolio_state"
+    expected_no_trade = _validated_outcome_weights(expected_no_trade, "no_trade_weights")
+    expected_target = _validated_outcome_weights(
+        _advisory_consensus_weights(advisory_dir), "target_weights"
+    )
+    expected_baseline = _validated_outcome_weights(
+        _baseline_weights(), "baseline_weights"
+    )
+    proposed = {
+        symbol: round(
+            _float(expected_target.get(symbol)) - _float(expected_no_trade.get(symbol)), 6
+        )
+        for symbol in sorted(set(expected_target) | set(expected_no_trade))
+        if round(
+            _float(expected_target.get(symbol)) - _float(expected_no_trade.get(symbol)), 6
+        )
+    }
+    expected_limited_deltas = _limit_paper_deltas(
+        proposed,
+        config,
+        before_weights=expected_no_trade,
+    )
+    expected_limited = _apply_weight_deltas(expected_no_trade, expected_limited_deltas)
+    if (
+        advisory_event.get("no_trade_source") != expected_source
+        or _mapping(advisory_event.get("no_trade_weights")) != expected_no_trade
+        or _mapping(advisory_event.get("target_weights")) != expected_target
+        or _mapping(advisory_event.get("baseline_weights")) != expected_baseline
+        or _mapping(advisory_event.get("limited_adjustment_deltas"))
+        != expected_limited_deltas
+        or _mapping(advisory_event.get("limited_adjustment_weights"))
+        != expected_limited
+        or advisory_event.get("paper_action_status") != "PENDING"
+        or _mapping(advisory_event.get("paper_action_weights"))
+    ):
+        raise DynamicV3PaperTrackingError("advisory event derived weights mismatch")
+    if not _outcome_record_has_no_execution_effect(advisory_event):
+        raise DynamicV3PaperTrackingError("advisory event execution effect is forbidden")
+    return config
+
+
+def _outcome_record_has_no_execution_effect(record: Mapping[str, Any]) -> bool:
+    return (
+        record.get("official_target_weights_generated") is False
+        and record.get("portfolio_mutated") is False
+        and record.get("order_ticket_generated") is False
+        and record.get("broker_action_allowed") is False
+        and record.get("broker_action_taken") is False
+        and record.get("production_effect") == "none"
+    )
+
+
+def _replay_outcome_update_events(
+    *,
+    advisory_event: Mapping[str, Any],
+    config: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    previous_checksum = "GENESIS"
+    previous_as_of: date | None = None
+    previous_event_at: datetime | None = None
+    paper_root = Path(
+        _text(
+            _mapping(advisory_event.get("paper_portfolio_source")).get(
+                "paper_portfolio_root"
+            )
+        )
+    )
+    for index, raw in enumerate(events, start=1):
+        event = dict(raw)
+        updated_as_of = _date_from_any(event.get("updated_as_of"))
+        event_at = _parse_datetime_text(_text(event.get("event_at")))
+        expected_id = _stable_id(
+            "advisory-outcome-update",
+            advisory_event.get("outcome_id"),
+            index,
+            _text(event.get("updated_as_of")),
+            _text(event.get("event_at")),
+        )
+        if event.get("ledger_schema_version") != OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION:
+            errors.append(f"ledger_schema_invalid:{index}")
+        if event.get("event_type") != OUTCOME_UPDATE_EVENT_TYPE:
+            errors.append(f"event_type_invalid:{index}")
+        if event.get("event_sequence") != index:
+            errors.append(f"event_sequence_mismatch:{index}")
+        if event.get("update_event_id") != expected_id:
+            errors.append(f"update_event_id_mismatch:{index}")
+        if event.get("outcome_id") != advisory_event.get("outcome_id"):
+            errors.append(f"outcome_id_mismatch:{index}")
+        if event.get("daily_advisory_id") != advisory_event.get("daily_advisory_id"):
+            errors.append(f"daily_advisory_id_mismatch:{index}")
+        if event.get("previous_event_checksum") != previous_checksum:
+            errors.append(f"previous_event_checksum_mismatch:{index}")
+        if event.get("event_checksum") != _outcome_update_event_checksum(event):
+            errors.append(f"event_checksum_mismatch:{index}")
+        previous_checksum = _text(event.get("event_checksum"))
+        if (
+            updated_as_of is None
+            or (previous_as_of is not None and updated_as_of < previous_as_of)
+            or event_at is None
+            or (previous_event_at is not None and event_at < previous_event_at)
+        ):
+            errors.append(f"update_time_or_as_of_reversed:{index}")
+        if updated_as_of is None or event_at is None:
+            continue
+        previous_as_of = updated_as_of
+        previous_event_at = event_at
+        try:
+            expected_binding = _paper_action_binding_for_outcome(
+                advisory_event=advisory_event,
+                paper_portfolio_dir=paper_root,
+                updated_as_of=updated_as_of,
+                known_at=event_at,
+            )
+            data_gate_ran = updated_as_of <= event_at.date()
+            if data_gate_ran:
+                snapshot_path = Path(_text(event.get("price_snapshot_path")))
+                quality_path = Path(_text(event.get("data_quality_report_path")))
+                if (
+                    not snapshot_path.is_file()
+                    or event.get("price_snapshot_checksum") != _file_sha256(snapshot_path)
+                    or not quality_path.is_file()
+                    or event.get("data_quality_report_checksum") != _file_sha256(quality_path)
+                    or event.get("data_quality_status") not in {"PASS", "PASS_WITH_WARNINGS"}
+                ):
+                    raise DynamicV3PaperTrackingError(
+                        "update price snapshot or data quality evidence mismatch"
+                    )
+                snapshot = _read_outcome_price_snapshot(snapshot_path)
+            else:
+                if any(
+                    _text(event.get(field))
+                    for field in (
+                        "price_snapshot_path",
+                        "price_snapshot_checksum",
+                        "data_quality_report_path",
+                        "data_quality_report_checksum",
+                        "prices_source_path",
+                        "prices_source_checksum",
+                        "rates_source_path",
+                        "rates_source_checksum",
+                    )
+                ) or event.get("data_quality_status") != "NOT_RUN_FUTURE_AS_OF":
+                    raise DynamicV3PaperTrackingError(
+                        "future-as-of update must not claim data quality evidence"
+                    )
+                snapshot = None
+            expected_rows = _compute_outcome_window_rows(
+                advisory_event=advisory_event,
+                config=config,
+                paper_binding=expected_binding,
+                prices=snapshot,
+                updated_as_of=updated_as_of,
+                data_gate_ran=data_gate_ran,
+            )
+            if _mapping(event.get("paper_action_binding")) != expected_binding:
+                errors.append(f"paper_action_binding_mismatch:{index}")
+            if _records(event.get("outcome_windows")) != expected_rows:
+                errors.append(f"outcome_windows_content_mismatch:{index}")
+            if event.get("status") != _rollup_outcome_status(expected_rows):
+                errors.append(f"rollup_status_mismatch:{index}")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"update_recomputation_failed:{index}:{exc}")
+        if not _outcome_record_has_no_execution_effect(event):
+            errors.append(f"execution_effect_forbidden:{index}")
+    return sorted(set(errors))
+
+
+def _ensure_no_duplicate_outcome_tracker(
+    *, daily_advisory_id: str, output_dir: Path
+) -> None:
+    if not output_dir.exists():
+        return
+    for path in sorted(output_dir.glob("*/advisory_event.json")):
+        try:
+            payload = _read_json(path)
+        except Exception as exc:  # noqa: BLE001
+            raise DynamicV3PaperTrackingError(
+                f"existing advisory outcome event is unreadable: {path}: {exc}"
+            ) from exc
+        if payload.get("daily_advisory_id") == daily_advisory_id:
+            raise DynamicV3PaperTrackingError(
+                f"advisory outcome already tracked for daily advisory: {daily_advisory_id}"
+            )
+
+
+def _paper_action_binding_for_outcome(
+    *,
+    advisory_event: Mapping[str, Any],
+    paper_portfolio_dir: Path,
+    updated_as_of: date,
+    known_at: datetime,
+) -> dict[str, Any]:
+    source = _mapping(advisory_event.get("paper_portfolio_source"))
+    portfolio_id = _text(source.get("paper_portfolio_id"))
+    if not portfolio_id:
+        raise DynamicV3PaperTrackingError("outcome paper portfolio source id is missing")
+    validation = validate_paper_portfolio_artifact(
+        paper_portfolio_id=portfolio_id,
+        output_dir=paper_portfolio_dir,
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "selected paper portfolio validation must PASS for outcome update"
+        )
+    portfolio_dir = paper_portfolio_dir / portfolio_id
+    manifest = _read_json(portfolio_dir / "paper_portfolio_manifest.json")
+    events = _read_jsonl(portfolio_dir / "paper_action_ledger.jsonl")
+    prefix_count = int(source.get("event_count_at_track") or 0)
+    prefix = events[:prefix_count]
+    if (
+        source.get("initial_snapshot_checksum") != manifest.get("initial_snapshot_checksum")
+        or source.get("config_checksum") != manifest.get("config_checksum")
+        or len(events) < prefix_count
+        or source.get("last_event_checksum_at_track")
+        != (_text(prefix[-1].get("event_checksum")) if prefix else "GENESIS")
+    ):
+        raise DynamicV3PaperTrackingError(
+            "selected paper portfolio lineage changed after outcome tracking"
+        )
+    daily_advisory_id = _text(advisory_event.get("daily_advisory_id"))
+    matching = [row for row in events if row.get("daily_advisory_id") == daily_advisory_id]
+    eligible = []
+    future_count = 0
+    for row in matching:
+        created = _parse_datetime_text(_text(row.get("created_at")))
+        if created is None:
+            raise DynamicV3PaperTrackingError("paper action created_at is invalid")
+        if created <= known_at and created.date() <= updated_as_of:
+            eligible.append(row)
+        else:
+            future_count += 1
+    if len(eligible) > 1:
+        raise DynamicV3PaperTrackingError(
+            "multiple eligible paper actions found for one daily advisory"
+        )
+    if not eligible:
+        return {
+            "status": "NOT_RECORDED_BY_AS_OF",
+            "paper_portfolio_id": portfolio_id,
+            "daily_advisory_id": daily_advisory_id,
+            "paper_action_id": "",
+            "paper_action_event_checksum": "",
+            "action_type": "",
+            "created_at": "",
+            "after_weights": {},
+            "applied_paper_deltas": {},
+            "excluded_future_action_count": future_count,
+        }
+    row = eligible[0]
+    after = _validated_outcome_weights(
+        _mapping(row.get("after_weights")), "paper_action_after_weights"
+    )
+    return {
+        "status": (
+            "AVAILABLE"
+            if row.get("action_type") in {"paper_adjustment", "manual_adjustment"}
+            else "NO_STATE_CHANGE"
+        ),
+        "paper_portfolio_id": portfolio_id,
+        "daily_advisory_id": daily_advisory_id,
+        "paper_action_id": row.get("paper_action_id"),
+        "paper_action_event_checksum": row.get("event_checksum"),
+        "action_type": row.get("action_type"),
+        "created_at": row.get("created_at"),
+        "after_weights": after,
+        "applied_paper_deltas": _mapping(row.get("applied_paper_deltas")),
+        "excluded_future_action_count": future_count,
+    }
+
+
+def _outcome_required_symbols(
+    advisory_event: Mapping[str, Any], paper_binding: Mapping[str, Any]
+) -> set[str]:
+    weights = [
+        _mapping(advisory_event.get("no_trade_weights")),
+        _mapping(advisory_event.get("baseline_weights")),
+        _mapping(advisory_event.get("target_weights")),
+        _mapping(advisory_event.get("limited_adjustment_weights")),
+        _mapping(paper_binding.get("after_weights")),
+    ]
+    return {symbol for row in weights for symbol in row if symbol != "CASH"}
+
+
+def _outcome_price_snapshot(
+    *,
+    prices: pd.DataFrame,
+    advisory_event: Mapping[str, Any],
+    paper_binding: Mapping[str, Any],
+    start: date,
+    as_of: date,
+) -> pd.DataFrame:
+    symbols = _outcome_required_symbols(advisory_event, paper_binding)
+    earliest = start - timedelta(days=31)
+    snapshot = prices.loc[
+        prices["symbol"].isin(symbols)
+        & prices["_date"].map(lambda value: earliest <= value <= as_of),
+        ["_date", "symbol", "_adj_close"],
+    ].copy()
+    if snapshot.empty:
+        raise DynamicV3PaperTrackingError("required-symbol outcome price snapshot is empty")
+    return snapshot.sort_values(["_date", "symbol"]).reset_index(drop=True)
+
+
+def _write_outcome_price_snapshot(path: Path, prices: pd.DataFrame) -> None:
+    export = prices.rename(columns={"_date": "date", "_adj_close": "adj_close"}).copy()
+    export["date"] = export["date"].map(lambda value: value.isoformat())
+    text = export[["date", "symbol", "adj_close"]].to_csv(
+        index=False, lineterminator="\n"
+    )
+    write_text_atomic(path, text)
+
+
+def _read_outcome_price_snapshot(path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    required = {"date", "symbol", "adj_close"}
+    if set(frame.columns) != required:
+        raise DynamicV3PaperTrackingError("outcome price snapshot schema is invalid")
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+    frame["_adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    return frame[["_date", "symbol", "_adj_close"]]
+
+
+def _outcome_update_event_checksum(event: Mapping[str, Any]) -> str:
+    payload = dict(event)
+    payload.pop("event_checksum", None)
+    return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _outcome_counterfactuals_payload() -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_advisory_counterfactuals",
+        "counterfactuals": [
+            {"name": "no_trade", "description": "Keep current portfolio snapshot unchanged"},
+            {"name": "paper_action", "description": "Apply owner-approved paper action"},
+            {
+                "name": "candidate_consensus_target",
+                "description": "Move fully to consensus target weights",
+            },
+            {"name": "limited_adjustment", "description": "Apply capped advisory deltas"},
+        ],
+        "calculation_policy": {
+            "static_path": "fixed_share_from_start",
+            "paper_path": "no_trade_then_rebalance_on_first_complete_date_after_action",
+            "transaction_cost": "one_time_turnover_x_commission_plus_slippage_bps",
+            "cash_return": "zero",
+        },
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+    }
+
+
+def _advisory_event_checksum(event: Mapping[str, Any]) -> str:
+    payload = dict(event)
+    payload.pop("event_checksum", None)
+    return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _outcome_manifest_materialized_payload(
+    *, manifest: Mapping[str, Any], update_events: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
+    payload = dict(manifest)
+    latest = _mapping(update_events[-1]) if update_events else {}
+    rows = _records(latest.get("outcome_windows")) if latest else []
+    payload.update(
+        {
+            "status": latest.get("status", "PENDING"),
+            "update_ledger_schema_version": OUTCOME_UPDATE_LEDGER_SCHEMA_VERSION,
+            "update_chain_status": "PASS",
+            "update_event_count": len(update_events),
+            "latest_update_event_id": latest.get("update_event_id", ""),
+            "latest_update_event_checksum": latest.get("event_checksum", ""),
+            "updated_at": latest.get("event_at", ""),
+            "updated_as_of": latest.get("updated_as_of", ""),
+            "data_quality_status": latest.get(
+                "data_quality_status", "NOT_RUN_PENDING_ONLY"
+            ),
+            "data_quality_report_path": latest.get("data_quality_report_path", ""),
+            "paper_action_status": _mapping(latest.get("paper_action_binding")).get(
+                "status", payload.get("paper_action_status", "PENDING")
+            ),
+            "available_window_count": (
+                sum(row.get("outcome_status") == "AVAILABLE" for row in rows)
+                if latest
+                else payload.get("available_window_count", 0)
+            ),
+            "pending_window_count": (
+                sum(row.get("outcome_status") == "PENDING" for row in rows)
+                if latest
+                else payload.get("pending_window_count", 0)
+            ),
+            "insufficient_window_count": (
+                sum(row.get("outcome_status") == "INSUFFICIENT_DATA" for row in rows)
+                if latest
+                else payload.get("insufficient_window_count", 0)
+            ),
+            "broker_action_allowed": False,
+            "broker_action_taken": False,
+            "owner_approval_required": True,
+            "manual_review_required": True,
+            "official_target_weights_generated": False,
+            "portfolio_mutated": False,
+            "order_ticket_generated": False,
+            "production_effect": "none",
+        }
+    )
+    return payload
+
+
+def _materialize_advisory_outcome(
+    *,
+    outcome_dir: Path,
+    manifest: Mapping[str, Any],
+    advisory_event: Mapping[str, Any],
+    update_events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    if not update_events:
+        raise DynamicV3PaperTrackingError("outcome materialization requires an update event")
+    latest = update_events[-1]
+    rows = _records(latest.get("outcome_windows"))
+    materialized_manifest = _outcome_manifest_materialized_payload(
+        manifest=manifest,
+        update_events=update_events,
+    )
+    paper_binding = _mapping(latest.get("paper_action_binding"))
+    event_view = {
+        **dict(advisory_event),
+        "paper_action_status": paper_binding.get("status"),
+        "paper_action_weights": paper_binding.get("after_weights", {}),
+    }
+    _write_json(outcome_dir / "advisory_outcome_manifest.json", materialized_manifest)
+    _write_jsonl(outcome_dir / "outcome_windows.jsonl", rows)
+    _write_text(
+        outcome_dir / "advisory_outcome_report.md",
+        render_advisory_outcome_report(materialized_manifest, event_view, rows),
+    )
+    return materialized_manifest
+
+
 def _advisory_current_weights(advisory_dir: Path) -> dict[str, float]:
     for row in _read_jsonl(advisory_dir / "daily_position_deltas.jsonl"):
         current = _mapping(row.get("current_weights"))
@@ -2298,15 +3390,11 @@ def _pending_outcome_window(
         "window_days": window_days,
         "start_date": start_date,
         "end_date": "",
-        "paper_portfolio_return": 0.0,
-        "no_trade_return": 0.0,
-        "baseline_return": 0.0,
-        "target_weight_return": 0.0,
-        "relative_to_no_trade": 0.0,
-        "relative_to_baseline": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        **{field: None for field in OUTCOME_METRIC_FIELDS},
+        "paper_action_status": "PENDING",
+        "paper_action_effective_date": "",
         "outcome_status": "PENDING",
+        "insufficient_reason": "WINDOW_NOT_EVALUATED",
     }
 
 
@@ -2333,13 +3421,12 @@ def _run_cached_data_quality_gate(
     return quality
 
 
-def _load_outcome_prices(prices_path: Path, event: Mapping[str, Any]) -> pd.DataFrame:
-    symbols = (
-        set(_mapping(event.get("no_trade_weights")))
-        | set(_mapping(event.get("paper_action_weights")))
-        | set(_mapping(event.get("baseline_weights")))
-        | set(_mapping(event.get("target_weights")))
-    )
+def _load_outcome_prices(
+    prices_path: Path,
+    event: Mapping[str, Any],
+    paper_binding: Mapping[str, Any],
+) -> pd.DataFrame:
+    symbols = _outcome_required_symbols(event, paper_binding)
     config = load_etf_config_bundle()
     prices, quality = load_standard_prices(
         prices_path,
@@ -2355,102 +3442,326 @@ def _load_outcome_prices(prices_path: Path, event: Mapping[str, Any]) -> pd.Data
     return prices.dropna(subset=["_date", "_adj_close"])
 
 
-def _available_price_dates(prices: pd.DataFrame) -> list[date]:
-    return sorted(date_value for date_value in prices["_date"].dropna().unique())
+def _complete_price_dates(prices: pd.DataFrame, symbols: set[str]) -> list[date]:
+    if prices.duplicated(subset=["_date", "symbol"]).any():
+        raise DynamicV3PaperTrackingError("outcome price snapshot contains duplicate keys")
+    complete = []
+    for date_value, group in prices.groupby("_date", dropna=True):
+        values = {
+            _text(row["symbol"]): row["_adj_close"]
+            for _, row in group.iterrows()
+        }
+        if symbols <= set(values) and all(
+            _is_finite_number(values[symbol]) and _float(values[symbol]) > 0
+            for symbol in symbols
+        ):
+            complete.append(date_value)
+    return sorted(complete)
 
 
 def _nth_trading_date_after(dates: Sequence[date], start: date, n: int) -> date | None:
     after = [item for item in dates if item > start]
-    if len(after) < n:
-        return None
-    return after[n - 1]
+    return after[n - 1] if len(after) >= n else None
 
 
-def _outcome_window_metrics(
+def _compute_outcome_window_rows(
+    *,
+    advisory_event: Mapping[str, Any],
+    config: Mapping[str, Any],
+    paper_binding: Mapping[str, Any],
+    prices: pd.DataFrame | None,
+    updated_as_of: date,
+    data_gate_ran: bool,
+) -> list[dict[str, Any]]:
+    start = _date_from_any(advisory_event.get("as_of"))
+    if start is None:
+        raise DynamicV3PaperTrackingError("advisory event as_of is invalid")
+    windows = _configured_outcome_windows(config)
+    if not data_gate_ran:
+        return [
+            {
+                **_pending_outcome_window(
+                    daily_advisory_id=_text(advisory_event.get("daily_advisory_id")),
+                    window_days=window,
+                    start_date=start.isoformat(),
+                ),
+                "paper_action_status": paper_binding.get("status"),
+                "insufficient_reason": "AS_OF_AFTER_GENERATED_DATE_DATA_GATE_NOT_RUN",
+            }
+            for window in windows
+        ]
+    if prices is None:
+        raise DynamicV3PaperTrackingError("price snapshot is required after data gate")
+    symbols = _outcome_required_symbols(advisory_event, paper_binding)
+    complete_dates = _complete_price_dates(prices, symbols)
+    rows: list[dict[str, Any]] = []
+    for window in windows:
+        base = _pending_outcome_window(
+            daily_advisory_id=_text(advisory_event.get("daily_advisory_id")),
+            window_days=window,
+            start_date=start.isoformat(),
+        )
+        end = _nth_trading_date_after(complete_dates, start, window)
+        if end is None or end > updated_as_of:
+            rows.append(
+                {
+                    **base,
+                    "end_date": end.isoformat() if end else "",
+                    "outcome_status": (
+                        "PENDING" if end is not None else "INSUFFICIENT_DATA"
+                    ),
+                    "paper_action_status": paper_binding.get("status"),
+                    "insufficient_reason": (
+                        "WINDOW_NOT_DUE" if end is not None else "MISSING_COMPLETE_TRADING_DATES"
+                    ),
+                }
+            )
+            continue
+        try:
+            metrics = _outcome_window_metrics_v2(
+                prices=prices,
+                start=start,
+                end=end,
+                advisory_event=advisory_event,
+                paper_binding=paper_binding,
+                config=config,
+            )
+        except DynamicV3PaperTrackingError as exc:
+            rows.append(
+                {
+                    **base,
+                    "end_date": end.isoformat(),
+                    "outcome_status": "INSUFFICIENT_DATA",
+                    "paper_action_status": paper_binding.get("status"),
+                    "insufficient_reason": str(exc),
+                }
+            )
+            continue
+        rows.append(
+            {
+                **base,
+                "end_date": end.isoformat(),
+                **metrics,
+                "outcome_status": "AVAILABLE",
+                "insufficient_reason": "",
+            }
+        )
+    return rows
+
+
+def _outcome_window_metrics_v2(
     *,
     prices: pd.DataFrame,
     start: date,
     end: date,
-    event: Mapping[str, Any],
+    advisory_event: Mapping[str, Any],
+    paper_binding: Mapping[str, Any],
+    config: Mapping[str, Any],
 ) -> dict[str, Any]:
-    no_trade_weights = _mapping(event.get("no_trade_weights"))
-    paper_weights = _mapping(event.get("paper_action_weights")) or no_trade_weights
-    baseline_weights = _mapping(event.get("baseline_weights"))
-    target_weights = _mapping(event.get("target_weights"))
-    try:
-        paper_return, daily_returns = _portfolio_return_and_path(prices, paper_weights, start, end)
-        no_trade_return, _ = _portfolio_return_and_path(prices, no_trade_weights, start, end)
-        baseline_return, _ = _portfolio_return_and_path(prices, baseline_weights, start, end)
-        target_return, _ = _portfolio_return_and_path(prices, target_weights, start, end)
-    except DynamicV3PaperTrackingError:
-        return {
-            "paper_portfolio_return": 0.0,
-            "no_trade_return": 0.0,
-            "baseline_return": 0.0,
-            "target_weight_return": 0.0,
-            "relative_to_no_trade": 0.0,
-            "relative_to_baseline": 0.0,
-            "max_drawdown": 0.0,
-            "realized_volatility": 0.0,
-            "status": "INSUFFICIENT_DATA",
-        }
-    return {
+    no_trade = _validated_outcome_weights(
+        _mapping(advisory_event.get("no_trade_weights")), "no_trade_weights"
+    )
+    baseline = _validated_outcome_weights(
+        _mapping(advisory_event.get("baseline_weights")), "baseline_weights"
+    )
+    target = _validated_outcome_weights(
+        _mapping(advisory_event.get("target_weights")), "target_weights"
+    )
+    limited = _validated_outcome_weights(
+        _mapping(advisory_event.get("limited_adjustment_weights")),
+        "limited_adjustment_weights",
+    )
+    cost_rate = _outcome_cost_rate(config)
+    no_trade_return, _no_trade_daily, _ = _static_counterfactual_path(
+        prices=prices,
+        weights=no_trade,
+        reference_weights=no_trade,
+        start=start,
+        end=end,
+        cost_rate=0.0,
+    )
+    baseline_return, _baseline_daily, baseline_cost = _static_counterfactual_path(
+        prices=prices,
+        weights=baseline,
+        reference_weights=no_trade,
+        start=start,
+        end=end,
+        cost_rate=cost_rate,
+    )
+    target_return, _target_daily, target_cost = _static_counterfactual_path(
+        prices=prices,
+        weights=target,
+        reference_weights=no_trade,
+        start=start,
+        end=end,
+        cost_rate=cost_rate,
+    )
+    limited_return, _limited_daily, limited_cost = _static_counterfactual_path(
+        prices=prices,
+        weights=limited,
+        reference_weights=no_trade,
+        start=start,
+        end=end,
+        cost_rate=cost_rate,
+    )
+    paper_return, paper_daily, paper_cost, effective_date = _paper_counterfactual_path(
+        prices=prices,
+        no_trade_weights=no_trade,
+        paper_binding=paper_binding,
+        start=start,
+        end=end,
+        cost_rate=cost_rate,
+    )
+    metrics = {
         "paper_portfolio_return": round(paper_return, 6),
         "no_trade_return": round(no_trade_return, 6),
         "baseline_return": round(baseline_return, 6),
         "target_weight_return": round(target_return, 6),
+        "limited_adjustment_return": round(limited_return, 6),
         "relative_to_no_trade": round(paper_return - no_trade_return, 6),
         "relative_to_baseline": round(paper_return - baseline_return, 6),
-        "max_drawdown": round(_max_drawdown(daily_returns), 6),
-        "realized_volatility": round(_realized_volatility(daily_returns), 6),
-        "status": "AVAILABLE",
+        "max_drawdown": round(_max_drawdown(paper_daily), 6),
+        "realized_volatility": round(_realized_volatility(paper_daily), 6),
+        "paper_transaction_cost": round(paper_cost, 8),
+        "baseline_transaction_cost": round(baseline_cost, 8),
+        "target_transaction_cost": round(target_cost, 8),
+        "limited_transaction_cost": round(limited_cost, 8),
+        "paper_action_status": paper_binding.get("status"),
+        "paper_action_effective_date": effective_date.isoformat() if effective_date else "",
     }
+    if not all(_is_finite_number(metrics[field]) for field in OUTCOME_METRIC_FIELDS):
+        raise DynamicV3PaperTrackingError("outcome metrics contain non-finite values")
+    return metrics
 
 
-def _portfolio_return_and_path(
+def _outcome_cost_rate(config: Mapping[str, Any]) -> float:
+    simulation = _mapping(config.get("simulation"))
+    total_bps = _strict_finite_number(
+        simulation.get("transaction_cost_bps"), "transaction_cost_bps"
+    ) + _strict_finite_number(simulation.get("slippage_bps"), "slippage_bps")
+    return total_bps / 10_000.0
+
+
+def _turnover_between(left: Mapping[str, Any], right: Mapping[str, Any]) -> float:
+    symbols = set(left) | set(right)
+    return 0.5 * sum(
+        abs(_float(right.get(symbol)) - _float(left.get(symbol))) for symbol in symbols
+    )
+
+
+def _static_counterfactual_path(
+    *,
     prices: pd.DataFrame,
     weights: Mapping[str, Any],
+    reference_weights: Mapping[str, Any],
     start: date,
     end: date,
-) -> tuple[float, list[float]]:
-    clean = _normalize_weights(weights)
-    if not clean:
-        raise DynamicV3PaperTrackingError("empty weights")
-    pivot = prices.pivot_table(index="_date", columns="symbol", values="_adj_close", aggfunc="last")
-    dates = [item for item in sorted(pivot.index) if start <= item <= end]
-    if start not in pivot.index:
-        prior = [item for item in sorted(pivot.index) if item <= start]
-        if not prior:
-            raise DynamicV3PaperTrackingError("missing start price")
-        start_idx = prior[-1]
-    else:
-        start_idx = start
-    if end not in pivot.index:
-        raise DynamicV3PaperTrackingError("missing end price")
-    daily_returns = []
-    total_return = 0.0
-    for symbol, weight in clean.items():
-        if symbol == "CASH":
-            continue
-        if symbol not in pivot.columns:
-            raise DynamicV3PaperTrackingError(f"missing symbol price: {symbol}")
-        start_price = _float(pivot.loc[start_idx, symbol])
-        end_price = _float(pivot.loc[end, symbol])
-        if start_price <= 0 or end_price <= 0:
-            raise DynamicV3PaperTrackingError(f"invalid price for {symbol}")
-        total_return += _float(weight) * (end_price / start_price - 1.0)
-    for left, right in zip(dates, dates[1:], strict=False):
-        day_ret = 0.0
-        for symbol, weight in clean.items():
-            if symbol == "CASH":
-                continue
-            left_price = _float(pivot.loc[left, symbol])
-            right_price = _float(pivot.loc[right, symbol])
-            if left_price <= 0 or right_price <= 0:
-                continue
-            day_ret += _float(weight) * (right_price / left_price - 1.0)
-        daily_returns.append(day_ret)
-    return total_return, daily_returns
+    cost_rate: float,
+) -> tuple[float, list[float], float]:
+    values, _dates = _fixed_share_values(prices, weights, start=start, end=end)
+    turnover = _turnover_between(reference_weights, weights)
+    cost = turnover * cost_rate
+    total_return = (1.0 - cost) * values[-1] - 1.0
+    daily = ([-cost] if cost else []) + _daily_returns_from_values(values)
+    return total_return, daily, cost
+
+
+def _paper_counterfactual_path(
+    *,
+    prices: pd.DataFrame,
+    no_trade_weights: Mapping[str, Any],
+    paper_binding: Mapping[str, Any],
+    start: date,
+    end: date,
+    cost_rate: float,
+) -> tuple[float, list[float], float, date | None]:
+    no_trade_values, dates = _fixed_share_values(
+        prices, no_trade_weights, start=start, end=end
+    )
+    action_at = _parse_datetime_text(_text(paper_binding.get("created_at")))
+    after_weights = _mapping(paper_binding.get("after_weights"))
+    if action_at is None or not after_weights:
+        return no_trade_values[-1] - 1.0, _daily_returns_from_values(no_trade_values), 0.0, None
+    effective = next((value for value in dates if value > action_at.date()), None)
+    if effective is None or effective > end:
+        return no_trade_values[-1] - 1.0, _daily_returns_from_values(no_trade_values), 0.0, None
+    start_date = dates[0]
+    if effective <= start_date:
+        values, _ = _fixed_share_values(prices, after_weights, start=start, end=end)
+        turnover = 0.5 * sum(
+            abs(_float(value))
+            for value in _mapping(paper_binding.get("applied_paper_deltas")).values()
+        )
+        cost = turnover * cost_rate
+        total_return = (1.0 - cost) * values[-1] - 1.0
+        daily = ([-cost] if cost else []) + _daily_returns_from_values(values)
+        return total_return, daily, cost, effective
+    effective_index = dates.index(effective)
+    post_values, post_dates = _fixed_share_values(
+        prices,
+        after_weights,
+        start=effective,
+        end=end,
+    )
+    if post_dates[0] != effective:
+        raise DynamicV3PaperTrackingError("paper action effective price is missing")
+    turnover = 0.5 * sum(
+        abs(_float(value))
+        for value in _mapping(paper_binding.get("applied_paper_deltas")).values()
+    )
+    cost = turnover * cost_rate
+    anchor = no_trade_values[effective_index] * (1.0 - cost)
+    composite = [*no_trade_values[:effective_index], *[anchor * value for value in post_values]]
+    return composite[-1] - 1.0, _daily_returns_from_values(composite), cost, effective
+
+
+def _fixed_share_values(
+    prices: pd.DataFrame,
+    weights: Mapping[str, Any],
+    *,
+    start: date,
+    end: date,
+) -> tuple[list[float], list[date]]:
+    clean = _validated_outcome_weights(weights, "counterfactual_weights")
+    symbols = {symbol for symbol in clean if symbol != "CASH"}
+    if prices.duplicated(subset=["_date", "symbol"]).any():
+        raise DynamicV3PaperTrackingError("outcome price snapshot contains duplicate keys")
+    pivot = prices.pivot(index="_date", columns="symbol", values="_adj_close")
+    union_dates = sorted(value for value in pivot.index if value <= end)
+    prior = [value for value in union_dates if value <= start]
+    if not prior:
+        raise DynamicV3PaperTrackingError("MISSING_COMPLETE_START_PRICE")
+    start_idx = prior[-1]
+    dates = [value for value in union_dates if start_idx <= value <= end]
+    if not dates or end not in dates:
+        raise DynamicV3PaperTrackingError("MISSING_END_PRICE")
+    for date_value in dates:
+        for symbol in symbols:
+            if symbol not in pivot.columns:
+                raise DynamicV3PaperTrackingError(f"MISSING_SYMBOL_PRICE:{symbol}")
+            value = pivot.loc[date_value, symbol]
+            if not _is_finite_number(value) or _float(value) <= 0:
+                raise DynamicV3PaperTrackingError(
+                    f"INCOMPLETE_PRICE_PATH:{symbol}:{date_value}"
+                )
+    base_prices = {symbol: _float(pivot.loc[start_idx, symbol]) for symbol in symbols}
+    values = []
+    for date_value in dates:
+        value = _float(clean.get("CASH"))
+        value += sum(
+            _float(clean.get(symbol))
+            * _float(pivot.loc[date_value, symbol])
+            / base_prices[symbol]
+            for symbol in symbols
+        )
+        if not math.isfinite(value) or value <= 0:
+            raise DynamicV3PaperTrackingError("portfolio value path is invalid")
+        values.append(value)
+    return values, dates
+
+
+def _daily_returns_from_values(values: Sequence[float]) -> list[float]:
+    return [right / left - 1.0 for left, right in zip(values, values[1:], strict=False)]
 
 
 def _max_drawdown(daily_returns: Sequence[float]) -> float:
@@ -2473,11 +3784,15 @@ def _realized_volatility(daily_returns: Sequence[float]) -> float:
 
 def _rollup_outcome_status(rows: Sequence[Mapping[str, Any]]) -> str:
     statuses = {_text(row.get("outcome_status")) for row in rows}
-    if "AVAILABLE" in statuses:
+    if statuses == {"AVAILABLE"}:
         return "AVAILABLE"
-    if "INSUFFICIENT_DATA" in statuses:
+    if "AVAILABLE" in statuses:
+        return "PARTIAL"
+    if "PENDING" in statuses:
+        return "PENDING"
+    if statuses == {"INSUFFICIENT_DATA"}:
         return "INSUFFICIENT_DATA"
-    return "PENDING"
+    return "INSUFFICIENT_DATA"
 
 
 def _owner_decision_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -3063,17 +4378,24 @@ def _write_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
             handle.write(json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def _append_jsonl_atomic(path: Path, row: Mapping[str, Any]) -> None:
+def _append_jsonl_atomic(
+    path: Path,
+    row: Mapping[str, Any],
+    *,
+    sequence_field: str = "event_sequence",
+    checksum_field: str = "event_checksum",
+    previous_field: str = "previous_event_checksum",
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     existing = path.read_text(encoding="utf-8") if path.exists() else ""
     if existing and not existing.endswith("\n"):
         raise DynamicV3PaperTrackingError(f"JSONL source is not newline terminated: {path}")
     current = _read_jsonl(path)
     expected_sequence = len(current) + 1
-    expected_previous = _text(current[-1].get("event_checksum")) if current else "GENESIS"
+    expected_previous = _text(current[-1].get(checksum_field)) if current else "GENESIS"
     if (
-        row.get("event_sequence") != expected_sequence
-        or row.get("previous_event_checksum") != expected_previous
+        row.get(sequence_field) != expected_sequence
+        or row.get(previous_field) != expected_previous
     ):
         raise DynamicV3PaperTrackingError("paper action append precondition changed")
     line = json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n"

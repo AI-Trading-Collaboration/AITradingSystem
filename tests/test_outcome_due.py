@@ -8,8 +8,8 @@ from typing import Any
 import pandas as pd
 from dynamic_v3_paper_tracking_helpers import (
     paper_config_path,
-    write_daily_advisory,
     write_market_cache,
+    write_validated_daily_advisory,
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
@@ -26,25 +26,27 @@ def test_outcome_due_scan_classifies_due_not_due_and_price_missing(
     monkeypatch.setattr(accumulation, "DEFAULT_LATEST_POINTER_DIR", tmp_path / "latest")
     config_path = paper_config_path(tmp_path)
     init_paper_portfolio(config_path=config_path, output_dir=tmp_path / "paper_portfolio")
-    advisory = write_daily_advisory(tmp_path, daily_advisory_id="due", as_of="2026-06-08")
+    advisory = write_validated_daily_advisory(tmp_path, as_of=date(2026, 6, 8))
     due = track_advisory_outcome(
         daily_advisory_id=advisory["daily_advisory_id"],
         config_path=config_path,
         output_dir=tmp_path / "advisory_outcome",
         daily_advisory_dir=tmp_path / "position_advisory_daily",
         paper_portfolio_dir=tmp_path / "paper_portfolio",
+        generated_at=datetime(2026, 6, 8, 15, tzinfo=UTC),
     )
-    missing_advisory = write_daily_advisory(
-        tmp_path,
-        daily_advisory_id="missing-price",
-        as_of="2026-06-08",
+    missing_advisory = write_validated_daily_advisory(
+        tmp_path / "missing_source",
+        as_of=date(2026, 6, 8),
+        generated_at=datetime(2026, 6, 8, 10, 1, tzinfo=UTC),
     )
     missing = track_advisory_outcome(
         daily_advisory_id=missing_advisory["daily_advisory_id"],
         config_path=config_path,
         output_dir=tmp_path / "advisory_outcome",
-        daily_advisory_dir=tmp_path / "position_advisory_daily",
+        daily_advisory_dir=missing_advisory["daily_advisory_dir"],
         paper_portfolio_dir=tmp_path / "paper_portfolio",
+        generated_at=datetime(2026, 6, 8, 15, 1, tzinfo=UTC),
     )
     event_path = missing["outcome_dir"] / "advisory_event.json"
     event = json.loads(event_path.read_text(encoding="utf-8"))
@@ -85,4 +87,3 @@ def test_outcome_due_scan_classifies_due_not_due_and_price_missing(
         )["status"]
         == "PASS"
     )
-

@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AM_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AN_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 5622611d
+base_commit: 153bb36b
 production_effect: none
 
 arch_004_owned_paths:
@@ -214,6 +214,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_consensus_drift.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_owner_review_journal.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_paper_portfolio.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_advisory_outcome.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_real_snapshot.py
@@ -222,6 +223,10 @@ arch_004_owned_paths:
   - tests/test_owner_review_journal.py
   - tests/test_paper_portfolio.py
   - tests/test_advisory_outcome.py
+  - tests/test_outcome_due.py
+  - tests/test_outcome_dashboard.py
+  - tests/test_owner_attribution.py
+  - tests/test_weekly_advisory_review.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py

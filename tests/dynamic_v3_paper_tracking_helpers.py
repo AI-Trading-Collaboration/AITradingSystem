@@ -49,7 +49,13 @@ def paper_snapshot_path(tmp_path: Path) -> Path:
     return path
 
 
-def paper_config_path(tmp_path: Path, *, snapshot_path: Path | None = None) -> Path:
+def paper_config_path(
+    tmp_path: Path,
+    *,
+    snapshot_path: Path | None = None,
+    transaction_cost_bps: float = 0,
+    slippage_bps: float = 0,
+) -> Path:
     path = tmp_path / "paper_portfolio_v1.yaml"
     path.write_text(
         yaml.safe_dump(
@@ -80,8 +86,8 @@ def paper_config_path(tmp_path: Path, *, snapshot_path: Path | None = None) -> P
                 "simulation": {
                     "price_source": "existing_price_cache",
                     "use_adjusted_close": True,
-                    "transaction_cost_bps": 0,
-                    "slippage_bps": 0,
+                    "transaction_cost_bps": transaction_cost_bps,
+                    "slippage_bps": slippage_bps,
                     "min_trade_threshold": 0.01,
                     "max_single_day_total_adjustment": 0.10,
                     "max_single_symbol_adjustment": 0.05,
@@ -216,37 +222,65 @@ def write_validated_owner_review(
     *,
     owner_decision: str,
     as_of: date = date(2026, 6, 7),
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    daily = write_validated_daily_advisory(
+        tmp_path,
+        as_of=as_of,
+        generated_at=generated_at,
+    )
+    base = generated_at or datetime.combine(as_of, datetime.min.time(), tzinfo=UTC).replace(
+        hour=10
+    )
+    created = create_owner_review(
+        daily_advisory_id=daily["daily_advisory_id"],
+        daily_advisory_dir=daily["daily_advisory_dir"],
+        output_dir=tmp_path / "owner_review_journal",
+        generated_at=base.replace(hour=12),
+    )
+    record_owner_review_decision(
+        review_id=created["review_id"],
+        decision=owner_decision,
+        output_dir=tmp_path / "owner_review_journal",
+        daily_advisory_dir=daily["daily_advisory_dir"],
+        generated_at=base.replace(hour=13),
+    )
+    return {
+        "review_id": created["review_id"],
+        "daily_advisory_id": daily["daily_advisory_id"],
+        "daily_advisory_dir": daily["daily_advisory_dir"],
+        "owner_review_dir": tmp_path / "owner_review_journal",
+    }
+
+
+def write_validated_daily_advisory(
+    tmp_path: Path,
+    *,
+    as_of: date = date(2026, 6, 7),
+    generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     tmp_path.mkdir(parents=True, exist_ok=True)
+    base = generated_at or datetime.combine(as_of, datetime.min.time(), tzinfo=UTC).replace(
+        hour=10
+    )
     fixture = shadow_shortlist_fixture(tmp_path)
     monitor = run_shadow_shortlist_monitor(
         shadow_shortlist_id=fixture["shadow"]["shadow_shortlist_id"],
         as_of=as_of,
         shadow_shortlist_dir=tmp_path / "shadow_shortlist",
         output_dir=tmp_path / "shadow_monitor_runs",
+        generated_at=base,
     )
     daily = run_position_advisory_daily(
         shadow_monitor_run_id=monitor["monitor_run_id"],
         config_path=position_advisory_config(tmp_path),
         shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
         output_dir=tmp_path / "position_advisory_daily",
-    )
-    created = create_owner_review(
-        daily_advisory_id=daily["daily_advisory_id"],
-        daily_advisory_dir=tmp_path / "position_advisory_daily",
-        output_dir=tmp_path / "owner_review_journal",
-    )
-    record_owner_review_decision(
-        review_id=created["review_id"],
-        decision=owner_decision,
-        output_dir=tmp_path / "owner_review_journal",
-        daily_advisory_dir=tmp_path / "position_advisory_daily",
+        generated_at=base.replace(hour=11),
     )
     return {
-        "review_id": created["review_id"],
         "daily_advisory_id": daily["daily_advisory_id"],
         "daily_advisory_dir": tmp_path / "position_advisory_daily",
-        "owner_review_dir": tmp_path / "owner_review_journal",
     }
 
 

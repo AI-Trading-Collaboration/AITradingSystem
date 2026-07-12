@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from dynamic_v3_paper_tracking_helpers import (
     paper_config_path,
-    write_daily_advisory,
     write_owner_review,
     write_shadow_shortlist_and_monitoring,
+    write_validated_daily_advisory,
 )
 
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
@@ -30,7 +30,7 @@ def test_weekly_advisory_review_aggregates_and_flows_to_reader_brief(
 ) -> None:
     config_path = paper_config_path(tmp_path)
     paper = init_paper_portfolio(config_path=config_path, output_dir=tmp_path / "paper_portfolio")
-    advisory = write_daily_advisory(tmp_path, as_of="2026-06-08")
+    advisory = write_validated_daily_advisory(tmp_path, as_of=date(2026, 6, 8))
     write_owner_review(
         tmp_path,
         daily_advisory_id=advisory["daily_advisory_id"],
@@ -43,6 +43,7 @@ def test_weekly_advisory_review_aggregates_and_flows_to_reader_brief(
         output_dir=tmp_path / "advisory_outcome",
         daily_advisory_dir=tmp_path / "position_advisory_daily",
         paper_portfolio_dir=tmp_path / "paper_portfolio",
+        generated_at=datetime(2026, 6, 8, 15, tzinfo=UTC),
     )
     attribution = run_owner_attribution(
         output_dir=tmp_path / "owner_attribution",

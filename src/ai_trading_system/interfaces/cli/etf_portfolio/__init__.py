@@ -17,6 +17,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v2_review as dynamic_v2_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_advisory_outcome as dynamic_v3_advisory_outcome_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_candidate_evidence as dynamic_v3_candidate_evidence_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -137,6 +140,7 @@ __all__ = [
     "dynamic_rescue_commands",
     "dynamic_v2_review_commands",
     "dynamic_v3_rescue_commands",
+    "dynamic_v3_advisory_outcome_commands",
     "dynamic_v3_real_evaluation_commands",
     "dynamic_v3_real_execution_owner_review_commands",
     "dynamic_v3_real_snapshot_intake_commands",

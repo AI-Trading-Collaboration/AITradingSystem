@@ -6283,13 +6283,17 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_outcome_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_event.json
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/outcome_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/outcome_update_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_counterfactuals.json
       - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_outcome_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/source_snapshots/*/required_symbol_prices.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/source_snapshots/*/validate_data_quality_report.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-137 evaluates paper action, no_trade, baseline, and consensus
-      counterfactual windows after daily advisory while preserving pending and
-      insufficient-data states.
+      TRADING-137 freezes decision-time sources and per-update data-quality /
+      required-symbol price evidence, then replays an append-only checksum event
+      chain for paper, no_trade, baseline, consensus, and limited-adjustment
+      counterfactuals without look-ahead or execution effect.
     owner_action: review_advisory_outcome_before_adjusting_advisory_rules
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
