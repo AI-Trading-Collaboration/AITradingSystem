@@ -1,0 +1,36 @@
+schema_version: sim_defensive_validation_policy.v1
+
+policy_metadata:
+  policy_id: dynamic_v3_sim_defensive_validation_v1
+  owner: project_owner
+  version: "2026-07-13"
+  status: pilot_baseline
+  rationale: >
+    Defensive naming requires paired pressure-regime evidence; missing samples
+    must not be converted to zero return or zero drawdown.
+  intended_effect: >
+    Govern which regimes and windows are reviewed, the minimum distinct-event
+    evidence floor, and the return/drawdown boundaries used for manual review.
+  validation_evidence: >
+    G2.4BV focused tests cover strict policy validation, paired cohorts,
+    null-preserving outputs, source/policy drift and full artifact recomputation.
+  review_condition: >
+    Recalibrate only through a preregistered review after independent forward
+    pressure samples mature; do not tune from this simulation result.
+
+pressure_regimes:
+  - tech_drawdown
+  - risk_off
+  - semiconductor_pullback
+
+tracked_window_days: [5, 10, 20]
+minimum_distinct_events_per_pressure_regime: 5
+minimum_relative_return: 0.0
+minimum_drawdown_delta_vs_no_trade: 0.0
+
+safety:
+  outcome_mode: BACKTEST_SIMULATION
+  pit_safety_status: SIMULATION_NOT_PIT
+  auto_policy_apply: false
+  production_effect: none
+  broker_action: none

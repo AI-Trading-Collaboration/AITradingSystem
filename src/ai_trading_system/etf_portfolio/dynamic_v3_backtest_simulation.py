@@ -78,6 +78,13 @@ DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR = (
 DEFAULT_SIM_INTERPRETATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_interpretation"
 DEFAULT_SIM_RISK_RETURN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_risk_return"
 DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_defensive_validation"
+DEFAULT_SIM_DEFENSIVE_VALIDATION_POLICY_PATH = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.parents[2]
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "sim_defensive_validation_v1.yaml"
+)
 DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "advisory_proposal_review"
 DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_plan"
@@ -98,6 +105,9 @@ BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = (
 )
 SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION = "sim_interpretation_input_snapshot.v2"
 SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION = "sim_risk_return_input_snapshot.v2"
+SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION = (
+    "sim_defensive_validation_input_snapshot.v2"
+)
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -4569,65 +4579,79 @@ def run_sim_defensive_validation(
     outcome_id: str,
     outcome_dir: Path = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
     output_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    policy_path: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
-    outcome_rows = _read_jsonl(outcome_dir / outcome_id / "simulated_outcome_windows.jsonl")
-    matrix_rows = _defensive_regime_matrix(outcome_rows)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dir = outcome_dir / outcome_id
+    outcome_validation = validate_backtest_sim_outcome_artifact(
+        sim_outcome_id=outcome_id, output_dir=outcome_dir
+    )
+    if outcome_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError("defensive validation Outcome validation failed")
+    outcome_bundle = _backtest_sim_outcome_bundle(source_dir)
+    outcome_manifest = _mapping(outcome_bundle.get("manifest"))
+    outcome_generated = _datetime_from_any(outcome_manifest.get("generated_at"))
+    if outcome_generated is None or outcome_generated > generated:
+        raise DynamicV3BacktestSimulationError(
+            "Outcome source generated after defensive validation cutoff"
+        )
+    policy = _load_sim_defensive_validation_policy(policy_path)
+    policy_bundle = {
+        "path": str(policy_path),
+        "payload": policy,
+        "file_contents": _read_text(policy_path),
+    }
+    matrix_rows = _defensive_regime_matrix(
+        _records(outcome_bundle.get("windows")), policy=policy
+    )
     failure_cases = [
         _defensive_failure_case(row)
         for row in matrix_rows
         if _mapping(row.get("defensive_limited_adjustment")).get("status")
         == "FAILS_DEFENSIVE_EXPECTATION"
     ]
-    summary = _defensive_validation_summary(matrix_rows)
+    summary = _defensive_validation_summary(matrix_rows, policy=policy)
     defensive_validation_id = _stable_id(
         "sim-defensive-validation",
         outcome_id,
         generated.isoformat(),
     )
     defensive_dir = _unique_dir(output_dir / defensive_validation_id)
-    defensive_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_sim_defensive_validation_manifest",
-        "defensive_validation_id": defensive_dir.name,
-        "outcome_id": outcome_id,
+    input_snapshot = {
+        "schema_version": SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_defensive_validation_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "market_regime": "ai_after_chatgpt",
+        "outcome_dir": str(source_dir),
+        "outcome_bundle": outcome_bundle,
+        "outcome_validation": outcome_validation,
+        "policy_bundle": policy_bundle,
+        "lineage": {"outcome_id": outcome_id},
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
-        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
         "not_for_production": True,
-        "source_best_variant": outcome_manifest.get("best_variant"),
-        "defensive_validation_manifest_path": str(
-            defensive_dir / "defensive_validation_manifest.json"
-        ),
-        "defensive_regime_matrix_path": str(defensive_dir / "defensive_regime_matrix.jsonl"),
-        "defensive_failure_cases_path": str(defensive_dir / "defensive_failure_cases.jsonl"),
-        "defensive_validation_summary_path": str(
-            defensive_dir / "defensive_validation_summary.json"
-        ),
-        "defensive_validation_report_path": str(defensive_dir / "defensive_validation_report.md"),
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    manifest = _sim_defensive_validation_manifest(
+        defensive_dir=defensive_dir,
+        generated=generated,
+        outcome_id=outcome_id,
+        outcome_manifest=outcome_manifest,
+        policy=policy,
+        summary=summary,
+    )
+    report = render_defensive_validation_report(manifest, summary, matrix_rows)
+    defensive_dir.mkdir(parents=True, exist_ok=False)
     _write_json(defensive_dir / "defensive_validation_manifest.json", manifest)
     _write_jsonl(defensive_dir / "defensive_regime_matrix.jsonl", matrix_rows)
     _write_jsonl(defensive_dir / "defensive_failure_cases.jsonl", failure_cases)
     _write_json(defensive_dir / "defensive_validation_summary.json", summary)
-    _write_text(
-        defensive_dir / "defensive_validation_report.md",
-        render_defensive_validation_report(manifest, summary, matrix_rows),
+    _write_json(
+        defensive_dir / "sim_defensive_validation_input_snapshot.json", input_snapshot
     )
+    _write_text(defensive_dir / "defensive_validation_report.md", report)
     _update_latest_pointer(
         "latest_sim_defensive_validation",
         defensive_dir.name,
@@ -4640,6 +4664,60 @@ def run_sim_defensive_validation(
         "defensive_regime_matrix": matrix_rows,
         "defensive_failure_cases": failure_cases,
         "defensive_validation_summary": summary,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _sim_defensive_validation_manifest(
+    *,
+    defensive_dir: Path,
+    generated: datetime,
+    outcome_id: str,
+    outcome_manifest: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    policy_metadata = _mapping(policy.get("policy_metadata"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_defensive_validation_manifest",
+        "defensive_validation_id": defensive_dir.name,
+        "outcome_id": outcome_id,
+        "generated_at": generated.isoformat(),
+        "status": (
+            "PASS"
+            if summary.get("defensive_limited_adjustment_status")
+            != "INSUFFICIENT_DATA"
+            else "INSUFFICIENT_DATA"
+        ),
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": outcome_manifest.get("best_variant"),
+        "policy_id": policy_metadata.get("policy_id"),
+        "policy_version": policy_metadata.get("version"),
+        "defensive_validation_manifest_path": str(
+            defensive_dir / "defensive_validation_manifest.json"
+        ),
+        "defensive_regime_matrix_path": str(defensive_dir / "defensive_regime_matrix.jsonl"),
+        "defensive_failure_cases_path": str(defensive_dir / "defensive_failure_cases.jsonl"),
+        "defensive_validation_summary_path": str(
+            defensive_dir / "defensive_validation_summary.json"
+        ),
+        "sim_defensive_validation_input_snapshot_path": str(
+            defensive_dir / "sim_defensive_validation_input_snapshot.json"
+        ),
+        "defensive_validation_report_path": str(defensive_dir / "defensive_validation_report.md"),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -4660,6 +4738,9 @@ def sim_defensive_validation_report_payload(
         "defensive_validation_summary": _read_json(
             defensive_dir / "defensive_validation_summary.json"
         ),
+        "sim_defensive_validation_input_snapshot": _read_json(
+            defensive_dir / "sim_defensive_validation_input_snapshot.json"
+        ),
         "defensive_validation_dir": str(defensive_dir),
     }
 
@@ -4672,7 +4753,94 @@ def validate_sim_defensive_validation_artifact(
     defensive_dir = output_dir / defensive_validation_id
     manifest = _read_optional_json(defensive_dir / "defensive_validation_manifest.json") or {}
     rows = _read_jsonl(defensive_dir / "defensive_regime_matrix.jsonl")
+    failure_cases = _read_jsonl(defensive_dir / "defensive_failure_cases.jsonl")
     summary = _read_optional_json(defensive_dir / "defensive_validation_summary.json") or {}
+    snapshot = (
+        _read_optional_json(defensive_dir / "sim_defensive_validation_input_snapshot.json")
+        or {}
+    )
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_snapshot: dict[str, Any] = {}
+    expected_rows: list[dict[str, Any]] = []
+    expected_failure_cases: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    policy: dict[str, Any] = {}
+    try:
+        if snapshot.get("schema_version") != SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("defensive validation snapshot schema mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3BacktestSimulationError(
+                "defensive validation snapshot generated_at must be timezone-aware"
+            )
+        lineage = _mapping(snapshot.get("lineage"))
+        outcome_id = _text(lineage.get("outcome_id"))
+        source_dir = Path(_text(snapshot.get("outcome_dir")))
+        if outcome_id != manifest.get("outcome_id") or source_dir.name != outcome_id:
+            source_errors.append("defensive validation Outcome lineage mismatch")
+        live_validation = validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=outcome_id, output_dir=source_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("live Outcome validation failed")
+        live_bundle = _backtest_sim_outcome_bundle(source_dir)
+        if snapshot.get("outcome_validation") != live_validation:
+            source_errors.append("Outcome validation drifted from frozen snapshot")
+        if snapshot.get("outcome_bundle") != live_bundle:
+            source_errors.append("Outcome bundle drifted from frozen snapshot")
+        outcome_manifest = _mapping(live_bundle.get("manifest"))
+        outcome_generated = _datetime_from_any(outcome_manifest.get("generated_at"))
+        if outcome_generated is None or outcome_generated > generated:
+            source_errors.append("Outcome source generated after defensive validation cutoff")
+        frozen_policy_bundle = _mapping(snapshot.get("policy_bundle"))
+        policy_path = Path(_text(frozen_policy_bundle.get("path")))
+        policy = _load_sim_defensive_validation_policy(policy_path)
+        live_policy_bundle = {
+            "path": str(policy_path),
+            "payload": policy,
+            "file_contents": _read_text(policy_path),
+        }
+        if frozen_policy_bundle != live_policy_bundle:
+            source_errors.append("defensive validation policy drifted from frozen snapshot")
+        expected_rows = _defensive_regime_matrix(
+            _records(live_bundle.get("windows")), policy=policy
+        )
+        expected_failure_cases = [
+            _defensive_failure_case(row)
+            for row in expected_rows
+            if _mapping(row.get("defensive_limited_adjustment")).get("status")
+            == "FAILS_DEFENSIVE_EXPECTATION"
+        ]
+        expected_summary = _defensive_validation_summary(expected_rows, policy=policy)
+        expected_snapshot = {
+            "schema_version": SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_sim_defensive_validation_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "outcome_dir": str(source_dir),
+            "outcome_bundle": live_bundle,
+            "outcome_validation": live_validation,
+            "policy_bundle": live_policy_bundle,
+            "lineage": {"outcome_id": outcome_id},
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _sim_defensive_validation_manifest(
+            defensive_dir=defensive_dir,
+            generated=generated,
+            outcome_id=outcome_id,
+            outcome_manifest=outcome_manifest,
+            policy=policy,
+            summary=expected_summary,
+        )
+        expected_report = render_defensive_validation_report(
+            expected_manifest, expected_summary, expected_rows
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check(
             "manifest_exists",
@@ -4691,6 +4859,11 @@ def validate_sim_defensive_validation_artifact(
             "",
         ),
         _check(
+            "snapshot_exists",
+            (defensive_dir / "sim_defensive_validation_input_snapshot.json").exists(),
+            "",
+        ),
+        _check(
             "report_exists",
             (defensive_dir / "defensive_validation_report.md").exists(),
             "",
@@ -4700,15 +4873,69 @@ def validate_sim_defensive_validation_artifact(
             manifest.get("defensive_validation_id") == defensive_validation_id,
             "",
         ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source/policy"),
+        _check("matrix_recomputed", rows == expected_rows, "Outcome windows"),
+        _check(
+            "failure_cases_recomputed",
+            failure_cases == expected_failure_cases,
+            "matrix",
+        ),
+        _check("summary_recomputed", summary == expected_summary, "matrix"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file()
+                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (
+                        defensive_dir / "sim_defensive_validation_input_snapshot.json",
+                        expected_snapshot,
+                    ),
+                    (defensive_dir / "defensive_validation_summary.json", expected_summary),
+                    (defensive_dir / "defensive_validation_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "all_jsonl_bytes_recomputed",
+            all(
+                path.is_file()
+                and path.read_text(encoding="utf-8") == _canonical_jsonl_text(payload)
+                for path, payload in (
+                    (defensive_dir / "defensive_regime_matrix.jsonl", expected_rows),
+                    (defensive_dir / "defensive_failure_cases.jsonl", expected_failure_cases),
+                )
+            ),
+            "canonical JSONL",
+        ),
+        _check(
+            "report_recomputed",
+            (defensive_dir / "defensive_validation_report.md").is_file()
+            and (defensive_dir / "defensive_validation_report.md").read_text(
+                encoding="utf-8"
+            )
+            == expected_report,
+            "Markdown",
+        ),
         _check(
             "pressure_regimes_present",
-            {row.get("regime") for row in rows} >= DEFENSIVE_PRESSURE_REGIMES,
+            {row.get("regime") for row in rows}
+            >= set(_texts(policy.get("pressure_regimes"))),
             "pressure regimes",
         ),
         _check(
             "defensive_not_auto_proven",
             summary.get("defensive_limited_adjustment_status")
-            in {"NOT_PROVEN_DEFENSIVE", "PARTIALLY_DEFENSIVE", "PROVEN_DEFENSIVE"},
+            in {
+                "INSUFFICIENT_DATA",
+                "NOT_PROVEN_DEFENSIVE",
+                "PARTIALLY_DEFENSIVE",
+                "PROVEN_DEFENSIVE",
+            },
             _text(summary.get("defensive_limited_adjustment_status")),
         ),
         _check(
@@ -4719,6 +4946,41 @@ def validate_sim_defensive_validation_artifact(
                 for row in rows
             ),
             "defensive statuses",
+        ),
+        _check(
+            "paired_units_and_nulls_valid",
+            all(
+                isinstance(row.get("paired_event_count"), int)
+                and isinstance(row.get("paired_window_count"), int)
+                and row.get("paired_window_count", 0) >= row.get("paired_event_count", 0)
+                and (
+                    (
+                        row.get("paired_window_count") == 0
+                        and all(profile.get(key) is None for key in metric_keys)
+                    )
+                    or (
+                        row.get("paired_window_count", 0) > 0
+                        and all(_finite_number(profile.get(key)) for key in metric_keys)
+                    )
+                )
+                for row in rows
+                for profile in (_mapping(row.get("defensive_limited_adjustment")),)
+                for metric_keys in (
+                    (
+                        "avg_return",
+                        "avg_relative_to_no_trade",
+                        "win_rate_vs_no_trade",
+                        "avg_drawdown_delta_vs_no_trade",
+                    ),
+                )
+            ),
+            "paired event/window null-preserving evidence",
+        ),
+        _check(
+            "no_auto_policy",
+            manifest.get("auto_policy_apply") is False
+            and manifest.get("production_effect") == "none",
+            "no policy apply",
         ),
         _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
     ]
@@ -5431,7 +5693,8 @@ def render_defensive_validation_report(
             *[
                 (
                     f"- {row.get('regime')}: best_variant={row.get('best_variant')}; "
-                    f"sample_count={row.get('sample_count')}; "
+                    f"paired_event_count={row.get('paired_event_count')}; "
+                    f"paired_window_count={row.get('paired_window_count')}; "
                     f"defensive_status="
                     f"{_mapping(row.get('defensive_limited_adjustment')).get('status')}; "
                     f"avg_relative_to_no_trade="
@@ -6132,11 +6395,61 @@ def _risk_return_status(
     return "RETURN_WORSE_RISK_WORSE"
 
 
-def _defensive_regime_matrix(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _load_sim_defensive_validation_policy(path: Path) -> dict[str, Any]:
+    payload = safe_load_yaml_path(path)
+    if not isinstance(payload, Mapping) or payload.get("schema_version") != (
+        "sim_defensive_validation_policy.v1"
+    ):
+        raise DynamicV3BacktestSimulationError("defensive validation policy schema invalid")
+    policy = dict(payload)
+    metadata = _mapping(policy.get("policy_metadata"))
+    required_metadata = ("policy_id", "owner", "version", "status", "rationale", "review_condition")
+    if any(not _text(metadata.get(key)) for key in required_metadata):
+        raise DynamicV3BacktestSimulationError("defensive validation policy metadata incomplete")
+    regimes = _texts(policy.get("pressure_regimes"))
+    if set(regimes) != DEFENSIVE_PRESSURE_REGIMES or len(regimes) != len(set(regimes)):
+        raise DynamicV3BacktestSimulationError("defensive validation pressure regimes invalid")
+    windows = policy.get("tracked_window_days")
+    if (
+        not isinstance(windows, list)
+        or not windows
+        or any(
+            isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            for value in windows
+        )
+        or len(windows) != len(set(windows))
+    ):
+        raise DynamicV3BacktestSimulationError("defensive validation windows invalid")
+    floor = policy.get("minimum_distinct_events_per_pressure_regime")
+    if isinstance(floor, bool) or not isinstance(floor, int) or floor <= 0:
+        raise DynamicV3BacktestSimulationError("defensive validation sample floor invalid")
+    for key in ("minimum_relative_return", "minimum_drawdown_delta_vs_no_trade"):
+        if not _finite_number(policy.get(key)):
+            raise DynamicV3BacktestSimulationError(f"defensive validation {key} invalid")
+    safety = _mapping(policy.get("safety"))
+    if (
+        safety.get("outcome_mode") != OUTCOME_MODE_BACKTEST_SIMULATION
+        or safety.get("pit_safety_status") != PIT_SAFETY_SIMULATION
+        or safety.get("auto_policy_apply") is not False
+        or safety.get("production_effect") != "none"
+        or safety.get("broker_action") != "none"
+    ):
+        raise DynamicV3BacktestSimulationError("defensive validation policy safety invalid")
+    return policy
+
+
+def _defensive_regime_matrix(
+    rows: Sequence[Mapping[str, Any]], *, policy: Mapping[str, Any]
+) -> list[dict[str, Any]]:
+    tracked_windows = {_int(value) for value in policy.get("tracked_window_days", [])}
     available = [
         row
         for row in rows
-        if row.get("outcome_status") == "AVAILABLE" and _int(row.get("window_days")) in {5, 10, 20}
+        if row.get("outcome_status") == "AVAILABLE"
+        and _int(row.get("window_days")) in tracked_windows
+        and _text(row.get("regime_label")) in REGIME_BUCKETS
+        and _text(row.get("variant")) in BACKTEST_SIM_VARIANTS
+        and all(_finite_number(row.get(key)) for key in ("return", "max_drawdown"))
     ]
     by_variant_regime: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
     for row in available:
@@ -6153,34 +6466,44 @@ def _defensive_regime_matrix(rows: Sequence[Mapping[str, Any]]) -> list[dict[str
     ]
     matrix = []
     for regime in ordered_regimes:
-        defensive_rows = by_variant_regime.get((regime, "defensive_limited_adjustment"), [])
-        no_trade_rows = by_variant_regime.get((regime, "no_trade"), [])
-        rel = [_float(row.get("relative_to_no_trade")) for row in defensive_rows]
-        drawdown_deltas = _aligned_drawdown_deltas(defensive_rows, no_trade_rows)
-        sample_count = len({_text(row.get("sim_event_id")) for row in defensive_rows})
-        avg_relative = round(_avg(rel), 6)
-        avg_drawdown_delta = round(_avg(drawdown_deltas), 6)
+        pairs = _defensive_regime_pairs(by_variant_regime, regime)
+        defensive_rows = [pair[0] for pair in pairs]
+        rel = [
+            _float(defensive.get("return")) - _float(no_trade.get("return"))
+            for defensive, no_trade in pairs
+        ]
+        drawdown_deltas = [
+            _float(defensive.get("max_drawdown")) - _float(no_trade.get("max_drawdown"))
+            for defensive, no_trade in pairs
+        ]
+        paired_event_count = len({_text(row.get("sim_event_id")) for row in defensive_rows})
+        paired_window_count = len(pairs)
+        avg_return = _nullable_avg([_float(row.get("return")) for row in defensive_rows])
+        avg_relative = _nullable_avg(rel)
+        avg_drawdown_delta = _nullable_avg(drawdown_deltas)
         status = _defensive_regime_status(
             regime=regime,
-            sample_count=sample_count,
+            paired_event_count=paired_event_count,
             avg_relative=avg_relative,
             avg_drawdown_delta=avg_drawdown_delta,
+            policy=policy,
         )
         best_variant = _best_regime_variant(by_variant_regime, regime)
         matrix.append(
             {
                 "schema_version": SCHEMA_VERSION,
                 "regime": regime,
-                "sample_count": sample_count,
+                "sample_count": paired_event_count,
+                "paired_event_count": paired_event_count,
+                "paired_window_count": paired_window_count,
                 "best_variant": best_variant,
                 "defensive_limited_adjustment": {
-                    "avg_return": round(
-                        _avg([_float(row.get("return")) for row in defensive_rows]),
-                        6,
-                    ),
+                    "avg_return": avg_return,
                     "avg_relative_to_no_trade": avg_relative,
                     "win_rate_vs_no_trade": (
-                        round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else 0.0
+                        round(sum(1 for value in rel if value > 0) / len(rel), 6)
+                        if rel
+                        else None
                     ),
                     "avg_drawdown_delta_vs_no_trade": avg_drawdown_delta,
                     "status": status,
@@ -6193,36 +6516,43 @@ def _defensive_regime_matrix(rows: Sequence[Mapping[str, Any]]) -> list[dict[str
     return matrix
 
 
-def _aligned_drawdown_deltas(
-    defensive_rows: Sequence[Mapping[str, Any]],
-    no_trade_rows: Sequence[Mapping[str, Any]],
-) -> list[float]:
+def _defensive_regime_pairs(
+    by_variant_regime: Mapping[tuple[str, str], Sequence[Mapping[str, Any]]], regime: str
+) -> list[tuple[Mapping[str, Any], Mapping[str, Any]]]:
     no_trade_by_key = {
-        (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row for row in no_trade_rows
+        (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row
+        for row in by_variant_regime.get((regime, "no_trade"), [])
     }
-    deltas = []
-    for row in defensive_rows:
-        key = (_text(row.get("sim_event_id")), _int(row.get("window_days")))
-        reference = no_trade_by_key.get(key)
-        if reference is None:
-            continue
-        deltas.append(_float(row.get("max_drawdown")) - _float(reference.get("max_drawdown")))
-    return deltas
+    return [
+        (row, no_trade_by_key[key])
+        for row in by_variant_regime.get((regime, "defensive_limited_adjustment"), [])
+        for key in [(_text(row.get("sim_event_id")), _int(row.get("window_days")))]
+        if key in no_trade_by_key
+    ]
 
 
 def _defensive_regime_status(
     *,
     regime: str,
-    sample_count: int,
-    avg_relative: float,
-    avg_drawdown_delta: float,
+    paired_event_count: int,
+    avg_relative: float | None,
+    avg_drawdown_delta: float | None,
+    policy: Mapping[str, Any],
 ) -> str:
-    if sample_count <= 0:
+    if (
+        paired_event_count <= 0
+        or not _finite_number(avg_relative)
+        or not _finite_number(avg_drawdown_delta)
+    ):
         return "INSUFFICIENT_DATA"
-    if regime in DEFENSIVE_PRESSURE_REGIMES and sample_count < 5:
+    if regime in set(_texts(policy.get("pressure_regimes"))) and paired_event_count < _int(
+        policy.get("minimum_distinct_events_per_pressure_regime")
+    ):
         return "INSUFFICIENT_SAMPLE"
-    return_ok = avg_relative >= 0
-    drawdown_ok = avg_drawdown_delta >= 0
+    return_ok = _float(avg_relative) >= _float(policy.get("minimum_relative_return"))
+    drawdown_ok = _float(avg_drawdown_delta) >= _float(
+        policy.get("minimum_drawdown_delta_vs_no_trade")
+    )
     if return_ok and drawdown_ok:
         return "PROVEN_DEFENSIVE"
     if not return_ok and not drawdown_ok:
@@ -6234,18 +6564,23 @@ def _best_regime_variant(
     by_variant_regime: Mapping[tuple[str, str], Sequence[Mapping[str, Any]]],
     regime: str,
 ) -> str:
-    candidates = []
-    for variant in BACKTEST_SIM_VARIANTS:
-        rows = by_variant_regime.get((regime, variant), [])
-        if rows:
-            candidates.append(
-                (
-                    variant,
-                    _avg([_float(row.get("return")) for row in rows]),
-                )
-            )
-    if not candidates:
+    rows_by_variant = {
+        variant: {
+            (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row
+            for row in by_variant_regime.get((regime, variant), [])
+        }
+        for variant in BACKTEST_SIM_VARIANTS
+    }
+    common_keys = set.intersection(*(set(rows) for rows in rows_by_variant.values()))
+    if not common_keys:
         return "INSUFFICIENT_DATA"
+    candidates = [
+        (
+            variant,
+            _avg([_float(rows_by_variant[variant][key].get("return")) for key in common_keys]),
+        )
+        for variant in BACKTEST_SIM_VARIANTS
+    ]
     return max(candidates, key=lambda item: item[1])[0]
 
 
@@ -6277,14 +6612,16 @@ def _defensive_failure_case(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _defensive_validation_summary(matrix_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def _defensive_validation_summary(
+    matrix_rows: Sequence[Mapping[str, Any]], *, policy: Mapping[str, Any]
+) -> dict[str, Any]:
     regime_results = {
         _text(row.get("regime")): _mapping(row.get("defensive_limited_adjustment")).get("status")
         for row in matrix_rows
     }
     pressure_statuses = [
         _text(regime_results.get(regime), "INSUFFICIENT_DATA")
-        for regime in sorted(DEFENSIVE_PRESSURE_REGIMES)
+        for regime in _texts(policy.get("pressure_regimes"))
     ]
     if pressure_statuses and all(status == "PROVEN_DEFENSIVE" for status in pressure_statuses):
         overall = "PROVEN_DEFENSIVE"
@@ -6293,7 +6630,14 @@ def _defensive_validation_summary(matrix_rows: Sequence[Mapping[str, Any]]) -> d
         overall = "PARTIALLY_DEFENSIVE"
         recommendation = "continue_observation_without_default_defensive_claim"
     else:
-        overall = "NOT_PROVEN_DEFENSIVE"
+        overall = (
+            "INSUFFICIENT_DATA"
+            if all(
+                status in {"INSUFFICIENT_DATA", "INSUFFICIENT_SAMPLE"}
+                for status in pressure_statuses
+            )
+            else "NOT_PROVEN_DEFENSIVE"
+        )
         recommendation = "rename_or_reclassify_as_active_variant"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -6302,6 +6646,8 @@ def _defensive_validation_summary(matrix_rows: Sequence[Mapping[str, Any]]) -> d
         "regime_results": regime_results,
         "recommendation": recommendation,
         "requires_forward_confirmation": True,
+        "policy_id": _mapping(policy.get("policy_metadata")).get("policy_id"),
+        "policy_version": _mapping(policy.get("policy_metadata")).get("version"),
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "broker_action_taken": False,
     }

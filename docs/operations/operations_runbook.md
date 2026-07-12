@@ -168,6 +168,8 @@
 
 - G2.4BU开始，`sim-risk-return run`必须在创建artifact目录前要求显式Outcome的content-derived validator PASS，并校验timezone-aware generated cutoff；`sim_risk_return_input_snapshot.v2`冻结full Outcome bundle、validation和lineage。每个active variant只与同`sim_event_id`、同20日窗口、同时为`AVAILABLE`且return/max_drawdown/turnover均finite的`no_trade`配对；报告分别披露paired event/window count。Return delta、drawdown worsening与turnover increase分开计算；没有配对、missing metric或非正分母的ratio保持null/`INSUFFICIENT_DATA`，不得填0或跨cohort相减。运行后用`validate-sim-risk-return`重验live Outcome并逐字节重算snapshot/CSV/summary/manifest/Markdown；FAIL不得进入Defensive Validation或proposal/confirmation后续链。本步为manual/ad-hoc non-PIT diagnostic，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
 
+- G2.4BV开始，`sim-defensive-validation run`必须在创建artifact目录前要求Outcome content-derived validator PASS、timezone-aware generated cutoff和严格reviewed `sim_defensive_validation_v1.yaml`。`sim_defensive_validation_input_snapshot.v2`冻结full Outcome bundle/validation/lineage与policy bytes。Regime matrix只使用同regime、同event、同window且return/max_drawdown均为AVAILABLE finite的`defensive_limited_adjustment`/`no_trade` pair，披露paired event/window counts；无配对时return/relative/win-rate/drawdown delta为null/`INSUFFICIENT_DATA`。Pressure regimes、tracked windows、distinct-event sample floor和return/drawdown boundaries由policy治理；best variant只在五variant共同finite cohort上排名。运行后用`validate-sim-defensive-validation`重验live Outcome/policy并逐字节重算snapshot/matrix/failure cases/summary/manifest/Markdown；FAIL不得进入Proposal Review。本步为manual/ad-hoc non-PIT diagnostic，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
+
 ## Unified Daily Trigger
 
 标准外部调度入口：

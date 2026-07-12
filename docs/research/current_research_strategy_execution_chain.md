@@ -1158,6 +1158,23 @@ TRADING-169 Simulation Interpretation回答“当Outcome、Calibration与forward
 
 该环节故意不自动触发Defensive Validation、proposal review或confirmation plan。下游必须各自重新验证source、lineage和时间边界，避免一个workflow PASS被链式放大成投资结论。
 
+### 7.5 Simulation Defensive Validation（TRADING-171 / ARCH-004G2.4BV）
+
+为什么这样设计：`defensive_limited_adjustment`的名字不是证据。若按regime分别聚合不完整的variant样本，或把missing return/drawdown填0，overall best会被错误放大成“压力环境有效”。本环节因此要求严格配对、共同cohort排名和受治理的样本门槛。
+
+| 项目 | 当前定义 |
+|---|---|
+| 输入 | 显式`outcome_id`、Outcome root、timezone-aware cutoff；Outcome content-derived PASS；reviewed `sim_defensive_validation_v1.yaml` |
+| 冻结证据 | `sim_defensive_validation_input_snapshot.v2`：full Outcome bundle/validation/lineage、policy payload和原始bytes |
+| 可计算样本 | policy tracked windows内，同regime+`sim_event_id`+window的defensive/no_trade rows均`AVAILABLE`且return/max_drawdown finite |
+| 计算逻辑 | `relative=defensive return-no_trade return`；`drawdown delta=defensive max_drawdown-no_trade max_drawdown`；按严格pairs计算均值和win-rate；pressure status再应用policy distinct-event floor与return/drawdown boundaries |
+| 排名逻辑 | `best_variant`只在五个simulation variants对相同event/window均有finite return的共同cohort上比较；无共同cohort为`INSUFFICIENT_DATA` |
+| 输出 | regime matrix、failure cases、summary、manifest、冻结快照与Markdown；每个regime披露paired event/window counts和null-preserving metrics |
+| 当前结果边界 | 当前fixture因pressure distinct-event证据不足会得到`INSUFFICIENT_DATA`，这是正确结论，不是0收益/0风险，也不能支持defensive label |
+| 优化空间 | 独立forward pressure样本成熟后，可预注册评估sample floor、regime taxonomy、置信区间、tail loss/CVaR与transaction-cost sensitivity；不得从本次simulation事后调阈值 |
+
+Workflow PASS只证明来源、policy binding和计算可重放，不代表防守假设成立。Proposal Review必须作为下一独立slice重新验证输入，不得由本环节自动触发。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

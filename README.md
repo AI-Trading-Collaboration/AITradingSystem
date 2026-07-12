@@ -962,7 +962,10 @@ drawdown 和 turnover 代价拆开。Risk-return只消费validated Outcome，并
 validation冻结到`sim_risk_return_input_snapshot.v2`；只比较同event的20日AVAILABLE finite
 variant/no_trade pairs，披露paired units，missing或不可定义ratio保持null/`INSUFFICIENT_DATA`。
 Defensive validation 明确
-`defensive_limited_adjustment` 不能因 overall best 自动视为防守有效；proposal review
+`defensive_limited_adjustment` 不能因 overall best 自动视为防守有效；它只消费validated
+Outcome，冻结full bundle/validation与reviewed policy，并只比较same-regime/event/window
+AVAILABLE finite defensive/no_trade pairs。无pair保持null/`INSUFFICIENT_DATA`，sample floor
+与判定边界来自`sim_defensive_validation_v1.yaml`。Proposal review
 固定 `auto_apply=false`、`owner_approval_required=true`；forward confirmation plan
 只生成后续 tracking 的 success / failure 条件。该阶段继续固定
 `BACKTEST_SIMULATION_NOT_PIT`、`production_effect=none`、no broker、no production、no

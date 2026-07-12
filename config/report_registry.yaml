@@ -7108,11 +7108,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_regime_matrix.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_failure_cases.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_validation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/sim_defensive_validation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_validation_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-171 checks whether defensive_limited_adjustment is actually
-      defensive in pressure regimes instead of relying on overall best ranking.
+      TRADING-171 freezes validated Outcome and reviewed policy evidence, then
+      checks paired pressure-regime cohorts instead of relying on overall best
+      ranking or zero-filled missing samples.
     owner_action: review_pressure_regime_defensive_validation_before_using_defensive_label
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
