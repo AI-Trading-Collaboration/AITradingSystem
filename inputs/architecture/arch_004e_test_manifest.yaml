@@ -91,7 +91,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_historical_replay_helpers
   path: tests/dynamic_v3_historical_replay_helpers.py
-  sha256: d775ae1b5ef1af57e6c6a76580c45ba03a9f1e3162ba5246a971a0c49c5d2592
+  sha256: 621db1ae9de858a607c82738f64689b2f3adda290898d6fbd26f06533187abe2
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 12797847c46d14b95d6e79bb2a88d640a521f0f86ce24cbd71006f9f2a5c2d46
+  sha256: 5716de5440ca0e5913fdd3783fa7f22d00fadb3f25f39a74135ac42b53f2d30e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: 976564a0221ffeac1ff4845e938b19e4c5bd930f6bcbc80866ed34fd413be47f
+  sha256: a802df2504e97143bce91a78a12120637f2fb00f4c52894671c286b10ac27c0a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 27520f9f163c331e050550a88b47d4de67791b52d1eca6776f2053caa751b45d
+  sha256: 0ba22766a6079c6d047db744e06e6a9f0c35aa7f2ab60a7b1355cc21fd1ff014
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9311,7 +9311,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_dynamic_v3_historical_replay
   path: tests/test_dynamic_v3_historical_replay.py
-  sha256: 680d7d7ec894574e7f54dd824348fb1f27f96a2a845d3eae0b081379cdc5aa76
+  sha256: ae70702379fcb77e3181a9e35f9a82625ceb3f18b976d1d550df6c54eaf09821
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13057,7 +13057,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_replay_inventory
   path: tests/test_replay_inventory.py
-  sha256: c75daeb56dbf0a2508756136642e1d811b6239ad668c243da55bb822f32aaab7
+  sha256: 92bcc1826831f225032495d6023c5b4a0b05c5ffc5dc7826fac4ca324e214718
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

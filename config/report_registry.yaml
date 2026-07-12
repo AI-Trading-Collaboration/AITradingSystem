@@ -6386,12 +6386,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/replay_inventory/*/replay_artifact_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/replay_inventory/*/pit_safety_audit.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_inventory/*/replay_coverage_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_inventory/*/replay_inventory_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_inventory/*/replay_inventory_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-141 historical replay inventory should remain discoverable while
-      auditing which daily advisory artifacts are PIT_SAFE, PIT_WARNING, or
-      PIT_UNSAFE before historical outcome replay.
+      TRADING-141 freezes a generated-cutoff source snapshot and exposes the
+      requested/actual AI-regime range, cutoff-visible owner/paper/drift inputs,
+      source checksums, and PIT_SAFE/PIT_WARNING/PIT_UNSAFE classification before
+      historical outcome replay. Future prices are outcome availability only.
     owner_action: review_replay_inventory_pit_safety_before_historical_replay
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

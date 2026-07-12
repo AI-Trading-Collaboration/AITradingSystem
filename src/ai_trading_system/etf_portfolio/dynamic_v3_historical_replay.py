@@ -52,6 +52,7 @@ DEFAULT_VARIANT_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_com
 DEFAULT_RULE_CALIBRATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rule_calibration"
 DEFAULT_REPLAY_FORWARD_BRIDGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_forward_bridge"
 DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
+REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION = "replay_inventory_source_snapshot.v2"
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
@@ -96,6 +97,209 @@ class DynamicV3HistoricalReplayError(ValueError):
     """Raised when historical replay artifacts fail closed."""
 
 
+def _require_aware_utc(value: datetime, field: str) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise DynamicV3HistoricalReplayError(f"{field} must be timezone-aware")
+    return value.astimezone(UTC)
+
+
+def _datetime_from_any(value: Any) -> datetime | None:
+    text = _text(value)
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed.astimezone(UTC)
+
+
+def _selected_replay_advisories(
+    *,
+    start: date,
+    end: date,
+    generated_cutoff: datetime,
+    daily_advisory_dir: Path,
+) -> tuple[list[tuple[Path, dict[str, Any], date]], int]:
+    selected: list[tuple[Path, dict[str, Any], date]] = []
+    future_generated_excluded_count = 0
+    for manifest_path in sorted(daily_advisory_dir.glob("*/daily_advisory_manifest.json")):
+        manifest = _read_optional_json(manifest_path)
+        if manifest is None:
+            raise DynamicV3HistoricalReplayError(
+                f"daily advisory manifest is unreadable: {manifest_path}"
+            )
+        as_of = _date_from_any(manifest.get("as_of"))
+        if as_of is None:
+            raise DynamicV3HistoricalReplayError(
+                f"daily advisory as_of is invalid: {manifest_path}"
+            )
+        if not (start <= as_of <= end):
+            continue
+        source_generated_at = _datetime_from_any(manifest.get("generated_at"))
+        if source_generated_at is None:
+            raise DynamicV3HistoricalReplayError(
+                f"daily advisory generated_at is invalid: {manifest_path}"
+            )
+        if source_generated_at > generated_cutoff:
+            future_generated_excluded_count += 1
+            continue
+        if as_of > generated_cutoff.date():
+            raise DynamicV3HistoricalReplayError(
+                f"daily advisory as_of exceeds generated cutoff: {manifest_path}"
+            )
+        selected.append((manifest_path.parent, dict(manifest), as_of))
+    daily_ids = [_text(manifest.get("daily_advisory_id")) for _, manifest, _ in selected]
+    if any(not daily_id for daily_id in daily_ids) or len(daily_ids) != len(set(daily_ids)):
+        raise DynamicV3HistoricalReplayError(
+            "replay inventory requires unique non-empty daily advisory ids"
+        )
+    as_of_values = [as_of for _, _, as_of in selected]
+    if len(as_of_values) != len(set(as_of_values)):
+        raise DynamicV3HistoricalReplayError(
+            "replay inventory requires at most one daily advisory per as_of"
+        )
+    return selected, future_generated_excluded_count
+
+
+def _replay_inventory_source_snapshot(
+    *,
+    start: date,
+    end: date,
+    generated_cutoff: datetime,
+    selected_advisories: Sequence[tuple[Path, Mapping[str, Any], date]],
+    rows: Sequence[Mapping[str, Any]],
+    future_generated_source_excluded_count: int,
+    config_path: Path,
+    prices_path: Path,
+    owner_review_dir: Path,
+    paper_portfolio_dir: Path,
+    shadow_monitor_run_dir: Path,
+    consensus_drift_dir: Path,
+) -> dict[str, Any]:
+    source_files: set[Path] = {config_path, prices_path}
+    for advisory_dir, manifest, _ in selected_advisories:
+        source_files.update(path for path in advisory_dir.rglob("*") if path.is_file())
+        monitor_id = _text(manifest.get("source_shadow_monitor_run_id"))
+        monitor_dir = shadow_monitor_run_dir / monitor_id
+        if monitor_id and monitor_dir.is_dir():
+            source_files.update(path for path in monitor_dir.rglob("*") if path.is_file())
+    for root in (owner_review_dir, paper_portfolio_dir, consensus_drift_dir):
+        if root.is_dir():
+            source_files.update(path for path in root.rglob("*") if path.is_file())
+    return {
+        "schema_version": REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "generated_cutoff": generated_cutoff.isoformat(),
+        "market_regime": "ai_after_chatgpt",
+        "price_data_role": "outcome_availability_only_not_decision_input",
+        "future_generated_source_excluded_count": future_generated_source_excluded_count,
+        "selected_daily_advisory_ids": [
+            _text(manifest.get("daily_advisory_id"))
+            for _, manifest, _ in selected_advisories
+        ],
+        "selected_daily_sources": [
+            {
+                "advisory_dir": str(advisory_dir),
+                "manifest_path": str(advisory_dir / "daily_advisory_manifest.json"),
+                "daily_advisory_id": _text(manifest.get("daily_advisory_id")),
+                "as_of": as_of.isoformat(),
+            }
+            for advisory_dir, manifest, as_of in selected_advisories
+        ],
+        "source_roots": {
+            "config_path": str(config_path),
+            "prices_path": str(prices_path),
+            "owner_review_dir": str(owner_review_dir),
+            "paper_portfolio_dir": str(paper_portfolio_dir),
+            "shadow_monitor_run_dir": str(shadow_monitor_run_dir),
+            "consensus_drift_dir": str(consensus_drift_dir),
+        },
+        "source_files": _replay_source_file_inventory(source_files),
+        "cutoff_visible_bindings": [
+            {
+                "daily_advisory_id": row.get("daily_advisory_id"),
+                "as_of": row.get("as_of"),
+                "source_artifacts": _mapping(row.get("source_artifacts")),
+                "available_inputs": _mapping(row.get("available_inputs")),
+                "decision_inputs": _mapping(row.get("decision_inputs")),
+            }
+            for row in rows
+        ],
+        "canonical_rows": [dict(row) for row in rows],
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+    }
+
+
+def _replay_source_file_inventory(paths: Sequence[Path] | set[Path]) -> list[dict[str, Any]]:
+    inventory = []
+    for path in sorted({item.resolve() for item in paths if item.is_file()}, key=str):
+        inventory.append(
+            {
+                "path": str(path),
+                "size_bytes": path.stat().st_size,
+                "sha256": _sha256_file(path),
+            }
+        )
+    return inventory
+
+
+def _sha256_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _replay_inventory_rows_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    roots = _mapping(snapshot.get("source_roots"))
+    config = load_paper_portfolio_config(Path(_text(roots.get("config_path"))))
+    owner_review_dir = Path(_text(roots.get("owner_review_dir")))
+    paper_portfolio_dir = Path(_text(roots.get("paper_portfolio_dir")))
+    shadow_monitor_run_dir = Path(_text(roots.get("shadow_monitor_run_dir")))
+    consensus_drift_dir = Path(_text(roots.get("consensus_drift_dir")))
+    price_index = _price_availability_index(Path(_text(roots.get("prices_path"))))
+    generated_cutoff = _datetime_from_any(snapshot.get("generated_cutoff"))
+    if generated_cutoff is None:
+        raise DynamicV3HistoricalReplayError("snapshot generated cutoff is invalid")
+    owner_reviews = _owner_reviews_at_cutoff(
+        owner_review_dir / "owner_review_journal.jsonl",
+        generated_cutoff=generated_cutoff,
+    )
+    rows = []
+    for source in _records(snapshot.get("selected_daily_sources")):
+        advisory_dir = Path(_text(source.get("advisory_dir")))
+        manifest = _read_json(Path(_text(source.get("manifest_path"))))
+        as_of = _date_from_any(source.get("as_of"))
+        if (
+            as_of is None
+            or _text(manifest.get("daily_advisory_id"))
+            != _text(source.get("daily_advisory_id"))
+        ):
+            raise DynamicV3HistoricalReplayError("snapshot daily advisory binding is invalid")
+        rows.append(
+            _inventory_row(
+                advisory_dir=advisory_dir,
+                manifest=manifest,
+                as_of=as_of,
+                config=config,
+                owner_reviews=owner_reviews,
+                shadow_monitor_run_dir=shadow_monitor_run_dir,
+                consensus_drift_dir=consensus_drift_dir,
+                paper_portfolio_dir=paper_portfolio_dir,
+                price_index=price_index,
+                generated_cutoff=generated_cutoff,
+            )
+        )
+    return sorted(rows, key=lambda row: (row.get("as_of", ""), row.get("daily_advisory_id", "")))
+
+
 def build_replay_inventory(
     *,
     start: date,
@@ -110,17 +314,23 @@ def build_replay_inventory(
     config_path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    if start > end:
+        raise DynamicV3HistoricalReplayError("replay inventory start must be on or before end")
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    selected_advisories, future_generated_excluded_count = _selected_replay_advisories(
+        start=start,
+        end=end,
+        generated_cutoff=generated,
+        daily_advisory_dir=daily_advisory_dir,
+    )
     config = load_paper_portfolio_config(config_path)
-    owner_reviews = _read_jsonl(owner_review_dir / "owner_review_journal.jsonl")
+    owner_reviews = _owner_reviews_at_cutoff(
+        owner_review_dir / "owner_review_journal.jsonl",
+        generated_cutoff=generated,
+    )
     price_index = _price_availability_index(prices_path)
     rows = []
-    for advisory_manifest_path in sorted(daily_advisory_dir.glob("*/daily_advisory_manifest.json")):
-        advisory_dir = advisory_manifest_path.parent
-        manifest = _read_optional_json(advisory_manifest_path) or {}
-        as_of = _date_from_any(manifest.get("as_of"))
-        if as_of is None or not (start <= as_of <= end):
-            continue
+    for advisory_dir, manifest, as_of in selected_advisories:
         rows.append(
             _inventory_row(
                 advisory_dir=advisory_dir,
@@ -132,6 +342,7 @@ def build_replay_inventory(
                 consensus_drift_dir=consensus_drift_dir,
                 paper_portfolio_dir=paper_portfolio_dir,
                 price_index=price_index,
+                generated_cutoff=generated,
             )
         )
     rows = sorted(rows, key=lambda row: (row.get("as_of", ""), row.get("daily_advisory_id", "")))
@@ -140,6 +351,23 @@ def build_replay_inventory(
     inventory_dir.mkdir(parents=True, exist_ok=False)
     audit = _pit_safety_audit(rows)
     coverage = _replay_coverage_summary(rows, start=start, end=end)
+    source_snapshot = _replay_inventory_source_snapshot(
+        start=start,
+        end=end,
+        generated_cutoff=generated,
+        selected_advisories=selected_advisories,
+        rows=rows,
+        future_generated_source_excluded_count=future_generated_excluded_count,
+        config_path=config_path,
+        prices_path=prices_path,
+        owner_review_dir=owner_review_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+    )
+    source_snapshot_path = inventory_dir / "replay_inventory_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
+    source_snapshot_checksum = _sha256_file(source_snapshot_path)
     status = "PASS"
     if audit["pit_unsafe_count"]:
         status = "PASS_WITH_WARNINGS"
@@ -153,6 +381,11 @@ def build_replay_inventory(
         "status": status,
         "start": start.isoformat(),
         "end": end.isoformat(),
+        "actual_start": _text(rows[0].get("as_of")) if rows else "",
+        "actual_end": _text(rows[-1].get("as_of")) if rows else "",
+        "evidence_cutoff": generated.isoformat(),
+        "market_regime": "ai_after_chatgpt",
+        "future_generated_source_excluded_count": future_generated_excluded_count,
         "total_replay_events": len(rows),
         "pit_safe_count": audit["pit_safe_count"],
         "pit_warning_count": audit["pit_warning_count"],
@@ -166,11 +399,14 @@ def build_replay_inventory(
         "pit_safety_audit_path": str(inventory_dir / "pit_safety_audit.json"),
         "replay_coverage_summary_path": str(inventory_dir / "replay_coverage_summary.json"),
         "replay_inventory_report_path": str(inventory_dir / "replay_inventory_report.md"),
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": source_snapshot_checksum,
         "production_effect": "none",
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "production_candidate_generated": False,
         "manual_review_required": True,
+        "price_data_role": "outcome_availability_only_not_decision_input",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -194,6 +430,8 @@ def build_replay_inventory(
         "rows": rows,
         "pit_safety_audit": audit,
         "coverage_summary": coverage,
+        "source_snapshot": source_snapshot,
+        "future_generated_source_excluded_count": future_generated_excluded_count,
     }
 
 
@@ -225,6 +463,121 @@ def validate_replay_inventory_artifact(
     inventory_dir = output_dir / inventory_id
     manifest = _read_optional_json(inventory_dir / "replay_inventory_manifest.json") or {}
     rows = _read_jsonl(inventory_dir / "replay_artifact_inventory.jsonl")
+    snapshot_path = inventory_dir / "replay_inventory_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (inventory_dir / "replay_inventory_manifest.json").is_file(),
+                inventory_id,
+            ),
+            _check(
+                "inventory_rows_exist",
+                (inventory_dir / "replay_artifact_inventory.jsonl").is_file(),
+                inventory_id,
+            ),
+            _check(
+                "pit_safety_audit_exists",
+                (inventory_dir / "pit_safety_audit.json").is_file(),
+                "legacy",
+            ),
+            _check(
+                "coverage_summary_exists",
+                (inventory_dir / "replay_coverage_summary.json").is_file(),
+                "legacy",
+            ),
+            _check(
+                "report_exists",
+                (inventory_dir / "replay_inventory_report.md").is_file(),
+                "legacy",
+            ),
+            _check(
+                "inventory_id_matches",
+                manifest.get("inventory_id") == inventory_id,
+                inventory_id,
+            ),
+            _check(
+                "pit_safety_status_valid",
+                all(row.get("pit_safety_status") in PIT_SAFE_STATUSES for row in rows),
+                "legacy shallow validation",
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_replay_inventory_validation",
+            artifact_id_key="inventory_id",
+            artifact_id=inventory_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    audit = _read_optional_json(inventory_dir / "pit_safety_audit.json") or {}
+    coverage = _read_optional_json(inventory_dir / "replay_coverage_summary.json") or {}
+    canonical_rows = _records(snapshot.get("canonical_rows"))
+    try:
+        expected_rows = _replay_inventory_rows_from_snapshot(snapshot)
+        snapshot_replay_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_rows = []
+        snapshot_replay_error = str(exc)
+    start = _date_from_any(snapshot.get("start"))
+    end = _date_from_any(snapshot.get("end"))
+    expected_audit = _pit_safety_audit(expected_rows)
+    expected_coverage = (
+        _replay_coverage_summary(expected_rows, start=start, end=end)
+        if start is not None and end is not None
+        else {}
+    )
+    source_files_valid = True
+    for source in _records(snapshot.get("source_files")):
+        path = Path(_text(source.get("path")))
+        if (
+            not path.is_file()
+            or path.stat().st_size != _int(source.get("size_bytes"))
+            or _sha256_file(path) != _text(source.get("sha256"))
+        ):
+            source_files_valid = False
+            break
+    expected_report = render_replay_inventory_report(
+        manifest,
+        expected_audit,
+        expected_coverage,
+        expected_rows,
+    )
+    report_path = inventory_dir / "replay_inventory_report.md"
+    report_matches = report_path.is_file() and report_path.read_text(
+        encoding="utf-8"
+    ) == expected_report
+    derived_manifest_matches = bool(start is not None and end is not None) and all(
+        (
+            manifest.get("start") == snapshot.get("start"),
+            manifest.get("end") == snapshot.get("end"),
+            manifest.get("evidence_cutoff") == snapshot.get("generated_cutoff"),
+            manifest.get("market_regime") == snapshot.get("market_regime"),
+            manifest.get("price_data_role") == snapshot.get("price_data_role"),
+            manifest.get("future_generated_source_excluded_count")
+            == snapshot.get("future_generated_source_excluded_count"),
+            _int(manifest.get("total_replay_events")) == len(expected_rows),
+            _int(manifest.get("pit_safe_count")) == _int(expected_audit.get("pit_safe_count")),
+            _int(manifest.get("pit_warning_count"))
+            == _int(expected_audit.get("pit_warning_count")),
+            _int(manifest.get("pit_unsafe_count"))
+            == _int(expected_audit.get("pit_unsafe_count")),
+            _int(manifest.get("eligible_count"))
+            == _int(expected_coverage.get("eligible_count")),
+            _int(manifest.get("partial_count")) == _int(expected_coverage.get("partial_count")),
+            _int(manifest.get("ineligible_count"))
+            == _int(expected_coverage.get("ineligible_count")),
+        )
+    )
     checks = [
         _check(
             "manifest_exists",
@@ -243,6 +596,28 @@ def validate_replay_inventory_artifact(
             "",
         ),
         _check("report_exists", (inventory_dir / "replay_inventory_report.md").exists(), ""),
+        _check("source_snapshot_exists", snapshot_path.exists(), inventory_id),
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION,
+            REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            _text(manifest.get("source_snapshot_checksum")) == _sha256_file(snapshot_path),
+            "source snapshot checksum",
+        ),
+        _check("source_files_unchanged", source_files_valid, "source inventory"),
+        _check(
+            "snapshot_rows_recomputed",
+            not snapshot_replay_error and canonical_rows == expected_rows,
+            snapshot_replay_error or "snapshot rows",
+        ),
+        _check("inventory_rows_match_snapshot", rows == expected_rows, "canonical rows"),
+        _check("pit_audit_recomputed", audit == expected_audit, "PIT audit"),
+        _check("coverage_recomputed", coverage == expected_coverage, "coverage"),
+        _check("manifest_derived_fields_match", derived_manifest_matches, "manifest"),
+        _check("report_recomputed", report_matches, "Markdown report"),
         _check("inventory_id_matches", manifest.get("inventory_id") == inventory_id, inventory_id),
         _check(
             "pit_safety_status_valid",
@@ -275,6 +650,12 @@ def validate_replay_inventory_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+        _check(
+            "price_role_is_outcome_only",
+            manifest.get("price_data_role")
+            == "outcome_availability_only_not_decision_input",
+            "future prices are not decision inputs",
         ),
     ]
     return _validation_payload(
@@ -1908,6 +2289,13 @@ def render_replay_inventory_report(
             f"- 状态：{manifest.get('status')}",
             f"- inventory_id：`{manifest.get('inventory_id')}`",
             f"- 日期范围：{manifest.get('start')} to {manifest.get('end')}",
+            f"- 实际来源范围：{manifest.get('actual_start') or 'none'} to "
+            f"{manifest.get('actual_end') or 'none'}",
+            f"- evidence cutoff：{manifest.get('evidence_cutoff')}",
+            f"- market regime：{manifest.get('market_regime')}",
+            f"- cutoff后来源排除数："
+            f"{manifest.get('future_generated_source_excluded_count')}",
+            f"- price data role：{manifest.get('price_data_role')}",
             f"- historical advisory events：{manifest.get('total_replay_events')}",
             f"- PIT_SAFE：{audit.get('pit_safe_count')}",
             f"- PIT_WARNING：{audit.get('pit_warning_count')}",
@@ -1921,6 +2309,7 @@ def render_replay_inventory_report(
             f"{coverage.get('partial_count')} / {coverage.get('ineligible_count')}",
             "- 默认 replay 不允许 PIT_UNSAFE 进入 outcome 链路；"
             "--include-pit-warning 不会覆盖 hard PIT limitations。",
+            "- future price rows只判断outcome availability，不进入decision input。",
             "- production_effect=none；broker_action_taken=false。",
             "",
         ]
@@ -2927,6 +3316,7 @@ def _inventory_row(
     consensus_drift_dir: Path,
     paper_portfolio_dir: Path,
     price_index: Mapping[str, set[date]],
+    generated_cutoff: datetime,
 ) -> dict[str, Any]:
     daily_advisory_id = _text(manifest.get("daily_advisory_id"), advisory_dir.name)
     actions = _read_optional_json(advisory_dir / "daily_advisory_actions.json") or {}
@@ -2937,17 +3327,20 @@ def _inventory_row(
         advisory_dir=advisory_dir,
         as_of=as_of,
         paper_portfolio_dir=paper_portfolio_dir,
+        generated_cutoff=generated_cutoff,
     )
     owner_review = _owner_review_for_daily(daily_advisory_id, owner_reviews)
     paper_action_weights = _paper_action_weights_for_daily(
         daily_advisory_id=daily_advisory_id,
         paper_portfolio_dir=paper_portfolio_dir,
+        generated_cutoff=generated_cutoff,
     )
     limited_weights = _limited_adjustment_weights(current_weights, consensus_weights, config)
     source_shadow_monitor_id = _text(manifest.get("source_shadow_monitor_run_id"))
     consensus_drift = _consensus_drift_for_monitor(
         source_shadow_monitor_id,
         consensus_drift_dir=consensus_drift_dir,
+        generated_cutoff=generated_cutoff,
     )
     limitations = [*consensus_limitations, *current_limitations]
     if not owner_review:
@@ -3427,14 +3820,22 @@ def _variant_performance_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str,
 
 
 def _current_weights(
-    *, advisory_dir: Path, as_of: date, paper_portfolio_dir: Path
+    *,
+    advisory_dir: Path,
+    as_of: date,
+    paper_portfolio_dir: Path,
+    generated_cutoff: datetime,
 ) -> tuple[dict[str, float], list[str]]:
     limitations = []
     for row in _read_jsonl(advisory_dir / "daily_position_deltas.jsonl"):
         current = _mapping(row.get("current_weights"))
         if current:
             return _normalize_weights(current), limitations
-    paper = _paper_weights_at_or_before(as_of=as_of, paper_portfolio_dir=paper_portfolio_dir)
+    paper = _paper_weights_at_or_before(
+        as_of=as_of,
+        paper_portfolio_dir=paper_portfolio_dir,
+        generated_cutoff=generated_cutoff,
+    )
     if paper:
         limitations.append("PORTFOLIO_SNAPSHOT_APPROXIMATED_FROM_PAPER_STATE")
         return paper, limitations
@@ -3500,30 +3901,81 @@ def _limited_adjustment_weights(
     return _apply_weight_deltas(current, limited)
 
 
-def _paper_weights_at_or_before(*, as_of: date, paper_portfolio_dir: Path) -> dict[str, float]:
-    candidates: list[tuple[date, dict[str, Any]]] = []
+def _paper_weights_at_or_before(
+    *,
+    as_of: date,
+    paper_portfolio_dir: Path,
+    generated_cutoff: datetime,
+) -> dict[str, float]:
+    candidates: list[tuple[date, datetime, dict[str, Any]]] = []
     for path in paper_portfolio_dir.glob("*/paper_position_history.jsonl"):
         for row in _read_jsonl(path):
             row_date = _date_from_any(row.get("as_of"))
-            if row_date is not None and row_date <= as_of:
-                candidates.append((row_date, row))
+            created_at = _datetime_from_any(row.get("created_at"))
+            if row_date is None or created_at is None:
+                raise DynamicV3HistoricalReplayError(
+                    f"paper position history time is invalid: {path}"
+                )
+            if row_date <= as_of and created_at <= generated_cutoff:
+                candidates.append((row_date, created_at, row))
     if not candidates:
         return {}
-    latest = sorted(candidates, key=lambda item: item[0])[-1][1]
+    latest = sorted(candidates, key=lambda item: (item[0], item[1]))[-1][2]
     return _normalize_weights(_mapping(latest.get("positions")))
 
 
+def _owner_reviews_at_cutoff(
+    path: Path,
+    *,
+    generated_cutoff: datetime,
+) -> list[dict[str, Any]]:
+    selected = []
+    selected_daily_ids: set[str] = set()
+    for row in _read_jsonl(path):
+        created_at = _datetime_from_any(row.get("created_at"))
+        updated_at = _datetime_from_any(row.get("updated_at") or row.get("created_at"))
+        if created_at is None or updated_at is None or updated_at < created_at:
+            raise DynamicV3HistoricalReplayError(
+                f"owner review journal time is invalid: {path}"
+            )
+        if updated_at > generated_cutoff:
+            continue
+        daily_id = _text(row.get("daily_advisory_id"))
+        if not daily_id or daily_id in selected_daily_ids:
+            raise DynamicV3HistoricalReplayError(
+                f"owner review cutoff selection is ambiguous: {daily_id or 'MISSING'}"
+            )
+        selected_daily_ids.add(daily_id)
+        selected.append(dict(row))
+    return selected
+
+
 def _paper_action_weights_for_daily(
-    *, daily_advisory_id: str, paper_portfolio_dir: Path
+    *,
+    daily_advisory_id: str,
+    paper_portfolio_dir: Path,
+    generated_cutoff: datetime,
 ) -> dict[str, Any]:
     candidates = []
     for path in paper_portfolio_dir.glob("*/paper_action_ledger.jsonl"):
         for row in _read_jsonl(path):
             if _text(row.get("daily_advisory_id")) == daily_advisory_id:
-                candidates.append((_date_from_any(row.get("created_at")) or date.min, row, path))
+                created_at = _datetime_from_any(row.get("created_at"))
+                if created_at is None:
+                    raise DynamicV3HistoricalReplayError(
+                        f"paper action created_at is invalid: {path}"
+                    )
+                if created_at <= generated_cutoff:
+                    candidates.append((created_at, row, path))
     if not candidates:
         return {}
-    _, row, path = sorted(candidates, key=lambda item: item[0])[-1]
+    latest_at = max(item[0] for item in candidates)
+    latest = [item for item in candidates if item[0] == latest_at]
+    if len(latest) != 1:
+        raise DynamicV3HistoricalReplayError(
+            f"paper action cutoff selection is ambiguous: {daily_advisory_id}"
+        )
+    _, row, path = latest[0]
     return {
         "paper_portfolio_id": _text(row.get("paper_portfolio_id"), path.parent.name),
         "weights": _normalize_weights(_mapping(row.get("after_weights"))),
@@ -3538,7 +3990,11 @@ def _owner_review_for_daily(
         for row in owner_reviews
         if _text(row.get("daily_advisory_id")) == daily_advisory_id
     ]
-    return matches[-1] if matches else {}
+    if len(matches) > 1:
+        raise DynamicV3HistoricalReplayError(
+            f"owner review cutoff selection is ambiguous: {daily_advisory_id}"
+        )
+    return matches[0] if matches else {}
 
 
 def _owner_decision(owner_review: Mapping[str, Any]) -> str:
@@ -3559,7 +4015,10 @@ def _owner_decision_weights(
 
 
 def _consensus_drift_for_monitor(
-    shadow_monitor_run_id: str, *, consensus_drift_dir: Path
+    shadow_monitor_run_id: str,
+    *,
+    consensus_drift_dir: Path,
+    generated_cutoff: datetime,
 ) -> dict[str, Any]:
     if not shadow_monitor_run_id:
         return {}
@@ -3568,11 +4027,24 @@ def _consensus_drift_for_monitor(
         if not child.is_dir():
             continue
         manifest = _read_optional_json(child / "consensus_drift_manifest.json") or {}
-        if _text(manifest.get("source_shadow_monitor_run_id")) == shadow_monitor_run_id:
-            candidates.append(child)
+        if _text(manifest.get("source_shadow_monitor_run_id")) != shadow_monitor_run_id:
+            continue
+        generated_at = _datetime_from_any(manifest.get("generated_at"))
+        if generated_at is None:
+            raise DynamicV3HistoricalReplayError(
+                f"consensus drift generated_at is invalid: {child}"
+            )
+        if generated_at <= generated_cutoff:
+            candidates.append((generated_at, child))
     if not candidates:
         return {}
-    latest = max(candidates, key=lambda path: path.stat().st_mtime)
+    latest_at = max(item[0] for item in candidates)
+    latest_candidates = [item[1] for item in candidates if item[0] == latest_at]
+    if len(latest_candidates) != 1:
+        raise DynamicV3HistoricalReplayError(
+            f"consensus drift cutoff selection is ambiguous: {shadow_monitor_run_id}"
+        )
+    latest = latest_candidates[0]
     manifest = _read_optional_json(latest / "consensus_drift_manifest.json") or {}
     summary = _read_optional_json(latest / "consensus_drift_summary.json") or {}
     return {

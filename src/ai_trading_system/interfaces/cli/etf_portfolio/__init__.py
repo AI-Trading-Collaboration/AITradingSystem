@@ -92,6 +92,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_real_snapshot_paper_action as dynamic_v3_real_snapshot_paper_action_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_replay_inventory as dynamic_v3_replay_inventory_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rescue as dynamic_v3_rescue_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -170,6 +173,7 @@ __all__ = [
     "dynamic_v3_portfolio_risk_controls_commands",
     "dynamic_v3_position_advisory_commands",
     "dynamic_v3_position_advisory_daily_commands",
+    "dynamic_v3_replay_inventory_commands",
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_shadow_aging_commands",
     "dynamic_v3_sweep_config_commands",

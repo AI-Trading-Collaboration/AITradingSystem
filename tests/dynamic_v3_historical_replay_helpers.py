@@ -204,7 +204,13 @@ def write_paper_action(
     )
 
 
-def build_replay_inventory(paths: dict[str, Path], *, start: date, end: date) -> dict[str, Any]:
+def build_replay_inventory(
+    paths: dict[str, Path],
+    *,
+    start: date,
+    end: date,
+    generated_at: datetime = datetime(2026, 6, 10, tzinfo=UTC),
+) -> dict[str, Any]:
     return replay.build_replay_inventory(
         start=start,
         end=end,
@@ -216,7 +222,7 @@ def build_replay_inventory(paths: dict[str, Path], *, start: date, end: date) ->
         paper_portfolio_dir=paths["paper_portfolio_dir"],
         prices_path=paths["prices_path"],
         config_path=paths["config_path"],
-        generated_at=datetime(2026, 6, 10, tzinfo=UTC),
+        generated_at=generated_at,
     )
 
 

@@ -118,6 +118,7 @@ def test_dynamic_v3_historical_replay_marks_hard_pit_limitations_unsafe(
         paths,
         start=date(2026, 6, 1),
         end=date(2026, 8, 10),
+        generated_at=datetime(2026, 8, 10, tzinfo=UTC),
     )
     rows = {row["daily_advisory_id"]: row for row in inventory["rows"]}
 
@@ -157,6 +158,7 @@ def test_dynamic_v3_historical_replay_marks_hard_pit_limitations_unsafe(
         paths,
         start=date(2026, 6, 4),
         end=date(2026, 8, 10),
+        generated_at=datetime(2026, 8, 10, tzinfo=UTC),
     )
     unsafe_only_replay = run_historical_replay(
         inventory_id=unsafe_only_inventory["inventory_id"],
