@@ -302,7 +302,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_BACKFILL_REPAIR_DIR,
     DEFAULT_BACKFILLED_OUTCOME_DIR,
     DEFAULT_HISTORICAL_REPLAY_DIR,
-    DEFAULT_REPLAY_INVENTORY_DIR,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_CONSENSUS_RISK_DIR,
@@ -313,7 +312,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     DEFAULT_OUTCOME_DUE_DIR,
     DEFAULT_OUTCOME_UPDATE_DIR,
     DEFAULT_OUTCOME_UPDATE_REVIEW_DIR,
-    DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
     DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
     build_outcome_dashboard,
     consensus_risk_report_payload,
@@ -323,7 +321,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     outcome_dashboard_report_payload,
     outcome_update_report_payload,
     outcome_update_review_report_payload,
-    replay_sample_expansion_report_payload,
     rolling_evidence_refresh_report_payload,
     run_consensus_risk_review,
     run_evidence_trend,
@@ -331,7 +328,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     run_limited_vs_notrade_evaluation,
     run_outcome_update,
     run_outcome_update_review,
-    run_replay_sample_expansion,
     run_rolling_evidence_refresh,
     validate_consensus_risk_artifact,
     validate_evidence_trend_artifact,
@@ -340,7 +336,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
     validate_outcome_dashboard_artifact,
     validate_outcome_update_artifact,
     validate_outcome_update_review_artifact,
-    validate_replay_sample_expansion_artifact,
     validate_rolling_evidence_refresh_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
@@ -806,7 +801,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_readiness_health_recovery_app,
     dynamic_v3_refined_method_proposal_app,
     dynamic_v3_regime_mismatch_attribution_app,
-    dynamic_v3_replay_sample_expansion_app,
     dynamic_v3_rescue_app,
     dynamic_v3_research_method_hardening_app,
     dynamic_v3_risk_capped_backfill_app,
@@ -15267,103 +15261,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_replay_sample_expansion_app.command("run")
-def dynamic_v3_replay_sample_expansion_run_command(
-    start: Annotated[str, typer.Option("--start", help="AI regime replay scan start。")],
-    end: Annotated[str, typer.Option("--end", help="replay scan end。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
-    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
-    daily_advisory_dir: Annotated[
-        Path,
-        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
-    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
-    replay_inventory_dir: Annotated[
-        Path,
-        typer.Option("--replay-inventory-dir", help="replay inventory artifact root。"),
-    ] = DEFAULT_REPLAY_INVENTORY_DIR,
-    prices_path: Annotated[
-        Path,
-        typer.Option("--prices-path", help="cached ETF price path。"),
-    ] = DEFAULT_ETF_PRICE_PATH,
-) -> None:
-    """扩展 historical replay candidate 样本。"""
-    start_date = _parse_dynamic_v3_outcome_date(start, "--start")
-    end_date = _parse_dynamic_v3_outcome_date(end, "--end")
-    result = run_replay_sample_expansion(
-        start=start_date,
-        end=end_date,
-        output_dir=output_dir,
-        daily_advisory_dir=daily_advisory_dir,
-        replay_inventory_dir=replay_inventory_dir,
-        prices_path=prices_path,
-    )
-    summary = result["pit_classification_summary"]
-    typer.echo(f"expansion_id={result['expansion_id']}")
-    typer.echo(f"expansion_dir={result['expansion_dir']}")
-    typer.echo(f"status={result['manifest']['status']}")
-    typer.echo(f"new_replay_events={summary['total_expanded_events']}")
-    typer.echo(f"pit_safe_count={summary['pit_safe_count']}")
-    typer.echo(f"pit_warning_count={summary['pit_warning_count']}")
-    typer.echo(f"pit_unsafe_count={summary['pit_unsafe_count']}")
-    typer.echo("pit_unsafe_allowed_in_default_replay=false")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_replay_sample_expansion_app.command("report")
-def dynamic_v3_replay_sample_expansion_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest replay sample expansion。"),
-    ] = False,
-    expansion_id: Annotated[
-        str | None,
-        typer.Option("--expansion-id", help="expansion id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
-    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
-) -> None:
-    """展示 replay sample expansion 摘要。"""
-    payload = replay_sample_expansion_report_payload(
-        expansion_id=expansion_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    summary = payload["pit_classification_summary"]
-    typer.echo(f"expansion_id={payload['expansion_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"new_replay_events={summary['total_expanded_events']}")
-    typer.echo(f"pit_safe_count={summary['pit_safe_count']}")
-    typer.echo(f"pit_warning_count={summary['pit_warning_count']}")
-    typer.echo(f"pit_unsafe_count={summary['pit_unsafe_count']}")
-    typer.echo(f"report_path={payload['replay_sample_expansion_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-replay-sample-expansion")
-def dynamic_v3_validate_replay_sample_expansion_command(
-    expansion_id: Annotated[str, typer.Option("--expansion-id", help="expansion id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
-    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
-) -> None:
-    """校验 TRADING-152 replay sample expansion artifact。"""
-    payload = validate_replay_sample_expansion_artifact(
-        expansion_id=expansion_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("production_effect=none")
-    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

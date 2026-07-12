@@ -1,7 +1,7 @@
 schema_version: arch_004g2_cli_contract.v1
 source:
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: ee34ee6e80f15daedde2ac6fefaa30527d1ed95bf635ab7b1c8a80ebea7142aa
+  sha256: bcc50bdd12ab7bead2e803589fd0252798597302e2a47f7e272445e3aa5b718d
 counts:
   root_command_count: 41
   group_count: 291
@@ -9,7 +9,7 @@ counts:
   registered_leaf_count: 993
   unique_path_count: 1284
   duplicate_path_count: 0
-tree_sha256: 266c1f9e2c67cee3214f344a33435d0248fa5068094b09638248c83c7f2352cd
+tree_sha256: 3032d1654338f81ef3d4571fdbea851f2ac229d260da77f95c0586d274f7e516
 nodes:
 - path: <root>
   kind: group
@@ -2245,8 +2245,8 @@ nodes:
   contract_sha256: 720d9ea0c1eea26b5693043d9ba182712e8aa62ddc7082749458b89461e147e5
 - path: dynamic-v3-rescue replay-sample-expansion run
   kind: command
-  parameter_count: 6
-  contract_sha256: 0f08734813b719909bb19b8818c115b23f6bef5c0f4aa62941744a176d4baffb
+  parameter_count: 9
+  contract_sha256: 09860c752184060ec78c14459dbbb81e90f9847dec1cf9adc328fc986c6351bb
 - path: dynamic-v3-rescue report
   kind: command
   parameter_count: 2

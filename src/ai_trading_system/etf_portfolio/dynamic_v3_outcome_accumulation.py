@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import math
 from collections import Counter, defaultdict
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from ai_trading_system.config import (
     configured_price_tickers,
@@ -27,6 +29,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_HISTORICAL_REPLAY_DIR,
     DEFAULT_REPLAY_DIAGNOSIS_DIR,
     DEFAULT_REPLAY_INVENTORY_DIR,
+    validate_replay_inventory_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
@@ -53,6 +56,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     SCHEMA_VERSION,
     STRATEGY_FAMILY,
+    validate_owner_review_artifact,
+    validate_position_advisory_daily_artifact,
 )
 from ai_trading_system.etf_portfolio.models import DEFAULT_ETF_PRICE_PATH, load_etf_config_bundle
 
@@ -63,14 +68,14 @@ DEFAULT_LIMITED_VS_NOTRADE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_vs_
 DEFAULT_CONSENSUS_RISK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_risk"
 DEFAULT_OUTCOME_UPDATE_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_update_review"
 DEFAULT_OUTCOME_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_update"
-DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rolling_evidence_refresh"
-)
+DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rolling_evidence_refresh"
 DEFAULT_EVIDENCE_TREND_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_trend"
-DEFAULT_FORWARD_OUTCOME_DECISION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
-)
+DEFAULT_FORWARD_OUTCOME_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
 OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION = "outcome_due_source_snapshot.v2"
+REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION = "replay_sample_expansion_source_snapshot.v2"
+DEFAULT_REPLAY_SAMPLE_EXPANSION_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion_v1.yaml"
+)
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -494,9 +499,7 @@ def validate_outcome_due_artifact(
             raise DynamicV3OutcomeAccumulationError("snapshot time fields are invalid")
         price_index = {
             symbol: {
-                parsed
-                for value in _texts(values)
-                if (parsed := _date_from_any(value)) is not None
+                parsed for value in _texts(values) if (parsed := _date_from_any(value)) is not None
             }
             for symbol, values in _mapping(snapshot.get("price_date_availability")).items()
         }
@@ -514,8 +517,7 @@ def validate_outcome_due_artifact(
             for window in windows:
                 identity = (
                     _text(
-                        window.get("daily_advisory_id")
-                        or source_manifest.get("daily_advisory_id")
+                        window.get("daily_advisory_id") or source_manifest.get("daily_advisory_id")
                     ),
                     _int(window.get("window_days")),
                 )
@@ -577,12 +579,11 @@ def validate_outcome_due_artifact(
             and snapshot.get("rates_checksum") == _file_sha256(rates_path)
         )
         report_path = Path(_text(snapshot.get("data_quality_report_path")))
-        dq_evidence_matches = (
-            snapshot.get("data_quality_status") == "SKIPPED_EXPLICIT_TEST_FIXTURE"
-            or (
-                report_path.is_file()
-                and snapshot.get("data_quality_report_checksum") == _file_sha256(report_path)
-            )
+        dq_evidence_matches = snapshot.get(
+            "data_quality_status"
+        ) == "SKIPPED_EXPLICIT_TEST_FIXTURE" or (
+            report_path.is_file()
+            and snapshot.get("data_quality_report_checksum") == _file_sha256(report_path)
         )
         recompute_error = ""
     except Exception as exc:  # noqa: BLE001
@@ -616,8 +617,7 @@ def validate_outcome_due_artifact(
         _check(
             "report_recomputed",
             (due_dir / "outcome_due_report.md").is_file()
-            and (due_dir / "outcome_due_report.md").read_text(encoding="utf-8")
-            == expected_report,
+            and (due_dir / "outcome_due_report.md").read_text(encoding="utf-8") == expected_report,
             "Markdown report",
         ),
     ]
@@ -640,61 +640,37 @@ def run_replay_sample_expansion(
     owner_review_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
     replay_inventory_dir: Path = DEFAULT_REPLAY_INVENTORY_DIR,
     prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    policy_path: Path = DEFAULT_REPLAY_SAMPLE_EXPANSION_POLICY_PATH,
+    enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    owner_reviews = _read_jsonl(owner_review_dir / "owner_review_journal.jsonl")
-    price_index = _price_availability_index(prices_path)
-    rows: list[dict[str, Any]] = []
-    source_inventory: list[dict[str, Any]] = []
-    daily_rows = _expanded_events_from_daily_advisory(
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    if start > end:
+        raise DynamicV3OutcomeAccumulationError("replay expansion start must be <= end")
+    if end > generated.date():
+        raise DynamicV3OutcomeAccumulationError("replay expansion end cannot be in the future")
+    policy = _load_replay_sample_expansion_policy(policy_path)
+    quality = _cached_data_quality_result(
+        as_of=end,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        enforce=enforce_data_quality_gate,
+    )
+    snapshot = _build_replay_sample_expansion_snapshot(
+        start=start,
+        end=end,
+        generated=generated,
         daily_advisory_dir=daily_advisory_dir,
-        owner_reviews=owner_reviews,
-        price_index=price_index,
-        start=start,
-        end=end,
-    )
-    rows.extend(daily_rows)
-    source_inventory.append(
-        _source_inventory_row(
-            source_type="daily_advisory",
-            source_root=daily_advisory_dir,
-            scanned_count=len(list(daily_advisory_dir.glob("*/daily_advisory_manifest.json"))),
-            discovered_count=len(daily_rows),
-        )
-    )
-    replay_rows = _expanded_events_from_replay_inventory(
+        owner_review_dir=owner_review_dir,
         replay_inventory_dir=replay_inventory_dir,
-        start=start,
-        end=end,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        policy_path=policy_path,
+        policy=policy,
+        quality_status=(quality.status if quality is not None else "SKIPPED_EXPLICIT_TEST_FIXTURE"),
     )
-    rows.extend(replay_rows)
-    source_inventory.append(
-        _source_inventory_row(
-            source_type="replay_inventory",
-            source_root=replay_inventory_dir,
-            scanned_count=len(list(replay_inventory_dir.glob("*/replay_artifact_inventory.jsonl"))),
-            discovered_count=len(replay_rows),
-        )
-    )
-    shadow_count = len(list(shadow_monitor_run_dir.glob("*/shadow_monitor_manifest.json")))
-    source_inventory.append(
-        _source_inventory_row(
-            source_type="shadow_monitor",
-            source_root=shadow_monitor_run_dir,
-            scanned_count=shadow_count,
-            discovered_count=0,
-        )
-    )
-    source_inventory.append(
-        _source_inventory_row(
-            source_type="consensus_drift",
-            source_root=consensus_drift_dir,
-            scanned_count=len(list(consensus_drift_dir.glob("*/consensus_drift_manifest.json"))),
-            discovered_count=0,
-        )
-    )
-    rows = _dedupe_expanded_events(rows)
+    source_inventory, rows = _replay_sample_expansion_views_from_snapshot(snapshot)
     summary = _pit_classification_summary(rows)
     expansion_id = _stable_id(
         "replay-sample-expansion",
@@ -704,6 +680,18 @@ def run_replay_sample_expansion(
     )
     expansion_dir = _unique_dir(output_dir / expansion_id)
     expansion_dir.mkdir(parents=True, exist_ok=False)
+    quality_report_path = ""
+    if quality is not None:
+        quality_report = expansion_dir / "validate_data_quality_report.md"
+        write_data_quality_report(quality, quality_report)
+        quality_report_path = str(quality_report)
+    snapshot["expansion_id"] = expansion_dir.name
+    snapshot["data_quality_report_path"] = quality_report_path
+    snapshot["data_quality_report_checksum"] = (
+        _file_sha256(Path(quality_report_path)) if quality_report_path else ""
+    )
+    snapshot_path = expansion_dir / "replay_sample_expansion_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     status = "PASS"
     if not rows:
         status = "INSUFFICIENT_DATA"
@@ -717,6 +705,13 @@ def run_replay_sample_expansion(
         "start": start.isoformat(),
         "end": end.isoformat(),
         "status": status,
+        "market_regime": "ai_after_chatgpt",
+        "data_quality_status": snapshot["data_quality_status"],
+        "data_quality_report_path": quality_report_path,
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _file_sha256(snapshot_path),
+        "policy_id": policy["policy_id"],
+        "policy_version": policy["version"],
         "new_replay_event_count": len(rows),
         "pit_safe_count": summary["pit_safe_count"],
         "pit_warning_count": summary["pit_warning_count"],
@@ -727,10 +722,12 @@ def run_replay_sample_expansion(
         "candidate_source_inventory_path": str(expansion_dir / "candidate_source_inventory.jsonl"),
         "expanded_replay_events_path": str(expansion_dir / "expanded_replay_events.jsonl"),
         "pit_classification_summary_path": str(expansion_dir / "pit_classification_summary.json"),
+        "source_snapshot_artifact_path": str(snapshot_path),
         "replay_sample_expansion_report_path": str(
             expansion_dir / "replay_sample_expansion_report.md"
         ),
         "pit_unsafe_allowed_in_default_replay": False,
+        "automatic_replay_execution_allowed": False,
         "production_effect": "none",
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -759,6 +756,7 @@ def run_replay_sample_expansion(
         "candidate_source_inventory": source_inventory,
         "expanded_replay_events": rows,
         "pit_classification_summary": summary,
+        "source_snapshot": snapshot,
     }
 
 
@@ -791,7 +789,130 @@ def validate_replay_sample_expansion_artifact(
 ) -> dict[str, Any]:
     expansion_dir = output_dir / expansion_id
     manifest = _read_optional_json(expansion_dir / "expansion_manifest.json") or {}
+    inventory = _read_jsonl(expansion_dir / "candidate_source_inventory.jsonl")
     rows = _read_jsonl(expansion_dir / "expanded_replay_events.jsonl")
+    summary = _read_optional_json(expansion_dir / "pit_classification_summary.json") or {}
+    snapshot_path = expansion_dir / "replay_sample_expansion_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (expansion_dir / "expansion_manifest.json").is_file(),
+                expansion_id,
+            ),
+            _check(
+                "source_inventory_exists",
+                (expansion_dir / "candidate_source_inventory.jsonl").is_file(),
+                expansion_id,
+            ),
+            _check(
+                "expanded_events_exists",
+                (expansion_dir / "expanded_replay_events.jsonl").is_file(),
+                expansion_id,
+            ),
+            _check(
+                "pit_summary_exists",
+                (expansion_dir / "pit_classification_summary.json").is_file(),
+                expansion_id,
+            ),
+            _check(
+                "report_exists",
+                (expansion_dir / "replay_sample_expansion_report.md").is_file(),
+                expansion_id,
+            ),
+            _check(
+                "pit_unsafe_default_excluded",
+                all(
+                    row.get("replay_eligibility") == "INELIGIBLE"
+                    for row in rows
+                    if row.get("pit_safety_status") == "PIT_UNSAFE"
+                ),
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_replay_sample_expansion_validation",
+            artifact_id_key="expansion_id",
+            artifact_id=expansion_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    recompute_error = ""
+    try:
+        expected_inventory, expected_rows = _replay_sample_expansion_views_from_snapshot(snapshot)
+        expected_summary = _pit_classification_summary(expected_rows)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_inventory, expected_rows, expected_summary = [], [], {}
+    expected_status = "PASS"
+    if not expected_rows:
+        expected_status = "INSUFFICIENT_DATA"
+    elif expected_summary.get("pit_unsafe_count") or expected_summary.get("pit_warning_count"):
+        expected_status = "PASS_WITH_WARNINGS"
+    expected_manifest_fields = {
+        "expansion_id": expansion_id,
+        "start": snapshot.get("start"),
+        "end": snapshot.get("end"),
+        "generated_at": snapshot.get("generated_at"),
+        "status": expected_status,
+        "market_regime": "ai_after_chatgpt",
+        "data_quality_status": snapshot.get("data_quality_status"),
+        "policy_id": _mapping(snapshot.get("policy")).get("policy_id"),
+        "policy_version": _mapping(snapshot.get("policy")).get("version"),
+        "new_replay_event_count": len(expected_rows),
+        "pit_safe_count": expected_summary.get("pit_safe_count"),
+        "pit_warning_count": expected_summary.get("pit_warning_count"),
+        "pit_unsafe_count": expected_summary.get("pit_unsafe_count"),
+        "eligible_count": expected_summary.get("eligible_count"),
+        "partial_count": expected_summary.get("partial_count"),
+        "ineligible_count": expected_summary.get("ineligible_count"),
+    }
+    expected_report = render_replay_sample_expansion_report(
+        manifest,
+        expected_summary,
+        expected_inventory,
+    )
+    source_bundles_match = all(
+        _source_bundle_matches(bundle)
+        for bundle in _records(snapshot.get("daily_sources"))
+        + _records(snapshot.get("replay_inventory_sources"))
+        + _records(snapshot.get("owner_review_sources"))
+    )
+    prices_path = Path(_text(snapshot.get("prices_path")))
+    rates_path = Path(_text(snapshot.get("rates_path")))
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    input_checksums_match = (
+        _file_sha256(prices_path) == snapshot.get("prices_checksum")
+        and _file_sha256(rates_path) == snapshot.get("rates_checksum")
+        and _file_sha256(policy_path) == snapshot.get("policy_checksum")
+    )
+    try:
+        policy_snapshot_matches = _load_replay_sample_expansion_policy(policy_path) == snapshot.get(
+            "policy"
+        )
+        quality = _cached_data_quality_result(
+            as_of=_date_from_any(snapshot.get("end")) or date.min,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            enforce=snapshot.get("data_quality_status") != "SKIPPED_EXPLICIT_TEST_FIXTURE",
+        )
+        quality_status_matches = quality is None or quality.status == snapshot.get(
+            "data_quality_status"
+        )
+        live_source_validation_passes = _replay_expansion_live_source_validation(snapshot)
+    except Exception:  # noqa: BLE001
+        policy_snapshot_matches = False
+        quality_status_matches = False
+        live_source_validation_passes = False
+    quality_report_path = Path(_text(snapshot.get("data_quality_report_path")))
+    data_quality_evidence_matches = not _text(snapshot.get("data_quality_report_path")) or (
+        quality_report_path.is_file()
+        and _file_sha256(quality_report_path) == snapshot.get("data_quality_report_checksum")
+    )
     checks = [
         _check(
             "manifest_exists", (expansion_dir / "expansion_manifest.json").exists(), expansion_id
@@ -817,6 +938,45 @@ def validate_replay_sample_expansion_artifact(
             expansion_id,
         ),
         _check("expansion_id_matches", manifest.get("expansion_id") == expansion_id, expansion_id),
+        _check(
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION,
+            "v2 source snapshot",
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "source snapshot",
+        ),
+        _check("source_files_unchanged", source_bundles_match, "validated source bundles"),
+        _check(
+            "live_source_validation_passes",
+            live_source_validation_passes,
+            "daily/owner/replay validators",
+        ),
+        _check("cached_and_policy_inputs_unchanged", input_checksums_match, "input checksums"),
+        _check("policy_snapshot_matches", policy_snapshot_matches, "reviewed policy"),
+        _check("data_quality_status_matches", quality_status_matches, "cached DQ rerun"),
+        _check(
+            "data_quality_evidence_matches",
+            data_quality_evidence_matches,
+            "data quality evidence",
+        ),
+        _check("source_inventory_recomputed", inventory == expected_inventory, recompute_error),
+        _check("expanded_events_recomputed", rows == expected_rows, recompute_error),
+        _check("pit_summary_recomputed", summary == expected_summary, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            recompute_error,
+        ),
+        _check(
+            "report_recomputed",
+            (expansion_dir / "replay_sample_expansion_report.md").is_file()
+            and (expansion_dir / "replay_sample_expansion_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
+        ),
         _check(
             "pit_status_valid",
             all(row.get("pit_safety_status") in PIT_SAFETY_STATUSES for row in rows),
@@ -1340,14 +1500,10 @@ def run_outcome_update_review(
         "outcome_update_review_manifest_path": str(
             review_dir / "outcome_update_review_manifest.json"
         ),
-        "update_ready_review_matrix_path": str(
-            review_dir / "update_ready_review_matrix.jsonl"
-        ),
+        "update_ready_review_matrix_path": str(review_dir / "update_ready_review_matrix.jsonl"),
         "update_impact_preview_path": str(review_dir / "update_impact_preview.json"),
         "update_safety_checks_path": str(review_dir / "update_safety_checks.json"),
-        "outcome_update_review_report_path": str(
-            review_dir / "outcome_update_review_report.md"
-        ),
+        "outcome_update_review_report_path": str(review_dir / "outcome_update_review_report.md"),
         "requires_owner_review": True,
         "production_effect": "none",
         "broker_action_allowed": False,
@@ -1393,9 +1549,7 @@ def outcome_update_review_report_payload(
     )
     return {
         **_read_json(review_dir / "outcome_update_review_manifest.json"),
-        "update_ready_review_matrix": _read_jsonl(
-            review_dir / "update_ready_review_matrix.jsonl"
-        ),
+        "update_ready_review_matrix": _read_jsonl(review_dir / "update_ready_review_matrix.jsonl"),
         "update_impact_preview": _read_json(review_dir / "update_impact_preview.json"),
         "update_safety_checks": _read_json(review_dir / "update_safety_checks.json"),
         "review_dir": str(review_dir),
@@ -2033,9 +2187,7 @@ def validate_evidence_trend_artifact(
         _check(
             "timeseries_exists", (trend_dir / "evidence_trend_timeseries.jsonl").exists(), trend_id
         ),
-        _check(
-            "summary_exists", (trend_dir / "confidence_trend_summary.json").exists(), trend_id
-        ),
+        _check("summary_exists", (trend_dir / "confidence_trend_summary.json").exists(), trend_id),
         _check("report_exists", (trend_dir / "evidence_trend_report.md").exists(), trend_id),
         _check("trend_id_matches", manifest.get("trend_id") == trend_id, trend_id),
         _check(
@@ -2344,12 +2496,12 @@ def render_limited_vs_notrade_report(
 ) -> str:
     rows = _records(comparison.get("by_window"))
     row_lines = [
-            (
-                f"- {row.get('window_days')}d: available={row.get('available_count')}, "
-                f"win_rate={row.get('win_rate')}, "
-                f"avg_relative_return={row.get('avg_relative_return')}, "
-                f"confidence={row.get('confidence')}"
-            )
+        (
+            f"- {row.get('window_days')}d: available={row.get('available_count')}, "
+            f"win_rate={row.get('win_rate')}, "
+            f"avg_relative_return={row.get('avg_relative_return')}, "
+            f"confidence={row.get('confidence')}"
+        )
         for row in rows
     ]
     return (
@@ -2527,10 +2679,7 @@ def render_rolling_refresh_reader_brief(
                 f"- refresh_id: {manifest.get('refresh_id')}",
                 f"- forward_available: {after.get('forward_available')}",
                 f"- forward_pending: {after.get('forward_pending')}",
-                (
-                    "- limited_vs_notrade_confidence: "
-                    f"{after.get('limited_vs_notrade_confidence')}"
-                ),
+                (f"- limited_vs_notrade_confidence: {after.get('limited_vs_notrade_confidence')}"),
                 f"- consensus_target_risk: {after.get('consensus_target_risk')}",
                 f"- material_change: {delta.get('material_change')}",
                 f"- recommended_action: {after.get('recommended_action')}",
@@ -2722,10 +2871,7 @@ def _outcome_update_impact_preview(rows: Sequence[Mapping[str, Any]]) -> dict[st
 def _forward_rows_by_outcome_window(
     rows: Sequence[Mapping[str, Any]],
 ) -> dict[tuple[str, int], dict[str, Any]]:
-    return {
-        (_text(row.get("outcome_id")), _int(row.get("window_days"))): dict(row)
-        for row in rows
-    }
+    return {(_text(row.get("outcome_id")), _int(row.get("window_days"))): dict(row) for row in rows}
 
 
 def _forward_status_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, int]:
@@ -2818,9 +2964,7 @@ def _latest_consensus_risk_summary(output_dir: Path) -> dict[str, Any]:
     except DynamicV3OutcomeAccumulationError:
         return {"consensus_target_risk": "INSUFFICIENT_DATA"}
     return {
-        "consensus_target_risk": _text(
-            payload.get("consensus_target_risk"), "INSUFFICIENT_DATA"
-        )
+        "consensus_target_risk": _text(payload.get("consensus_target_risk"), "INSUFFICIENT_DATA")
     }
 
 
@@ -2939,9 +3083,7 @@ def _evidence_trend_timeseries(rolling_refresh_dir: Path) -> list[dict[str, Any]
                 "consensus_target_risk": _text(
                     after.get("consensus_target_risk"), "INSUFFICIENT_DATA"
                 ),
-                "recommended_action": _text(
-                    after.get("recommended_action"), "continue_tracking"
-                ),
+                "recommended_action": _text(after.get("recommended_action"), "continue_tracking"),
                 "production_effect": "none",
                 "broker_action_taken": False,
             }
@@ -3205,6 +3347,503 @@ def _pending_window_summary(
         "production_effect": "none",
         "broker_action_taken": False,
     }
+
+
+def _load_replay_sample_expansion_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3OutcomeAccumulationError(f"replay sample expansion policy not found: {path}")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    policy = dict(payload) if isinstance(payload, Mapping) else {}
+    required_text = (
+        "schema_version",
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    )
+    if any(not _text(policy.get(key)) for key in required_text):
+        raise DynamicV3OutcomeAccumulationError(
+            "replay sample expansion policy metadata is incomplete"
+        )
+    if policy.get("automatic_replay_execution_allowed") is not False:
+        raise DynamicV3OutcomeAccumulationError(
+            "replay sample expansion policy must prohibit automatic replay execution"
+        )
+    if policy.get("production_effect") != "none":
+        raise DynamicV3OutcomeAccumulationError(
+            "replay sample expansion policy production_effect must be none"
+        )
+    for key in (
+        "pit_unsafe_limitations",
+        "replay_ineligible_limitations",
+        "pit_warning_limitations",
+        "source_precedence",
+    ):
+        values = _texts(policy.get(key))
+        if not values or len(values) != len(set(values)):
+            raise DynamicV3OutcomeAccumulationError(
+                f"replay sample expansion policy {key} must be unique and non-empty"
+            )
+        policy[key] = values
+    return policy
+
+
+def _build_replay_sample_expansion_snapshot(
+    *,
+    start: date,
+    end: date,
+    generated: datetime,
+    daily_advisory_dir: Path,
+    owner_review_dir: Path,
+    replay_inventory_dir: Path,
+    prices_path: Path,
+    rates_path: Path,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+    quality_status: str,
+) -> dict[str, Any]:
+    daily_sources: list[dict[str, Any]] = []
+    daily_ids: set[str] = set()
+    daily_dates: set[str] = set()
+    daily_manifest_paths = sorted(daily_advisory_dir.glob("*/daily_advisory_manifest.json"))
+    for manifest_path in daily_manifest_paths:
+        manifest = _read_optional_json(manifest_path)
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"daily advisory manifest is invalid JSON: {manifest_path}"
+            )
+        as_of = _date_from_any(manifest.get("as_of"))
+        if as_of is None or not (start <= as_of <= end):
+            continue
+        daily_id = _text(manifest.get("daily_advisory_id"), manifest_path.parent.name)
+        source_time = _datetime_from_any(manifest.get("generated_at"))
+        if not daily_id or source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError(
+                f"daily advisory identity/time is invalid or future: {manifest_path}"
+            )
+        if daily_id in daily_ids or as_of.isoformat() in daily_dates:
+            raise DynamicV3OutcomeAccumulationError(
+                "duplicate daily advisory id or as_of in replay expansion range"
+            )
+        validation = validate_position_advisory_daily_artifact(
+            daily_advisory_id=daily_id,
+            output_dir=daily_advisory_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"daily advisory validation must PASS: {daily_id}"
+            )
+        daily_ids.add(daily_id)
+        daily_dates.add(as_of.isoformat())
+        daily_sources.append(_immutable_source_bundle(manifest_path.parent))
+
+    owner_records: list[dict[str, Any]] = []
+    owner_sources: list[dict[str, Any]] = []
+    owner_events_path = owner_review_dir / "owner_review_events.jsonl"
+    if owner_events_path.is_file():
+        selected_by_daily: dict[str, dict[str, Any]] = {}
+        for record in _read_jsonl(owner_review_dir / "owner_review_journal.jsonl"):
+            daily_id = _text(record.get("daily_advisory_id"))
+            if daily_id not in daily_ids:
+                continue
+            source_time = _datetime_from_any(record.get("updated_at") or record.get("created_at"))
+            if source_time is None or source_time > generated:
+                continue
+            review_id = _text(record.get("review_id"))
+            validation = validate_owner_review_artifact(
+                review_id=review_id,
+                output_dir=owner_review_dir,
+            )
+            if validation.get("status") != "PASS":
+                raise DynamicV3OutcomeAccumulationError(
+                    f"owner review validation must PASS: {review_id}"
+                )
+            if daily_id in selected_by_daily:
+                raise DynamicV3OutcomeAccumulationError(
+                    f"multiple validated owner reviews for daily advisory: {daily_id}"
+                )
+            selected_by_daily[daily_id] = dict(record)
+        owner_records = [selected_by_daily[key] for key in sorted(selected_by_daily)]
+        owner_sources.append(_immutable_source_bundle(owner_review_dir))
+
+    replay_candidates: list[tuple[datetime, str, dict[str, Any]]] = []
+    replay_manifest_paths = sorted(replay_inventory_dir.glob("*/replay_inventory_manifest.json"))
+    for manifest_path in replay_manifest_paths:
+        manifest = _read_optional_json(manifest_path)
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"replay inventory manifest is invalid JSON: {manifest_path}"
+            )
+        source_time = _datetime_from_any(manifest.get("generated_at"))
+        inventory_id = _text(manifest.get("inventory_id"), manifest_path.parent.name)
+        if source_time is None or source_time > generated:
+            continue
+        validation = validate_replay_inventory_artifact(
+            inventory_id=inventory_id,
+            output_dir=replay_inventory_dir,
+        )
+        if validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                f"replay inventory validation must PASS: {inventory_id}"
+            )
+        replay_candidates.append(
+            (source_time, inventory_id, _immutable_source_bundle(manifest_path.parent))
+        )
+    replay_sources: list[dict[str, Any]] = []
+    if replay_candidates:
+        replay_candidates.sort(key=lambda row: (row[0], row[1]))
+        latest_time = replay_candidates[-1][0]
+        latest = [row for row in replay_candidates if row[0] == latest_time]
+        if len(latest) != 1:
+            raise DynamicV3OutcomeAccumulationError(
+                "ambiguous latest replay inventory at generated cutoff"
+            )
+        replay_sources = [latest[0][2]]
+
+    price_index = {
+        symbol: sorted(item.isoformat() for item in dates if item <= generated.date())
+        for symbol, dates in sorted(_price_availability_index(prices_path).items())
+    }
+    return {
+        "schema_version": REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": generated.isoformat(),
+        "generated_cutoff": generated.isoformat(),
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "daily_advisory_dir": str(daily_advisory_dir),
+        "daily_manifest_scanned_count": len(daily_manifest_paths),
+        "daily_sources": daily_sources,
+        "owner_review_dir": str(owner_review_dir),
+        "owner_records": owner_records,
+        "owner_review_sources": owner_sources,
+        "replay_inventory_dir": str(replay_inventory_dir),
+        "replay_inventory_manifest_scanned_count": len(replay_manifest_paths),
+        "replay_inventory_sources": replay_sources,
+        "prices_path": str(prices_path),
+        "prices_checksum": _file_sha256(prices_path),
+        "rates_path": str(rates_path),
+        "rates_checksum": _file_sha256(rates_path),
+        "price_date_availability": price_index,
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "data_quality_status": quality_status,
+        "production_effect": "none",
+    }
+
+
+def _replay_sample_expansion_views_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    start = _date_from_any(snapshot.get("start"))
+    end = _date_from_any(snapshot.get("end"))
+    generated = _datetime_from_any(snapshot.get("generated_cutoff"))
+    if start is None or end is None or generated is None or start > end or end > generated.date():
+        raise DynamicV3OutcomeAccumulationError("invalid replay expansion snapshot range/cutoff")
+    policy = _mapping(snapshot.get("policy"))
+    price_index = {
+        _text(symbol): {
+            parsed for value in _texts(values) if (parsed := _date_from_any(value)) is not None
+        }
+        for symbol, values in _mapping(snapshot.get("price_date_availability")).items()
+    }
+    owner_by_daily = {
+        _text(row.get("daily_advisory_id")): dict(row)
+        for row in _records(snapshot.get("owner_records"))
+    }
+    rows: list[dict[str, Any]] = []
+    for bundle in _records(snapshot.get("daily_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "daily_advisory_manifest.json"))
+        as_of = _date_from_any(manifest.get("as_of"))
+        if as_of is None or not (start <= as_of <= end):
+            raise DynamicV3OutcomeAccumulationError("daily source escaped frozen range")
+        daily_id = _text(manifest.get("daily_advisory_id"))
+        source_time = _datetime_from_any(manifest.get("generated_at"))
+        if not daily_id or source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError("daily source escaped generated cutoff")
+        targets, current, consensus, candidate_id = _daily_inputs_from_bundle(bundle)
+        owner = owner_by_daily.get(daily_id, {})
+        limitations: list[str] = []
+        if not targets:
+            limitations.append("MISSING_TARGET_WEIGHTS")
+        if not current:
+            limitations.append("MISSING_CURRENT_WEIGHTS")
+        if not consensus:
+            limitations.append("CONSENSUS_WEIGHTS_MISSING")
+        if not owner:
+            limitations.append("OWNER_DECISION_MISSING")
+        if source_time.date() > as_of:
+            limitations.append("SOURCE_GENERATED_AFTER_AS_OF_DATE")
+        symbols = set(targets) | set(current) | set(consensus)
+        price_after = _has_price_after(symbols, as_of, price_index)
+        if not price_after:
+            limitations.append("MISSING_PRICE_DATA_AFTER_AS_OF")
+        pit_status, eligibility = _replay_sample_classification(limitations, policy)
+        rows.append(
+            _expanded_event_row(
+                source_type="daily_advisory",
+                source_path=_bundle_primary_path(bundle, "daily_advisory_manifest.json"),
+                daily_advisory_id=daily_id,
+                as_of=as_of,
+                candidate_id=candidate_id,
+                targets=targets,
+                current=current,
+                consensus=consensus,
+                owner_available=bool(owner),
+                price_after=price_after,
+                pit_status=pit_status,
+                eligibility=eligibility,
+                limitations=limitations,
+            )
+        )
+    for bundle in _records(snapshot.get("replay_inventory_sources")):
+        source_path = _bundle_primary_path(bundle, "replay_artifact_inventory.jsonl")
+        for source in _records(_source_bundle_content(bundle, "replay_artifact_inventory.jsonl")):
+            as_of = _date_from_any(source.get("as_of"))
+            if as_of is None or not (start <= as_of <= end):
+                continue
+            inputs = _mapping(source.get("decision_inputs"))
+            targets = _normalize_weights(_mapping(inputs.get("target_weights")))
+            current = _normalize_weights(_mapping(inputs.get("current_weights")))
+            consensus = _normalize_weights(_mapping(inputs.get("consensus_weights")))
+            owner_available = _text(inputs.get("owner_decision")) not in {"", "missing"}
+            symbols = set(targets) | set(current) | set(consensus)
+            price_after = _has_price_after(symbols, as_of, price_index)
+            limitations = _texts(source.get("replay_limitations"))
+            if not targets and "MISSING_TARGET_WEIGHTS" not in limitations:
+                limitations.append("MISSING_TARGET_WEIGHTS")
+            if not current and "MISSING_CURRENT_WEIGHTS" not in limitations:
+                limitations.append("MISSING_CURRENT_WEIGHTS")
+            if not consensus and "CONSENSUS_WEIGHTS_MISSING" not in limitations:
+                limitations.append("CONSENSUS_WEIGHTS_MISSING")
+            if not owner_available and "OWNER_DECISION_MISSING" not in limitations:
+                limitations.append("OWNER_DECISION_MISSING")
+            if not price_after and "MISSING_PRICE_DATA_AFTER_AS_OF" not in limitations:
+                limitations.append("MISSING_PRICE_DATA_AFTER_AS_OF")
+            pit_status, eligibility = _replay_sample_classification(limitations, policy)
+            rows.append(
+                _expanded_event_row(
+                    source_type="replay_inventory",
+                    source_path=source_path,
+                    daily_advisory_id=_text(source.get("daily_advisory_id")),
+                    as_of=as_of,
+                    candidate_id=_text(source.get("candidate_id")),
+                    targets=targets,
+                    current=current,
+                    consensus=consensus,
+                    owner_available=owner_available,
+                    price_after=price_after,
+                    pit_status=pit_status,
+                    eligibility=eligibility,
+                    limitations=limitations,
+                )
+            )
+    rows = _canonical_replay_expansion_events(rows, policy)
+    inventory = [
+        _source_inventory_row(
+            source_type="daily_advisory",
+            source_root=Path(_text(snapshot.get("daily_advisory_dir"))),
+            scanned_count=_int(snapshot.get("daily_manifest_scanned_count")),
+            discovered_count=sum(1 for row in rows if row.get("source_type") == "daily_advisory"),
+        ),
+        _source_inventory_row(
+            source_type="owner_review",
+            source_root=Path(_text(snapshot.get("owner_review_dir"))),
+            scanned_count=len(_records(snapshot.get("owner_records"))),
+            discovered_count=len(_records(snapshot.get("owner_records"))),
+        ),
+        _source_inventory_row(
+            source_type="replay_inventory",
+            source_root=Path(_text(snapshot.get("replay_inventory_dir"))),
+            scanned_count=_int(snapshot.get("replay_inventory_manifest_scanned_count")),
+            discovered_count=sum(1 for row in rows if row.get("source_type") == "replay_inventory"),
+        ),
+        _source_inventory_row(
+            source_type="cached_prices",
+            source_root=Path(_text(snapshot.get("prices_path"))),
+            scanned_count=1,
+            discovered_count=1 if _text(snapshot.get("prices_checksum")) else 0,
+        ),
+    ]
+    return inventory, rows
+
+
+def _replay_expansion_live_source_validation(snapshot: Mapping[str, Any]) -> bool:
+    daily_root = Path(_text(snapshot.get("daily_advisory_dir")))
+    for bundle in _records(snapshot.get("daily_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "daily_advisory_manifest.json"))
+        daily_id = _text(manifest.get("daily_advisory_id"))
+        if (
+            validate_position_advisory_daily_artifact(
+                daily_advisory_id=daily_id,
+                output_dir=daily_root,
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    owner_root = Path(_text(snapshot.get("owner_review_dir")))
+    for record in _records(snapshot.get("owner_records")):
+        if (
+            validate_owner_review_artifact(
+                review_id=_text(record.get("review_id")),
+                output_dir=owner_root,
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    replay_root = Path(_text(snapshot.get("replay_inventory_dir")))
+    for bundle in _records(snapshot.get("replay_inventory_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "replay_inventory_manifest.json"))
+        if (
+            validate_replay_inventory_artifact(
+                inventory_id=_text(manifest.get("inventory_id")),
+                output_dir=replay_root,
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    return True
+
+
+def _daily_inputs_from_bundle(
+    bundle: Mapping[str, Any],
+) -> tuple[dict[str, float], dict[str, float], dict[str, float], str]:
+    target_rows = _records(_source_bundle_content(bundle, "daily_candidate_targets.jsonl"))
+    delta_rows = _records(_source_bundle_content(bundle, "daily_position_deltas.jsonl"))
+    targets: dict[str, float] = {}
+    current: dict[str, float] = {}
+    candidate_id = ""
+    for row in target_rows + delta_rows:
+        if not candidate_id:
+            candidate_id = _text(row.get("candidate_id"))
+        if not targets and _mapping(row.get("target_weights")):
+            targets = _normalize_weights(_mapping(row.get("target_weights")))
+        if not current and _mapping(row.get("current_weights")):
+            current = _normalize_weights(_mapping(row.get("current_weights")))
+    consensus_text = _text(_source_bundle_content(bundle, "daily_consensus_weights.csv"))
+    consensus: dict[str, float] = {}
+    if consensus_text:
+        for row in csv.DictReader(io.StringIO(consensus_text)):
+            symbol = _text(row.get("symbol"))
+            value = _float(row.get("median_target_weight"), default=float("nan"))
+            if symbol and math.isfinite(value):
+                consensus[symbol] = value
+        consensus = _normalize_weights(consensus)
+    if not targets:
+        targets = consensus
+    return targets, current, consensus, candidate_id
+
+
+def _bundle_primary_path(bundle: Mapping[str, Any], relative_path: str) -> str:
+    return _text(_mapping(_mapping(bundle.get("files")).get(relative_path)).get("path"))
+
+
+def _replay_sample_classification(
+    limitations: Sequence[str], policy: Mapping[str, Any]
+) -> tuple[str, str]:
+    limitation_set = set(limitations)
+    pit_unsafe = set(_texts(policy.get("pit_unsafe_limitations")))
+    ineligible = set(_texts(policy.get("replay_ineligible_limitations")))
+    warnings = set(_texts(policy.get("pit_warning_limitations")))
+    pit_status = "PIT_UNSAFE" if limitation_set & pit_unsafe else "PIT_SAFE"
+    if pit_status != "PIT_UNSAFE" and limitation_set & warnings:
+        pit_status = "PIT_WARNING"
+    if limitation_set & ineligible:
+        eligibility = "INELIGIBLE"
+    elif pit_status == "PIT_WARNING":
+        eligibility = "PARTIAL"
+    else:
+        eligibility = "ELIGIBLE"
+    return pit_status, eligibility
+
+
+def _expanded_event_row(
+    *,
+    source_type: str,
+    source_path: str,
+    daily_advisory_id: str,
+    as_of: date,
+    candidate_id: str,
+    targets: Mapping[str, float],
+    current: Mapping[str, float],
+    consensus: Mapping[str, float],
+    owner_available: bool,
+    price_after: bool,
+    pit_status: str,
+    eligibility: str,
+    limitations: Sequence[str],
+) -> dict[str, Any]:
+    sample_key = f"{daily_advisory_id}|{as_of.isoformat()}"
+    return {
+        "expanded_event_id": _stable_id("expanded-event", sample_key),
+        "sample_key": sample_key,
+        "as_of": as_of.isoformat(),
+        "daily_advisory_id": daily_advisory_id,
+        "source_type": source_type,
+        "source_types": [source_type],
+        "source_artifact_path": source_path,
+        "source_artifact_paths": [source_path],
+        "candidate_id": candidate_id,
+        "target_weights_available": bool(targets),
+        "current_weights_available": bool(current),
+        "consensus_weights_available": bool(consensus),
+        "owner_decision_available": owner_available,
+        "price_data_after_as_of_available": price_after,
+        "pit_safety_status": pit_status,
+        "replay_eligibility": eligibility,
+        "limitations": sorted(set(limitations)),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _canonical_replay_expansion_events(
+    rows: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> list[dict[str, Any]]:
+    by_key: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        key = _text(row.get("sample_key"))
+        if not key:
+            raise DynamicV3OutcomeAccumulationError("expanded replay event missing sample key")
+        by_key[key].append(dict(row))
+    precedence = {name: index for index, name in enumerate(_texts(policy.get("source_precedence")))}
+    result: list[dict[str, Any]] = []
+    comparison_fields = (
+        "candidate_id",
+        "target_weights_available",
+        "current_weights_available",
+        "consensus_weights_available",
+        "owner_decision_available",
+        "price_data_after_as_of_available",
+        "pit_safety_status",
+        "replay_eligibility",
+        "limitations",
+    )
+    for key, candidates in sorted(by_key.items()):
+        identities = {
+            json.dumps({field: row.get(field) for field in comparison_fields}, sort_keys=True)
+            for row in candidates
+        }
+        if len(identities) > 1:
+            raise DynamicV3OutcomeAccumulationError(
+                f"conflicting cross-source replay expansion event: {key}"
+            )
+        candidates.sort(
+            key=lambda row: (
+                precedence.get(_text(row.get("source_type")), 999),
+                _text(row.get("source_artifact_path")),
+            )
+        )
+        selected = candidates[0]
+        selected["source_types"] = sorted({_text(row.get("source_type")) for row in candidates})
+        selected["source_artifact_paths"] = sorted(
+            {_text(row.get("source_artifact_path")) for row in candidates}
+        )
+        result.append(selected)
+    return sorted(result, key=lambda row: (_text(row.get("as_of")), _text(row.get("sample_key"))))
 
 
 def _expanded_events_from_daily_advisory(

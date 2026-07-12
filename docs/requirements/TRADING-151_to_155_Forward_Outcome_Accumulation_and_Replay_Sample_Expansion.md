@@ -5,6 +5,8 @@
 ## ARCH-004G2.4BB 进展
 
 - 2026-07-12：Outcome Due完成source-derived hardening与CLI迁移。Scan在任何due output前执行time/as-of、cached DQ和所有Advisory Outcome validators，冻结完整outcome bundles、DQ、price/rate checksums及cutoff price-date availability；duplicate daily×window阻断，validator重算全部scan views并检测tamper。`update-ready`先要求due PASS/live freshness/time/single-use，按outcome显式传DUE `allowed_window_days`，post-update outcome validation PASS并记录execution。NOT_DUE/PRICE_MISSING不更新，无自动后续链或policy/production/broker effect。
+- 2026-07-12：Replay Sample Expansion进入G2.4BC source-derived hardening与CLI迁移。Run在任何output前执行range/future、cached DQ、Daily/Owner/Replay Inventory full validators与generated cutoff；重复daily id/as-of、ambiguous latest inventory或跨源sample冲突fail closed。完整source bundles、DQ、price/rate checksums、cutoff price dates和reviewed PIT policy冻结到snapshot；events按`daily_advisory_id|as_of`唯一化，PIT safety与outcome-price evaluability分开。Validator重验live source/DQ/policy并重算inventory/events/summary/manifest/Markdown；不运行replay/backfill或修改policy/portfolio/production/broker。
+- 2026-07-12：Replay Sample Expansion的G2.4BC实现与正式验证完成，任务继续保持`VALIDATING`等待真实PIT-safe样本积累。当前validated TARGET_ONLY fixture因缺decision-time current weights，技术source validator PASS但分类仍为`PIT_UNSAFE/INELIGIBLE`，证明不会用结构完整性冒充replay资格。Focused=168、architecture=238、contract=203 PASS；无production/broker effect。
 
 ## 背景
 
@@ -26,7 +28,7 @@ TRADING-146_to_150 已经能解释 historical replay 的 `PARTIAL`、`PENDING`
 |ID|范围|状态|验收标准|
 |---|---|---|---|
 |TRADING-151|Forward Outcome Scheduler & Due Window Detector|VALIDATING|`outcome-due scan/report/update-ready` 和 `validate-outcome-due` 可运行；能区分 `DUE`、`NOT_DUE`、`PRICE_MISSING`、`ALREADY_AVAILABLE`、`INSUFFICIENT_DATA`；`update-ready` 只处理 `can_update=true` 的 outcome。|
-|TRADING-152|Replay Sample Expansion from Historical Candidate Artifacts|VALIDATING|`replay-sample-expansion run/report` 和 `validate-replay-sample-expansion` 可运行；扫描 existing dynamic-v3 artifacts；输出 expanded replay events；`PIT_UNSAFE` 默认不进入 replay eligibility。|
+|TRADING-152|Replay Sample Expansion from Historical Candidate Artifacts|VALIDATING|`replay-sample-expansion run/report` 和 `validate-replay-sample-expansion` 已迁至canonical CLI并通过正式验证；只接受validated/cutoff-bound sources，输出immutable source snapshot与unique expanded replay events；`PIT_UNSAFE`或缺评价价格默认不进入 replay eligibility；等待真实PIT-safe样本积累。|
 |TRADING-153|Outcome Availability Dashboard|VALIDATING|`outcome-dashboard build/report` 和 `validate-outcome-dashboard` 可运行；聚合 forward outcome、historical replay/backfilled outcome、backtest simulation availability、pending reasons 和 Reader Brief section。|
 |TRADING-154|Limited Adjustment vs No Trade Focused Evaluation|VALIDATING|`limited-vs-notrade run/report` 和 `validate-limited-vs-notrade` 可运行；聚合 forward/replay outcome；样本不足时明确 `INSUFFICIENT_DATA`；不自动修改 advisory policy。|
 |TRADING-155|Consensus Target Risk Review|VALIDATING|`consensus-risk run/report` 和 `validate-consensus-risk` 可运行；样本不足时不得给 `PASS`；结论只能作为 observation/risk review input。|

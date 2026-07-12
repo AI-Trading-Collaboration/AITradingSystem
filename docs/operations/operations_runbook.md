@@ -312,3 +312,4 @@ Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / met
 4. 确认任务的 `production_effect`、weight write、broker action 和 trading action 边界。
 5. 如果任务会新增或修改 CLI、配置、artifact、report schema、数据流、评分、回测或治理解释，同步更新 `docs/system_flow.md`、`docs/artifact_catalog.md`、任务登记和相关 requirements/runbook。
 6. 如果遇到 blocker，不要静默绕过；按 AGENTS 的 no-silent-workaround 流程记录原因、影响、风险、验证覆盖和退出条件。
+ARCH-004G2.4BC Replay Sample Expansion 是显式ad-hoc研究证据入口，不是daily scheduler子任务。执行前必须先通过同一路径cached price/rate DQ，并要求selected Daily Advisory、append-only Owner Review和latest Replay Inventory validators在generated cutoff下PASS；任何duplicate/conflict/future source都应在创建output前失败。输出snapshot必须绑定source bundles、DQ evidence、price/rate checksums、cutoff price dates和reviewed PIT policy；validator重验live inputs并重算全部views。它不自动运行historical replay/backfill，也不修改policy/config/portfolio/production/order/broker。

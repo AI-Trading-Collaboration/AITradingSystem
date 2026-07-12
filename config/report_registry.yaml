@@ -6649,11 +6649,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/candidate_source_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/expanded_replay_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/pit_classification_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/replay_sample_expansion_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/validate_data_quality_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/replay_sample_expansion_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-152 expands replay samples only from existing artifacts and keeps
-      PIT_UNSAFE rows ineligible for downstream replay interpretation.
+      TRADING-152 expands replay samples only from validated, cutoff-bound Daily/Owner/Replay
+      sources. The immutable snapshot binds source bundles, DQ evidence, price/rate inputs and
+      reviewed PIT policy; PIT_UNSAFE rows remain ineligible for downstream replay interpretation.
     owner_action: review_pit_classification_before_using_expanded_replay_samples
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

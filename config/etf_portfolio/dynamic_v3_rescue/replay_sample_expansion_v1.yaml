@@ -1,0 +1,32 @@
+schema_version: replay_sample_expansion_policy.v1
+policy_id: dynamic_v3_replay_sample_expansion
+version: v1
+status: pilot
+owner: research_governance
+rationale: >-
+  Replay sample expansion may only count validated, point-in-time reconstructable
+  decision events. Evaluation-price availability is kept separate from decision-time
+  PIT safety so future outcome data cannot be mistaken for a decision input.
+intended_effect: >-
+  Fail closed on ambiguous or incomplete decision-time sources, exclude samples that
+  cannot be evaluated, and keep all expansion outputs research-only.
+review_condition: >-
+  Recalibrate after a preregistered replay cohort is large enough to estimate missingness
+  and source-conflict rates without weakening PIT controls.
+pit_unsafe_limitations:
+  - MISSING_TARGET_WEIGHTS
+  - MISSING_CURRENT_WEIGHTS
+  - SOURCE_GENERATED_AFTER_AS_OF_DATE
+replay_ineligible_limitations:
+  - MISSING_TARGET_WEIGHTS
+  - MISSING_CURRENT_WEIGHTS
+  - SOURCE_GENERATED_AFTER_AS_OF_DATE
+  - MISSING_PRICE_DATA_AFTER_AS_OF
+pit_warning_limitations:
+  - CONSENSUS_WEIGHTS_MISSING
+  - OWNER_DECISION_MISSING
+source_precedence:
+  - replay_inventory
+  - daily_advisory
+automatic_replay_execution_allowed: false
+production_effect: none

@@ -2796,6 +2796,28 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4bb["python_module_count"] == 866
     assert phase_g2_4bb["sources"]
     for source in phase_g2_4bb["sources"]:
+        if source["path"] in set(phase_g2_4bb.get("superseded_source_paths", [])):
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4bc = baseline["phase_g2_4bc_etf_cli_dynamic_v3_replay_sample_expansion"]
+    assert phase_g2_4bc["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4bc = phase_g2_4bc["migration"]
+    assert migration_g2_4bc["callback_count"] == 3
+    assert migration_g2_4bc["pre_output_range_time_data_quality_gate"] is True
+    assert migration_g2_4bc["daily_owner_replay_full_validation"] is True
+    assert migration_g2_4bc["duplicate_or_conflicting_event_allowed"] is False
+    assert migration_g2_4bc["source_policy_price_snapshot_required"] is True
+    assert migration_g2_4bc["pit_safety_separate_from_price_evaluability"] is True
+    assert migration_g2_4bc["content_derived_all_views_validation"] is True
+    assert migration_g2_4bc["automatic_replay_execution_allowed"] is False
+    assert migration_g2_4bc["portfolio_or_execution_effect"] is False
+    assert migration_g2_4bc["legacy_root_lines_after"] == 25589
+    assert migration_g2_4bc["legacy_root_top_level_functions_after"] == 755
+    assert migration_g2_4bc["legacy_root_command_decorators_after"] == 716
+    assert migration_g2_4bc["python_module_count"] == 867
+    assert phase_g2_4bc["sources"]
+    for source in phase_g2_4bc["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2852,6 +2874,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BA_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BB_VALIDATING_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BB_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BC_IN_PROGRESS_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BC_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

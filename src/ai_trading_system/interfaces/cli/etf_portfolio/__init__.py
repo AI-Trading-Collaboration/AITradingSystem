@@ -119,6 +119,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_replay_performance_review as dynamic_v3_replay_performance_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_replay_sample_expansion as dynamic_v3_replay_sample_expansion_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_rescue as dynamic_v3_rescue_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -205,6 +208,7 @@ __all__ = [
     "dynamic_v3_position_advisory_commands",
     "dynamic_v3_position_advisory_daily_commands",
     "dynamic_v3_replay_inventory_commands",
+    "dynamic_v3_replay_sample_expansion_commands",
     "dynamic_v3_replay_diagnosis_commands",
     "dynamic_v3_replay_forward_bridge_commands",
     "dynamic_v3_replay_performance_review_commands",
