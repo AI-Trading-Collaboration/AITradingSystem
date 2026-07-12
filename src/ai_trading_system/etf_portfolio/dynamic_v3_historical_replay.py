@@ -60,8 +60,12 @@ HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION = "historical_paper_sim_source_snap
 REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "replay_performance_review_source_snapshot.v2"
 REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION = "replay_diagnosis_source_snapshot.v2"
 BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION = "backfill_repair_source_snapshot.v2"
+VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION = "variant_comparison_source_snapshot.v2"
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
+)
+DEFAULT_VARIANT_COMPARISON_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/variant_comparison_v1.yaml"
 )
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
@@ -1851,6 +1855,58 @@ def _load_replay_performance_review_policy(path: Path) -> dict[str, Any]:
     return loaded
 
 
+def _load_variant_comparison_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3HistoricalReplayError(f"comparison policy is missing: {path}")
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(loaded, dict):
+        raise DynamicV3HistoricalReplayError("comparison policy must be a mapping")
+    metadata = _mapping(loaded.get("policy_metadata"))
+    gate = _mapping(loaded.get("evidence_gate"))
+    ranking = _mapping(loaded.get("ranking"))
+    safety = _mapping(loaded.get("safety"))
+    required_metadata = (
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    )
+    if any(not _text(metadata.get(field)) for field in required_metadata):
+        raise DynamicV3HistoricalReplayError("comparison policy metadata is incomplete")
+    eligible = tuple(_texts(gate.get("rank_eligible_variants")))
+    diagnostic = tuple(_texts(gate.get("diagnostic_only_variants")))
+    if (
+        metadata.get("status") != "pilot_baseline"
+        or _int(gate.get("primary_window_trading_days")) not in OUTCOME_WINDOWS
+        or _int(gate.get("minimum_distinct_replay_event_count")) <= 0
+        or _int(gate.get("minimum_available_variant_window_count")) <= 0
+        or _int(gate.get("minimum_paired_event_count")) <= 0
+        or set((*eligible, *diagnostic)) != set(REPLAY_VARIANTS)
+        or set(eligible) & set(diagnostic)
+        or gate.get("same_cohort_required") is not True
+        or ranking.get("primary_metric") != "avg_relative_to_no_trade"
+        or ranking.get("cross_window_averaging_allowed") is not False
+    ):
+        raise DynamicV3HistoricalReplayError("comparison evidence/ranking policy is invalid")
+    required_safety = (
+        ("manual_review_required", True),
+        ("requires_owner_approval", True),
+        ("automatic_rule_calibration", False),
+        ("automatic_config_update", False),
+        ("automatic_candidate_promotion", False),
+        ("broker_action_taken", False),
+    )
+    if (
+        any(safety.get(field) is not expected for field, expected in required_safety)
+        or safety.get("production_effect") != "none"
+    ):
+        raise DynamicV3HistoricalReplayError("comparison policy safety boundary is invalid")
+    return loaded
+
+
 def _review_source_bundle(root: Path, names: Sequence[str]) -> dict[str, Any]:
     bundle: dict[str, Any] = {}
     for name in names:
@@ -3500,25 +3556,81 @@ def run_variant_comparison(
     backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
     repair_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
     output_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+    policy_path: Path = DEFAULT_VARIANT_COMPARISON_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_backfill_dir = backfill_dir / backfill_id
+    backfill_validation = validate_backfill_outcome_artifact(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    if backfill_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            f"source backfill validation must PASS: {backfill_validation.get('status')}"
+        )
     backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
     source_repair_dir = repair_dir / repair_id if repair_id else None
-    repair_manifest = (
-        _read_json(source_repair_dir / "backfill_repair_manifest.json")
+    repair_validation: dict[str, Any] = {}
+    repair_manifest: dict[str, Any] = {}
+    if source_repair_dir is not None:
+        repair_validation = validate_backfill_repair_artifact(
+            repair_id=_text(repair_id),
+            output_dir=repair_dir,
+        )
+        if repair_validation.get("status") != "PASS":
+            raise DynamicV3HistoricalReplayError(
+                f"source repair validation must PASS: {repair_validation.get('status')}"
+            )
+        repair_manifest = _read_json(source_repair_dir / "backfill_repair_manifest.json")
+        if repair_manifest.get("backfill_id") != backfill_id or repair_manifest.get(
+            "replay_id"
+        ) != backfill_manifest.get("replay_id"):
+            raise DynamicV3HistoricalReplayError("repair and backfill lineage must match")
+    source_times = [_datetime_from_any(backfill_manifest.get("generated_at"))]
+    if repair_manifest:
+        source_times.append(_datetime_from_any(repair_manifest.get("generated_at")))
+    if any(value is None for value in source_times):
+        raise DynamicV3HistoricalReplayError("source generated_at must be timezone-aware")
+    if any(generated < value for value in source_times if value is not None):
+        raise DynamicV3HistoricalReplayError(
+            "comparison generated_at must not precede source artifacts"
+        )
+    policy = _load_variant_comparison_policy(policy_path)
+    backfill_bundle = _review_source_bundle(
+        source_backfill_dir,
+        (
+            "backfilled_outcome_source_snapshot.json",
+            "backfill_manifest.json",
+            "replay_outcome_windows.jsonl",
+            "variant_performance_summary.json",
+            "backfill_outcome_report.md",
+        ),
+    )
+    repair_bundle = (
+        _review_source_bundle(
+            source_repair_dir,
+            (
+                "backfill_repair_source_snapshot.json",
+                "backfill_repair_manifest.json",
+                "repair_actions.jsonl",
+                "repaired_outcome_windows.jsonl",
+                "backfill_availability_delta.json",
+                "backfill_repair_report.md",
+            ),
+        )
         if source_repair_dir is not None
         else {}
     )
-    rows = (
-        _read_jsonl(source_repair_dir / "repaired_outcome_windows.jsonl")
-        if source_repair_dir is not None
-        else _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
+    rows = list(
+        _review_bundle_content(repair_bundle, "repaired_outcome_windows.jsonl")
+        if repair_bundle
+        else _review_bundle_content(backfill_bundle, "replay_outcome_windows.jsonl")
     )
+    _require_unique_variant_window_rows(rows)
     metrics = _variant_window_metrics(rows)
     pairwise = _variant_pairwise_comparison(rows)
-    ranking = _variant_rank_summary(metrics)
+    ranking = _variant_rank_summary(metrics, rows, policy)
     comparison_id = _stable_id(
         "variant-comparison",
         backfill_id,
@@ -3526,12 +3638,32 @@ def run_variant_comparison(
         generated.isoformat(),
     )
     comparison_dir = _unique_dir(output_dir / comparison_id)
-    comparison_dir.mkdir(parents=True, exist_ok=False)
     status = (
         "PASS"
         if ranking["recommendation_confidence"] != "INSUFFICIENT_DATA"
         else "INSUFFICIENT_DATA"
     )
+    metadata = _mapping(policy.get("policy_metadata"))
+    snapshot = {
+        "schema_version": VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION,
+        "comparison_id": comparison_dir.name,
+        "backfill_id": backfill_id,
+        "repair_id": repair_id or "",
+        "replay_id": backfill_manifest.get("replay_id"),
+        "generated_at": generated.isoformat(),
+        "backfill_bundle": backfill_bundle,
+        "repair_bundle": repair_bundle,
+        "selected_rows": rows,
+        "policy_path": str(policy_path),
+        "policy_checksum": _sha256_file(policy_path),
+        "policy": policy,
+        "source_backfill_validation_status": "PASS",
+        "source_repair_validation_status": "PASS" if repair_id else "NOT_SELECTED",
+        "production_effect": "none",
+    }
+    comparison_dir.mkdir(parents=True, exist_ok=False)
+    snapshot_path = comparison_dir / "variant_comparison_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_variant_comparison_manifest",
@@ -3542,6 +3674,16 @@ def run_variant_comparison(
         "status": status,
         "best_variant": ranking["best_variant"],
         "recommendation_confidence": ranking["recommendation_confidence"],
+        "policy_id": metadata.get("policy_id"),
+        "policy_version": metadata.get("version"),
+        "primary_window_trading_days": ranking["primary_window_trading_days"],
+        "distinct_replay_event_count": ranking["distinct_replay_event_count"],
+        "common_cohort_event_count": ranking["common_cohort_event_count"],
+        "available_variant_window_count": ranking["available_variant_window_count"],
+        "source_backfill_validation_status": "PASS",
+        "source_repair_validation_status": "PASS" if repair_id else "NOT_SELECTED",
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _sha256_file(snapshot_path),
         "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
         "source_repair_path": (
             ""
@@ -3562,6 +3704,7 @@ def run_variant_comparison(
         "broker_action_taken": False,
         "production_candidate_generated": False,
         "manual_review_required": True,
+        "automatic_rule_calibration": False,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -3620,8 +3763,9 @@ def validate_variant_comparison_artifact(
     comparison_dir = output_dir / comparison_id
     manifest = _read_optional_json(comparison_dir / "variant_comparison_manifest.json") or {}
     metrics = _read_jsonl(comparison_dir / "variant_window_metrics.jsonl")
+    pairwise = _read_optional_json(comparison_dir / "variant_pairwise_comparison.json") or {}
     ranking = _read_optional_json(comparison_dir / "variant_rank_summary.json") or {}
-    checks = [
+    shallow_checks = [
         _check(
             "manifest_exists", (comparison_dir / "variant_comparison_manifest.json").exists(), ""
         ),
@@ -3652,8 +3796,149 @@ def validate_variant_comparison_artifact(
         _check(
             "broker_action_forbidden",
             manifest.get("broker_action_allowed") is False
-            and manifest.get("broker_action_taken") is False,
+            and manifest.get("broker_action_taken") is False
+            and manifest.get("automatic_rule_calibration") is False,
             "broker action forbidden",
+        ),
+    ]
+    snapshot_path = comparison_dir / "variant_comparison_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_variant_comparison_validation",
+            artifact_id_key="comparison_id",
+            artifact_id=comparison_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    backfill_bundle = _mapping(snapshot.get("backfill_bundle"))
+    repair_bundle = _mapping(snapshot.get("repair_bundle"))
+    try:
+        backfill_manifest_path = Path(
+            _text(_mapping(backfill_bundle.get("backfill_manifest.json")).get("path"))
+        )
+        backfill_validation = validate_backfill_outcome_artifact(
+            backfill_id=_text(snapshot.get("backfill_id")),
+            output_dir=backfill_manifest_path.parent.parent,
+        )
+        repair_validation = {"status": "NOT_SELECTED"}
+        if snapshot.get("repair_id"):
+            repair_manifest_path = Path(
+                _text(_mapping(repair_bundle.get("backfill_repair_manifest.json")).get("path"))
+            )
+            repair_validation = validate_backfill_repair_artifact(
+                repair_id=_text(snapshot.get("repair_id")),
+                output_dir=repair_manifest_path.parent.parent,
+            )
+        policy_path = Path(_text(snapshot.get("policy_path")))
+        policy = _load_variant_comparison_policy(policy_path)
+        expected_rows = _records(snapshot.get("selected_rows"))
+        _require_unique_variant_window_rows(expected_rows)
+        embedded_rows = (
+            _review_bundle_content(
+                repair_bundle,
+                "repaired_outcome_windows.jsonl",
+            )
+            if repair_bundle
+            else _review_bundle_content(
+                backfill_bundle,
+                "replay_outcome_windows.jsonl",
+            )
+        )
+        expected_metrics = _variant_window_metrics(expected_rows)
+        expected_pairwise = _variant_pairwise_comparison(expected_rows)
+        expected_ranking = _variant_rank_summary(expected_metrics, expected_rows, policy)
+        expected_status = (
+            "PASS"
+            if expected_ranking["recommendation_confidence"] != "INSUFFICIENT_DATA"
+            else "INSUFFICIENT_DATA"
+        )
+        metadata = _mapping(policy.get("policy_metadata"))
+        expected_manifest_fields = {
+            "comparison_id": comparison_id,
+            "backfill_id": snapshot.get("backfill_id"),
+            "repair_id": snapshot.get("repair_id"),
+            "generated_at": snapshot.get("generated_at"),
+            "status": expected_status,
+            "best_variant": expected_ranking["best_variant"],
+            "recommendation_confidence": expected_ranking["recommendation_confidence"],
+            "policy_id": metadata.get("policy_id"),
+            "policy_version": metadata.get("version"),
+            "primary_window_trading_days": expected_ranking["primary_window_trading_days"],
+            "distinct_replay_event_count": expected_ranking["distinct_replay_event_count"],
+            "common_cohort_event_count": expected_ranking["common_cohort_event_count"],
+            "available_variant_window_count": expected_ranking["available_variant_window_count"],
+            "source_backfill_validation_status": "PASS",
+            "source_repair_validation_status": (
+                "PASS" if snapshot.get("repair_id") else "NOT_SELECTED"
+            ),
+        }
+        expected_manifest = {**manifest, **expected_manifest_fields}
+        expected_report = render_variant_comparison_report(
+            expected_manifest,
+            expected_metrics,
+            expected_pairwise,
+            expected_ranking,
+        )
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        backfill_validation = {"status": "FAIL"}
+        repair_validation = {"status": "FAIL"}
+        policy_path = Path(".")
+        policy = {}
+        expected_rows, embedded_rows = [], None
+        expected_metrics, expected_pairwise, expected_ranking = [], {}, {}
+        expected_manifest_fields, expected_report = {}, ""
+        recompute_error = str(exc)
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION,
+            VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "comparison source snapshot",
+        ),
+        _check(
+            "source_validations_pass",
+            backfill_validation.get("status") == "PASS"
+            and repair_validation.get("status") in {"PASS", "NOT_SELECTED"},
+            "backfill/optional repair",
+        ),
+        _check(
+            "source_files_unchanged",
+            _review_bundle_matches(backfill_bundle)
+            and (not repair_bundle or _review_bundle_matches(repair_bundle)),
+            "source bundles",
+        ),
+        _check(
+            "policy_unchanged",
+            policy_path.is_file()
+            and snapshot.get("policy_checksum") == _sha256_file(policy_path)
+            and snapshot.get("policy") == policy,
+            "reviewed comparison policy",
+        ),
+        _check("selected_rows_match_source", expected_rows == embedded_rows, recompute_error),
+        _check("window_metrics_recomputed", metrics == expected_metrics, recompute_error),
+        _check("pairwise_recomputed", pairwise == expected_pairwise, recompute_error),
+        _check("ranking_recomputed", ranking == expected_ranking, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            "manifest",
+        ),
+        _check(
+            "report_recomputed",
+            (comparison_dir / "variant_comparison_report.md").is_file()
+            and (comparison_dir / "variant_comparison_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
@@ -4320,6 +4605,10 @@ def render_variant_comparison_report(
             f"- status：{manifest.get('status')}",
             f"- best_variant：{ranking.get('best_variant')}",
             f"- recommendation_confidence：{ranking.get('recommendation_confidence')}",
+            f"- primary_window：{ranking.get('primary_window_trading_days')} trading days",
+            f"- distinct/common-cohort events：{ranking.get('distinct_replay_event_count')} / "
+            f"{ranking.get('common_cohort_event_count')}",
+            f"- available variant-windows：{ranking.get('available_variant_window_count')}",
             f"- limited_adjustment_vs_no_trade："
             f"{limited_pair.get('limited_adjustment_conclusion', 'INSUFFICIENT_DATA')}",
             "",
@@ -4336,9 +4625,11 @@ def render_variant_comparison_report(
             "",
             "## 解读",
             "",
-            "- 样本不足时标记 INSUFFICIENT_DATA，不生成强结论。",
-            "- ranking 的 overall_score 等于 avg_relative_to_no_trade 的透明诊断值，"
-            "不是 production policy score。",
+            "- 样本不足时best_variant=MISSING且标记INSUFFICIENT_DATA；missing metrics保持null。",
+            "- ranking只使用reviewed primary window上的same-event common cohort；"
+            "不跨window或不同missing cohort等权混排。",
+            "- overall_score是primary-window avg_relative_to_no_trade透明诊断值，"
+            "PILOT_ELIGIBLE也不是production policy score或统计显著性结论。",
             "- owner_decision 和 paper_action 只作为人工复核参考，"
             "不代表 broker 或 production action。",
             "",
@@ -4741,6 +5032,37 @@ def _repair_outcome_rows(
     return repaired_rows, actions
 
 
+def _require_unique_variant_window_rows(rows: Sequence[Mapping[str, Any]]) -> None:
+    keys = [
+        (
+            _text(row.get("replay_event_id")),
+            _text(row.get("variant")),
+            _int(row.get("window_days")),
+        )
+        for row in rows
+    ]
+    if any(
+        not key[0] or key[1] not in REPLAY_VARIANTS or key[2] not in OUTCOME_WINDOWS for key in keys
+    ):
+        raise DynamicV3HistoricalReplayError("comparison rows contain invalid identity")
+    if len(keys) != len(set(keys)):
+        raise DynamicV3HistoricalReplayError("duplicate event-variant-window comparison row")
+
+
+def _finite_numbers(rows: Sequence[Mapping[str, Any]], field: str) -> list[float]:
+    return [
+        float(row[field])
+        for row in rows
+        if isinstance(row.get(field), (int, float))
+        and not isinstance(row.get(field), bool)
+        and math.isfinite(float(row[field]))
+    ]
+
+
+def _rounded_median_or_none(values: Sequence[float]) -> float | None:
+    return round(_median(values), 6) if values else None
+
+
 def _variant_window_metrics(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     result = []
     for variant in REPLAY_VARIANTS:
@@ -4752,33 +5074,35 @@ def _variant_window_metrics(rows: Sequence[Mapping[str, Any]]) -> list[dict[str,
                 and _int(row.get("window_days")) == window
                 and row.get("outcome_status") == "AVAILABLE"
             ]
-            returns = [_float(row.get("return")) for row in window_rows]
-            rel = [_float(row.get("relative_to_no_trade")) for row in window_rows]
+            returns = _finite_numbers(window_rows, "return")
+            rel = _finite_numbers(window_rows, "relative_to_no_trade")
+            drawdowns = _finite_numbers(window_rows, "max_drawdown")
+            volatility = _finite_numbers(window_rows, "realized_volatility")
+            turnover = _finite_numbers(window_rows, "turnover")
+            distinct_events = len({_text(row.get("replay_event_id")) for row in window_rows})
             result.append(
                 {
                     "variant": variant,
                     "window_days": window,
                     "available_count": len(window_rows),
-                    "avg_return": round(_avg(returns), 6),
-                    "median_return": round(_median(returns), 6),
-                    "avg_relative_to_no_trade": round(_avg(rel), 6),
-                    "median_relative_to_no_trade": round(_median(rel), 6),
+                    "available_count_unit": "event_variant_window",
+                    "distinct_replay_event_count": distinct_events,
+                    "avg_return": _rounded_avg_or_none(returns),
+                    "median_return": _rounded_median_or_none(returns),
+                    "avg_relative_to_no_trade": _rounded_avg_or_none(rel),
+                    "median_relative_to_no_trade": _rounded_median_or_none(rel),
                     "win_rate_vs_no_trade": (
                         round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else 0.0
-                    ),
-                    "avg_max_drawdown": round(
-                        _avg([_float(row.get("max_drawdown")) for row in window_rows]),
-                        6,
-                    ),
-                    "avg_realized_volatility": round(
-                        _avg([_float(row.get("realized_volatility")) for row in window_rows]),
-                        6,
-                    ),
-                    "avg_turnover": round(
-                        _avg([_float(row.get("turnover")) for row in window_rows]),
-                        6,
-                    ),
-                    "status": "PASS" if window_rows else "INSUFFICIENT_DATA",
+                    )
+                    if rel
+                    else None,
+                    "avg_max_drawdown": _rounded_avg_or_none(drawdowns),
+                    "avg_realized_volatility": _rounded_avg_or_none(volatility),
+                    "avg_turnover": _rounded_avg_or_none(turnover),
+                    "status": "PASS" if window_rows and returns else "INSUFFICIENT_DATA",
+                    "insufficient_reason": ""
+                    if window_rows and returns
+                    else "no_finite_available_rows",
                 }
             )
     return result
@@ -4805,19 +5129,42 @@ def _variant_pairwise_comparison(rows: Sequence[Mapping[str, Any]]) -> dict[str,
                 right = by_key.get((event_id, window, variant_b))
                 if not left or not right:
                     continue
-                deltas.append(_float(left.get("return")) - _float(right.get("return")))
-                drawdowns.append(
-                    _float(left.get("max_drawdown")) - _float(right.get("max_drawdown"))
-                )
-                turnovers.append(_float(left.get("turnover")) - _float(right.get("turnover")))
-            avg_delta = round(_avg(deltas), 6)
-            drawdown_delta = round(_avg(drawdowns), 6)
-            turnover_delta = round(_avg(turnovers), 6)
+                values = [
+                    left.get("return"),
+                    right.get("return"),
+                    left.get("max_drawdown"),
+                    right.get("max_drawdown"),
+                    left.get("turnover"),
+                    right.get("turnover"),
+                ]
+                if any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(float(value))
+                    for value in values
+                ):
+                    continue
+                deltas.append(float(values[0]) - float(values[1]))
+                drawdowns.append(float(values[2]) - float(values[3]))
+                turnovers.append(float(values[4]) - float(values[5]))
+            avg_delta = _rounded_avg_or_none(deltas)
+            drawdown_delta = _rounded_avg_or_none(drawdowns)
+            turnover_delta = _rounded_avg_or_none(turnovers)
             conclusion = "insufficient_data"
             if deltas:
-                if avg_delta > 0 and drawdown_delta >= 0:
+                if (
+                    avg_delta is not None
+                    and drawdown_delta is not None
+                    and avg_delta > 0
+                    and drawdown_delta >= 0
+                ):
                     conclusion = "variant_a_better"
-                elif avg_delta < 0 and drawdown_delta <= 0:
+                elif (
+                    avg_delta is not None
+                    and drawdown_delta is not None
+                    and avg_delta < 0
+                    and drawdown_delta <= 0
+                ):
                     conclusion = "variant_b_better"
                 else:
                     conclusion = "mixed"
@@ -4827,11 +5174,12 @@ def _variant_pairwise_comparison(rows: Sequence[Mapping[str, Any]]) -> dict[str,
                     "variant_b": variant_b,
                     "window_days": window,
                     "event_count": len(deltas),
+                    "event_count_unit": "paired_distinct_replay_event",
                     "avg_return_delta": avg_delta,
                     "win_rate": (
                         round(sum(1 for value in deltas if value > 0) / len(deltas), 6)
                         if deltas
-                        else 0.0
+                        else None
                     ),
                     "drawdown_delta": drawdown_delta,
                     "turnover_delta": turnover_delta,
@@ -4847,29 +5195,69 @@ def _variant_pairwise_comparison(rows: Sequence[Mapping[str, Any]]) -> dict[str,
     }
 
 
-def _variant_rank_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def _variant_rank_summary(
+    metrics: Sequence[Mapping[str, Any]],
+    source_rows: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    gate = _mapping(policy.get("evidence_gate"))
+    primary_window = _int(gate.get("primary_window_trading_days"))
+    eligible = tuple(_texts(gate.get("rank_eligible_variants")))
+    primary_rows = [
+        row
+        for row in source_rows
+        if row.get("outcome_status") == "AVAILABLE"
+        and _int(row.get("window_days")) == primary_window
+        and _text(row.get("variant")) in eligible
+        and _finite_numbers((row,), "return")
+        and _finite_numbers((row,), "relative_to_no_trade")
+        and _finite_numbers((row,), "max_drawdown")
+        and _finite_numbers((row,), "turnover")
+    ]
+    events_by_variant = {
+        variant: {
+            _text(row.get("replay_event_id"))
+            for row in primary_rows
+            if row.get("variant") == variant
+        }
+        for variant in eligible
+    }
+    common_events = set.intersection(*(events_by_variant.values())) if eligible else set()
+    cohort_rows = [
+        row for row in primary_rows if _text(row.get("replay_event_id")) in common_events
+    ]
+    distinct_events = len({_text(row.get("replay_event_id")) for row in primary_rows})
+    available_windows = len(primary_rows)
+    evidence_ready = (
+        distinct_events >= _int(gate.get("minimum_distinct_replay_event_count"))
+        and available_windows >= _int(gate.get("minimum_available_variant_window_count"))
+        and len(common_events) >= _int(gate.get("minimum_paired_event_count"))
+    )
     rows = []
-    for variant in REPLAY_VARIANTS:
-        variant_rows = [row for row in metrics if row.get("variant") == variant]
-        available = [row for row in variant_rows if _int(row.get("available_count")) > 0]
-        avg_relative = _avg([_float(row.get("avg_relative_to_no_trade")) for row in available])
-        avg_return = _avg([_float(row.get("avg_return")) for row in available])
-        avg_drawdown = _avg([_float(row.get("avg_max_drawdown")) for row in available])
-        avg_turnover = _avg([_float(row.get("avg_turnover")) for row in available])
+    for variant in eligible:
+        variant_rows = [row for row in cohort_rows if row.get("variant") == variant]
+        relative = _finite_numbers(variant_rows, "relative_to_no_trade")
+        returns = _finite_numbers(variant_rows, "return")
+        drawdown = _finite_numbers(variant_rows, "max_drawdown")
+        turnover = _finite_numbers(variant_rows, "turnover")
         rows.append(
             {
                 "variant": variant,
-                "overall_score": round(avg_relative, 6),
-                "return_score": round(avg_return, 6),
-                "drawdown_score": round(avg_drawdown, 6),
-                "stability_score": sum(_int(row.get("available_count")) for row in available),
-                "turnover_penalty": round(-avg_turnover, 6),
-                "status": "PASS_WITH_WARNINGS" if available else "INSUFFICIENT_DATA",
+                "overall_score": _rounded_avg_or_none(relative),
+                "return_score": _rounded_avg_or_none(returns),
+                "drawdown_score": _rounded_avg_or_none(drawdown),
+                "stability_score": len(common_events),
+                "turnover_penalty": (round(-_avg(turnover), 6) if turnover else None),
+                "status": "PILOT_ELIGIBLE" if evidence_ready else "INSUFFICIENT_DATA",
             }
         )
     ranked = sorted(
-        [row for row in rows if row["status"] != "INSUFFICIENT_DATA"],
-        key=lambda row: (row["overall_score"], row["return_score"], row["drawdown_score"]),
+        [row for row in rows if row["status"] == "PILOT_ELIGIBLE"],
+        key=lambda row: (
+            float(row["overall_score"]),
+            float(row["return_score"]),
+            float(row["drawdown_score"]),
+        ),
         reverse=True,
     )
     ranking = [{**row, "rank": index + 1} for index, row in enumerate(ranked)]
@@ -4878,8 +5266,13 @@ def _variant_rank_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any
         "report_type": "etf_dynamic_v3_variant_rank_summary",
         "ranking": ranking,
         "best_variant": ranking[0]["variant"] if ranking else "MISSING",
-        "recommendation_confidence": "LOW" if ranking else "INSUFFICIENT_DATA",
-        "ranking_method": "overall_score_is_avg_relative_to_no_trade_diagnostic",
+        "recommendation_confidence": "PILOT_ELIGIBLE" if ranking else "INSUFFICIENT_DATA",
+        "primary_window_trading_days": primary_window,
+        "distinct_replay_event_count": distinct_events,
+        "common_cohort_event_count": len(common_events),
+        "available_variant_window_count": available_windows,
+        "ranking_method": "primary_window_same_event_cohort_avg_relative_to_no_trade",
+        "cross_window_averaging_allowed": False,
         "production_effect": "none",
         "broker_action_taken": False,
     }

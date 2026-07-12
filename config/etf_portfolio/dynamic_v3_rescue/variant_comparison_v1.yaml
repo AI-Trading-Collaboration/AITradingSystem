@@ -1,0 +1,47 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_variant_comparison_v1
+  owner: project_owner
+  version: 2026-07-12-pilot
+  status: pilot_baseline
+  rationale: >
+    Prevent sparse, unmatched, or differently missing replay windows from being
+    averaged into a directional best-variant claim.
+  intended_effect: >
+    Rank variants only on a preregistered primary window and common event cohort,
+    while preserving null metrics and distinct-event sample units.
+  validation_evidence: ARCH-004G2.4AY focused source, cohort, policy, and tamper tests
+  review_condition: >
+    Recalibrate only after at least eight owner-reviewed forward weeks across
+    multiple market regimes; historical replay alone cannot adopt a policy.
+
+evidence_gate:
+  primary_window_trading_days: 5
+  minimum_distinct_replay_event_count: 3
+  minimum_available_variant_window_count: 10
+  minimum_paired_event_count: 3
+  rank_eligible_variants:
+    - no_trade
+    - consensus_target
+    - limited_adjustment
+  diagnostic_only_variants:
+    - owner_decision
+    - paper_action
+  same_cohort_required: true
+
+ranking:
+  primary_metric: avg_relative_to_no_trade
+  tie_breakers:
+    - avg_return
+    - avg_max_drawdown
+  cross_window_averaging_allowed: false
+
+safety:
+  manual_review_required: true
+  requires_owner_approval: true
+  automatic_rule_calibration: false
+  automatic_config_update: false
+  automatic_candidate_promotion: false
+  production_effect: none
+  broker_action_taken: false

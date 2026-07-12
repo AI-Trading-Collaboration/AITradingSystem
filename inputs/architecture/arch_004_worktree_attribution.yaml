@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AX_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AY_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 2c5dd6e7
+base_commit: 4a480f09
 production_effect: none
 
 arch_004_owned_paths:
@@ -15,6 +15,7 @@ arch_004_owned_paths:
   - config/report_registry.yaml
   - config/etf_portfolio/dynamic_v3_rescue/paper_portfolio_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/variant_comparison_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -229,6 +230,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_performance_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_diagnosis.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backfill_repair.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_variant_comparison.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
@@ -251,6 +253,7 @@ arch_004_owned_paths:
   - tests/test_replay_performance_review.py
   - tests/test_replay_diagnosis.py
   - tests/test_backfill_repair.py
+  - tests/test_variant_comparison.py
   - tests/dynamic_v3_historical_replay_helpers.py
   - tests/test_outcome_update.py
   - tests/dynamic_v3_outcome_loop_helpers.py

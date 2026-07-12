@@ -34,6 +34,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/<repair_id>/backfill_repair_source_snapshot.json`<br/>`backfill_repair_manifest.json`<br/>`repair_actions.jsonl`<br/>`repaired_outcome_windows.jsonl`<br/>`backfill_availability_delta.json`<br/>`backfill_repair_report.md`<br/>真实运行另含`validate_data_quality_report.md`|`aits etf dynamic-v3-rescue backfill-repair run --backfill-id <id> --diagnosis-id <id>`、`report --latest`、`validate-backfill-repair --repair-id <id>`|full-PASS、同一lineage且时间有序的Backfilled Outcome、Replay Diagnosis和Historical Replay；reviewed backfill cost/window policy；cached ETF prices/rates与统一DQ|任何output前完成三源validator/lineage/time/DQ；snapshot冻结三源bundle、policy-cost、cutoff price rows及checksums；只重算原PENDING/INSUFFICIENT，原AVAILABLE保持immutable；同AT fixed-share gross、initial one-way L1 cost与null逻辑；delta sample unit=`event_variant_window`；validator重验live source/DQ并重算actions/rows/delta/manifest/Markdown；`production_effect=none`|修复“窗口现已到期且当前缓存证据完整”的历史outcome availability，供后续人工comparison使用|否，repair evidence only|repair PASS不代表comparison ready或策略有效；`repaired_count`是variant-window row数而非独立event数；未来价格只用于outcome，不能回流decision；不覆写原backfill、不自动运行comparison/calibration、不修改policy/weights/portfolio/order/broker|
 
+## ARCH-004G2.4AY Variant Comparison 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/<comparison_id>/variant_comparison_source_snapshot.json`及manifest/window-metrics/pairwise/rank/Markdown|`aits etf dynamic-v3-rescue variant-comparison run --backfill-id <id> [--repair-id <id>]`、`report --latest`、`validate-variant-comparison`|full-PASS Backfilled Outcome；optional full-PASS same-lineage Backfill Repair；reviewed `variant_comparison_v1.yaml`|pre-output validation/lineage/time；冻结source/canonical rows/policy；duplicate key阻断；missing metric为null；pairwise单位为paired distinct event；ranking只用5d same-event common cohort，3 distinct events/10 variant-windows/3 paired events门槛未过则best=MISSING/confidence=INSUFFICIENT_DATA；validator重算全部views|人工理解variant相对表现与证据缺口|否，comparison evidence only|rank不是跨window总分、PILOT_ELIGIBLE不是显著性或calibration批准；owner/paper variants仅diagnostic；当前单event fixture正确不排名，不自动运行calibration或改policy/portfolio/broker|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

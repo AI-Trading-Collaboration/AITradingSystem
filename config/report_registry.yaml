@@ -6550,6 +6550,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue variant-comparison report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_comparison_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_comparison_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_window_metrics.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_pairwise_comparison.json
@@ -6557,8 +6558,9 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_comparison_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-148 comparison ranks replay variants only from available outcome
-      windows and marks insufficient samples as INSUFFICIENT_DATA.
+      TRADING-148 freezes and revalidates the selected backfill or repair plus
+      reviewed comparison policy, preserves null metrics, and ranks only a
+      same-event cohort on the preregistered primary window after sample floors.
     owner_action: review_variant_comparison_before_any_rule_calibration_proposal
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
