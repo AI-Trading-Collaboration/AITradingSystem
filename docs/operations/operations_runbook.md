@@ -159,6 +159,8 @@
 
 - G2.4BO开始，`backtest-sim paper-run`必须在创建artifact目录前要求Variant validator PASS、source generated/requested-end cutoff和cached price/rate DQ；随后将full variant/event/config/validation、cache full-file/requested-end rows和DQ evidence冻结到`backtest_sim_paper_input_snapshot.v2`。Selected variant与no_trade的state/history/ledger/summary必须从snapshot重算，无READY/不可计算metrics为null/`INSUFFICIENT_DATA`。当前无reviewed cost model，return只能标`GROSS_BEFORE_COSTS`/`NOT_CONFIGURED`，不能作为net evidence。运行后必须用`validate-backtest-sim-paper`重验live variant/cache/DQ并逐字节重算全部views；FAIL时不得进入calibration。Focused tests只能显式跳过真实DQ。该链固定non-PIT/no-production/no-broker，不修改任何真实或official portfolio。
 
+- G2.4BP开始，`backtest-sim regime-review`必须在创建artifact目录前要求Outcome validator PASS且source generated不晚于本次cutoff；随后冻结full Outcome bundle/validation到`backtest_sim_regime_input_snapshot.v2`。Regime×variant metrics只聚合AVAILABLE finite windows并区分distinct event/window count；missing return/relative/win-rate/drawdown/turnover为null。运行后必须用`validate-backtest-sim-regime`重验live Outcome并逐字节重算全部views；FAIL时不得进入calibration。该层不直接读取cache，DQ只继承validated Outcome source，不得伪造新的DQ PASS；固定non-PIT/no-production/no-broker。
+
 ## Unified Daily Trigger
 
 标准外部调度入口：

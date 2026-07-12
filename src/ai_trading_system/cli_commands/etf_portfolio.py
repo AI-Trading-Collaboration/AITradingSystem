@@ -209,13 +209,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     advisory_proposal_review_report_payload,
     backtest_sim_calibration_report_payload,
     backtest_sim_forward_bridge_report_payload,
-    backtest_sim_regime_report_payload,
     backtest_sim_sensitivity_report_payload,
     forward_confirmation_plan_report_payload,
     run_advisory_proposal_review,
     run_backtest_sim_calibration_pack,
     run_backtest_sim_forward_bridge,
-    run_backtest_sim_regime_review,
     run_backtest_sim_sensitivity,
     run_forward_confirmation_plan,
     run_sim_defensive_validation,
@@ -227,7 +225,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     validate_advisory_proposal_review_artifact,
     validate_backtest_sim_calibration_artifact,
     validate_backtest_sim_forward_bridge_artifact,
-    validate_backtest_sim_regime_artifact,
     validate_backtest_sim_sensitivity_artifact,
     validate_forward_confirmation_plan_artifact,
     validate_sim_defensive_validation_artifact,
@@ -15199,92 +15196,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
-    typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_backtest_sim_app.command("regime-review")
-def dynamic_v3_backtest_sim_regime_review_command(
-    sim_outcome_id: Annotated[
-        str,
-        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
-    outcome_dir: Annotated[
-        Path,
-        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
-) -> None:
-    """运行 TRADING-165 regime-specific simulation review。"""
-    result = run_backtest_sim_regime_review(
-        sim_outcome_id=sim_outcome_id,
-        output_dir=output_dir,
-        outcome_dir=outcome_dir,
-    )
-    manifest = result["manifest"]
-    inventory = result["regime_window_inventory"]
-    regime_count = len(_mapping_obj(inventory.get("regime_counts")))
-    typer.echo(f"regime_review_id={result['regime_review_id']}")
-    typer.echo(f"regime_dir={result['regime_review_dir']}")
-    typer.echo(f"status={manifest['status']}")
-    typer.echo(f"regime_count={regime_count}")
-    typer.echo("broker_action_taken=false")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_backtest_sim_app.command("regime-report")
-def dynamic_v3_backtest_sim_regime_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest backtest sim regime。"),
-    ] = False,
-    regime_review_id: Annotated[
-        str | None,
-        typer.Option("--regime-review-id", help="regime review id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
-) -> None:
-    """展示 TRADING-165 regime review 摘要。"""
-    payload = backtest_sim_regime_report_payload(
-        regime_review_id=regime_review_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    inventory = payload["regime_window_inventory"]
-    regime_count = len(_mapping_obj(inventory.get("regime_counts")))
-    typer.echo(f"regime_review_id={payload['regime_review_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"regime_count={regime_count}")
-    typer.echo(f"report_path={payload['backtest_sim_regime_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-backtest-sim-regime")
-def dynamic_v3_validate_backtest_sim_regime_command(
-    regime_review_id: Annotated[
-        str,
-        typer.Option("--regime-review-id", help="regime review id。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
-) -> None:
-    """校验 TRADING-165 backtest simulation regime artifact。"""
-    payload = validate_backtest_sim_regime_artifact(
-        regime_review_id=regime_review_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_taken=false")
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

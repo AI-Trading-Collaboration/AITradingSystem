@@ -6963,11 +6963,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/regime_window_inventory.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/variant_regime_metrics.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/regime_review_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/regime_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/backtest_sim_regime_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-165 regime review checks whether simulated performance is
-      concentrated in narrow AI-cycle market states before calibration review.
+      concentrated in narrow AI-cycle market states; immutable outcome binding
+      and null missing metrics are required before calibration review.
     owner_action: review_regime_concentration_before_interpreting_simulation_strength
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

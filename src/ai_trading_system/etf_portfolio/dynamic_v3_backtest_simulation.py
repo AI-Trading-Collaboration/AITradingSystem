@@ -90,6 +90,7 @@ BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_event_input_snapshot.
 BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_variant_input_snapshot.v2"
 BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_outcome_input_snapshot.v2"
 BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_paper_input_snapshot.v2"
+BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_regime_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -1605,6 +1606,34 @@ def _backtest_sim_variant_bundle(variant_dir: Path) -> dict[str, Any]:
     }
 
 
+def _backtest_sim_outcome_bundle(outcome_dir: Path) -> dict[str, Any]:
+    manifest_path = outcome_dir / "sim_outcome_manifest.json"
+    windows_path = outcome_dir / "simulated_outcome_windows.jsonl"
+    summary_path = outcome_dir / "simulated_variant_summary.json"
+    snapshot_path = outcome_dir / "outcome_input_snapshot.json"
+    report_path = outcome_dir / "backtest_sim_outcome_report.md"
+    quality_path = outcome_dir / "validate_data_quality_report.md"
+    return {
+        "sim_outcome_dir": str(outcome_dir),
+        "manifest": _read_json(manifest_path),
+        "windows": _read_jsonl(windows_path),
+        "summary": _read_json(summary_path),
+        "input_snapshot": _read_json(snapshot_path),
+        "outcome_report": _read_text(report_path),
+        "data_quality_report": _read_text(quality_path) if quality_path.is_file() else "",
+        "file_contents": {
+            "sim_outcome_manifest.json": _read_text(manifest_path),
+            "simulated_outcome_windows.jsonl": _read_text(windows_path),
+            "simulated_variant_summary.json": _read_text(summary_path),
+            "outcome_input_snapshot.json": _read_text(snapshot_path),
+            "backtest_sim_outcome_report.md": _read_text(report_path),
+            "validate_data_quality_report.md": (
+                _read_text(quality_path) if quality_path.is_file() else ""
+            ),
+        },
+    }
+
+
 def run_backtest_sim_paper(
     *,
     variant_set_id: str,
@@ -2098,23 +2127,84 @@ def run_backtest_sim_regime_review(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     source_dir = outcome_dir / sim_outcome_id
-    manifest_in = _read_json(source_dir / "sim_outcome_manifest.json")
-    rows = _read_jsonl(source_dir / "simulated_outcome_windows.jsonl")
+    outcome_validation = validate_backtest_sim_outcome_artifact(
+        sim_outcome_id=sim_outcome_id, output_dir=outcome_dir
+    )
+    if outcome_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError("backtest simulation outcome validation failed")
+    outcome_bundle = _backtest_sim_outcome_bundle(source_dir)
+    manifest_in = _mapping(outcome_bundle.get("manifest"))
+    source_generated = _datetime_from_any(manifest_in.get("generated_at"))
+    if source_generated is None or source_generated > generated:
+        raise DynamicV3BacktestSimulationError("outcome source generated after regime cutoff")
+    rows = _records(outcome_bundle.get("windows"))
     metrics = _regime_metrics(rows)
     inventory = _regime_inventory(rows)
     summary = _regime_summary(metrics)
     review_id = _stable_id("backtest-sim-regime", sim_outcome_id, generated.isoformat())
     regime_dir = _unique_dir(output_dir / review_id)
-    regime_dir.mkdir(parents=True, exist_ok=False)
     available = sum(row["event_count"] for row in metrics if row["status"] != "INSUFFICIENT_DATA")
     status = "PASS" if available else "INSUFFICIENT_DATA"
-    manifest = {
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_regime_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "sim_outcome_id": sim_outcome_id,
+        "sim_outcome_dir": str(source_dir),
+        "outcome_bundle": outcome_bundle,
+        "outcome_validation": outcome_validation,
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _backtest_sim_regime_manifest(
+        regime_dir=regime_dir,
+        generated=generated,
+        sim_outcome_id=sim_outcome_id,
+        variant_set_id=_text(manifest_in.get("variant_set_id")),
+        status=status,
+    )
+    regime_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(regime_dir / "sim_regime_manifest.json", manifest)
+    _write_json(regime_dir / "regime_window_inventory.json", inventory)
+    _write_jsonl(regime_dir / "variant_regime_metrics.jsonl", metrics)
+    _write_json(regime_dir / "regime_review_summary.json", summary)
+    _write_json(regime_dir / "regime_input_snapshot.json", input_snapshot)
+    _write_text(
+        regime_dir / "backtest_sim_regime_report.md", render_regime_report(manifest, summary)
+    )
+    _update_latest_pointer(
+        "latest_backtest_sim_regime", regime_dir.name, regime_dir / "sim_regime_manifest.json"
+    )
+    return {
+        "regime_review_id": regime_dir.name,
+        "regime_review_dir": regime_dir,
+        "manifest": manifest,
+        "regime_window_inventory": inventory,
+        "variant_regime_metrics": metrics,
+        "regime_review_summary": summary,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_regime_manifest(
+    *,
+    regime_dir: Path,
+    generated: datetime,
+    sim_outcome_id: str,
+    variant_set_id: str,
+    status: str,
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_regime_manifest",
         "regime_review_id": regime_dir.name,
         "sim_outcome_id": sim_outcome_id,
-        "variant_set_id": manifest_in.get("variant_set_id"),
+        "variant_set_id": variant_set_id,
         "generated_at": generated.isoformat(),
         "status": status,
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
@@ -2124,6 +2214,7 @@ def run_backtest_sim_regime_review(
         "regime_window_inventory_path": str(regime_dir / "regime_window_inventory.json"),
         "variant_regime_metrics_path": str(regime_dir / "variant_regime_metrics.jsonl"),
         "regime_review_summary_path": str(regime_dir / "regime_review_summary.json"),
+        "regime_input_snapshot_path": str(regime_dir / "regime_input_snapshot.json"),
         "backtest_sim_regime_report_path": str(regime_dir / "backtest_sim_regime_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -2133,26 +2224,6 @@ def run_backtest_sim_regime_review(
         "manual_review_required": True,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(regime_dir / "sim_regime_manifest.json", manifest)
-    _write_json(regime_dir / "regime_window_inventory.json", inventory)
-    _write_jsonl(regime_dir / "variant_regime_metrics.jsonl", metrics)
-    _write_json(regime_dir / "regime_review_summary.json", summary)
-    _write_text(
-        regime_dir / "backtest_sim_regime_report.md", render_regime_report(manifest, summary)
-    )
-    _update_latest_pointer(
-        "latest_backtest_sim_regime",
-        regime_dir.name,
-        regime_dir / "sim_regime_manifest.json",
-    )
-    return {
-        "regime_review_id": regime_dir.name,
-        "regime_review_dir": regime_dir,
-        "manifest": manifest,
-        "regime_window_inventory": inventory,
-        "variant_regime_metrics": metrics,
-        "regime_review_summary": summary,
     }
 
 
@@ -2172,6 +2243,7 @@ def backtest_sim_regime_report_payload(
         "regime_window_inventory": _read_json(regime_dir / "regime_window_inventory.json"),
         "variant_regime_metrics": _read_jsonl(regime_dir / "variant_regime_metrics.jsonl"),
         "regime_review_summary": _read_json(regime_dir / "regime_review_summary.json"),
+        "regime_input_snapshot": _read_json(regime_dir / "regime_input_snapshot.json"),
         "regime_review_dir": str(regime_dir),
     }
 
@@ -2182,16 +2254,116 @@ def validate_backtest_sim_regime_artifact(
     regime_dir = output_dir / regime_review_id
     manifest = _read_optional_json(regime_dir / "sim_regime_manifest.json") or {}
     metrics = _read_jsonl(regime_dir / "variant_regime_metrics.jsonl")
+    inventory = _read_optional_json(regime_dir / "regime_window_inventory.json") or {}
+    summary = _read_optional_json(regime_dir / "regime_review_summary.json") or {}
+    snapshot = _read_optional_json(regime_dir / "regime_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        sim_outcome_id = _text(snapshot.get("sim_outcome_id"))
+        sim_outcome_dir = Path(_text(snapshot.get("sim_outcome_dir")))
+        if (
+            snapshot.get("schema_version") != BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION
+            or generated is None
+            or sim_outcome_dir.name != sim_outcome_id
+        ):
+            raise DynamicV3BacktestSimulationError("regime snapshot identity/time invalid")
+        live_validation = validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=sim_outcome_id, output_dir=sim_outcome_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("outcome_validation_failed")
+        if live_validation != snapshot.get("outcome_validation"):
+            source_errors.append("outcome_validation_changed")
+        live_bundle = _backtest_sim_outcome_bundle(sim_outcome_dir)
+        if live_bundle != snapshot.get("outcome_bundle"):
+            source_errors.append("outcome_bundle_changed")
+        source_manifest = _mapping(live_bundle.get("manifest"))
+        rows = _records(live_bundle.get("windows"))
+        expected_metrics = _regime_metrics(rows)
+        expected_inventory = _regime_inventory(rows)
+        expected_summary = _regime_summary(expected_metrics)
+        available = sum(
+            row["event_count"] for row in expected_metrics if row["status"] != "INSUFFICIENT_DATA"
+        )
+        expected_status = "PASS" if available else "INSUFFICIENT_DATA"
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_regime_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "sim_outcome_id": sim_outcome_id,
+            "sim_outcome_dir": str(sim_outcome_dir),
+            "outcome_bundle": live_bundle,
+            "outcome_validation": live_validation,
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_regime_manifest(
+            regime_dir=regime_dir,
+            generated=generated,
+            sim_outcome_id=sim_outcome_id,
+            variant_set_id=_text(source_manifest.get("variant_set_id")),
+            status=expected_status,
+        )
+        expected_report = render_regime_report(expected_manifest, expected_summary)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_metrics = []
+        expected_inventory = {}
+        expected_summary = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
+    report_path = regime_dir / "backtest_sim_regime_report.md"
     checks = [
         _check("manifest_exists", (regime_dir / "sim_regime_manifest.json").exists(), ""),
         _check("inventory_exists", (regime_dir / "regime_window_inventory.json").exists(), ""),
         _check("metrics_exists", (regime_dir / "variant_regime_metrics.jsonl").exists(), ""),
         _check("summary_exists", (regime_dir / "regime_review_summary.json").exists(), ""),
+        _check("snapshot_exists", (regime_dir / "regime_input_snapshot.json").exists(), ""),
         _check("report_exists", (regime_dir / "backtest_sim_regime_report.md").exists(), ""),
         _check(
             "regime_review_id_matches",
             manifest.get("regime_review_id") == regime_review_id,
             "",
+        ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source"),
+        _check("inventory_recomputed", inventory == expected_inventory, "snapshot"),
+        _check("metrics_recomputed", metrics == expected_metrics, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "snapshot_bytes_recomputed",
+            (regime_dir / "regime_input_snapshot.json").is_file()
+            and (regime_dir / "regime_input_snapshot.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_snapshot),
+            "canonical JSON",
+        ),
+        _check(
+            "metrics_bytes_recomputed",
+            (regime_dir / "variant_regime_metrics.jsonl").is_file()
+            and (regime_dir / "variant_regime_metrics.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_metrics),
+            "canonical JSONL",
+        ),
+        _check(
+            "inventory_summary_manifest_bytes_recomputed",
+            (regime_dir / "regime_window_inventory.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_inventory)
+            and (regime_dir / "regime_review_summary.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_summary)
+            and (regime_dir / "sim_regime_manifest.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_manifest),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown",
         ),
         _check(
             "regime_names_valid",
@@ -5177,22 +5349,36 @@ def _regime_metrics(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 for row in available
                 if row.get("regime_label") == regime and row.get("variant") == variant
             ]
-            rel = [_float(row.get("relative_to_no_trade")) for row in subset]
+            returns = [float(row["return"]) for row in subset if _finite_number(row.get("return"))]
+            rel = [
+                float(row["relative_to_no_trade"])
+                for row in subset
+                if _finite_number(row.get("relative_to_no_trade"))
+            ]
+            drawdowns = [
+                float(row["max_drawdown"])
+                for row in subset
+                if _finite_number(row.get("max_drawdown"))
+            ]
+            turnovers = [
+                float(row["turnover"])
+                for row in subset
+                if _finite_number(row.get("turnover"), minimum=0.0)
+            ]
             result.append(
                 {
                     "schema_version": SCHEMA_VERSION,
                     "regime": regime,
                     "variant": variant,
                     "event_count": len({_text(row.get("sim_event_id")) for row in subset}),
-                    "avg_return": round(_avg([_float(row.get("return")) for row in subset]), 6),
-                    "avg_relative_to_no_trade": round(_avg(rel), 6),
+                    "window_count": len(subset),
+                    "avg_return": _nullable_avg(returns),
+                    "avg_relative_to_no_trade": _nullable_avg(rel),
                     "win_rate_vs_no_trade": (
-                        round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else 0.0
+                        round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else None
                     ),
-                    "avg_drawdown": round(
-                        _avg([_float(row.get("max_drawdown")) for row in subset]), 6
-                    ),
-                    "avg_turnover": round(_avg([_float(row.get("turnover")) for row in subset]), 6),
+                    "avg_drawdown": _nullable_avg(drawdowns),
+                    "avg_turnover": _nullable_avg(turnovers),
                     "status": "PASS" if subset else "INSUFFICIENT_DATA",
                     "broker_action_taken": False,
                 }
@@ -5221,8 +5407,9 @@ def _regime_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             for row in metrics
             if row.get("regime") == regime and row.get("status") != "INSUFFICIENT_DATA"
         ]
-        if subset:
-            best[regime] = max(subset, key=lambda row: _float(row.get("avg_relative_to_no_trade")))[
+        ranked = [row for row in subset if _finite_number(row.get("avg_relative_to_no_trade"))]
+        if ranked:
+            best[regime] = max(ranked, key=lambda row: float(row["avg_relative_to_no_trade"]))[
                 "variant"
             ]
         else:

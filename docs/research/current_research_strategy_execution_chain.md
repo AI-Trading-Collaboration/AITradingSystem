@@ -1090,6 +1090,8 @@ TRADING-163 outcome层只接受BM variant validator PASS且generated不早于sou
 
 TRADING-164 paper层同样从validated/cutoff-safe variant bundle出发，在output前执行cached DQ，并冻结full variant/event/config/validation、price/rate full-file与requested-end cutoff rows、DQ evidence到`backtest_sim_paper_input_snapshot.v2`。Selected variant和no_trade分别按event时间顺序重建before/after state、区间组合价值、drawdown、turnover与trade ledger，再计算relative；无READY或任一必要区间不可计算时，history/ledger为空且performance为null/`INSUFFICIENT_DATA`，不能写0继续。当前config没有受治理的transaction/slippage cost model，因此return固定披露`GROSS_BEFORE_COSTS`/`NOT_CONFIGURED`，不得解释为net。Validator重验live variant/cache/DQ并逐字节重算全部views。优化空间是把fixed-share interval engine、cost policy和typed state/ledger contract抽出共享；cost model进入reviewed config前不能以硬编码bps补齐。
 
+TRADING-165 regime review只接受validated且不晚于generated cutoff的Outcome，冻结完整outcome bundle与validation到`backtest_sim_regime_input_snapshot.v2`。Inventory保留原始regime/outcome-status窗口计数；metrics按known regime×variant穷举，只聚合AVAILABLE且finite的return/relative/drawdown/turnover，并同时披露distinct event count和window count。无样本均值、win rate与risk为null，summary只在finite relative存在时选择best variant。Validator重验live Outcome并逐字节重算全部views。当前结论只用于发现simulation表现是否集中于少数regime，不是因果、PIT或production证据；优化空间是引入reviewed minimum event/window floor与不确定性区间，但在治理前不能用硬编码样本门槛改变投资解释。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |

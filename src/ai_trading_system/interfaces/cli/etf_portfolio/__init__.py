@@ -35,6 +35,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_backtest_sim_paper as dynamic_v3_backtest_sim_paper_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_backtest_sim_regime as dynamic_v3_backtest_sim_regime_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_backtest_sim_variants as dynamic_v3_backtest_sim_variants_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -261,6 +264,7 @@ __all__ = [
     "dynamic_v3_backtest_sim_events_commands",
     "dynamic_v3_backtest_sim_outcome_commands",
     "dynamic_v3_backtest_sim_paper_commands",
+    "dynamic_v3_backtest_sim_regime_commands",
     "dynamic_v3_backtest_sim_variants_commands",
     "dynamic_v3_historical_paper_sim_commands",
     "dynamic_v3_shadow_registry_commands",

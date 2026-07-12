@@ -218,6 +218,10 @@ DYNAMIC_V3_BACKTEST_SIM_PAPER_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_paper.py"
 )
+DYNAMIC_V3_BACKTEST_SIM_REGIME_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_regime.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -317,7 +321,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "e1375d614da777149e757d65f0852ae675c3d0057fb4133fb41e25349ce1454f"
+        "41822fdf459f390f67d2acb338cbe5423b5a60a7786c29de77230e34db4e22dc"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -371,7 +375,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24483
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24394
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -582,8 +586,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24483
-    assert len(legacy_names) == 718
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24394
+    assert len(legacy_names) == 715
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1862,6 +1866,28 @@ def test_g2_4_dynamic_v3_backtest_sim_paper_callbacks_leave_legacy_root() -> Non
             "backtest_sim_paper_report_payload",
             "run_backtest_sim_paper",
             "validate_backtest_sim_paper_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_backtest_sim_regime_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_BACKTEST_SIM_REGIME_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_backtest_sim_regime_review_command",
+        "dynamic_v3_backtest_sim_regime_report_command",
+        "dynamic_v3_validate_backtest_sim_regime_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "backtest_sim_regime_report_payload",
+            "run_backtest_sim_regime_review",
+            "validate_backtest_sim_regime_artifact",
         }
     )
 

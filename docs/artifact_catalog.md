@@ -2219,6 +2219,10 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 
 `reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/<sim_paper_id>/paper_input_snapshot.json` 使用 `backtest_sim_paper_input_snapshot.v2`：冻结full variant/event/config/validation bundle、price/rate full-file与requested-end cutoff rows、DQ report content/checksum。Paper validator重验live source/DQ并逐字节重算state history、trade ledger、summary、manifest和Markdown；无READY/不可计算metrics为null/INSUFFICIENT_DATA。Return固定披露`GROSS_BEFORE_COSTS`与`cost_model_status=NOT_CONFIGURED`，不是net/PIT/production evidence，`production_effect=none`。
 
+## TRADING-165 Backtest Simulation Regime Snapshot
+
+`reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/<regime_review_id>/regime_input_snapshot.json` 使用 `backtest_sim_regime_input_snapshot.v2`冻结full Outcome bundle/validation。Regime validator重验live Outcome并逐字节重算inventory/metrics/summary/manifest/Markdown；metrics只纳入AVAILABLE finite rows，event/window单位分离，missing为null且不参与ranking。该artifact不是PIT/因果/production evidence，`production_effect=none`。
+
 ## TRADING-2320 Event Gating Validation
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
