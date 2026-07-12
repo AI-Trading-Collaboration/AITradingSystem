@@ -1,0 +1,33 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rule_calibration_v1
+  owner: project_owner
+  version: 2026-07-12-pilot
+  status: pilot_baseline
+  rationale: >
+    Keep evidence collection actions separate from policy-change proposals and
+    prevent insufficient replay comparisons from being labelled calibrated.
+  intended_effect: >
+    Permit a directional manual proposal only when the validated comparison is
+    PILOT_ELIGIBLE; otherwise emit a non-policy evidence action.
+  validation_evidence: ARCH-004G2.4AZ focused source, policy, and tamper tests
+  review_condition: >
+    Replace after preregistered forward evidence spans at least eight
+    owner-reviewed weeks and multiple market regimes.
+
+eligibility:
+  required_comparison_confidence: PILOT_ELIGIBLE
+  required_comparison_status: PASS
+  insufficient_status: INSUFFICIENT_DATA
+  insufficient_action: require_more_forward_data
+  policy_change_allowed_when_insufficient: false
+
+safety:
+  manual_review_required: true
+  requires_owner_approval: true
+  auto_apply: false
+  automatic_config_update: false
+  automatic_candidate_promotion: false
+  production_effect: none
+  broker_action_taken: false

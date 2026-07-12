@@ -32,6 +32,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
     DEFAULT_LATEST_POINTER_DIR,
     DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
     DEFAULT_POSITION_ADVISORY_DAILY_DIR,
     DEFAULT_SHADOW_MONITOR_RUN_DIR,
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -61,11 +62,15 @@ REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "replay_performance_review_s
 REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION = "replay_diagnosis_source_snapshot.v2"
 BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION = "backfill_repair_source_snapshot.v2"
 VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION = "variant_comparison_source_snapshot.v2"
+RULE_CALIBRATION_SNAPSHOT_SCHEMA_VERSION = "rule_calibration_source_snapshot.v2"
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
 )
 DEFAULT_VARIANT_COMPARISON_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/variant_comparison_v1.yaml"
+)
+DEFAULT_RULE_CALIBRATION_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/rule_calibration_v1.yaml"
 )
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
@@ -1904,6 +1909,52 @@ def _load_variant_comparison_policy(path: Path) -> dict[str, Any]:
         or safety.get("production_effect") != "none"
     ):
         raise DynamicV3HistoricalReplayError("comparison policy safety boundary is invalid")
+    return loaded
+
+
+def _load_rule_calibration_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3HistoricalReplayError(f"calibration policy is missing: {path}")
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(loaded, dict):
+        raise DynamicV3HistoricalReplayError("calibration policy must be a mapping")
+    metadata = _mapping(loaded.get("policy_metadata"))
+    eligibility = _mapping(loaded.get("eligibility"))
+    safety = _mapping(loaded.get("safety"))
+    if (
+        any(
+            not _text(metadata.get(field))
+            for field in (
+                "policy_id",
+                "owner",
+                "version",
+                "status",
+                "rationale",
+                "intended_effect",
+                "review_condition",
+            )
+        )
+        or metadata.get("status") != "pilot_baseline"
+    ):
+        raise DynamicV3HistoricalReplayError("calibration policy metadata is incomplete")
+    if (
+        eligibility.get("required_comparison_confidence") != "PILOT_ELIGIBLE"
+        or eligibility.get("required_comparison_status") != "PASS"
+        or eligibility.get("insufficient_status") != "INSUFFICIENT_DATA"
+        or eligibility.get("insufficient_action") != "require_more_forward_data"
+        or eligibility.get("policy_change_allowed_when_insufficient") is not False
+    ):
+        raise DynamicV3HistoricalReplayError("calibration eligibility policy is invalid")
+    if (
+        safety.get("manual_review_required") is not True
+        or safety.get("requires_owner_approval") is not True
+        or safety.get("auto_apply") is not False
+        or safety.get("automatic_config_update") is not False
+        or safety.get("automatic_candidate_promotion") is not False
+        or safety.get("production_effect") != "none"
+        or safety.get("broker_action_taken") is not False
+    ):
+        raise DynamicV3HistoricalReplayError("calibration policy safety boundary is invalid")
     return loaded
 
 
@@ -3954,45 +4005,98 @@ def run_rule_calibration(
     comparison_id: str,
     comparison_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
     output_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
+    policy_path: Path = DEFAULT_RULE_CALIBRATION_POLICY_PATH,
+    target_policy_path: Path = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_comparison_dir = comparison_dir / comparison_id
+    comparison_validation = validate_variant_comparison_artifact(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    if comparison_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            f"source comparison validation must PASS: {comparison_validation.get('status')}"
+        )
     comparison_manifest = _read_json(source_comparison_dir / "variant_comparison_manifest.json")
     ranking = _read_json(source_comparison_dir / "variant_rank_summary.json")
     metrics = _read_jsonl(source_comparison_dir / "variant_window_metrics.jsonl")
-    diagnostics = _advisory_rule_diagnostics_from_comparison(comparison_manifest, ranking, metrics)
-    proposals = _policy_adjustment_proposals_from_diagnostics(
-        comparison_manifest,
-        ranking,
-        diagnostics,
+    source_time = _datetime_from_any(comparison_manifest.get("generated_at"))
+    if source_time is None or generated < source_time:
+        raise DynamicV3HistoricalReplayError(
+            "calibration generated_at must not precede source comparison"
+        )
+    policy = _load_rule_calibration_policy(policy_path)
+    if not target_policy_path.is_file():
+        raise DynamicV3HistoricalReplayError("target advisory policy is missing")
+    target_policy = yaml.safe_load(target_policy_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(target_policy, dict):
+        raise DynamicV3HistoricalReplayError("target advisory policy must be a mapping")
+    target_policy = json.loads(json.dumps(target_policy, default=str))
+    comparison_bundle = _review_source_bundle(
+        source_comparison_dir,
+        (
+            "variant_comparison_source_snapshot.json",
+            "variant_comparison_manifest.json",
+            "variant_window_metrics.jsonl",
+            "variant_pairwise_comparison.json",
+            "variant_rank_summary.json",
+            "variant_comparison_report.md",
+        ),
     )
-    safety = {
-        "auto_apply": False,
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "owner_approval_required": True,
-        "sufficient_sample_size": ranking.get("recommendation_confidence") != "INSUFFICIENT_DATA",
-        "requires_forward_confirmation": True,
-    }
+    diagnostics, actions, proposals, safety, status = _rule_calibration_views(
+        comparison_manifest=comparison_manifest,
+        ranking=ranking,
+        metrics=metrics,
+        policy=policy,
+    )
     calibration_id = _stable_id("rule-calibration", comparison_id, generated.isoformat())
     calibration_dir = _unique_dir(output_dir / calibration_id)
     calibration_dir.mkdir(parents=True, exist_ok=False)
+    metadata = _mapping(policy.get("policy_metadata"))
+    snapshot = {
+        "schema_version": RULE_CALIBRATION_SNAPSHOT_SCHEMA_VERSION,
+        "calibration_id": calibration_dir.name,
+        "comparison_id": comparison_id,
+        "generated_at": generated.isoformat(),
+        "comparison_bundle": comparison_bundle,
+        "calibration_policy_path": str(policy_path),
+        "calibration_policy_checksum": _sha256_file(policy_path),
+        "calibration_policy": policy,
+        "target_policy_path": str(target_policy_path),
+        "target_policy_checksum": _sha256_file(target_policy_path),
+        "target_policy": target_policy,
+        "source_comparison_validation_status": "PASS",
+        "production_effect": "none",
+    }
+    snapshot_path = calibration_dir / "rule_calibration_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_rule_calibration_manifest",
         "calibration_id": calibration_dir.name,
         "comparison_id": comparison_id,
         "generated_at": generated.isoformat(),
-        "status": "PASS",
+        "status": status,
         "proposal_count": len(proposals["proposals"]),
+        "evidence_action_count": len(actions["actions"]),
+        "policy_change_allowed": status == "PASS",
+        "policy_id": metadata.get("policy_id"),
+        "policy_version": metadata.get("version"),
         "auto_apply": False,
         "owner_approval_required": True,
         "source_comparison_path": str(source_comparison_dir / "variant_comparison_manifest.json"),
+        "source_comparison_validation_status": "PASS",
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _sha256_file(snapshot_path),
         "rule_calibration_manifest_path": str(calibration_dir / "rule_calibration_manifest.json"),
         "advisory_rule_diagnostics_path": str(calibration_dir / "advisory_rule_diagnostics.json"),
         "proposed_policy_adjustments_path": str(
             calibration_dir / "proposed_policy_adjustments.json"
+        ),
+        "evidence_collection_actions_path": str(
+            calibration_dir / "evidence_collection_actions.json"
         ),
         "calibration_safety_checks_path": str(calibration_dir / "calibration_safety_checks.json"),
         "rule_calibration_report_path": str(calibration_dir / "rule_calibration_report.md"),
@@ -4010,10 +4114,11 @@ def run_rule_calibration(
     _write_json(calibration_dir / "rule_calibration_manifest.json", manifest)
     _write_json(calibration_dir / "advisory_rule_diagnostics.json", diagnostics)
     _write_json(calibration_dir / "proposed_policy_adjustments.json", proposals)
+    _write_json(calibration_dir / "evidence_collection_actions.json", actions)
     _write_json(calibration_dir / "calibration_safety_checks.json", safety)
     _write_text(
         calibration_dir / "rule_calibration_report.md",
-        render_rule_calibration_report(manifest, diagnostics, proposals, safety),
+        render_rule_calibration_report(manifest, diagnostics, actions, proposals, safety),
     )
     _update_latest_pointer(
         "latest_rule_calibration",
@@ -4026,6 +4131,7 @@ def run_rule_calibration(
         "manifest": manifest,
         "advisory_rule_diagnostics": diagnostics,
         "proposed_policy_adjustments": proposals,
+        "evidence_collection_actions": actions,
         "calibration_safety_checks": safety,
     }
 
@@ -4047,6 +4153,9 @@ def rule_calibration_report_payload(
         "proposed_policy_adjustments": _read_json(
             calibration_dir / "proposed_policy_adjustments.json"
         ),
+        "evidence_collection_actions": _read_json(
+            calibration_dir / "evidence_collection_actions.json"
+        ),
         "calibration_safety_checks": _read_json(calibration_dir / "calibration_safety_checks.json"),
         "calibration_dir": str(calibration_dir),
     }
@@ -4059,9 +4168,11 @@ def validate_rule_calibration_artifact(
 ) -> dict[str, Any]:
     calibration_dir = output_dir / calibration_id
     manifest = _read_optional_json(calibration_dir / "rule_calibration_manifest.json") or {}
+    diagnostics = _read_optional_json(calibration_dir / "advisory_rule_diagnostics.json") or {}
+    actions = _read_optional_json(calibration_dir / "evidence_collection_actions.json") or {}
     proposals = _read_optional_json(calibration_dir / "proposed_policy_adjustments.json") or {}
     safety = _read_optional_json(calibration_dir / "calibration_safety_checks.json") or {}
-    checks = [
+    shallow_checks = [
         _check(
             "manifest_exists", (calibration_dir / "rule_calibration_manifest.json").exists(), ""
         ),
@@ -4073,6 +4184,11 @@ def validate_rule_calibration_artifact(
         _check(
             "proposals_exists",
             (calibration_dir / "proposed_policy_adjustments.json").exists(),
+            "",
+        ),
+        _check(
+            "evidence_actions_exists",
+            (calibration_dir / "evidence_collection_actions.json").exists(),
             "",
         ),
         _check(
@@ -4108,6 +4224,134 @@ def validate_rule_calibration_artifact(
             and manifest.get("official_target_weights_mutated") is False
             and manifest.get("baseline_config_mutated") is False,
             "no production mutation",
+        ),
+    ]
+    snapshot_path = calibration_dir / "rule_calibration_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_rule_calibration_validation",
+            artifact_id_key="calibration_id",
+            artifact_id=calibration_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    comparison_bundle = _mapping(snapshot.get("comparison_bundle"))
+    try:
+        source_manifest_path = Path(
+            _text(_mapping(comparison_bundle.get("variant_comparison_manifest.json")).get("path"))
+        )
+        comparison_validation = validate_variant_comparison_artifact(
+            comparison_id=_text(snapshot.get("comparison_id")),
+            output_dir=source_manifest_path.parent.parent,
+        )
+        comparison_manifest = _mapping(
+            _review_bundle_content(comparison_bundle, "variant_comparison_manifest.json")
+        )
+        ranking = _mapping(_review_bundle_content(comparison_bundle, "variant_rank_summary.json"))
+        metrics = _records(
+            _review_bundle_content(comparison_bundle, "variant_window_metrics.jsonl")
+        )
+        calibration_policy_path = Path(_text(snapshot.get("calibration_policy_path")))
+        target_policy_path = Path(_text(snapshot.get("target_policy_path")))
+        calibration_policy = _load_rule_calibration_policy(calibration_policy_path)
+        target_policy = yaml.safe_load(target_policy_path.read_text(encoding="utf-8")) or {}
+        target_policy = json.loads(json.dumps(target_policy, default=str))
+        (
+            expected_diagnostics,
+            expected_actions,
+            expected_proposals,
+            expected_safety,
+            expected_status,
+        ) = _rule_calibration_views(
+            comparison_manifest=comparison_manifest,
+            ranking=ranking,
+            metrics=metrics,
+            policy=calibration_policy,
+        )
+        metadata = _mapping(calibration_policy.get("policy_metadata"))
+        expected_manifest_fields = {
+            "calibration_id": calibration_id,
+            "comparison_id": snapshot.get("comparison_id"),
+            "generated_at": snapshot.get("generated_at"),
+            "status": expected_status,
+            "proposal_count": len(expected_proposals["proposals"]),
+            "evidence_action_count": len(expected_actions["actions"]),
+            "policy_change_allowed": expected_status == "PASS",
+            "policy_id": metadata.get("policy_id"),
+            "policy_version": metadata.get("version"),
+            "source_comparison_validation_status": "PASS",
+        }
+        expected_report = render_rule_calibration_report(
+            {**manifest, **expected_manifest_fields},
+            expected_diagnostics,
+            expected_actions,
+            expected_proposals,
+            expected_safety,
+        )
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        comparison_validation = {"status": "FAIL"}
+        calibration_policy_path = Path(".")
+        target_policy_path = Path(".")
+        calibration_policy, target_policy = {}, {}
+        expected_diagnostics, expected_actions, expected_proposals = {}, {}, {}
+        expected_safety, expected_manifest_fields, expected_report = {}, {}, ""
+        recompute_error = str(exc)
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == RULE_CALIBRATION_SNAPSHOT_SCHEMA_VERSION,
+            RULE_CALIBRATION_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "calibration source snapshot",
+        ),
+        _check(
+            "source_comparison_validation_passes",
+            comparison_validation.get("status") == "PASS",
+            _text(snapshot.get("comparison_id")),
+        ),
+        _check(
+            "source_files_unchanged",
+            _review_bundle_matches(comparison_bundle),
+            "comparison bundle",
+        ),
+        _check(
+            "calibration_policy_unchanged",
+            calibration_policy_path.is_file()
+            and snapshot.get("calibration_policy_checksum") == _sha256_file(calibration_policy_path)
+            and snapshot.get("calibration_policy") == calibration_policy,
+            "calibration policy",
+        ),
+        _check(
+            "target_policy_unchanged",
+            target_policy_path.is_file()
+            and snapshot.get("target_policy_checksum") == _sha256_file(target_policy_path)
+            and snapshot.get("target_policy") == target_policy,
+            "target advisory policy",
+        ),
+        _check("diagnostics_recomputed", diagnostics == expected_diagnostics, recompute_error),
+        _check("evidence_actions_recomputed", actions == expected_actions, recompute_error),
+        _check("proposals_recomputed", proposals == expected_proposals, recompute_error),
+        _check("safety_recomputed", safety == expected_safety, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            "manifest",
+        ),
+        _check(
+            "report_recomputed",
+            (calibration_dir / "rule_calibration_report.md").is_file()
+            and (calibration_dir / "rule_calibration_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
@@ -4667,10 +4911,12 @@ def _limited_adjustment_vs_no_trade_pair(pairwise: Mapping[str, Any]) -> dict[st
 def render_rule_calibration_report(
     manifest: Mapping[str, Any],
     diagnostics: Mapping[str, Any],
+    actions: Mapping[str, Any],
     proposals: Mapping[str, Any],
     safety: Mapping[str, Any],
 ) -> str:
     proposal_rows = _records(proposals.get("proposals"))
+    action_rows = _records(actions.get("actions"))
     return "\n".join(
         [
             f"# Rule Calibration {manifest.get('calibration_id')}",
@@ -4680,6 +4926,7 @@ def render_rule_calibration_report(
             f"- auto_apply：{safety.get('auto_apply')}",
             f"- owner_approval_required：{safety.get('owner_approval_required')}",
             f"- requires_forward_confirmation：{safety.get('requires_forward_confirmation')}",
+            f"- policy_change_allowed：{safety.get('policy_change_allowed')}",
             "",
             "## Diagnostics",
             "",
@@ -4698,7 +4945,16 @@ def render_rule_calibration_report(
                 for row in proposal_rows
             ],
             "",
-            "- 本报告只输出 proposal，不自动修改 position_advisory_v1.yaml。",
+            "## Evidence Collection Actions",
+            "",
+            *[
+                f"- {row.get('action_type')}；policy_change_allowed="
+                f"{row.get('policy_change_allowed')}；reason={row.get('reason')}"
+                for row in action_rows
+            ],
+            "",
+            "- evidence action不是policy proposal；证据不足时proposal count必须为0。",
+            "- 本报告不自动修改 position_advisory_v1.yaml。",
             "- production_effect=none；broker_action_allowed=false。",
             "",
         ]
@@ -5276,6 +5532,100 @@ def _variant_rank_summary(
         "production_effect": "none",
         "broker_action_taken": False,
     }
+
+
+def _rule_calibration_views(
+    *,
+    comparison_manifest: Mapping[str, Any],
+    ranking: Mapping[str, Any],
+    metrics: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], str]:
+    eligibility = _mapping(policy.get("eligibility"))
+    evidence_ready = (
+        comparison_manifest.get("status") == eligibility.get("required_comparison_status")
+        and ranking.get("recommendation_confidence")
+        == eligibility.get("required_comparison_confidence")
+        and bool(_records(ranking.get("ranking")))
+    )
+    if evidence_ready:
+        diagnostics = _advisory_rule_diagnostics_from_comparison(
+            comparison_manifest, ranking, metrics
+        )
+        proposals = _policy_adjustment_proposals_from_diagnostics(
+            comparison_manifest, ranking, diagnostics
+        )
+        actions = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_evidence_collection_actions",
+            "comparison_id": comparison_manifest.get("comparison_id"),
+            "actions": [],
+            "policy_change_allowed": True,
+            "production_effect": "none",
+        }
+        status = "PASS"
+    else:
+        diagnostics = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_advisory_rule_diagnostics",
+            "current_policy": "position_advisory_v1.yaml",
+            "diagnostics": {
+                "monitor_too_conservative": None,
+                "manual_review_too_frequent": None,
+                "limited_adjustment_supported": None,
+                "consensus_target_too_aggressive": None,
+                "candidate_disagreement_rule_effective": None,
+                "insufficient_data": True,
+            },
+            "evidence": [
+                {
+                    "comparison_id": comparison_manifest.get("comparison_id"),
+                    "best_variant": ranking.get("best_variant"),
+                    "recommendation_confidence": ranking.get("recommendation_confidence"),
+                    "limited_adjustment_avg_relative_to_no_trade_5d": None,
+                    "consensus_target_avg_relative_to_no_trade_5d": None,
+                }
+            ],
+            "production_effect": "none",
+            "broker_action_taken": False,
+        }
+        proposals = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_proposed_policy_adjustments",
+            "comparison_id": comparison_manifest.get("comparison_id"),
+            "proposals": [],
+            "policy_change_allowed": False,
+            "reason": "comparison_evidence_not_pilot_eligible",
+            "production_effect": "none",
+            "broker_action_taken": False,
+        }
+        actions = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_evidence_collection_actions",
+            "comparison_id": comparison_manifest.get("comparison_id"),
+            "actions": [
+                {
+                    "action_type": eligibility.get("insufficient_action"),
+                    "reason": "validated comparison does not meet calibration eligibility",
+                    "policy_change_allowed": False,
+                    "auto_apply": False,
+                    "requires_owner_approval": True,
+                }
+            ],
+            "policy_change_allowed": False,
+            "production_effect": "none",
+        }
+        status = _text(eligibility.get("insufficient_status"), "INSUFFICIENT_DATA")
+    safety = {
+        "auto_apply": False,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "owner_approval_required": True,
+        "sufficient_sample_size": evidence_ready,
+        "policy_change_allowed": evidence_ready,
+        "requires_forward_confirmation": True,
+    }
+    return diagnostics, actions, proposals, safety, status
 
 
 def _advisory_rule_diagnostics_from_comparison(

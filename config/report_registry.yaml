@@ -6573,15 +6573,19 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue rule-calibration report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/rule_calibration_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/rule_calibration_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/advisory_rule_diagnostics.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/proposed_policy_adjustments.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/evidence_collection_actions.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/calibration_safety_checks.json
       - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/rule_calibration_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-149 calibration is proposal-only; it must disclose auto_apply=false,
-      owner approval requirement, and no production or broker effect.
+      TRADING-149 freezes and revalidates the full comparison plus reviewed
+      calibration and target policies. Only PILOT_ELIGIBLE evidence can create a
+      manual proposal; insufficient evidence creates a non-policy collection
+      action and must disclose no production or broker effect.
     owner_action: review_calibration_proposals_before_any_manual_policy_edit
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

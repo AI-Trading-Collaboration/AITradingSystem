@@ -162,6 +162,10 @@ DYNAMIC_V3_VARIANT_COMPARISON_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_variant_comparison.py"
 )
+DYNAMIC_V3_RULE_CALIBRATION_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rule_calibration.py"
+)
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
@@ -311,7 +315,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26007
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25921
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -522,8 +526,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26007
-    assert len(legacy_names) == 768
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25921
+    assert len(legacy_names) == 765
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1446,6 +1450,28 @@ def test_g2_4_dynamic_v3_variant_comparison_callbacks_leave_legacy_root() -> Non
             "run_variant_comparison",
             "validate_variant_comparison_artifact",
             "variant_comparison_report_payload",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_rule_calibration_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_RULE_CALIBRATION_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_rule_calibration_run_command",
+        "dynamic_v3_rule_calibration_report_command",
+        "dynamic_v3_validate_rule_calibration_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "rule_calibration_report_payload",
+            "run_rule_calibration",
+            "validate_rule_calibration_artifact",
         }
     )
 

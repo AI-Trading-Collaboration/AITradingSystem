@@ -40,6 +40,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/<comparison_id>/variant_comparison_source_snapshot.json`及manifest/window-metrics/pairwise/rank/Markdown|`aits etf dynamic-v3-rescue variant-comparison run --backfill-id <id> [--repair-id <id>]`、`report --latest`、`validate-variant-comparison`|full-PASS Backfilled Outcome；optional full-PASS same-lineage Backfill Repair；reviewed `variant_comparison_v1.yaml`|pre-output validation/lineage/time；冻结source/canonical rows/policy；duplicate key阻断；missing metric为null；pairwise单位为paired distinct event；ranking只用5d same-event common cohort，3 distinct events/10 variant-windows/3 paired events门槛未过则best=MISSING/confidence=INSUFFICIENT_DATA；validator重算全部views|人工理解variant相对表现与证据缺口|否，comparison evidence only|rank不是跨window总分、PILOT_ELIGIBLE不是显著性或calibration批准；owner/paper variants仅diagnostic；当前单event fixture正确不排名，不自动运行calibration或改policy/portfolio/broker|
 
+## ARCH-004G2.4AZ Rule Calibration 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/<calibration_id>/rule_calibration_source_snapshot.json`及manifest/diagnostics/proposals/evidence-actions/safety/Markdown|`aits etf dynamic-v3-rescue rule-calibration run --comparison-id <id>`、`report --latest`、`validate-rule-calibration`|full content-derived PASS Variant Comparison；reviewed `rule_calibration_v1.yaml`；当前目标`position_advisory_v1.yaml`|任何output前验证source与time；冻结完整comparison bundle和两份policy；只有comparison status=PASS且confidence=PILOT_ELIGIBLE才允许方向性manual proposal；否则status=INSUFFICIENT_DATA、proposal_count=0，仅输出`require_more_forward_data`且`policy_change_allowed=false`；validator重验live source/policies并重算全部views|把“是否足以提出人工规则变更”与“下一步收集什么证据”明确分离|否，proposal/evidence only|技术validator PASS不等于证据充分；INSUFFICIENT_DATA不是校准成功；proposal从不自动应用，目标policy/config/weights/portfolio/order/broker均不修改|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

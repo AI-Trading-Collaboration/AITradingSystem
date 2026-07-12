@@ -750,6 +750,21 @@ Variant Comparison回答“在同一批可比历史事件上，各advisory varia
 
 当前fixture只有1个独立replay event，虽有若干repair后AVAILABLE rows和paired delta，仍不满足3 event/10 window/3 common-pair门槛，因此best=MISSING、confidence=INSUFFICIENT_DATA；这正是预期结果。后续先增加PIT-safe独立event和5d common cohort，再预注册regime/成本/置信区间与economic significance；不能通过跨window平均、重复variant rows、把missing写0或降低pilot floor来制造排名。
 
+#### Rule Calibration 链（TRADING-149 / G2.4AZ）
+
+Rule Calibration回答的是“经审计的comparison证据是否已经足以提出一项供owner人工审查的规则变更”，不是“技术校验通过后如何必然生成一个提案”。旧链路即使comparison已经明确INSUFFICIENT_DATA，仍会把`require_more_forward_data`包装成`proposed_policy_adjustments`，同时manifest写PASS；这混淆了证据动作与政策动作，也会让下游把“继续观察”误读为“规则已校准”。AZ把source完整性、证据资格、政策变更许可和人工批准拆成四个独立门。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source preflight | 显式comparison id/root；timezone-aware calibration time | 先运行Variant Comparison content-derived validator；source必须技术PASS，calibration time不得早于comparison | source validation/time evidence | invalid、legacy drift、tamper或time travel在创建目录前阻断。后续可统一chain root和签名时间戳 |
+| Policy/source freeze | comparison snapshot/manifest/metrics/pairwise/rank/report；`rule_calibration_v1.yaml`；当前`position_advisory_v1.yaml` | 冻结每个source path/content/checksum以及两份完整policy；YAML值先规范成确定性JSON语义，避免date/string伪差异 | `rule_calibration_source_snapshot.json` | live source或任一policy byte drift均FAIL。后续增加policy registry id、审批签名和retention lock |
+| Evidence eligibility | source manifest status、rank confidence、ranking rows；reviewed eligibility policy | `eligible = source_status == PASS and confidence == PILOT_ELIGIBLE and ranking非空`；技术validator PASS不参与替代证据门槛 | eligibility decision embedded in manifest/views | 不足证据不得用0填充方向、不得降低floor制造提案。后续以预注册holdout、regime覆盖、CI和economic significance替代pilot gate |
+| Eligible proposal path | eligible comparison的best variant、rank与window diagnostics | 计算既有方向性diagnostics并形成manual-only proposal；固定`auto_apply=false`、`requires_owner_approval=true` | `advisory_rule_diagnostics.json`、`proposed_policy_adjustments.json` | proposal只是审查输入，不是批准或policy mutation。后续增加effect-size/uncertainty、counterfactual和rollback criteria |
+| Insufficient evidence path | 未通过eligibility的validated comparison | 所有方向性diagnostic保持null；manifest status=INSUFFICIENT_DATA、proposal_count=0；独立输出`require_more_forward_data`，且`policy_change_allowed=false` | `evidence_collection_actions.json` | “继续收集证据”不得进入proposal数组。后续细分缺口为event/common-cohort/regime/cost/holdout并给出可验证completion criteria |
+| Safety/validator/report | snapshot和全部derived views | 重验live comparison与两份policy，从冻结内容重算diagnostics/actions/proposals/safety/manifest/Markdown | content-derived PASS/FAIL与人工报告 | source/snapshot/policy/view/report任一tamper FAIL；不得自动写`position_advisory_v1.yaml`或触发portfolio/order/broker |
+
+当前fixture的comparison技术校验PASS，但只有1个独立event，ranking为MISSING/INSUFFICIENT_DATA；因此校准manifest正确为INSUFFICIENT_DATA，proposal_count=0，只要求继续forward data，且明确`policy_change_allowed=false`。这说明审计链可工作，不说明规则已被校准。下一步优化应先扩充PIT-safe common cohort并完成跨regime/成本/holdout验证，再校准proposal逻辑的effect-size、置信区间、expiry和rollback；不能通过把evidence action改名为proposal、用0替代missing或绕过owner approval加速结论。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

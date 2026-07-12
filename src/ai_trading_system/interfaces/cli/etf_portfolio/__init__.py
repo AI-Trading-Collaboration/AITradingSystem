@@ -119,6 +119,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_research_control as dynamic_v3_research_control_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_rule_calibration as dynamic_v3_rule_calibration_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_shadow_aging as dynamic_v3_shadow_aging_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -216,6 +219,7 @@ __all__ = [
     "dynamic_v3_weight_path_commands",
     "dynamic_v3_validation_evidence_commands",
     "dynamic_v3_variant_comparison_commands",
+    "dynamic_v3_rule_calibration_commands",
     "etf_app",
     "operations_commands",
     "parameter_review_commands",
