@@ -6525,6 +6525,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue backfill-repair report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_repair_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_repair_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/repair_actions.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/repaired_outcome_windows.jsonl
@@ -6532,9 +6533,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_repair_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-147 repair records calendar/date alignment and price-cache lookup
-      repairs without overwriting the original backfilled outcome artifact or
-      using future prices as replay decision input.
+      TRADING-147 first validates and freezes the complete backfill, diagnosis,
+      replay, policy-cost, data-quality, and cutoff-price evidence, then
+      deterministically repairs only due non-AVAILABLE variant-window rows.
+      The original backfill remains immutable and future prices never enter the
+      replay decision input.
     owner_action: review_repair_delta_and_future_data_safety_before_variant_comparison
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

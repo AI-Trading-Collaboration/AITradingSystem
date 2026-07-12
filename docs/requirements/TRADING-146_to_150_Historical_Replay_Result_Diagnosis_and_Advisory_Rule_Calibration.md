@@ -64,6 +64,7 @@
 
 ## 进展记录
 
+- 2026-07-12：ARCH-004G2.4AX完成Backfill Repair source-derived hardening与CLI迁移。Repair现在在任何output前要求Backfilled Outcome、Replay Diagnosis、Historical Replay full PASS、同链lineage/time ordering及cached DQ PASS，冻结三源bundle、reviewed cost和cutoff price rows；只对原PENDING/INSUFFICIENT按AT fixed-share/cost/null语义重算，原AVAILABLE保持immutable，availability delta显式使用`event_variant_window`单位。Validator重验live source/DQ并重算actions/rows/delta/manifest/Markdown，source/snapshot/output tamper FAIL；不覆写原backfill、不自动运行comparison/calibration，无policy/portfolio/production/broker effect。
 - 2026-07-12：G2.4AW完成Replay Diagnosis hardening与CLI迁移；focused 83、architecture 232、contract 203全部PASS。当前fixture虽有部分AVAILABLE windows，但仅1个独立replay event且simulation不足，因此comparison readiness保持false；诊断不把单window误作方向性证据。同步修复Backfill Repair调用AT outcome helper时遗漏cost_rate的回归。G2.4继续，尚未触发ARCH-005 handoff。
 - 2026-07-12：ARCH-004G2.4AW对Replay Diagnosis执行source-derived hardening并迁移CLI。Diagnosis现在要求五类source full PASS和完整lineage/time ordering，冻结全部files/content/checksums；coverage、pending reasons与health matrix显式区分event/window/state/chain单位，无reason不再注入blocking unknown，comparison readiness继承AV reviewed evidence gate。Validator重算全部views并检测source/snapshot/output tamper；不运行repair/comparison/calibration，无policy/portfolio/production/broker effect。
 - 2026-06-09：新增任务登记和需求文档，进入实现阶段。当前 implementation plan 是复用 `dynamic_v3_historical_replay.py` 现有 artifact helper 和 safety contract，新增 diagnosis/repair/comparison/calibration/bridge artifact，不覆写 TRADING-141_to_145 原始 outputs。

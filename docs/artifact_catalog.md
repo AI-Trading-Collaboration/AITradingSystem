@@ -28,6 +28,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/<diagnosis_id>/replay_diagnosis_source_snapshot.json`及manifest/coverage/pending-reasons/health-matrix/Markdown|`aits etf dynamic-v3-rescue replay-diagnosis run ...`、`report --latest`、`validate-replay-diagnosis`|full-PASS且完整lineage的Inventory/Replay/Backfill/Sim/Review|冻结五类source；event/window/chain count units分离；无reason不造unknown；comparison readiness绑定AV evidence gate；validator重算全部views；`production_effect=none`|解释覆盖与阻断原因，为后续人工repair/comparison排序|否，diagnosis only|PASS只证明诊断可重放；available window、health PASS或readiness都不授权repair、calibration、policy或execution|
 
+## ARCH-004G2.4AX Backfill Repair 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/<repair_id>/backfill_repair_source_snapshot.json`<br/>`backfill_repair_manifest.json`<br/>`repair_actions.jsonl`<br/>`repaired_outcome_windows.jsonl`<br/>`backfill_availability_delta.json`<br/>`backfill_repair_report.md`<br/>真实运行另含`validate_data_quality_report.md`|`aits etf dynamic-v3-rescue backfill-repair run --backfill-id <id> --diagnosis-id <id>`、`report --latest`、`validate-backfill-repair --repair-id <id>`|full-PASS、同一lineage且时间有序的Backfilled Outcome、Replay Diagnosis和Historical Replay；reviewed backfill cost/window policy；cached ETF prices/rates与统一DQ|任何output前完成三源validator/lineage/time/DQ；snapshot冻结三源bundle、policy-cost、cutoff price rows及checksums；只重算原PENDING/INSUFFICIENT，原AVAILABLE保持immutable；同AT fixed-share gross、initial one-way L1 cost与null逻辑；delta sample unit=`event_variant_window`；validator重验live source/DQ并重算actions/rows/delta/manifest/Markdown；`production_effect=none`|修复“窗口现已到期且当前缓存证据完整”的历史outcome availability，供后续人工comparison使用|否，repair evidence only|repair PASS不代表comparison ready或策略有效；`repaired_count`是variant-window row数而非独立event数；未来价格只用于outcome，不能回流decision；不覆写原backfill、不自动运行comparison/calibration、不修改policy/weights/portfolio/order/broker|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

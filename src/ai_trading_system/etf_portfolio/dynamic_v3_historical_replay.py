@@ -59,6 +59,7 @@ BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backfilled_outcome_source_snapshot
 HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION = "historical_paper_sim_source_snapshot.v2"
 REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "replay_performance_review_source_snapshot.v2"
 REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION = "replay_diagnosis_source_snapshot.v2"
+BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION = "backfill_repair_source_snapshot.v2"
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
 )
@@ -3017,42 +3018,77 @@ def run_backfill_repair(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_backfill_dir = backfill_dir / backfill_id
     source_diagnosis_dir = diagnosis_dir / diagnosis_id
+    backfill_validation = validate_backfill_outcome_artifact(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    diagnosis_validation = validate_replay_diagnosis_artifact(
+        diagnosis_id=diagnosis_id,
+        output_dir=diagnosis_dir,
+    )
+    if backfill_validation.get("status") != "PASS" or diagnosis_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            "backfill repair requires full-PASS backfill and diagnosis sources"
+        )
     backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
     diagnosis_manifest = _read_json(source_diagnosis_dir / "replay_diagnosis_manifest.json")
     original_rows = _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
     replay_id = _text(backfill_manifest.get("replay_id"))
     source_replay_dir = replay_dir / replay_id
+    replay_validation = validate_historical_replay_artifact(
+        replay_id=replay_id,
+        output_dir=replay_dir,
+    )
+    if replay_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError("backfill repair requires a full-PASS replay source")
+    replay_manifest = _read_json(source_replay_dir / "historical_replay_manifest.json")
+    if not all(
+        (
+            diagnosis_manifest.get("backfill_id") == backfill_id,
+            diagnosis_manifest.get("replay_id") == replay_id,
+            backfill_manifest.get("replay_id") == replay_id,
+        )
+    ):
+        raise DynamicV3HistoricalReplayError("backfill repair source lineage is inconsistent")
+    source_times = [
+        _datetime_from_any(backfill_manifest.get("generated_at")),
+        _datetime_from_any(diagnosis_manifest.get("generated_at")),
+        _datetime_from_any(replay_manifest.get("generated_at")),
+    ]
+    if any(value is None for value in source_times) or any(
+        generated < value for value in source_times if value is not None
+    ):
+        raise DynamicV3HistoricalReplayError(
+            "backfill repair generated_at must not precede source artifacts"
+        )
     replay_events = _read_jsonl(source_replay_dir / "replay_events.jsonl")
-
-    repair_id = _stable_id("backfill-repair", backfill_id, diagnosis_id, generated.isoformat())
-    repair_dir = _unique_dir(output_dir / repair_id)
-    repair_dir.mkdir(parents=True, exist_ok=False)
-    quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
-    quality_report_path = ""
+    quality = None
     if enforce_data_quality_gate:
-        quality_report = repair_dir / "validate_data_quality_report.md"
-        quality = _run_cached_data_quality_gate(
+        quality = _validate_cached_data_quality(
             as_of=generated.date(),
             prices_path=prices_path,
             rates_path=rates_path,
-            report_path=quality_report,
         )
-        quality_status = quality.status
-        quality_report_path = str(quality_report)
         if not quality.passed:
             raise DynamicV3HistoricalReplayError(
                 f"backfill repair data quality gate failed: {quality.status}"
             )
     prices = _load_prices_for_replay(prices_path, replay_events)
-    price_dates = _available_price_dates(prices)
+    price_rows = _frozen_replay_price_rows(prices, generated_date=generated.date())
+    frozen_prices = pd.DataFrame(
+        price_rows,
+        columns=["symbol", "date", "adj_close"],
+    ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
+    frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+    price_dates = _available_price_dates(frozen_prices)
     event_map = {_text(event.get("replay_event_id")): event for event in replay_events}
     repaired_rows, actions = _repair_outcome_rows(
         original_rows=original_rows,
         event_map=event_map,
-        prices=prices,
+        prices=frozen_prices,
         price_dates=price_dates,
         generated_date=generated.date(),
         cost_rate=_float(backfill_manifest.get("cost_rate")),
@@ -3066,6 +3102,7 @@ def run_backfill_repair(
         and action.get("new_status") == "AVAILABLE"
     )
     delta = {
+        "sample_unit": "event_variant_window",
         "before": before,
         "after": after,
         "repaired_count": repaired_count,
@@ -3075,6 +3112,70 @@ def run_backfill_repair(
     status = "PASS" if repaired_count else "PASS_WITH_WARNINGS"
     if not repaired_rows or after["available"] == 0:
         status = "INSUFFICIENT_DATA" if not after["pending"] else "PENDING"
+    repair_id = _stable_id("backfill-repair", backfill_id, diagnosis_id, generated.isoformat())
+    repair_dir = _unique_dir(output_dir / repair_id)
+    repair_dir.mkdir(parents=True, exist_ok=False)
+    quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    quality_report_path = ""
+    if enforce_data_quality_gate:
+        assert quality is not None
+        quality_report = repair_dir / "validate_data_quality_report.md"
+        write_data_quality_report(quality, quality_report)
+        quality_status = quality.status
+        quality_report_path = str(quality_report)
+    source_snapshot = {
+        "schema_version": BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION,
+        "repair_id": repair_dir.name,
+        "generated_at": generated.isoformat(),
+        "backfill_id": backfill_id,
+        "diagnosis_id": diagnosis_id,
+        "replay_id": replay_id,
+        "backfill_root": str(source_backfill_dir),
+        "diagnosis_root": str(source_diagnosis_dir),
+        "replay_root": str(source_replay_dir),
+        "backfill_files": _review_source_bundle(
+            source_backfill_dir,
+            (
+                "backfilled_outcome_source_snapshot.json",
+                "backfill_manifest.json",
+                "replay_outcome_windows.jsonl",
+                "variant_performance_summary.json",
+                "backfill_outcome_report.md",
+            ),
+        ),
+        "diagnosis_files": _review_source_bundle(
+            source_diagnosis_dir,
+            (
+                "replay_diagnosis_source_snapshot.json",
+                "replay_diagnosis_manifest.json",
+                "replay_coverage_breakdown.json",
+                "replay_pending_reason_summary.json",
+                "replay_artifact_health_matrix.jsonl",
+                "replay_diagnosis_report.md",
+            ),
+        ),
+        "replay_files": _review_source_bundle(
+            source_replay_dir,
+            (
+                "historical_replay_source_snapshot.json",
+                "historical_replay_manifest.json",
+                "replay_events.jsonl",
+                "replay_decision_inputs.jsonl",
+                "replay_action_summary.json",
+                "historical_replay_report.md",
+            ),
+        ),
+        "cost_rate": _float(backfill_manifest.get("cost_rate")),
+        "prices_path": str(prices_path),
+        "prices_checksum": _sha256_file(prices_path),
+        "rates_path": str(rates_path),
+        "rates_checksum": _sha256_file(rates_path),
+        "price_rows": price_rows,
+        "data_quality_status": quality_status,
+        "data_quality_gate_skipped_for_test": not enforce_data_quality_gate,
+    }
+    source_snapshot_path = repair_dir / "backfill_repair_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backfill_repair_manifest",
@@ -3086,7 +3187,13 @@ def run_backfill_repair(
         "status": status,
         "data_quality_status": quality_status,
         "data_quality_report_path": quality_report_path,
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": _sha256_file(source_snapshot_path),
         "future_data_used_in_decision": False,
+        "repair_count_unit": "event_variant_window",
+        "source_backfill_validation_status": "PASS",
+        "source_diagnosis_validation_status": "PASS",
+        "source_replay_validation_status": "PASS",
         "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
         "source_diagnosis_path": str(source_diagnosis_dir / "replay_diagnosis_manifest.json"),
         "source_replay_path": str(source_replay_dir / "historical_replay_manifest.json"),
@@ -3124,6 +3231,7 @@ def run_backfill_repair(
         "repaired_outcome_windows": repaired_rows,
         "backfill_availability_delta": delta,
         "diagnosis_manifest": diagnosis_manifest,
+        "source_snapshot": source_snapshot,
     }
 
 
@@ -3156,7 +3264,8 @@ def validate_backfill_repair_artifact(
     manifest = _read_optional_json(repair_dir / "backfill_repair_manifest.json") or {}
     actions = _read_jsonl(repair_dir / "repair_actions.jsonl")
     rows = _read_jsonl(repair_dir / "repaired_outcome_windows.jsonl")
-    checks = [
+    delta = _read_optional_json(repair_dir / "backfill_availability_delta.json") or {}
+    shallow_checks = [
         _check("manifest_exists", (repair_dir / "backfill_repair_manifest.json").exists(), ""),
         _check("repair_actions_exists", (repair_dir / "repair_actions.jsonl").exists(), ""),
         _check(
@@ -3187,6 +3296,193 @@ def validate_backfill_repair_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+    ]
+    snapshot_path = repair_dir / "backfill_repair_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_backfill_repair_validation",
+            artifact_id_key="repair_id",
+            artifact_id=repair_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    backfill_bundle = _mapping(snapshot.get("backfill_files"))
+    diagnosis_bundle = _mapping(snapshot.get("diagnosis_files"))
+    replay_bundle = _mapping(snapshot.get("replay_files"))
+    backfill_root = Path(_text(snapshot.get("backfill_root")))
+    diagnosis_root = Path(_text(snapshot.get("diagnosis_root")))
+    replay_root = Path(_text(snapshot.get("replay_root")))
+    try:
+        validations = {
+            "backfill": validate_backfill_outcome_artifact(
+                backfill_id=_text(snapshot.get("backfill_id")),
+                output_dir=backfill_root.parent,
+            ),
+            "diagnosis": validate_replay_diagnosis_artifact(
+                diagnosis_id=_text(snapshot.get("diagnosis_id")),
+                output_dir=diagnosis_root.parent,
+            ),
+            "replay": validate_historical_replay_artifact(
+                replay_id=_text(snapshot.get("replay_id")),
+                output_dir=replay_root.parent,
+            ),
+        }
+    except Exception as exc:  # noqa: BLE001
+        validations = {
+            name: {"status": "FAIL", "error": str(exc)}
+            for name in (
+                "backfill",
+                "diagnosis",
+                "replay",
+            )
+        }
+    prices_path = Path(_text(snapshot.get("prices_path")))
+    rates_path = Path(_text(snapshot.get("rates_path")))
+    source_files_match = (
+        _review_bundle_matches(backfill_bundle)
+        and _review_bundle_matches(diagnosis_bundle)
+        and _review_bundle_matches(replay_bundle)
+        and prices_path.is_file()
+        and rates_path.is_file()
+        and snapshot.get("prices_checksum") == _sha256_file(prices_path)
+        and snapshot.get("rates_checksum") == _sha256_file(rates_path)
+    )
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    dq_valid = snapshot.get("data_quality_status") == "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    if snapshot.get("data_quality_gate_skipped_for_test") is not True and generated is not None:
+        quality = _validate_cached_data_quality(
+            as_of=generated.date(),
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+        dq_valid = quality.passed and quality.status == snapshot.get("data_quality_status")
+    try:
+        original_rows = _records(
+            _review_bundle_content(backfill_bundle, "replay_outcome_windows.jsonl")
+        )
+        backfill_manifest = _mapping(
+            _review_bundle_content(backfill_bundle, "backfill_manifest.json")
+        )
+        diagnosis_manifest = _mapping(
+            _review_bundle_content(diagnosis_bundle, "replay_diagnosis_manifest.json")
+        )
+        replay_manifest = _mapping(
+            _review_bundle_content(replay_bundle, "historical_replay_manifest.json")
+        )
+        replay_events = _records(_review_bundle_content(replay_bundle, "replay_events.jsonl"))
+        if generated is None:
+            raise DynamicV3HistoricalReplayError("repair snapshot generated_at is invalid")
+        frozen_prices = pd.DataFrame(
+            _records(snapshot.get("price_rows")),
+            columns=["symbol", "date", "adj_close"],
+        ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
+        frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+        expected_rows, expected_actions = _repair_outcome_rows(
+            original_rows=original_rows,
+            event_map={_text(event.get("replay_event_id")): event for event in replay_events},
+            prices=frozen_prices,
+            price_dates=_available_price_dates(frozen_prices),
+            generated_date=generated.date(),
+            cost_rate=_float(snapshot.get("cost_rate")),
+        )
+        before = _availability_counts(original_rows)
+        after = _availability_counts(expected_rows)
+        repaired_count = sum(
+            1
+            for action in expected_actions
+            if action.get("original_status") != action.get("new_status")
+            and action.get("new_status") == "AVAILABLE"
+        )
+        expected_delta = {
+            "sample_unit": "event_variant_window",
+            "before": before,
+            "after": after,
+            "repaired_count": repaired_count,
+            "still_pending_count": after["pending"],
+            "still_insufficient_count": after["insufficient_data"],
+        }
+        expected_status = "PASS" if repaired_count else "PASS_WITH_WARNINGS"
+        if not expected_rows or after["available"] == 0:
+            expected_status = "INSUFFICIENT_DATA" if not after["pending"] else "PENDING"
+        lineage_valid = all(
+            (
+                diagnosis_manifest.get("backfill_id") == snapshot.get("backfill_id"),
+                diagnosis_manifest.get("replay_id") == snapshot.get("replay_id"),
+                backfill_manifest.get("replay_id") == snapshot.get("replay_id"),
+                replay_manifest.get("replay_id") == snapshot.get("replay_id"),
+            )
+        )
+        expected_manifest_fields = {
+            "repair_id": repair_id,
+            "backfill_id": snapshot.get("backfill_id"),
+            "diagnosis_id": snapshot.get("diagnosis_id"),
+            "replay_id": snapshot.get("replay_id"),
+            "generated_at": snapshot.get("generated_at"),
+            "status": expected_status,
+            "data_quality_status": snapshot.get("data_quality_status"),
+            "repair_count_unit": "event_variant_window",
+            "source_backfill_validation_status": "PASS",
+            "source_diagnosis_validation_status": "PASS",
+            "source_replay_validation_status": "PASS",
+        }
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_rows, expected_actions, expected_delta = [], [], {}
+        expected_manifest_fields, lineage_valid = {}, False
+        recompute_error = str(exc)
+    expected_report = render_backfill_repair_report(
+        manifest,
+        expected_delta,
+        expected_actions,
+    )
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION,
+            BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "repair source snapshot",
+        ),
+        _check(
+            "all_source_validations_pass",
+            all(payload.get("status") == "PASS" for payload in validations.values()),
+            "backfill/diagnosis/replay",
+        ),
+        _check("source_lineage_matches", lineage_valid, _text(snapshot.get("replay_id"))),
+        _check("source_files_unchanged", source_files_match, "source bundles and caches"),
+        _check("data_quality_evidence_valid", dq_valid, _text(snapshot.get("data_quality_status"))),
+        _check("repair_actions_recomputed", actions == expected_actions, recompute_error),
+        _check("repaired_rows_recomputed", rows == expected_rows, recompute_error),
+        _check("availability_delta_recomputed", delta == expected_delta, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            "manifest",
+        ),
+        _check(
+            "original_available_rows_immutable",
+            all(
+                row == expected_rows[index]
+                for index, row in enumerate(original_rows)
+                if row.get("outcome_status") == "AVAILABLE"
+            ),
+            "AVAILABLE rows",
+        ),
+        _check(
+            "report_recomputed",
+            (repair_dir / "backfill_repair_report.md").is_file()
+            and (repair_dir / "backfill_repair_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
