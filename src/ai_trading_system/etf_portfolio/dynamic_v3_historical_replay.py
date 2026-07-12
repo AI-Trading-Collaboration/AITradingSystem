@@ -53,6 +53,7 @@ DEFAULT_RULE_CALIBRATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rule_calibrat
 DEFAULT_REPLAY_FORWARD_BRIDGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_forward_bridge"
 DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
 REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION = "replay_inventory_source_snapshot.v2"
+HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION = "historical_replay_source_snapshot.v2"
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
@@ -674,24 +675,29 @@ def run_historical_replay(
     output_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_dir = inventory_dir / inventory_id
+    inventory_validation = validate_replay_inventory_artifact(
+        inventory_id=inventory_id,
+        output_dir=inventory_dir,
+    )
+    if inventory_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            "historical replay requires a fully validated snapshotted inventory"
+        )
     inventory_manifest = _read_json(source_dir / "replay_inventory_manifest.json")
     inventory_rows = _read_jsonl(source_dir / "replay_artifact_inventory.jsonl")
-    events = []
-    decision_inputs = []
-    skipped = []
-    for row in inventory_rows:
-        pit_status = _text(row.get("pit_safety_status"))
-        if pit_status == "PIT_UNSAFE":
-            skipped.append(_skip_row(row, "PIT_UNSAFE_EXCLUDED"))
-            continue
-        if pit_status == "PIT_WARNING" and not include_pit_warning:
-            skipped.append(_skip_row(row, "PIT_WARNING_EXCLUDED"))
-            continue
-        event = _historical_replay_event(row)
-        events.append(event)
-        decision_inputs.append(_historical_decision_input(row, event))
+    inventory_snapshot_path = source_dir / "replay_inventory_source_snapshot.json"
+    inventory_snapshot = _read_json(inventory_snapshot_path)
+    inventory_cutoff = _datetime_from_any(inventory_manifest.get("evidence_cutoff"))
+    if inventory_cutoff is None or generated < inventory_cutoff:
+        raise DynamicV3HistoricalReplayError(
+            "historical replay generated_at cannot precede inventory evidence cutoff"
+        )
+    events, decision_inputs, skipped = _historical_replay_views(
+        inventory_rows,
+        include_pit_warning=include_pit_warning,
+    )
     replay_id = _stable_id(
         "historical-replay",
         inventory_id,
@@ -701,6 +707,28 @@ def run_historical_replay(
     replay_dir = _unique_dir(output_dir / replay_id)
     replay_dir.mkdir(parents=True, exist_ok=False)
     action_summary = _replay_action_summary(events, skipped)
+    replay_source_snapshot = {
+        "schema_version": HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
+        "inventory_id": inventory_id,
+        "inventory_root": str(source_dir),
+        "inventory_manifest_checksum": _sha256_file(
+            source_dir / "replay_inventory_manifest.json"
+        ),
+        "inventory_source_snapshot_checksum": _sha256_file(inventory_snapshot_path),
+        "inventory_manifest": inventory_manifest,
+        "inventory_source_snapshot": inventory_snapshot,
+        "inventory_rows": inventory_rows,
+        "include_pit_warning": include_pit_warning,
+        "generated_at": generated.isoformat(),
+        "selected_daily_advisory_ids": [
+            _text(event.get("daily_advisory_id")) for event in events
+        ],
+        "skipped_events": skipped,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    replay_source_snapshot_path = replay_dir / "historical_replay_source_snapshot.json"
+    _write_json(replay_source_snapshot_path, replay_source_snapshot)
     status = "PASS" if events else "INSUFFICIENT_DATA"
     if skipped and events:
         status = "PASS_WITH_WARNINGS"
@@ -717,6 +745,13 @@ def run_historical_replay(
         "skipped_count": len(skipped),
         "generated_variants": list(REPLAY_VARIANTS),
         "source_inventory_path": str(source_dir / "replay_inventory_manifest.json"),
+        "source_inventory_validation_status": "PASS",
+        "source_inventory_evidence_cutoff": inventory_cutoff.isoformat(),
+        "market_regime": inventory_manifest.get("market_regime"),
+        "historical_replay_source_snapshot_path": str(replay_source_snapshot_path),
+        "historical_replay_source_snapshot_checksum": _sha256_file(
+            replay_source_snapshot_path
+        ),
         "historical_replay_manifest_path": str(replay_dir / "historical_replay_manifest.json"),
         "replay_events_path": str(replay_dir / "replay_events.jsonl"),
         "replay_decision_inputs_path": str(replay_dir / "replay_decision_inputs.jsonl"),
@@ -781,20 +816,158 @@ def validate_historical_replay_artifact(
     replay_dir = output_dir / replay_id
     manifest = _read_optional_json(replay_dir / "historical_replay_manifest.json") or {}
     events = _read_jsonl(replay_dir / "replay_events.jsonl")
+    decision_inputs = _read_jsonl(replay_dir / "replay_decision_inputs.jsonl")
+    action_summary = _read_optional_json(replay_dir / "replay_action_summary.json") or {}
+    snapshot_path = replay_dir / "historical_replay_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = _historical_replay_shallow_checks(
+            replay_id=replay_id,
+            replay_dir=replay_dir,
+            manifest=manifest,
+            events=events,
+        )
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_historical_replay_validation",
+            artifact_id_key="replay_id",
+            artifact_id=replay_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    source_root = Path(_text(snapshot.get("inventory_root")))
+    source_inventory_id = _text(snapshot.get("inventory_id"))
+    source_manifest_path = source_root / "replay_inventory_manifest.json"
+    source_snapshot_path = source_root / "replay_inventory_source_snapshot.json"
+    try:
+        expected_events, expected_inputs, expected_skipped = _historical_replay_views(
+            _records(snapshot.get("inventory_rows")),
+            include_pit_warning=bool(snapshot.get("include_pit_warning")),
+        )
+        replay_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_events, expected_inputs, expected_skipped = [], [], []
+        replay_error = str(exc)
+    expected_summary = _replay_action_summary(expected_events, expected_skipped)
+    expected_report = render_historical_replay_report(
+        manifest,
+        expected_summary,
+        expected_events,
+        expected_skipped,
+    )
+    report_path = replay_dir / "historical_replay_report.md"
+    source_validation = validate_replay_inventory_artifact(
+        inventory_id=source_inventory_id,
+        output_dir=source_root.parent,
+    )
+    derived_manifest_matches = all(
+        (
+            manifest.get("inventory_id") == source_inventory_id,
+            manifest.get("generated_at") == snapshot.get("generated_at"),
+            manifest.get("include_pit_warning") == snapshot.get("include_pit_warning"),
+            _int(manifest.get("replay_event_count")) == len(expected_events),
+            _int(manifest.get("skipped_count")) == len(expected_skipped),
+            manifest.get("generated_variants") == list(REPLAY_VARIANTS),
+            manifest.get("source_inventory_validation_status") == "PASS",
+            manifest.get("market_regime")
+            == _mapping(snapshot.get("inventory_manifest")).get("market_regime"),
+        )
+    )
     checks = [
-        _check(
-            "manifest_exists",
-            (replay_dir / "historical_replay_manifest.json").exists(),
-            replay_id,
+        *_historical_replay_shallow_checks(
+            replay_id=replay_id,
+            replay_dir=replay_dir,
+            manifest=manifest,
+            events=events,
         ),
-        _check("replay_events_exists", (replay_dir / "replay_events.jsonl").exists(), ""),
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
+            HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("historical_replay_source_snapshot_checksum")
+            == _sha256_file(snapshot_path),
+            "replay source snapshot",
+        ),
+        _check(
+            "source_inventory_validation_passes",
+            source_validation.get("status") == "PASS",
+            source_inventory_id,
+        ),
+        _check(
+            "source_inventory_files_unchanged",
+            source_manifest_path.is_file()
+            and source_snapshot_path.is_file()
+            and snapshot.get("inventory_manifest_checksum")
+            == _sha256_file(source_manifest_path)
+            and snapshot.get("inventory_source_snapshot_checksum")
+            == _sha256_file(source_snapshot_path),
+            source_inventory_id,
+        ),
+        _check(
+            "embedded_inventory_content_matches_source",
+            source_manifest_path.is_file()
+            and source_snapshot_path.is_file()
+            and snapshot.get("inventory_manifest") == _read_json(source_manifest_path)
+            and snapshot.get("inventory_source_snapshot") == _read_json(source_snapshot_path)
+            and _records(snapshot.get("inventory_rows"))
+            == _read_jsonl(source_root / "replay_artifact_inventory.jsonl"),
+            source_inventory_id,
+        ),
+        _check("events_recomputed", not replay_error and events == expected_events, replay_error),
+        _check(
+            "decision_inputs_recomputed",
+            not replay_error and decision_inputs == expected_inputs,
+            replay_error,
+        ),
+        _check("action_summary_recomputed", action_summary == expected_summary, "summary"),
+        _check("manifest_derived_fields_match", derived_manifest_matches, "manifest"),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown report",
+        ),
+        _check(
+            "variant_weights_and_turnover_valid",
+            not replay_error
+            and all(
+                variant.get("turnover_convention") == "one_way_l1_weight_change"
+                and bool(variant.get("source_status"))
+                for event in expected_events
+                for variant in _records(event.get("variants"))
+            ),
+            replay_error or "variant contract",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_historical_replay_validation",
+        artifact_id_key="replay_id",
+        artifact_id=replay_id,
+        checks=checks,
+    )
+
+
+def _historical_replay_shallow_checks(
+    *,
+    replay_id: str,
+    replay_dir: Path,
+    manifest: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        _check("manifest_exists", (replay_dir / "historical_replay_manifest.json").is_file(), ""),
+        _check("replay_events_exists", (replay_dir / "replay_events.jsonl").is_file(), ""),
         _check(
             "decision_inputs_exists",
-            (replay_dir / "replay_decision_inputs.jsonl").exists(),
+            (replay_dir / "replay_decision_inputs.jsonl").is_file(),
             "",
         ),
-        _check("action_summary_exists", (replay_dir / "replay_action_summary.json").exists(), ""),
-        _check("report_exists", (replay_dir / "historical_replay_report.md").exists(), ""),
+        _check("action_summary_exists", (replay_dir / "replay_action_summary.json").is_file(), ""),
+        _check("report_exists", (replay_dir / "historical_replay_report.md").is_file(), ""),
         _check("replay_id_matches", manifest.get("replay_id") == replay_id, replay_id),
         _check(
             "outcome_mode_is_historical_replay",
@@ -809,8 +982,8 @@ def validate_historical_replay_artifact(
         _check(
             "variants_generated",
             all(
-                {variant["variant"] for variant in _records(row.get("variants"))}
-                >= set(REPLAY_VARIANTS)
+                {variant.get("variant") for variant in _records(row.get("variants"))}
+                == set(REPLAY_VARIANTS)
                 for row in events
             ),
             "required variants",
@@ -823,12 +996,6 @@ def validate_historical_replay_artifact(
             "broker action forbidden",
         ),
     ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_historical_replay_validation",
-        artifact_id_key="replay_id",
-        artifact_id=replay_id,
-        checks=checks,
-    )
 
 
 def run_backfill_outcome(
@@ -2334,6 +2501,10 @@ def render_historical_replay_report(
             "",
             f"- 状态：{manifest.get('status')}",
             f"- replay_id：`{manifest.get('replay_id')}`",
+            f"- source inventory：`{manifest.get('inventory_id')}`",
+            f"- inventory validation：{manifest.get('source_inventory_validation_status')}",
+            f"- inventory evidence cutoff：{manifest.get('source_inventory_evidence_cutoff')}",
+            f"- market regime：{manifest.get('market_regime')}",
             f"- replay events：{manifest.get('replay_event_count')}",
             f"- skipped events：{manifest.get('skipped_count')}",
             f"- generated variants：{variants}",
@@ -2344,6 +2515,10 @@ def render_historical_replay_report(
             f"- skipped PIT_UNSAFE events：{skipped_pit_unsafe}",
             f"- skipped reasons：{dict(skipped_reasons) or 'none'}",
             f"- broker action present：{summary.get('broker_action_present')}",
+            "- turnover convention：one_way_l1_weight_change = Σ|w_variant-w_current|。",
+            "- owner/paper source_status会显式区分recorded action与"
+            "missing-input no-trade fallback。",
+            "- future_prices_used_for_decision_input=false；本层不读取outcome price。",
             "- outcome_mode=HISTORICAL_REPLAY。",
             "- production_effect=none；broker_action_taken=false。",
             "",
@@ -3424,19 +3599,99 @@ def _inventory_row(
     }
 
 
+def _historical_replay_views(
+    inventory_rows: Sequence[Mapping[str, Any]],
+    *,
+    include_pit_warning: bool,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    events = []
+    decision_inputs = []
+    skipped = []
+    for row in inventory_rows:
+        pit_status = _text(row.get("pit_safety_status"))
+        eligibility = _text(row.get("replay_eligibility"))
+        hard_limitations = HARD_PIT_LIMITATIONS & set(_texts(row.get("replay_limitations")))
+        if pit_status == "PIT_UNSAFE" or eligibility == "INELIGIBLE" or hard_limitations:
+            skipped.append(_skip_row(row, "PIT_UNSAFE_EXCLUDED"))
+            continue
+        if (pit_status, eligibility) not in {
+            ("PIT_SAFE", "ELIGIBLE"),
+            ("PIT_WARNING", "PARTIAL"),
+        }:
+            raise DynamicV3HistoricalReplayError(
+                "inventory PIT status/eligibility binding is invalid: "
+                f"{row.get('daily_advisory_id')}"
+            )
+        if pit_status == "PIT_WARNING" and not include_pit_warning:
+            skipped.append(_skip_row(row, "PIT_WARNING_EXCLUDED"))
+            continue
+        event = _historical_replay_event(row)
+        events.append(event)
+        decision_inputs.append(_historical_decision_input(row, event))
+    return events, decision_inputs, skipped
+
+
+def _validated_replay_weights(value: Any, field: str) -> dict[str, float]:
+    raw = _mapping(value)
+    if not raw:
+        raise DynamicV3HistoricalReplayError(f"historical replay weights are missing: {field}")
+    weights = {_text(symbol): _float(weight) for symbol, weight in raw.items()}
+    if (
+        any(not symbol for symbol in weights)
+        or any(not math.isfinite(weight) or weight < 0 for weight in weights.values())
+        or abs(sum(weights.values()) - 1.0) > 1e-6
+    ):
+        raise DynamicV3HistoricalReplayError(
+            f"historical replay weights must be a finite nonnegative simplex: {field}"
+        )
+    return {symbol: round(weight, 6) for symbol, weight in sorted(weights.items())}
+
+
 def _historical_replay_event(row: Mapping[str, Any]) -> dict[str, Any]:
     inputs = _mapping(row.get("decision_inputs"))
-    current = _normalize_weights(_mapping(inputs.get("current_weights")))
-    consensus = _normalize_weights(_mapping(inputs.get("consensus_weights")))
-    limited = _normalize_weights(_mapping(inputs.get("limited_adjustment_weights")))
-    owner_weights = _normalize_weights(_mapping(inputs.get("owner_decision_weights"))) or current
-    paper_weights = _normalize_weights(_mapping(inputs.get("paper_action_weights"))) or current
+    current = _validated_replay_weights(inputs.get("current_weights"), "current_weights")
+    consensus = _validated_replay_weights(inputs.get("consensus_weights"), "consensus_weights")
+    limited = _validated_replay_weights(
+        inputs.get("limited_adjustment_weights"),
+        "limited_adjustment_weights",
+    )
+    owner_raw = _mapping(inputs.get("owner_decision_weights"))
+    paper_raw = _mapping(inputs.get("paper_action_weights"))
+    owner_recorded = _text(inputs.get("owner_decision"), "missing") != "missing"
+    owner_weights = (
+        _validated_replay_weights(owner_raw, "owner_decision_weights") if owner_raw else current
+    )
+    paper_weights = (
+        _validated_replay_weights(paper_raw, "paper_action_weights") if paper_raw else current
+    )
     variants = [
-        _variant("no_trade", current, "Keep current weights unchanged"),
-        _variant("consensus_target", consensus, "Move fully to consensus target weights"),
-        _variant("limited_adjustment", limited, "Apply capped advisory deltas"),
-        _variant("owner_decision", owner_weights, "Apply recorded owner decision if available"),
-        _variant("paper_action", paper_weights, "Apply recorded paper action if available"),
+        _variant("no_trade", current, "Keep current weights unchanged", "CURRENT_WEIGHTS"),
+        _variant(
+            "consensus_target",
+            consensus,
+            "Move fully to consensus target weights",
+            "RECORDED_CONSENSUS_TARGET",
+        ),
+        _variant(
+            "limited_adjustment",
+            limited,
+            "Apply capped advisory deltas",
+            "RECORDED_LIMITED_ADJUSTMENT",
+        ),
+        _variant(
+            "owner_decision",
+            owner_weights,
+            "Apply recorded owner decision if available",
+            "RECORDED_OWNER_DECISION"
+            if owner_recorded
+            else "FALLBACK_NO_TRADE_MISSING_OWNER",
+        ),
+        _variant(
+            "paper_action",
+            paper_weights,
+            "Apply recorded paper action if available",
+            "RECORDED_PAPER_ACTION" if paper_raw else "FALLBACK_NO_TRADE_MISSING_PAPER_ACTION",
+        ),
     ]
     for variant in variants:
         weights = _mapping(variant.get("weights"))
@@ -3445,6 +3700,7 @@ def _historical_replay_event(row: Mapping[str, Any]) -> dict[str, Any]:
             if weights
             else 0.0
         )
+        variant["turnover_convention"] = "one_way_l1_weight_change"
     missing = [variant["variant"] for variant in variants if not _mapping(variant.get("weights"))]
     replay_status = "READY_FOR_OUTCOME" if not missing else "PARTIAL"
     return {
@@ -4149,7 +4405,12 @@ def _historical_decision_input(row: Mapping[str, Any], event: Mapping[str, Any])
         "source_artifacts": _mapping(row.get("source_artifacts")),
         "decision_inputs": _mapping(row.get("decision_inputs")),
         "generated_variants": [
-            {"variant": variant.get("variant"), "turnover": variant.get("turnover")}
+            {
+                "variant": variant.get("variant"),
+                "turnover": variant.get("turnover"),
+                "turnover_convention": variant.get("turnover_convention"),
+                "source_status": variant.get("source_status"),
+            }
             for variant in _records(event.get("variants"))
         ],
         "future_prices_used_for_decision_input": False,
@@ -4168,11 +4429,17 @@ def _skip_row(row: Mapping[str, Any], reason: str) -> dict[str, Any]:
     }
 
 
-def _variant(name: str, weights: Mapping[str, Any], description: str) -> dict[str, Any]:
+def _variant(
+    name: str,
+    weights: Mapping[str, Any],
+    description: str,
+    source_status: str,
+) -> dict[str, Any]:
     clean = _normalize_weights(weights)
     return {
         "variant": name,
         "description": description,
+        "source_status": source_status,
         "weights": clean,
         "turnover": 0.0,
         "broker_action_taken": False,

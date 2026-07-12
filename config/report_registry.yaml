@@ -6410,12 +6410,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/historical_replay/*/replay_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/historical_replay/*/replay_decision_inputs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/historical_replay/*/replay_action_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/historical_replay/*/historical_replay_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/historical_replay/*/historical_replay_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-142 historical replay variants should remain discoverable for
-      no_trade, consensus_target, limited_adjustment, owner_decision, and
-      paper_action comparison without broker or production effects.
+      TRADING-142 freezes a fully validated inventory binding, PIT inclusion
+      matrix, deterministic variant source status, and one-way L1 turnover.
+      It reads no outcome prices and has no broker or production effects.
     owner_action: review_historical_replay_variants_before_backfilled_outcome
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

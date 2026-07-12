@@ -148,6 +148,11 @@ DYNAMIC_V3_REPLAY_INVENTORY_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_replay_inventory.py"
 )
+DYNAMIC_V3_HISTORICAL_REPLAY_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_historical_replay.py"
+)
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
@@ -297,7 +302,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26686
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26602
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -508,8 +513,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26686
-    assert len(legacy_names) == 789
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 26602
+    assert len(legacy_names) == 786
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1286,6 +1291,28 @@ def test_g2_4_dynamic_v3_replay_inventory_callbacks_leave_legacy_root() -> None:
             "build_replay_inventory",
             "replay_inventory_report_payload",
             "validate_replay_inventory_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_historical_replay_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_HISTORICAL_REPLAY_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_historical_replay_run_command",
+        "dynamic_v3_historical_replay_report_command",
+        "dynamic_v3_validate_historical_replay_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "historical_replay_report_payload",
+            "run_historical_replay",
+            "validate_historical_replay_artifact",
         }
     )
 

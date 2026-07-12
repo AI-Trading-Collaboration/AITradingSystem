@@ -312,7 +312,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     backfill_outcome_report_payload,
     backfill_repair_report_payload,
     historical_paper_sim_report_payload,
-    historical_replay_report_payload,
     replay_diagnosis_report_payload,
     replay_forward_bridge_report_payload,
     replay_performance_review_report_payload,
@@ -320,7 +319,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     run_backfill_outcome,
     run_backfill_repair,
     run_historical_paper_sim,
-    run_historical_replay,
     run_replay_diagnosis,
     run_replay_forward_bridge,
     run_replay_performance_review,
@@ -329,7 +327,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     validate_backfill_outcome_artifact,
     validate_backfill_repair_artifact,
     validate_historical_paper_sim_artifact,
-    validate_historical_replay_artifact,
     validate_replay_diagnosis_artifact,
     validate_replay_forward_bridge_artifact,
     validate_replay_performance_review_artifact,
@@ -795,7 +792,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_gate_calibrated_review_app,
     dynamic_v3_gate_calibration_review_app,
     dynamic_v3_historical_paper_sim_app,
-    dynamic_v3_historical_replay_app,
     dynamic_v3_hypothesis_backlog_app,
     dynamic_v3_limited_consistency_app,
     dynamic_v3_limited_instability_app,
@@ -15299,86 +15295,6 @@ def dynamic_v3_validate_method_promotion_plan_command(
     typer.echo("experiment_only=true")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_historical_replay_app.command("run")
-def dynamic_v3_historical_replay_run_command(
-    inventory_id: Annotated[str, typer.Option("--inventory-id", help="inventory id。")],
-    include_pit_warning: Annotated[
-        bool,
-        typer.Option("--include-pit-warning", help="允许 PIT_WARNING 进入 replay。"),
-    ] = False,
-    inventory_dir: Annotated[
-        Path,
-        typer.Option("--inventory-dir", help="replay inventory artifact root。"),
-    ] = DEFAULT_REPLAY_INVENTORY_DIR,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical replay artifact root。"),
-    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
-) -> None:
-    """运行 TRADING-142 historical advisory replay。"""
-    result = run_historical_replay(
-        inventory_id=inventory_id,
-        include_pit_warning=include_pit_warning,
-        inventory_dir=inventory_dir,
-        output_dir=output_dir,
-    )
-    manifest = result["manifest"]
-    summary = result["action_summary"]
-    typer.echo(f"replay_id={result['replay_id']}")
-    typer.echo(f"replay_dir={result['replay_dir']}")
-    typer.echo(f"status={manifest['status']}")
-    typer.echo(f"replay_event_count={manifest['replay_event_count']}")
-    typer.echo(f"skipped_count={manifest['skipped_count']}")
-    typer.echo(f"generated_variants={','.join(manifest['generated_variants'])}")
-    typer.echo(f"broker_action_present={summary['broker_action_present']}")
-    typer.echo("broker_action_taken=false")
-
-
-@dynamic_v3_historical_replay_app.command("report")
-def dynamic_v3_historical_replay_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest historical replay。"),
-    ] = False,
-    replay_id: Annotated[str | None, typer.Option("--replay-id", help="replay id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical replay artifact root。"),
-    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
-) -> None:
-    """展示 TRADING-142 historical replay 摘要。"""
-    payload = historical_replay_report_payload(
-        replay_id=replay_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    summary = _mapping_obj(payload.get("replay_action_summary"))
-    typer.echo(f"replay_id={payload['replay_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"replay_event_count={payload['replay_event_count']}")
-    typer.echo(f"skipped_count={payload['skipped_count']}")
-    typer.echo(f"broker_action_present={summary.get('broker_action_present')}")
-    typer.echo(f"report_path={payload['historical_replay_report_path']}")
-    typer.echo("broker_action_taken=false")
-
-
-@dynamic_v3_rescue_app.command("validate-historical-replay")
-def dynamic_v3_validate_historical_replay_command(
-    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical replay artifact root。"),
-    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
-) -> None:
-    """校验 TRADING-142 historical replay artifact。"""
-    payload = validate_historical_replay_artifact(replay_id=replay_id, output_dir=output_dir)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

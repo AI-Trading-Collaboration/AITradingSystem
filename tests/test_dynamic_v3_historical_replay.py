@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, date, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+import pytest
 from dynamic_v3_historical_replay_helpers import (
     build_replay_inventory,
     prepare_replay_test_environment,
@@ -14,6 +16,7 @@ from dynamic_v3_historical_replay_helpers import (
 
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     REPLAY_VARIANTS,
+    DynamicV3HistoricalReplayError,
     run_historical_paper_sim,
     run_historical_replay,
     validate_historical_paper_sim_artifact,
@@ -66,6 +69,11 @@ def test_dynamic_v3_historical_replay_skips_unsafe_and_requires_warning_opt_in(
     assert event["broker_action_taken"] is False
     limited = next(row for row in event["variants"] if row["variant"] == "limited_adjustment")
     assert limited["turnover"] > 0
+    assert limited["turnover_convention"] == "one_way_l1_weight_change"
+    owner = next(row for row in event["variants"] if row["variant"] == "owner_decision")
+    paper = next(row for row in event["variants"] if row["variant"] == "paper_action")
+    assert owner["source_status"] == "RECORDED_OWNER_DECISION"
+    assert paper["source_status"] == "FALLBACK_NO_TRADE_MISSING_PAPER_ACTION"
 
     validation = validate_historical_replay_artifact(
         replay_id=default_replay["replay_id"],
@@ -201,3 +209,103 @@ def test_dynamic_v3_historical_replay_marks_hard_pit_limitations_unsafe(
     assert "hard_limitations_are_pit_unsafe" in {
         row["check_id"] for row in failed_validation["checks"] if not row["passed"]
     }
+
+
+def test_historical_replay_rejects_time_travel_and_invalid_inventory_before_output(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    paths = prepare_replay_test_environment(tmp_path, monkeypatch)
+    target = {"QQQ": 0.45, "SMH": 0.30, "SOXX": 0.10, "CASH": 0.15}
+    write_replay_daily_advisory(
+        paths["daily_advisory_dir"],
+        daily_advisory_id="safe",
+        as_of="2026-06-03",
+        target_weights=target,
+    )
+    write_owner_reviews(paths["owner_review_dir"], ["safe"])
+    inventory = build_replay_inventory(paths, start=date(2026, 6, 1), end=date(2026, 6, 10))
+
+    with pytest.raises(DynamicV3HistoricalReplayError, match="cannot precede"):
+        run_historical_replay(
+            inventory_id=inventory["inventory_id"],
+            inventory_dir=paths["inventory_dir"],
+            output_dir=paths["historical_replay_dir"],
+            generated_at=datetime(2026, 6, 9, tzinfo=UTC),
+        )
+    assert not paths["historical_replay_dir"].exists()
+
+    rows_path = Path(inventory["inventory_dir"]) / "replay_artifact_inventory.jsonl"
+    row = json.loads(rows_path.read_text(encoding="utf-8"))
+    row["recommended_action"] = "tampered"
+    rows_path.write_text(json.dumps(row, sort_keys=True) + "\n", encoding="utf-8")
+    with pytest.raises(DynamicV3HistoricalReplayError, match="fully validated"):
+        run_historical_replay(
+            inventory_id=inventory["inventory_id"],
+            inventory_dir=paths["inventory_dir"],
+            output_dir=paths["historical_replay_dir"],
+            generated_at=datetime(2026, 6, 10, tzinfo=UTC),
+        )
+    assert not paths["historical_replay_dir"].exists()
+
+
+@pytest.mark.parametrize("tamper_target", ["snapshot", "event", "report", "source"])
+def test_historical_replay_validator_recomputes_all_views_and_source_binding(
+    tmp_path: Path,
+    monkeypatch: Any,
+    tamper_target: str,
+) -> None:
+    paths = prepare_replay_test_environment(tmp_path, monkeypatch)
+    target = {"QQQ": 0.45, "SMH": 0.30, "SOXX": 0.10, "CASH": 0.15}
+    write_replay_daily_advisory(
+        paths["daily_advisory_dir"],
+        daily_advisory_id="safe",
+        as_of="2026-06-03",
+        target_weights=target,
+    )
+    write_owner_reviews(paths["owner_review_dir"], ["safe"])
+    inventory = build_replay_inventory(paths, start=date(2026, 6, 1), end=date(2026, 6, 10))
+    replay = run_historical_replay(
+        inventory_id=inventory["inventory_id"],
+        inventory_dir=paths["inventory_dir"],
+        output_dir=paths["historical_replay_dir"],
+        generated_at=datetime(2026, 6, 10, tzinfo=UTC),
+    )
+    replay_dir = Path(replay["replay_dir"])
+    if tamper_target == "snapshot":
+        snapshot_path = replay_dir / "historical_replay_source_snapshot.json"
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        snapshot["inventory_rows"][0]["recommended_action"] = "tampered"
+        snapshot_path.write_text(
+            json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        manifest_path = replay_dir / "historical_replay_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["historical_replay_source_snapshot_checksum"] = sha256(
+            snapshot_path.read_bytes()
+        ).hexdigest()
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    elif tamper_target == "event":
+        event_path = replay_dir / "replay_events.jsonl"
+        event = json.loads(event_path.read_text(encoding="utf-8"))
+        event["recommended_action"] = "tampered"
+        event_path.write_text(json.dumps(event, sort_keys=True) + "\n", encoding="utf-8")
+    elif tamper_target == "report":
+        report_path = replay_dir / "historical_replay_report.md"
+        report_path.write_text(
+            report_path.read_text(encoding="utf-8") + "tampered",
+            encoding="utf-8",
+        )
+    else:
+        source_path = Path(inventory["inventory_dir"]) / "replay_inventory_manifest.json"
+        source_path.write_text(source_path.read_text(encoding="utf-8") + " ", encoding="utf-8")
+
+    validation = validate_historical_replay_artifact(
+        replay_id=replay["replay_id"],
+        output_dir=paths["historical_replay_dir"],
+    )
+    assert validation["status"] == "FAIL"
