@@ -1,0 +1,50 @@
+schema_version: etf_dynamic_v3_evidence_trend_policy.v1
+policy_id: dynamic_v3_evidence_trend_v1
+version: 1
+status: PILOT_BASELINE
+owner: research_governance
+rationale: >
+  将 refresh 历史充足度、confidence ordering、availability growth、relative-return
+  signal 与人工复核路由从代码常量迁入可审计 policy。该 policy 只生成观察标签，不授权
+  自动调参、policy apply、portfolio mutation、production 或 broker action。
+minimum_history_refresh_count: 2
+confidence_order:
+  - INSUFFICIENT_DATA
+  - LOW
+  - MEDIUM
+  - HIGH
+availability_growth:
+  improving_minimum: 1
+  deteriorating_maximum: -1
+relative_return_signal:
+  early_positive_exclusive_floor: 0.0
+  eligible_confidence:
+    - LOW
+    - MEDIUM
+    - HIGH
+consensus_risk_signal_statuses:
+  - HIGH_RISK
+  - REVIEW_REQUIRED
+manual_review_risk_statuses:
+  - HIGH_RISK
+  - REVIEW_REQUIRED
+trend_precedence:
+  - DETERIORATING
+  - IMPROVING
+  - STABLE
+next_action_by_trend:
+  INSUFFICIENT_HISTORY: continue_tracking
+  DETERIORATING: manual_review
+  IMPROVING: continue_tracking
+  STABLE: continue_tracking
+review_condition: >
+  在至少两个真实、validated、COMMITTED refresh 跨越不同 as-of 后复核；若 Dashboard
+  sample universe 定义、confidence policy 或 consensus risk taxonomy 变化，必须先升级
+  policy version 并重新验证历史可比性。
+validation_plan: >
+  覆盖single refresh、ROLLED_BACK/legacy/future排除、invalid COMMITTED阻断、unique
+  refresh/update identity、full-state growth、null metrics、policy boundary及source/snapshot/
+  policy/output tamper。
+production_effect: none
+broker_action_allowed: false
+auto_policy_apply: false

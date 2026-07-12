@@ -50,6 +50,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_evidence_readiness as dynamic_v3_evidence_readiness_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_evidence_trend as dynamic_v3_evidence_trend_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_failure_attribution as dynamic_v3_failure_attribution_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -213,6 +216,7 @@ __all__ = [
     "dynamic_v3_failure_attribution_commands",
     "dynamic_v3_evidence_readiness_commands",
     "dynamic_v3_evidence_governance_commands",
+    "dynamic_v3_evidence_trend_commands",
     "dynamic_v3_injection_audit_commands",
     "dynamic_v3_legacy_validation_commands",
     "dynamic_v3_limited_vs_notrade_commands",

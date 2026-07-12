@@ -198,6 +198,10 @@ DYNAMIC_V3_ROLLING_EVIDENCE_REFRESH_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_rolling_evidence_refresh.py"
 )
+DYNAMIC_V3_EVIDENCE_TREND_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_trend.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -297,7 +301,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "77c2a9cee274898d972ec5013e2dca149ae514cb2bf1abb412f8cd60f6b43753"
+        "44a9b8702d6ca1f5a3a016013852311546e0f126a5e6f3f9ff2e487a183055ae"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -351,7 +355,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25020
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24948
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -562,8 +566,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25020
-    assert len(legacy_names) == 737
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 24948
+    assert len(legacy_names) == 734
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1712,6 +1716,28 @@ def test_g2_4_dynamic_v3_rolling_evidence_refresh_callbacks_leave_legacy_root() 
             "rolling_evidence_refresh_report_payload",
             "run_rolling_evidence_refresh",
             "validate_rolling_evidence_refresh_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_evidence_trend_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_EVIDENCE_TREND_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_evidence_trend_run_command",
+        "dynamic_v3_evidence_trend_report_command",
+        "dynamic_v3_validate_evidence_trend_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "evidence_trend_report_payload",
+            "run_evidence_trend",
+            "validate_evidence_trend_artifact",
         }
     )
 

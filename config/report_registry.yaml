@@ -6816,12 +6816,15 @@ reports:
     command: aits etf dynamic-v3-rescue evidence-trend report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/*/evidence_trend_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/*/evidence_trend_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/*/evidence_trend_timeseries.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/*/confidence_trend_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/*/evidence_trend_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-159 summarizes rolling refresh history and keeps single-refresh
+      TRADING-159 consumes only validated committed refresh history, freezes full
+      source bundles and reviewed trend policy, derives comparable full-Dashboard
+      availability states, preserves null metrics, and keeps single-refresh
       evidence at INSUFFICIENT_HISTORY rather than authorizing calibration.
     owner_action: review_trend_history_before_any_rule_calibration_discussion
     include_in_reader_brief: true

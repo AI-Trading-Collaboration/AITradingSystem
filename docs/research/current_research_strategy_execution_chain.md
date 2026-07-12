@@ -883,6 +883,34 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前fixture的单一ready window由PENDING变为AVAILABLE，selected cohort为forward available `0→1`、pending `4→3`；另三个NOT_DUE window进入skipped audit。8个Outcome Update测试覆盖正常commit、CASH零收益语义、invalid review零mutation、single-use、post-mutation异常全量rollback，以及snapshot/report/live-post tamper。结果证明事务与重放契约，不证明forward performance有效；下一步优化应优先是跨进程lease、纯plan/apply API、fsync/掉电恢复演练与transaction artifact envelope，而不是自动触发rolling refresh或放宽DQ/review gate。
 
+#### Rolling Evidence Refresh 链（TRADING-158 / G2.4BI）
+
+这一链回答“一个已经COMMITTED且尚未消费的Outcome Update，能否在同一可回滚事务中刷新所有约定的下游证据，并把变化严格归因到本次selected cohort”。它不负责决定策略是否更好，也不允许把某个下游成功误写成整轮刷新成功。旧实现只检查producer声明、下游逐项写出但没有统一rollback、baseline和post来源混杂，并把Reader Brief section写成全局brief已更新，导致半刷新和错误归因风险。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Update/single-use gate | 显式`outcome_update_id`、timezone-aware generated、Outcome Update root | content-derived validator必须PASS；id/time/COMMITTED/live post一致；同update已有COMMITTED refresh则阻断 | frozen update bundle与validation | invalid、future、重复消费在任何下游前阻断；后续增加跨进程lease |
+| Baseline capture | 六类downstream latest pointers及其当前artifact | 只接受可验证baseline；记录每类pointer与完整bundle，不用任意历史目录替代 | validated baseline snapshot | 缺失允许显式空基线，invalid baseline阻断；后续统一RunLedger binding |
+| Transaction orchestration | update、baseline、六个canonical generators | 先写PREPARED；依次刷新Dashboard、Limited、Consensus、Owner、Aging、Weekly；每个实际artifact的content-derived validator必须PASS | post artifacts/validations | 任一步失败删除本轮新目录、恢复全部latest pointer并写ROLLED_BACK；后续加强fsync/crash recovery |
+| Cohort delta | frozen update selected windows、validated baseline、post Dashboard full state | forward delta只统计本update selected cohort；baseline delta只来自同事务冻结的validated baseline；post Dashboard显式排除已消费且live-invalid的旧Due | evidence delta summary | 不把全目录或不同cohort变化归因于本轮；后续增加canonical sample identity |
+| Reader projection | post evidence | 只生成`reader_brief_section.md`，固定`reader_brief_updated=false` | section与manifest disclosure | 不声明全局brief已写；后续由统一publisher消费section |
+| Validator | update/baseline/post full bundles、validation snapshot、transaction及全部views | 重验live update/downstream，重算inventory、delta、manifest、Markdown、section和transaction一致性 | PASS/FAIL | 任一source/output/pointer evidence drift FAIL；不改policy/portfolio/production/broker |
+
+当前fixture证明单一COMMITTED update可以生成六类一致的post evidence，且故障注入会恢复新目录和latest pointers；post Dashboard不会重新摄入已消费、因live outcome变化而失效的Outcome Due。它只证明事务与证据归因契约，不证明forward收益或风险已改善。优化顺序是跨进程lease与幂等RunLedger、原子目录/pointer交换和掉电恢复演练、统一ArtifactEnvelope，之后才考虑调度；不得通过跳过某个validator、复用invalid Due或自动修改policy让刷新表面成功。
+
+#### Evidence Trend 链（TRADING-159 / G2.4BJ）
+
+这一链回答“多轮可验证刷新后，完整forward evidence state是否在样本可用性、Limited-vs-NoTrade confidence/relative return和Consensus risk上出现可解释变化”。比较单位必须是每次refresh结束后的完整Dashboard state，而不是各轮Outcome Update选中的不同cohort。旧实现扫描任何含manifest的目录，可能混入legacy、PREPARED、ROLLED_BACK、tampered或future refresh；还会把missing metric变成0，并把history floor、confidence排序、growth/return/risk/action阈值硬编码。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Refresh selection | timezone-aware generated cutoff、Rolling Refresh root | ROLLED_BACK/legacy/future进入显式excluded inventory；PREPARED或invalid COMMITTED阻断；selected必须unique refresh/update id、PASS/COMMITTED且as-of不越界 | selected/excluded source snapshot | excluded也冻结full bundle并重验reason；后续改为显式refresh ids/RunLedger，不依赖目录扫描 |
+| Comparable state | 每个selected refresh内的post Dashboard/Limited/Consensus full bundle | Dashboard读取full forward/historical availability summary；Limited与Consensus读取同轮post artifact；missing保持null | null-preserving timeseries | 不比较不同update selected cohort，不把缺值写0；后续加入cohort/effective sample/regime标签 |
+| Trend policy | reviewed`evidence_trend_v1` | history count、confidence order、availability growth、relative-return signal、risk/manual-review routing、conflict precedence和next action全部由policy治理 | policy id/version与summary | 单轮为`INSUFFICIENT_HISTORY`且growth=null；pilot boundary不是promotion gate，需真实多轮证据校准 |
+| Validator | snapshot、live selected/excluded refreshes、live policy及全部derived files | 核对bundle checksum和reason事实，重跑refresh validators，从snapshot重算timeseries、summary、manifest和Markdown | PASS/FAIL；legacy只作为排除证据 | source/snapshot/policy/output drift FAIL；不运行refresh、不apply policy |
+
+当前fixture只有一个selected refresh，因此结论严格为`INSUFFICIENT_HISTORY`，`available_sample_growth=null`，next action是`continue_tracking`。正向两行fixture只验证policy precedence与full-state增长公式，不代表真实策略已改善。下一步应先用显式RunLedger绑定至少两个不同as-of的真实COMMITTED refresh，再加入cohort composition、有效样本量、置信区间、regime和staleness；随后基于真实误判成本复核pilot policy。不得通过纳入legacy/rollback、把missing填0、降低history floor或自动调policy制造趋势结论。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

@@ -81,6 +81,9 @@ DEFAULT_OUTCOME_UPDATE_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_
 DEFAULT_OUTCOME_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_update"
 DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rolling_evidence_refresh"
 DEFAULT_EVIDENCE_TREND_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_trend"
+DEFAULT_EVIDENCE_TREND_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/evidence_trend_v1.yaml"
+)
 DEFAULT_FORWARD_OUTCOME_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
 OUTCOME_DUE_SNAPSHOT_SCHEMA_VERSION = "outcome_due_source_snapshot.v2"
 REPLAY_SAMPLE_EXPANSION_SNAPSHOT_SCHEMA_VERSION = "replay_sample_expansion_source_snapshot.v2"
@@ -104,6 +107,7 @@ OUTCOME_UPDATE_SNAPSHOT_SCHEMA_VERSION = "outcome_update_source_snapshot.v2"
 OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION = "outcome_update_transaction.v1"
 ROLLING_EVIDENCE_REFRESH_SNAPSHOT_SCHEMA_VERSION = "rolling_evidence_refresh_source_snapshot.v2"
 ROLLING_EVIDENCE_REFRESH_TRANSACTION_SCHEMA_VERSION = "rolling_evidence_refresh_transaction.v1"
+EVIDENCE_TREND_SNAPSHOT_SCHEMA_VERSION = "evidence_trend_source_snapshot.v2"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -3636,34 +3640,40 @@ def run_evidence_trend(
     *,
     output_dir: Path = DEFAULT_EVIDENCE_TREND_DIR,
     rolling_refresh_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
+    policy_path: Path = DEFAULT_EVIDENCE_TREND_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    timeseries = _evidence_trend_timeseries(rolling_refresh_dir)
-    summary = _confidence_trend_summary(timeseries)
-    trend_id = _stable_id("evidence-trend", len(timeseries), generated.isoformat())
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    policy = _load_evidence_trend_policy(policy_path)
+    snapshot = _build_evidence_trend_snapshot(
+        rolling_refresh_dir=rolling_refresh_dir,
+        policy_path=policy_path,
+        policy=policy,
+        generated=generated,
+    )
+    timeseries = _evidence_trend_timeseries(snapshot)
+    summary = _confidence_trend_summary(timeseries, policy)
+    trend_id = _stable_id(
+        "evidence-trend-v2",
+        len(timeseries),
+        generated.isoformat(),
+        sha256(
+            json.dumps(snapshot, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest(),
+    )
     trend_dir = _unique_dir(output_dir / trend_id)
     trend_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_evidence_trend_manifest",
-        "trend_id": trend_dir.name,
-        "generated_at": generated.isoformat(),
-        "status": "PASS" if timeseries else "INSUFFICIENT_DATA",
-        "refresh_count": len(timeseries),
-        "trend_status": summary["trend_status"],
-        "evidence_trend_manifest_path": str(trend_dir / "evidence_trend_manifest.json"),
-        "evidence_trend_timeseries_path": str(trend_dir / "evidence_trend_timeseries.jsonl"),
-        "confidence_trend_summary_path": str(trend_dir / "confidence_trend_summary.json"),
-        "evidence_trend_report_path": str(trend_dir / "evidence_trend_report.md"),
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    snapshot["trend_id"] = trend_dir.name
+    snapshot_path = trend_dir / "evidence_trend_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
+    manifest = _evidence_trend_manifest(
+        trend_dir=trend_dir,
+        generated=generated,
+        timeseries=timeseries,
+        summary=summary,
+        policy=policy,
+        source_snapshot_checksum=_file_sha256(snapshot_path),
+    )
     _write_json(trend_dir / "evidence_trend_manifest.json", manifest)
     _write_jsonl(trend_dir / "evidence_trend_timeseries.jsonl", timeseries)
     _write_json(trend_dir / "confidence_trend_summary.json", summary)
@@ -3682,6 +3692,7 @@ def run_evidence_trend(
         "manifest": manifest,
         "evidence_trend_timeseries": timeseries,
         "confidence_trend_summary": summary,
+        "source_snapshot": snapshot,
     }
 
 
@@ -3700,6 +3711,9 @@ def evidence_trend_report_payload(
         **_read_json(trend_dir / "evidence_trend_manifest.json"),
         "evidence_trend_timeseries": _read_jsonl(trend_dir / "evidence_trend_timeseries.jsonl"),
         "confidence_trend_summary": _read_json(trend_dir / "confidence_trend_summary.json"),
+        "source_snapshot": _read_optional_json(
+            trend_dir / "evidence_trend_source_snapshot.json"
+        ),
         "trend_dir": str(trend_dir),
     }
 
@@ -3711,23 +3725,77 @@ def validate_evidence_trend_artifact(
     manifest = _read_optional_json(trend_dir / "evidence_trend_manifest.json") or {}
     rows = _read_jsonl(trend_dir / "evidence_trend_timeseries.jsonl")
     summary = _read_optional_json(trend_dir / "confidence_trend_summary.json") or {}
+    snapshot_path = trend_dir / "evidence_trend_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "legacy_required_files",
+                all(
+                    (trend_dir / name).is_file()
+                    for name in (
+                        "evidence_trend_manifest.json",
+                        "evidence_trend_timeseries.jsonl",
+                        "confidence_trend_summary.json",
+                        "evidence_trend_report.md",
+                    )
+                ),
+                trend_id,
+            ),
+            _check("trend_id_matches", manifest.get("trend_id") == trend_id, trend_id),
+            _check(
+                "legacy_broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy trend is observation only",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_evidence_trend_validation",
+            artifact_id_key="trend_id",
+            artifact_id=trend_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    snapshot_errors = _evidence_trend_snapshot_errors(snapshot)
+    recompute_error = ""
+    expected_rows: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3OutcomeAccumulationError("trend snapshot generated_at invalid")
+        policy = _mapping(snapshot.get("policy"))
+        expected_rows = _evidence_trend_timeseries(snapshot)
+        expected_summary = _confidence_trend_summary(expected_rows, policy)
+        expected_manifest = _evidence_trend_manifest(
+            trend_dir=trend_dir,
+            generated=generated,
+            timeseries=expected_rows,
+            summary=expected_summary,
+            policy=policy,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        expected_report = render_evidence_trend_report(
+            expected_manifest, expected_summary, expected_rows
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
-        _check("manifest_exists", (trend_dir / "evidence_trend_manifest.json").exists(), trend_id),
+        _check("snapshot_content_valid", not snapshot_errors, ";".join(snapshot_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("timeseries_recomputed", rows == expected_rows, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
         _check(
-            "timeseries_exists", (trend_dir / "evidence_trend_timeseries.jsonl").exists(), trend_id
-        ),
-        _check("summary_exists", (trend_dir / "confidence_trend_summary.json").exists(), trend_id),
-        _check("report_exists", (trend_dir / "evidence_trend_report.md").exists(), trend_id),
-        _check("trend_id_matches", manifest.get("trend_id") == trend_id, trend_id),
-        _check(
-            "refresh_ids_present",
-            all(_text(row.get("refresh_id")) for row in rows) or not rows,
-            "refresh ids",
-        ),
-        _check(
-            "insufficient_history_explicit",
-            len(rows) >= 2 or summary.get("trend_status") == "INSUFFICIENT_HISTORY",
-            "single refresh trend must be insufficient history",
+            "report_recomputed",
+            _read_text(trend_dir / "evidence_trend_report.md") == expected_report,
+            "Markdown",
         ),
         _check(
             "broker_action_forbidden",
@@ -5194,79 +5262,447 @@ def _resolve_shadow_shortlist_id(shadow_aging_dir: Path) -> str:
     return ""
 
 
-def _evidence_trend_timeseries(rolling_refresh_dir: Path) -> list[dict[str, Any]]:
-    rows = []
+def _load_evidence_trend_policy(path: Path) -> dict[str, Any]:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping) or payload.get("schema_version") != (
+        "etf_dynamic_v3_evidence_trend_policy.v1"
+    ):
+        raise DynamicV3OutcomeAccumulationError("evidence trend policy schema invalid")
+    policy = dict(payload)
+    required_text = (
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "review_condition",
+        "validation_plan",
+    )
+    if not all(_text(policy.get(key)) for key in required_text):
+        raise DynamicV3OutcomeAccumulationError("evidence trend policy governance incomplete")
+    confidence_order = _texts(policy.get("confidence_order"))
+    trend_precedence = _texts(policy.get("trend_precedence"))
+    next_actions = _mapping(policy.get("next_action_by_trend"))
+    growth_policy = _mapping(policy.get("availability_growth"))
+    return_policy = _mapping(policy.get("relative_return_signal"))
+    risk_statuses = _texts(policy.get("consensus_risk_signal_statuses"))
+    manual_review_statuses = _texts(policy.get("manual_review_risk_statuses"))
+    try:
+        return_floor = float(return_policy.get("early_positive_exclusive_floor"))
+    except (TypeError, ValueError):
+        return_floor = math.nan
+    if (
+        _int(policy.get("minimum_history_refresh_count")) < 2
+        or len(confidence_order) != len(set(confidence_order))
+        or set(confidence_order) != {"INSUFFICIENT_DATA", "LOW", "MEDIUM", "HIGH"}
+        or trend_precedence != ["DETERIORATING", "IMPROVING", "STABLE"]
+        or _int(growth_policy.get("improving_minimum")) < 1
+        or _int(growth_policy.get("deteriorating_maximum")) > -1
+        or not math.isfinite(return_floor)
+        or not set(_texts(return_policy.get("eligible_confidence"))).issubset(
+            set(confidence_order) - {"INSUFFICIENT_DATA"}
+        )
+        or not risk_statuses
+        or len(risk_statuses) != len(set(risk_statuses))
+        or not manual_review_statuses
+        or len(manual_review_statuses) != len(set(manual_review_statuses))
+        or set(next_actions)
+        != {"INSUFFICIENT_HISTORY", "DETERIORATING", "IMPROVING", "STABLE"}
+        or any(not _text(value) for value in next_actions.values())
+        or policy.get("production_effect") != "none"
+        or policy.get("broker_action_allowed") is not False
+        or policy.get("auto_policy_apply") is not False
+    ):
+        raise DynamicV3OutcomeAccumulationError("evidence trend policy contract invalid")
+    return policy
+
+
+def _evidence_trend_manifest(
+    *,
+    trend_dir: Path,
+    generated: datetime,
+    timeseries: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_trend_manifest",
+        "trend_id": trend_dir.name,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if timeseries else "INSUFFICIENT_DATA",
+        "refresh_count": len(timeseries),
+        "trend_status": summary.get("trend_status"),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
+        "source_snapshot_path": str(trend_dir / "evidence_trend_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "evidence_trend_manifest_path": str(trend_dir / "evidence_trend_manifest.json"),
+        "evidence_trend_timeseries_path": str(trend_dir / "evidence_trend_timeseries.jsonl"),
+        "confidence_trend_summary_path": str(trend_dir / "confidence_trend_summary.json"),
+        "evidence_trend_report_path": str(trend_dir / "evidence_trend_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "auto_policy_apply": False,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _build_evidence_trend_snapshot(
+    *,
+    rolling_refresh_dir: Path,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+    generated: datetime,
+) -> dict[str, Any]:
+    selected: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    refresh_ids: set[str] = set()
+    update_ids: set[str] = set()
     for child in _artifact_children(rolling_refresh_dir):
+        transaction = _read_optional_json(child / "rolling_refresh_transaction.json") or {}
         manifest = _read_optional_json(child / "rolling_refresh_manifest.json") or {}
-        delta = _read_optional_json(child / "evidence_delta_summary.json") or {}
-        after = _mapping(delta.get("after"))
-        if not manifest:
+        transaction_status = _text(transaction.get("status"))
+        if transaction_status == "ROLLED_BACK":
+            excluded.append(
+                {
+                    "refresh_id": child.name,
+                    "reason": "ROLLED_BACK",
+                    "source_bundle": _immutable_source_bundle(child),
+                    "production_effect": "none",
+                }
+            )
             continue
+        if transaction_status == "PREPARED":
+            raise DynamicV3OutcomeAccumulationError(
+                f"prepared rolling refresh blocks trend snapshot: {child.name}"
+            )
+        source_generated = _datetime_from_any(manifest.get("generated_at"))
+        if source_generated is not None and source_generated > generated:
+            excluded.append(
+                {
+                    "refresh_id": child.name,
+                    "reason": "FUTURE_GENERATED",
+                    "source_bundle": _immutable_source_bundle(child),
+                    "production_effect": "none",
+                }
+            )
+            continue
+        if not manifest or source_generated is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"rolling refresh manifest invalid for trend: {child.name}"
+            )
+        refresh_id = _text(manifest.get("refresh_id"))
+        update_id = _text(manifest.get("outcome_update_id"))
+        validation = validate_rolling_evidence_refresh_artifact(
+            refresh_id=refresh_id,
+            output_dir=rolling_refresh_dir,
+        )
+        if validation.get("status") == "PASS_WITH_WARNINGS":
+            excluded.append(
+                {
+                    "refresh_id": refresh_id or child.name,
+                    "reason": "LEGACY_UNSNAPSHOTTED",
+                    "source_bundle": _immutable_source_bundle(child),
+                    "validation": validation,
+                    "production_effect": "none",
+                }
+            )
+            continue
+        source_as_of = _date_from_any(manifest.get("as_of"))
+        if (
+            validation.get("status") != "PASS"
+            or transaction_status != "COMMITTED"
+            or not refresh_id
+            or not update_id
+            or refresh_id != child.name
+            or source_as_of is None
+            or source_as_of > generated.date()
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                f"committed rolling refresh validation failed: {child.name}="
+                f"{validation.get('status')}"
+            )
+        if refresh_id in refresh_ids or update_id in update_ids:
+            raise DynamicV3OutcomeAccumulationError(
+                "evidence trend contains duplicate refresh or outcome update identity"
+            )
+        refresh_ids.add(refresh_id)
+        update_ids.add(update_id)
+        selected.append(
+            {
+                "refresh_id": refresh_id,
+                "outcome_update_id": update_id,
+                "generated_at": source_generated.isoformat(),
+                "as_of": source_as_of.isoformat(),
+                "source_bundle": _immutable_source_bundle(child),
+                "validation": validation,
+            }
+        )
+    selected.sort(
+        key=lambda row: (
+            _text(row.get("generated_at")),
+            _text(row.get("as_of")),
+            _text(row.get("refresh_id")),
+        )
+    )
+    return {
+        "schema_version": EVIDENCE_TREND_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_trend_source_snapshot",
+        "generated_at": generated.isoformat(),
+        "rolling_refresh_dir": str(rolling_refresh_dir),
+        "selected_refreshes": selected,
+        "excluded_refreshes": excluded,
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _evidence_trend_snapshot_errors(snapshot: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    if (
+        snapshot.get("schema_version") != EVIDENCE_TREND_SNAPSHOT_SCHEMA_VERSION
+        or generated is None
+        or snapshot.get("production_effect") != "none"
+        or snapshot.get("broker_action_taken") is not False
+    ):
+        errors.append("snapshot_contract_invalid")
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    try:
+        policy_matches = (
+            _file_sha256(policy_path) == snapshot.get("policy_checksum")
+            and _load_evidence_trend_policy(policy_path) == snapshot.get("policy")
+        )
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+    if not policy_matches:
+        errors.append("policy_snapshot_changed")
+    refresh_ids: set[str] = set()
+    update_ids: set[str] = set()
+    previous_order: tuple[str, str, str] | None = None
+    for selected in _records(snapshot.get("selected_refreshes")):
+        refresh_id = _text(selected.get("refresh_id"))
+        update_id = _text(selected.get("outcome_update_id"))
+        selected_generated = _datetime_from_any(selected.get("generated_at"))
+        as_of = _date_from_any(selected.get("as_of"))
+        bundle = _mapping(selected.get("source_bundle"))
+        root = Path(_text(bundle.get("root")))
+        order = (
+            _text(selected.get("generated_at")),
+            _text(selected.get("as_of")),
+            refresh_id,
+        )
+        if (
+            not refresh_id
+            or not update_id
+            or refresh_id in refresh_ids
+            or update_id in update_ids
+            or selected_generated is None
+            or generated is None
+            or selected_generated > generated
+            or as_of is None
+            or as_of > generated.date()
+            or (previous_order is not None and order < previous_order)
+            or root.name != refresh_id
+            or not _source_bundle_matches(bundle)
+        ):
+            errors.append(f"selected_refresh_invalid:{refresh_id or 'missing'}")
+            continue
+        refresh_ids.add(refresh_id)
+        update_ids.add(update_id)
+        previous_order = order
+        live_validation = validate_rolling_evidence_refresh_artifact(
+            refresh_id=refresh_id,
+            output_dir=root.parent,
+        )
+        manifest = _mapping(
+            _source_bundle_content(bundle, "rolling_refresh_manifest.json")
+        )
+        transaction = _mapping(
+            _source_bundle_content(bundle, "rolling_refresh_transaction.json")
+        )
+        if (
+            live_validation.get("status") != "PASS"
+            or _mapping(selected.get("validation")) != live_validation
+            or manifest.get("refresh_id") != refresh_id
+            or manifest.get("outcome_update_id") != update_id
+            or transaction.get("status") != "COMMITTED"
+            or transaction.get("refresh_id") != refresh_id
+            or transaction.get("outcome_update_id") != update_id
+        ):
+            errors.append(f"selected_refresh_live_validation_failed:{refresh_id}")
+    allowed_exclusions = {"ROLLED_BACK", "FUTURE_GENERATED", "LEGACY_UNSNAPSHOTTED"}
+    excluded_ids: set[str] = set()
+    for excluded in _records(snapshot.get("excluded_refreshes")):
+        refresh_id = _text(excluded.get("refresh_id"))
+        reason = _text(excluded.get("reason"))
+        bundle = _mapping(excluded.get("source_bundle"))
+        root = Path(_text(bundle.get("root")))
+        manifest = _mapping(
+            _source_bundle_content(bundle, "rolling_refresh_manifest.json")
+        )
+        transaction = _mapping(
+            _source_bundle_content(bundle, "rolling_refresh_transaction.json")
+        )
+        if (
+            not refresh_id
+            or refresh_id in refresh_ids
+            or refresh_id in excluded_ids
+            or reason not in allowed_exclusions
+            or excluded.get("production_effect") != "none"
+            or not _source_bundle_matches(bundle)
+        ):
+            errors.append(f"excluded_refresh_invalid:{refresh_id or 'missing'}")
+            continue
+        excluded_ids.add(refresh_id)
+        if reason == "ROLLED_BACK" and transaction.get("status") != "ROLLED_BACK":
+            errors.append(f"excluded_refresh_reason_mismatch:{refresh_id}")
+        elif reason == "FUTURE_GENERATED":
+            source_generated = _datetime_from_any(manifest.get("generated_at"))
+            if generated is None or source_generated is None or source_generated <= generated:
+                errors.append(f"excluded_refresh_reason_mismatch:{refresh_id}")
+        elif reason == "LEGACY_UNSNAPSHOTTED":
+            live_validation = validate_rolling_evidence_refresh_artifact(
+                refresh_id=_text(manifest.get("refresh_id")),
+                output_dir=root.parent,
+            )
+            if (
+                live_validation.get("status") != "PASS_WITH_WARNINGS"
+                or _mapping(excluded.get("validation")) != live_validation
+            ):
+                errors.append(f"excluded_refresh_reason_mismatch:{refresh_id}")
+    return errors
+
+
+def _evidence_trend_timeseries(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for selected in _records(snapshot.get("selected_refreshes")):
+        bundle = _mapping(selected.get("source_bundle"))
+        refresh_snapshot = _mapping(
+            _source_bundle_content(bundle, "rolling_refresh_source_snapshot.json")
+        )
+        post = _mapping(refresh_snapshot.get("post_artifacts"))
+        dashboard_bundle = _mapping(
+            _mapping(post.get("outcome_dashboard")).get("source_bundle")
+        )
+        limited_bundle = _mapping(
+            _mapping(post.get("limited_vs_notrade")).get("source_bundle")
+        )
+        consensus_bundle = _mapping(
+            _mapping(post.get("consensus_risk")).get("source_bundle")
+        )
+        dashboard_matrix = _mapping(
+            _source_bundle_content(dashboard_bundle, "outcome_availability_matrix.json")
+        )
+        dashboard_summary = _mapping(dashboard_matrix.get("summary"))
+        forward = _mapping(dashboard_summary.get("forward_outcome"))
+        historical = _mapping(dashboard_summary.get("historical_replay"))
+        limited_manifest = _mapping(
+            _source_bundle_content(limited_bundle, "limited_vs_notrade_manifest.json")
+        )
+        limited_metrics = _mapping(
+            _source_bundle_content(limited_bundle, "window_comparison_metrics.json")
+        )
+        limited_rows = _records(limited_metrics.get("by_window"))
+        limited_first = limited_rows[0] if limited_rows else {}
+        consensus_manifest = _mapping(
+            _source_bundle_content(consensus_bundle, "consensus_risk_manifest.json")
+        )
         rows.append(
             {
-                "refresh_id": _text(manifest.get("refresh_id"), child.name),
-                "as_of": _text(manifest.get("as_of")),
-                "forward_available": _int(after.get("forward_available")),
-                "forward_pending": _int(after.get("forward_pending")),
-                "historical_replay_available": _int(after.get("historical_replay_available")),
-                "historical_replay_pending": _int(after.get("historical_replay_pending")),
-                "limited_vs_notrade_available_count": _int(
-                    after.get("limited_vs_notrade_available_count")
+                "refresh_id": _text(selected.get("refresh_id")),
+                "outcome_update_id": _text(selected.get("outcome_update_id")),
+                "generated_at": _text(selected.get("generated_at")),
+                "as_of": _text(selected.get("as_of")),
+                "forward_available": forward.get("available"),
+                "forward_pending": forward.get("pending"),
+                "historical_replay_available": historical.get("available"),
+                "historical_replay_pending": historical.get("pending"),
+                "limited_vs_notrade_available_count": limited_manifest.get(
+                    "available_count"
                 ),
-                "limited_vs_notrade_win_rate": _float(after.get("limited_vs_notrade_win_rate")),
-                "limited_vs_notrade_avg_relative_return": _float(
-                    after.get("limited_vs_notrade_avg_relative_return")
+                "limited_vs_notrade_win_rate": limited_first.get("win_rate"),
+                "limited_vs_notrade_avg_relative_return": limited_first.get(
+                    "avg_relative_return"
                 ),
-                "limited_vs_notrade_confidence": _text(
-                    after.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA"
-                ),
-                "consensus_target_risk": _text(
-                    after.get("consensus_target_risk"), "INSUFFICIENT_DATA"
-                ),
-                "recommended_action": _text(after.get("recommended_action"), "continue_tracking"),
+                "limited_vs_notrade_confidence": limited_first.get("confidence"),
+                "consensus_target_risk": consensus_manifest.get("consensus_target_risk"),
+                "recommended_action": limited_metrics.get("overall_recommendation"),
+                "sample_scope": "post_dashboard_full_forward_state",
                 "production_effect": "none",
                 "broker_action_taken": False,
             }
         )
-    return sorted(rows, key=lambda row: (_text(row.get("as_of")), _text(row.get("refresh_id"))))
+    return rows
 
 
-def _confidence_trend_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    if len(rows) < 2:
+def _confidence_trend_summary(
+    rows: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    minimum_history = _int(policy.get("minimum_history_refresh_count"))
+    growth_policy = _mapping(policy.get("availability_growth"))
+    if len(rows) < minimum_history:
         trend_status = "INSUFFICIENT_HISTORY"
-        growth = _int(rows[-1].get("forward_available")) if rows else 0
+        growth = None
         confidence_change = "NO_CHANGE"
     else:
         first = rows[0]
         last = rows[-1]
         growth = _int(last.get("forward_available")) - _int(first.get("forward_available"))
         confidence_change = _confidence_change(
-            _text(first.get("limited_vs_notrade_confidence")),
-            _text(last.get("limited_vs_notrade_confidence")),
+            _text(first.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA"),
+            _text(last.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA"),
+            _texts(policy.get("confidence_order")),
         )
-        if growth > 0 or confidence_change == "IMPROVED":
-            trend_status = "IMPROVING"
-        elif growth < 0 or confidence_change == "DETERIORATED":
-            trend_status = "DETERIORATING"
-        else:
-            trend_status = "STABLE"
+        candidates = {"STABLE"}
+        if growth >= _int(growth_policy.get("improving_minimum")) or (
+            confidence_change == "IMPROVED"
+        ):
+            candidates.add("IMPROVING")
+        if growth <= _int(growth_policy.get("deteriorating_maximum")) or (
+            confidence_change == "DETERIORATED"
+        ):
+            candidates.add("DETERIORATING")
+        trend_status = next(
+            status
+            for status in _texts(policy.get("trend_precedence"))
+            if status in candidates
+        )
     latest = rows[-1] if rows else {}
-    confidence = _text(latest.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA")
-    avg_return = _float(latest.get("limited_vs_notrade_avg_relative_return"))
+    confidence = latest.get("limited_vs_notrade_confidence")
+    avg_return = latest.get("limited_vs_notrade_avg_relative_return")
+    signal_policy = _mapping(policy.get("relative_return_signal"))
     limited_signal = "INSUFFICIENT_DATA"
-    if confidence in {"LOW", "MEDIUM", "HIGH"}:
-        limited_signal = "EARLY_POSITIVE" if avg_return > 0 else "MIXED"
-    consensus_risk = _text(latest.get("consensus_target_risk"), "INSUFFICIENT_DATA")
+    if confidence in set(_texts(signal_policy.get("eligible_confidence"))) and isinstance(
+        avg_return, (int, float)
+    ):
+        limited_signal = (
+            "EARLY_POSITIVE"
+            if float(avg_return)
+            > float(signal_policy.get("early_positive_exclusive_floor", 0.0))
+            else "MIXED"
+        )
+    consensus_risk = latest.get("consensus_target_risk")
     consensus_signal = (
         consensus_risk
-        if consensus_risk in {"HIGH_RISK", "REVIEW_REQUIRED"}
+        if consensus_risk in set(_texts(policy.get("consensus_risk_signal_statuses")))
         else "INSUFFICIENT_DATA"
     )
-    next_action = "continue_tracking"
-    if trend_status == "DETERIORATING" or consensus_risk == "REVIEW_REQUIRED":
+    next_action = _text(
+        _mapping(policy.get("next_action_by_trend")).get(trend_status),
+        "continue_tracking",
+    )
+    if consensus_risk in set(_texts(policy.get("manual_review_risk_statuses"))):
         next_action = "manual_review"
-    elif trend_status == "INSUFFICIENT_HISTORY":
-        next_action = "continue_tracking"
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_confidence_trend_summary",
@@ -5276,13 +5712,15 @@ def _confidence_trend_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, An
         "limited_vs_notrade_signal": limited_signal,
         "consensus_risk_signal": consensus_signal,
         "next_action": next_action,
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
-def _confidence_change(before: str, after: str) -> str:
-    order = {"INSUFFICIENT_DATA": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3}
+def _confidence_change(before: str, after: str, confidence_order: Sequence[str]) -> str:
+    order = {value: index for index, value in enumerate(confidence_order)}
     before_rank = order.get(before, 0)
     after_rank = order.get(after, 0)
     if after_rank > before_rank:
