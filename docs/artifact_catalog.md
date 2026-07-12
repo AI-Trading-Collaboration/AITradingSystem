@@ -1305,6 +1305,8 @@ ARCH-004G2.4BS 补充：`backtest_sim_forward_bridge/<bridge_id>/` 必须包含 
 
 ARCH-004G2.4BT 补充：`sim_interpretation/<interpretation_id>/` 必须包含`sim_interpretation_input_snapshot.json`（schema=`sim_interpretation_input_snapshot.v2`），冻结validated same-lineage Outcome/Calibration/Forward Bridge full bundles/validations。Matrix只对同event/window AVAILABLE finite variant/no_trade pairs解释，missing为null/`INSUFFICIENT_DATA`；key findings confidence由真实证据推导，tracking plan不是forward success。`validate-sim-interpretation`重验live三source并逐字节重算全views，PASS不表示defensive proof、policy approval或production readiness。
 
+ARCH-004G2.4BU 补充：`sim_risk_return/<risk_return_id>/` 必须包含`sim_risk_return_input_snapshot.json`（schema=`sim_risk_return_input_snapshot.v2`），冻结validated Outcome full bundle/validation/lineage。Tradeoff CSV与summary只对同event的20日AVAILABLE finite variant/no_trade pair计算并披露paired event/window counts；missing与不可定义ratio为null/`INSUFFICIENT_DATA`，不得以0表示无收益或无风险。`validate-sim-risk-return`重验live Outcome并逐字节重算snapshot/CSV/summary/manifest/Markdown，PASS不表示rule superiority、defensive proof、policy approval或production readiness。
+
 ## Trading engine / paper trading 产物
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

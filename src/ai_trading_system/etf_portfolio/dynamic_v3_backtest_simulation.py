@@ -97,6 +97,7 @@ BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = (
     "backtest_sim_forward_bridge_input_snapshot.v2"
 )
 SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION = "sim_interpretation_input_snapshot.v2"
+SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION = "sim_risk_return_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -4229,48 +4230,51 @@ def run_sim_risk_return(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
-    outcome_summary = _read_json(outcome_dir / outcome_id / "simulated_variant_summary.json")
-    table = _risk_return_tradeoff_table(outcome_summary)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dir = outcome_dir / outcome_id
+    outcome_validation = validate_backtest_sim_outcome_artifact(
+        sim_outcome_id=outcome_id, output_dir=outcome_dir
+    )
+    if outcome_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError("risk-return Outcome validation failed")
+    outcome_bundle = _backtest_sim_outcome_bundle(source_dir)
+    outcome_manifest = _mapping(outcome_bundle.get("manifest"))
+    outcome_generated = _datetime_from_any(outcome_manifest.get("generated_at"))
+    if outcome_generated is None or outcome_generated > generated:
+        raise DynamicV3BacktestSimulationError("Outcome source generated after risk-return cutoff")
+    table = _risk_return_tradeoff_table(_records(outcome_bundle.get("windows")))
     summary = _risk_adjusted_summary(table)
     risk_return_id = _stable_id("sim-risk-return", outcome_id, generated.isoformat())
     risk_return_dir = _unique_dir(output_dir / risk_return_id)
-    risk_return_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_sim_risk_return_manifest",
-        "risk_return_id": risk_return_dir.name,
-        "outcome_id": outcome_id,
+    input_snapshot = {
+        "schema_version": SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_risk_return_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": "PASS" if table else "INSUFFICIENT_DATA",
-        "market_regime": "ai_after_chatgpt",
+        "outcome_dir": str(source_dir),
+        "outcome_bundle": outcome_bundle,
+        "outcome_validation": outcome_validation,
+        "lineage": {"outcome_id": outcome_id},
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
-        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
         "not_for_production": True,
-        "source_best_variant": outcome_manifest.get("best_variant"),
-        "risk_return_manifest_path": str(risk_return_dir / "risk_return_manifest.json"),
-        "active_variant_tradeoff_table_path": str(
-            risk_return_dir / "active_variant_tradeoff_table.csv"
-        ),
-        "risk_adjusted_summary_path": str(risk_return_dir / "risk_adjusted_summary.json"),
-        "risk_return_report_path": str(risk_return_dir / "risk_return_report.md"),
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
-    _write_json(risk_return_dir / "risk_return_manifest.json", manifest)
-    pd.DataFrame(table).to_csv(risk_return_dir / "active_variant_tradeoff_table.csv", index=False)
-    _write_json(risk_return_dir / "risk_adjusted_summary.json", summary)
-    _write_text(
-        risk_return_dir / "risk_return_report.md",
-        render_risk_return_report(manifest, table, summary),
+    manifest = _sim_risk_return_manifest(
+        risk_return_dir=risk_return_dir,
+        generated=generated,
+        outcome_id=outcome_id,
+        outcome_manifest=outcome_manifest,
+        table=table,
     )
+    csv_text = _risk_return_csv_text(table)
+    report = render_risk_return_report(manifest, table, summary)
+    risk_return_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(risk_return_dir / "risk_return_manifest.json", manifest)
+    _write_text(risk_return_dir / "active_variant_tradeoff_table.csv", csv_text)
+    _write_json(risk_return_dir / "risk_adjusted_summary.json", summary)
+    _write_json(risk_return_dir / "sim_risk_return_input_snapshot.json", input_snapshot)
+    _write_text(risk_return_dir / "risk_return_report.md", report)
     _update_latest_pointer(
         "latest_sim_risk_return",
         risk_return_dir.name,
@@ -4282,7 +4286,57 @@ def run_sim_risk_return(
         "manifest": manifest,
         "active_variant_tradeoff_table": table,
         "risk_adjusted_summary": summary,
+        "input_snapshot": input_snapshot,
     }
+
+
+def _sim_risk_return_manifest(
+    *,
+    risk_return_dir: Path,
+    generated: datetime,
+    outcome_id: str,
+    outcome_manifest: Mapping[str, Any],
+    table: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_risk_return_manifest",
+        "risk_return_id": risk_return_dir.name,
+        "outcome_id": outcome_id,
+        "generated_at": generated.isoformat(),
+        "status": (
+            "PASS"
+            if any(row.get("risk_return_status") != "INSUFFICIENT_DATA" for row in table)
+            else "INSUFFICIENT_DATA"
+        ),
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": outcome_manifest.get("best_variant"),
+        "risk_return_manifest_path": str(risk_return_dir / "risk_return_manifest.json"),
+        "active_variant_tradeoff_table_path": str(
+            risk_return_dir / "active_variant_tradeoff_table.csv"
+        ),
+        "risk_adjusted_summary_path": str(risk_return_dir / "risk_adjusted_summary.json"),
+        "sim_risk_return_input_snapshot_path": str(
+            risk_return_dir / "sim_risk_return_input_snapshot.json"
+        ),
+        "risk_return_report_path": str(risk_return_dir / "risk_return_report.md"),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _risk_return_csv_text(table: Sequence[Mapping[str, Any]]) -> str:
+    return pd.DataFrame(table).to_csv(index=False, lineterminator="\n")
 
 
 def sim_risk_return_report_payload(
@@ -4299,6 +4353,9 @@ def sim_risk_return_report_payload(
     return {
         **_read_json(risk_return_dir / "risk_return_manifest.json"),
         "risk_adjusted_summary": _read_json(risk_return_dir / "risk_adjusted_summary.json"),
+        "sim_risk_return_input_snapshot": _read_json(
+            risk_return_dir / "sim_risk_return_input_snapshot.json"
+        ),
         "risk_return_dir": str(risk_return_dir),
     }
 
@@ -4309,7 +4366,79 @@ def validate_sim_risk_return_artifact(
     risk_return_dir = output_dir / risk_return_id
     manifest = _read_optional_json(risk_return_dir / "risk_return_manifest.json") or {}
     summary = _read_optional_json(risk_return_dir / "risk_adjusted_summary.json") or {}
+    snapshot = (
+        _read_optional_json(risk_return_dir / "sim_risk_return_input_snapshot.json") or {}
+    )
     rows = _records(summary.get("summary"))
+    source_errors: list[str] = []
+    recompute_error = ""
+    expected_bundle: dict[str, Any] = {}
+    expected_validation: dict[str, Any] = {}
+    expected_snapshot: dict[str, Any] = {}
+    expected_table: list[dict[str, Any]] = []
+    expected_summary: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_csv = ""
+    expected_report = ""
+    try:
+        if snapshot.get("schema_version") != SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("risk-return snapshot schema mismatch")
+        if snapshot.get("report_type") != "etf_dynamic_v3_sim_risk_return_input_snapshot":
+            source_errors.append("risk-return snapshot report_type mismatch")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3BacktestSimulationError(
+                "risk-return snapshot generated_at must be timezone-aware"
+            )
+        lineage = _mapping(snapshot.get("lineage"))
+        outcome_id = _text(lineage.get("outcome_id"))
+        source_dir = Path(_text(snapshot.get("outcome_dir")))
+        if outcome_id != manifest.get("outcome_id") or source_dir.name != outcome_id:
+            source_errors.append("risk-return Outcome lineage mismatch")
+        expected_validation = validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=outcome_id,
+            output_dir=source_dir.parent,
+        )
+        if expected_validation.get("status") != "PASS":
+            source_errors.append("live Outcome validation failed")
+        expected_bundle = _backtest_sim_outcome_bundle(source_dir)
+        outcome_manifest = _mapping(expected_bundle.get("manifest"))
+        outcome_generated = _datetime_from_any(outcome_manifest.get("generated_at"))
+        if outcome_generated is None or outcome_generated > generated:
+            source_errors.append("Outcome source generated after risk-return cutoff")
+        if snapshot.get("outcome_validation") != expected_validation:
+            source_errors.append("Outcome validation drifted from frozen snapshot")
+        if snapshot.get("outcome_bundle") != expected_bundle:
+            source_errors.append("Outcome bundle drifted from frozen snapshot")
+        expected_table = _risk_return_tradeoff_table(
+            _records(expected_bundle.get("windows"))
+        )
+        expected_summary = _risk_adjusted_summary(expected_table)
+        expected_snapshot = {
+            "schema_version": SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_sim_risk_return_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "outcome_dir": str(source_dir),
+            "outcome_bundle": expected_bundle,
+            "outcome_validation": expected_validation,
+            "lineage": {"outcome_id": outcome_id},
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _sim_risk_return_manifest(
+            risk_return_dir=risk_return_dir,
+            generated=generated,
+            outcome_id=outcome_id,
+            outcome_manifest=outcome_manifest,
+            table=expected_table,
+        )
+        expected_csv = _risk_return_csv_text(expected_table)
+        expected_report = render_risk_return_report(
+            expected_manifest, expected_table, expected_summary
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
     checks = [
         _check("manifest_exists", (risk_return_dir / "risk_return_manifest.json").exists(), ""),
         _check(
@@ -4318,11 +4447,53 @@ def validate_sim_risk_return_artifact(
             "",
         ),
         _check("summary_exists", (risk_return_dir / "risk_adjusted_summary.json").exists(), ""),
+        _check(
+            "snapshot_exists",
+            (risk_return_dir / "sim_risk_return_input_snapshot.json").exists(),
+            "",
+        ),
         _check("report_exists", (risk_return_dir / "risk_return_report.md").exists(), ""),
         _check("risk_return_id_matches", manifest.get("risk_return_id") == risk_return_id, ""),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live Outcome"),
+        _check("summary_recomputed", summary == expected_summary, "Outcome windows"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file()
+                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (
+                        risk_return_dir / "sim_risk_return_input_snapshot.json",
+                        expected_snapshot,
+                    ),
+                    (risk_return_dir / "risk_adjusted_summary.json", expected_summary),
+                    (risk_return_dir / "risk_return_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "tradeoff_csv_recomputed",
+            (risk_return_dir / "active_variant_tradeoff_table.csv").is_file()
+            and (risk_return_dir / "active_variant_tradeoff_table.csv").read_text(
+                encoding="utf-8"
+            )
+            == expected_csv,
+            "CSV",
+        ),
+        _check(
+            "report_recomputed",
+            (risk_return_dir / "risk_return_report.md").is_file()
+            and (risk_return_dir / "risk_return_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown",
+        ),
         _check(
             "active_variants_present",
-            {row.get("variant") for row in rows} >= set(ACTIVE_SIM_VARIANTS),
+            {row.get("variant") for row in rows} == set(ACTIVE_SIM_VARIANTS),
             "active variants",
         ),
         _check(
@@ -4339,11 +4510,51 @@ def validate_sim_risk_return_artifact(
             "separate return/risk fields",
         ),
         _check(
+            "paired_evidence_disclosed",
+            all(
+                isinstance(row.get("paired_event_count"), int)
+                and isinstance(row.get("paired_window_count"), int)
+                and row.get("paired_event_count") == row.get("paired_window_count")
+                for row in rows
+            ),
+            "same-event 20d pairs",
+        ),
+        _check(
+            "missing_metrics_not_zero_filled",
+            all(
+                (
+                    row.get("evidence_status") == "INSUFFICIENT_DATA"
+                    and row.get("risk_return_status") == "INSUFFICIENT_DATA"
+                    and all(row.get(key) is None for key in metric_keys)
+                )
+                or (
+                    row.get("evidence_status") == "AVAILABLE"
+                    and row.get("paired_event_count", 0) > 0
+                    and all(
+                        row.get(key) is None or _finite_number(row.get(key))
+                        for key in metric_keys
+                    )
+                )
+                for row in rows
+                for metric_keys in (
+                    (
+                        "return_improvement_20d_pp",
+                        "drawdown_worsening_20d_pp",
+                        "turnover_increase_pp",
+                        "return_per_drawdown_worsening",
+                        "return_per_turnover",
+                    ),
+                )
+            ),
+            "null/finite paired evidence",
+        ),
+        _check(
             "no_auto_policy",
             manifest.get("auto_policy_apply") is False
             and manifest.get("production_effect") == "none",
             "no policy apply",
         ),
+        _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
     ]
     return _validation_payload(
         report_type="etf_dynamic_v3_sim_risk_return_validation",
@@ -5756,52 +5967,52 @@ def _sim_key_findings(
     }
 
 
-def _risk_return_tradeoff_table(outcome_summary: Mapping[str, Any]) -> list[dict[str, Any]]:
-    no_trade = _variant_summary_row(outcome_summary, "no_trade")
-    if not no_trade:
-        return []
+def _risk_return_tradeoff_table(
+    outcome_windows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
     rows = []
     for variant in ACTIVE_SIM_VARIANTS:
-        row = _variant_summary_row(outcome_summary, variant)
-        if not row:
+        pairs = _risk_return_pairs(outcome_windows, variant)
+        if not pairs:
             rows.append(_empty_risk_return_row(variant))
             continue
-        return_delta_pp = _pp(
-            _float(row.get("avg_20d_return")) - _float(no_trade.get("avg_20d_return"))
+        variant_rows = [pair[0] for pair in pairs]
+        baseline_rows = [pair[1] for pair in pairs]
+        variant_return = _nullable_avg([row.get("return") for row in variant_rows])
+        baseline_return = _nullable_avg([row.get("return") for row in baseline_rows])
+        variant_drawdown = _nullable_avg([row.get("max_drawdown") for row in variant_rows])
+        baseline_drawdown = _nullable_avg([row.get("max_drawdown") for row in baseline_rows])
+        variant_turnover = _nullable_avg([row.get("turnover") for row in variant_rows])
+        baseline_turnover = _nullable_avg([row.get("turnover") for row in baseline_rows])
+        return_delta_pp = _pp(_float(variant_return) - _float(baseline_return))
+        drawdown_delta_pp = _pp(_float(variant_drawdown) - _float(baseline_drawdown))
+        turnover_delta_pp = _pp(_float(variant_turnover) - _float(baseline_turnover))
+        drawdown_worsening_pp = round(max(0.0, -drawdown_delta_pp), 4)
+        status = _risk_return_status(
+            return_delta_pp, drawdown_delta_pp, paired_event_count=len(pairs)
         )
-        drawdown_delta_pp = _pp(
-            _float(row.get("avg_max_drawdown_20d")) - _float(no_trade.get("avg_max_drawdown_20d"))
-        )
-        drawdown_worsening_pp = round(
-            max(
-                0.0,
-                abs(_float(row.get("avg_max_drawdown_20d")))
-                - abs(_float(no_trade.get("avg_max_drawdown_20d"))),
-            )
-            * 100,
-            4,
-        )
-        turnover_delta_pp = _pp(
-            _float(row.get("avg_turnover")) - _float(no_trade.get("avg_turnover"))
-        )
-        status = _risk_return_status(return_delta_pp, drawdown_delta_pp, row)
         rows.append(
             {
                 "variant": variant,
-                "avg_1d_return": row.get("avg_1d_return", 0.0),
-                "avg_5d_return": row.get("avg_5d_return", 0.0),
-                "avg_10d_return": row.get("avg_10d_return", 0.0),
-                "avg_20d_return": row.get("avg_20d_return", 0.0),
+                "evidence_status": "AVAILABLE",
+                "paired_event_count": len(pairs),
+                "paired_window_count": len(pairs),
+                "avg_20d_return": variant_return,
+                "no_trade_avg_20d_return": baseline_return,
                 "delta_20d_return_vs_no_trade": return_delta_pp,
-                "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d", 0.0),
+                "avg_max_drawdown_20d": variant_drawdown,
+                "no_trade_avg_max_drawdown_20d": baseline_drawdown,
                 "drawdown_delta_vs_no_trade": drawdown_delta_pp,
-                "avg_turnover": row.get("avg_turnover", 0.0),
+                "avg_turnover": variant_turnover,
+                "no_trade_avg_turnover": baseline_turnover,
                 "turnover_delta_vs_no_trade": turnover_delta_pp,
-                "return_per_drawdown_worsening": _ratio(
+                "return_per_drawdown_worsening": _nullable_positive_denominator_ratio(
                     return_delta_pp,
                     drawdown_worsening_pp,
                 ),
-                "return_per_turnover": _ratio(return_delta_pp, turnover_delta_pp),
+                "return_per_turnover": _nullable_positive_denominator_ratio(
+                    return_delta_pp, turnover_delta_pp
+                ),
                 "risk_return_status": status,
                 "drawdown_worsening_20d_pp": drawdown_worsening_pp,
             }
@@ -5809,22 +6020,53 @@ def _risk_return_tradeoff_table(outcome_summary: Mapping[str, Any]) -> list[dict
     return rows
 
 
+def _risk_return_pairs(
+    outcome_windows: Sequence[Mapping[str, Any]], variant: str
+) -> list[tuple[Mapping[str, Any], Mapping[str, Any]]]:
+    available = {
+        (_text(row.get("sim_event_id")), _text(row.get("variant"))): row
+        for row in outcome_windows
+        if row.get("outcome_status") == "AVAILABLE"
+        and _int(row.get("window_days")) == 20
+        and all(
+            _finite_number(row.get(key))
+            for key in ("return", "max_drawdown", "turnover")
+        )
+    }
+    return [
+        (row, available[(event_id, "no_trade")])
+        for (event_id, row_variant), row in sorted(available.items())
+        if row_variant == variant and (event_id, "no_trade") in available
+    ]
+
+
+def _nullable_positive_denominator_ratio(
+    numerator: float, denominator: float
+) -> float | None:
+    if not math.isfinite(numerator) or not math.isfinite(denominator) or denominator <= 0:
+        return None
+    return round(numerator / denominator, 6)
+
+
 def _empty_risk_return_row(variant: str) -> dict[str, Any]:
     return {
         "variant": variant,
-        "avg_1d_return": 0.0,
-        "avg_5d_return": 0.0,
-        "avg_10d_return": 0.0,
-        "avg_20d_return": 0.0,
-        "delta_20d_return_vs_no_trade": 0.0,
-        "avg_max_drawdown_20d": 0.0,
-        "drawdown_delta_vs_no_trade": 0.0,
-        "avg_turnover": 0.0,
-        "turnover_delta_vs_no_trade": 0.0,
-        "return_per_drawdown_worsening": 0.0,
-        "return_per_turnover": 0.0,
+        "evidence_status": "INSUFFICIENT_DATA",
+        "paired_event_count": 0,
+        "paired_window_count": 0,
+        "avg_20d_return": None,
+        "no_trade_avg_20d_return": None,
+        "delta_20d_return_vs_no_trade": None,
+        "avg_max_drawdown_20d": None,
+        "no_trade_avg_max_drawdown_20d": None,
+        "drawdown_delta_vs_no_trade": None,
+        "avg_turnover": None,
+        "no_trade_avg_turnover": None,
+        "turnover_delta_vs_no_trade": None,
+        "return_per_drawdown_worsening": None,
+        "return_per_turnover": None,
         "risk_return_status": "INSUFFICIENT_DATA",
-        "drawdown_worsening_20d_pp": 0.0,
+        "drawdown_worsening_20d_pp": None,
     }
 
 
@@ -5835,19 +6077,27 @@ def _risk_adjusted_summary(table: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         rows.append(
             {
                 "variant": row.get("variant"),
-                "return_improvement_20d_pp": row.get("delta_20d_return_vs_no_trade", 0.0),
-                "drawdown_worsening_20d_pp": row.get("drawdown_worsening_20d_pp", 0.0),
-                "turnover_increase_pp": max(0.0, _float(row.get("turnover_delta_vs_no_trade"))),
-                "return_per_drawdown_worsening": row.get(
-                    "return_per_drawdown_worsening",
-                    0.0,
+                "evidence_status": row.get("evidence_status"),
+                "paired_event_count": row.get("paired_event_count"),
+                "paired_window_count": row.get("paired_window_count"),
+                "return_improvement_20d_pp": row.get("delta_20d_return_vs_no_trade"),
+                "drawdown_worsening_20d_pp": row.get("drawdown_worsening_20d_pp"),
+                "turnover_increase_pp": (
+                    max(0.0, _float(row.get("turnover_delta_vs_no_trade")))
+                    if _finite_number(row.get("turnover_delta_vs_no_trade"))
+                    else None
                 ),
-                "return_per_turnover": row.get("return_per_turnover", 0.0),
+                "return_per_drawdown_worsening": row.get("return_per_drawdown_worsening"),
+                "return_per_turnover": row.get("return_per_turnover"),
                 "risk_return_status": status,
                 "recommendation": (
                     "observe_not_execute"
                     if status == "RETURN_IMPROVES_RISK_WORSENS"
-                    else "continue_review"
+                    else (
+                        "continue_review"
+                        if status != "INSUFFICIENT_DATA"
+                        else "collect_more_paired_evidence"
+                    )
                 ),
             }
         )
@@ -5866,9 +6116,10 @@ def _risk_adjusted_summary(table: Sequence[Mapping[str, Any]]) -> dict[str, Any]
 def _risk_return_status(
     return_delta_pp: float,
     drawdown_delta_pp: float,
-    row: Mapping[str, Any],
+    *,
+    paired_event_count: int,
 ) -> str:
-    if _int(row.get("available_count")) <= 0:
+    if paired_event_count <= 0:
         return "INSUFFICIENT_DATA"
     return_improves = return_delta_pp > 0
     risk_improves = drawdown_delta_pp >= 0

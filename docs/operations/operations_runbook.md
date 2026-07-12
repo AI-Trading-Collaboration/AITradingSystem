@@ -166,6 +166,8 @@
 
 - G2.4BT开始，`sim-interpretation run`必须在创建artifact目录前要求Outcome、Calibration和Forward Bridge三个content-derived validator PASS，校验timezone-aware generated cutoff与Outcome→Calibration→Bridge same-lineage，并冻结三个full bundles/validations到`sim_interpretation_input_snapshot.v2`。Return/drawdown/turnover只在同event+window的AVAILABLE finite variant/no_trade pair上计算，missing保持null/`INSUFFICIENT_DATA`，不得用0表示相似；无evidence finding不得标HIGH confidence，Bridge只能解释为`TRACKING_PLAN_ONLY`。运行后用`validate-sim-interpretation`重验live三source并逐字节重算snapshot/matrix/findings/manifest/Markdown；FAIL不得进入Risk Return或proposal/confirmation后续链。本步为manual/ad-hoc non-PIT interpretation，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
 
+- G2.4BU开始，`sim-risk-return run`必须在创建artifact目录前要求显式Outcome的content-derived validator PASS，并校验timezone-aware generated cutoff；`sim_risk_return_input_snapshot.v2`冻结full Outcome bundle、validation和lineage。每个active variant只与同`sim_event_id`、同20日窗口、同时为`AVAILABLE`且return/max_drawdown/turnover均finite的`no_trade`配对；报告分别披露paired event/window count。Return delta、drawdown worsening与turnover increase分开计算；没有配对、missing metric或非正分母的ratio保持null/`INSUFFICIENT_DATA`，不得填0或跨cohort相减。运行后用`validate-sim-risk-return`重验live Outcome并逐字节重算snapshot/CSV/summary/manifest/Markdown；FAIL不得进入Defensive Validation或proposal/confirmation后续链。本步为manual/ad-hoc non-PIT diagnostic，不新增scheduler entry或改policy/config/portfolio/production/order/broker。
+
 ## Unified Daily Trigger
 
 标准外部调度入口：

@@ -958,7 +958,10 @@ Outcome/Calibration/Forward Bridge，并冻结`sim_interpretation_input_snapshot
 `reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation|sim_risk_return|sim_defensive_validation|advisory_proposal_review|forward_confirmation_plan/`。
 Interpretation pack 解释每个 variant 的 role、return/risk profile 和 recommended
 usage；risk-return review 把 limited / defensive / consensus 相对 `no_trade` 的收益、
-drawdown 和 turnover 代价拆开；defensive validation 明确
+drawdown 和 turnover 代价拆开。Risk-return只消费validated Outcome，并把full bundle/
+validation冻结到`sim_risk_return_input_snapshot.v2`；只比较同event的20日AVAILABLE finite
+variant/no_trade pairs，披露paired units，missing或不可定义ratio保持null/`INSUFFICIENT_DATA`。
+Defensive validation 明确
 `defensive_limited_adjustment` 不能因 overall best 自动视为防守有效；proposal review
 固定 `auto_apply=false`、`owner_approval_required=true`；forward confirmation plan
 只生成后续 tracking 的 success / failure 条件。该阶段继续固定

@@ -1141,6 +1141,23 @@ TRADING-169 Simulation Interpretation回答“当Outcome、Calibration与forward
 
 不可以：growth-tilt 候选“回测失败”；B2/B3 已可生产；2022-12-01 是 QQQ/SGOV/TQQQ 唯一 primary window；governance/workflow PASS 等于投资有效性 PASS。
 
+### 7.4 Simulation Risk-Return（TRADING-170 / ARCH-004G2.4BU）
+
+为什么这样设计：active variant 的收益、回撤和换手必须来自相同事件与相同观察窗口，否则分别聚合后再相减会产生 cohort mismatch；missing 或分母为0若被默认成0，又会把“没有证据”误读成“没有风险/成本”。因此本环节先验证并冻结 Outcome，再做严格配对和 null-preserving 计算。
+
+| 项目 | 当前定义 |
+|---|---|
+| 输入 | 显式 `outcome_id`、Outcome artifact root、timezone-aware `generated_at`；Outcome 必须通过 content-derived validator，且 source generated time 不晚于本次 cutoff |
+| 冻结证据 | `sim_risk_return_input_snapshot.v2`：full Outcome manifest/windows/summary/input snapshot/report/DQ file contents、Outcome validation、lineage |
+| 可计算样本 | `window_days=20`、`outcome_status=AVAILABLE`，且同一 `sim_event_id` 下 active variant 与 `no_trade` 的 return/max_drawdown/turnover 均为 finite |
+| 计算逻辑 | 对严格配对样本分别取均值；`return delta pp=(variant return-no_trade return)×100`；`drawdown delta pp=(variant max_drawdown-no_trade max_drawdown)×100`；`drawdown worsening=max(0,-drawdown delta)`；turnover同口径；ratio只在分母为正且有限时计算 |
+| 输出 | `active_variant_tradeoff_table.csv`、`risk_adjusted_summary.json`、`risk_return_manifest.json`、冻结快照与人工可读Markdown；每个variant披露paired event/window counts和独立risk-return status |
+| Fail-closed | 无配对、missing/non-finite metric或不可定义ratio保持null/`INSUFFICIENT_DATA`；validator重验live Outcome并逐字节重算全部五类输出 |
+| 当前结果边界 | 当前实现提供可审计的non-PIT risk-return diagnostic；PASS只说明来源与计算一致，不证明active rule优于no_trade、defensive标签成立或可进入production |
+| 后续优化空间 | 只有在独立样本增长后才评估多窗口比较、成本敏感性、置信区间/重采样、regime分层及multiple-testing控制；任何新threshold须进入governed policy并预注册，不得在本报告内事后调参 |
+
+该环节故意不自动触发Defensive Validation、proposal review或confirmation plan。下游必须各自重新验证source、lineage和时间边界，避免一个workflow PASS被链式放大成投资结论。
+
 ## 8. 定期复核与优化触发
 
 | Cadence | 输入 | 固定输出 | 允许动作 | 禁止动作 |

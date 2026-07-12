@@ -7084,11 +7084,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_return_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/active_variant_tradeoff_table.csv
       - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_adjusted_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/sim_risk_return_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_return_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-170 separates medium-horizon simulated return improvement from
-      drawdown/turnover cost before any advisory rule discussion.
+      TRADING-170 validates and freezes the full Outcome bundle, then compares
+      only same-event 20d finite pairs so missing evidence cannot become zero
+      return, zero risk or zero turnover before any advisory rule discussion.
     owner_action: review_risk_return_tradeoff_before_interpreting_active_variants
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
