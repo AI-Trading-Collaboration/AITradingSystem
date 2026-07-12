@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BK_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BL_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: c9b673ba
+base_commit: e1052f24
 production_effect: none
 
 arch_004_owned_paths:
@@ -24,6 +24,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/consensus_risk_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/evidence_trend_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/backtest_simulation_advisory_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -36,6 +37,7 @@ arch_004_owned_paths:
   - docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md
   - docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md
   - docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md
+  - docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md
   - docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md
   - docs/requirements/ARCH-004B_Semantic_Kernel.md
   - docs/requirements/ARCH-004C_Platform_Contracts.md
@@ -197,6 +199,8 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_rolling_evidence_refresh.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_evidence_trend.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_outcome_decision.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_events.py
+  - src/ai_trading_system/etf_portfolio/dynamic_v3_backtest_simulation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
@@ -289,6 +293,7 @@ arch_004_owned_paths:
   - tests/test_rolling_evidence_refresh.py
   - tests/test_evidence_trend.py
   - tests/test_forward_outcome_decision.py
+  - tests/test_backtest_sim_events.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py

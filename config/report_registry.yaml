@@ -6870,7 +6870,9 @@ reports:
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-161 simulation events should be refreshed after shadow shortlist,
-      advisory rules, date range, or cached-data provenance changes.
+      advisory rules, date range, or cached-data provenance changes. The v2 input
+      snapshot binds governed source content, cutoff rows, event schedule, and DQ
+      evidence; validation must recompute every event view before downstream use.
     owner_action: review_simulation_event_status_before_variant_or_outcome_interpretation
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

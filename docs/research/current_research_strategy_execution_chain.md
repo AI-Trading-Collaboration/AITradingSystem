@@ -1070,6 +1070,20 @@ ExperimentSpec
 
 当 PluginRegistry 提供与 report plugin同 id/version 的 lifecycle capability时，generic runner额外写 `<primary-stem>.lifecycle.json`；未提供时不生成。该 sidecar不进入旧 payload的 artifact_paths，也不改变 primary、section、Markdown、envelope或run-ledger bytes。
 
+### 5.12 Dynamic-v3 Backtest Simulation Event Foundation（TRADING-161）
+
+这条链用于回答“按当前 shadow shortlist 与 advisory policy，在 AI-after-ChatGPT 历史区间会产生哪些模拟观察”，而不是把历史数据伪装成当时真实可用的 PIT/forward evidence。它只构造模拟事件，不自动执行 variants、outcomes、calibration 或 policy mutation。
+
+|环节|输入|计算/校验|输出与语义|优化空间|
+|---|---|---|---|---|
+|Config gate|governed simulation config、shortlist id、position policy、price/rate paths|校验 owner/version/rationale/evidence/review condition、AI regime/date、schedule、unique variants/windows、finite thresholds/limits、source files/schema与 safety|content-derived config validation；FAIL 时不创建 event artifact|把 section-specific numeric schemas 进一步 typed 化；当前仍在 monolithic simulation module 中|
+|Time/DQ gate|timezone-aware `generated_at`、requested start/end、cached prices/rates|要求 `end <= generated.date()`；在临时目录执行等价 `aits validate-data`，DQ FAIL 不留 partial artifact|DQ status/report evidence；测试只能显式跳过真实 DQ|未来统一接入 canonical `ResearchEvaluationContext` 与 DQ contract|
+|Immutable input binding|完整 config、shortlist raw JSONL、position-policy raw YAML、candidate manifests/daily weights、prices/rates、requested-end cutoff rows|记录内容/checksum、解析后的 candidate weights/regimes、event schedule、DQ report content/checksum|`simulation_input_snapshot.json`，schema=`backtest_sim_event_input_snapshot.v2`|candidate bundle 可迁入 typed artifact envelope；大文件 snapshot 可改 content-addressed immutable store|
+|Event calculation|baseline weights、candidate weights、price dates、schedule、governed consensus/regime/limit rules|min-history gate；在 event date 截止状态上计算 candidate consensus、dispersion、regime、模拟 target/limited adjustments；无合法 date 时保持空 rows 并标记 `INSUFFICIENT_DATA`|events JSONL、manifest、Markdown；固定 `BACKTEST_SIMULATION_NOT_PIT`、no production/broker|把 event calculator 从 I/O orchestrator 拆成 pure typed service，并与 common metric semantics 对齐|
+|Content-derived validation|snapshot、live sources、DQ evidence、全部输出|重验 config/source/checksum/cutoff rows/candidate identity/live DQ，随后重算 schedule、events、counts、manifest、Markdown|任一 source/snapshot/output drift 为 FAIL；PASS 才允许人工选择后续 variants slice|后续应把 same validator contract 扩展到 variants/outcome/paper 等独立 slices|
+
+设计理由：历史模拟最危险的失真不是“算错一个收益”，而是 mutable source 变化后仍把旧输出当作可复现事实，或把 non-PIT simulation 当成 forward evidence。因此这里优先冻结输入语义、cutoff 与 DQ 证据，并用重算 validator 建立 fail-closed 边界。当前结果只证明事件生成链可审计和可复算，不证明任何 advisory variant 有投资有效性。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |

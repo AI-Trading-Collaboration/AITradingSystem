@@ -282,6 +282,7 @@ def _write_config(
             "status": "test",
             "rationale": "Focused tests for non-PIT simulation artifacts.",
             "intended_effect": "Exercise backtest simulation without production mutation.",
+            "validation_evidence": "Focused deterministic fixture validation.",
             "review_condition": "Test fixture only.",
         },
         "simulation": {

@@ -195,7 +195,6 @@ from ai_trading_system.etf_portfolio.dynamic_shadow import (
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
     DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
-    DEFAULT_BACKTEST_SIM_CONFIG_PATH,
     DEFAULT_BACKTEST_SIM_EVENT_DIR,
     DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
     DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
@@ -209,7 +208,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_SIM_RISK_RETURN_DIR,
     advisory_proposal_review_report_payload,
     backtest_sim_calibration_report_payload,
-    backtest_sim_event_report_payload,
     backtest_sim_forward_bridge_report_payload,
     backtest_sim_outcome_report_payload,
     backtest_sim_paper_report_payload,
@@ -217,7 +215,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     backtest_sim_sensitivity_report_payload,
     backtest_sim_variant_report_payload,
     forward_confirmation_plan_report_payload,
-    generate_backtest_sim_events,
     generate_backtest_sim_variants,
     run_advisory_proposal_review,
     run_backtest_sim_calibration_pack,
@@ -235,14 +232,12 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     sim_risk_return_report_payload,
     validate_advisory_proposal_review_artifact,
     validate_backtest_sim_calibration_artifact,
-    validate_backtest_sim_events_artifact,
     validate_backtest_sim_forward_bridge_artifact,
     validate_backtest_sim_outcome_artifact,
     validate_backtest_sim_paper_artifact,
     validate_backtest_sim_regime_artifact,
     validate_backtest_sim_sensitivity_artifact,
     validate_backtest_sim_variants_artifact,
-    validate_backtest_simulation_config,
     validate_forward_confirmation_plan_artifact,
     validate_sim_defensive_validation_artifact,
     validate_sim_interpretation_artifact,
@@ -15213,101 +15208,6 @@ def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_allowed=false")
-    typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_backtest_sim_app.command("config-validate")
-def dynamic_v3_backtest_sim_config_validate_command(
-    config_path: Annotated[
-        Path,
-        typer.Option("--config", "--config-path", help="backtest simulation config。"),
-    ] = DEFAULT_BACKTEST_SIM_CONFIG_PATH,
-) -> None:
-    """校验 TRADING-161 backtest simulation config。"""
-    payload = validate_backtest_simulation_config(config_path=config_path)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("outcome_mode=BACKTEST_SIMULATION")
-    typer.echo("pit_safety_status=SIMULATION_NOT_PIT")
-    typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_backtest_sim_app.command("event-generate")
-def dynamic_v3_backtest_sim_event_generate_command(
-    config_path: Annotated[
-        Path,
-        typer.Option("--config", "--config-path", help="backtest simulation config。"),
-    ] = DEFAULT_BACKTEST_SIM_CONFIG_PATH,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
-) -> None:
-    """生成 TRADING-161 simulated advisory events。"""
-    result = generate_backtest_sim_events(config_path=config_path, output_dir=output_dir)
-    manifest = result["manifest"]
-    typer.echo(f"event_set_id={result['event_set_id']}")
-    typer.echo(f"event_dir={result['event_set_dir']}")
-    typer.echo(f"status={manifest['status']}")
-    typer.echo(f"event_count={manifest['event_count']}")
-    typer.echo(f"ready_count={manifest['ready_count']}")
-    typer.echo(f"insufficient_data_count={manifest['insufficient_data_count']}")
-    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
-    typer.echo("outcome_mode=BACKTEST_SIMULATION")
-    typer.echo("pit_safety_status=SIMULATION_NOT_PIT")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_backtest_sim_app.command("event-report")
-def dynamic_v3_backtest_sim_event_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest backtest sim events。"),
-    ] = False,
-    event_set_id: Annotated[
-        str | None,
-        typer.Option("--event-set-id", help="event set id。"),
-    ] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
-) -> None:
-    """展示 TRADING-161 event generation 摘要。"""
-    payload = backtest_sim_event_report_payload(
-        event_set_id=event_set_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    typer.echo(f"event_set_id={payload['event_set_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"event_count={payload['event_count']}")
-    typer.echo(f"ready_count={payload['ready_count']}")
-    typer.echo(f"data_quality_status={payload['data_quality_status']}")
-    typer.echo(f"report_path={payload['event_generation_report_path']}")
-    typer.echo("production_effect=none")
-
-
-@dynamic_v3_rescue_app.command("validate-backtest-sim-events")
-def dynamic_v3_validate_backtest_sim_events_command(
-    event_set_id: Annotated[str, typer.Option("--event-set-id", help="event set id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
-    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
-) -> None:
-    """校验 TRADING-161 backtest simulation event artifact。"""
-    payload = validate_backtest_sim_events_artifact(
-        event_set_id=event_set_id,
-        output_dir=output_dir,
-    )
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("outcome_mode=BACKTEST_SIMULATION")
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

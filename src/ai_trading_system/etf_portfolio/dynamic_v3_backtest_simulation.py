@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -76,12 +77,8 @@ DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR = (
 )
 DEFAULT_SIM_INTERPRETATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_interpretation"
 DEFAULT_SIM_RISK_RETURN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_risk_return"
-DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_defensive_validation"
-)
-DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "advisory_proposal_review"
-)
+DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_defensive_validation"
+DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "advisory_proposal_review"
 DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_plan"
 )
@@ -89,6 +86,7 @@ DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
 OUTCOME_MODE_BACKTEST_SIMULATION = "BACKTEST_SIMULATION"
 PIT_SAFETY_SIMULATION = "SIMULATION_NOT_PIT"
 REPORT_LABEL_BACKTEST_SIMULATION = "BACKTEST_SIMULATION_NOT_PIT"
+BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_event_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -152,6 +150,31 @@ def load_backtest_simulation_config(
     return payload
 
 
+def _finite_number(value: Any, *, minimum: float | None = None) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    number = float(value)
+    return math.isfinite(number) and (minimum is None or number >= minimum)
+
+
+def _mapping_values_finite(payload: Mapping[str, Any]) -> bool:
+    if not payload:
+        return False
+    for value in payload.values():
+        if isinstance(value, Mapping):
+            if not _mapping_values_finite(value):
+                return False
+        elif isinstance(value, list):
+            if not value or not all(
+                _finite_number(item) or (isinstance(item, str) and bool(item.strip()))
+                for item in value
+            ):
+                return False
+        elif not _finite_number(value) and not (isinstance(value, str) and bool(value.strip())):
+            return False
+    return True
+
+
 def validate_backtest_simulation_config(
     *, config_path: Path = DEFAULT_BACKTEST_SIM_CONFIG_PATH
 ) -> dict[str, Any]:
@@ -165,8 +188,46 @@ def validate_backtest_simulation_config(
     limits = _mapping(config.get("limits"))
     windows = _records_as_ints(_mapping(config.get("outcome_windows")).get("trading_days"))
     baseline = _normalize_weights(_mapping(portfolio.get("baseline_snapshot")))
+    raw_baseline = _mapping(portfolio.get("baseline_snapshot"))
+    position_path_text = _text(source.get("position_advisory_config"))
+    price_path_text = _text(source.get("price_cache_path"))
+    rates_path_text = _text(source.get("rates_cache_path"))
+    policy_metadata = _mapping(config.get("policy_metadata"))
+    sensitivity = _mapping(config.get("sensitivity_policy"))
+    adjustment_grid = (
+        sensitivity.get("adjustment_limit_grid")
+        if isinstance(sensitivity.get("adjustment_limit_grid"), list)
+        else []
+    )
+    shortlist_grid = (
+        sensitivity.get("shortlist_top_n_grid")
+        if isinstance(sensitivity.get("shortlist_top_n_grid"), list)
+        else []
+    )
+    event_frequency = _text(date_range.get("event_frequency"))
+    event_day = _text(date_range.get("event_day"))
+    shortlist_path = _shadow_shortlist_path(config)
+    shortlist_rows = _read_jsonl(shortlist_path) if shortlist_path.is_file() else []
+    shortlist_candidate_ids = [_text(row.get("candidate_id")) for row in shortlist_rows]
     checks = [
         _check("schema_version", config.get("schema_version") == SCHEMA_VERSION, "schema=1"),
+        _check(
+            "policy_governance_complete",
+            all(
+                _text(policy_metadata.get(key))
+                for key in (
+                    "policy_id",
+                    "owner",
+                    "version",
+                    "status",
+                    "rationale",
+                    "intended_effect",
+                    "validation_evidence",
+                    "review_condition",
+                )
+            ),
+            "policy metadata",
+        ),
         _check(
             "outcome_mode_backtest_simulation",
             simulation.get("outcome_mode") == OUTCOME_MODE_BACKTEST_SIMULATION,
@@ -194,37 +255,109 @@ def validate_backtest_simulation_config(
             "start <= end",
         ),
         _check(
+            "event_schedule_supported",
+            event_frequency in {"weekly", "biweekly", "monthly"}
+            and event_day in {"MON", "TUE", "WED", "THU", "FRI"}
+            and _int(date_range.get("min_history_days_before_event")) >= 1,
+            f"{event_frequency}/{event_day}",
+        ),
+        _check(
             "baseline_weights_sum",
-            abs(sum(baseline.values()) - 1.0) <= 0.000001,
+            bool(raw_baseline)
+            and len(baseline) == len(raw_baseline)
+            and all(math.isfinite(value) and value >= 0 for value in baseline.values())
+            and abs(sum(baseline.values()) - 1.0) <= 0.000001,
             json.dumps(baseline, sort_keys=True),
         ),
         _check(
             "variants_supported",
-            bool(variants) and set(variants) <= set(BACKTEST_SIM_VARIANTS),
+            bool(variants)
+            and len(variants) == len(set(variants))
+            and set(variants) <= set(BACKTEST_SIM_VARIANTS),
             ",".join(variants),
         ),
-        _check("outcome_windows_present", bool(windows) and all(item > 0 for item in windows), ""),
         _check(
-            "adjustment_limits_positive",
-            _float(limits.get("max_single_event_total_adjustment")) > 0
-            and _float(limits.get("max_single_symbol_adjustment")) > 0
-            and _float(limits.get("min_trade_threshold")) >= 0,
+            "outcome_windows_present",
+            bool(windows)
+            and len(windows) == len(set(windows))
+            and all(item > 0 for item in windows),
+            "",
+        ),
+        _check(
+            "adjustment_limits_governed",
+            _finite_number(limits.get("max_single_event_total_adjustment"), minimum=0.0)
+            and _finite_number(limits.get("max_single_symbol_adjustment"), minimum=0.0)
+            and _finite_number(limits.get("min_trade_threshold"), minimum=0.0)
+            and 0 < _float(limits.get("max_single_event_total_adjustment")) <= 1
+            and 0 < _float(limits.get("max_single_symbol_adjustment")) <= 1
+            and _float(limits.get("min_trade_threshold"))
+            <= _float(limits.get("max_single_symbol_adjustment")),
             "limits",
         ),
         _check(
-            "shadow_shortlist_id_present",
-            bool(_text(source.get("shadow_shortlist_id"))),
-            _text(source.get("shadow_shortlist_id")),
+            "investment_thresholds_finite",
+            all(
+                _mapping_values_finite(_mapping(config.get(section)))
+                for section in (
+                    "consensus_policy",
+                    "regime_policy",
+                    "forward_confirmation",
+                )
+            ),
+            "policy thresholds",
+        ),
+        _check(
+            "sensitivity_policy_valid",
+            bool(_texts(sensitivity.get("event_frequency_profiles")))
+            and len(_texts(sensitivity.get("event_frequency_profiles")))
+            == len(set(_texts(sensitivity.get("event_frequency_profiles"))))
+            and set(_texts(sensitivity.get("event_frequency_profiles"))).issubset(
+                {"weekly", "biweekly", "monthly"}
+            )
+            and bool(adjustment_grid)
+            and all(_finite_number(item, minimum=0.0) for item in adjustment_grid)
+            and bool(shortlist_grid)
+            and all(
+                isinstance(item, int) and not isinstance(item, bool) and item >= 1
+                for item in shortlist_grid
+            )
+            and _mapping_values_finite(_mapping(sensitivity.get("consensus_dispersion_thresholds")))
+            and all(
+                _finite_number(sensitivity.get(field), minimum=0.0)
+                for field in (
+                    "min_available_windows_for_low_risk",
+                    "max_regime_return_concentration_low_risk",
+                    "max_parameter_result_spread_low_risk",
+                    "high_risk_regime_return_concentration",
+                    "high_risk_parameter_result_spread",
+                )
+            ),
+            "sensitivity policy",
+        ),
+        _check(
+            "shadow_shortlist_source_valid",
+            bool(_text(source.get("shadow_shortlist_id")))
+            and shortlist_path.is_file()
+            and bool(shortlist_rows)
+            and all(shortlist_candidate_ids)
+            and len(shortlist_candidate_ids) == len(set(shortlist_candidate_ids))
+            and all(_text(row.get("real_evaluation_artifact_path")) for row in shortlist_rows),
+            str(shortlist_path),
         ),
         _check(
             "position_advisory_config_exists",
-            _resolve_project_path(Path(_text(source.get("position_advisory_config")))).exists(),
-            _text(source.get("position_advisory_config")),
+            bool(position_path_text) and _resolve_project_path(Path(position_path_text)).is_file(),
+            position_path_text,
         ),
         _check(
             "price_cache_exists",
-            _resolve_project_path(Path(_text(source.get("price_cache_path")))).exists(),
-            _text(source.get("price_cache_path")),
+            bool(price_path_text) and _resolve_project_path(Path(price_path_text)).is_file(),
+            price_path_text,
+        ),
+        _check(
+            "rates_cache_exists",
+            bool(rates_path_text) and _resolve_project_path(Path(rates_path_text)).is_file(),
+            rates_path_text,
         ),
         _check(
             "safety_no_broker",
@@ -259,6 +392,9 @@ def generate_backtest_sim_events(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     config = load_backtest_simulation_config(config_path)
     validation = validate_backtest_simulation_config(config_path=config_path)
     if validation["status"] != "PASS":
@@ -267,11 +403,11 @@ def generate_backtest_sim_events(
     date_range = _mapping(config.get("date_range"))
     start = _date_from_any(date_range.get("start")) or date(2022, 12, 1)
     end = _date_from_any(date_range.get("end")) or generated.date()
+    if end > generated.date():
+        raise DynamicV3BacktestSimulationError("simulation end exceeds generated cutoff")
     prices_path = _resolve_project_path(Path(_text(source.get("price_cache_path"))))
-    rates_path = (
-        _resolve_project_path(Path(_text(source.get("rates_cache_path"))))
-        or DEFAULT_RATES_CACHE_PATH
-    )
+    rates_text = _text(source.get("rates_cache_path"))
+    rates_path = _resolve_project_path(Path(rates_text)) if rates_text else DEFAULT_RATES_CACHE_PATH
     event_set_id = _stable_id(
         "backtest-sim-events",
         config_path,
@@ -279,20 +415,21 @@ def generate_backtest_sim_events(
         end.isoformat(),
         generated.isoformat(),
     )
-    event_dir = _unique_dir(output_dir / event_set_id)
-    event_dir.mkdir(parents=True, exist_ok=False)
     quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
     quality_report_path = ""
+    quality_report_text = ""
     if enforce_data_quality_gate:
-        quality_report = event_dir / "validate_data_quality_report.md"
-        quality = _run_cached_quality_gate(
-            as_of=end,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            report_path=quality_report,
-        )
+        with tempfile.TemporaryDirectory(prefix="backtest-sim-event-dq-") as temp_dir:
+            quality_report = Path(temp_dir) / "validate_data_quality_report.md"
+            quality = _run_cached_quality_gate(
+                as_of=end,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                report_path=quality_report,
+            )
+            if quality_report.exists():
+                quality_report_text = quality_report.read_text(encoding="utf-8")
         quality_status = quality.status
-        quality_report_path = str(quality_report)
         if not quality.passed:
             raise DynamicV3BacktestSimulationError(
                 f"backtest simulation event data quality gate failed: {quality.status}"
@@ -301,6 +438,8 @@ def generate_backtest_sim_events(
     price_dates = _available_price_dates(prices)
     event_dates = _scheduled_event_dates(price_dates, start=start, end=end, config=config)
     candidates = _load_shadow_candidate_sources(config)
+    shortlist_path = _shadow_shortlist_path(config)
+    position_path = _resolve_project_path(Path(_text(source.get("position_advisory_config"))))
     baseline = _normalize_weights(
         _mapping(_mapping(config.get("portfolio")).get("baseline_snapshot"))
     )
@@ -319,23 +458,30 @@ def generate_backtest_sim_events(
             )
         )
     counts = Counter(_text(row.get("event_status")) for row in events)
-    event_set_dir = event_dir
     input_snapshot = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_input_snapshot",
         "config_path": str(config_path),
+        "config_checksum": sha256(config_path.read_bytes()).hexdigest(),
         "config": config,
+        "generated_at": generated.isoformat(),
+        "requested_start": start.isoformat(),
+        "requested_end": end.isoformat(),
+        "event_dates": [item.isoformat() for item in event_dates],
         "candidate_count": len(candidates),
-        "candidate_sources": [
-            {
-                "candidate_id": row["candidate_id"],
-                "shortlist_rank": row.get("shortlist_rank"),
-                "daily_weights_path": str(row.get("daily_weights_path")),
-            }
-            for row in candidates
-        ],
+        "shortlist_source": _text_source_snapshot(shortlist_path),
+        "position_advisory_source": _text_source_snapshot(position_path),
+        "candidate_sources": _candidate_source_snapshot(candidates),
         "price_source": _price_source_snapshot(prices_path),
+        "rate_source": _price_source_snapshot(rates_path),
+        "price_cutoff_snapshot": _csv_cutoff_snapshot(prices_path, end=end),
+        "rate_cutoff_snapshot": _csv_cutoff_snapshot(rates_path, end=end),
         "data_quality_status": quality_status,
+        "data_quality_enforced": enforce_data_quality_gate,
+        "data_quality_report_content": quality_report_text,
+        "data_quality_report_checksum": sha256(quality_report_text.encode("utf-8")).hexdigest()
+        if quality_report_text
+        else "",
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
         "not_for_production": True,
@@ -343,7 +489,62 @@ def generate_backtest_sim_events(
     status = "PASS" if counts.get("READY", 0) else "INSUFFICIENT_DATA"
     if counts.get("INSUFFICIENT_DATA", 0) and counts.get("READY", 0):
         status = "PASS_WITH_WARNINGS"
-    manifest = {
+    event_dir = _unique_dir(output_dir / event_set_id)
+    event_dir.mkdir(parents=True, exist_ok=False)
+    event_set_dir = event_dir
+    if enforce_data_quality_gate:
+        quality_report = event_dir / "validate_data_quality_report.md"
+        _write_text(quality_report, quality_report_text)
+        quality_report_path = str(quality_report)
+    manifest = _backtest_sim_event_manifest(
+        event_set_dir=event_set_dir,
+        generated=generated,
+        status=status,
+        config=config,
+        config_path=config_path,
+        start=start,
+        end=end,
+        events=events,
+        quality_status=quality_status,
+        quality_report_path=quality_report_path,
+    )
+    _write_json(event_set_dir / "backtest_sim_event_manifest.json", manifest)
+    _write_jsonl(event_set_dir / "simulated_advisory_events.jsonl", events)
+    _write_json(event_set_dir / "simulation_input_snapshot.json", input_snapshot)
+    _write_text(
+        event_set_dir / "event_generation_report.md",
+        render_event_generation_report(manifest, events),
+    )
+    _update_latest_pointer(
+        "latest_backtest_sim_events",
+        event_set_dir.name,
+        event_set_dir / "backtest_sim_event_manifest.json",
+    )
+    return {
+        "event_set_id": event_set_dir.name,
+        "event_set_dir": event_set_dir,
+        "manifest": manifest,
+        "events": events,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_event_manifest(
+    *,
+    event_set_dir: Path,
+    generated: datetime,
+    status: str,
+    config: Mapping[str, Any],
+    config_path: Path,
+    start: date,
+    end: date,
+    events: Sequence[Mapping[str, Any]],
+    quality_status: str,
+    quality_report_path: str,
+) -> dict[str, Any]:
+    source = _mapping(config.get("source"))
+    counts = Counter(_text(row.get("event_status")) for row in events)
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_event_manifest",
         "event_set_id": event_set_dir.name,
@@ -377,25 +578,6 @@ def generate_backtest_sim_events(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
-    _write_json(event_set_dir / "backtest_sim_event_manifest.json", manifest)
-    _write_jsonl(event_set_dir / "simulated_advisory_events.jsonl", events)
-    _write_json(event_set_dir / "simulation_input_snapshot.json", input_snapshot)
-    _write_text(
-        event_set_dir / "event_generation_report.md",
-        render_event_generation_report(manifest, events),
-    )
-    _update_latest_pointer(
-        "latest_backtest_sim_events",
-        event_set_dir.name,
-        event_set_dir / "backtest_sim_event_manifest.json",
-    )
-    return {
-        "event_set_id": event_set_dir.name,
-        "event_set_dir": event_set_dir,
-        "manifest": manifest,
-        "events": events,
-        "input_snapshot": input_snapshot,
-    }
 
 
 def backtest_sim_event_report_payload(
@@ -423,6 +605,117 @@ def validate_backtest_sim_events_artifact(
     event_dir = output_dir / event_set_id
     manifest = _read_optional_json(event_dir / "backtest_sim_event_manifest.json") or {}
     rows = _read_jsonl(event_dir / "simulated_advisory_events.jsonl")
+    snapshot = _read_optional_json(event_dir / "simulation_input_snapshot.json") or {}
+    recompute_error = ""
+    source_errors: list[str] = []
+    try:
+        config_path = Path(_text(snapshot.get("config_path")))
+        config = _mapping(snapshot.get("config"))
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        start = _date_from_any(snapshot.get("requested_start"))
+        end = _date_from_any(snapshot.get("requested_end"))
+        if generated is None or start is None or end is None:
+            raise DynamicV3BacktestSimulationError("event snapshot time invalid")
+        if snapshot.get("schema_version") != BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("snapshot_schema_invalid")
+        if (
+            not config_path.is_file()
+            or sha256(config_path.read_bytes()).hexdigest() != snapshot.get("config_checksum")
+            or load_backtest_simulation_config(config_path) != config
+            or validate_backtest_simulation_config(config_path=config_path).get("status") != "PASS"
+        ):
+            source_errors.append("config_changed")
+        source = _mapping(config.get("source"))
+        shortlist_path = _shadow_shortlist_path(config)
+        position_path = _resolve_project_path(Path(_text(source.get("position_advisory_config"))))
+        if _text_source_snapshot(shortlist_path) != snapshot.get("shortlist_source"):
+            source_errors.append("shortlist_source_changed")
+        if _text_source_snapshot(position_path) != snapshot.get("position_advisory_source"):
+            source_errors.append("position_advisory_source_changed")
+        prices_path = _resolve_project_path(Path(_text(source.get("price_cache_path"))))
+        rates_path = _resolve_project_path(Path(_text(source.get("rates_cache_path"))))
+        if _price_source_snapshot(prices_path) != snapshot.get("price_source"):
+            source_errors.append("price_source_changed")
+        if _price_source_snapshot(rates_path) != snapshot.get("rate_source"):
+            source_errors.append("rate_source_changed")
+        if _csv_cutoff_snapshot(prices_path, end=end) != snapshot.get("price_cutoff_snapshot"):
+            source_errors.append("price_cutoff_rows_changed")
+        if _csv_cutoff_snapshot(rates_path, end=end) != snapshot.get("rate_cutoff_snapshot"):
+            source_errors.append("rate_cutoff_rows_changed")
+        candidates = _load_shadow_candidate_sources(config)
+        if _candidate_source_snapshot(candidates) != snapshot.get("candidate_sources"):
+            source_errors.append("candidate_sources_changed")
+        quality_status = _text(snapshot.get("data_quality_status"))
+        frozen_quality_content = _text(snapshot.get("data_quality_report_content"))
+        frozen_quality_checksum = _text(snapshot.get("data_quality_report_checksum"))
+        if bool(frozen_quality_content) != bool(snapshot.get("data_quality_enforced")):
+            source_errors.append("data_quality_evidence_missing")
+        if (
+            frozen_quality_content
+            and sha256(frozen_quality_content.encode("utf-8")).hexdigest()
+            != frozen_quality_checksum
+        ):
+            source_errors.append("data_quality_evidence_checksum_invalid")
+        live_quality_path = Path(_text(manifest.get("data_quality_report_path")))
+        if frozen_quality_content and (
+            not live_quality_path.is_file()
+            or live_quality_path.read_text(encoding="utf-8") != frozen_quality_content
+        ):
+            source_errors.append("data_quality_report_changed")
+        if snapshot.get("data_quality_enforced") is True:
+            with tempfile.TemporaryDirectory(prefix="backtest-sim-event-validate-dq-") as temp_dir:
+                quality = _run_cached_quality_gate(
+                    as_of=end,
+                    prices_path=prices_path,
+                    rates_path=rates_path,
+                    report_path=Path(temp_dir) / "validate_data_quality_report.md",
+                )
+            if not quality.passed or quality.status != quality_status:
+                source_errors.append("data_quality_changed")
+        prices = _load_prices(prices_path, extra_symbols=_portfolio_symbols(config))
+        price_dates = _available_price_dates(prices)
+        event_dates = _scheduled_event_dates(price_dates, start=start, end=end, config=config)
+        if [item.isoformat() for item in event_dates] != snapshot.get("event_dates"):
+            source_errors.append("event_schedule_changed")
+        baseline = _normalize_weights(
+            _mapping(_mapping(config.get("portfolio")).get("baseline_snapshot"))
+        )
+        min_history = _int(_mapping(config.get("date_range")).get("min_history_days_before_event"))
+        expected_rows = [
+            _sim_event(
+                event_date=event_date,
+                config=config,
+                candidates=candidates,
+                baseline=baseline,
+                prices=prices,
+                price_dates=price_dates,
+                min_history=min_history,
+            )
+            for event_date in event_dates
+        ]
+        counts = Counter(_text(row.get("event_status")) for row in expected_rows)
+        expected_status = "PASS" if counts.get("READY", 0) else "INSUFFICIENT_DATA"
+        if counts.get("INSUFFICIENT_DATA", 0) and counts.get("READY", 0):
+            expected_status = "PASS_WITH_WARNINGS"
+        expected_manifest = _backtest_sim_event_manifest(
+            event_set_dir=event_dir,
+            generated=generated,
+            status=expected_status,
+            config=config,
+            config_path=config_path,
+            start=start,
+            end=end,
+            events=expected_rows,
+            quality_status=quality_status,
+            quality_report_path=_text(manifest.get("data_quality_report_path")),
+        )
+        expected_report = render_event_generation_report(expected_manifest, expected_rows)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_rows = []
+        expected_manifest = {}
+        expected_report = ""
+    report_path = event_dir / "event_generation_report.md"
     checks = [
         _check("manifest_exists", (event_dir / "backtest_sim_event_manifest.json").exists(), ""),
         _check("events_exists", (event_dir / "simulated_advisory_events.jsonl").exists(), ""),
@@ -431,7 +724,15 @@ def validate_backtest_sim_events_artifact(
         ),
         _check("report_exists", (event_dir / "event_generation_report.md").exists(), ""),
         _check("event_set_id_matches", manifest.get("event_set_id") == event_set_id, event_set_id),
-        _check("events_present", bool(rows), "events required"),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("events_recomputed", rows == expected_rows, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "report_recomputed",
+            report_path.exists() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown",
+        ),
         _check(
             "event_status_valid",
             all(row.get("event_status") in EVENT_STATUSES for row in rows),
@@ -1567,9 +1868,7 @@ def run_sim_interpretation(
             interpretation_dir / "variant_interpretation_matrix.json"
         ),
         "key_findings_path": str(interpretation_dir / "key_findings.json"),
-        "sim_interpretation_report_path": str(
-            interpretation_dir / "sim_interpretation_report.md"
-        ),
+        "sim_interpretation_report_path": str(interpretation_dir / "sim_interpretation_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "auto_policy_apply": False,
@@ -1659,9 +1958,7 @@ def validate_sim_interpretation_artifact(
         _check(
             "variant_fields_present",
             all(
-                row.get("role")
-                and row.get("risk_profile")
-                and row.get("recommended_usage")
+                row.get("role") and row.get("risk_profile") and row.get("recommended_usage")
                 for row in variants
             ),
             "role/risk/recommended usage",
@@ -1804,8 +2101,7 @@ def validate_sim_risk_return_artifact(
         _check(
             "return_and_risk_separated",
             all(
-                "return_improvement_20d_pp" in row
-                and "drawdown_worsening_20d_pp" in row
+                "return_improvement_20d_pp" in row and "drawdown_worsening_20d_pp" in row
                 for row in rows
             ),
             "separate return/risk fields",
@@ -1871,9 +2167,7 @@ def run_sim_defensive_validation(
         "defensive_validation_summary_path": str(
             defensive_dir / "defensive_validation_summary.json"
         ),
-        "defensive_validation_report_path": str(
-            defensive_dir / "defensive_validation_report.md"
-        ),
+        "defensive_validation_report_path": str(defensive_dir / "defensive_validation_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
         "auto_policy_apply": False,
@@ -2013,9 +2307,7 @@ def run_advisory_proposal_review(
     key_findings = _read_json(interpretation_dir / interpretation_id / "key_findings.json")
     risk_summary = _read_json(risk_return_dir / risk_return_id / "risk_adjusted_summary.json")
     defensive_summary = _read_json(
-        defensive_validation_dir
-        / defensive_validation_id
-        / "defensive_validation_summary.json"
+        defensive_validation_dir / defensive_validation_id / "defensive_validation_summary.json"
     )
     calibration_manifest = _read_json(
         calibration_dir / calibration_id / "sim_calibration_manifest.json"
@@ -2985,9 +3277,7 @@ def _medium_horizon_compare(row: Mapping[str, Any], baseline: Mapping[str, Any])
 
 
 def _drawdown_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
-    delta = _float(row.get("avg_max_drawdown_20d")) - _float(
-        baseline.get("avg_max_drawdown_20d")
-    )
+    delta = _float(row.get("avg_max_drawdown_20d")) - _float(baseline.get("avg_max_drawdown_20d"))
     if abs(delta) <= 0.000001:
         return "similar_to_no_trade"
     return "better_than_no_trade" if delta > 0 else "worse_than_no_trade"
@@ -3018,8 +3308,7 @@ def _sim_key_findings(
     drawdown_worse = [
         row
         for row in active_rows
-        if _float(row.get("avg_max_drawdown_20d"))
-        < _float(no_trade.get("avg_max_drawdown_20d"))
+        if _float(row.get("avg_max_drawdown_20d")) < _float(no_trade.get("avg_max_drawdown_20d"))
     ]
     findings = [
         {
@@ -3066,8 +3355,7 @@ def _sim_key_findings(
         {
             "finding_id": "defensive_variant_requires_regime_validation",
             "summary": (
-                "defensive_limited_adjustment is not proven defensive "
-                "by overall ranking alone."
+                "defensive_limited_adjustment is not proven defensive by overall ranking alone."
             ),
             "evidence": [
                 {
@@ -3083,8 +3371,7 @@ def _sim_key_findings(
         {
             "finding_id": "requires_forward_confirmation",
             "summary": (
-                "BACKTEST_SIMULATION_NOT_PIT requires forward confirmation "
-                "before rule calibration."
+                "BACKTEST_SIMULATION_NOT_PIT requires forward confirmation before rule calibration."
             ),
             "evidence": _records(bridge_targets.get("targets")),
             "confidence": "HIGH",
@@ -3114,8 +3401,7 @@ def _risk_return_tradeoff_table(outcome_summary: Mapping[str, Any]) -> list[dict
             _float(row.get("avg_20d_return")) - _float(no_trade.get("avg_20d_return"))
         )
         drawdown_delta_pp = _pp(
-            _float(row.get("avg_max_drawdown_20d"))
-            - _float(no_trade.get("avg_max_drawdown_20d"))
+            _float(row.get("avg_max_drawdown_20d")) - _float(no_trade.get("avg_max_drawdown_20d"))
         )
         drawdown_worsening_pp = round(
             max(
@@ -3230,8 +3516,7 @@ def _defensive_regime_matrix(rows: Sequence[Mapping[str, Any]]) -> list[dict[str
     available = [
         row
         for row in rows
-        if row.get("outcome_status") == "AVAILABLE"
-        and _int(row.get("window_days")) in {5, 10, 20}
+        if row.get("outcome_status") == "AVAILABLE" and _int(row.get("window_days")) in {5, 10, 20}
     ]
     by_variant_regime: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
     for row in available:
@@ -3293,8 +3578,7 @@ def _aligned_drawdown_deltas(
     no_trade_rows: Sequence[Mapping[str, Any]],
 ) -> list[float]:
     no_trade_by_key = {
-        (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row
-        for row in no_trade_rows
+        (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row for row in no_trade_rows
     }
     deltas = []
     for row in defensive_rows:
@@ -3302,9 +3586,7 @@ def _aligned_drawdown_deltas(
         reference = no_trade_by_key.get(key)
         if reference is None:
             continue
-        deltas.append(
-            _float(row.get("max_drawdown")) - _float(reference.get("max_drawdown"))
-        )
+        deltas.append(_float(row.get("max_drawdown")) - _float(reference.get("max_drawdown")))
     return deltas
 
 
@@ -3446,9 +3728,7 @@ def _proposal_decision_matrix(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_proposal_decision_matrix",
         "proposals": proposal_rows,
-        "key_findings": [
-            row.get("finding_id") for row in _records(key_findings.get("findings"))
-        ],
+        "key_findings": [row.get("finding_id") for row in _records(key_findings.get("findings"))],
         "auto_apply": False,
         "owner_approval_required": True,
         "position_advisory_config_mutated": False,
@@ -3484,9 +3764,7 @@ def _proposal_review_reason(
             "defensive_limited_adjustment_status="
             f"{defensive_summary.get('defensive_limited_adjustment_status')}."
         )
-    statuses = [
-        row.get("risk_return_status") for row in _records(risk_summary.get("summary"))
-    ]
+    statuses = [row.get("risk_return_status") for row in _records(risk_summary.get("summary"))]
     return f"owner review required; risk_return_statuses={statuses}."
 
 
@@ -3533,8 +3811,7 @@ def _confirmation_targets(
             },
             "current_status": "IN_PROGRESS",
             "reason": (
-                "Backtest simulation suggests medium-horizon return benefit "
-                "but worse drawdown."
+                "Backtest simulation suggests medium-horizon return benefit but worse drawdown."
             ),
         },
         {
@@ -4493,25 +4770,73 @@ def _weekly_review_questions() -> dict[str, Any]:
 
 
 def _load_shadow_candidate_sources(config: Mapping[str, Any]) -> list[dict[str, Any]]:
-    source = _mapping(config.get("source"))
-    shortlist_id = _text(source.get("shadow_shortlist_id"))
-    shortlist_dir = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_shortlist" / shortlist_id
-    rows = _read_jsonl(shortlist_dir / "shadow_shortlist_candidates.jsonl")
+    rows = _read_jsonl(_shadow_shortlist_path(config))
     result = []
+    candidate_ids: set[str] = set()
     for row in rows:
+        candidate_id = _text(row.get("candidate_id"))
+        if not candidate_id or candidate_id in candidate_ids:
+            raise DynamicV3BacktestSimulationError(
+                "shadow shortlist candidate identity missing or duplicate"
+            )
+        candidate_ids.add(candidate_id)
         artifact_path = _resolve_project_path(Path(_text(row.get("real_evaluation_artifact_path"))))
         daily_weights_path = artifact_path.parent / "daily_weights.csv"
+        manifest = _read_optional_json(artifact_path) or {}
+        if manifest.get("candidate_id") != candidate_id or not daily_weights_path.is_file():
+            raise DynamicV3BacktestSimulationError(
+                f"candidate source identity/files invalid: {candidate_id}"
+            )
         weights_by_date, regime_by_date = _read_daily_weights(daily_weights_path)
+        if not weights_by_date or any(
+            not weights or abs(sum(weights.values()) - 1.0) > 0.000001
+            for weights in weights_by_date.values()
+        ):
+            raise DynamicV3BacktestSimulationError(
+                f"candidate daily weights invalid: {candidate_id}"
+            )
         result.append(
             {
-                "candidate_id": _text(row.get("candidate_id")),
+                "candidate_id": candidate_id,
                 "shortlist_rank": row.get("shortlist_rank"),
+                "real_evaluation_manifest_path": artifact_path,
+                "real_evaluation_manifest_checksum": sha256(artifact_path.read_bytes()).hexdigest(),
                 "daily_weights_path": daily_weights_path,
+                "daily_weights_checksum": sha256(daily_weights_path.read_bytes()).hexdigest(),
                 "weights_by_date": weights_by_date,
                 "regime_by_date": regime_by_date,
             }
         )
     return result
+
+
+def _shadow_shortlist_path(config: Mapping[str, Any]) -> Path:
+    source = _mapping(config.get("source"))
+    shortlist_id = _text(source.get("shadow_shortlist_id"))
+    return (
+        DEFAULT_DYNAMIC_V3_RESEARCH_ROOT
+        / "shadow_shortlist"
+        / shortlist_id
+        / "shadow_shortlist_candidates.jsonl"
+    )
+
+
+def _candidate_source_snapshot(
+    candidates: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "candidate_id": row.get("candidate_id"),
+            "shortlist_rank": row.get("shortlist_rank"),
+            "real_evaluation_manifest_path": str(row.get("real_evaluation_manifest_path")),
+            "real_evaluation_manifest_checksum": row.get("real_evaluation_manifest_checksum"),
+            "daily_weights_path": str(row.get("daily_weights_path")),
+            "daily_weights_checksum": row.get("daily_weights_checksum"),
+            "weights_by_date": row.get("weights_by_date"),
+            "regime_by_date": row.get("regime_by_date"),
+        }
+        for row in candidates
+    ]
 
 
 def _read_daily_weights(path: Path) -> tuple[dict[str, dict[str, float]], dict[str, str]]:
@@ -4963,6 +5288,40 @@ def _price_source_snapshot(path: Path) -> dict[str, Any]:
     }
 
 
+def _text_source_snapshot(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {"path": str(path), "checksum": "", "content": ""}
+    content = path.read_text(encoding="utf-8")
+    return {
+        "path": str(path),
+        "checksum": sha256(content.encode("utf-8")).hexdigest(),
+        "content": content,
+    }
+
+
+def _csv_cutoff_snapshot(path: Path, *, end: date) -> dict[str, Any]:
+    if not path.is_file():
+        return {"row_count": 0, "max_date": "", "rows_checksum": ""}
+    frame = pd.read_csv(path)
+    date_column = next(
+        (name for name in ("date", "Date", "timestamp") if name in frame.columns),
+        "",
+    )
+    if not date_column:
+        raise DynamicV3BacktestSimulationError(f"cache date column missing: {path}")
+    parsed = pd.to_datetime(frame[date_column], errors="coerce").dt.date
+    selected = frame.loc[parsed.notna() & (parsed <= end)].copy()
+    selected[date_column] = parsed.loc[selected.index].map(date.isoformat)
+    max_date = parsed.loc[selected.index].max() if not selected.empty else None
+    selected = selected.sort_values(list(selected.columns), kind="stable").reset_index(drop=True)
+    material = selected.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    return {
+        "row_count": len(selected),
+        "max_date": "" if max_date is None else max_date.isoformat(),
+        "rows_checksum": sha256(material).hexdigest(),
+    }
+
+
 def _portfolio_symbols(config: Mapping[str, Any]) -> set[str]:
     baseline = _mapping(_mapping(config.get("portfolio")).get("baseline_snapshot"))
     symbols = set(baseline)
@@ -5010,6 +5369,19 @@ def _date_from_any(value: Any) -> date | None:
             return pd.to_datetime(value, errors="raise").date()
         except (ValueError, TypeError):
             return None
+
+
+def _datetime_from_any(value: Any) -> datetime | None:
+    text = _text(value)
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed.astimezone(UTC)
 
 
 def _read_text(path: Path) -> str:
