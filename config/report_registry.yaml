@@ -6265,8 +6265,9 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_portfolio_report.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-136 tracks owner-reviewed paper-only advisory simulation state
-      and immutable action ledger without mutating the real portfolio.
+      TRADING-136 tracks validated initial config/snapshot sources and a
+      source-bound append-only checksum action ledger whose state, history,
+      manifest, and report are replayable without mutating the real portfolio.
     owner_action: review_paper_portfolio_state_before_outcome_or_weekly_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

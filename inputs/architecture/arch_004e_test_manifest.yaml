@@ -123,7 +123,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_paper_tracking_helpers
   path: tests/dynamic_v3_paper_tracking_helpers.py
-  sha256: 93719d61f308ac7cf4450205d788d8c76df77cde380f1773f98cd34a4987cbf5
+  sha256: f6d749a5bcc6dac2394a25258a0ab698d68a21dcbdd2d1b32608b65ed78ee232
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7293,7 +7293,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_advisory_outcome
   path: tests/test_advisory_outcome.py
-  sha256: 565d70d70b8b1ec24aeeba7869c6f7248db1ef5e5b6ae091bc8c6cfe679f1b68
+  sha256: 291c508abea42aa33fb790656327be39c2d6aaea93fce41f33a7343d64c93212
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: a2b5ad0cf8025eca9ffa31e8c231685a091986872131ad342db89fc8dce5d33d
+  sha256: b139b9ca7c78d797df7ab7194cefaaddab847f66b18c1c605c6fa5e9b44cfde3
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: d7a3ab273abf6e1967a8aea2595fe3f56e01127683a87a1d63d81a985ddd0295
+  sha256: c2767f08111a4ef9b7a3062df6580dd84c0c1b3791fd13ca8335363b1266bc25
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: cee97380ad714ac655c6affcc63db67d74ba8719b402338b38fb5c0e4ebc8ef3
+  sha256: bf1e4f63889f9d8f76d47329f5046cd66e2ee11b13fc92bfdcac3ebd90f018a3
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -12081,7 +12081,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_paper_portfolio
   path: tests/test_paper_portfolio.py
-  sha256: 8bfd6b11769fd57772b7bdc4c1338cab75f7d45e83c977765f586f1ca848f9d7
+  sha256: 9f7860a690cf4c0031e0efabfbfb4216cfd7be0c50f17d767818290aa50abb4e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

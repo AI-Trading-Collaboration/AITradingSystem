@@ -2412,7 +2412,32 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4al["legacy_root_command_decorators_after"] == 771
     assert migration_g2_4al["python_module_count"] == 850
     assert phase_g2_4al["sources"]
+    superseded_g2_4al = set(phase_g2_4al["superseded_source_paths"])
     for source in phase_g2_4al["sources"]:
+        if source["path"] in superseded_g2_4al:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4am = baseline["phase_g2_4am_etf_cli_dynamic_v3_paper_portfolio"]
+    assert phase_g2_4am["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4am = phase_g2_4am["migration"]
+    assert migration_g2_4am["callback_count"] == 5
+    assert migration_g2_4am["requires_validated_initial_config_snapshot"] is True
+    assert migration_g2_4am["append_only_checksum_event_chain"] is True
+    assert migration_g2_4am["one_review_one_action"] is True
+    assert migration_g2_4am["requires_validated_owner_review"] is True
+    assert migration_g2_4am["requires_frozen_daily_source"] is True
+    assert migration_g2_4am["manual_deltas_finite_zero_sum"] is True
+    assert migration_g2_4am["policy_limited_content_replay"] is True
+    assert migration_g2_4am["materialized_views_derived_from_events"] is True
+    assert migration_g2_4am["legacy_unchained_mutation_allowed"] is False
+    assert migration_g2_4am["paper_state_is_real_portfolio_mutation"] is False
+    assert migration_g2_4am["legacy_root_lines_after"] == 27212
+    assert migration_g2_4am["legacy_root_top_level_functions_after"] == 805
+    assert migration_g2_4am["legacy_root_command_decorators_after"] == 766
+    assert migration_g2_4am["python_module_count"] == 851
+    assert phase_g2_4am["sources"]
+    for source in phase_g2_4am["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2437,6 +2462,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
     assert attribution["status"] in {
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AL_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AL_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AM_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AM_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {

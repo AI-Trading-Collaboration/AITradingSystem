@@ -118,6 +118,11 @@ DYNAMIC_V3_OWNER_REVIEW_JOURNAL_COMMANDS_PATH = (
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
     "dynamic_v3_owner_review_journal.py"
 )
+DYNAMIC_V3_PAPER_PORTFOLIO_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_paper_portfolio.py"
+)
 DYNAMIC_V3_FAILURE_ATTRIBUTION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_failure_attribution.py"
@@ -267,7 +272,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27373
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27212
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -478,8 +483,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27373
-    assert len(legacy_names) == 810
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 27212
+    assert len(legacy_names) == 805
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1114,6 +1119,33 @@ def test_g2_4_dynamic_v3_owner_review_journal_callbacks_leave_legacy_root() -> N
     assert callbacks <= canonical_names
 
 
+def test_g2_4_dynamic_v3_paper_portfolio_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_PAPER_PORTFOLIO_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_paper_portfolio_init_command",
+        "dynamic_v3_paper_portfolio_apply_review_command",
+        "dynamic_v3_paper_portfolio_state_command",
+        "dynamic_v3_paper_portfolio_report_command",
+        "dynamic_v3_validate_paper_portfolio_command",
+    }
+    legacy_imported_names = _imported_names(legacy_tree)
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert legacy_imported_names.isdisjoint(
+        {
+            "init_paper_portfolio",
+            "apply_owner_review_to_paper_portfolio",
+            "paper_portfolio_state_payload",
+            "paper_portfolio_report_payload",
+            "validate_paper_portfolio_artifact",
+        }
+    )
+
+
 def __file_path() -> Path:
     return Path(__file__).resolve()
 
@@ -1151,4 +1183,13 @@ def _imported_modules(tree: ast.Module) -> set[str]:
         node.module
         for node in tree.body
         if isinstance(node, ast.ImportFrom) and node.module is not None
+    }
+
+
+def _imported_names(tree: ast.Module) -> set[str]:
+    return {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom)
+        for alias in node.names
     }

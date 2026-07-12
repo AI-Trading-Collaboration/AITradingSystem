@@ -1,17 +1,25 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import yaml
+from dynamic_v3_position_readiness_helpers import (
+    position_advisory_config,
+    shadow_shortlist_fixture,
+)
 
 from ai_trading_system.config import configured_price_tickers, configured_rate_series, load_universe
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     SCHEMA_VERSION,
+    create_owner_review,
+    record_owner_review_decision,
+    run_position_advisory_daily,
+    run_shadow_shortlist_monitor,
 )
 
 
@@ -201,6 +209,45 @@ def write_owner_review(
         encoding="utf-8",
     )
     return {"review_id": review_id, "review_dir": review_dir, "record": record}
+
+
+def write_validated_owner_review(
+    tmp_path: Path,
+    *,
+    owner_decision: str,
+    as_of: date = date(2026, 6, 7),
+) -> dict[str, Any]:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    fixture = shadow_shortlist_fixture(tmp_path)
+    monitor = run_shadow_shortlist_monitor(
+        shadow_shortlist_id=fixture["shadow"]["shadow_shortlist_id"],
+        as_of=as_of,
+        shadow_shortlist_dir=tmp_path / "shadow_shortlist",
+        output_dir=tmp_path / "shadow_monitor_runs",
+    )
+    daily = run_position_advisory_daily(
+        shadow_monitor_run_id=monitor["monitor_run_id"],
+        config_path=position_advisory_config(tmp_path),
+        shadow_monitor_run_dir=tmp_path / "shadow_monitor_runs",
+        output_dir=tmp_path / "position_advisory_daily",
+    )
+    created = create_owner_review(
+        daily_advisory_id=daily["daily_advisory_id"],
+        daily_advisory_dir=tmp_path / "position_advisory_daily",
+        output_dir=tmp_path / "owner_review_journal",
+    )
+    record_owner_review_decision(
+        review_id=created["review_id"],
+        decision=owner_decision,
+        output_dir=tmp_path / "owner_review_journal",
+        daily_advisory_dir=tmp_path / "position_advisory_daily",
+    )
+    return {
+        "review_id": created["review_id"],
+        "daily_advisory_id": daily["daily_advisory_id"],
+        "daily_advisory_dir": tmp_path / "position_advisory_daily",
+        "owner_review_dir": tmp_path / "owner_review_journal",
+    }
 
 
 def write_market_cache(

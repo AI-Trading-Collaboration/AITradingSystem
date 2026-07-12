@@ -7,7 +7,7 @@ from dynamic_v3_paper_tracking_helpers import (
     paper_config_path,
     write_daily_advisory,
     write_market_cache,
-    write_owner_review,
+    write_validated_owner_review,
 )
 
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
@@ -47,25 +47,23 @@ def test_advisory_outcome_track_creates_pending_windows(tmp_path: Path) -> None:
 def test_advisory_outcome_update_marks_available_with_quality_gate(tmp_path: Path) -> None:
     config_path = paper_config_path(tmp_path)
     init_paper_portfolio(config_path=config_path, output_dir=tmp_path / "paper_portfolio")
-    advisory = write_daily_advisory(tmp_path, as_of="2026-06-08")
-    review = write_owner_review(
-        tmp_path,
-        daily_advisory_id=advisory["daily_advisory_id"],
+    review = write_validated_owner_review(
+        tmp_path / "validated_source",
         owner_decision="paper_adjustment",
-        as_of="2026-06-08",
+        as_of=date(2026, 6, 8),
     )
     apply_owner_review_to_paper_portfolio(
         review_id=review["review_id"],
         config_path=config_path,
         output_dir=tmp_path / "paper_portfolio",
-        owner_review_dir=tmp_path / "owner_review_journal",
-        daily_advisory_dir=tmp_path / "position_advisory_daily",
+        owner_review_dir=review["owner_review_dir"],
+        daily_advisory_dir=review["daily_advisory_dir"],
     )
     outcome = track_advisory_outcome(
-        daily_advisory_id=advisory["daily_advisory_id"],
+        daily_advisory_id=review["daily_advisory_id"],
         config_path=config_path,
         output_dir=tmp_path / "advisory_outcome",
-        daily_advisory_dir=tmp_path / "position_advisory_daily",
+        daily_advisory_dir=review["daily_advisory_dir"],
         paper_portfolio_dir=tmp_path / "paper_portfolio",
     )
     prices_path, rates_path = write_market_cache(tmp_path, start="2026-06-08")

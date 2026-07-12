@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -31,11 +32,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     OWNER_REVIEW_DECISIONS,
     SCHEMA_VERSION,
     STRATEGY_FAMILY,
+    validate_owner_review_artifact,
+    validate_position_advisory_daily_artifact,
 )
 from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_PRICE_PATH,
     load_etf_config_bundle,
 )
+from ai_trading_system.platform.artifacts.writer import write_text_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH = (
@@ -50,6 +54,9 @@ DEFAULT_SHADOW_AGING_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_aging"
 DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weekly_advisory_review"
 
 PAPER_DECISIONS_NO_STATE_CHANGE = {"monitor", "no_trade", "reject_advisory", "needs_more_data"}
+PAPER_ACTION_LEDGER_SCHEMA_VERSION = "paper_action_ledger.v2"
+PAPER_ACTION_EVENT_TYPE = "PAPER_PORTFOLIO_REVIEW_APPLIED"
+PAPER_WEIGHT_TOLERANCE = 0.000001
 OUTCOME_WINDOW_STATUSES = {"PENDING", "AVAILABLE", "INSUFFICIENT_DATA"}
 PROMOTION_CLOCK_STATUSES = {
     "not_started",
@@ -68,6 +75,32 @@ def load_paper_portfolio_config(path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH
     raw = safe_load_yaml_path(path)
     if not isinstance(raw, Mapping):
         raise DynamicV3PaperTrackingError("paper portfolio config must be a mapping")
+    metadata = _mapping(raw.get("policy_metadata"))
+    required_metadata = {
+        "policy_id",
+        "owner",
+        "version",
+        "status",
+        "rationale",
+        "intended_effect",
+        "review_condition",
+    }
+    missing_metadata = sorted(key for key in required_metadata if not _text(metadata.get(key)))
+    if missing_metadata:
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio policy metadata is incomplete: " + ",".join(missing_metadata)
+        )
+    paper_config = _mapping(raw.get("paper_portfolio"))
+    if paper_config.get("enabled") is not True:
+        raise DynamicV3PaperTrackingError("paper portfolio config must be enabled")
+    if paper_config.get("mode") != "advisory_simulation_only":
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio mode must be advisory_simulation_only"
+        )
+    if paper_config.get("initial_source") != "manual_snapshot":
+        raise DynamicV3PaperTrackingError("paper portfolio initial source must be manual_snapshot")
+    if not _text(paper_config.get("initial_snapshot_path")):
+        raise DynamicV3PaperTrackingError("paper portfolio initial snapshot path is required")
     safety = _mapping(raw.get("safety"))
     if safety.get("broker_action_allowed") is not False:
         raise DynamicV3PaperTrackingError("paper portfolio config must forbid broker actions")
@@ -77,6 +110,44 @@ def load_paper_portfolio_config(path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH
         )
     if safety.get("allow_auto_apply_advisory") is not False:
         raise DynamicV3PaperTrackingError("paper portfolio config must forbid auto apply")
+    if safety.get("require_owner_review") is not True:
+        raise DynamicV3PaperTrackingError("paper portfolio config must require owner review")
+    ledger = _mapping(raw.get("ledger"))
+    if (
+        ledger.get("immutable_events") is not True
+        or ledger.get("allow_rebuild_from_events") is not True
+    ):
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio ledger must be immutable and rebuildable from events"
+        )
+    simulation = _mapping(raw.get("simulation"))
+    thresholds = {
+        "min_trade_threshold": _strict_finite_number(
+            simulation.get("min_trade_threshold"), "min_trade_threshold"
+        ),
+        "max_single_day_total_adjustment": _strict_finite_number(
+            simulation.get("max_single_day_total_adjustment"),
+            "max_single_day_total_adjustment",
+        ),
+        "max_single_symbol_adjustment": _strict_finite_number(
+            simulation.get("max_single_symbol_adjustment"),
+            "max_single_symbol_adjustment",
+        ),
+    }
+    if not 0 <= thresholds["min_trade_threshold"] <= 1:
+        raise DynamicV3PaperTrackingError("min_trade_threshold must be within [0,1]")
+    if not 0 < thresholds["max_single_day_total_adjustment"] <= 2:
+        raise DynamicV3PaperTrackingError(
+            "max_single_day_total_adjustment must be within (0,2]"
+        )
+    if not 0 < thresholds["max_single_symbol_adjustment"] <= 1:
+        raise DynamicV3PaperTrackingError(
+            "max_single_symbol_adjustment must be within (0,1]"
+        )
+    if thresholds["min_trade_threshold"] > thresholds["max_single_symbol_adjustment"]:
+        raise DynamicV3PaperTrackingError(
+            "min_trade_threshold cannot exceed max_single_symbol_adjustment"
+        )
     return dict(raw)
 
 
@@ -87,13 +158,18 @@ def init_paper_portfolio(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    config = load_paper_portfolio_config(config_path)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    resolved_config_path = _resolve_project_path(config_path)
+    config = load_paper_portfolio_config(resolved_config_path)
     paper_config = _mapping(config.get("paper_portfolio"))
     snapshot_path = _resolve_project_path(Path(_text(paper_config.get("initial_snapshot_path"))))
     snapshot = _manual_snapshot_weights(snapshot_path)
+    policy_metadata = _mapping(config.get("policy_metadata"))
     paper_portfolio_id = _stable_id(
         "paper-portfolio",
-        str(config_path),
+        str(resolved_config_path),
+        _file_sha256(snapshot_path),
+        _file_sha256(resolved_config_path),
         str(snapshot_path),
         snapshot.get("as_of"),
         generated.isoformat(),
@@ -119,9 +195,21 @@ def init_paper_portfolio(
         "mode": _text(paper_config.get("mode"), "advisory_simulation_only"),
         "base_currency": state["base_currency"],
         "initial_source": _text(paper_config.get("initial_source"), "manual_snapshot"),
+        "initial_as_of": state["as_of"],
+        "initial_base_currency": state["base_currency"],
         "initial_snapshot_path": str(snapshot_path),
+        "initial_snapshot_checksum": _file_sha256(snapshot_path),
         "initial_weights": state["positions"],
-        "config_path": str(config_path),
+        "config_path": str(resolved_config_path),
+        "config_checksum": _file_sha256(resolved_config_path),
+        "config_policy_id": _text(policy_metadata.get("policy_id")),
+        "config_policy_version": _text(policy_metadata.get("version")),
+        "ledger_schema_version": PAPER_ACTION_LEDGER_SCHEMA_VERSION,
+        "event_chain_status": "PASS",
+        "paper_action_count": 0,
+        "last_updated_at": generated.isoformat(),
+        "last_review_id": "",
+        "last_action_id": "",
         "paper_portfolio_state_path": str(portfolio_dir / "paper_portfolio_state.json"),
         "paper_action_ledger_path": str(portfolio_dir / "paper_action_ledger.jsonl"),
         "paper_position_history_path": str(portfolio_dir / "paper_position_history.jsonl"),
@@ -130,6 +218,10 @@ def init_paper_portfolio(
         "broker_action_taken": False,
         "owner_approval_required": True,
         "manual_review_required": True,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_effect": "none",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -139,8 +231,10 @@ def init_paper_portfolio(
             "paper_portfolio_id": portfolio_dir.name,
             "as_of": state["as_of"],
             "event_type": "init",
+            "event_sequence": 0,
             "review_id": "",
             "paper_action_id": "",
+            "source_snapshot_checksum": manifest["initial_snapshot_checksum"],
             "positions": state["positions"],
             "total_weight": state["total_weight"],
             "broker_action_taken": False,
@@ -180,119 +274,145 @@ def apply_owner_review_to_paper_portfolio(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    config = load_paper_portfolio_config(config_path)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
     portfolio_dir = _paper_portfolio_dir(
         paper_portfolio_id=paper_portfolio_id,
         output_dir=output_dir,
     )
+    resolved_portfolio_id = portfolio_dir.name
+    current_validation = validate_paper_portfolio_artifact(
+        paper_portfolio_id=resolved_portfolio_id,
+        output_dir=output_dir,
+    )
+    if current_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio validation must PASS before mutation; "
+            f"status={current_validation.get('status')}"
+        )
     manifest = _read_json(portfolio_dir / "paper_portfolio_manifest.json")
     state = _read_json(portfolio_dir / "paper_portfolio_state.json")
     ledger_path = portfolio_dir / "paper_action_ledger.jsonl"
-    history_path = portfolio_dir / "paper_position_history.jsonl"
+    manifest_config_path = Path(_text(manifest.get("config_path")))
+    resolved_config_path = _resolve_project_path(config_path)
+    if not _paths_equal(manifest_config_path, resolved_config_path):
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio config must match the immutable initialization source"
+        )
+    config = load_paper_portfolio_config(manifest_config_path)
+    if manifest.get("config_checksum") != _file_sha256(manifest_config_path):
+        raise DynamicV3PaperTrackingError("paper portfolio config changed after initialization")
+    owner_validation = validate_owner_review_artifact(
+        review_id=review_id,
+        output_dir=owner_review_dir,
+    )
+    if owner_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "owner review validation must PASS before paper portfolio mutation"
+        )
     review = _owner_review_record(review_id=review_id, output_dir=owner_review_dir)
     owner_decision = _text(review.get("owner_decision"))
     if owner_decision not in OWNER_REVIEW_DECISIONS:
         raise DynamicV3PaperTrackingError(f"unsupported owner decision: {owner_decision}")
     daily_advisory_id = _text(review.get("daily_advisory_id"))
-    before = _clean_weights(_mapping(state.get("positions")))
-    proposed = _paper_proposed_deltas(
+    source_daily_root = Path(_text(review.get("source_daily_advisory_root")))
+    if not _paths_equal(source_daily_root, daily_advisory_dir):
+        raise DynamicV3PaperTrackingError(
+            "daily advisory root must match the owner review frozen source"
+        )
+    daily_validation = validate_position_advisory_daily_artifact(
         daily_advisory_id=daily_advisory_id,
-        before_weights=before,
-        daily_advisory_dir=daily_advisory_dir,
+        output_dir=source_daily_root,
     )
+    if daily_validation.get("status") != "PASS":
+        raise DynamicV3PaperTrackingError(
+            "daily advisory validation must PASS before paper portfolio mutation"
+        )
+    source_paths = _mapping(review.get("source_artifact_paths"))
+    source_checksums = _mapping(review.get("source_artifact_checksums"))
+    if not source_paths or any(
+        not Path(_text(path)).is_file()
+        or source_checksums.get(key) != _file_sha256(Path(_text(path)))
+        for key, path in source_paths.items()
+    ):
+        raise DynamicV3PaperTrackingError(
+            "owner review daily advisory frozen source changed before paper mutation"
+        )
+    ledger = _read_jsonl(ledger_path)
+    if any(row.get("review_id") == review_id for row in ledger):
+        raise DynamicV3PaperTrackingError(
+            f"owner review already applied to paper portfolio: {review_id}"
+        )
+    before = _clean_weights(_mapping(state.get("positions")))
+    review_as_of = _date_from_any(review.get("as_of"))
+    state_as_of = _date_from_any(state.get("as_of"))
+    if review_as_of is None or (state_as_of is not None and review_as_of < state_as_of):
+        raise DynamicV3PaperTrackingError(
+            "owner review as_of cannot precede the current paper portfolio state"
+        )
     manual_override = False
     action_type = "no_trade"
     reason = owner_decision
     if owner_decision == "paper_adjustment":
         action_type = "paper_adjustment"
-        applied = _limit_paper_deltas(proposed, config)
+        if manual_deltas:
+            raise DynamicV3PaperTrackingError(
+                "manual deltas are not allowed for paper_adjustment"
+            )
+        proposed = _paper_proposed_deltas(
+            daily_advisory_id=daily_advisory_id,
+            before_weights=before,
+            daily_advisory_dir=source_daily_root,
+        )
+        if not proposed:
+            raise DynamicV3PaperTrackingError(
+                "paper_adjustment requires non-empty source-derived deltas"
+            )
     elif owner_decision == "manual_adjustment":
         action_type = "manual_adjustment"
         manual_override = True
-        proposed = _clean_weights(dict(manual_deltas or {}))
-        applied = _limit_paper_deltas(proposed, config)
-        if not proposed:
-            reason = "manual_adjustment_without_deltas"
+        proposed = _validated_manual_deltas(manual_deltas)
     else:
-        applied = {}
+        if manual_deltas:
+            raise DynamicV3PaperTrackingError(
+                f"manual deltas are not allowed for owner decision: {owner_decision}"
+            )
+        proposed = {}
+    applied = _limit_paper_deltas(proposed, config, before_weights=before)
     after = _apply_weight_deltas(before, applied)
-    paper_action_id = _stable_id(
-        "paper-portfolio-action",
-        portfolio_dir.name,
-        review_id,
-        generated.isoformat(),
+    event = _build_paper_action_event(
+        events=ledger,
+        paper_portfolio_id=resolved_portfolio_id,
+        review=review,
+        owner_review_dir=owner_review_dir,
+        source_daily_root=source_daily_root,
+        source_paths=source_paths,
+        source_checksums=source_checksums,
+        config_path=manifest_config_path,
+        config=config,
+        action_type=action_type,
+        manual_override=manual_override,
+        before_weights=before,
+        proposed_deltas=proposed,
+        applied_deltas=applied,
+        after_weights=after,
+        reason=reason,
+        event_at=generated,
     )
-    event = {
-        "schema_version": SCHEMA_VERSION,
-        "paper_action_id": paper_action_id,
-        "paper_portfolio_id": portfolio_dir.name,
-        "review_id": review_id,
-        "daily_advisory_id": daily_advisory_id,
-        "as_of": _text(review.get("as_of"), _text(state.get("as_of"))),
-        "owner_decision": owner_decision,
-        "action_type": action_type,
-        "manual_override": manual_override,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "before_weights": before,
-        "proposed_deltas": proposed,
-        "applied_paper_deltas": applied,
-        "after_weights": after,
-        "reason": reason,
-        "notes": _text(review.get("manual_notes")),
-        "created_at": generated.isoformat(),
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    ledger = [*_read_jsonl(ledger_path), event]
-    next_state_status = "NEEDS_REVIEW" if owner_decision == "needs_more_data" else "ACTIVE"
-    next_state = _paper_state_payload(
-        paper_portfolio_id=portfolio_dir.name,
-        as_of=_text(event.get("as_of"), _text(state.get("as_of"))),
-        base_currency=_text(state.get("base_currency"), "USD"),
-        source=_text(state.get("source"), "manual_snapshot"),
-        positions=after,
-        last_review_id=review_id,
-        last_action_id=paper_action_id,
-        state_status=next_state_status,
-    )
-    history = _read_jsonl(history_path)
-    history.append(
-        {
-            "schema_version": SCHEMA_VERSION,
-            "paper_portfolio_id": portfolio_dir.name,
-            "as_of": next_state["as_of"],
-            "event_type": action_type,
-            "review_id": review_id,
-            "paper_action_id": paper_action_id,
-            "positions": next_state["positions"],
-            "total_weight": next_state["total_weight"],
-            "broker_action_taken": False,
-            "created_at": generated.isoformat(),
-        }
-    )
-    manifest["last_updated_at"] = generated.isoformat()
-    manifest["last_review_id"] = review_id
-    manifest["last_action_id"] = paper_action_id
-    manifest["broker_action_allowed"] = False
-    manifest["broker_action_taken"] = False
-    _write_json(portfolio_dir / "paper_portfolio_manifest.json", manifest)
-    _write_json(portfolio_dir / "paper_portfolio_state.json", next_state)
-    _write_jsonl(ledger_path, ledger)
-    _write_jsonl(history_path, history)
-    _write_text(
-        portfolio_dir / "paper_portfolio_report.md",
-        render_paper_portfolio_report(manifest, next_state, ledger),
+    _append_jsonl_atomic(ledger_path, event)
+    next_state = _materialize_paper_portfolio(
+        portfolio_dir=portfolio_dir,
+        manifest=manifest,
+        events=[*ledger, event],
     )
     _update_latest_pointer(
         "latest_paper_portfolio",
-        portfolio_dir.name,
+        resolved_portfolio_id,
         portfolio_dir / "paper_portfolio_manifest.json",
     )
     return {
-        "paper_portfolio_id": portfolio_dir.name,
+        "paper_portfolio_id": resolved_portfolio_id,
         "paper_portfolio_dir": portfolio_dir,
-        "paper_action_id": paper_action_id,
+        "paper_action_id": event["paper_action_id"],
         "event": event,
         "state": next_state,
     }
@@ -338,73 +458,192 @@ def validate_paper_portfolio_artifact(
     output_dir: Path = DEFAULT_PAPER_PORTFOLIO_DIR,
 ) -> dict[str, Any]:
     portfolio_dir = output_dir / paper_portfolio_id
-    manifest = _read_optional_json(portfolio_dir / "paper_portfolio_manifest.json") or {}
-    state = _read_optional_json(portfolio_dir / "paper_portfolio_state.json") or {}
-    ledger = _read_jsonl(portfolio_dir / "paper_action_ledger.jsonl")
-    rebuilt = _rebuild_paper_state(manifest, ledger)
+    required_names = [
+        "paper_portfolio_manifest.json",
+        "paper_portfolio_state.json",
+        "paper_action_ledger.jsonl",
+        "paper_position_history.jsonl",
+        "paper_portfolio_report.md",
+    ]
+    parse_error = ""
+    try:
+        manifest = _read_optional_json(portfolio_dir / "paper_portfolio_manifest.json") or {}
+        state = _read_optional_json(portfolio_dir / "paper_portfolio_state.json") or {}
+        ledger = _read_jsonl(portfolio_dir / "paper_action_ledger.jsonl")
+        history = _read_jsonl(portfolio_dir / "paper_position_history.jsonl")
+    except Exception as exc:  # noqa: BLE001
+        manifest, state, ledger, history = {}, {}, [], []
+        parse_error = str(exc)
+    base_checks = [
+        _check(f"artifact_exists:{name}", (portfolio_dir / name).is_file(), name)
+        for name in required_names
+    ]
+    base_checks.extend(
+        [
+            _check("artifacts_parse", not parse_error, parse_error or "artifacts parsed"),
+            _check(
+                "paper_portfolio_id_matches",
+                manifest.get("paper_portfolio_id") == paper_portfolio_id
+                and state.get("paper_portfolio_id") == paper_portfolio_id,
+                paper_portfolio_id,
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and state.get("broker_action_allowed") is False,
+                "broker action forbidden",
+            ),
+            _check(
+                "broker_action_not_taken",
+                manifest.get("broker_action_taken") is False
+                and state.get("broker_action_taken") is False,
+                "broker action not taken",
+            ),
+            _check(
+                "total_weight_is_one",
+                _is_finite_number(state.get("total_weight"))
+                and abs(_float(state.get("total_weight")) - 1.0) <= PAPER_WEIGHT_TOLERANCE,
+                str(state.get("total_weight")),
+            ),
+        ]
+    )
+    is_legacy = manifest.get("ledger_schema_version") != PAPER_ACTION_LEDGER_SCHEMA_VERSION
+    if is_legacy:
+        rebuilt = _rebuild_paper_state(manifest, ledger)
+        checks = [
+            *base_checks,
+            _check(
+                "legacy_ledger_rebuild_matches_state",
+                _weights_equal(rebuilt, _mapping(state.get("positions"))),
+                "legacy ledger rebuild",
+            ),
+        ]
+        structural_pass = all(check["passed"] for check in checks)
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_paper_portfolio_validation",
+            artifact_id_key="paper_portfolio_id",
+            artifact_id=paper_portfolio_id,
+            status="PASS_WITH_WARNINGS" if structural_pass else "FAIL",
+            checks=checks,
+        )
+        payload.update(
+            {
+                "event_chain_status": "LEGACY_UNCHAINED",
+                "mutation_allowed": False,
+                "warnings": ["LEGACY_UNCHAINED"] if structural_pass else [],
+            }
+        )
+        return payload
+    replay_state: dict[str, Any] = {}
+    expected_history: list[dict[str, Any]] = []
+    replay_errors: list[str] = []
+    source_error = ""
+    try:
+        config_path = Path(_text(manifest.get("config_path")))
+        snapshot_path = Path(_text(manifest.get("initial_snapshot_path")))
+        config = load_paper_portfolio_config(config_path)
+        snapshot = _manual_snapshot_weights(snapshot_path)
+        if manifest.get("config_checksum") != _file_sha256(config_path):
+            raise DynamicV3PaperTrackingError("config checksum mismatch")
+        if manifest.get("initial_snapshot_checksum") != _file_sha256(snapshot_path):
+            raise DynamicV3PaperTrackingError("initial snapshot checksum mismatch")
+        if not _weights_equal(snapshot["weights"], _mapping(manifest.get("initial_weights"))):
+            raise DynamicV3PaperTrackingError("initial snapshot weights mismatch")
+        paper_config = _mapping(config.get("paper_portfolio"))
+        policy = _mapping(config.get("policy_metadata"))
+        if (
+            manifest.get("initial_as_of") != snapshot.get("as_of")
+            or manifest.get("initial_base_currency") != snapshot.get("base_currency")
+            or manifest.get("base_currency") != snapshot.get("base_currency")
+            or manifest.get("mode") != paper_config.get("mode")
+            or manifest.get("initial_source") != paper_config.get("initial_source")
+            or manifest.get("config_policy_id") != policy.get("policy_id")
+            or manifest.get("config_policy_version") != policy.get("version")
+        ):
+            raise DynamicV3PaperTrackingError("initial source-derived manifest fields mismatch")
+        replay_state, expected_history, replay_errors = _replay_paper_action_events(
+            manifest=manifest,
+            events=ledger,
+            config=config,
+            validate_sources=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        source_error = str(exc)
+    expected_manifest = (
+        _paper_manifest_materialized_payload(manifest=manifest, events=ledger)
+        if not source_error and not replay_errors
+        else {}
+    )
+    expected_report = (
+        render_paper_portfolio_report(expected_manifest, replay_state, ledger)
+        if expected_manifest
+        else ""
+    )
+    report_path = portfolio_dir / "paper_portfolio_report.md"
     checks = [
+        *base_checks,
         _check(
-            "manifest_exists",
-            (portfolio_dir / "paper_portfolio_manifest.json").exists(),
-            str(portfolio_dir),
+            "ledger_schema_current",
+            manifest.get("ledger_schema_version") == PAPER_ACTION_LEDGER_SCHEMA_VERSION,
+            _text(manifest.get("ledger_schema_version")),
         ),
         _check(
-            "state_exists",
-            (portfolio_dir / "paper_portfolio_state.json").exists(),
-            str(portfolio_dir),
+            "source_recomputation_succeeds",
+            not source_error,
+            source_error or "initial sources recomputed",
         ),
         _check(
-            "ledger_exists",
-            (portfolio_dir / "paper_action_ledger.jsonl").exists(),
-            str(portfolio_dir),
+            "event_chain_and_content_valid",
+            not replay_errors,
+            ",".join(replay_errors),
         ),
         _check(
-            "history_exists",
-            (portfolio_dir / "paper_position_history.jsonl").exists(),
-            str(portfolio_dir),
+            "state_matches_event_replay",
+            state == replay_state,
+            _text(state.get("last_action_id")),
         ),
         _check(
-            "report_exists",
-            (portfolio_dir / "paper_portfolio_report.md").exists(),
-            str(portfolio_dir),
+            "history_matches_event_replay",
+            history == expected_history,
+            f"history={len(history)} expected={len(expected_history)}",
         ),
         _check(
-            "paper_portfolio_id_matches",
-            manifest.get("paper_portfolio_id") == paper_portfolio_id
-            and state.get("paper_portfolio_id") == paper_portfolio_id,
-            paper_portfolio_id,
+            "manifest_materialized_fields_match",
+            manifest == expected_manifest,
+            _text(manifest.get("last_action_id")),
         ),
         _check(
-            "broker_action_forbidden",
-            manifest.get("broker_action_allowed") is False
-            and state.get("broker_action_allowed") is False,
-            "broker action forbidden",
+            "report_matches_event_replay",
+            report_path.is_file()
+            and report_path.read_text(encoding="utf-8") == expected_report,
+            str(report_path),
         ),
         _check(
-            "broker_action_not_taken",
-            manifest.get("broker_action_taken") is False
-            and state.get("broker_action_taken") is False,
-            "broker action not taken",
-        ),
-        _check(
-            "total_weight_is_one",
-            abs(_float(state.get("total_weight")) - 1.0) <= 0.000001,
-            str(state.get("total_weight")),
-        ),
-        _check(
-            "ledger_rebuild_matches_state",
-            _weights_equal(rebuilt, _mapping(state.get("positions"))),
-            "ledger rebuild",
+            "no_execution_effect",
+            manifest.get("official_target_weights_generated") is False
+            and manifest.get("portfolio_mutated") is False
+            and manifest.get("order_ticket_generated") is False
+            and manifest.get("production_effect") == "none"
+            and all(_paper_event_has_no_execution_effect(row) for row in ledger),
+            "paper simulation only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
-    return _validation_payload(
+    payload = _validation_payload(
         report_type="etf_dynamic_v3_paper_portfolio_validation",
         artifact_id_key="paper_portfolio_id",
         artifact_id=paper_portfolio_id,
         status=status,
         checks=checks,
     )
+    payload.update(
+        {
+            "event_chain_status": "PASS" if status == "PASS" else "FAIL",
+            "mutation_allowed": status == "PASS",
+            "event_count": len(ledger),
+        }
+    )
+    return payload
 
 
 def track_advisory_outcome(
@@ -1222,10 +1461,15 @@ def render_paper_portfolio_report(
             f"- as_of：{state.get('as_of', '')}",
             f"- 当前权重：{weights}",
             f"- paper action count：{len(ledger)}",
+            f"- ledger schema：{manifest.get('ledger_schema_version', 'LEGACY_UNCHAINED')}",
+            f"- event chain status：{manifest.get('event_chain_status', 'LEGACY_UNCHAINED')}",
+            "- config policy："
+            f"{manifest.get('config_policy_id', '')}@{manifest.get('config_policy_version', '')}",
             "- broker_action_allowed：false",
             "- broker_action_taken：false",
             "- 解释：这是 advisory_simulation_only 纸面组合，"
             "不是 broker import，也不是真实仓位修改。",
+            "- 完整性说明：event checksum 是可重算的审计链，不是 owner 数字签名。",
             "",
         ]
     )
@@ -1394,25 +1638,40 @@ def render_weekly_advisory_reader_brief(
 
 
 def _manual_snapshot_weights(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3PaperTrackingError(f"manual snapshot not found: {path}")
     raw = safe_load_yaml_path(path)
     if not isinstance(raw, Mapping):
         raise DynamicV3PaperTrackingError("manual snapshot must be a mapping")
     cash = _mapping(raw.get("cash"))
     positions = _records(raw.get("positions"))
+    symbols = [_text(row.get("symbol")) for row in positions]
+    if not symbols or any(not symbol for symbol in symbols):
+        raise DynamicV3PaperTrackingError("manual snapshot positions require symbols")
+    cash_symbol = _text(cash.get("symbol"), "CASH")
+    all_symbols = [*symbols, cash_symbol]
+    if len(all_symbols) != len(set(all_symbols)):
+        raise DynamicV3PaperTrackingError("manual snapshot symbols must be unique")
     weights = {
-        _text(row.get("symbol")): _float(row.get("weight"))
-        for row in positions
-        if _text(row.get("symbol"))
+        symbol: _strict_finite_number(row.get("weight"), f"weight:{symbol}")
+        for symbol, row in zip(symbols, positions, strict=True)
     }
-    weights[_text(cash.get("symbol"), "CASH")] = _float(cash.get("weight"))
-    if abs(sum(weights.values()) - 1.0) > 0.000001:
+    weights[cash_symbol] = _strict_finite_number(cash.get("weight"), f"weight:{cash_symbol}")
+    if any(value < 0 or value > 1 for value in weights.values()):
+        raise DynamicV3PaperTrackingError("manual snapshot weights must be within [0,1]")
+    if abs(sum(weights.values()) - 1.0) > PAPER_WEIGHT_TOLERANCE:
         raise DynamicV3PaperTrackingError("manual snapshot weights must sum to 1")
     weights = _normalize_weights(weights)
     metadata = _mapping(raw.get("metadata"))
+    if metadata.get("owner_reviewed") is not True:
+        raise DynamicV3PaperTrackingError("manual snapshot must be owner reviewed")
     if metadata.get("broker_imported") is True:
         raise DynamicV3PaperTrackingError("broker_imported=true is not allowed")
+    as_of = _text(raw.get("as_of"))
+    if _date_from_any(as_of) is None:
+        raise DynamicV3PaperTrackingError("manual snapshot as_of must be an ISO date")
     return {
-        "as_of": _text(raw.get("as_of")),
+        "as_of": as_of,
         "base_currency": _text(raw.get("base_currency"), "USD"),
         "weights": weights,
     }
@@ -1474,14 +1733,52 @@ def _paper_proposed_deltas(
     }
 
 
-def _limit_paper_deltas(deltas: Mapping[str, Any], config: Mapping[str, Any]) -> dict[str, float]:
-    raw = _clean_weights(deltas)
+def _validated_manual_deltas(deltas: Mapping[str, Any] | None) -> dict[str, float]:
+    if not isinstance(deltas, Mapping) or not deltas:
+        raise DynamicV3PaperTrackingError(
+            "manual_adjustment requires a non-empty manual deltas object"
+        )
+    raw = _validated_delta_map(deltas, label="manual_delta")
+    if not raw:
+        raise DynamicV3PaperTrackingError("manual_adjustment deltas cannot all be zero")
+    return raw
+
+
+def _validated_delta_map(deltas: Mapping[str, Any], *, label: str) -> dict[str, float]:
+    raw: dict[str, float] = {}
+    for symbol, value in deltas.items():
+        clean_symbol = _text(symbol)
+        if not clean_symbol:
+            raise DynamicV3PaperTrackingError(f"{label} symbol cannot be empty")
+        number = _strict_finite_number(value, f"{label}:{clean_symbol}")
+        if number:
+            raw[clean_symbol] = number
+    if raw and abs(sum(raw.values())) > PAPER_WEIGHT_TOLERANCE:
+        raise DynamicV3PaperTrackingError(f"{label} values must sum to zero")
+    return dict(sorted(raw.items()))
+
+
+def _limit_paper_deltas(
+    deltas: Mapping[str, Any],
+    config: Mapping[str, Any],
+    *,
+    before_weights: Mapping[str, Any],
+) -> dict[str, float]:
+    raw = _validated_delta_map(deltas, label="proposed_delta")
     if not raw:
         return {}
     simulation = _mapping(config.get("simulation"))
-    max_total = _float(simulation.get("max_single_day_total_adjustment"), 0.10)
-    max_symbol = _float(simulation.get("max_single_symbol_adjustment"), 0.05)
-    min_trade = _float(simulation.get("min_trade_threshold"), 0.01)
+    max_total = _strict_finite_number(
+        simulation.get("max_single_day_total_adjustment"),
+        "max_single_day_total_adjustment",
+    )
+    max_symbol = _strict_finite_number(
+        simulation.get("max_single_symbol_adjustment"),
+        "max_single_symbol_adjustment",
+    )
+    min_trade = _strict_finite_number(
+        simulation.get("min_trade_threshold"), "min_trade_threshold"
+    )
     if all(abs(value) < min_trade for value in raw.values()):
         return {}
     total_abs = sum(abs(value) for value in raw.values())
@@ -1491,6 +1788,10 @@ def _limit_paper_deltas(deltas: Mapping[str, Any], config: Mapping[str, Any]) ->
         scale = min(scale, max_total / total_abs)
     if max_abs > max_symbol > 0:
         scale = min(scale, max_symbol / max_abs)
+    for symbol, value in raw.items():
+        available = _float(before_weights.get(symbol))
+        if value < 0 and abs(value) > available:
+            scale = min(scale, available / abs(value))
     limited = {symbol: round(value * scale, 6) for symbol, value in raw.items()}
     limited = {symbol: value for symbol, value in limited.items() if value != 0}
     drift = round(sum(limited.values()), 6)
@@ -1498,7 +1799,15 @@ def _limit_paper_deltas(deltas: Mapping[str, Any], config: Mapping[str, Any]) ->
         limited["CASH"] = round(limited["CASH"] - drift, 6)
     elif drift:
         limited["CASH"] = round(-drift, 6)
-    return {symbol: value for symbol, value in limited.items() if value != 0}
+    result = {symbol: value for symbol, value in sorted(limited.items()) if value != 0}
+    if abs(sum(result.values())) > PAPER_WEIGHT_TOLERANCE:
+        raise DynamicV3PaperTrackingError("limited paper deltas must sum to zero")
+    if any(
+        _float(before_weights.get(symbol)) + value < -PAPER_WEIGHT_TOLERANCE
+        for symbol, value in result.items()
+    ):
+        raise DynamicV3PaperTrackingError("limited paper deltas cannot create negative weights")
+    return result
 
 
 def _apply_weight_deltas(weights: Mapping[str, Any], deltas: Mapping[str, Any]) -> dict[str, float]:
@@ -1517,6 +1826,400 @@ def _rebuild_paper_state(
     for row in ledger:
         weights = _apply_weight_deltas(weights, _mapping(row.get("applied_paper_deltas")))
     return weights
+
+
+def _paper_action_event_checksum(event: Mapping[str, Any]) -> str:
+    payload = dict(event)
+    payload.pop("event_checksum", None)
+    return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _build_paper_action_event(
+    *,
+    events: Sequence[Mapping[str, Any]],
+    paper_portfolio_id: str,
+    review: Mapping[str, Any],
+    owner_review_dir: Path,
+    source_daily_root: Path,
+    source_paths: Mapping[str, Any],
+    source_checksums: Mapping[str, Any],
+    config_path: Path,
+    config: Mapping[str, Any],
+    action_type: str,
+    manual_override: bool,
+    before_weights: Mapping[str, Any],
+    proposed_deltas: Mapping[str, Any],
+    applied_deltas: Mapping[str, Any],
+    after_weights: Mapping[str, Any],
+    reason: str,
+    event_at: datetime,
+) -> dict[str, Any]:
+    sequence = len(events) + 1
+    event_at_text = event_at.isoformat()
+    if events:
+        previous_at = _parse_datetime_text(_text(events[-1].get("created_at")))
+        if previous_at is None or event_at < previous_at:
+            raise DynamicV3PaperTrackingError(
+                "paper action event time cannot precede the prior event"
+            )
+    review_id = _text(review.get("review_id"))
+    paper_action_id = _stable_id(
+        "paper-portfolio-action",
+        paper_portfolio_id,
+        sequence,
+        review_id,
+        event_at_text,
+    )
+    policy = _mapping(config.get("policy_metadata"))
+    event = {
+        "schema_version": SCHEMA_VERSION,
+        "ledger_schema_version": PAPER_ACTION_LEDGER_SCHEMA_VERSION,
+        "event_sequence": sequence,
+        "event_type": PAPER_ACTION_EVENT_TYPE,
+        "paper_action_id": paper_action_id,
+        "paper_portfolio_id": paper_portfolio_id,
+        "review_id": review_id,
+        "owner_review_root": str(owner_review_dir),
+        "owner_review_event_id": _text(review.get("last_event_id")),
+        "owner_review_event_checksum": _text(review.get("last_event_checksum")),
+        "owner_review_validation_status": "PASS",
+        "daily_advisory_id": _text(review.get("daily_advisory_id")),
+        "source_daily_advisory_root": str(source_daily_root),
+        "source_daily_advisory_validation_status": "PASS",
+        "source_artifact_paths": dict(source_paths),
+        "source_artifact_checksums": dict(source_checksums),
+        "config_path": str(config_path),
+        "config_checksum": _file_sha256(config_path),
+        "config_policy_id": _text(policy.get("policy_id")),
+        "config_policy_version": _text(policy.get("version")),
+        "as_of": _text(review.get("as_of")),
+        "owner_decision": _text(review.get("owner_decision")),
+        "action_type": action_type,
+        "manual_override": manual_override,
+        "before_weights": dict(before_weights),
+        "proposed_deltas": dict(proposed_deltas),
+        "applied_paper_deltas": dict(applied_deltas),
+        "after_weights": dict(after_weights),
+        "reason": reason,
+        "notes": _text(review.get("manual_notes")),
+        "previous_event_checksum": (
+            _text(events[-1].get("event_checksum")) if events else "GENESIS"
+        ),
+        "created_at": event_at_text,
+        "paper_state_updated": True,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "real_portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    event["event_checksum"] = _paper_action_event_checksum(event)
+    return event
+
+
+def _replay_paper_action_events(
+    *,
+    manifest: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+    validate_sources: bool,
+) -> tuple[dict[str, Any], list[dict[str, Any]], list[str]]:
+    portfolio_id = _text(manifest.get("paper_portfolio_id"))
+    weights = _normalize_weights(_mapping(manifest.get("initial_weights")))
+    state = _paper_state_payload(
+        paper_portfolio_id=portfolio_id,
+        as_of=_text(manifest.get("initial_as_of")),
+        base_currency=_text(manifest.get("initial_base_currency"), "USD"),
+        source=_text(manifest.get("initial_source"), "manual_snapshot"),
+        positions=weights,
+        last_review_id="",
+        last_action_id="",
+        state_status="ACTIVE",
+    )
+    history = [_paper_initial_history_row(manifest=manifest, state=state)]
+    errors: list[str] = []
+    previous_checksum = "GENESIS"
+    previous_event_at: datetime | None = None
+    seen_action_ids: set[str] = set()
+    seen_review_ids: set[str] = set()
+    for index, raw_event in enumerate(events, start=1):
+        event = dict(raw_event)
+        action_id = _text(event.get("paper_action_id"))
+        review_id = _text(event.get("review_id"))
+        created_at = _text(event.get("created_at"))
+        event_at = _parse_datetime_text(created_at)
+        expected_action_id = _stable_id(
+            "paper-portfolio-action",
+            portfolio_id,
+            index,
+            review_id,
+            created_at,
+        )
+        if event.get("ledger_schema_version") != PAPER_ACTION_LEDGER_SCHEMA_VERSION:
+            errors.append(f"ledger_schema_invalid:{index}")
+        if event.get("event_sequence") != index:
+            errors.append(f"event_sequence_mismatch:{index}")
+        if event.get("event_type") != PAPER_ACTION_EVENT_TYPE:
+            errors.append(f"event_type_invalid:{index}")
+        if event.get("paper_portfolio_id") != portfolio_id:
+            errors.append(f"paper_portfolio_id_mismatch:{index}")
+        if not review_id or review_id in seen_review_ids:
+            errors.append(f"review_id_missing_or_duplicate:{index}")
+        seen_review_ids.add(review_id)
+        if action_id != expected_action_id or action_id in seen_action_ids:
+            errors.append(f"paper_action_id_invalid_or_duplicate:{index}")
+        seen_action_ids.add(action_id)
+        if event.get("previous_event_checksum") != previous_checksum:
+            errors.append(f"previous_event_checksum_mismatch:{index}")
+        if event.get("event_checksum") != _paper_action_event_checksum(event):
+            errors.append(f"event_checksum_mismatch:{index}")
+        previous_checksum = _text(event.get("event_checksum"))
+        if event_at is None or (previous_event_at is not None and event_at < previous_event_at):
+            errors.append(f"event_time_invalid_or_reversed:{index}")
+        if event_at is not None:
+            previous_event_at = event_at
+        review: dict[str, Any] = {}
+        if validate_sources:
+            try:
+                owner_root = Path(_text(event.get("owner_review_root")))
+                owner_validation = validate_owner_review_artifact(
+                    review_id=review_id,
+                    output_dir=owner_root,
+                )
+                if owner_validation.get("status") != "PASS":
+                    raise DynamicV3PaperTrackingError("owner review validation did not PASS")
+                review = _owner_review_record(review_id=review_id, output_dir=owner_root)
+                daily_root = Path(_text(event.get("source_daily_advisory_root")))
+                if not _paths_equal(
+                    daily_root, Path(_text(review.get("source_daily_advisory_root")))
+                ):
+                    raise DynamicV3PaperTrackingError("daily advisory root binding mismatch")
+                daily_validation = validate_position_advisory_daily_artifact(
+                    daily_advisory_id=_text(review.get("daily_advisory_id")),
+                    output_dir=daily_root,
+                )
+                if daily_validation.get("status") != "PASS":
+                    raise DynamicV3PaperTrackingError("daily advisory validation did not PASS")
+                review_paths = _mapping(review.get("source_artifact_paths"))
+                review_checksums = _mapping(review.get("source_artifact_checksums"))
+                if (
+                    _mapping(event.get("source_artifact_paths")) != review_paths
+                    or _mapping(event.get("source_artifact_checksums")) != review_checksums
+                    or any(
+                        not Path(_text(path)).is_file()
+                        or review_checksums.get(key) != _file_sha256(Path(_text(path)))
+                        for key, path in review_paths.items()
+                    )
+                ):
+                    raise DynamicV3PaperTrackingError("daily source checksum binding mismatch")
+                if (
+                    event.get("owner_review_event_id") != review.get("last_event_id")
+                    or event.get("owner_review_event_checksum")
+                    != review.get("last_event_checksum")
+                    or event.get("daily_advisory_id") != review.get("daily_advisory_id")
+                    or event.get("owner_decision") != review.get("owner_decision")
+                    or event.get("as_of") != review.get("as_of")
+                    or event.get("notes") != review.get("manual_notes")
+                    or event.get("owner_review_validation_status") != "PASS"
+                    or event.get("source_daily_advisory_validation_status") != "PASS"
+                ):
+                    raise DynamicV3PaperTrackingError("owner review content binding mismatch")
+                config_path = Path(_text(event.get("config_path")))
+                if (
+                    not _paths_equal(config_path, Path(_text(manifest.get("config_path"))))
+                    or event.get("config_checksum") != _file_sha256(config_path)
+                    or event.get("config_checksum") != manifest.get("config_checksum")
+                    or event.get("config_policy_id")
+                    != _mapping(config.get("policy_metadata")).get("policy_id")
+                    or event.get("config_policy_version")
+                    != _mapping(config.get("policy_metadata")).get("version")
+                ):
+                    raise DynamicV3PaperTrackingError("config source binding mismatch")
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"source_validation_failed:{index}:{exc}")
+        owner_decision = _text(event.get("owner_decision"))
+        action_type = _text(event.get("action_type"))
+        expected_action_type = (
+            "paper_adjustment"
+            if owner_decision == "paper_adjustment"
+            else "manual_adjustment"
+            if owner_decision == "manual_adjustment"
+            else "no_trade"
+        )
+        if owner_decision not in OWNER_REVIEW_DECISIONS or action_type != expected_action_type:
+            errors.append(f"decision_action_type_mismatch:{index}")
+        if event.get("reason") != owner_decision:
+            errors.append(f"reason_mismatch:{index}")
+        try:
+            if owner_decision == "paper_adjustment":
+                daily_root = Path(_text(event.get("source_daily_advisory_root")))
+                expected_proposed = _paper_proposed_deltas(
+                    daily_advisory_id=_text(event.get("daily_advisory_id")),
+                    before_weights=weights,
+                    daily_advisory_dir=daily_root,
+                )
+                if not expected_proposed:
+                    raise DynamicV3PaperTrackingError(
+                        "paper adjustment source-derived deltas are empty"
+                    )
+            elif owner_decision == "manual_adjustment":
+                expected_proposed = _validated_manual_deltas(
+                    _mapping(event.get("proposed_deltas"))
+                )
+            else:
+                expected_proposed = {}
+            expected_applied = _limit_paper_deltas(
+                expected_proposed,
+                config,
+                before_weights=weights,
+            )
+            expected_after = _apply_weight_deltas(weights, expected_applied)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"event_recomputation_failed:{index}:{exc}")
+            expected_proposed, expected_applied, expected_after = {}, {}, weights
+        if not _weights_equal(_mapping(event.get("before_weights")), weights):
+            errors.append(f"before_weights_mismatch:{index}")
+        if _mapping(event.get("proposed_deltas")) != expected_proposed:
+            errors.append(f"proposed_deltas_mismatch:{index}")
+        if _mapping(event.get("applied_paper_deltas")) != expected_applied:
+            errors.append(f"applied_deltas_mismatch:{index}")
+        if not _weights_equal(_mapping(event.get("after_weights")), expected_after):
+            errors.append(f"after_weights_mismatch:{index}")
+        if event.get("manual_override") is not (owner_decision == "manual_adjustment"):
+            errors.append(f"manual_override_mismatch:{index}")
+        if not _paper_event_has_no_execution_effect(event):
+            errors.append(f"execution_effect_forbidden:{index}")
+        current_as_of = _date_from_any(state.get("as_of"))
+        event_as_of = _date_from_any(event.get("as_of"))
+        if event_as_of is None or (current_as_of is not None and event_as_of < current_as_of):
+            errors.append(f"event_as_of_invalid_or_reversed:{index}")
+        weights = expected_after
+        state = _paper_state_payload(
+            paper_portfolio_id=portfolio_id,
+            as_of=_text(event.get("as_of"), _text(state.get("as_of"))),
+            base_currency=_text(state.get("base_currency"), "USD"),
+            source=_text(state.get("source"), "manual_snapshot"),
+            positions=weights,
+            last_review_id=review_id,
+            last_action_id=action_id,
+            state_status=(
+                "NEEDS_REVIEW" if owner_decision == "needs_more_data" else "ACTIVE"
+            ),
+        )
+        history.append(_paper_event_history_row(event=event, state=state))
+    return state, history, sorted(set(errors))
+
+
+def _paper_initial_history_row(
+    *, manifest: Mapping[str, Any], state: Mapping[str, Any]
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "paper_portfolio_id": manifest.get("paper_portfolio_id"),
+        "as_of": state.get("as_of"),
+        "event_type": "init",
+        "event_sequence": 0,
+        "review_id": "",
+        "paper_action_id": "",
+        "source_snapshot_checksum": manifest.get("initial_snapshot_checksum"),
+        "positions": state.get("positions"),
+        "total_weight": state.get("total_weight"),
+        "broker_action_taken": False,
+        "created_at": manifest.get("generated_at"),
+    }
+
+
+def _paper_event_history_row(
+    *, event: Mapping[str, Any], state: Mapping[str, Any]
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "paper_portfolio_id": event.get("paper_portfolio_id"),
+        "as_of": state.get("as_of"),
+        "event_type": event.get("action_type"),
+        "event_sequence": event.get("event_sequence"),
+        "review_id": event.get("review_id"),
+        "paper_action_id": event.get("paper_action_id"),
+        "event_checksum": event.get("event_checksum"),
+        "positions": state.get("positions"),
+        "total_weight": state.get("total_weight"),
+        "broker_action_taken": False,
+        "created_at": event.get("created_at"),
+    }
+
+
+def _paper_manifest_materialized_payload(
+    *, manifest: Mapping[str, Any], events: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
+    payload = dict(manifest)
+    latest = _mapping(events[-1]) if events else {}
+    payload.update(
+        {
+            "status": "PASS",
+            "ledger_schema_version": PAPER_ACTION_LEDGER_SCHEMA_VERSION,
+            "event_chain_status": "PASS",
+            "paper_action_count": len(events),
+            "last_updated_at": latest.get("created_at", manifest.get("generated_at")),
+            "last_review_id": latest.get("review_id", ""),
+            "last_action_id": latest.get("paper_action_id", ""),
+            "broker_action_allowed": False,
+            "broker_action_taken": False,
+            "owner_approval_required": True,
+            "manual_review_required": True,
+            "official_target_weights_generated": False,
+            "portfolio_mutated": False,
+            "order_ticket_generated": False,
+            "production_effect": "none",
+        }
+    )
+    return payload
+
+
+def _materialize_paper_portfolio(
+    *,
+    portfolio_dir: Path,
+    manifest: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    config = load_paper_portfolio_config(Path(_text(manifest.get("config_path"))))
+    state, history, errors = _replay_paper_action_events(
+        manifest=manifest,
+        events=events,
+        config=config,
+        validate_sources=True,
+    )
+    if errors:
+        raise DynamicV3PaperTrackingError(
+            "paper portfolio event replay failed: " + ",".join(errors)
+        )
+    materialized_manifest = _paper_manifest_materialized_payload(
+        manifest=manifest,
+        events=events,
+    )
+    _write_json(portfolio_dir / "paper_portfolio_manifest.json", materialized_manifest)
+    _write_json(portfolio_dir / "paper_portfolio_state.json", state)
+    _write_jsonl(portfolio_dir / "paper_position_history.jsonl", history)
+    _write_text(
+        portfolio_dir / "paper_portfolio_report.md",
+        render_paper_portfolio_report(materialized_manifest, state, events),
+    )
+    return state
+
+
+def _paper_event_has_no_execution_effect(event: Mapping[str, Any]) -> bool:
+    return (
+        event.get("official_target_weights_generated") is False
+        and event.get("portfolio_mutated") is False
+        and event.get("real_portfolio_mutated") is False
+        and event.get("order_ticket_generated") is False
+        and event.get("broker_action_allowed") is False
+        and event.get("broker_action_taken") is False
+        and event.get("production_effect") == "none"
+    )
 
 
 def _advisory_current_weights(advisory_dir: Path) -> dict[str, float]:
@@ -2283,6 +2986,16 @@ def _date_from_any(value: Any) -> date | None:
         return None
 
 
+def _parse_datetime_text(value: str) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None and parsed.utcoffset() is not None else None
+
+
 def _latest_child_dir(path: Path) -> Path | None:
     if not path.exists():
         return None
@@ -2292,6 +3005,29 @@ def _latest_child_dir(path: Path) -> Path | None:
 
 def _resolve_project_path(path: Path) -> Path:
     return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def _paths_equal(left: Path, right: Path) -> bool:
+    return left.resolve(strict=False) == right.resolve(strict=False)
+
+
+def _file_sha256(path: Path) -> str:
+    if not path.is_file():
+        raise DynamicV3PaperTrackingError(f"source file not found: {path}")
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def _is_finite_number(value: Any) -> bool:
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _strict_finite_number(value: Any, label: str) -> float:
+    if not _is_finite_number(value):
+        raise DynamicV3PaperTrackingError(f"{label} must be a finite number")
+    return float(value)
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -2325,6 +3061,23 @@ def _write_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _append_jsonl_atomic(path: Path, row: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing = path.read_text(encoding="utf-8") if path.exists() else ""
+    if existing and not existing.endswith("\n"):
+        raise DynamicV3PaperTrackingError(f"JSONL source is not newline terminated: {path}")
+    current = _read_jsonl(path)
+    expected_sequence = len(current) + 1
+    expected_previous = _text(current[-1].get("event_checksum")) if current else "GENESIS"
+    if (
+        row.get("event_sequence") != expected_sequence
+        or row.get("previous_event_checksum") != expected_previous
+    ):
+        raise DynamicV3PaperTrackingError("paper action append precondition changed")
+    line = json.dumps(_jsonable(row), ensure_ascii=False, sort_keys=True) + "\n"
+    write_text_atomic(path, existing + line)
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
