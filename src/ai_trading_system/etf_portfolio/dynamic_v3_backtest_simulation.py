@@ -88,6 +88,7 @@ PIT_SAFETY_SIMULATION = "SIMULATION_NOT_PIT"
 REPORT_LABEL_BACKTEST_SIMULATION = "BACKTEST_SIMULATION_NOT_PIT"
 BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_event_input_snapshot.v2"
 BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_variant_input_snapshot.v2"
+BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_outcome_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -1136,37 +1137,62 @@ def run_backtest_sim_outcome(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     source_dir = variant_dir / variant_set_id
-    variant_manifest = _read_json(source_dir / "variant_set_manifest.json")
+    variant_validation = validate_backtest_sim_variants_artifact(
+        variant_set_id=variant_set_id, output_dir=variant_dir
+    )
+    if variant_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError(
+            "backtest simulation variant artifact validation failed"
+        )
+    variant_bundle = _backtest_sim_variant_bundle(source_dir)
+    variant_manifest = _mapping(variant_bundle.get("manifest"))
+    variant_generated = _datetime_from_any(variant_manifest.get("generated_at"))
+    if variant_generated is None or variant_generated > generated:
+        raise DynamicV3BacktestSimulationError("variant source generated after outcome cutoff")
     event_set_id = _text(variant_manifest.get("event_set_id"))
-    event_snapshot = _read_json(event_dir / event_set_id / "simulation_input_snapshot.json")
-    config = _mapping(event_snapshot.get("config"))
+    variant_snapshot = _mapping(variant_bundle.get("input_snapshot"))
+    event_bundle = _mapping(variant_snapshot.get("event_bundle"))
+    event_snapshot = _mapping(event_bundle.get("input_snapshot"))
+    frozen_event_dir = Path(_text(event_bundle.get("event_set_dir")))
+    if frozen_event_dir.name != event_set_id or frozen_event_dir.parent != event_dir:
+        raise DynamicV3BacktestSimulationError("variant event source binding invalid")
+    config = _mapping(variant_snapshot.get("config"))
+    if config != _mapping(event_snapshot.get("config")):
+        raise DynamicV3BacktestSimulationError("variant config binding invalid")
     source = _mapping(config.get("source"))
     requested_end = (
         _date_from_any(_mapping(config.get("date_range")).get("end")) or generated.date()
     )
+    if requested_end > generated.date():
+        raise DynamicV3BacktestSimulationError("requested end exceeds outcome cutoff")
     prices_path = _resolve_project_path(Path(_text(source.get("price_cache_path"))))
     rates_path = _resolve_project_path(Path(_text(source.get("rates_cache_path"))))
-    sim_outcome_id = _stable_id("backtest-sim-outcome", variant_set_id, generated.isoformat())
-    outcome_dir = _unique_dir(output_dir / sim_outcome_id)
-    outcome_dir.mkdir(parents=True, exist_ok=False)
     quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
-    quality_report_path = ""
+    quality_report_content = ""
     if enforce_data_quality_gate:
-        quality_report = outcome_dir / "validate_data_quality_report.md"
-        quality = _run_cached_quality_gate(
-            as_of=requested_end,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            report_path=quality_report,
-        )
+        with tempfile.TemporaryDirectory(prefix="backtest-sim-outcome-dq-") as temp_dir:
+            temp_quality_report = Path(temp_dir) / "validate_data_quality_report.md"
+            quality = _run_cached_quality_gate(
+                as_of=requested_end,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                report_path=temp_quality_report,
+            )
+            quality_report_content = (
+                temp_quality_report.read_text(encoding="utf-8")
+                if temp_quality_report.is_file()
+                else ""
+            )
         quality_status = quality.status
-        quality_report_path = str(quality_report)
         if not quality.passed:
             raise DynamicV3BacktestSimulationError(
                 f"backtest simulation outcome data quality gate failed: {quality.status}"
             )
-    rows_in = _read_jsonl(source_dir / "simulated_variant_weights.jsonl")
+    rows_in = _records(variant_bundle.get("weights"))
     prices = _load_prices(prices_path, extra_symbols=_weights_symbols(rows_in))
     price_dates = _available_price_dates(prices)
     windows = _records_as_ints(_mapping(config.get("outcome_windows")).get("trading_days"))
@@ -1184,7 +1210,93 @@ def run_backtest_sim_outcome(
         status = "PASS_WITH_WARNINGS"
     elif rollup.get("PENDING"):
         status = "PENDING"
-    manifest = {
+    sim_outcome_id = _stable_id("backtest-sim-outcome", variant_set_id, generated.isoformat())
+    outcome_dir = _unique_dir(output_dir / sim_outcome_id)
+    quality_report_path = (
+        str(outcome_dir / "validate_data_quality_report.md") if enforce_data_quality_gate else ""
+    )
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_outcome_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "variant_set_id": variant_set_id,
+        "variant_set_dir": str(source_dir),
+        "variant_bundle": variant_bundle,
+        "variant_validation": variant_validation,
+        "event_set_id": event_set_id,
+        "event_set_dir": str(frozen_event_dir),
+        "config": config,
+        "requested_end": requested_end.isoformat(),
+        "price_source": _price_source_snapshot(prices_path),
+        "rate_source": _price_source_snapshot(rates_path),
+        "price_cutoff_snapshot": _csv_cutoff_snapshot(prices_path, end=requested_end),
+        "rate_cutoff_snapshot": _csv_cutoff_snapshot(rates_path, end=requested_end),
+        "data_quality_enforced": enforce_data_quality_gate,
+        "data_quality_status": quality_status,
+        "data_quality_report_content": quality_report_content,
+        "data_quality_report_checksum": (
+            sha256(quality_report_content.encode("utf-8")).hexdigest()
+            if quality_report_content
+            else ""
+        ),
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _backtest_sim_outcome_manifest(
+        outcome_dir=outcome_dir,
+        generated=generated,
+        status=status,
+        variant_set_id=variant_set_id,
+        event_set_id=event_set_id,
+        windows=windows,
+        rollup=rollup,
+        summary=summary,
+        config=config,
+        quality_status=quality_status,
+        quality_report_path=quality_report_path,
+    )
+    outcome_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(outcome_dir / "sim_outcome_manifest.json", manifest)
+    _write_jsonl(outcome_dir / "simulated_outcome_windows.jsonl", outcome_rows)
+    _write_json(outcome_dir / "simulated_variant_summary.json", summary)
+    _write_json(outcome_dir / "outcome_input_snapshot.json", input_snapshot)
+    _write_text(
+        outcome_dir / "backtest_sim_outcome_report.md",
+        render_outcome_report(manifest, summary),
+    )
+    if quality_report_content:
+        _write_text(outcome_dir / "validate_data_quality_report.md", quality_report_content)
+    _update_latest_pointer(
+        "latest_backtest_sim_outcome",
+        outcome_dir.name,
+        outcome_dir / "sim_outcome_manifest.json",
+    )
+    return {
+        "sim_outcome_id": outcome_dir.name,
+        "sim_outcome_dir": outcome_dir,
+        "manifest": manifest,
+        "outcome_rows": outcome_rows,
+        "variant_summary": summary,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_outcome_manifest(
+    *,
+    outcome_dir: Path,
+    generated: datetime,
+    status: str,
+    variant_set_id: str,
+    event_set_id: str,
+    windows: Sequence[int],
+    rollup: Mapping[str, int],
+    summary: Mapping[str, Any],
+    config: Mapping[str, Any],
+    quality_status: str,
+    quality_report_path: str,
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_outcome_manifest",
         "sim_outcome_id": outcome_dir.name,
@@ -1206,6 +1318,7 @@ def run_backtest_sim_outcome(
         "sim_outcome_manifest_path": str(outcome_dir / "sim_outcome_manifest.json"),
         "simulated_outcome_windows_path": str(outcome_dir / "simulated_outcome_windows.jsonl"),
         "simulated_variant_summary_path": str(outcome_dir / "simulated_variant_summary.json"),
+        "outcome_input_snapshot_path": str(outcome_dir / "outcome_input_snapshot.json"),
         "backtest_sim_outcome_report_path": str(outcome_dir / "backtest_sim_outcome_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -1215,25 +1328,6 @@ def run_backtest_sim_outcome(
         "manual_review_required": True,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(outcome_dir / "sim_outcome_manifest.json", manifest)
-    _write_jsonl(outcome_dir / "simulated_outcome_windows.jsonl", outcome_rows)
-    _write_json(outcome_dir / "simulated_variant_summary.json", summary)
-    _write_text(
-        outcome_dir / "backtest_sim_outcome_report.md",
-        render_outcome_report(manifest, summary),
-    )
-    _update_latest_pointer(
-        "latest_backtest_sim_outcome",
-        outcome_dir.name,
-        outcome_dir / "sim_outcome_manifest.json",
-    )
-    return {
-        "sim_outcome_id": outcome_dir.name,
-        "sim_outcome_dir": outcome_dir,
-        "manifest": manifest,
-        "outcome_rows": outcome_rows,
-        "variant_summary": summary,
     }
 
 
@@ -1252,6 +1346,7 @@ def backtest_sim_outcome_report_payload(
         **_read_json(outcome_dir / "sim_outcome_manifest.json"),
         "simulated_outcome_windows": _read_jsonl(outcome_dir / "simulated_outcome_windows.jsonl"),
         "simulated_variant_summary": _read_json(outcome_dir / "simulated_variant_summary.json"),
+        "outcome_input_snapshot": _read_json(outcome_dir / "outcome_input_snapshot.json"),
         "sim_outcome_dir": str(outcome_dir),
     }
 
@@ -1262,12 +1357,198 @@ def validate_backtest_sim_outcome_artifact(
     outcome_dir = output_dir / sim_outcome_id
     manifest = _read_optional_json(outcome_dir / "sim_outcome_manifest.json") or {}
     rows = _read_jsonl(outcome_dir / "simulated_outcome_windows.jsonl")
+    summary = _read_optional_json(outcome_dir / "simulated_variant_summary.json") or {}
+    snapshot = _read_optional_json(outcome_dir / "outcome_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        if snapshot.get("schema_version") != BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("snapshot_schema_invalid")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        variant_set_id = _text(snapshot.get("variant_set_id"))
+        variant_set_dir = Path(_text(snapshot.get("variant_set_dir")))
+        event_set_id = _text(snapshot.get("event_set_id"))
+        event_set_dir = Path(_text(snapshot.get("event_set_dir")))
+        requested_end = _date_from_any(snapshot.get("requested_end"))
+        if (
+            generated is None
+            or requested_end is None
+            or requested_end > generated.date()
+            or variant_set_dir.name != variant_set_id
+            or event_set_dir.name != event_set_id
+        ):
+            raise DynamicV3BacktestSimulationError("outcome source identity/time invalid")
+        live_validation = validate_backtest_sim_variants_artifact(
+            variant_set_id=variant_set_id, output_dir=variant_set_dir.parent
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("variant_validation_failed")
+        if live_validation != snapshot.get("variant_validation"):
+            source_errors.append("variant_validation_changed")
+        live_bundle = _backtest_sim_variant_bundle(variant_set_dir)
+        if live_bundle != snapshot.get("variant_bundle"):
+            source_errors.append("variant_bundle_changed")
+        variant_snapshot = _mapping(live_bundle.get("input_snapshot"))
+        frozen_event_bundle = _mapping(variant_snapshot.get("event_bundle"))
+        if Path(_text(frozen_event_bundle.get("event_set_dir"))) != event_set_dir:
+            source_errors.append("event_binding_changed")
+        config = _mapping(snapshot.get("config"))
+        if config != _mapping(variant_snapshot.get("config")):
+            source_errors.append("config_binding_changed")
+        source = _mapping(config.get("source"))
+        prices_path = _resolve_project_path(Path(_text(source.get("price_cache_path"))))
+        rates_path = _resolve_project_path(Path(_text(source.get("rates_cache_path"))))
+        if _price_source_snapshot(prices_path) != snapshot.get("price_source"):
+            source_errors.append("price_source_changed")
+        if _price_source_snapshot(rates_path) != snapshot.get("rate_source"):
+            source_errors.append("rate_source_changed")
+        if _csv_cutoff_snapshot(prices_path, end=requested_end) != snapshot.get(
+            "price_cutoff_snapshot"
+        ):
+            source_errors.append("price_cutoff_rows_changed")
+        if _csv_cutoff_snapshot(rates_path, end=requested_end) != snapshot.get(
+            "rate_cutoff_snapshot"
+        ):
+            source_errors.append("rate_cutoff_rows_changed")
+        quality_status = _text(snapshot.get("data_quality_status"))
+        quality_content = _text(snapshot.get("data_quality_report_content"))
+        quality_checksum = _text(snapshot.get("data_quality_report_checksum"))
+        quality_enforced = snapshot.get("data_quality_enforced") is True
+        if bool(quality_content) != quality_enforced:
+            source_errors.append("data_quality_evidence_missing")
+        if (
+            quality_content
+            and sha256(quality_content.encode("utf-8")).hexdigest() != quality_checksum
+        ):
+            source_errors.append("data_quality_evidence_checksum_invalid")
+        quality_path = outcome_dir / "validate_data_quality_report.md"
+        if quality_content and (
+            not quality_path.is_file()
+            or quality_path.read_text(encoding="utf-8") != quality_content
+        ):
+            source_errors.append("data_quality_report_changed")
+        if quality_enforced:
+            with tempfile.TemporaryDirectory(
+                prefix="backtest-sim-outcome-validate-dq-"
+            ) as temp_dir:
+                quality = _run_cached_quality_gate(
+                    as_of=requested_end,
+                    prices_path=prices_path,
+                    rates_path=rates_path,
+                    report_path=Path(temp_dir) / "validate_data_quality_report.md",
+                )
+            if not quality.passed or quality.status != quality_status:
+                source_errors.append("data_quality_changed")
+        variant_rows = _records(live_bundle.get("weights"))
+        prices = _load_prices(prices_path, extra_symbols=_weights_symbols(variant_rows))
+        price_dates = _available_price_dates(prices)
+        windows = _records_as_ints(_mapping(config.get("outcome_windows")).get("trading_days"))
+        expected_rows = _outcome_rows(
+            variant_rows=variant_rows,
+            windows=windows,
+            prices=prices,
+            price_dates=price_dates,
+            generated_date=generated.date(),
+        )
+        expected_summary = _variant_summary(expected_rows)
+        rollup = Counter(_text(row.get("outcome_status")) for row in expected_rows)
+        expected_status = "AVAILABLE" if rollup.get("AVAILABLE") else "INSUFFICIENT_DATA"
+        if rollup.get("PENDING") and rollup.get("AVAILABLE"):
+            expected_status = "PASS_WITH_WARNINGS"
+        elif rollup.get("PENDING"):
+            expected_status = "PENDING"
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_outcome_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "variant_set_id": variant_set_id,
+            "variant_set_dir": str(variant_set_dir),
+            "variant_bundle": live_bundle,
+            "variant_validation": live_validation,
+            "event_set_id": event_set_id,
+            "event_set_dir": str(event_set_dir),
+            "config": config,
+            "requested_end": requested_end.isoformat(),
+            "price_source": _price_source_snapshot(prices_path),
+            "rate_source": _price_source_snapshot(rates_path),
+            "price_cutoff_snapshot": _csv_cutoff_snapshot(prices_path, end=requested_end),
+            "rate_cutoff_snapshot": _csv_cutoff_snapshot(rates_path, end=requested_end),
+            "data_quality_enforced": quality_enforced,
+            "data_quality_status": quality_status,
+            "data_quality_report_content": quality_content,
+            "data_quality_report_checksum": quality_checksum,
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_outcome_manifest(
+            outcome_dir=outcome_dir,
+            generated=generated,
+            status=expected_status,
+            variant_set_id=variant_set_id,
+            event_set_id=event_set_id,
+            windows=windows,
+            rollup=rollup,
+            summary=expected_summary,
+            config=config,
+            quality_status=quality_status,
+            quality_report_path=str(quality_path) if quality_enforced else "",
+        )
+        expected_report = render_outcome_report(expected_manifest, expected_summary)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_rows = []
+        expected_summary = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
+    report_path = outcome_dir / "backtest_sim_outcome_report.md"
     checks = [
         _check("manifest_exists", (outcome_dir / "sim_outcome_manifest.json").exists(), ""),
         _check("windows_exists", (outcome_dir / "simulated_outcome_windows.jsonl").exists(), ""),
         _check("summary_exists", (outcome_dir / "simulated_variant_summary.json").exists(), ""),
+        _check("snapshot_exists", (outcome_dir / "outcome_input_snapshot.json").exists(), ""),
         _check("report_exists", (outcome_dir / "backtest_sim_outcome_report.md").exists(), ""),
         _check("sim_outcome_id_matches", manifest.get("sim_outcome_id") == sim_outcome_id, ""),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source"),
+        _check("windows_recomputed", rows == expected_rows, "snapshot"),
+        _check("summary_recomputed", summary == expected_summary, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "snapshot_bytes_recomputed",
+            (outcome_dir / "outcome_input_snapshot.json").is_file()
+            and (outcome_dir / "outcome_input_snapshot.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_snapshot),
+            "canonical JSON",
+        ),
+        _check(
+            "windows_bytes_recomputed",
+            (outcome_dir / "simulated_outcome_windows.jsonl").is_file()
+            and (outcome_dir / "simulated_outcome_windows.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_rows),
+            "canonical JSONL",
+        ),
+        _check(
+            "summary_bytes_recomputed",
+            (outcome_dir / "simulated_variant_summary.json").is_file()
+            and (outcome_dir / "simulated_variant_summary.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_summary),
+            "canonical JSON",
+        ),
+        _check(
+            "manifest_bytes_recomputed",
+            (outcome_dir / "sim_outcome_manifest.json").is_file()
+            and (outcome_dir / "sim_outcome_manifest.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_manifest),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown",
+        ),
         _check(
             "outcome_status_valid",
             all(row.get("outcome_status") in OUTCOME_STATUSES for row in rows),
@@ -1278,11 +1559,18 @@ def validate_backtest_sim_outcome_artifact(
             all(row.get("outcome_mode") == OUTCOME_MODE_BACKTEST_SIMULATION for row in rows),
             OUTCOME_MODE_BACKTEST_SIMULATION,
         ),
+        _check("outcome_contract_valid", _outcome_rows_contract_valid(rows), "rows"),
         _check(
             "broker_action_forbidden",
             manifest.get("broker_action_taken") is False
             and all(row.get("broker_action_taken") is False for row in rows),
             "broker action forbidden",
+        ),
+        _check(
+            "not_for_production",
+            manifest.get("not_for_production") is True
+            and all(row.get("not_for_production") is True for row in rows),
+            "not for production",
         ),
     ]
     return _validation_payload(
@@ -1291,6 +1579,29 @@ def validate_backtest_sim_outcome_artifact(
         artifact_id=sim_outcome_id,
         checks=checks,
     )
+
+
+def _backtest_sim_variant_bundle(variant_dir: Path) -> dict[str, Any]:
+    manifest_path = variant_dir / "variant_set_manifest.json"
+    weights_path = variant_dir / "simulated_variant_weights.jsonl"
+    ledger_path = variant_dir / "variant_action_ledger.jsonl"
+    snapshot_path = variant_dir / "variant_input_snapshot.json"
+    report_path = variant_dir / "variant_generation_report.md"
+    return {
+        "variant_set_dir": str(variant_dir),
+        "manifest": _read_json(manifest_path),
+        "weights": _read_jsonl(weights_path),
+        "ledger": _read_jsonl(ledger_path),
+        "input_snapshot": _read_json(snapshot_path),
+        "variant_generation_report": _read_text(report_path),
+        "file_contents": {
+            "variant_set_manifest.json": _read_text(manifest_path),
+            "simulated_variant_weights.jsonl": _read_text(weights_path),
+            "variant_action_ledger.jsonl": _read_text(ledger_path),
+            "variant_input_snapshot.json": _read_text(snapshot_path),
+            "variant_generation_report.md": _read_text(report_path),
+        },
+    }
 
 
 def run_backtest_sim_paper(
@@ -2900,9 +3211,9 @@ def render_outcome_report(manifest: Mapping[str, Any], summary: Mapping[str, Any
         f"{manifest.get('available_count')} / {manifest.get('pending_count')} / "
         f"{manifest.get('insufficient_data_count')}"
     )
-    limited_relative = limited.get("avg_relative_to_no_trade_5d", 0.0)
-    defensive_drawdown = defensive.get("avg_max_drawdown_20d", 0.0)
-    consensus_drawdown = consensus.get("avg_max_drawdown_20d", 0.0)
+    limited_relative = limited.get("avg_relative_to_no_trade_5d")
+    defensive_drawdown = defensive.get("avg_max_drawdown_20d")
+    consensus_drawdown = consensus.get("avg_max_drawdown_20d")
     return "\n".join(
         [
             "# Dynamic v3 backtest simulation outcome",
@@ -4343,7 +4654,7 @@ def _outcome_rows(
                         "window_days": window,
                         "start_date": start.isoformat(),
                         "end_date": end.isoformat(),
-                        "return": metrics["return"],
+                        "return": metrics.get("return") if status == "AVAILABLE" else None,
                         "relative_to_no_trade": _relative(metrics, returns, "no_trade", status),
                         "relative_to_consensus_target": _relative(
                             metrics, returns, "consensus_target", status
@@ -4351,8 +4662,12 @@ def _outcome_rows(
                         "relative_to_limited_adjustment": _relative(
                             metrics, returns, "limited_adjustment", status
                         ),
-                        "max_drawdown": metrics["max_drawdown"],
-                        "realized_volatility": metrics["realized_volatility"],
+                        "max_drawdown": (
+                            metrics.get("max_drawdown") if status == "AVAILABLE" else None
+                        ),
+                        "realized_volatility": (
+                            metrics.get("realized_volatility") if status == "AVAILABLE" else None
+                        ),
                         "turnover": _float(variant_row.get("turnover")),
                         "outcome_status": status,
                         "broker_action_taken": False,
@@ -4466,21 +4781,25 @@ def _variant_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 "variant": variant,
                 "event_count": len({_text(row.get("sim_event_id")) for row in variant_rows}),
                 "available_count": len(available),
-                "avg_1d_return": round(_avg(_window_values(available, 1, "return")), 6),
-                "avg_5d_return": round(_avg(_window_values(available, 5, "return")), 6),
-                "avg_10d_return": round(_avg(_window_values(available, 10, "return")), 6),
-                "avg_20d_return": round(_avg(_window_values(available, 20, "return")), 6),
-                "avg_relative_to_no_trade_5d": round(_avg(rel_5), 6),
+                "avg_1d_return": _nullable_avg(_window_values(available, 1, "return")),
+                "avg_5d_return": _nullable_avg(_window_values(available, 5, "return")),
+                "avg_10d_return": _nullable_avg(_window_values(available, 10, "return")),
+                "avg_20d_return": _nullable_avg(_window_values(available, 20, "return")),
+                "avg_relative_to_no_trade_5d": _nullable_avg(rel_5),
                 "win_rate_vs_no_trade_5d": (
-                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else 0.0
+                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else None
                 ),
-                "avg_max_drawdown_20d": round(
-                    _avg(_window_values(available, 20, "max_drawdown")), 6
+                "avg_max_drawdown_20d": _nullable_avg(
+                    _window_values(available, 20, "max_drawdown")
                 ),
-                "avg_turnover": round(_avg([_float(row.get("turnover")) for row in available]), 6),
+                "avg_turnover": _nullable_avg([_float(row.get("turnover")) for row in available]),
             }
         )
-    ranked = [row for row in summary if row["available_count"] and row["variant"] != "no_trade"]
+    ranked = [
+        row
+        for row in summary
+        if row["variant"] != "no_trade" and _finite_number(row.get("avg_relative_to_no_trade_5d"))
+    ]
     best = (
         max(ranked, key=lambda row: row["avg_relative_to_no_trade_5d"])["variant"]
         if ranked
@@ -4494,7 +4813,7 @@ def _variant_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "best_variant": best,
         "limited_adjustment_vs_no_trade_5d": _variant_summary_row(
             {"summary": summary}, "limited_adjustment"
-        ).get("avg_relative_to_no_trade_5d", 0.0),
+        ).get("avg_relative_to_no_trade_5d"),
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "broker_action_taken": False,
     }
@@ -5359,12 +5678,12 @@ def _pending_sim_outcome(
         "window_days": window,
         "start_date": start.isoformat(),
         "end_date": "" if end is None else end.isoformat(),
-        "return": 0.0,
-        "relative_to_no_trade": 0.0,
-        "relative_to_consensus_target": 0.0,
-        "relative_to_limited_adjustment": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        "return": None,
+        "relative_to_no_trade": None,
+        "relative_to_consensus_target": None,
+        "relative_to_limited_adjustment": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
         "turnover": _float(variant_row.get("turnover")),
         "outcome_status": "PENDING",
         "broker_action_taken": False,
@@ -5377,18 +5696,18 @@ def _relative(
     returns: Mapping[str, Mapping[str, Any]],
     reference: str,
     status: str,
-) -> float:
+) -> float | None:
     ref = returns.get(reference, _missing_metrics())
     if status != "AVAILABLE" or ref.get("status") != "AVAILABLE":
-        return 0.0
+        return None
     return round(_float(metrics.get("return")) - _float(ref.get("return")), 6)
 
 
 def _missing_metrics() -> dict[str, Any]:
     return {
-        "return": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        "return": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
         "status": "INSUFFICIENT_DATA",
     }
 
@@ -5422,10 +5741,49 @@ def _realized_volatility(values: Sequence[float]) -> float:
 
 def _window_values(rows: Sequence[Mapping[str, Any]], window: int, key: str) -> list[float]:
     return [
-        _float(row.get(key))
+        float(row[key])
         for row in rows
-        if _int(row.get("window_days")) == window and row.get("outcome_status") == "AVAILABLE"
+        if _int(row.get("window_days")) == window
+        and row.get("outcome_status") == "AVAILABLE"
+        and _finite_number(row.get(key))
     ]
+
+
+def _nullable_avg(values: Sequence[float]) -> float | None:
+    return round(_avg(values), 6) if values else None
+
+
+def _outcome_rows_contract_valid(rows: Sequence[Mapping[str, Any]]) -> bool:
+    identities: set[tuple[str, str, int]] = set()
+    metric_keys = (
+        "return",
+        "relative_to_no_trade",
+        "relative_to_consensus_target",
+        "relative_to_limited_adjustment",
+        "max_drawdown",
+        "realized_volatility",
+    )
+    for row in rows:
+        identity = (
+            _text(row.get("sim_event_id")),
+            _text(row.get("variant")),
+            _int(row.get("window_days")),
+        )
+        if not identity[0] or not identity[1] or identity[2] <= 0 or identity in identities:
+            return False
+        identities.add(identity)
+        status = _text(row.get("outcome_status"))
+        if not _finite_number(row.get("turnover"), minimum=0.0):
+            return False
+        if status == "AVAILABLE":
+            if not all(_finite_number(row.get(key)) for key in metric_keys):
+                return False
+        elif status in {"PENDING", "INSUFFICIENT_DATA"}:
+            if any(row.get(key) is not None for key in metric_keys):
+                return False
+        else:
+            return False
+    return True
 
 
 def _variant_summary_row(summary: Mapping[str, Any], variant: str) -> dict[str, Any]:

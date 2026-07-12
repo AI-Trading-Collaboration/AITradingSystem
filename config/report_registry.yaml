@@ -6913,13 +6913,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/sim_outcome_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/simulated_outcome_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/simulated_variant_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/outcome_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/backtest_sim_outcome_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/validate_data_quality_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-163 simulated outcome windows disclose AVAILABLE/PENDING/
-      INSUFFICIENT_DATA counts and data quality status before simulation
-      conclusions are interpreted.
+      INSUFFICIENT_DATA counts, immutable variant/cache/DQ bindings, null unknown
+      metrics, and data quality status before simulation conclusions are interpreted.
     owner_action: review_simulated_outcome_status_and_data_quality_before_calibration
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

@@ -4164,6 +4164,10 @@ flowchart TD
     R3 --> R4
 ```
 
+### Backtest Simulation Outcome 可复算边界（TRADING-163 / ARCH-004G2.4BN）
+
+`backtest-sim outcome-run`只接受content-derived PASS且不晚于generated cutoff的variant artifact，并在创建output前执行cached DQ。`outcome_input_snapshot.json`（schema=`backtest_sim_outcome_input_snapshot.v2`）冻结完整variant/event/config/validation bundle、price/rate full-file与requested-end cutoff rows和DQ report evidence。每个event×variant×window identity必须唯一，只有AVAILABLE metrics可为finite number；PENDING/INSUFFICIENT未知收益、相对收益、回撤和波动保持null且不进入summary/best ranking。`validate-backtest-sim-outcome`重验live variant/cache/DQ并逐字节重算snapshot、windows、summary、manifest和Markdown；任一drift阻断paper/regime/sensitivity。该链路固定`SIMULATION_NOT_PIT`、`not_for_production=true`和`production_effect=none`。
+
 ## 文件和命令责任表
 
 |层级|命令或文件|责任|当前状态|

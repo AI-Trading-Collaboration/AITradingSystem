@@ -1086,6 +1086,8 @@ ExperimentSpec
 
 TRADING-162 variant层在此基础上再加一道边界：只接受BL event validator PASS且generated不晚于本次variant cutoff的source，冻结event全bundle、validation、config和exact enabled variants；每个event×variant按时间顺序维护独立state，计算before/target/after、delta、L1 turnover、risk/semiconductor/cash exposure与action ledger。Validator重验live event后逐字节重算所有JSON/JSONL/Markdown；这证明variant路径可复现，不证明某个variant优于no_trade，收益、回撤与cost结论必须等待独立outcome/paper slice。
 
+TRADING-163 outcome层只接受BM variant validator PASS且generated不早于source的bundle，在任何output前执行cached DQ。`backtest_sim_outcome_input_snapshot.v2`冻结完整variant/event/config/validation、price/rate full-file与requested-end cutoff rows和DQ evidence；每个event×variant×window唯一，只有AVAILABLE收益/相对收益/回撤/波动为finite，PENDING/INSUFFICIENT未知值保持null且不进入汇总或best ranking。Validator重验live variant/cache/DQ并逐字节重算snapshot、windows、summary、manifest和Markdown。当前结果只证明non-PIT outcome计算可复现，不证明best variant具备forward或production有效性；优化空间是将window calculator、nullable metric schema和artifact envelope拆为typed pure services，并为后续paper/regime消费建立相同source-validation contract。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |

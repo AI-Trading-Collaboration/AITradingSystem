@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BM_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BN_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: 95271c39
+base_commit: b3279eaa
 production_effect: none
 
 arch_004_owned_paths:
@@ -201,6 +201,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_forward_outcome_decision.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_events.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_variants.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backtest_sim_outcome.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_backtest_simulation.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
@@ -296,6 +297,7 @@ arch_004_owned_paths:
   - tests/test_forward_outcome_decision.py
   - tests/test_backtest_sim_events.py
   - tests/test_backtest_sim_variants.py
+  - tests/test_backtest_sim_outcome.py
   - tests/dynamic_v3_paper_tracking_helpers.py
   - tests/test_position_advisory_daily.py
   - src/ai_trading_system/etf_portfolio/dynamic_rescue.py
