@@ -268,6 +268,9 @@ def build_replay_review_chain(
         replay_dir=paths["historical_replay_dir"],
         output_dir=paths["paper_sim_dir"],
         prices_path=paths["prices_path"],
+        rates_path=paths["rates_path"],
+        config_path=paths["config_path"],
+        enforce_data_quality_gate=False,
         generated_at=chain_generated_at,
     )
     review = replay.run_replay_performance_review(

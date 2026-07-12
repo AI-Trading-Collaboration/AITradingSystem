@@ -310,20 +310,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_RULE_CALIBRATION_DIR,
     DEFAULT_VARIANT_COMPARISON_DIR,
     backfill_repair_report_payload,
-    historical_paper_sim_report_payload,
     replay_diagnosis_report_payload,
     replay_forward_bridge_report_payload,
     replay_performance_review_report_payload,
     rule_calibration_report_payload,
     run_backfill_repair,
-    run_historical_paper_sim,
     run_replay_diagnosis,
     run_replay_forward_bridge,
     run_replay_performance_review,
     run_rule_calibration,
     run_variant_comparison,
     validate_backfill_repair_artifact,
-    validate_historical_paper_sim_artifact,
     validate_replay_diagnosis_artifact,
     validate_replay_forward_bridge_artifact,
     validate_replay_performance_review_artifact,
@@ -786,7 +783,6 @@ from ai_trading_system.interfaces.cli.etf_portfolio.registration import (
     dynamic_v3_forward_pressure_capture_app,
     dynamic_v3_gate_calibrated_review_app,
     dynamic_v3_gate_calibration_review_app,
-    dynamic_v3_historical_paper_sim_app,
     dynamic_v3_hypothesis_backlog_app,
     dynamic_v3_limited_consistency_app,
     dynamic_v3_limited_instability_app,
@@ -15290,92 +15286,6 @@ def dynamic_v3_validate_method_promotion_plan_command(
     typer.echo("experiment_only=true")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
-    if payload["status"] != "PASS":
-        raise typer.Exit(code=1)
-
-
-@dynamic_v3_historical_paper_sim_app.command("run")
-def dynamic_v3_historical_paper_sim_run_command(
-    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
-    variant: Annotated[
-        str,
-        typer.Option("--variant", help="simulation variant。"),
-    ] = "limited_adjustment",
-    replay_dir: Annotated[
-        Path,
-        typer.Option("--replay-dir", help="historical replay artifact root。"),
-    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical paper sim artifact root。"),
-    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
-    prices_path: Annotated[
-        Path,
-        typer.Option("--prices-path", help="cached ETF price path。"),
-    ] = DEFAULT_ETF_PRICE_PATH,
-) -> None:
-    """运行 TRADING-144 historical paper portfolio simulation。"""
-    result = run_historical_paper_sim(
-        replay_id=replay_id,
-        variant=variant,
-        replay_dir=replay_dir,
-        output_dir=output_dir,
-        prices_path=prices_path,
-    )
-    summary = result["performance_summary"]
-    typer.echo(f"sim_id={result['sim_id']}")
-    typer.echo(f"sim_dir={result['sim_dir']}")
-    typer.echo(f"status={summary['simulation_status']}")
-    typer.echo(f"variant={summary['variant']}")
-    typer.echo(f"total_return={summary['total_return']}")
-    typer.echo(f"max_drawdown={summary['max_drawdown']}")
-    typer.echo(f"turnover={summary['turnover']}")
-    typer.echo(f"relative_to_no_trade={summary['relative_to_no_trade']}")
-    typer.echo("broker_action_taken=false")
-
-
-@dynamic_v3_historical_paper_sim_app.command("report")
-def dynamic_v3_historical_paper_sim_report_command(
-    latest: Annotated[
-        bool,
-        typer.Option("--latest/--no-latest", help="读取 latest historical paper sim。"),
-    ] = False,
-    sim_id: Annotated[str | None, typer.Option("--sim-id", help="simulation id。")] = None,
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical paper sim artifact root。"),
-    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
-) -> None:
-    """展示 TRADING-144 historical paper sim 摘要。"""
-    payload = historical_paper_sim_report_payload(
-        sim_id=sim_id,
-        latest=latest,
-        output_dir=output_dir,
-    )
-    summary = _mapping_obj(payload.get("simulated_performance_summary"))
-    typer.echo(f"sim_id={payload['sim_id']}")
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"variant={summary.get('variant')}")
-    typer.echo(f"total_return={summary.get('total_return')}")
-    typer.echo(f"max_drawdown={summary.get('max_drawdown')}")
-    typer.echo(f"turnover={summary.get('turnover')}")
-    typer.echo(f"report_path={payload['historical_paper_sim_report_path']}")
-    typer.echo("broker_action_taken=false")
-
-
-@dynamic_v3_rescue_app.command("validate-historical-paper-sim")
-def dynamic_v3_validate_historical_paper_sim_command(
-    sim_id: Annotated[str, typer.Option("--sim-id", help="simulation id。")],
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", help="historical paper sim artifact root。"),
-    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
-) -> None:
-    """校验 TRADING-144 historical paper sim artifact。"""
-    payload = validate_historical_paper_sim_artifact(sim_id=sim_id, output_dir=output_dir)
-    typer.echo(f"status={payload['status']}")
-    typer.echo(f"failed_check_count={payload['failed_check_count']}")
-    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

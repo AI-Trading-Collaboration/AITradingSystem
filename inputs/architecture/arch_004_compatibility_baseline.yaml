@@ -5264,6 +5264,7 @@ phase_g2_4ar_etf_cli_dynamic_v3_replay_inventory:
     tree_sha256: 266c1f9e2c67cee3214f344a33435d0248fa5068094b09638248c83c7f2352cd
     production_effect: none
   superseded_source_paths:
+    - tests/dynamic_v3_historical_replay_helpers.py
     - config/report_registry.yaml
     - docs/artifact_catalog.md
     - docs/operations/operations_runbook.md
@@ -5364,6 +5365,7 @@ phase_g2_4as_etf_cli_dynamic_v3_historical_replay:
     architecture_fitness: {status: PASS, passed: 228, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260712T062532Z/test_runtime_summary.json}
     contract_validation: {status: PASS, passed: 203, runtime_artifact: outputs/validation_runtime/contract-validation_20260712T062735Z/test_runtime_summary.json}
   superseded_source_paths:
+    - tests/test_dynamic_v3_historical_replay.py
     - config/report_registry.yaml
     - docs/artifact_catalog.md
     - docs/operations/operations_runbook.md
@@ -5435,3 +5437,81 @@ phase_g2_4at_etf_cli_dynamic_v3_backfilled_outcome:
     focused: {status: PASS, passed: 87}
     architecture_fitness: {status: PASS, passed: 229, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260712T070207Z/test_runtime_summary.json}
     contract_validation: {status: PASS, passed: 203, runtime_artifact: outputs/validation_runtime/contract-validation_20260712T070408Z/test_runtime_summary.json}
+  superseded_source_paths:
+    - config/report_registry.yaml
+    - docs/artifact_catalog.md
+    - docs/operations/operations_runbook.md
+    - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
+    - docs/research/current_research_strategy_execution_chain.md
+    - docs/system_flow.md
+    - docs/task_register.md
+    - inputs/architecture/arch_004_worktree_attribution.yaml
+    - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    - inputs/architecture/arch_004e_architecture_fitness.yaml
+    - inputs/architecture/arch_004e_module_manifest.yaml
+    - inputs/architecture/arch_004e_test_manifest.yaml
+    - inputs/architecture/arch_004f3_reporting_inventory.yaml
+    - inputs/architecture/arch_004g2_etf_cli_contract.yaml
+    - inputs/architecture/arch_004g_deprecation_inventory.yaml
+    - src/ai_trading_system/cli_commands/etf_portfolio.py
+    - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
+    - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+    - tests/test_arch_004_refactor_policy.py
+    - tests/test_arch_004g2_etf_cli_contract.py
+    - tests/test_arch_004g_deprecation.py
+
+phase_g2_4au_etf_cli_dynamic_v3_historical_paper_sim:
+  status: COMPLETE_G2_4_CONTINUES
+  as_of: 2026-07-12
+  migration:
+    callback_count: 3
+    canonical_owner: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_historical_paper_sim.py
+    requires_full_validated_replay: true
+    generated_cutoff_ordering_enforced: true
+    cached_data_quality_gate_required: true
+    fixed_share_total_and_risk_path_consistent: true
+    missing_price_return_zero_allowed: false
+    event_target_reset_cost_explicit: true
+    immutable_source_snapshot: true
+    content_derived_all_views_validation: true
+    portfolio_or_execution_effect: false
+    direct_writer_calls_after: 858
+    legacy_root_lines_after: 26414
+    legacy_root_top_level_functions_after: 780
+    legacy_root_command_decorators_after: 741
+    python_module_count: 859
+    python_test_file_count: 1114
+    tree_sha256: 266c1f9e2c67cee3214f344a33435d0248fa5068094b09638248c83c7f2352cd
+    production_effect: none
+  sources:
+    - {path: config/report_registry.yaml, sha256: f696530e79a5f7b1ad12c82ee74e89985d46874305a9beb3cedc5671b538e088}
+    - {path: docs/artifact_catalog.md, sha256: 9db8ef97fbc818e1ff0afeaa6c4027b69ce78d0c3228c06319ebe63fac6dd6f4}
+    - {path: docs/operations/operations_runbook.md, sha256: 1e722bcaaeb26d54e4ac127f6e960d228862160946b50e536fe31f62540df4f6}
+    - {path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md, sha256: d166d2723dc2b321da4108b24a743398c5f217a97ea2d470d5df58515c740ea2}
+    - {path: docs/research/current_research_strategy_execution_chain.md, sha256: 8e7acbae32831d88cc97fe6556bbf715334750e07714e4f098b9c37c59918b44}
+    - {path: docs/system_flow.md, sha256: f1da4065b767f7399d51662fab40445c81c203b4efee93cad7b4c9147fb16d4e}
+    - {path: docs/task_register.md, sha256: 744892204e82bcd698acbf914ae8873967805414170e25ab2db64e7cd2bc6e9e}
+    - {path: inputs/architecture/arch_004_worktree_attribution.yaml, sha256: def8ada0114cefb789328e6315b419fb20860d7d0eae2f22d7e73e7cc0b7a175}
+    - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: d1badf985a0cdb94ff4d583f9ca932a3a31dffac6b1a3e9374dc92908be69de4}
+    - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: b51075f87287e267362a75340eb7e8a8a9eb45b18102c23afc606e860114e402}
+    - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 141d704bca3967aa66d6e76a1fe06d9aab25c3b7258013ef67b5a02f577e7cd2}
+    - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 61c92e800e511a4a261671d4935676bee82344d3b7cb67f8812d2e7e83d29f81}
+    - {path: inputs/architecture/arch_004f3_reporting_inventory.yaml, sha256: b54392c746fb5013c4b31e39c7222812b293b52a0171a06615f276eb7c929ba3}
+    - {path: inputs/architecture/arch_004g2_etf_cli_contract.yaml, sha256: 36229ea91212d601b6194c355517dc85b03bf48634e15cef4d002b8911efdcba}
+    - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: b51b6a0c90a080d6d6219ee637f82ad08366dd0920cde46aaeacc2614446479d}
+    - {path: src/ai_trading_system/cli_commands/etf_portfolio.py, sha256: 7a6c4e2a29fc5b7a1e6bcb45c680afe509806026fec34375c6c156c9a6097502}
+    - {path: src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py, sha256: de76f230829c0057ab13d12bb91630001c1adb58f9ce3158203b5a3653cf0b40}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py, sha256: 56979af9fc3b5b55d53a21406ef035a00591167c095ddfb8c90a13567f32cf67}
+    - {path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_historical_paper_sim.py, sha256: 0fe7e07b88b55c06f6e3f04f24cc72742e33f5893d262e6e5eb653a6bcb0f405}
+    - {path: tests/dynamic_v3_historical_replay_helpers.py, sha256: d10d82581c234c846829cfe7077c90d84258717b9031e95bed0da11c21677fc6}
+    - {path: tests/test_arch_004_refactor_policy.py, sha256: 60acc5bcd01670406fc6d2a94badac26243b32ac38082380a882589f398deafd}
+    - {path: tests/test_arch_004g2_etf_cli_contract.py, sha256: fa727d4ead24bb51c5e1ed8d5ecb433a55f209c079068ad0d65a5fd116a708ec}
+    - {path: tests/test_arch_004g_deprecation.py, sha256: 0b178a1edff73414a4a5d35b71325b8c077ed7aed74d0a3d606b98e38ac36ba4}
+    - {path: tests/test_backfill_outcome.py, sha256: 30b5721190f808261a619833d083a1234ccfdd4359d021171d0afb50cfe071da}
+    - {path: tests/test_dynamic_v3_historical_replay.py, sha256: bc2986d19338d653b600b1c7c6c2299058b0b017695cdb7d87022a4cdbc7c3a1}
+    - {path: tests/test_historical_paper_sim.py, sha256: d3a05cd8d52e4df9d877d323b196b096a361f2cd321d894fd9772493ae466242}
+    - {path: tests/test_replay_performance_review.py, sha256: 5d6d792cb203b6002e6c3f3adcd585e90bf30e8c231beeb467bc657fa02bdf61}
+  validation:
+    focused: {status: PASS, passed: 95}
+    architecture_fitness: {status: PASS, passed: 230, runtime_artifact: outputs/validation_runtime/architecture-fitness_20260712T073441Z/test_runtime_summary.json}
+    contract_validation: {status: PASS, passed: 203, runtime_artifact: outputs/validation_runtime/contract-validation_20260712T073654Z/test_runtime_summary.json}

@@ -180,6 +180,9 @@ def test_dynamic_v3_historical_replay_marks_hard_pit_limitations_unsafe(
         replay_dir=paths["historical_replay_dir"],
         output_dir=paths["paper_sim_dir"],
         prices_path=paths["prices_path"],
+        rates_path=paths["rates_path"],
+        config_path=paths["config_path"],
+        enforce_data_quality_gate=False,
         generated_at=datetime(2026, 8, 11, tzinfo=UTC),
     )
     assert sim["manifest"]["status"] == "INSUFFICIENT_DATA"

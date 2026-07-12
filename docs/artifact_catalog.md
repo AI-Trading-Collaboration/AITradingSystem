@@ -10,6 +10,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/<backfill_id>/backfilled_outcome_source_snapshot.json`<br/>`backfill_manifest.json`<br/>`replay_outcome_windows.jsonl`<br/>`variant_performance_summary.json`<br/>`backfill_outcome_report.md`<br/>真实运行另含`validate_data_quality_report.md`|`aits etf dynamic-v3-rescue backfill-outcome run --replay-id <replay_id>`、`report --latest`、`validate-backfill-outcome --backfill-id <backfill_id>`|full-PASS snapshotted Historical Replay、reviewed `paper_portfolio_v1.yaml`、cached ETF prices/rates与统一DQ gate|snapshot冻结replay/config/window/session/cost/price-row bindings与checksums；sample unit=`event×variant×window`；AVAILABLE输出fixed-share gross return、initial one-way L1 turnover cost和net return，risk metrics标为gross path；PENDING/INSUFFICIENT收益/relative/risk/cost均null+reason；validator重验live replay/DQ/source并重算全部derived views；`production_effect=none`|历史variant结果评价、后续人工performance review输入|否，仅historical evaluation evidence|Backfill PASS不是策略有效、best variant不是promotion，gross risk也不是cost-adjusted risk；测试DQ skip不能作为投资证据，price不能回流为decision input，任何artifact均不授权policy/weights/portfolio/order/broker变化|
 
+## ARCH-004G2.4AU Historical Paper Simulation 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/<sim_id>/historical_paper_sim_source_snapshot.json`<br/>`historical_paper_sim_manifest.json`<br/>`simulated_paper_state_history.jsonl`<br/>`simulated_trade_ledger.jsonl`<br/>`simulated_performance_summary.json`<br/>`historical_paper_sim_report.md`|`aits etf dynamic-v3-rescue historical-paper-sim run --replay-id <id>`、`report --latest`、`validate-historical-paper-sim --sim-id <id>`|full-PASS Historical Replay、reviewed cost policy、cached ETF prices/rates与统一DQ|event interval用fixed-share value path；event target reset按simulated before→target one-way L1及cost进入net equity；缺价/少样本为INSUFFICIENT且metrics null；snapshot冻结全部bindings，validator重算全部views；`production_effect=none`|研究用variant path accounting与后续人工review|否，historical paper evidence only|不是real/paper runtime account、不是order fill或PIT production backtest；AVAILABLE/relative也不批准policy、weights、portfolio、production或broker|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

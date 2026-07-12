@@ -47,6 +47,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_failure_attribution as dynamic_v3_failure_attribution_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_historical_paper_sim as dynamic_v3_historical_paper_sim_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_historical_replay as dynamic_v3_historical_replay_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -182,6 +185,7 @@ __all__ = [
     "dynamic_v3_replay_inventory_commands",
     "dynamic_v3_historical_replay_commands",
     "dynamic_v3_backfilled_outcome_commands",
+    "dynamic_v3_historical_paper_sim_commands",
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_shadow_aging_commands",
     "dynamic_v3_sweep_config_commands",

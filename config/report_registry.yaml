@@ -6455,14 +6455,16 @@ reports:
     command: aits etf dynamic-v3-rescue historical-paper-sim report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/historical_paper_sim_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/historical_paper_sim_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/simulated_paper_state_history.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/simulated_trade_ledger.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/simulated_performance_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/historical_paper_sim/*/historical_paper_sim_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-144 historical paper simulation reconstructs paper-only state and
-      ledger evidence for replay variants without broker execution.
+      TRADING-144 freezes a full-PASS replay, reviewed cost policy, cached data
+      quality and cutoff price rows, then reconstructs cost-adjusted event-target
+      state, ledger and daily fixed-share equity evidence without broker execution.
     owner_action: review_historical_paper_sim_before_replay_performance_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

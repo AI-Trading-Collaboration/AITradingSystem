@@ -91,7 +91,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.dynamic_v3_historical_replay_helpers
   path: tests/dynamic_v3_historical_replay_helpers.py
-  sha256: 621db1ae9de858a607c82738f64689b2f3adda290898d6fbd26f06533187abe2
+  sha256: d10d82581c234c846829cfe7077c90d84258717b9031e95bed0da11c21677fc6
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7389,7 +7389,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: ec68952b9c19d4bff53e7002efa735c7abc2bd311583febbb29feb468e4002a6
+  sha256: 60acc5bcd01670406fc6d2a94badac26243b32ac38082380a882589f398deafd
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7605,7 +7605,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g2_etf_cli_contract
   path: tests/test_arch_004g2_etf_cli_contract.py
-  sha256: c9904e38a6883875f3deefc48cc33c9e8c15c9ea78098bbdb0cbd7555dbf5dcb
+  sha256: fa727d4ead24bb51c5e1ed8d5ecb433a55f209c079068ad0d65a5fd116a708ec
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7623,7 +7623,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 267fc94cf6bb22aab3e90bdb8be82dabc33c9544603d9c698c8f6d3e84be3633
+  sha256: 0b178a1edff73414a4a5d35b71325b8c077ed7aed74d0a3d606b98e38ac36ba4
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9311,7 +9311,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_dynamic_v3_historical_replay
   path: tests/test_dynamic_v3_historical_replay.py
-  sha256: 04ed69d70b97b88193ac1fdaa28ea8f395b516232a660a7786f020805cad970e
+  sha256: bc2986d19338d653b600b1c7c6c2299058b0b017695cdb7d87022a4cdbc7c3a1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -11089,7 +11089,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_historical_paper_sim
   path: tests/test_historical_paper_sim.py
-  sha256: 0de68cd2924764681888ceb79421422dca340e1c9cd5c15415150e071571ab95
+  sha256: d3a05cd8d52e4df9d877d323b196b096a361f2cd321d894fd9772493ae466242
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13073,7 +13073,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_replay_performance_review
   path: tests/test_replay_performance_review.py
-  sha256: 4de068326cde6c4ebfe5884456fe0d5168e4add09dc53642e22753e3f0020cc9
+  sha256: 5d6d792cb203b6002e6c3f3adcd585e90bf30e8c231beeb467bc657fa02bdf61
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

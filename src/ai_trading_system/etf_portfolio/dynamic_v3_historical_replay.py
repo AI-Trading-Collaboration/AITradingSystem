@@ -55,6 +55,7 @@ DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfoli
 REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION = "replay_inventory_source_snapshot.v2"
 HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION = "historical_replay_source_snapshot.v2"
 BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backfilled_outcome_source_snapshot.v2"
+HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION = "historical_paper_sim_source_snapshot.v2"
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
@@ -200,8 +201,7 @@ def _replay_inventory_source_snapshot(
         "price_data_role": "outcome_availability_only_not_decision_input",
         "future_generated_source_excluded_count": future_generated_source_excluded_count,
         "selected_daily_advisory_ids": [
-            _text(manifest.get("daily_advisory_id"))
-            for _, manifest, _ in selected_advisories
+            _text(manifest.get("daily_advisory_id")) for _, manifest, _ in selected_advisories
         ],
         "selected_daily_sources": [
             {
@@ -279,10 +279,8 @@ def _replay_inventory_rows_from_snapshot(snapshot: Mapping[str, Any]) -> list[di
         advisory_dir = Path(_text(source.get("advisory_dir")))
         manifest = _read_json(Path(_text(source.get("manifest_path"))))
         as_of = _date_from_any(source.get("as_of"))
-        if (
-            as_of is None
-            or _text(manifest.get("daily_advisory_id"))
-            != _text(source.get("daily_advisory_id"))
+        if as_of is None or _text(manifest.get("daily_advisory_id")) != _text(
+            source.get("daily_advisory_id")
         ):
             raise DynamicV3HistoricalReplayError("snapshot daily advisory binding is invalid")
         rows.append(
@@ -555,9 +553,9 @@ def validate_replay_inventory_artifact(
         expected_rows,
     )
     report_path = inventory_dir / "replay_inventory_report.md"
-    report_matches = report_path.is_file() and report_path.read_text(
-        encoding="utf-8"
-    ) == expected_report
+    report_matches = (
+        report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report
+    )
     derived_manifest_matches = bool(start is not None and end is not None) and all(
         (
             manifest.get("start") == snapshot.get("start"),
@@ -571,10 +569,8 @@ def validate_replay_inventory_artifact(
             _int(manifest.get("pit_safe_count")) == _int(expected_audit.get("pit_safe_count")),
             _int(manifest.get("pit_warning_count"))
             == _int(expected_audit.get("pit_warning_count")),
-            _int(manifest.get("pit_unsafe_count"))
-            == _int(expected_audit.get("pit_unsafe_count")),
-            _int(manifest.get("eligible_count"))
-            == _int(expected_coverage.get("eligible_count")),
+            _int(manifest.get("pit_unsafe_count")) == _int(expected_audit.get("pit_unsafe_count")),
+            _int(manifest.get("eligible_count")) == _int(expected_coverage.get("eligible_count")),
             _int(manifest.get("partial_count")) == _int(expected_coverage.get("partial_count")),
             _int(manifest.get("ineligible_count"))
             == _int(expected_coverage.get("ineligible_count")),
@@ -655,8 +651,7 @@ def validate_replay_inventory_artifact(
         ),
         _check(
             "price_role_is_outcome_only",
-            manifest.get("price_data_role")
-            == "outcome_availability_only_not_decision_input",
+            manifest.get("price_data_role") == "outcome_availability_only_not_decision_input",
             "future prices are not decision inputs",
         ),
     ]
@@ -712,18 +707,14 @@ def run_historical_replay(
         "schema_version": HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
         "inventory_id": inventory_id,
         "inventory_root": str(source_dir),
-        "inventory_manifest_checksum": _sha256_file(
-            source_dir / "replay_inventory_manifest.json"
-        ),
+        "inventory_manifest_checksum": _sha256_file(source_dir / "replay_inventory_manifest.json"),
         "inventory_source_snapshot_checksum": _sha256_file(inventory_snapshot_path),
         "inventory_manifest": inventory_manifest,
         "inventory_source_snapshot": inventory_snapshot,
         "inventory_rows": inventory_rows,
         "include_pit_warning": include_pit_warning,
         "generated_at": generated.isoformat(),
-        "selected_daily_advisory_ids": [
-            _text(event.get("daily_advisory_id")) for event in events
-        ],
+        "selected_daily_advisory_ids": [_text(event.get("daily_advisory_id")) for event in events],
         "skipped_events": skipped,
         "production_effect": "none",
         "broker_action_taken": False,
@@ -750,9 +741,7 @@ def run_historical_replay(
         "source_inventory_evidence_cutoff": inventory_cutoff.isoformat(),
         "market_regime": inventory_manifest.get("market_regime"),
         "historical_replay_source_snapshot_path": str(replay_source_snapshot_path),
-        "historical_replay_source_snapshot_checksum": _sha256_file(
-            replay_source_snapshot_path
-        ),
+        "historical_replay_source_snapshot_checksum": _sha256_file(replay_source_snapshot_path),
         "historical_replay_manifest_path": str(replay_dir / "historical_replay_manifest.json"),
         "replay_events_path": str(replay_dir / "replay_events.jsonl"),
         "replay_decision_inputs_path": str(replay_dir / "replay_decision_inputs.jsonl"),
@@ -903,8 +892,7 @@ def validate_historical_replay_artifact(
             "source_inventory_files_unchanged",
             source_manifest_path.is_file()
             and source_snapshot_path.is_file()
-            and snapshot.get("inventory_manifest_checksum")
-            == _sha256_file(source_manifest_path)
+            and snapshot.get("inventory_manifest_checksum") == _sha256_file(source_manifest_path)
             and snapshot.get("inventory_source_snapshot_checksum")
             == _sha256_file(source_snapshot_path),
             source_inventory_id,
@@ -1047,9 +1035,7 @@ def run_backfill_outcome(
     frozen_prices = pd.DataFrame(
         price_rows,
         columns=["symbol", "date", "adj_close"],
-    ).rename(
-        columns={"date": "_date", "adj_close": "_adj_close"}
-    )
+    ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
     frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
     rows, summary, rollup, status = _backfill_views(
         replay_events,
@@ -1252,8 +1238,7 @@ def validate_backfill_outcome_artifact(
         and prices_path.is_file()
         and rates_path.is_file()
         and snapshot.get("replay_manifest_checksum") == _sha256_file(source_manifest_path)
-        and snapshot.get("replay_source_snapshot_checksum")
-        == _sha256_file(source_snapshot_path)
+        and snapshot.get("replay_source_snapshot_checksum") == _sha256_file(source_snapshot_path)
         and snapshot.get("config_checksum") == _sha256_file(config_path)
         and snapshot.get("prices_checksum") == _sha256_file(prices_path)
         and snapshot.get("rates_checksum") == _sha256_file(rates_path)
@@ -1272,8 +1257,7 @@ def validate_backfill_outcome_artifact(
             source_manifest_path.is_file()
             and config_path.is_file()
             and snapshot.get("replay_manifest") == _read_json(source_manifest_path)
-            and snapshot.get("replay_events")
-            == _read_jsonl(source_root / "replay_events.jsonl")
+            and snapshot.get("replay_events") == _read_jsonl(source_root / "replay_events.jsonl")
             and snapshot.get("config") == load_paper_portfolio_config(config_path)
             and snapshot.get("price_rows")
             == _frozen_replay_price_rows(
@@ -1438,19 +1422,99 @@ def run_historical_paper_sim(
     replay_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
     output_dir: Path = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
     prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    config_path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     if variant not in SIM_VARIANTS:
         raise DynamicV3HistoricalReplayError(f"unsupported simulation variant: {variant}")
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_dir = replay_dir / replay_id
+    source_validation = validate_historical_replay_artifact(
+        replay_id=replay_id,
+        output_dir=replay_dir,
+    )
+    if source_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            "historical paper sim requires a fully validated snapshotted replay"
+        )
     replay_manifest = _read_json(source_dir / "historical_replay_manifest.json")
+    replay_generated = _datetime_from_any(replay_manifest.get("generated_at"))
+    if replay_generated is None or generated < replay_generated:
+        raise DynamicV3HistoricalReplayError(
+            "historical paper sim generated_at cannot precede replay generated_at"
+        )
     events = sorted(_read_jsonl(source_dir / "replay_events.jsonl"), key=lambda row: row["as_of"])
+    config = load_paper_portfolio_config(config_path)
+    cost_rate = _backfill_cost_rate(config)
+    policy_metadata = _mapping(config.get("policy_metadata"))
+    quality = None
+    if enforce_data_quality_gate:
+        quality = _validate_cached_data_quality(
+            as_of=generated.date(),
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+        if not quality.passed:
+            raise DynamicV3HistoricalReplayError(
+                f"historical paper sim data quality gate failed: {quality.status}"
+            )
+    prices = _load_prices_for_replay(prices_path, events)
+    price_rows = _frozen_replay_price_rows(prices, generated_date=generated.date())
+    frozen_prices = pd.DataFrame(
+        price_rows,
+        columns=["symbol", "date", "adj_close"],
+    ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
+    frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+    history, ledger, summary = _simulate_paper_history(
+        events,
+        variant=variant,
+        prices=frozen_prices,
+        cost_rate=cost_rate,
+    )
     sim_id = _stable_id("historical-paper-sim", replay_id, variant, generated.isoformat())
     sim_dir = _unique_dir(output_dir / sim_id)
     sim_dir.mkdir(parents=True, exist_ok=False)
-    prices = _load_prices_for_replay(prices_path, events)
-    history, ledger, summary = _simulate_paper_history(events, variant=variant, prices=prices)
+    quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    quality_report_path = ""
+    if enforce_data_quality_gate:
+        assert quality is not None
+        quality_report = sim_dir / "validate_data_quality_report.md"
+        write_data_quality_report(quality, quality_report)
+        quality_status = quality.status
+        quality_report_path = str(quality_report)
+    source_snapshot = {
+        "schema_version": HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION,
+        "replay_id": replay_id,
+        "replay_root": str(source_dir),
+        "replay_manifest_checksum": _sha256_file(source_dir / "historical_replay_manifest.json"),
+        "replay_source_snapshot_checksum": _sha256_file(
+            source_dir / "historical_replay_source_snapshot.json"
+        ),
+        "replay_manifest": replay_manifest,
+        "replay_events": events,
+        "variant": variant,
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "config_checksum": _sha256_file(config_path),
+        "config": config,
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
+        "cost_rate": cost_rate,
+        "cost_role": "event_target_reset_cost_on_pre_trade_equity",
+        "prices_path": str(prices_path),
+        "prices_checksum": _sha256_file(prices_path),
+        "rates_path": str(rates_path),
+        "rates_checksum": _sha256_file(rates_path),
+        "price_rows": price_rows,
+        "data_quality_status": quality_status,
+        "data_quality_gate_skipped_for_test": not enforce_data_quality_gate,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    source_snapshot_path = sim_dir / "historical_paper_sim_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
     status = summary["simulation_status"]
     manifest = {
         "schema_version": SCHEMA_VERSION,
@@ -1461,7 +1525,16 @@ def run_historical_paper_sim(
         "status": status,
         "variant": variant,
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
+        "source_replay_validation_status": "PASS",
+        "data_quality_status": quality_status,
+        "data_quality_report_path": quality_report_path,
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
+        "cost_rate": cost_rate,
+        "cost_role": "event_target_reset_cost_on_pre_trade_equity",
         "source_replay_path": str(source_dir / "historical_replay_manifest.json"),
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": _sha256_file(source_snapshot_path),
         "historical_paper_sim_manifest_path": str(sim_dir / "historical_paper_sim_manifest.json"),
         "simulated_paper_state_history_path": str(sim_dir / "simulated_paper_state_history.jsonl"),
         "simulated_trade_ledger_path": str(sim_dir / "simulated_trade_ledger.jsonl"),
@@ -1530,7 +1603,9 @@ def validate_historical_paper_sim_artifact(
     manifest = _read_optional_json(sim_dir / "historical_paper_sim_manifest.json") or {}
     history = _read_jsonl(sim_dir / "simulated_paper_state_history.jsonl")
     ledger = _read_jsonl(sim_dir / "simulated_trade_ledger.jsonl")
-    checks = [
+    summary = _read_optional_json(sim_dir / "simulated_performance_summary.json") or {}
+    snapshot_path = sim_dir / "historical_paper_sim_source_snapshot.json"
+    shallow_checks = [
         _check(
             "manifest_exists",
             (sim_dir / "historical_paper_sim_manifest.json").exists(),
@@ -1564,6 +1639,152 @@ def validate_historical_paper_sim_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+    ]
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_historical_paper_sim_validation",
+            artifact_id_key="sim_id",
+            artifact_id=sim_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    source_root = Path(_text(snapshot.get("replay_root")))
+    source_replay_id = _text(snapshot.get("replay_id"))
+    source_manifest_path = source_root / "historical_replay_manifest.json"
+    source_replay_snapshot_path = source_root / "historical_replay_source_snapshot.json"
+    config_path = Path(_text(snapshot.get("config_path")))
+    prices_path = Path(_text(snapshot.get("prices_path")))
+    rates_path = Path(_text(snapshot.get("rates_path")))
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    try:
+        source_validation = validate_historical_replay_artifact(
+            replay_id=source_replay_id,
+            output_dir=source_root.parent,
+        )
+    except Exception as exc:  # noqa: BLE001
+        source_validation = {"status": "FAIL", "error": str(exc)}
+    source_files_match = (
+        source_manifest_path.is_file()
+        and source_replay_snapshot_path.is_file()
+        and config_path.is_file()
+        and prices_path.is_file()
+        and rates_path.is_file()
+        and snapshot.get("replay_manifest_checksum") == _sha256_file(source_manifest_path)
+        and snapshot.get("replay_source_snapshot_checksum")
+        == _sha256_file(source_replay_snapshot_path)
+        and snapshot.get("config_checksum") == _sha256_file(config_path)
+        and snapshot.get("prices_checksum") == _sha256_file(prices_path)
+        and snapshot.get("rates_checksum") == _sha256_file(rates_path)
+    )
+    try:
+        frozen_prices = pd.DataFrame(
+            _records(snapshot.get("price_rows")),
+            columns=["symbol", "date", "adj_close"],
+        ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
+        frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+        expected_history, expected_ledger, expected_summary = _simulate_paper_history(
+            _records(snapshot.get("replay_events")),
+            variant=_text(snapshot.get("variant")),
+            prices=frozen_prices,
+            cost_rate=_float(snapshot.get("cost_rate")),
+        )
+        replay_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_history, expected_ledger, expected_summary = [], [], {}
+        replay_error = str(exc)
+    try:
+        embedded_source_matches = (
+            generated is not None
+            and snapshot.get("replay_manifest") == _read_json(source_manifest_path)
+            and snapshot.get("replay_events") == _read_jsonl(source_root / "replay_events.jsonl")
+            and snapshot.get("config") == load_paper_portfolio_config(config_path)
+            and snapshot.get("price_rows")
+            == _frozen_replay_price_rows(
+                _load_prices_for_replay(
+                    prices_path,
+                    _records(snapshot.get("replay_events")),
+                ),
+                generated_date=generated.date(),
+            )
+        )
+    except Exception:  # noqa: BLE001
+        embedded_source_matches = False
+    snapshot_config = _mapping(snapshot.get("config"))
+    snapshot_policy = _mapping(snapshot_config.get("policy_metadata"))
+    try:
+        policy_matches = all(
+            (
+                _float(snapshot.get("cost_rate")) == _backfill_cost_rate(snapshot_config),
+                snapshot.get("cost_role") == "event_target_reset_cost_on_pre_trade_equity",
+                snapshot.get("policy_id") == _text(snapshot_policy.get("policy_id")),
+                snapshot.get("policy_version") == _text(snapshot_policy.get("version")),
+            )
+        )
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+    dq_skipped = snapshot.get("data_quality_gate_skipped_for_test") is True
+    dq_valid = snapshot.get("data_quality_status") == "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    if not dq_skipped and source_files_match and generated is not None:
+        quality = _validate_cached_data_quality(
+            as_of=generated.date(),
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+        dq_valid = quality.passed and quality.status == snapshot.get("data_quality_status")
+    expected_report = render_historical_paper_sim_report(manifest, expected_summary)
+    report_path = sim_dir / "historical_paper_sim_report.md"
+    derived_manifest_matches = all(
+        (
+            manifest.get("replay_id") == source_replay_id,
+            manifest.get("generated_at") == snapshot.get("generated_at"),
+            manifest.get("variant") == snapshot.get("variant"),
+            manifest.get("status") == expected_summary.get("simulation_status"),
+            manifest.get("source_replay_validation_status") == "PASS",
+            manifest.get("data_quality_status") == snapshot.get("data_quality_status"),
+            manifest.get("policy_id") == snapshot.get("policy_id"),
+            manifest.get("policy_version") == snapshot.get("policy_version"),
+            _float(manifest.get("cost_rate")) == _float(snapshot.get("cost_rate")),
+            manifest.get("cost_role") == snapshot.get("cost_role"),
+        )
+    )
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION,
+            HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "historical paper sim source snapshot",
+        ),
+        _check(
+            "source_replay_validation_passes",
+            source_validation.get("status") == "PASS",
+            source_replay_id,
+        ),
+        _check("source_files_unchanged", source_files_match, source_replay_id),
+        _check("embedded_sources_match", embedded_source_matches, source_replay_id),
+        _check("snapshot_policy_recomputed", policy_matches, "cost and policy"),
+        _check("data_quality_evidence_valid", dq_valid, _text(snapshot.get("data_quality_status"))),
+        _check(
+            "state_history_recomputed",
+            not replay_error and history == expected_history,
+            replay_error or "state history",
+        ),
+        _check("trade_ledger_recomputed", ledger == expected_ledger, "trade ledger"),
+        _check("performance_summary_recomputed", summary == expected_summary, "summary"),
+        _check("manifest_derived_fields_match", derived_manifest_matches, "manifest"),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
@@ -2723,8 +2944,7 @@ def render_replay_inventory_report(
             f"{manifest.get('actual_end') or 'none'}",
             f"- evidence cutoff：{manifest.get('evidence_cutoff')}",
             f"- market regime：{manifest.get('market_regime')}",
-            f"- cutoff后来源排除数："
-            f"{manifest.get('future_generated_source_excluded_count')}",
+            f"- cutoff后来源排除数：{manifest.get('future_generated_source_excluded_count')}",
             f"- price data role：{manifest.get('price_data_role')}",
             f"- historical advisory events：{manifest.get('total_replay_events')}",
             f"- PIT_SAFE：{audit.get('pit_safe_count')}",
@@ -2804,11 +3024,9 @@ def render_backfill_outcome_report(manifest: Mapping[str, Any], summary: Mapping
             f"- limited_adjustment_vs_no_trade_5d："
             f"{summary.get('limited_adjustment_vs_no_trade_5d')}",
             f"- data_quality_status：{manifest.get('data_quality_status')}",
-            f"- source_replay_validation_status："
-            f"{manifest.get('source_replay_validation_status')}",
+            f"- source_replay_validation_status：{manifest.get('source_replay_validation_status')}",
             "- sample_unit：event × variant × configured trading-session window。",
-            f"- cost_rate：{manifest.get('cost_rate')}；cost_role："
-            f"{manifest.get('cost_role')}。",
+            f"- cost_rate：{manifest.get('cost_rate')}；cost_role：{manifest.get('cost_role')}。",
             f"- policy：{manifest.get('policy_id')}@{manifest.get('policy_version')}；"
             f"session_source：{manifest.get('session_source')}。",
             "- return = gross fixed-share return - initial one-way L1 turnover cost；"
@@ -2836,8 +3054,17 @@ def render_historical_paper_sim_report(
             f"- total_return：{summary.get('total_return')}",
             f"- max_drawdown：{summary.get('max_drawdown')}",
             f"- turnover：{summary.get('turnover')}",
+            f"- estimated_cost：{summary.get('estimated_cost')}；cost_rate："
+            f"{manifest.get('cost_rate')}",
             f"- trade_count：{summary.get('trade_count')}",
             f"- relative_to_no_trade：{summary.get('relative_to_no_trade')}",
+            f"- daily_return_observation_count：{summary.get('daily_return_observation_count')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}；source replay："
+            f"{manifest.get('source_replay_validation_status')}",
+            "- 每个event interval使用fixed-share value path；event date按simulated before"
+            "到frozen variant target重置并扣one-way L1成本。",
+            "- 缺required-symbol path时status=INSUFFICIENT_DATA，return/risk/relative为null，"
+            "不以0继续累计。",
             "- outcome_mode=HISTORICAL_REPLAY；不是真实仓位历史。",
             "- production_effect=none；broker_action_taken=false。",
             "",
@@ -2861,8 +3088,7 @@ def render_replay_performance_review(
             f"- replay_event_count：{manifest.get('replay_event_count')}",
             f"- available_outcome_count：{manifest.get('available_outcome_count')}",
             f"- best_variant：{manifest.get('best_variant')}",
-            f"- limited_adjustment_vs_no_trade："
-            f"{manifest.get('limited_adjustment_vs_no_trade')}",
+            f"- limited_adjustment_vs_no_trade：{manifest.get('limited_adjustment_vs_no_trade')}",
             f"- simulation_variant：{sim_summary.get('variant')}",
             f"- simulation_total_return：{sim_summary.get('total_return')}",
             f"- primary_recommendation：{top.get('type')}",
@@ -2888,8 +3114,7 @@ def render_replay_performance_reader_brief(
             f"- replay_event_count: {manifest.get('replay_event_count')}",
             f"- available_outcome_count: {manifest.get('available_outcome_count')}",
             f"- best_variant: {manifest.get('best_variant')}",
-            f"- limited_adjustment_vs_no_trade: "
-            f"{manifest.get('limited_adjustment_vs_no_trade')}",
+            f"- limited_adjustment_vs_no_trade: {manifest.get('limited_adjustment_vs_no_trade')}",
             f"- calibration_recommendation: {top.get('type')}",
             f"- next_action: {manifest.get('next_action')}",
             "- production_effect: none",
@@ -3046,9 +3271,7 @@ def _limited_adjustment_vs_no_trade_pair(pairwise: Mapping[str, Any]) -> dict[st
             else:
                 limited_conclusion = conclusion
             normalized["limited_adjustment_conclusion"] = limited_conclusion
-            normalized["limited_adjustment_avg_return_delta"] = -_float(
-                row.get("avg_return_delta")
-            )
+            normalized["limited_adjustment_avg_return_delta"] = -_float(row.get("avg_return_delta"))
         return normalized
     return {
         "limited_adjustment_conclusion": "INSUFFICIENT_DATA",
@@ -3956,9 +4179,7 @@ def _historical_replay_event(row: Mapping[str, Any]) -> dict[str, Any]:
             "owner_decision",
             owner_weights,
             "Apply recorded owner decision if available",
-            "RECORDED_OWNER_DECISION"
-            if owner_recorded
-            else "FALLBACK_NO_TRADE_MISSING_OWNER",
+            "RECORDED_OWNER_DECISION" if owner_recorded else "FALLBACK_NO_TRADE_MISSING_OWNER",
         ),
         _variant(
             "paper_action",
@@ -4154,34 +4375,94 @@ def _backfilled_outcome_rows(
 
 
 def _simulate_paper_history(
-    events: Sequence[Mapping[str, Any]], *, variant: str, prices: pd.DataFrame
+    events: Sequence[Mapping[str, Any]],
+    *,
+    variant: str,
+    prices: pd.DataFrame,
+    cost_rate: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    history, ledger, summary = _simulate_variant_history(
+        events,
+        variant=variant,
+        prices=prices,
+        cost_rate=cost_rate,
+    )
+    _, _, baseline = _simulate_variant_history(
+        events,
+        variant="no_trade_baseline",
+        prices=prices,
+        cost_rate=cost_rate,
+    )
+    if (
+        summary.get("simulation_status") == "AVAILABLE"
+        and baseline.get("simulation_status") == "AVAILABLE"
+    ):
+        relative = round(
+            _float(summary.get("total_return")) - _float(baseline.get("total_return")),
+            6,
+        )
+        summary["relative_to_no_trade"] = relative
+        summary["relative_to_baseline"] = relative
+    return history, ledger, summary
+
+
+def _simulate_variant_history(
+    events: Sequence[Mapping[str, Any]],
+    *,
+    variant: str,
+    prices: pd.DataFrame,
+    cost_rate: float,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     if not events:
         return [], [], _empty_sim_summary(variant)
     replay_variant = "no_trade" if variant == "no_trade_baseline" else variant
-    history = []
-    ledger = []
-    current_weights = _normalize_weights(_mapping(events[0].get("current_weights")))
-    value = 1.0
-    peak = 1.0
-    daily_returns = []
-    previous_date = _date_from_any(events[0].get("as_of"))
-    if previous_date is None:
+    ordered_events = sorted(events, key=lambda row: _text(row.get("as_of")))
+    start_date = _date_from_any(ordered_events[0].get("as_of"))
+    if start_date is None:
         return [], [], _empty_sim_summary(variant)
-    start_date = previous_date
-    for event in events:
+    current_weights = _normalize_weights(_mapping(ordered_events[0].get("current_weights")))
+    if not current_weights:
+        return [], [], _empty_sim_summary(variant)
+    history: list[dict[str, Any]] = []
+    ledger: list[dict[str, Any]] = []
+    daily_returns: list[float] = []
+    value = 1.0
+    previous_date = start_date
+    incomplete_reason = ""
+    for event in ordered_events:
         event_date = _date_from_any(event.get("as_of"))
-        if event_date is None:
-            continue
+        if event_date is None or event_date < previous_date:
+            incomplete_reason = "invalid_or_non_monotonic_event_date"
+            break
+        period_gross_return = 0.0
+        interval_daily_returns: list[float] = []
         if event_date > previous_date:
-            metrics = _portfolio_metrics(prices, current_weights, previous_date, event_date)
-            day_return = metrics["return"] if metrics["status"] == "AVAILABLE" else 0.0
-            value = round(value * (1.0 + day_return), 8)
-            daily_returns.append(day_return)
-            peak = max(peak, value)
-        after = _variant_weights(event, replay_variant) or current_weights
+            try:
+                period_gross_return, interval_daily_returns = _portfolio_return_and_path(
+                    prices,
+                    current_weights,
+                    previous_date,
+                    event_date,
+                )
+            except DynamicV3HistoricalReplayError:
+                incomplete_reason = "required_symbol_price_path_incomplete"
+                break
+            value = value * (1.0 + period_gross_return)
+            daily_returns.extend(interval_daily_returns)
+        after = _variant_weights(event, replay_variant)
+        if not after:
+            incomplete_reason = "variant_target_weights_missing"
+            break
         deltas = _weight_deltas(current_weights, after)
-        turnover = round(sum(abs(value) for value in deltas.values()), 6)
+        turnover = round(sum(abs(delta) for delta in deltas.values()), 6)
+        estimated_cost = round(turnover * cost_rate, 8)
+        value_before_trade = value
+        value = value * (1.0 - estimated_cost)
+        if estimated_cost:
+            if interval_daily_returns and daily_returns:
+                daily_returns[-1] = (1.0 + daily_returns[-1]) * (1.0 - estimated_cost) - 1.0
+            else:
+                daily_returns.append(-estimated_cost)
         if turnover:
             ledger.append(
                 {
@@ -4192,38 +4473,55 @@ def _simulate_paper_history(
                     "after_weights": after,
                     "deltas": deltas,
                     "turnover": turnover,
-                    "reason": "historical_replay_advisory",
+                    "turnover_convention": "one_way_l1_weight_change",
+                    "cost_rate": cost_rate,
+                    "estimated_cost": estimated_cost,
+                    "cost_role": "event_target_reset_cost_on_pre_trade_equity",
+                    "reason": "historical_replay_event_target_reset",
                     "source_replay_event_id": event.get("replay_event_id"),
                     "broker_action_taken": False,
                 }
             )
         current_weights = after
-        drawdown = round(value / peak - 1.0, 6) if peak else 0.0
         history.append(
             {
                 "schema_version": SCHEMA_VERSION,
                 "date": event_date.isoformat(),
                 "variant": variant,
                 "weights": current_weights,
-                "portfolio_value": value,
-                "daily_return": daily_returns[-1] if daily_returns else 0.0,
-                "drawdown": drawdown,
+                "portfolio_value_before_trade": round(value_before_trade, 8),
+                "portfolio_value": round(value, 8),
+                "period_gross_return": round(period_gross_return, 6),
+                "period_observation_days": len(interval_daily_returns),
+                "estimated_cost": estimated_cost,
                 "turnover": turnover,
+                "turnover_convention": "one_way_l1_weight_change",
                 "source_replay_event_id": event.get("replay_event_id"),
                 "broker_action_taken": False,
             }
         )
         previous_date = event_date
-    end_date = _date_from_any(history[-1]["date"]) if history else start_date
-    baseline_return = _portfolio_metrics(
-        prices,
-        _normalize_weights(_mapping(events[0].get("current_weights"))),
-        start_date,
-        end_date,
-    )["return"]
+    if incomplete_reason or len({row["date"] for row in history}) < 2:
+        summary = _empty_sim_summary(variant)
+        summary.update(
+            {
+                "start_date": start_date.isoformat(),
+                "end_date": history[-1]["date"] if history else "",
+                "simulation_reason": incomplete_reason or "fewer_than_two_event_dates",
+                "turnover": round(sum(_float(row.get("turnover")) for row in ledger), 6),
+                "estimated_cost": round(
+                    sum(_float(row.get("estimated_cost")) for row in ledger),
+                    8,
+                ),
+                "trade_count": len(ledger),
+            }
+        )
+        return history, ledger, summary
+    end_date = _date_from_any(history[-1]["date"])
+    assert end_date is not None
     total_return = round(value - 1.0, 6)
     years = max((end_date - start_date).days / 365.25, 0.0)
-    annualized = round((value ** (1 / years) - 1.0), 6) if years > 0 and value > 0 else 0.0
+    annualized = round(value ** (1 / years) - 1.0, 6) if years > 0 and value > 0 else None
     summary = {
         "schema_version": SCHEMA_VERSION,
         "variant": variant,
@@ -4231,14 +4529,20 @@ def _simulate_paper_history(
         "end_date": end_date.isoformat(),
         "total_return": total_return,
         "annualized_return": annualized,
-        "max_drawdown": round(min([row["drawdown"] for row in history] or [0.0]), 6),
+        "max_drawdown": round(_max_drawdown(daily_returns), 6),
         "realized_volatility": round(_realized_volatility(daily_returns), 6),
+        "daily_return_observation_count": len(daily_returns),
         "turnover": round(sum(_float(row.get("turnover")) for row in ledger), 6),
+        "estimated_cost": round(sum(_float(row.get("estimated_cost")) for row in ledger), 8),
+        "cost_rate": cost_rate,
+        "cost_role": "event_target_reset_cost_on_pre_trade_equity",
         "trade_count": len(ledger),
-        "relative_to_no_trade": round(total_return - baseline_return, 6),
-        "relative_to_baseline": round(total_return - baseline_return, 6),
-        "simulation_status": "AVAILABLE" if history else "INSUFFICIENT_DATA",
+        "relative_to_no_trade": None,
+        "relative_to_baseline": None,
+        "simulation_status": "AVAILABLE",
+        "simulation_reason": "",
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
+        "sample_unit": "daily_price_return_with_event_target_resets",
         "broker_action_taken": False,
     }
     return history, ledger, summary
@@ -4527,9 +4831,7 @@ def _owner_reviews_at_cutoff(
         created_at = _datetime_from_any(row.get("created_at"))
         updated_at = _datetime_from_any(row.get("updated_at") or row.get("created_at"))
         if created_at is None or updated_at is None or updated_at < created_at:
-            raise DynamicV3HistoricalReplayError(
-                f"owner review journal time is invalid: {path}"
-            )
+            raise DynamicV3HistoricalReplayError(f"owner review journal time is invalid: {path}")
         if updated_at > generated_cutoff:
             continue
         daily_id = _text(row.get("daily_advisory_id"))
@@ -4961,24 +5263,25 @@ def _portfolio_return_and_path(
         raise DynamicV3HistoricalReplayError("missing start or end price")
     start_idx = prior[-1]
     path_dates = [item for item in available_dates if start_idx <= item <= end]
-    total_return = 0.0
-    for symbol, weight in clean.items():
-        if symbol == "CASH":
-            continue
-        start_price = _portfolio_price(pivot, start_idx, symbol)
-        end_price = _portfolio_price(pivot, end, symbol)
-        total_return += _float(weight) * (end_price / start_price - 1.0)
-    daily_returns = []
-    for left, right in zip(path_dates, path_dates[1:], strict=False):
-        day_return = 0.0
+    start_prices = {
+        symbol: _portfolio_price(pivot, start_idx, symbol) for symbol in clean if symbol != "CASH"
+    }
+    values = []
+    for path_date in path_dates:
+        portfolio_value = _float(clean.get("CASH"))
         for symbol, weight in clean.items():
             if symbol == "CASH":
                 continue
-            left_price = _portfolio_price(pivot, left, symbol)
-            right_price = _portfolio_price(pivot, right, symbol)
-            day_return += _float(weight) * (right_price / left_price - 1.0)
-        daily_returns.append(day_return)
-    return total_return, daily_returns
+            portfolio_value += _float(weight) * (
+                _portfolio_price(pivot, path_date, symbol) / start_prices[symbol]
+            )
+        values.append(portfolio_value)
+    if not values or not math.isfinite(values[-1]) or values[-1] <= 0:
+        raise DynamicV3HistoricalReplayError("invalid fixed-share portfolio value path")
+    daily_returns = [
+        right / left - 1.0 for left, right in zip(values, values[1:], strict=False) if left > 0
+    ]
+    return values[-1] - 1.0, daily_returns
 
 
 def _portfolio_price(pivot: pd.DataFrame, price_date: date, symbol: str) -> float:
@@ -5078,15 +5381,18 @@ def _empty_sim_summary(variant: str) -> dict[str, Any]:
         "variant": variant,
         "start_date": "",
         "end_date": "",
-        "total_return": 0.0,
-        "annualized_return": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        "total_return": None,
+        "annualized_return": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
+        "daily_return_observation_count": 0,
         "turnover": 0.0,
+        "estimated_cost": 0.0,
         "trade_count": 0,
-        "relative_to_no_trade": 0.0,
-        "relative_to_baseline": 0.0,
+        "relative_to_no_trade": None,
+        "relative_to_baseline": None,
         "simulation_status": "INSUFFICIENT_DATA",
+        "simulation_reason": "no_replay_events",
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
         "broker_action_taken": False,
     }
