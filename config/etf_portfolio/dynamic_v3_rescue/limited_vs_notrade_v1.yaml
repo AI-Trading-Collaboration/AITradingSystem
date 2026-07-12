@@ -1,0 +1,39 @@
+schema_version: limited_vs_notrade_policy.v1
+policy_id: dynamic_v3_limited_vs_notrade
+version: v1
+status: pilot
+owner: research_governance
+rationale: >-
+  Limited-adjustment effectiveness may only be interpreted from uniquely paired, validated
+  limited_adjustment and no_trade samples. Missing metrics and unsupported regime labels must
+  remain explicit rather than being replaced with zero.
+intended_effect: >-
+  Govern confidence and manual recommendation labels without applying policy or changing any
+  portfolio state.
+validation_plan: >-
+  Recompute paired positive, empty, duplicate, unknown-variant, unknown-status, regime, policy,
+  and output-tamper fixtures before each policy-version change.
+review_condition: >-
+  Recalibrate confidence floors and aggregation after preregistered distinct-event cohorts cover
+  multiple real regimes.
+tracked_windows: [1, 5, 10, 20]
+medium_confidence_distinct_event_floor: 5
+high_confidence_distinct_event_floor: 20
+win_relative_return_threshold: 0.0
+overall_relative_return_threshold: 0.0
+window_aggregation: equal_window
+recommendation_precedence:
+  - insufficient_data
+  - continue_tracking
+  - support_limited_adjustment
+  - weaken_limited_adjustment
+regime_taxonomy:
+  - ai_trend
+  - tech_drawdown
+  - semiconductor_pullback
+  - sideways
+  - risk_off
+  - unknown
+missing_regime_behavior: UNAVAILABLE
+auto_policy_apply: false
+production_effect: none

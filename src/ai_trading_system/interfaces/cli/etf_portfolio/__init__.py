@@ -62,6 +62,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_legacy_validation as dynamic_v3_legacy_validation_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_limited_vs_notrade as dynamic_v3_limited_vs_notrade_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_manual_execution_review as dynamic_v3_manual_execution_review_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -200,6 +203,7 @@ __all__ = [
     "dynamic_v3_evidence_governance_commands",
     "dynamic_v3_injection_audit_commands",
     "dynamic_v3_legacy_validation_commands",
+    "dynamic_v3_limited_vs_notrade_commands",
     "dynamic_v3_manual_execution_review_commands",
     "dynamic_v3_observation_lifecycle_commands",
     "dynamic_v3_outcome_dashboard_commands",

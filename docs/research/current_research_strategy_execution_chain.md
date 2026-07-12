@@ -824,6 +824,21 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前focused fixture只有一个validated forward outcome，4个windows均PENDING，historical/simulation均为0，因此dashboard为PENDING、available count=0、top reason=`future_window_not_reached`。这证明缺source不会被填成AVAILABLE，也不证明forward strategy无效。优化顺序应先把source ids从latest选择改为显式RunLedger binding，再加入cohort/date/regime/effective-sample-size与staleness披露，最后接typed ReportSpec；不得通过扫描更多旧目录、重复pending reason或自动运行upstream让dashboard看起来更完整。
 
+#### Limited-vs-NoTrade 链（TRADING-154 / G2.4BE）
+
+这一链回答“在同一event、同一window且两种variant都可用的样本中，limited adjustment相对no trade表现如何”。它不是把所有outcome各自求平均，也不批准修改advisory policy。旧实现会覆盖duplicate variant、静默丢弃unpaired rows、把missing和empty aggregate写0、用paper portfolio return冒充forward limited return，并输出没有真实regime input的固定零桶；这些都会高估证据完整度。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source gate | generated cutoff、Advisory Outcome、Repair/Backfill roots | Forward逐个validator PASS；historical选择唯一latest validated Repair，否则Backfill；future/tie/invalid阻断 | selected full source bundles | 后续由显式RunLedger source ids取代latest |
+| Pair construction | forward outcome event/windows；historical event×window×variant | Forward只读取明确`limited_adjustment_return`和`no_trade_return`且要求limited weights lineage；historical每key各恰好一个limited/no_trade；duplicate/conflict阻断，unpaired进入coverage | sample inventory、pair coverage | 样本单位是distinct event×window pair。后续披露event/date/cluster dependence |
+| Metric semantics | paired status与finite metrics | 只有双方AVAILABLE才计算limited-no_trade relative return；缺值/非AVAILABLE保持null。Drawdown/turnover没有双边证据时也保持null | per-sample paired metrics | 不用0表示missing。后续增加paired cost/drawdown path与bootstrap CI |
+| Confidence/recommendation | reviewed policy的5/20 distinct-event pilot floors、0 win threshold、equal-window aggregation | 每window按distinct pair计数；MEDIUM/HIGH只在floor后；仅confident windows参与manual recommendation | window metrics、manual recommendation | pilot floor不是promotion gate。后续按有效样本量/相关性/CI校准 |
+| Regime | sample中真实regime label、reviewed taxonomy | 只聚合真实label；无label时整体UNAVAILABLE，各桶count=0且metric=null | regime breakdown | 不把unknown或0桶写成完成分析。后续绑定canonical regime artifact/checksum |
+| Validator | immutable source/policy snapshot、live inputs和全部views | 重跑sources/policy并重算samples/coverage/metrics/regime/manifest/Markdown | PASS/FAIL；legacy warning | source/snapshot/policy/output tamper FAIL；不apply policy |
+
+当前empty-source fixture产生paired=0、available=0、recommendation=`insufficient_data`，四个window的avg/median/win/drawdown/turnover全部null，regime status=`UNAVAILABLE`。这证明系统不再把“没有数据”解释成0收益或0风险。优化应先获得真实paired AVAILABLE cohort与canonical regime labels，再校准confidence floors和估计置信区间；不得通过放宽pair gate、复用paper return、填0或自动修改policy来制造方向结论。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

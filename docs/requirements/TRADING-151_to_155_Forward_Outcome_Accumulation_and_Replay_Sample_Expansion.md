@@ -9,6 +9,8 @@
 - 2026-07-12：Replay Sample Expansion的G2.4BC实现与正式验证完成，任务继续保持`VALIDATING`等待真实PIT-safe样本积累。当前validated TARGET_ONLY fixture因缺decision-time current weights，技术source validator PASS但分类仍为`PIT_UNSAFE/INELIGIBLE`，证明不会用结构完整性冒充replay资格。Focused=168、architecture=238、contract=203 PASS；无production/broker effect。
 - 2026-07-12：Outcome Dashboard进入G2.4BD source-derived hardening与CLI迁移。Build要求selected Advisory Outcome、Repair/Backfill、Paper Sim、Diagnosis和Outcome Due validators在generated cutoff下PASS，选择唯一latest链并冻结full bundles与reviewed pending-action policy。Matrix按三类明确sample unit计算，pending reason只来自selected frozen sources；validator重算matrix/mode/pending/manifest/Markdown/Reader Brief。无upstream/policy/portfolio/production/broker effect。
 - 2026-07-12：Outcome Dashboard的G2.4BD实现与正式验证完成并保持`VALIDATING`。Focused=170、architecture=239、contract=203 PASS；当前fixture只有4个forward PENDING windows，historical/simulation为0、available=0、top reason=future_window_not_reached，证明missing source不会被补成AVAILABLE。无production/broker effect。
+- 2026-07-12：Limited-vs-NoTrade进入G2.4BE source-derived hardening与CLI迁移。Run要求validated/cutoff-bound Advisory Outcome与唯一latest Repair/Backfill，冻结full bundles和reviewed comparison policy；strict pair/coverage gate，AVAILABLE finite、missing/empty null，真实regime缺失时UNAVAILABLE。Validator重算samples/coverage/metrics/regime/manifest/Markdown；manual research only，无policy/production/broker effect。
+- 2026-07-12：Limited-vs-NoTrade的G2.4BE实现与正式验证完成并保持`VALIDATING`。累计focused=326、architecture=240、contract=203 PASS；positive paired fixture验证5个distinct events达到MEDIUM并按reviewed overall threshold给出manual support label，duplicate/unknown variant/status fail closed；empty-source fixture为paired=0、available=0、recommendation=insufficient_data，所有缺失aggregate均为null，regime=UNAVAILABLE。无policy/production/broker effect。
 
 ## 背景
 
@@ -32,7 +34,7 @@ TRADING-146_to_150 已经能解释 historical replay 的 `PARTIAL`、`PENDING`
 |TRADING-151|Forward Outcome Scheduler & Due Window Detector|VALIDATING|`outcome-due scan/report/update-ready` 和 `validate-outcome-due` 可运行；能区分 `DUE`、`NOT_DUE`、`PRICE_MISSING`、`ALREADY_AVAILABLE`、`INSUFFICIENT_DATA`；`update-ready` 只处理 `can_update=true` 的 outcome。|
 |TRADING-152|Replay Sample Expansion from Historical Candidate Artifacts|VALIDATING|`replay-sample-expansion run/report` 和 `validate-replay-sample-expansion` 已迁至canonical CLI并通过正式验证；只接受validated/cutoff-bound sources，输出immutable source snapshot与unique expanded replay events；`PIT_UNSAFE`或缺评价价格默认不进入 replay eligibility；等待真实PIT-safe样本积累。|
 |TRADING-153|Outcome Availability Dashboard|VALIDATING|`outcome-dashboard build/report` 和 `validate-outcome-dashboard` 已迁至canonical CLI并通过正式验证；只聚合validated/cutoff-bound unique latest sources，输出immutable snapshot与三类明确sample-unit matrix；Reader Brief只读取frozen projection。|
-|TRADING-154|Limited Adjustment vs No Trade Focused Evaluation|VALIDATING|`limited-vs-notrade run/report` 和 `validate-limited-vs-notrade` 可运行；聚合 forward/replay outcome；样本不足时明确 `INSUFFICIENT_DATA`；不自动修改 advisory policy。|
+|TRADING-154|Limited Adjustment vs No Trade Focused Evaluation|VALIDATING|`limited-vs-notrade run/report` 和 `validate-limited-vs-notrade` 已迁至canonical CLI并通过正式验证；仅使用validated strict paired cohort，missing metrics保持null，confidence/recommendation/regime由reviewed policy治理；不自动修改 advisory policy。|
 |TRADING-155|Consensus Target Risk Review|VALIDATING|`consensus-risk run/report` 和 `validate-consensus-risk` 可运行；样本不足时不得给 `PASS`；结论只能作为 observation/risk review input。|
 
 ## CLI

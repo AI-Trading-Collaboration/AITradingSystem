@@ -177,6 +177,10 @@ DYNAMIC_V3_OUTCOME_DASHBOARD_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_dashboard.py"
 )
+DYNAMIC_V3_LIMITED_VS_NOTRADE_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_limited_vs_notrade.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -276,7 +280,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "4abbbdca67f1d8c554f934dc121511cb4c7eb16bb8b9c47919a15fd96a401422"
+        "707e80286aeab5a94d8529b89d2448b156d266e343b53e60f119e973abf6ed15"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -330,7 +334,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25492
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25399
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -541,8 +545,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25492
-    assert len(legacy_names) == 752
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25399
+    assert len(legacy_names) == 749
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1579,6 +1583,28 @@ def test_g2_4_dynamic_v3_outcome_dashboard_callbacks_leave_legacy_root() -> None
             "build_outcome_dashboard",
             "outcome_dashboard_report_payload",
             "validate_outcome_dashboard_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_limited_vs_notrade_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_LIMITED_VS_NOTRADE_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_limited_vs_notrade_run_command",
+        "dynamic_v3_limited_vs_notrade_report_command",
+        "dynamic_v3_validate_limited_vs_notrade_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "limited_vs_notrade_report_payload",
+            "run_limited_vs_notrade_evaluation",
+            "validate_limited_vs_notrade_artifact",
         }
     )
 

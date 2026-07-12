@@ -84,6 +84,10 @@ OUTCOME_DASHBOARD_SNAPSHOT_SCHEMA_VERSION = "outcome_dashboard_source_snapshot.v
 DEFAULT_OUTCOME_DASHBOARD_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/outcome_dashboard_v1.yaml"
 )
+LIMITED_VS_NOTRADE_SNAPSHOT_SCHEMA_VERSION = "limited_vs_notrade_source_snapshot.v2"
+DEFAULT_LIMITED_VS_NOTRADE_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade_v1.yaml"
+)
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -1354,21 +1358,27 @@ def run_limited_vs_notrade_evaluation(
     advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
     backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
     repair_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+    policy_path: Path = DEFAULT_LIMITED_VS_NOTRADE_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    samples = _limited_vs_notrade_samples(
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    policy = _load_limited_vs_notrade_policy(policy_path)
+    snapshot = _build_limited_vs_notrade_snapshot(
+        generated=generated,
         advisory_outcome_dir=advisory_outcome_dir,
         backfill_dir=backfill_dir,
         repair_dir=repair_dir,
+        policy_path=policy_path,
+        policy=policy,
     )
-    metrics = _limited_window_metrics(samples)
-    regime_breakdown = _limited_regime_breakdown(samples)
+    samples, coverage = _limited_vs_notrade_views_from_snapshot(snapshot)
+    metrics = _limited_window_metrics_v2(samples, policy)
+    regime_breakdown = _limited_regime_breakdown_v2(samples, policy)
     focus_id = _stable_id("limited-vs-notrade", generated.isoformat())
     focus_dir = _unique_dir(output_dir / focus_id)
     focus_dir.mkdir(parents=True, exist_ok=False)
     available_count = sum(1 for row in samples if row.get("sample_status") == "AVAILABLE")
-    recommendation = _limited_overall_recommendation(metrics)
+    recommendation = _limited_overall_recommendation_v2(metrics, policy)
     status = "PASS" if available_count else "INSUFFICIENT_DATA"
     if recommendation == "continue_tracking":
         status = "PASS_WITH_WARNINGS"
@@ -1378,7 +1388,13 @@ def run_limited_vs_notrade_evaluation(
         "focus_id": focus_dir.name,
         "generated_at": generated.isoformat(),
         "status": status,
+        "source_snapshot_path": str(focus_dir / "limited_vs_notrade_source_snapshot.json"),
+        "source_snapshot_checksum": "",
+        "policy_id": policy["policy_id"],
+        "policy_version": policy["version"],
         "available_count": available_count,
+        "paired_sample_count": len(samples),
+        "unpaired_source_row_count": coverage["unpaired_source_row_count"],
         "overall_recommendation": recommendation,
         "limited_vs_notrade_manifest_path": str(focus_dir / "limited_vs_notrade_manifest.json"),
         "sample_inventory_path": str(focus_dir / "sample_inventory.jsonl"),
@@ -1399,10 +1415,17 @@ def run_limited_vs_notrade_evaluation(
         "report_type": "etf_dynamic_v3_limited_vs_notrade_window_comparison_metrics",
         "by_window": metrics,
         "overall_recommendation": recommendation,
+        "pair_coverage": coverage,
+        "policy_id": policy["policy_id"],
+        "policy_version": policy["version"],
         "policy_mutated": False,
         "production_effect": "none",
         "broker_action_taken": False,
     }
+    snapshot["focus_id"] = focus_dir.name
+    snapshot_path = focus_dir / "limited_vs_notrade_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
+    manifest["source_snapshot_checksum"] = _file_sha256(snapshot_path)
     _write_json(focus_dir / "limited_vs_notrade_manifest.json", manifest)
     _write_jsonl(focus_dir / "sample_inventory.jsonl", samples)
     _write_json(focus_dir / "window_comparison_metrics.json", comparison)
@@ -1423,6 +1446,7 @@ def run_limited_vs_notrade_evaluation(
         "sample_inventory": samples,
         "window_comparison_metrics": comparison,
         "regime_breakdown": regime_breakdown,
+        "source_snapshot": snapshot,
     }
 
 
@@ -1455,6 +1479,93 @@ def validate_limited_vs_notrade_artifact(
     manifest = _read_optional_json(focus_dir / "limited_vs_notrade_manifest.json") or {}
     samples = _read_jsonl(focus_dir / "sample_inventory.jsonl")
     metrics = _read_optional_json(focus_dir / "window_comparison_metrics.json") or {}
+    regime = _read_optional_json(focus_dir / "regime_breakdown.json") or {}
+    snapshot_path = focus_dir / "limited_vs_notrade_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (focus_dir / "limited_vs_notrade_manifest.json").is_file(),
+                focus_id,
+            ),
+            _check("samples_exists", (focus_dir / "sample_inventory.jsonl").is_file(), focus_id),
+            _check(
+                "no_auto_policy_apply",
+                manifest.get("auto_policy_apply") is False,
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_limited_vs_notrade_validation",
+            artifact_id_key="focus_id",
+            artifact_id=focus_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    recompute_error = ""
+    try:
+        expected_samples, expected_coverage = _limited_vs_notrade_views_from_snapshot(snapshot)
+        policy = _mapping(snapshot.get("policy"))
+        expected_metric_rows = _limited_window_metrics_v2(expected_samples, policy)
+        expected_recommendation = _limited_overall_recommendation_v2(
+            expected_metric_rows, policy
+        )
+        expected_metrics = {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_limited_vs_notrade_window_comparison_metrics",
+            "by_window": expected_metric_rows,
+            "overall_recommendation": expected_recommendation,
+            "pair_coverage": expected_coverage,
+            "policy_id": policy.get("policy_id"),
+            "policy_version": policy.get("version"),
+            "policy_mutated": False,
+            "production_effect": "none",
+            "broker_action_taken": False,
+        }
+        expected_regime = _limited_regime_breakdown_v2(expected_samples, policy)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_samples, expected_metrics, expected_regime = [], {}, {}
+        expected_recommendation = "insufficient_data"
+        expected_coverage = {}
+    available_count = sum(
+        1 for row in expected_samples if row.get("sample_status") == "AVAILABLE"
+    )
+    expected_status = "PASS" if available_count else "INSUFFICIENT_DATA"
+    if expected_recommendation == "continue_tracking":
+        expected_status = "PASS_WITH_WARNINGS"
+    expected_manifest_fields = {
+        "focus_id": focus_id,
+        "generated_at": snapshot.get("generated_at"),
+        "status": expected_status,
+        "policy_id": _mapping(snapshot.get("policy")).get("policy_id"),
+        "policy_version": _mapping(snapshot.get("policy")).get("version"),
+        "available_count": available_count,
+        "paired_sample_count": len(expected_samples),
+        "unpaired_source_row_count": expected_coverage.get("unpaired_source_row_count"),
+        "overall_recommendation": expected_recommendation,
+    }
+    expected_report = render_limited_vs_notrade_report(
+        manifest, expected_metrics, expected_regime
+    )
+    bundles = _records(snapshot.get("forward_sources")) + _records(
+        snapshot.get("historical_sources")
+    )
+    source_bundles_match = all(_source_bundle_matches(bundle) for bundle in bundles)
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    try:
+        policy_matches = (
+            _file_sha256(policy_path) == snapshot.get("policy_checksum")
+            and _load_limited_vs_notrade_policy(policy_path) == snapshot.get("policy")
+        )
+        live_source_validation_passes = _limited_vs_notrade_live_source_validation(snapshot)
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+        live_source_validation_passes = False
     checks = [
         _check(
             "manifest_exists", (focus_dir / "limited_vs_notrade_manifest.json").exists(), focus_id
@@ -1465,18 +1576,52 @@ def validate_limited_vs_notrade_artifact(
         _check("report_exists", (focus_dir / "limited_vs_notrade_report.md").exists(), focus_id),
         _check("focus_id_matches", manifest.get("focus_id") == focus_id, focus_id),
         _check(
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == LIMITED_VS_NOTRADE_SNAPSHOT_SCHEMA_VERSION,
+            "v2 source snapshot",
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "source snapshot",
+        ),
+        _check("source_files_unchanged", source_bundles_match, "selected source bundles"),
+        _check(
+            "live_source_validation_passes",
+            live_source_validation_passes,
+            "advisory outcome / repair / backfill validators",
+        ),
+        _check("policy_snapshot_matches", policy_matches, "reviewed comparison policy"),
+        _check("samples_recomputed", samples == expected_samples, recompute_error),
+        _check("metrics_recomputed", metrics == expected_metrics, recompute_error),
+        _check("regime_recomputed", regime == expected_regime, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            recompute_error,
+        ),
+        _check(
+            "report_recomputed",
+            (focus_dir / "limited_vs_notrade_report.md").is_file()
+            and (focus_dir / "limited_vs_notrade_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
+        ),
+        _check(
             "sample_status_valid",
             all(row.get("sample_status") in OUTCOME_WINDOW_STATUSES for row in samples),
             "sample status",
         ),
         _check(
             "insufficient_data_explicit",
-            bool(samples)
-            or all(
+            all(
                 row.get("confidence") == "INSUFFICIENT_DATA"
+                and row.get("avg_relative_return") is None
+                and row.get("win_rate") is None
                 for row in _records(metrics.get("by_window"))
+                if _int(row.get("available_count")) == 0
             ),
-            "empty samples must be insufficient",
+            "empty metrics must be null and insufficient",
         ),
         _check(
             "no_auto_policy_apply",
@@ -4777,6 +4922,499 @@ def _outcome_dashboard_reader_brief(
         "production_effect": "none",
         "broker_action_taken": False,
     }
+
+
+def _load_limited_vs_notrade_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3OutcomeAccumulationError(f"limited-vs-notrade policy not found: {path}")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    policy = dict(payload) if isinstance(payload, Mapping) else {}
+    for key in (
+        "schema_version",
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "validation_plan",
+        "review_condition",
+        "window_aggregation",
+        "missing_regime_behavior",
+    ):
+        if not _text(policy.get(key)):
+            raise DynamicV3OutcomeAccumulationError(
+                "limited-vs-notrade policy metadata is incomplete"
+            )
+    windows = [_int(value) for value in _records_or_values(policy.get("tracked_windows"))]
+    if tuple(windows) != OUTCOME_WINDOWS:
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade tracked windows must match outcome contract"
+        )
+    medium = policy.get("medium_confidence_distinct_event_floor")
+    high = policy.get("high_confidence_distinct_event_floor")
+    if (
+        isinstance(medium, bool)
+        or isinstance(high, bool)
+        or not isinstance(medium, int)
+        or not isinstance(high, int)
+        or not 0 < medium < high
+    ):
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade confidence floors are invalid"
+        )
+    if policy.get("window_aggregation") != "equal_window":
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade window aggregation must be explicit equal_window"
+        )
+    regimes = _texts(policy.get("regime_taxonomy"))
+    if not regimes or len(regimes) != len(set(regimes)):
+        raise DynamicV3OutcomeAccumulationError("limited-vs-notrade regime taxonomy invalid")
+    if policy.get("missing_regime_behavior") != "UNAVAILABLE":
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade missing regime behavior must be UNAVAILABLE"
+        )
+    precedence = _texts(policy.get("recommendation_precedence"))
+    if precedence != [
+        "insufficient_data",
+        "continue_tracking",
+        "support_limited_adjustment",
+        "weaken_limited_adjustment",
+    ]:
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade recommendation precedence invalid"
+        )
+    overall_threshold = policy.get("overall_relative_return_threshold")
+    if isinstance(overall_threshold, bool) or not isinstance(overall_threshold, int | float):
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade overall return threshold invalid"
+        )
+    if not math.isfinite(float(overall_threshold)):
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade overall return threshold must be finite"
+        )
+    if policy.get("auto_policy_apply") is not False or policy.get("production_effect") != "none":
+        raise DynamicV3OutcomeAccumulationError(
+            "limited-vs-notrade policy safety boundary invalid"
+        )
+    policy["tracked_windows"] = windows
+    policy["regime_taxonomy"] = regimes
+    policy["recommendation_precedence"] = precedence
+    return policy
+
+
+def _records_or_values(value: Any) -> list[Any]:
+    return list(value) if isinstance(value, list | tuple) else []
+
+
+def _build_limited_vs_notrade_snapshot(
+    *,
+    generated: datetime,
+    advisory_outcome_dir: Path,
+    backfill_dir: Path,
+    repair_dir: Path,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    forward_sources: list[dict[str, Any]] = []
+    ids: set[str] = set()
+    for child in _artifact_children(advisory_outcome_dir):
+        manifest = _read_optional_json(child / "advisory_outcome_manifest.json")
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(f"advisory outcome invalid: {child}")
+        outcome_id = _text(manifest.get("outcome_id"), child.name)
+        source_time = _datetime_from_any(manifest.get("updated_at") or manifest.get("generated_at"))
+        if source_time is None or source_time > generated or outcome_id in ids:
+            raise DynamicV3OutcomeAccumulationError(
+                "advisory outcome time/id invalid for limited comparison"
+            )
+        if (
+            validate_advisory_outcome_artifact(
+                outcome_id=outcome_id, output_dir=advisory_outcome_dir
+            ).get("status")
+            != "PASS"
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                f"advisory outcome validation must PASS: {outcome_id}"
+            )
+        ids.add(outcome_id)
+        forward_sources.append(_immutable_source_bundle(child))
+    repair_sources = _latest_dashboard_source_bundle(
+        root=repair_dir,
+        manifest_name="backfill_repair_manifest.json",
+        id_field="repair_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_backfill_repair_artifact(
+            repair_id=artifact_id, output_dir=repair_dir
+        ),
+    )
+    backfill_sources: list[dict[str, Any]] = []
+    if not repair_sources:
+        backfill_sources = _latest_dashboard_source_bundle(
+            root=backfill_dir,
+            manifest_name="backfill_manifest.json",
+            id_field="backfill_id",
+            generated=generated,
+            validator=lambda artifact_id: validate_backfill_outcome_artifact(
+                backfill_id=artifact_id, output_dir=backfill_dir
+            ),
+        )
+    return {
+        "schema_version": LIMITED_VS_NOTRADE_SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": generated.isoformat(),
+        "generated_cutoff": generated.isoformat(),
+        "advisory_outcome_dir": str(advisory_outcome_dir),
+        "forward_sources": forward_sources,
+        "backfill_dir": str(backfill_dir),
+        "repair_dir": str(repair_dir),
+        "historical_sources": repair_sources or backfill_sources,
+        "historical_source_type": "repair" if repair_sources else "backfill",
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "production_effect": "none",
+    }
+
+
+def _limited_vs_notrade_views_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    generated = _datetime_from_any(snapshot.get("generated_cutoff"))
+    if generated is None:
+        raise DynamicV3OutcomeAccumulationError("limited comparison snapshot cutoff invalid")
+    samples: list[dict[str, Any]] = []
+    source_row_count = 0
+    unpaired_source_row_count = 0
+    identities: set[tuple[str, int]] = set()
+    for bundle in _records(snapshot.get("forward_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        event = _mapping(_source_bundle_content(bundle, "advisory_event.json"))
+        outcome_id = _text(manifest.get("outcome_id"))
+        source_time = _datetime_from_any(manifest.get("updated_at") or manifest.get("generated_at"))
+        if source_time is None or source_time > generated:
+            raise DynamicV3OutcomeAccumulationError("forward comparison source escaped cutoff")
+        limited_supported = bool(_mapping(event.get("limited_adjustment_weights")))
+        for row in _records(_source_bundle_content(bundle, "outcome_windows.jsonl")):
+            source_row_count += 1
+            window = _int(row.get("window_days"))
+            identity = (outcome_id, window)
+            if not outcome_id or window not in OUTCOME_WINDOWS or identity in identities:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate or invalid forward limited comparison sample"
+                )
+            identities.add(identity)
+            status = _text(row.get("outcome_status"), "INSUFFICIENT_DATA")
+            if status not in OUTCOME_WINDOW_STATUSES:
+                raise DynamicV3OutcomeAccumulationError(
+                    "forward comparison outcome status invalid"
+                )
+            limited_return = _optional_finite(row.get("limited_adjustment_return"))
+            no_trade_return = _optional_finite(row.get("no_trade_return"))
+            if not limited_supported:
+                unpaired_source_row_count += 1
+                continue
+            if status == "AVAILABLE" and (limited_return is None or no_trade_return is None):
+                raise DynamicV3OutcomeAccumulationError(
+                    "AVAILABLE forward comparison sample missing finite paired return"
+                )
+            samples.append(
+                _limited_sample_row(
+                    sample_id=_stable_id("limited-forward", outcome_id, str(window)),
+                    source_mode="FORWARD_OUTCOME",
+                    as_of=_text(row.get("start_date") or manifest.get("as_of")),
+                    window=window,
+                    limited_return=limited_return,
+                    no_trade_return=no_trade_return,
+                    limited_drawdown=None,
+                    no_trade_drawdown=None,
+                    turnover=None,
+                    status=status,
+                    regime=_text(row.get("regime")),
+                )
+            )
+    historical_type = _text(snapshot.get("historical_source_type"))
+    if historical_type not in {"repair", "backfill"}:
+        raise DynamicV3OutcomeAccumulationError(
+            "limited comparison historical source type invalid"
+        )
+    filename = (
+        "repaired_outcome_windows.jsonl"
+        if historical_type == "repair"
+        else "replay_outcome_windows.jsonl"
+    )
+    grouped: dict[tuple[str, int], dict[str, Mapping[str, Any]]] = defaultdict(dict)
+    for bundle in _records(snapshot.get("historical_sources")):
+        for row in _records(_source_bundle_content(bundle, filename)):
+            source_row_count += 1
+            key = (
+                _text(row.get("replay_event_id") or row.get("daily_advisory_id")),
+                _int(row.get("window_days")),
+            )
+            variant = _text(row.get("variant"))
+            status = _text(row.get("outcome_status"))
+            if (
+                not key[0]
+                or key[1] not in OUTCOME_WINDOWS
+                or variant not in {"limited_adjustment", "no_trade"}
+                or status not in OUTCOME_WINDOW_STATUSES
+            ):
+                raise DynamicV3OutcomeAccumulationError("invalid historical comparison identity")
+            if variant in grouped[key]:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate historical event/window/variant comparison row"
+                )
+            grouped[key][variant] = row
+    for (event_id, window), variants in sorted(grouped.items()):
+        limited = variants.get("limited_adjustment")
+        no_trade = variants.get("no_trade")
+        if limited is None or no_trade is None:
+            unpaired_source_row_count += len(variants)
+            continue
+        status = _paired_status(limited, no_trade)
+        limited_return = _optional_finite(limited.get("return"))
+        no_trade_return = _optional_finite(no_trade.get("return"))
+        if status == "AVAILABLE" and (limited_return is None or no_trade_return is None):
+            raise DynamicV3OutcomeAccumulationError(
+                "AVAILABLE historical comparison sample missing finite paired return"
+            )
+        limited_regime = _text(limited.get("regime"))
+        no_trade_regime = _text(no_trade.get("regime"))
+        if limited_regime and no_trade_regime and limited_regime != no_trade_regime:
+            raise DynamicV3OutcomeAccumulationError("paired comparison regime labels conflict")
+        samples.append(
+            _limited_sample_row(
+                sample_id=_stable_id("limited-replay", event_id, str(window)),
+                source_mode="HISTORICAL_REPLAY",
+                as_of=_text(limited.get("as_of")),
+                window=window,
+                limited_return=limited_return,
+                no_trade_return=no_trade_return,
+                limited_drawdown=_optional_finite(limited.get("max_drawdown")),
+                no_trade_drawdown=_optional_finite(no_trade.get("max_drawdown")),
+                turnover=_optional_finite(limited.get("turnover")),
+                status=status,
+                regime=limited_regime or no_trade_regime,
+            )
+        )
+    samples.sort(key=lambda row: (_text(row.get("as_of")), _text(row.get("sample_id"))))
+    coverage = {
+        "source_row_count": source_row_count,
+        "paired_sample_count": len(samples),
+        "unpaired_source_row_count": unpaired_source_row_count,
+        "available_paired_sample_count": sum(
+            1 for row in samples if row.get("sample_status") == "AVAILABLE"
+        ),
+        "production_effect": "none",
+    }
+    return samples, coverage
+
+
+def _optional_finite(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    result = _float(value, default=float("nan"))
+    return result if math.isfinite(result) else None
+
+
+def _limited_sample_row(
+    *,
+    sample_id: str,
+    source_mode: str,
+    as_of: str,
+    window: int,
+    limited_return: float | None,
+    no_trade_return: float | None,
+    limited_drawdown: float | None,
+    no_trade_drawdown: float | None,
+    turnover: float | None,
+    status: str,
+    regime: str,
+) -> dict[str, Any]:
+    available = status == "AVAILABLE"
+    return {
+        "sample_id": sample_id,
+        "source_mode": source_mode,
+        "as_of": as_of,
+        "window_days": window,
+        "limited_adjustment_return": limited_return if available else None,
+        "no_trade_return": no_trade_return if available else None,
+        "relative_return": (
+            round(limited_return - no_trade_return, 6)
+            if available and limited_return is not None and no_trade_return is not None
+            else None
+        ),
+        "limited_drawdown": limited_drawdown if available else None,
+        "no_trade_drawdown": no_trade_drawdown if available else None,
+        "relative_drawdown": (
+            round(limited_drawdown - no_trade_drawdown, 6)
+            if available and limited_drawdown is not None and no_trade_drawdown is not None
+            else None
+        ),
+        "turnover": turnover if available else None,
+        "sample_status": status if status in OUTCOME_WINDOW_STATUSES else "INSUFFICIENT_DATA",
+        "regime": regime or None,
+    }
+
+
+def _limited_window_metrics_v2(
+    samples: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> list[dict[str, Any]]:
+    result = []
+    medium = _int(policy.get("medium_confidence_distinct_event_floor"))
+    high = _int(policy.get("high_confidence_distinct_event_floor"))
+    win_threshold = _float(policy.get("win_relative_return_threshold"))
+    for window in _records_or_values(policy.get("tracked_windows")):
+        rows = [
+            row
+            for row in samples
+            if _int(row.get("window_days")) == _int(window)
+            and row.get("sample_status") == "AVAILABLE"
+        ]
+        rel = [
+            value
+            for row in rows
+            if (value := _optional_finite(row.get("relative_return"))) is not None
+        ]
+        drawdowns = [
+            value
+            for row in rows
+            if (value := _optional_finite(row.get("relative_drawdown"))) is not None
+        ]
+        turnovers = [
+            value for row in rows if (value := _optional_finite(row.get("turnover"))) is not None
+        ]
+        count = len(rows)
+        confidence = "INSUFFICIENT_DATA"
+        if count >= high:
+            confidence = "HIGH"
+        elif count >= medium:
+            confidence = "MEDIUM"
+        elif count > 0:
+            confidence = "LOW"
+        result.append(
+            {
+                "window_days": _int(window),
+                "available_count": count,
+                "distinct_event_count": count,
+                "avg_relative_return": round(_avg(rel), 6) if rel else None,
+                "median_relative_return": round(_median(rel), 6) if rel else None,
+                "win_rate": (
+                    round(sum(1 for value in rel if value > win_threshold) / len(rel), 6)
+                    if rel
+                    else None
+                ),
+                "avg_drawdown_delta": round(_avg(drawdowns), 6) if drawdowns else None,
+                "avg_turnover": round(_avg(turnovers), 6) if turnovers else None,
+                "confidence": confidence,
+            }
+        )
+    return result
+
+
+def _limited_overall_recommendation_v2(
+    metrics: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> str:
+    if policy.get("window_aggregation") != "equal_window":
+        raise DynamicV3OutcomeAccumulationError("unsupported limited comparison aggregation")
+    available = [row for row in metrics if _int(row.get("available_count")) > 0]
+    if not available:
+        return "insufficient_data"
+    confident = [row for row in available if _text(row.get("confidence")) in {"MEDIUM", "HIGH"}]
+    if not confident:
+        return "continue_tracking"
+    values = [
+        value
+        for row in confident
+        if (value := _optional_finite(row.get("avg_relative_return"))) is not None
+    ]
+    if not values:
+        return "insufficient_data"
+    threshold = _float(policy.get("overall_relative_return_threshold"))
+    return (
+        "support_limited_adjustment"
+        if _avg(values) > threshold
+        else "weaken_limited_adjustment"
+    )
+
+
+def _limited_regime_breakdown_v2(
+    samples: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    regimes = _texts(policy.get("regime_taxonomy"))
+    unexpected = sorted(
+        {
+            label
+            for row in samples
+            if row.get("sample_status") == "AVAILABLE"
+            and (label := _text(row.get("regime")))
+            and label not in regimes
+        }
+    )
+    if unexpected:
+        raise DynamicV3OutcomeAccumulationError(
+            f"limited comparison regime labels outside policy taxonomy: {unexpected}"
+        )
+    by_regime: dict[str, Any] = {}
+    labeled_count = 0
+    for regime in regimes:
+        rows = [
+            row
+            for row in samples
+            if row.get("sample_status") == "AVAILABLE" and _text(row.get("regime")) == regime
+        ]
+        values = [
+            value
+            for row in rows
+            if (value := _optional_finite(row.get("relative_return"))) is not None
+        ]
+        labeled_count += len(rows)
+        by_regime[regime] = {
+            "available_count": len(rows),
+            "avg_relative_return": round(_avg(values), 6) if values else None,
+            "status": "AVAILABLE" if rows else "INSUFFICIENT_DATA",
+        }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_limited_vs_notrade_regime_breakdown",
+        "status": "PARTIAL" if labeled_count else _text(policy.get("missing_regime_behavior")),
+        "labeled_sample_count": labeled_count,
+        "by_regime": by_regime,
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _limited_vs_notrade_live_source_validation(snapshot: Mapping[str, Any]) -> bool:
+    forward_root = Path(_text(snapshot.get("advisory_outcome_dir")))
+    for bundle in _records(snapshot.get("forward_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "advisory_outcome_manifest.json"))
+        if (
+            validate_advisory_outcome_artifact(
+                outcome_id=_text(manifest.get("outcome_id")), output_dir=forward_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    historical_type = _text(snapshot.get("historical_source_type"))
+    root = Path(
+        _text(snapshot.get("repair_dir" if historical_type == "repair" else "backfill_dir"))
+    )
+    for bundle in _records(snapshot.get("historical_sources")):
+        if historical_type == "repair":
+            manifest = _mapping(_source_bundle_content(bundle, "backfill_repair_manifest.json"))
+            status = validate_backfill_repair_artifact(
+                repair_id=_text(manifest.get("repair_id")), output_dir=root
+            ).get("status")
+        else:
+            manifest = _mapping(_source_bundle_content(bundle, "backfill_manifest.json"))
+            status = validate_backfill_outcome_artifact(
+                backfill_id=_text(manifest.get("backfill_id")), output_dir=root
+            ).get("status")
+        if status != "PASS":
+            return False
+    return True
 
 
 def _limited_vs_notrade_samples(

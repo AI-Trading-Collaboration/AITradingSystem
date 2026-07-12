@@ -6697,11 +6697,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/sample_inventory.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/window_comparison_metrics.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/regime_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/limited_vs_notrade_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/limited_vs_notrade_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-154 evaluates limited_adjustment versus no_trade only from
-      available outcome samples and never applies policy automatically.
+      TRADING-154 evaluates uniquely paired, validated limited_adjustment versus no_trade samples
+      from an immutable source/policy snapshot. Missing metrics remain null, unsupported regime
+      coverage remains UNAVAILABLE, and policy is never applied automatically.
     owner_action: review_sample_count_confidence_and_recommendation_before_any_manual_policy_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

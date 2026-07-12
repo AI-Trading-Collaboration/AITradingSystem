@@ -1,8 +1,8 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BD_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4BE_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
-base_commit: b180bfbe
+base_commit: 45c42508
 production_effect: none
 
 arch_004_owned_paths:
@@ -20,6 +20,7 @@ arch_004_owned_paths:
   - config/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion_v1.yaml
   - config/etf_portfolio/dynamic_v3_rescue/outcome_dashboard_v1.yaml
+  - config/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade_v1.yaml
   - config/architecture/research_semantic_glossary.yaml
   - docs/architecture/arch_004_phase_a_baseline.md
   - docs/architecture/arch_004_semantic_glossary.md
@@ -163,6 +164,7 @@ arch_004_owned_paths:
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_004g_shared_writers.py
   - tests/test_arch_004g2_etf_cli_contract.py
+  - tests/test_limited_vs_notrade.py
   - tests/test_etf_satellite_attribution.py
   - tests/test_etf_trend_calibration.py
   - tests/test_etf_baseline_review.py
@@ -182,6 +184,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/__init__.py
   - src/ai_trading_system/interfaces/cli/__init__.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_limited_vs_notrade.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/registration.py
   - src/ai_trading_system/cli_commands/etf_portfolio.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/common.py
