@@ -185,6 +185,10 @@ DYNAMIC_V3_CONSENSUS_RISK_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_consensus_risk.py"
 )
+DYNAMIC_V3_OUTCOME_UPDATE_REVIEW_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_update_review.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -284,7 +288,7 @@ def test_g2_1_etf_cli_contract_matches_frozen_runtime_tree() -> None:
         "duplicate_path_count": 0,
     }
     assert contract["tree_sha256"] == (
-        "c46f54c3b3bd6afb2a2234bc898ba6f28f2a2a2584d2ac4f702209c9dd364070"
+        "055c644c5e4b3092c381de7484f15c4748db9f74213796ec6518bafb8c62f75e"
     )
     assert contract["production_effect"] == "none"
     assert contract == safe_load_yaml_path(BASELINE_PATH)
@@ -338,7 +342,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25301
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25221
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -549,8 +553,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25301
-    assert len(legacy_names) == 746
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25221
+    assert len(legacy_names) == 743
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1631,6 +1635,28 @@ def test_g2_4_dynamic_v3_consensus_risk_callbacks_leave_legacy_root() -> None:
             "consensus_risk_report_payload",
             "run_consensus_risk_review",
             "validate_consensus_risk_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_outcome_update_review_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(DYNAMIC_V3_OUTCOME_UPDATE_REVIEW_COMMANDS_PATH.read_text(encoding="utf-8"))
+    )
+    callbacks = {
+        "dynamic_v3_outcome_update_review_run_command",
+        "dynamic_v3_outcome_update_review_report_command",
+        "dynamic_v3_validate_outcome_update_review_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "outcome_update_review_report_payload",
+            "run_outcome_update_review",
+            "validate_outcome_update_review_artifact",
         }
     )
 

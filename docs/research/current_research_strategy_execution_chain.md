@@ -854,6 +854,20 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前empty-source fixture产生distinct exposure=0、paired drawdown=0、turnover sample=0，overall=`INSUFFICIENT_DATA`；exposure min/mean/max、四window drawdown和turnover aggregate均为null。Positive frozen fixture用5个distinct dates、5d/20d各5个paired outcomes验证required windows PASS且turnover只计5次；这只是计算契约证明，不是当前策略的真实风险结论。优化应先积累validated same-lineage真实cohort、统一turnover定义并增加regime/tail/CI，再复核pilot thresholds；不得用candidate target fallback、重复window turnover、填0或放宽lineage来制造PASS。
 
+#### Outcome Update Review 链（TRADING-156 / G2.4BG）
+
+这一链回答“哪些已经到期的forward outcome窗口，在当前review cutoff可见的数据范围内具备人工执行更新的前置条件，以及若继续会影响多少行”。这样设计是为了在真正写入Outcome evidence前，把source有效性、时间边界、row identity和影响范围冻结成可重放证据。旧实现直接相信Outcome Due中的`can_update`与价格字段，`future_data_used_in_decision=false`只是常量，validator也不能证明READY推导或发现合法empty artifact；这些都会让人工审查误读成执行授权或无未来数据证明。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source gate | 显式`due_id`、Outcome Due root、timezone-aware generated cutoff | 运行content-derived Outcome Due validator；要求manifest id一致，due generated/as-of均不晚于review cutoff；在任何review output前冻结完整due bundle与validation evidence | immutable source snapshot | invalid、id mismatch、future source立即阻断；后续用RunLedger显式绑定source envelope/checksum |
+| Row identity | frozen due inventory/ready list | 每个`outcome_id×window_days`必须唯一；校验due/current status、`can_update`、latest price date和必要字段，不允许dict覆盖duplicate | canonical review candidate rows | duplicate、非法status或future price阻断；后续统一canonical outcome-window id和schema version migration |
+| READY推导 | canonical rows、review cutoff | 仅`DUE + PENDING + can_update=true + cutoff-visible latest_price_date`推导READY，其余明确BLOCKED与reason；不信任已有ready布尔结论 | `update_ready_review_matrix.jsonl` | 不用默认值或填0制造READY；后续增加price provenance与DQ evidence的字段级绑定 |
+| 安全与影响 | source/review boundaries、derived rows | 从日期关系证明no-future-data；按READY/BLOCKED和forward pending/available变化预览影响，不写回source | safety checks、impact preview、overall status | empty rows合法为`INSUFFICIENT_DATA`；后续加入同一outcome update transaction/run id的pre/post reconciliation |
+| Validator | immutable snapshot、live Outcome Due和全部views | 重验live due source并从snapshot重算matrix/safety/impact/status/manifest/Markdown | PASS/FAIL；legacy warning | source/snapshot/output drift FAIL；不执行update或data refresh |
+
+当前完整fixture验证1个READY row、0个blocked row且date-derived future-data flag为false；empty snapshot则得到0个READY、overall=`INSUFFICIENT_DATA`，duplicate identity被阻断。这些是计算与安全契约测试，不是当前策略已获得新的forward结果，也不批准真实outcome update。后续应优先补强canonical envelope、price/DQ provenance、review→update transaction reconciliation和staleness策略；不能通过信任source布尔值、放宽cutoff、覆盖duplicate或自动串联update来提高表面ready率。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

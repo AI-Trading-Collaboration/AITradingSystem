@@ -93,6 +93,7 @@ CONSENSUS_RISK_SNAPSHOT_SCHEMA_VERSION = "consensus_risk_source_snapshot.v2"
 DEFAULT_CONSENSUS_RISK_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/consensus_risk_v1.yaml"
 )
+OUTCOME_UPDATE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "outcome_update_review_source_snapshot.v2"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -1913,53 +1914,29 @@ def run_outcome_update_review(
     outcome_due_dir: Path = DEFAULT_OUTCOME_DUE_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    due_dir = outcome_due_dir / due_id
-    due_manifest = _read_json(due_dir / "outcome_due_manifest.json")
-    due_rows = _read_jsonl(due_dir / "due_window_inventory.jsonl")
-    review_rows = [_outcome_update_review_row(row) for row in due_rows]
-    safety_checks = _outcome_update_safety_checks(review_rows)
-    impact_preview = _outcome_update_impact_preview(review_rows)
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    snapshot = _build_outcome_update_review_snapshot(
+        due_id=due_id, outcome_due_dir=outcome_due_dir, generated=generated
+    )
+    review_rows, safety_checks, impact_preview, status = _outcome_update_review_views(
+        snapshot
+    )
     review_id = _stable_id("outcome-update-review", due_id, generated.isoformat())
     review_dir = _unique_dir(output_dir / review_id)
     review_dir.mkdir(parents=True, exist_ok=False)
-    status = "PASS"
-    if not review_rows:
-        status = "INSUFFICIENT_DATA"
-    elif safety_checks["blocked_count"]:
-        status = "PASS_WITH_WARNINGS" if safety_checks["ready_to_update_count"] else "BLOCKED"
-    elif not safety_checks["ready_to_update_count"]:
-        status = "INSUFFICIENT_DATA"
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_outcome_update_review_manifest",
-        "update_review_id": review_dir.name,
-        "due_id": due_id,
-        "as_of": _text(due_manifest.get("as_of")),
-        "generated_at": generated.isoformat(),
-        "status": status,
-        "ready_to_update_count": safety_checks["ready_to_update_count"],
-        "blocked_count": safety_checks["blocked_count"],
-        "price_missing_count": sum(
-            1 for row in review_rows if row.get("price_data_available") is False
-        ),
-        "future_data_used_in_decision": False,
-        "outcome_update_review_manifest_path": str(
-            review_dir / "outcome_update_review_manifest.json"
-        ),
-        "update_ready_review_matrix_path": str(review_dir / "update_ready_review_matrix.jsonl"),
-        "update_impact_preview_path": str(review_dir / "update_impact_preview.json"),
-        "update_safety_checks_path": str(review_dir / "update_safety_checks.json"),
-        "outcome_update_review_report_path": str(review_dir / "outcome_update_review_report.md"),
-        "requires_owner_review": True,
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    snapshot["update_review_id"] = review_dir.name
+    snapshot_path = review_dir / "outcome_update_review_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
+    manifest = _outcome_update_review_manifest(
+        review_dir=review_dir,
+        due_id=due_id,
+        as_of=_text(snapshot.get("as_of")),
+        generated_at=generated.isoformat(),
+        status=status,
+        rows=review_rows,
+        safety=safety_checks,
+        source_snapshot_checksum=_file_sha256(snapshot_path),
+    )
     _write_json(review_dir / "outcome_update_review_manifest.json", manifest)
     _write_jsonl(review_dir / "update_ready_review_matrix.jsonl", review_rows)
     _write_json(review_dir / "update_impact_preview.json", impact_preview)
@@ -1980,6 +1957,7 @@ def run_outcome_update_review(
         "update_ready_review_matrix": review_rows,
         "update_impact_preview": impact_preview,
         "update_safety_checks": safety_checks,
+        "source_snapshot": snapshot,
     }
 
 
@@ -2010,6 +1988,67 @@ def validate_outcome_update_review_artifact(
     manifest = _read_optional_json(review_dir / "outcome_update_review_manifest.json") or {}
     rows = _read_jsonl(review_dir / "update_ready_review_matrix.jsonl")
     safety = _read_optional_json(review_dir / "update_safety_checks.json") or {}
+    impact = _read_optional_json(review_dir / "update_impact_preview.json") or {}
+    snapshot_path = review_dir / "outcome_update_review_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (review_dir / "outcome_update_review_manifest.json").is_file(),
+                review_id,
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_outcome_update_review_validation",
+            artifact_id_key="review_id",
+            artifact_id=review_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    recompute_error = ""
+    try:
+        expected_rows, expected_safety, expected_impact, expected_status = (
+            _outcome_update_review_views(snapshot)
+        )
+        expected_manifest = _outcome_update_review_manifest(
+            review_dir=review_dir,
+            due_id=_text(snapshot.get("due_id")),
+            as_of=_text(snapshot.get("as_of")),
+            generated_at=_text(snapshot.get("generated_at")),
+            status=expected_status,
+            rows=expected_rows,
+            safety=expected_safety,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        expected_report = render_outcome_update_review_report(
+            expected_manifest, expected_safety, expected_impact
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_rows, expected_safety, expected_impact = [], {}, {}
+        expected_manifest, expected_report = {}, ""
+    bundle = _mapping(snapshot.get("due_source_bundle"))
+    source_matches = _source_bundle_matches(bundle)
+    try:
+        source_validation_passes = (
+            validate_outcome_due_artifact(
+                due_id=_text(snapshot.get("due_id")),
+                output_dir=Path(_text(snapshot.get("outcome_due_dir"))),
+            ).get("status")
+            == "PASS"
+        )
+    except Exception:  # noqa: BLE001
+        source_validation_passes = False
     checks = [
         _check(
             "manifest_exists",
@@ -2038,10 +2077,27 @@ def validate_outcome_update_review_artifact(
         ),
         _check("review_id_matches", manifest.get("update_review_id") == review_id, review_id),
         _check(
-            "all_windows_have_review_status",
-            bool(rows)
-            and all(row.get("review_status") in OUTCOME_UPDATE_REVIEW_STATUSES for row in rows),
-            "review_status",
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == OUTCOME_UPDATE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+            "v2 source snapshot",
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "source snapshot",
+        ),
+        _check("source_files_unchanged", source_matches, "outcome due source"),
+        _check("source_validation_passes", source_validation_passes, "outcome due validator"),
+        _check("review_rows_recomputed", rows == expected_rows, recompute_error),
+        _check("safety_recomputed", safety == expected_safety, recompute_error),
+        _check("impact_recomputed", impact == expected_impact, recompute_error),
+        _check("manifest_recomputed", manifest == expected_manifest, recompute_error),
+        _check(
+            "report_recomputed",
+            (review_dir / "outcome_update_review_report.md").is_file()
+            and (review_dir / "outcome_update_review_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            recompute_error,
         ),
         _check(
             "future_data_not_used_in_decision",
@@ -3230,6 +3286,139 @@ def render_forward_decision_reader_brief(
         )
         + "\n"
     )
+
+
+def _build_outcome_update_review_snapshot(
+    *, due_id: str, outcome_due_dir: Path, generated: datetime
+) -> dict[str, Any]:
+    due_dir = outcome_due_dir / due_id
+    if (
+        validate_outcome_due_artifact(due_id=due_id, output_dir=outcome_due_dir).get("status")
+        != "PASS"
+    ):
+        raise DynamicV3OutcomeAccumulationError(f"outcome due validation must PASS: {due_id}")
+    manifest = _read_json(due_dir / "outcome_due_manifest.json")
+    source_generated = _datetime_from_any(manifest.get("generated_at"))
+    as_of = _date_from_any(manifest.get("as_of"))
+    if (
+        manifest.get("due_id") != due_id
+        or source_generated is None
+        or source_generated > generated
+        or as_of is None
+        or as_of > generated.date()
+    ):
+        raise DynamicV3OutcomeAccumulationError("outcome due identity/time exceeds review cutoff")
+    return {
+        "schema_version": OUTCOME_UPDATE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+        "due_id": due_id,
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "generated_cutoff": generated.isoformat(),
+        "outcome_due_dir": str(outcome_due_dir),
+        "due_source_validation_status": "PASS",
+        "due_source_bundle": _immutable_source_bundle(due_dir),
+        "production_effect": "none",
+    }
+
+
+def _outcome_update_review_views(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], str]:
+    generated = _datetime_from_any(snapshot.get("generated_cutoff"))
+    as_of = _date_from_any(snapshot.get("as_of"))
+    bundle = _mapping(snapshot.get("due_source_bundle"))
+    manifest = _mapping(_source_bundle_content(bundle, "outcome_due_manifest.json"))
+    source_rows = _records(_source_bundle_content(bundle, "due_window_inventory.jsonl"))
+    if (
+        generated is None
+        or as_of is None
+        or as_of > generated.date()
+        or manifest.get("due_id") != snapshot.get("due_id")
+        or _text(manifest.get("as_of")) != as_of.isoformat()
+    ):
+        raise DynamicV3OutcomeAccumulationError("outcome update review snapshot identity invalid")
+    identities: set[tuple[str, int]] = set()
+    review_rows: list[dict[str, Any]] = []
+    for row in source_rows:
+        identity = (_text(row.get("outcome_id")), _int(row.get("window_days")))
+        due_status = _text(row.get("due_status"))
+        current_status = _text(row.get("current_outcome_status"))
+        latest_price = _date_from_any(row.get("latest_price_date"))
+        if (
+            not identity[0]
+            or identity[1] not in OUTCOME_WINDOWS
+            or identity in identities
+            or due_status not in OUTCOME_DUE_STATUSES
+            or current_status not in OUTCOME_WINDOW_STATUSES
+            or (latest_price is not None and latest_price > as_of)
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                "outcome update review source row identity/status/time invalid"
+            )
+        identities.add(identity)
+        review_rows.append(_outcome_update_review_row(row))
+    review_rows.sort(
+        key=lambda row: (
+            _text(row.get("window_start")),
+            _text(row.get("outcome_id")),
+            _int(row.get("window_days")),
+        )
+    )
+    safety = _outcome_update_safety_checks(review_rows)
+    impact = _outcome_update_impact_preview(review_rows)
+    status = "PASS"
+    if not review_rows:
+        status = "INSUFFICIENT_DATA"
+    elif safety["blocked_count"]:
+        status = "PASS_WITH_WARNINGS" if safety["ready_to_update_count"] else "BLOCKED"
+    elif not safety["ready_to_update_count"]:
+        status = "INSUFFICIENT_DATA"
+    return review_rows, safety, impact, status
+
+
+def _outcome_update_review_manifest(
+    *,
+    review_dir: Path,
+    due_id: str,
+    as_of: str,
+    generated_at: str,
+    status: str,
+    rows: Sequence[Mapping[str, Any]],
+    safety: Mapping[str, Any],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_review_manifest",
+        "update_review_id": review_dir.name,
+        "due_id": due_id,
+        "as_of": as_of,
+        "generated_at": generated_at,
+        "status": status,
+        "ready_to_update_count": safety.get("ready_to_update_count"),
+        "blocked_count": safety.get("blocked_count"),
+        "price_missing_count": sum(
+            1 for row in rows if row.get("price_data_available") is False
+        ),
+        "future_data_used_in_decision": False,
+        "source_snapshot_path": str(review_dir / "outcome_update_review_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "outcome_update_review_manifest_path": str(
+            review_dir / "outcome_update_review_manifest.json"
+        ),
+        "update_ready_review_matrix_path": str(review_dir / "update_ready_review_matrix.jsonl"),
+        "update_impact_preview_path": str(review_dir / "update_impact_preview.json"),
+        "update_safety_checks_path": str(review_dir / "update_safety_checks.json"),
+        "outcome_update_review_report_path": str(review_dir / "outcome_update_review_report.md"),
+        "requires_owner_review": True,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
 
 
 def _outcome_update_review_row(row: Mapping[str, Any]) -> dict[str, Any]:

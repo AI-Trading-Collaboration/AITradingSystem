@@ -6742,15 +6742,17 @@ reports:
     command: aits etf dynamic-v3-rescue outcome-update-review report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/outcome_update_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/outcome_update_review_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/update_ready_review_matrix.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/update_impact_preview.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/update_safety_checks.json
       - reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/*/outcome_update_review_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-156 creates a human-readable review pack before safe outcome
-      update execution and confirms price availability, future-data decision
-      safety, and downstream impact.
+      TRADING-156 revalidates an explicitly selected Outcome Due artifact,
+      freezes its full source bundle, derives unique-window readiness and
+      no-future-data safety from cutoff-visible evidence, and previews impact
+      before any separately authorized outcome update.
     owner_action: review_outcome_update_pack_before_safe_update_execution
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

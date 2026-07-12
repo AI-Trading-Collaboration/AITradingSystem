@@ -676,6 +676,12 @@ def build_dynamic_v3_rescue_validation_report(
     / "cli"
     / "etf_portfolio"
     / "dynamic_v3_rescue.py",
+    canonical_command_owner_root: Path = PROJECT_ROOT
+    / "src"
+    / "ai_trading_system"
+    / "interfaces"
+    / "cli"
+    / "etf_portfolio",
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = _coerce_datetime(generated_at or datetime.now(UTC))
@@ -851,7 +857,11 @@ def build_dynamic_v3_rescue_validation_report(
     legacy_cli_text = _safe_read_text(cli_path)
     registration_text = _safe_read_text(registration_path)
     base_command_owner_text = _safe_read_text(base_command_owner_path)
-    cli_text = legacy_cli_text + base_command_owner_text
+    canonical_command_owner_text = "".join(
+        _safe_read_text(path)
+        for path in sorted(canonical_command_owner_root.glob("dynamic_v3_*.py"))
+    )
+    cli_text = legacy_cli_text + base_command_owner_text + canonical_command_owner_text
     _append_check(
         checks,
         "cli_namespace_available",

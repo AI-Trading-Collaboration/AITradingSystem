@@ -80,6 +80,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_outcome_due as dynamic_v3_outcome_due_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_outcome_update_review as dynamic_v3_outcome_update_review_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_owner_attribution as dynamic_v3_owner_attribution_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -212,6 +215,7 @@ __all__ = [
     "dynamic_v3_observation_lifecycle_commands",
     "dynamic_v3_outcome_dashboard_commands",
     "dynamic_v3_outcome_due_commands",
+    "dynamic_v3_outcome_update_review_commands",
     "dynamic_v3_owner_review_journal_commands",
     "dynamic_v3_owner_attribution_commands",
     "dynamic_v3_paper_portfolio_commands",

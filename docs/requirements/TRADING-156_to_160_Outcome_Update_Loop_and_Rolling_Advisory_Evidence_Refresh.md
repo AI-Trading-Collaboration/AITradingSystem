@@ -89,6 +89,7 @@ aits etf dynamic-v3-rescue forward-outcome-decision run --week-ending 2026-06-14
 
 ## 进展记录
 
+- 2026-07-12：ARCH-004G2.4BG 对 TRADING-156 Outcome Update Review 完成contract hardening与并行验证：CLI callbacks迁至canonical interface owner；run在任何output前验证显式Outcome Due并冻结完整bundle，强制due id/cutoff/唯一`outcome_id×window_days`；READY只由`DUE + PENDING + can_update + cutoff-visible price`推导，no-future-data由日期边界证明。Validator重验live source并重算matrix/safety/impact/status/manifest/Markdown；合法empty为`INSUFFICIENT_DATA`，duplicate或tamper FAIL。累计focused 333、architecture 242、contract 203 PASS；范围仍为owner review input，不执行outcome update、data refresh或任何policy/portfolio/production/broker变更。
 - 2026-06-10：任务登记与需求文档创建，进入实现阶段。下一步新增核心模块扩展、CLI、validators、focused tests、report registry、artifact catalog、system flow、operations runbook、README 和 Reader Brief integration。
 - 2026-06-10：baseline 实现完成并进入 VALIDATING。新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision` CLI/report/validator、registry/catalog/docs/Reader Brief integration 和 focused tests；修复 `CASH` 无价格行时 outcome return path 应按零收益处理的问题。
 - 2026-06-10：真实链路使用 existing due artifact `9d344a0a7c24b676`（`as_of=2026-06-14`）生成 review `3afeeb97f9be39e9`，ready=1、blocked=0、future_data=false；safe update `aaa8a4781e74934d` 因当前日期仍早于 2026-06-14，被底层 future-as-of 防护保持 updated=0、skipped=4、forward_available 0->0、forward_pending 4->4。该结果不是 workaround；解除条件是在 2026-06-14 不再是未来日期且 cached data quality gate 通过后复跑。
