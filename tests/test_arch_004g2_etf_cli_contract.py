@@ -193,6 +193,11 @@ DYNAMIC_V3_OUTCOME_UPDATE_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_outcome_update.py"
 )
+DYNAMIC_V3_ROLLING_EVIDENCE_REFRESH_COMMANDS_PATH = (
+    PROJECT_ROOT
+    / "src/ai_trading_system/interfaces/cli/etf_portfolio/"
+    "dynamic_v3_rolling_evidence_refresh.py"
+)
 DYNAMIC_V3_REPLAY_SAMPLE_EXPANSION_COMMANDS_PATH = (
     PROJECT_ROOT
     / "src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_sample_expansion.py"
@@ -346,7 +351,7 @@ def test_g2_2_registration_shell_owns_every_app_and_group_relationship() -> None
     assert _add_typer_count(legacy_tree) == 0
     assert _typer_app_count(registration_tree) == 291
     assert _add_typer_count(registration_tree) == 290
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25111
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25020
     assert len(REGISTRATION_PATH.read_text(encoding="utf-8").splitlines()) == 1855
 
 
@@ -557,8 +562,8 @@ def test_g2_3_closeout_selected_groups_have_zero_legacy_definitions_and_imports(
     assert len(migrated_helpers) == 13
     assert legacy_names.isdisjoint(migrated_callbacks | migrated_helpers)
     assert _imported_modules(legacy_tree).isdisjoint(migrated_domain_imports)
-    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25111
-    assert len(legacy_names) == 740
+    assert len(SOURCE_PATH.read_text(encoding="utf-8").splitlines()) == 25020
+    assert len(legacy_names) == 737
 
 
 def test_g2_4_baseline_review_callbacks_and_shared_helper_leave_legacy_root() -> None:
@@ -1683,6 +1688,30 @@ def test_g2_4_dynamic_v3_outcome_update_callbacks_leave_legacy_root() -> None:
             "outcome_update_report_payload",
             "run_outcome_update",
             "validate_outcome_update_artifact",
+        }
+    )
+
+
+def test_g2_4_dynamic_v3_rolling_evidence_refresh_callbacks_leave_legacy_root() -> None:
+    legacy_tree = ast.parse(SOURCE_PATH.read_text(encoding="utf-8"))
+    legacy_names = _function_names(legacy_tree)
+    canonical_names = _function_names(
+        ast.parse(
+            DYNAMIC_V3_ROLLING_EVIDENCE_REFRESH_COMMANDS_PATH.read_text(encoding="utf-8")
+        )
+    )
+    callbacks = {
+        "dynamic_v3_rolling_evidence_refresh_run_command",
+        "dynamic_v3_rolling_evidence_refresh_report_command",
+        "dynamic_v3_validate_rolling_evidence_refresh_command",
+    }
+    assert legacy_names.isdisjoint(callbacks)
+    assert callbacks <= canonical_names
+    assert _imported_names(legacy_tree).isdisjoint(
+        {
+            "rolling_evidence_refresh_report_payload",
+            "run_rolling_evidence_refresh",
+            "validate_rolling_evidence_refresh_artifact",
         }
     )
 

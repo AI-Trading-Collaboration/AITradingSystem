@@ -23,6 +23,7 @@ from ai_trading_system.config import (
     load_universe,
 )
 from ai_trading_system.data.quality import validate_data_cache, write_data_quality_report
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_tracking
 from ai_trading_system.etf_portfolio.data import load_standard_prices
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     DEFAULT_BACKFILL_REPAIR_DIR,
@@ -52,6 +53,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     run_weekly_advisory_review,
     update_advisory_outcome,
     validate_advisory_outcome_artifact,
+    validate_owner_attribution_artifact,
+    validate_shadow_aging_artifact,
+    validate_weekly_advisory_review_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CONSENSUS_DRIFT_DIR,
@@ -98,6 +102,8 @@ DEFAULT_CONSENSUS_RISK_POLICY_PATH = Path(
 OUTCOME_UPDATE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "outcome_update_review_source_snapshot.v2"
 OUTCOME_UPDATE_SNAPSHOT_SCHEMA_VERSION = "outcome_update_source_snapshot.v2"
 OUTCOME_UPDATE_TRANSACTION_SCHEMA_VERSION = "outcome_update_transaction.v1"
+ROLLING_EVIDENCE_REFRESH_SNAPSHOT_SCHEMA_VERSION = "rolling_evidence_refresh_source_snapshot.v2"
+ROLLING_EVIDENCE_REFRESH_TRANSACTION_SCHEMA_VERSION = "rolling_evidence_refresh_transaction.v1"
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -964,6 +970,17 @@ def validate_replay_sample_expansion_artifact(
             manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
             "source snapshot",
         ),
+        _check(
+            "due_source_selection_explicit",
+            snapshot.get("due_source_selection_status")
+            in {None, "INCLUDED", "EXCLUDED_POST_COMMITTED_UPDATE"}
+            and not (
+                snapshot.get("due_source_selection_status")
+                == "EXCLUDED_POST_COMMITTED_UPDATE"
+                and _records(snapshot.get("due_sources"))
+            ),
+            _text(snapshot.get("due_source_selection_status"), "LEGACY_INCLUDED"),
+        ),
         _check("source_files_unchanged", source_bundles_match, "validated source bundles"),
         _check(
             "live_source_validation_passes",
@@ -1032,6 +1049,7 @@ def build_outcome_dashboard(
     diagnosis_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
     outcome_due_dir: Path = DEFAULT_OUTCOME_DUE_DIR,
     policy_path: Path = DEFAULT_OUTCOME_DASHBOARD_POLICY_PATH,
+    include_outcome_due_sources: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
@@ -1044,6 +1062,7 @@ def build_outcome_dashboard(
         paper_sim_dir=paper_sim_dir,
         diagnosis_dir=diagnosis_dir,
         outcome_due_dir=outcome_due_dir,
+        include_outcome_due_sources=include_outcome_due_sources,
         policy_path=policy_path,
         policy=policy,
     )
@@ -2536,144 +2555,269 @@ def run_rolling_evidence_refresh(
     shadow_shortlist_id: str | None = None,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    update_payload = outcome_update_report_payload(
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    _recover_prepared_rolling_refreshes(
+        output_dir=output_dir,
+        outcome_update_id=outcome_update_id,
+    )
+    if _committed_rolling_refresh_for_update(output_dir, outcome_update_id):
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update already has a COMMITTED rolling evidence refresh"
+        )
+    update_validation = validate_outcome_update_artifact(
         update_id=outcome_update_id,
         output_dir=outcome_update_dir,
     )
-    as_of = _date_from_any(update_payload.get("as_of")) or generated.date()
-    before_limited = _latest_limited_vs_notrade_summary(limited_vs_notrade_dir)
-    before_consensus = _latest_consensus_risk_summary(consensus_risk_dir)
-    before_dashboard = _mapping(_mapping(update_payload.get("outcome_status_delta")).get("before"))
-    dashboard = build_outcome_dashboard(
-        output_dir=outcome_dashboard_dir,
-        advisory_outcome_dir=advisory_outcome_dir,
-        backfill_dir=backfill_dir,
-        repair_dir=repair_dir,
-        paper_sim_dir=paper_sim_dir,
-        diagnosis_dir=diagnosis_dir,
-        outcome_due_dir=outcome_due_dir,
-        generated_at=generated,
-    )
-    limited = run_limited_vs_notrade_evaluation(
-        output_dir=limited_vs_notrade_dir,
-        advisory_outcome_dir=advisory_outcome_dir,
-        backfill_dir=backfill_dir,
-        repair_dir=repair_dir,
-        generated_at=generated,
-    )
-    consensus = run_consensus_risk_review(
-        output_dir=consensus_risk_dir,
-        daily_advisory_dir=daily_advisory_dir,
-        historical_replay_dir=historical_replay_dir,
-        backfill_dir=backfill_dir,
-        repair_dir=repair_dir,
-        generated_at=generated,
-    )
-    owner = run_owner_attribution(
-        output_dir=owner_attribution_dir,
-        owner_review_dir=owner_review_dir,
-        outcome_dir=advisory_outcome_dir,
-        generated_at=generated,
-    )
-    resolved_shadow_shortlist_id = shadow_shortlist_id or _resolve_shadow_shortlist_id(
-        shadow_aging_dir
-    )
-    shadow: dict[str, Any] | None = None
-    if resolved_shadow_shortlist_id:
-        shadow = run_shadow_aging(
-            shadow_shortlist_id=resolved_shadow_shortlist_id,
-            config_path=config_path,
-            output_dir=shadow_aging_dir,
-            shadow_shortlist_dir=shadow_shortlist_dir,
-            shadow_monitor_run_dir=shadow_monitor_run_dir,
-            consensus_drift_dir=consensus_drift_dir,
-            advisory_outcome_dir=advisory_outcome_dir,
-            generated_at=generated,
+    if update_validation.get("status") != "PASS":
+        raise DynamicV3OutcomeAccumulationError(
+            f"outcome update validation failed: {update_validation.get('status')}"
         )
-    weekly = run_weekly_advisory_review(
-        week_ending=as_of,
-        output_dir=weekly_advisory_review_dir,
-        shadow_monitor_run_dir=shadow_monitor_run_dir,
-        daily_advisory_dir=daily_advisory_dir,
-        owner_review_dir=owner_review_dir,
-        paper_portfolio_dir=paper_portfolio_dir,
-        advisory_outcome_dir=advisory_outcome_dir,
-        shadow_aging_dir=shadow_aging_dir,
-        generated_at=generated,
+    update_root = _safe_child_dir(outcome_update_dir, outcome_update_id, "outcome_update_id")
+    update_bundle = _immutable_source_bundle(update_root)
+    update_manifest = _mapping(
+        _source_bundle_content(update_bundle, "outcome_update_manifest.json")
     )
-    refreshed = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_refreshed_artifacts",
-        "outcome_dashboard_id": dashboard["dashboard_id"],
-        "limited_vs_notrade_id": limited["focus_id"],
-        "consensus_risk_id": consensus["risk_id"],
-        "owner_attribution_id": owner["attribution_id"],
-        "shadow_aging_id": "" if shadow is None else shadow["aging_id"],
-        "shadow_aging_status": "SKIPPED_NO_SHADOW_SHORTLIST" if shadow is None else "REFRESHED",
-        "weekly_advisory_review_id": weekly["weekly_review_id"],
-        "reader_brief_updated": True,
-        "production_effect": "none",
-        "broker_action_taken": False,
+    update_generated = _datetime_from_any(update_manifest.get("generated_at"))
+    as_of = _date_from_any(update_manifest.get("as_of"))
+    if (
+        update_manifest.get("outcome_update_id") != outcome_update_id
+        or update_manifest.get("transaction_status") != "COMMITTED"
+        or update_generated is None
+        or as_of is None
+        or generated < update_generated
+        or as_of > generated.date()
+    ):
+        raise DynamicV3OutcomeAccumulationError(
+            "outcome update identity/time/transaction boundary invalid"
+        )
+    baseline = _rolling_refresh_baseline(
+        update_bundle=update_bundle,
+        limited_vs_notrade_dir=limited_vs_notrade_dir,
+        consensus_risk_dir=consensus_risk_dir,
+    )
+    output_roots = {
+        "outcome_dashboard": outcome_dashboard_dir,
+        "limited_vs_notrade": limited_vs_notrade_dir,
+        "consensus_risk": consensus_risk_dir,
+        "owner_attribution": owner_attribution_dir,
+        "shadow_aging": shadow_aging_dir,
+        "weekly_advisory_review": weekly_advisory_review_dir,
     }
-    evidence_delta = _rolling_evidence_delta_summary(
-        before_dashboard=before_dashboard,
-        before_limited=before_limited,
-        before_consensus=before_consensus,
-        dashboard=dashboard,
-        limited=limited,
-        consensus=consensus,
-    )
-    refresh_id = _stable_id("rolling-evidence-refresh", outcome_update_id, generated.isoformat())
+    refresh_id = _stable_id("rolling-evidence-refresh-v2", outcome_update_id, generated.isoformat())
     refresh_dir = _unique_dir(output_dir / refresh_id)
     refresh_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_rolling_refresh_manifest",
-        "refresh_id": refresh_dir.name,
-        "outcome_update_id": outcome_update_id,
-        "as_of": as_of.isoformat(),
-        "generated_at": generated.isoformat(),
-        "status": "PASS",
-        "material_change": evidence_delta["material_change"],
-        "rolling_refresh_manifest_path": str(refresh_dir / "rolling_refresh_manifest.json"),
-        "refreshed_artifacts_path": str(refresh_dir / "refreshed_artifacts.json"),
-        "evidence_delta_summary_path": str(refresh_dir / "evidence_delta_summary.json"),
-        "rolling_evidence_refresh_report_path": str(
-            refresh_dir / "rolling_evidence_refresh_report.md"
-        ),
-        "reader_brief_section_path": str(refresh_dir / "reader_brief_section.md"),
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(refresh_dir / "rolling_refresh_manifest.json", manifest)
-    _write_json(refresh_dir / "refreshed_artifacts.json", refreshed)
-    _write_json(refresh_dir / "evidence_delta_summary.json", evidence_delta)
-    _write_text(
-        refresh_dir / "rolling_evidence_refresh_report.md",
-        render_rolling_evidence_refresh_report(manifest, refreshed, evidence_delta),
+    transaction_path = refresh_dir / "rolling_refresh_transaction.json"
+    prestate = _rolling_refresh_transaction_prestate(output_roots)
+    transaction = _rolling_refresh_transaction(
+        refresh_id=refresh_dir.name,
+        outcome_update_id=outcome_update_id,
+        generated=generated,
+        status="PREPARED",
+        prestate=prestate,
+        created_artifacts={},
     )
-    _write_text(
-        refresh_dir / "reader_brief_section.md",
-        render_rolling_refresh_reader_brief(manifest, evidence_delta),
-    )
-    _update_latest_pointer(
-        "latest_rolling_evidence_refresh",
-        refresh_dir.name,
-        refresh_dir / "rolling_refresh_manifest.json",
-    )
-    return {
-        "refresh_id": refresh_dir.name,
-        "refresh_dir": refresh_dir,
-        "manifest": manifest,
-        "refreshed_artifacts": refreshed,
-        "evidence_delta_summary": evidence_delta,
-    }
+    _write_json(transaction_path, transaction)
+    created: dict[str, dict[str, str]] = {}
+    try:
+        dashboard = build_outcome_dashboard(
+            output_dir=outcome_dashboard_dir,
+            advisory_outcome_dir=advisory_outcome_dir,
+            backfill_dir=backfill_dir,
+            repair_dir=repair_dir,
+            paper_sim_dir=paper_sim_dir,
+            diagnosis_dir=diagnosis_dir,
+            outcome_due_dir=outcome_due_dir,
+            include_outcome_due_sources=False,
+            generated_at=generated,
+        )
+        _record_rolling_refresh_artifact(
+            created, "outcome_dashboard", outcome_dashboard_dir, dashboard["dashboard_id"]
+        )
+        limited = run_limited_vs_notrade_evaluation(
+            output_dir=limited_vs_notrade_dir,
+            advisory_outcome_dir=advisory_outcome_dir,
+            backfill_dir=backfill_dir,
+            repair_dir=repair_dir,
+            generated_at=generated,
+        )
+        _record_rolling_refresh_artifact(
+            created, "limited_vs_notrade", limited_vs_notrade_dir, limited["focus_id"]
+        )
+        consensus = run_consensus_risk_review(
+            output_dir=consensus_risk_dir,
+            daily_advisory_dir=daily_advisory_dir,
+            historical_replay_dir=historical_replay_dir,
+            backfill_dir=backfill_dir,
+            repair_dir=repair_dir,
+            generated_at=generated,
+        )
+        _record_rolling_refresh_artifact(
+            created, "consensus_risk", consensus_risk_dir, consensus["risk_id"]
+        )
+        owner = run_owner_attribution(
+            output_dir=owner_attribution_dir,
+            owner_review_dir=owner_review_dir,
+            outcome_dir=advisory_outcome_dir,
+            generated_at=generated,
+        )
+        _record_rolling_refresh_artifact(
+            created, "owner_attribution", owner_attribution_dir, owner["attribution_id"]
+        )
+        resolved_shadow_shortlist_id = shadow_shortlist_id or _resolve_shadow_shortlist_id(
+            shadow_aging_dir
+        )
+        shadow: dict[str, Any] | None = None
+        if resolved_shadow_shortlist_id:
+            shadow = run_shadow_aging(
+                shadow_shortlist_id=resolved_shadow_shortlist_id,
+                config_path=config_path,
+                output_dir=shadow_aging_dir,
+                shadow_shortlist_dir=shadow_shortlist_dir,
+                shadow_monitor_run_dir=shadow_monitor_run_dir,
+                consensus_drift_dir=consensus_drift_dir,
+                advisory_outcome_dir=advisory_outcome_dir,
+                generated_at=generated,
+            )
+            _record_rolling_refresh_artifact(
+                created, "shadow_aging", shadow_aging_dir, shadow["aging_id"]
+            )
+        weekly = run_weekly_advisory_review(
+            week_ending=as_of,
+            output_dir=weekly_advisory_review_dir,
+            shadow_monitor_run_dir=shadow_monitor_run_dir,
+            daily_advisory_dir=daily_advisory_dir,
+            owner_review_dir=owner_review_dir,
+            paper_portfolio_dir=paper_portfolio_dir,
+            advisory_outcome_dir=advisory_outcome_dir,
+            shadow_aging_dir=shadow_aging_dir,
+            config_path=config_path,
+            generated_at=generated,
+        )
+        _record_rolling_refresh_artifact(
+            created,
+            "weekly_advisory_review",
+            weekly_advisory_review_dir,
+            weekly["weekly_review_id"],
+        )
+        transaction = _rolling_refresh_transaction(
+            refresh_id=refresh_dir.name,
+            outcome_update_id=outcome_update_id,
+            generated=generated,
+            status="PREPARED",
+            prestate=prestate,
+            created_artifacts=created,
+        )
+        _write_json(transaction_path, transaction)
+        validations = _rolling_refresh_downstream_validations(
+            dashboard=dashboard,
+            outcome_dashboard_dir=outcome_dashboard_dir,
+            limited=limited,
+            limited_vs_notrade_dir=limited_vs_notrade_dir,
+            consensus=consensus,
+            consensus_risk_dir=consensus_risk_dir,
+            owner=owner,
+            owner_attribution_dir=owner_attribution_dir,
+            shadow=shadow,
+            shadow_aging_dir=shadow_aging_dir,
+            weekly=weekly,
+            weekly_advisory_review_dir=weekly_advisory_review_dir,
+        )
+        failed = {
+            key: value.get("status")
+            for key, value in validations.items()
+            if value.get("status") not in {"PASS", "SKIPPED_NO_SHADOW_SHORTLIST"}
+        }
+        if failed:
+            raise DynamicV3OutcomeAccumulationError(
+                f"rolling refresh downstream validation failed: {failed}"
+            )
+        post_artifacts = _rolling_refresh_post_artifacts(
+            created=created,
+            validations=validations,
+        )
+        snapshot = {
+            "schema_version": ROLLING_EVIDENCE_REFRESH_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_rolling_evidence_refresh_source_snapshot",
+            "refresh_id": refresh_dir.name,
+            "outcome_update_id": outcome_update_id,
+            "as_of": as_of.isoformat(),
+            "generated_at": generated.isoformat(),
+            "update_source_bundle": update_bundle,
+            "update_validation": update_validation,
+            "baseline": baseline,
+            "post_artifacts": post_artifacts,
+            "shadow_shortlist_id": resolved_shadow_shortlist_id,
+            "production_effect": "none",
+            "broker_action_taken": False,
+        }
+        refreshed = _rolling_refresh_refreshed_artifacts(snapshot)
+        evidence_delta = _rolling_evidence_delta_from_snapshot(snapshot)
+        snapshot_path = refresh_dir / "rolling_refresh_source_snapshot.json"
+        _write_json(snapshot_path, snapshot)
+        manifest = _rolling_refresh_manifest(
+            refresh_dir=refresh_dir,
+            outcome_update_id=outcome_update_id,
+            as_of=as_of,
+            generated=generated,
+            evidence_delta=evidence_delta,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        _write_json(refresh_dir / "rolling_refresh_manifest.json", manifest)
+        _write_json(refresh_dir / "refreshed_artifacts.json", refreshed)
+        _write_json(refresh_dir / "evidence_delta_summary.json", evidence_delta)
+        _write_text(
+            refresh_dir / "rolling_evidence_refresh_report.md",
+            render_rolling_evidence_refresh_report(manifest, refreshed, evidence_delta),
+        )
+        _write_text(
+            refresh_dir / "reader_brief_section.md",
+            render_rolling_refresh_reader_brief(manifest, evidence_delta),
+        )
+        transaction = _rolling_refresh_transaction(
+            refresh_id=refresh_dir.name,
+            outcome_update_id=outcome_update_id,
+            generated=generated,
+            status="COMMITTED",
+            prestate=prestate,
+            created_artifacts=created,
+        )
+        _write_json(transaction_path, transaction)
+        final_validation = validate_rolling_evidence_refresh_artifact(
+            refresh_id=refresh_dir.name,
+            output_dir=output_dir,
+        )
+        if final_validation.get("status") != "PASS":
+            raise DynamicV3OutcomeAccumulationError(
+                "rolling evidence refresh self-validation failed"
+            )
+        _update_latest_pointer(
+            "latest_rolling_evidence_refresh",
+            refresh_dir.name,
+            refresh_dir / "rolling_refresh_manifest.json",
+        )
+        return {
+            "refresh_id": refresh_dir.name,
+            "refresh_dir": refresh_dir,
+            "manifest": manifest,
+            "refreshed_artifacts": refreshed,
+            "evidence_delta_summary": evidence_delta,
+            "source_snapshot": snapshot,
+            "transaction": transaction,
+        }
+    except Exception as exc:
+        rollback = _rollback_rolling_refresh(prestate=prestate, created_artifacts=created)
+        transaction = _rolling_refresh_transaction(
+            refresh_id=refresh_dir.name,
+            outcome_update_id=outcome_update_id,
+            generated=generated,
+            status="ROLLED_BACK",
+            prestate=prestate,
+            created_artifacts=created,
+            error=str(exc),
+            rollback_validation=rollback,
+        )
+        _write_json(transaction_path, transaction)
+        raise
 
 
 def rolling_evidence_refresh_report_payload(
@@ -2691,6 +2835,10 @@ def rolling_evidence_refresh_report_payload(
         **_read_json(refresh_dir / "rolling_refresh_manifest.json"),
         "refreshed_artifacts": _read_json(refresh_dir / "refreshed_artifacts.json"),
         "evidence_delta_summary": _read_json(refresh_dir / "evidence_delta_summary.json"),
+        "source_snapshot": _read_optional_json(
+            refresh_dir / "rolling_refresh_source_snapshot.json"
+        ),
+        "transaction": _read_optional_json(refresh_dir / "rolling_refresh_transaction.json"),
         "reader_brief_section": _read_text(refresh_dir / "reader_brief_section.md"),
         "refresh_dir": str(refresh_dir),
     }
@@ -2703,51 +2851,99 @@ def validate_rolling_evidence_refresh_artifact(
     manifest = _read_optional_json(refresh_dir / "rolling_refresh_manifest.json") or {}
     refreshed = _read_optional_json(refresh_dir / "refreshed_artifacts.json") or {}
     delta = _read_optional_json(refresh_dir / "evidence_delta_summary.json") or {}
-    checks = [
-        _check(
-            "manifest_exists",
-            (refresh_dir / "rolling_refresh_manifest.json").exists(),
-            refresh_id,
-        ),
-        _check(
-            "refreshed_artifacts_exists",
-            (refresh_dir / "refreshed_artifacts.json").exists(),
-            refresh_id,
-        ),
-        _check(
-            "evidence_delta_exists",
-            (refresh_dir / "evidence_delta_summary.json").exists(),
-            refresh_id,
-        ),
-        _check(
-            "report_exists",
-            (refresh_dir / "rolling_evidence_refresh_report.md").exists(),
-            refresh_id,
-        ),
-        _check(
-            "reader_brief_exists",
-            (refresh_dir / "reader_brief_section.md").exists(),
-            refresh_id,
-        ),
-        _check("refresh_id_matches", manifest.get("refresh_id") == refresh_id, refresh_id),
-        _check(
-            "core_artifact_ids_present",
-            all(
-                _text(refreshed.get(key))
-                for key in (
-                    "outcome_dashboard_id",
-                    "limited_vs_notrade_id",
-                    "consensus_risk_id",
-                    "owner_attribution_id",
-                    "weekly_advisory_review_id",
-                )
+    snapshot_path = refresh_dir / "rolling_refresh_source_snapshot.json"
+    transaction_path = refresh_dir / "rolling_refresh_transaction.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "legacy_required_files",
+                all(
+                    (refresh_dir / name).is_file()
+                    for name in (
+                        "rolling_refresh_manifest.json",
+                        "refreshed_artifacts.json",
+                        "evidence_delta_summary.json",
+                        "rolling_evidence_refresh_report.md",
+                        "reader_brief_section.md",
+                    )
+                ),
+                refresh_id,
             ),
-            "core refreshed ids",
+            _check("refresh_id_matches", manifest.get("refresh_id") == refresh_id, refresh_id),
+            _check(
+                "legacy_broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and manifest.get("broker_action_taken") is False,
+                "legacy refresh is evidence only",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_rolling_evidence_refresh_validation",
+            artifact_id_key="refresh_id",
+            artifact_id=refresh_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    transaction = _read_optional_json(transaction_path) or {}
+    snapshot_errors = _rolling_refresh_snapshot_errors(snapshot)
+    recompute_error = ""
+    expected_refreshed: dict[str, Any] = {}
+    expected_delta: dict[str, Any] = {}
+    expected_manifest: dict[str, Any] = {}
+    expected_report = ""
+    expected_reader_brief = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        as_of = _date_from_any(snapshot.get("as_of"))
+        if generated is None or as_of is None:
+            raise DynamicV3OutcomeAccumulationError("refresh snapshot time invalid")
+        expected_refreshed = _rolling_refresh_refreshed_artifacts(snapshot)
+        expected_delta = _rolling_evidence_delta_from_snapshot(snapshot)
+        expected_manifest = _rolling_refresh_manifest(
+            refresh_dir=refresh_dir,
+            outcome_update_id=_text(snapshot.get("outcome_update_id")),
+            as_of=as_of,
+            generated=generated,
+            evidence_delta=expected_delta,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        expected_report = render_rolling_evidence_refresh_report(
+            expected_manifest, expected_refreshed, expected_delta
+        )
+        expected_reader_brief = render_rolling_refresh_reader_brief(
+            expected_manifest, expected_delta
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+    checks = [
+        _check("snapshot_content_valid", not snapshot_errors, ";".join(snapshot_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("refreshed_artifacts_recomputed", refreshed == expected_refreshed, "snapshot"),
+        _check("evidence_delta_recomputed", delta == expected_delta, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "report_recomputed",
+            _read_text(refresh_dir / "rolling_evidence_refresh_report.md") == expected_report,
+            "Markdown",
         ),
         _check(
-            "delta_before_after_present",
-            bool(_mapping(delta.get("before"))) and bool(_mapping(delta.get("after"))),
-            "delta before/after",
+            "reader_brief_recomputed",
+            _read_text(refresh_dir / "reader_brief_section.md") == expected_reader_brief,
+            "Reader Brief section",
+        ),
+        _check(
+            "transaction_committed",
+            transaction.get("schema_version")
+            == ROLLING_EVIDENCE_REFRESH_TRANSACTION_SCHEMA_VERSION
+            and transaction.get("status") == "COMMITTED"
+            and transaction.get("refresh_id") == refresh_id
+            and transaction.get("outcome_update_id") == snapshot.get("outcome_update_id")
+            and transaction.get("rollback_required") is False,
+            _text(transaction.get("status")),
         ),
         _check(
             "broker_action_forbidden",
@@ -2762,6 +2958,678 @@ def validate_rolling_evidence_refresh_artifact(
         artifact_id=refresh_id,
         checks=checks,
     )
+
+
+def _rolling_refresh_baseline(
+    *,
+    update_bundle: Mapping[str, Any],
+    limited_vs_notrade_dir: Path,
+    consensus_risk_dir: Path,
+) -> dict[str, Any]:
+    update_delta = _mapping(
+        _source_bundle_content(update_bundle, "outcome_status_delta.json")
+    )
+    return {
+        "forward_selected_cohort": _mapping(update_delta.get("before")),
+        "limited_vs_notrade": _rolling_refresh_latest_baseline_artifact(
+            kind="limited_vs_notrade", output_dir=limited_vs_notrade_dir
+        ),
+        "consensus_risk": _rolling_refresh_latest_baseline_artifact(
+            kind="consensus_risk", output_dir=consensus_risk_dir
+        ),
+    }
+
+
+def _rolling_refresh_latest_baseline_artifact(
+    *, kind: str, output_dir: Path
+) -> dict[str, Any]:
+    try:
+        if kind == "limited_vs_notrade":
+            payload = limited_vs_notrade_report_payload(latest=True, output_dir=output_dir)
+            artifact_id = _text(payload.get("focus_id"))
+            validation = validate_limited_vs_notrade_artifact(
+                focus_id=artifact_id, output_dir=output_dir
+            )
+        elif kind == "consensus_risk":
+            payload = consensus_risk_report_payload(latest=True, output_dir=output_dir)
+            artifact_id = _text(payload.get("risk_id"))
+            validation = validate_consensus_risk_artifact(
+                risk_id=artifact_id, output_dir=output_dir
+            )
+        else:
+            raise DynamicV3OutcomeAccumulationError(
+                f"unsupported rolling refresh baseline kind: {kind}"
+            )
+    except DynamicV3OutcomeAccumulationError:
+        return {"status": "MISSING", "artifact_id": "", "summary": None}
+    if validation.get("status") != "PASS":
+        raise DynamicV3OutcomeAccumulationError(
+            f"rolling refresh baseline validation failed: {kind}={validation.get('status')}"
+        )
+    artifact_root = _safe_child_dir(output_dir, artifact_id, f"{kind}_id")
+    bundle = _immutable_source_bundle(artifact_root)
+    if kind == "limited_vs_notrade":
+        metrics = _mapping(
+            _source_bundle_content(bundle, "window_comparison_metrics.json")
+        )
+        rows = _records(metrics.get("by_window"))
+        first = rows[0] if rows else {}
+        summary: dict[str, Any] = {
+            "available_count": _mapping(
+                _source_bundle_content(bundle, "limited_vs_notrade_manifest.json")
+            ).get("available_count"),
+            "confidence": first.get("confidence"),
+            "recommendation": metrics.get("overall_recommendation"),
+        }
+    else:
+        summary = {
+            "consensus_target_risk": _mapping(
+                _source_bundle_content(bundle, "consensus_risk_manifest.json")
+            ).get("consensus_target_risk")
+        }
+    return {
+        "status": "PRESENT",
+        "artifact_id": artifact_id,
+        "root": str(artifact_root),
+        "summary": summary,
+        "source_bundle": bundle,
+        "validation": validation,
+    }
+
+
+def _rolling_refresh_transaction_prestate(
+    output_roots: Mapping[str, Path],
+) -> dict[str, Any]:
+    outputs = {
+        key: {
+            "root": str(root),
+            "child_names": [child.name for child in _artifact_children(root)],
+        }
+        for key, root in output_roots.items()
+    }
+    pointer_names = (
+        "latest_outcome_dashboard",
+        "latest_limited_vs_notrade",
+        "latest_consensus_risk",
+        "latest_owner_attribution",
+        "latest_shadow_aging",
+        "latest_weekly_advisory_review",
+    )
+    pointers: dict[str, Any] = {}
+    for name in pointer_names:
+        pointer_root = (
+            dynamic_v3_paper_tracking.DEFAULT_DYNAMIC_V3_LATEST_POINTER_DIR
+            if name
+            in {
+                "latest_owner_attribution",
+                "latest_shadow_aging",
+                "latest_weekly_advisory_review",
+            }
+            else DEFAULT_LATEST_POINTER_DIR
+        )
+        path = pointer_root / f"{name}.json"
+        pointers[name] = {
+            "path": str(path),
+            "existed": path.is_file(),
+            "content": _read_optional_json(path),
+        }
+    return {"outputs": outputs, "latest_pointers": pointers}
+
+
+def _rolling_refresh_transaction(
+    *,
+    refresh_id: str,
+    outcome_update_id: str,
+    generated: datetime,
+    status: str,
+    prestate: Mapping[str, Any],
+    created_artifacts: Mapping[str, Any],
+    error: str = "",
+    rollback_validation: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if status not in {"PREPARED", "COMMITTED", "ROLLED_BACK"}:
+        raise DynamicV3OutcomeAccumulationError(
+            "rolling evidence refresh transaction status invalid"
+        )
+    return {
+        "schema_version": ROLLING_EVIDENCE_REFRESH_TRANSACTION_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rolling_evidence_refresh_transaction",
+        "refresh_id": refresh_id,
+        "outcome_update_id": outcome_update_id,
+        "transaction_at": generated.isoformat(),
+        "status": status,
+        "prestate": dict(prestate),
+        "created_artifacts": dict(created_artifacts),
+        "rollback_required": status == "PREPARED",
+        "rollback_validation": dict(rollback_validation or {}),
+        "error": error,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _record_rolling_refresh_artifact(
+    created: dict[str, dict[str, str]], kind: str, root: Path, artifact_id: str
+) -> None:
+    created[kind] = {"root": str(root), "artifact_id": artifact_id}
+
+
+def _rolling_refresh_downstream_validations(
+    *,
+    dashboard: Mapping[str, Any],
+    outcome_dashboard_dir: Path,
+    limited: Mapping[str, Any],
+    limited_vs_notrade_dir: Path,
+    consensus: Mapping[str, Any],
+    consensus_risk_dir: Path,
+    owner: Mapping[str, Any],
+    owner_attribution_dir: Path,
+    shadow: Mapping[str, Any] | None,
+    shadow_aging_dir: Path,
+    weekly: Mapping[str, Any],
+    weekly_advisory_review_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    validations = {
+        "outcome_dashboard": validate_outcome_dashboard_artifact(
+            dashboard_id=_text(dashboard.get("dashboard_id")),
+            output_dir=outcome_dashboard_dir,
+        ),
+        "limited_vs_notrade": validate_limited_vs_notrade_artifact(
+            focus_id=_text(limited.get("focus_id")),
+            output_dir=limited_vs_notrade_dir,
+        ),
+        "consensus_risk": validate_consensus_risk_artifact(
+            risk_id=_text(consensus.get("risk_id")),
+            output_dir=consensus_risk_dir,
+        ),
+        "owner_attribution": validate_owner_attribution_artifact(
+            attribution_id=_text(owner.get("attribution_id")),
+            output_dir=owner_attribution_dir,
+        ),
+        "weekly_advisory_review": validate_weekly_advisory_review_artifact(
+            weekly_review_id=_text(weekly.get("weekly_review_id")),
+            output_dir=weekly_advisory_review_dir,
+        ),
+    }
+    validations["shadow_aging"] = (
+        {
+            "status": "SKIPPED_NO_SHADOW_SHORTLIST",
+            "failed_check_count": 0,
+            "production_effect": "none",
+            "broker_action_taken": False,
+        }
+        if shadow is None
+        else validate_shadow_aging_artifact(
+            aging_id=_text(shadow.get("aging_id")), output_dir=shadow_aging_dir
+        )
+    )
+    return validations
+
+
+def _rolling_refresh_post_artifacts(
+    *,
+    created: Mapping[str, Mapping[str, str]],
+    validations: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    artifacts: dict[str, Any] = {}
+    for kind in (
+        "outcome_dashboard",
+        "limited_vs_notrade",
+        "consensus_risk",
+        "owner_attribution",
+        "shadow_aging",
+        "weekly_advisory_review",
+    ):
+        created_row = _mapping(created.get(kind))
+        validation = _mapping(validations.get(kind))
+        if kind == "shadow_aging" and not created_row:
+            artifacts[kind] = {
+                "status": "SKIPPED_NO_SHADOW_SHORTLIST",
+                "artifact_id": "",
+                "validation": validation,
+            }
+            continue
+        root = Path(_text(created_row.get("root")))
+        artifact_id = _text(created_row.get("artifact_id"))
+        artifact_root = _safe_child_dir(root, artifact_id, f"{kind}_id")
+        artifacts[kind] = {
+            "status": "REFRESHED",
+            "artifact_id": artifact_id,
+            "root": str(artifact_root),
+            "source_bundle": _immutable_source_bundle(artifact_root),
+            "validation": validation,
+        }
+    return artifacts
+
+
+def _rolling_refresh_refreshed_artifacts(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    post = _mapping(snapshot.get("post_artifacts"))
+    required = {
+        "outcome_dashboard_id": "outcome_dashboard",
+        "limited_vs_notrade_id": "limited_vs_notrade",
+        "consensus_risk_id": "consensus_risk",
+        "owner_attribution_id": "owner_attribution",
+        "weekly_advisory_review_id": "weekly_advisory_review",
+    }
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_refreshed_artifacts",
+        **{
+            output_key: _text(_mapping(post.get(kind)).get("artifact_id"))
+            for output_key, kind in required.items()
+        },
+        "shadow_aging_id": _text(
+            _mapping(post.get("shadow_aging")).get("artifact_id")
+        ),
+        "shadow_aging_status": _text(
+            _mapping(post.get("shadow_aging")).get("status")
+        ),
+        "reader_brief_section_generated": True,
+        "reader_brief_updated": False,
+        "all_downstream_validations_passed": all(
+            _mapping(row).get("validation", {}).get("status")
+            in {"PASS", "SKIPPED_NO_SHADOW_SHORTLIST"}
+            for row in post.values()
+        ),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    if not all(_text(payload.get(key)) for key in required):
+        raise DynamicV3OutcomeAccumulationError(
+            "rolling refresh snapshot missing required downstream artifact id"
+        )
+    return payload
+
+
+def _rolling_evidence_delta_from_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    update_bundle = _mapping(snapshot.get("update_source_bundle"))
+    update_delta = _mapping(
+        _source_bundle_content(update_bundle, "outcome_status_delta.json")
+    )
+    baseline = _mapping(snapshot.get("baseline"))
+    post = _mapping(snapshot.get("post_artifacts"))
+    dashboard_bundle = _mapping(
+        _mapping(post.get("outcome_dashboard")).get("source_bundle")
+    )
+    limited_bundle = _mapping(
+        _mapping(post.get("limited_vs_notrade")).get("source_bundle")
+    )
+    consensus_bundle = _mapping(
+        _mapping(post.get("consensus_risk")).get("source_bundle")
+    )
+    dashboard_matrix = _mapping(
+        _source_bundle_content(dashboard_bundle, "outcome_availability_matrix.json")
+    )
+    dashboard_summary = _mapping(dashboard_matrix.get("summary"))
+    historical = _mapping(dashboard_summary.get("historical_replay"))
+    limited_manifest = _mapping(
+        _source_bundle_content(limited_bundle, "limited_vs_notrade_manifest.json")
+    )
+    limited_metrics = _mapping(
+        _source_bundle_content(limited_bundle, "window_comparison_metrics.json")
+    )
+    limited_rows = _records(limited_metrics.get("by_window"))
+    limited_first = limited_rows[0] if limited_rows else {}
+    consensus_manifest = _mapping(
+        _source_bundle_content(consensus_bundle, "consensus_risk_manifest.json")
+    )
+    before_forward = _mapping(update_delta.get("before"))
+    after_forward = _mapping(update_delta.get("after"))
+    limited_baseline = _mapping(baseline.get("limited_vs_notrade"))
+    consensus_baseline = _mapping(baseline.get("consensus_risk"))
+    before_limited_summary = (
+        _mapping(limited_baseline.get("summary"))
+        if limited_baseline.get("status") == "PRESENT"
+        else {}
+    )
+    before_consensus_summary = (
+        _mapping(consensus_baseline.get("summary"))
+        if consensus_baseline.get("status") == "PRESENT"
+        else {}
+    )
+    before = {
+        "forward_available": before_forward.get("forward_available"),
+        "forward_pending": before_forward.get("forward_pending"),
+        "limited_vs_notrade_baseline_status": limited_baseline.get("status"),
+        "limited_vs_notrade_available_count": before_limited_summary.get("available_count"),
+        "limited_vs_notrade_confidence": before_limited_summary.get("confidence"),
+        "consensus_risk_baseline_status": consensus_baseline.get("status"),
+        "consensus_target_risk": before_consensus_summary.get("consensus_target_risk"),
+    }
+    limited_confidence = limited_first.get("confidence")
+    limited_recommendation = limited_metrics.get("overall_recommendation")
+    after = {
+        "forward_available": after_forward.get("forward_available"),
+        "forward_pending": after_forward.get("forward_pending"),
+        "historical_replay_available": historical.get("available"),
+        "historical_replay_pending": historical.get("pending"),
+        "limited_vs_notrade_available_count": limited_manifest.get("available_count"),
+        "limited_vs_notrade_win_rate": limited_first.get("win_rate"),
+        "limited_vs_notrade_avg_relative_return": limited_first.get(
+            "avg_relative_return"
+        ),
+        "limited_vs_notrade_confidence": limited_confidence,
+        "consensus_target_risk": consensus_manifest.get("consensus_target_risk"),
+        "recommended_action": (
+            "continue_tracking"
+            if limited_confidence in {None, "LOW", "INSUFFICIENT_DATA"}
+            else limited_recommendation
+        ),
+    }
+    material_reasons = []
+    for field in ("forward_available", "forward_pending"):
+        if before.get(field) != after.get(field):
+            material_reasons.append(f"{field}_changed")
+    if (
+        limited_baseline.get("status") == "PRESENT"
+        and before.get("limited_vs_notrade_confidence")
+        != after.get("limited_vs_notrade_confidence")
+    ):
+        material_reasons.append("limited_vs_notrade_confidence_changed")
+    if (
+        consensus_baseline.get("status") == "PRESENT"
+        and before.get("consensus_target_risk") != after.get("consensus_target_risk")
+    ):
+        material_reasons.append("consensus_target_risk_changed")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_delta_summary",
+        "scope": "outcome_update_selected_cohort_plus_transaction_baselines",
+        "before": before,
+        "after": after,
+        "material_change": bool(material_reasons),
+        "material_change_reasons": material_reasons,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _rolling_refresh_manifest(
+    *,
+    refresh_dir: Path,
+    outcome_update_id: str,
+    as_of: date,
+    generated: datetime,
+    evidence_delta: Mapping[str, Any],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rolling_refresh_manifest",
+        "refresh_id": refresh_dir.name,
+        "outcome_update_id": outcome_update_id,
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "transaction_status": "COMMITTED",
+        "material_change": evidence_delta.get("material_change"),
+        "source_snapshot_path": str(refresh_dir / "rolling_refresh_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "transaction_path": str(refresh_dir / "rolling_refresh_transaction.json"),
+        "rolling_refresh_manifest_path": str(refresh_dir / "rolling_refresh_manifest.json"),
+        "refreshed_artifacts_path": str(refresh_dir / "refreshed_artifacts.json"),
+        "evidence_delta_summary_path": str(refresh_dir / "evidence_delta_summary.json"),
+        "rolling_evidence_refresh_report_path": str(
+            refresh_dir / "rolling_evidence_refresh_report.md"
+        ),
+        "reader_brief_section_path": str(refresh_dir / "reader_brief_section.md"),
+        "reader_brief_section_generated": True,
+        "reader_brief_updated": False,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _rolling_refresh_snapshot_errors(snapshot: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if snapshot.get("schema_version") != ROLLING_EVIDENCE_REFRESH_SNAPSHOT_SCHEMA_VERSION:
+        errors.append("snapshot_schema_invalid")
+    generated = _datetime_from_any(snapshot.get("generated_at"))
+    as_of = _date_from_any(snapshot.get("as_of"))
+    update_bundle = _mapping(snapshot.get("update_source_bundle"))
+    update_manifest = _mapping(
+        _source_bundle_content(update_bundle, "outcome_update_manifest.json")
+    )
+    update_generated = _datetime_from_any(update_manifest.get("generated_at"))
+    if (
+        generated is None
+        or as_of is None
+        or update_generated is None
+        or generated < update_generated
+        or as_of > generated.date()
+        or update_manifest.get("outcome_update_id") != snapshot.get("outcome_update_id")
+        or update_manifest.get("transaction_status") != "COMMITTED"
+    ):
+        errors.append("update_identity_or_time_invalid")
+    if not _source_bundle_matches(update_bundle):
+        errors.append("update_source_bundle_changed")
+    else:
+        update_root = Path(_text(update_bundle.get("root")))
+        update_validation = validate_outcome_update_artifact(
+            update_id=_text(snapshot.get("outcome_update_id")),
+            output_dir=update_root.parent,
+        )
+        if (
+            update_validation.get("status") != "PASS"
+            or _mapping(snapshot.get("update_validation")) != update_validation
+        ):
+            errors.append("live_update_validation_failed")
+    for kind in ("limited_vs_notrade", "consensus_risk"):
+        baseline = _mapping(_mapping(snapshot.get("baseline")).get(kind))
+        if baseline.get("status") == "PRESENT":
+            bundle = _mapping(baseline.get("source_bundle"))
+            if not _source_bundle_matches(bundle):
+                errors.append(f"{kind}_baseline_changed")
+                continue
+            live_validation = _validate_rolling_refresh_post_artifact(
+                kind=kind,
+                artifact_id=_text(baseline.get("artifact_id")),
+                output_dir=Path(_text(baseline.get("root"))).parent,
+            )
+            expected_summary = _rolling_refresh_baseline_summary(kind=kind, bundle=bundle)
+            if (
+                live_validation.get("status") != "PASS"
+                or _mapping(baseline.get("validation")) != live_validation
+                or _mapping(baseline.get("summary")) != expected_summary
+            ):
+                errors.append(f"{kind}_baseline_validation_failed")
+        elif baseline.get("status") != "MISSING":
+            errors.append(f"{kind}_baseline_status_invalid")
+    post = _mapping(snapshot.get("post_artifacts"))
+    for kind in (
+        "outcome_dashboard",
+        "limited_vs_notrade",
+        "consensus_risk",
+        "owner_attribution",
+        "shadow_aging",
+        "weekly_advisory_review",
+    ):
+        row = _mapping(post.get(kind))
+        if kind == "shadow_aging" and row.get("status") == "SKIPPED_NO_SHADOW_SHORTLIST":
+            if _mapping(row.get("validation")).get("status") != (
+                "SKIPPED_NO_SHADOW_SHORTLIST"
+            ):
+                errors.append("shadow_aging_skip_validation_invalid")
+            continue
+        bundle = _mapping(row.get("source_bundle"))
+        if row.get("status") != "REFRESHED" or not _source_bundle_matches(bundle):
+            errors.append(f"{kind}_post_bundle_changed")
+            continue
+        live_validation = _validate_rolling_refresh_post_artifact(
+            kind=kind,
+            artifact_id=_text(row.get("artifact_id")),
+            output_dir=Path(_text(row.get("root"))).parent,
+        )
+        if (
+            live_validation.get("status") != "PASS"
+            or _mapping(row.get("validation")) != live_validation
+        ):
+            errors.append(f"{kind}_post_validation_failed")
+    return errors
+
+
+def _rolling_refresh_baseline_summary(
+    *, kind: str, bundle: Mapping[str, Any]
+) -> dict[str, Any]:
+    if kind == "limited_vs_notrade":
+        metrics = _mapping(
+            _source_bundle_content(bundle, "window_comparison_metrics.json")
+        )
+        rows = _records(metrics.get("by_window"))
+        first = rows[0] if rows else {}
+        return {
+            "available_count": _mapping(
+                _source_bundle_content(bundle, "limited_vs_notrade_manifest.json")
+            ).get("available_count"),
+            "confidence": first.get("confidence"),
+            "recommendation": metrics.get("overall_recommendation"),
+        }
+    if kind == "consensus_risk":
+        return {
+            "consensus_target_risk": _mapping(
+                _source_bundle_content(bundle, "consensus_risk_manifest.json")
+            ).get("consensus_target_risk")
+        }
+    raise DynamicV3OutcomeAccumulationError(
+        f"unsupported rolling refresh baseline kind: {kind}"
+    )
+
+
+def _validate_rolling_refresh_post_artifact(
+    *, kind: str, artifact_id: str, output_dir: Path
+) -> dict[str, Any]:
+    if kind == "outcome_dashboard":
+        return validate_outcome_dashboard_artifact(
+            dashboard_id=artifact_id, output_dir=output_dir
+        )
+    if kind == "limited_vs_notrade":
+        return validate_limited_vs_notrade_artifact(
+            focus_id=artifact_id, output_dir=output_dir
+        )
+    if kind == "consensus_risk":
+        return validate_consensus_risk_artifact(risk_id=artifact_id, output_dir=output_dir)
+    if kind == "owner_attribution":
+        return validate_owner_attribution_artifact(
+            attribution_id=artifact_id, output_dir=output_dir
+        )
+    if kind == "shadow_aging":
+        return validate_shadow_aging_artifact(aging_id=artifact_id, output_dir=output_dir)
+    if kind == "weekly_advisory_review":
+        return validate_weekly_advisory_review_artifact(
+            weekly_review_id=artifact_id, output_dir=output_dir
+        )
+    raise DynamicV3OutcomeAccumulationError(
+        f"unsupported rolling refresh downstream kind: {kind}"
+    )
+
+
+def _rollback_rolling_refresh(
+    *, prestate: Mapping[str, Any], created_artifacts: Mapping[str, Any]
+) -> dict[str, Any]:
+    output_status: dict[str, Any] = {}
+    rollback_errors: list[str] = []
+    for kind, raw_state in _mapping(prestate.get("outputs")).items():
+        state = _mapping(raw_state)
+        root = Path(_text(state.get("root")))
+        before = set(_texts(state.get("child_names")))
+        removed = []
+        try:
+            if root.exists():
+                for child in _artifact_children(root):
+                    if child.name not in before:
+                        shutil.rmtree(child)
+                        removed.append(child.name)
+            output_status[kind] = {"removed_artifact_ids": removed, "restored": True}
+        except Exception as exc:  # noqa: BLE001
+            rollback_errors.append(f"output:{kind}:{exc}")
+            output_status[kind] = {"removed_artifact_ids": removed, "restored": False}
+    pointer_status: dict[str, str] = {}
+    for name, raw_state in _mapping(prestate.get("latest_pointers")).items():
+        state = _mapping(raw_state)
+        path = Path(_text(state.get("path")))
+        try:
+            if state.get("existed") is True:
+                content = _mapping(state.get("content"))
+                if not content:
+                    raise DynamicV3OutcomeAccumulationError(
+                        f"rolling refresh pointer backup invalid: {name}"
+                    )
+                _write_json(path, content)
+                pointer_status[name] = "RESTORED"
+            else:
+                if path.exists():
+                    path.unlink()
+                pointer_status[name] = "REMOVED"
+        except Exception as exc:  # noqa: BLE001
+            rollback_errors.append(f"pointer:{name}:{exc}")
+            pointer_status[name] = "FAILED"
+    return {
+        "outputs": output_status,
+        "latest_pointers": pointer_status,
+        "created_artifact_count": len(created_artifacts),
+        "errors": rollback_errors,
+        "status": "PASS" if not rollback_errors else "FAIL",
+    }
+
+
+def _recover_prepared_rolling_refreshes(
+    *, output_dir: Path, outcome_update_id: str
+) -> None:
+    if not output_dir.exists():
+        return
+    for child in _artifact_children(output_dir):
+        transaction_path = child / "rolling_refresh_transaction.json"
+        transaction = _read_optional_json(transaction_path) or {}
+        if (
+            transaction.get("outcome_update_id") != outcome_update_id
+            or transaction.get("status") != "PREPARED"
+        ):
+            continue
+        generated = _datetime_from_any(transaction.get("transaction_at"))
+        if generated is None:
+            raise DynamicV3OutcomeAccumulationError(
+                f"prepared rolling refresh time invalid: {child.name}"
+            )
+        rollback = _rollback_rolling_refresh(
+            prestate=_mapping(transaction.get("prestate")),
+            created_artifacts=_mapping(transaction.get("created_artifacts")),
+        )
+        recovered = _rolling_refresh_transaction(
+            refresh_id=child.name,
+            outcome_update_id=outcome_update_id,
+            generated=generated,
+            status="ROLLED_BACK",
+            prestate=_mapping(transaction.get("prestate")),
+            created_artifacts=_mapping(transaction.get("created_artifacts")),
+            error="recovered_prepared_transaction_before_retry",
+            rollback_validation=rollback,
+        )
+        _write_json(transaction_path, recovered)
+
+
+def _committed_rolling_refresh_for_update(
+    output_dir: Path, outcome_update_id: str
+) -> bool:
+    if not output_dir.exists():
+        return False
+    committed = []
+    for child in _artifact_children(output_dir):
+        transaction = _read_optional_json(child / "rolling_refresh_transaction.json") or {}
+        if (
+            transaction.get("outcome_update_id") == outcome_update_id
+            and transaction.get("status") == "COMMITTED"
+        ):
+            committed.append(child.name)
+    if len(committed) > 1:
+        raise DynamicV3OutcomeAccumulationError(
+            "multiple COMMITTED rolling refreshes found for one outcome update"
+        )
+    return bool(committed)
 
 
 def run_evidence_trend(
@@ -5330,6 +6198,7 @@ def _build_outcome_dashboard_snapshot(
     paper_sim_dir: Path,
     diagnosis_dir: Path,
     outcome_due_dir: Path,
+    include_outcome_due_sources: bool,
     policy_path: Path,
     policy: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -5397,14 +6266,18 @@ def _build_outcome_dashboard_snapshot(
             diagnosis_id=artifact_id, output_dir=diagnosis_dir
         ),
     )
-    due_sources = _latest_dashboard_source_bundle(
-        root=outcome_due_dir,
-        manifest_name="outcome_due_manifest.json",
-        id_field="due_id",
-        generated=generated,
-        validator=lambda artifact_id: validate_outcome_due_artifact(
-            due_id=artifact_id, output_dir=outcome_due_dir
-        ),
+    due_sources = (
+        _latest_dashboard_source_bundle(
+            root=outcome_due_dir,
+            manifest_name="outcome_due_manifest.json",
+            id_field="due_id",
+            generated=generated,
+            validator=lambda artifact_id: validate_outcome_due_artifact(
+                due_id=artifact_id, output_dir=outcome_due_dir
+            ),
+        )
+        if include_outcome_due_sources
+        else []
     )
     return {
         "schema_version": OUTCOME_DASHBOARD_SNAPSHOT_SCHEMA_VERSION,
@@ -5422,6 +6295,9 @@ def _build_outcome_dashboard_snapshot(
         "diagnosis_sources": diagnosis_sources,
         "outcome_due_dir": str(outcome_due_dir),
         "due_sources": due_sources,
+        "due_source_selection_status": (
+            "INCLUDED" if include_outcome_due_sources else "EXCLUDED_POST_COMMITTED_UPDATE"
+        ),
         "policy_path": str(policy_path),
         "policy_checksum": _file_sha256(policy_path),
         "policy": dict(policy),

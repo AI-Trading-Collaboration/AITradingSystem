@@ -12,6 +12,7 @@ from dynamic_v3_paper_tracking_helpers import (
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_outcome_accumulation as accumulation
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_tracking as paper_tracking
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     apply_owner_review_to_paper_portfolio,
     init_paper_portfolio,
@@ -100,6 +101,9 @@ def run_safe_update_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
 
 def run_rolling_refresh_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
     fixture = run_safe_update_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        paper_tracking, "DEFAULT_DYNAMIC_V3_LATEST_POINTER_DIR", tmp_path / "latest"
+    )
     shadow = write_shadow_shortlist_and_monitoring(tmp_path)
     refresh = accumulation.run_rolling_evidence_refresh(
         outcome_update_id=fixture["update"]["outcome_update_id"],

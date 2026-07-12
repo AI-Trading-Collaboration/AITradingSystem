@@ -6790,6 +6790,8 @@ reports:
     command: aits etf dynamic-v3-rescue rolling-evidence-refresh report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/rolling_refresh_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/rolling_refresh_source_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/rolling_refresh_transaction.json
       - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/refreshed_artifacts.json
       - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/evidence_delta_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/*/rolling_evidence_refresh_report.md
@@ -6798,7 +6800,9 @@ reports:
     freshness_rationale: >
       TRADING-158 refreshes downstream outcome dashboard, limited-vs-notrade,
       consensus risk, owner attribution, shadow aging, weekly advisory review,
-      and Reader Brief evidence after a safe outcome update.
+      and a Reader Brief section after a validated safe outcome update. The
+      transaction and full source snapshot prove single-use, rollback, baseline,
+      downstream validation, and no-production boundaries.
     owner_action: review_evidence_delta_before_interpreting_advisory_evidence_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
