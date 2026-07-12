@@ -58,6 +58,7 @@ HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION = "historical_replay_source_snapshot.v
 BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backfilled_outcome_source_snapshot.v2"
 HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION = "historical_paper_sim_source_snapshot.v2"
 REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION = "replay_performance_review_source_snapshot.v2"
+REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION = "replay_diagnosis_source_snapshot.v2"
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
 )
@@ -2332,6 +2333,72 @@ def validate_replay_performance_review_artifact(
     )
 
 
+def _diagnosis_source_bundles(
+    *,
+    inventory_root: Path,
+    replay_root: Path,
+    backfill_root: Path,
+    sim_root: Path,
+    review_root: Path,
+) -> dict[str, Any]:
+    return {
+        "inventory": _review_source_bundle(
+            inventory_root,
+            (
+                "replay_inventory_source_snapshot.json",
+                "replay_inventory_manifest.json",
+                "replay_artifact_inventory.jsonl",
+                "pit_safety_audit.json",
+                "replay_coverage_summary.json",
+                "replay_inventory_report.md",
+            ),
+        ),
+        "replay": _review_source_bundle(
+            replay_root,
+            (
+                "historical_replay_source_snapshot.json",
+                "historical_replay_manifest.json",
+                "replay_events.jsonl",
+                "replay_decision_inputs.jsonl",
+                "replay_action_summary.json",
+                "historical_replay_report.md",
+            ),
+        ),
+        "backfill": _review_source_bundle(
+            backfill_root,
+            (
+                "backfilled_outcome_source_snapshot.json",
+                "backfill_manifest.json",
+                "replay_outcome_windows.jsonl",
+                "variant_performance_summary.json",
+                "backfill_outcome_report.md",
+            ),
+        ),
+        "sim": _review_source_bundle(
+            sim_root,
+            (
+                "historical_paper_sim_source_snapshot.json",
+                "historical_paper_sim_manifest.json",
+                "simulated_paper_state_history.jsonl",
+                "simulated_trade_ledger.jsonl",
+                "simulated_performance_summary.json",
+                "historical_paper_sim_report.md",
+            ),
+        ),
+        "review": _review_source_bundle(
+            review_root,
+            (
+                "replay_performance_review_source_snapshot.json",
+                "replay_performance_manifest.json",
+                "advisory_rule_effectiveness.json",
+                "calibration_recommendations.json",
+                "replay_performance_review.md",
+                "reader_brief_section.md",
+            ),
+        ),
+    }
+
+
 def run_replay_diagnosis(
     *,
     inventory_id: str,
@@ -2347,12 +2414,37 @@ def run_replay_diagnosis(
     output_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_inventory_dir = inventory_dir / inventory_id
     source_replay_dir = replay_dir / replay_id
     source_backfill_dir = backfill_dir / backfill_id
     source_sim_dir = sim_dir / sim_id
     source_review_dir = review_dir / review_id
+
+    validations = {
+        "inventory": validate_replay_inventory_artifact(
+            inventory_id=inventory_id,
+            output_dir=inventory_dir,
+        ),
+        "replay": validate_historical_replay_artifact(
+            replay_id=replay_id,
+            output_dir=replay_dir,
+        ),
+        "backfill": validate_backfill_outcome_artifact(
+            backfill_id=backfill_id,
+            output_dir=backfill_dir,
+        ),
+        "sim": validate_historical_paper_sim_artifact(sim_id=sim_id, output_dir=sim_dir),
+        "review": validate_replay_performance_review_artifact(
+            review_id=review_id,
+            output_dir=review_dir,
+        ),
+    }
+    failed = [name for name, payload in validations.items() if payload.get("status") != "PASS"]
+    if failed:
+        raise DynamicV3HistoricalReplayError(
+            f"diagnosis source validation must PASS: {', '.join(failed)}"
+        )
 
     inventory_manifest = _read_json(source_inventory_dir / "replay_inventory_manifest.json")
     inventory_rows = _read_jsonl(source_inventory_dir / "replay_artifact_inventory.jsonl")
@@ -2369,6 +2461,36 @@ def run_replay_diagnosis(
     sim_summary = _read_optional_json(source_sim_dir / "simulated_performance_summary.json") or {}
     review_manifest = _read_json(source_review_dir / "replay_performance_manifest.json")
     calibration = _read_optional_json(source_review_dir / "calibration_recommendations.json") or {}
+    if not all(
+        (
+            replay_manifest.get("inventory_id") == inventory_id,
+            backfill_manifest.get("replay_id") == replay_id,
+            sim_manifest.get("replay_id") == replay_id,
+            review_manifest.get("replay_id") == replay_id,
+            review_manifest.get("backfill_id") == backfill_id,
+            review_manifest.get("sim_id") == sim_id,
+        )
+    ):
+        raise DynamicV3HistoricalReplayError("diagnosis source lineage is inconsistent")
+    source_manifests = (
+        inventory_manifest,
+        replay_manifest,
+        backfill_manifest,
+        sim_manifest,
+        review_manifest,
+    )
+    source_times = [_datetime_from_any(item.get("generated_at")) for item in source_manifests]
+    if any(value is None for value in source_times):
+        raise DynamicV3HistoricalReplayError("diagnosis source generated_at is invalid")
+    if any(generated < value for value in source_times if value is not None):
+        raise DynamicV3HistoricalReplayError("diagnosis generated_at must not precede sources")
+    source_bundles = _diagnosis_source_bundles(
+        inventory_root=source_inventory_dir,
+        replay_root=source_replay_dir,
+        backfill_root=source_backfill_dir,
+        sim_root=source_sim_dir,
+        review_root=source_review_dir,
+    )
 
     pending_reasons = _replay_pending_reason_summary(
         inventory_rows=inventory_rows,
@@ -2400,6 +2522,8 @@ def run_replay_diagnosis(
             source_inventory_dir / "replay_inventory_manifest.json",
             inventory_manifest,
             len(inventory_rows),
+            validation_status="PASS",
+            source_snapshot_schema=REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION,
         ),
         _artifact_health_row(
             "historical_replay",
@@ -2407,6 +2531,8 @@ def run_replay_diagnosis(
             source_replay_dir / "historical_replay_manifest.json",
             replay_manifest,
             len(replay_events),
+            validation_status="PASS",
+            source_snapshot_schema=HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
         ),
         _artifact_health_row(
             "backfilled_outcome",
@@ -2414,6 +2540,8 @@ def run_replay_diagnosis(
             source_backfill_dir / "backfill_manifest.json",
             backfill_manifest,
             len(outcome_rows),
+            validation_status="PASS",
+            source_snapshot_schema=BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
         ),
         _artifact_health_row(
             "historical_paper_sim",
@@ -2421,6 +2549,8 @@ def run_replay_diagnosis(
             source_sim_dir / "historical_paper_sim_manifest.json",
             sim_manifest,
             len(sim_state_history),
+            validation_status="PASS",
+            source_snapshot_schema=HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION,
         ),
         _artifact_health_row(
             "replay_performance_review",
@@ -2428,6 +2558,8 @@ def run_replay_diagnosis(
             source_review_dir / "replay_performance_manifest.json",
             review_manifest,
             len(_records(calibration.get("recommendations"))),
+            validation_status="PASS",
+            source_snapshot_schema=REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
         ),
     ]
     status = "PASS" if not blocking_reasons else "PASS_WITH_WARNINGS"
@@ -2456,7 +2588,12 @@ def run_replay_diagnosis(
         "sim_id": sim_id,
         "review_id": review_id,
         "blocking_pending_reasons": blocking_reasons,
-        "can_enter_variant_comparison": coverage["backfill"]["available_windows"] > 0,
+        "can_enter_variant_comparison": review_manifest.get("directional_evidence_ready") is True,
+        "variant_comparison_evidence_status": (
+            "READY_FOR_DIRECTIONAL_REVIEW"
+            if review_manifest.get("directional_evidence_ready") is True
+            else "INSUFFICIENT_DIRECTIONAL_EVIDENCE"
+        ),
         "source_inventory_path": str(source_inventory_dir / "replay_inventory_manifest.json"),
         "source_replay_path": str(source_replay_dir / "historical_replay_manifest.json"),
         "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
@@ -2482,6 +2619,29 @@ def run_replay_diagnosis(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    source_snapshot = {
+        "schema_version": REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION,
+        "diagnosis_id": diagnosis_dir.name,
+        "generated_at": generated.isoformat(),
+        "inventory_id": inventory_id,
+        "replay_id": replay_id,
+        "backfill_id": backfill_id,
+        "sim_id": sim_id,
+        "review_id": review_id,
+        "source_roots": {
+            "inventory": str(source_inventory_dir),
+            "replay": str(source_replay_dir),
+            "backfill": str(source_backfill_dir),
+            "sim": str(source_sim_dir),
+            "review": str(source_review_dir),
+        },
+        "source_validation_statuses": {name: "PASS" for name in validations},
+        "source_bundles": source_bundles,
+    }
+    source_snapshot_path = diagnosis_dir / "replay_diagnosis_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
+    manifest["source_snapshot_path"] = str(source_snapshot_path)
+    manifest["source_snapshot_checksum"] = _sha256_file(source_snapshot_path)
     _write_json(diagnosis_dir / "replay_diagnosis_manifest.json", manifest)
     _write_json(diagnosis_dir / "replay_coverage_breakdown.json", coverage)
     _write_json(diagnosis_dir / "replay_pending_reason_summary.json", pending_reasons)
@@ -2502,6 +2662,7 @@ def run_replay_diagnosis(
         "coverage_breakdown": coverage,
         "pending_reason_summary": pending_reasons,
         "artifact_health_matrix": artifact_health,
+        "source_snapshot": source_snapshot,
     }
 
 
@@ -2537,9 +2698,10 @@ def validate_replay_diagnosis_artifact(
     diagnosis_dir = output_dir / diagnosis_id
     manifest = _read_optional_json(diagnosis_dir / "replay_diagnosis_manifest.json") or {}
     reasons = _read_optional_json(diagnosis_dir / "replay_pending_reason_summary.json") or {}
+    coverage = _read_optional_json(diagnosis_dir / "replay_coverage_breakdown.json") or {}
     health = _read_jsonl(diagnosis_dir / "replay_artifact_health_matrix.jsonl")
     valid_reasons = set(PENDING_REASON_ACTIONS)
-    checks = [
+    shallow_checks = [
         _check("manifest_exists", (diagnosis_dir / "replay_diagnosis_manifest.json").exists(), ""),
         _check(
             "coverage_breakdown_exists",
@@ -2568,7 +2730,12 @@ def validate_replay_diagnosis_artifact(
         ),
         _check(
             "artifact_health_has_sources",
-            all(row.get("exists") is True and row.get("artifact_id") for row in health),
+            all(
+                row.get("exists") is True
+                and row.get("artifact_id")
+                and row.get("validation_status") in {None, "PASS"}
+                for row in health
+            ),
             "source artifacts",
         ),
         _check(
@@ -2584,6 +2751,249 @@ def validate_replay_diagnosis_artifact(
             manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "broker action forbidden",
+        ),
+    ]
+    snapshot_path = diagnosis_dir / "replay_diagnosis_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_replay_diagnosis_validation",
+            artifact_id_key="diagnosis_id",
+            artifact_id=diagnosis_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    bundles = _mapping(snapshot.get("source_bundles"))
+    roots = _mapping(snapshot.get("source_roots"))
+    ids = {
+        "inventory": _text(snapshot.get("inventory_id")),
+        "replay": _text(snapshot.get("replay_id")),
+        "backfill": _text(snapshot.get("backfill_id")),
+        "sim": _text(snapshot.get("sim_id")),
+        "review": _text(snapshot.get("review_id")),
+    }
+    try:
+        source_validations = {
+            "inventory": validate_replay_inventory_artifact(
+                inventory_id=ids["inventory"],
+                output_dir=Path(_text(roots.get("inventory"))).parent,
+            ),
+            "replay": validate_historical_replay_artifact(
+                replay_id=ids["replay"],
+                output_dir=Path(_text(roots.get("replay"))).parent,
+            ),
+            "backfill": validate_backfill_outcome_artifact(
+                backfill_id=ids["backfill"],
+                output_dir=Path(_text(roots.get("backfill"))).parent,
+            ),
+            "sim": validate_historical_paper_sim_artifact(
+                sim_id=ids["sim"],
+                output_dir=Path(_text(roots.get("sim"))).parent,
+            ),
+            "review": validate_replay_performance_review_artifact(
+                review_id=ids["review"],
+                output_dir=Path(_text(roots.get("review"))).parent,
+            ),
+        }
+    except Exception as exc:  # noqa: BLE001
+        source_validations = {name: {"status": "FAIL", "error": str(exc)} for name in ids}
+    try:
+        inventory_bundle = _mapping(bundles.get("inventory"))
+        replay_bundle = _mapping(bundles.get("replay"))
+        backfill_bundle = _mapping(bundles.get("backfill"))
+        sim_bundle = _mapping(bundles.get("sim"))
+        review_bundle = _mapping(bundles.get("review"))
+        inventory_manifest = _mapping(
+            _review_bundle_content(inventory_bundle, "replay_inventory_manifest.json")
+        )
+        inventory_rows = _records(
+            _review_bundle_content(inventory_bundle, "replay_artifact_inventory.jsonl")
+        )
+        inventory_coverage = _mapping(
+            _review_bundle_content(inventory_bundle, "replay_coverage_summary.json")
+        )
+        replay_manifest = _mapping(
+            _review_bundle_content(replay_bundle, "historical_replay_manifest.json")
+        )
+        replay_events = _records(_review_bundle_content(replay_bundle, "replay_events.jsonl"))
+        replay_summary = _mapping(
+            _review_bundle_content(replay_bundle, "replay_action_summary.json")
+        )
+        backfill_manifest = _mapping(
+            _review_bundle_content(backfill_bundle, "backfill_manifest.json")
+        )
+        outcome_rows = _records(
+            _review_bundle_content(backfill_bundle, "replay_outcome_windows.jsonl")
+        )
+        sim_manifest = _mapping(
+            _review_bundle_content(sim_bundle, "historical_paper_sim_manifest.json")
+        )
+        sim_history = _records(
+            _review_bundle_content(sim_bundle, "simulated_paper_state_history.jsonl")
+        )
+        sim_summary = _mapping(
+            _review_bundle_content(sim_bundle, "simulated_performance_summary.json")
+        )
+        review_manifest = _mapping(
+            _review_bundle_content(review_bundle, "replay_performance_manifest.json")
+        )
+        calibration = _mapping(
+            _review_bundle_content(review_bundle, "calibration_recommendations.json")
+        )
+        expected_reasons = _replay_pending_reason_summary(
+            inventory_rows=inventory_rows,
+            replay_summary=replay_summary,
+            backfill_manifest=backfill_manifest,
+            outcome_rows=outcome_rows,
+            sim_summary=sim_summary,
+            review_manifest=review_manifest,
+        )
+        expected_coverage = _replay_diagnosis_coverage_breakdown(
+            inventory_manifest=inventory_manifest,
+            inventory_coverage=inventory_coverage,
+            replay_manifest=replay_manifest,
+            replay_summary=replay_summary,
+            backfill_manifest=backfill_manifest,
+            sim_manifest=sim_manifest,
+            sim_summary=sim_summary,
+            sim_event_count=len(sim_history),
+            review_manifest=review_manifest,
+            calibration=calibration,
+        )
+        expected_health = [
+            _artifact_health_row(
+                "replay_inventory",
+                ids["inventory"],
+                Path(
+                    _text(_mapping(inventory_bundle["replay_inventory_manifest.json"]).get("path"))
+                ),
+                inventory_manifest,
+                len(inventory_rows),
+                validation_status="PASS",
+                source_snapshot_schema=REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION,
+            ),
+            _artifact_health_row(
+                "historical_replay",
+                ids["replay"],
+                Path(_text(_mapping(replay_bundle["historical_replay_manifest.json"]).get("path"))),
+                replay_manifest,
+                len(replay_events),
+                validation_status="PASS",
+                source_snapshot_schema=HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION,
+            ),
+            _artifact_health_row(
+                "backfilled_outcome",
+                ids["backfill"],
+                Path(_text(_mapping(backfill_bundle["backfill_manifest.json"]).get("path"))),
+                backfill_manifest,
+                len(outcome_rows),
+                validation_status="PASS",
+                source_snapshot_schema=BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+            ),
+            _artifact_health_row(
+                "historical_paper_sim",
+                ids["sim"],
+                Path(_text(_mapping(sim_bundle["historical_paper_sim_manifest.json"]).get("path"))),
+                sim_manifest,
+                len(sim_history),
+                validation_status="PASS",
+                source_snapshot_schema=HISTORICAL_PAPER_SIM_SNAPSHOT_SCHEMA_VERSION,
+            ),
+            _artifact_health_row(
+                "replay_performance_review",
+                ids["review"],
+                Path(
+                    _text(_mapping(review_bundle["replay_performance_manifest.json"]).get("path"))
+                ),
+                review_manifest,
+                len(_records(calibration.get("recommendations"))),
+                validation_status="PASS",
+                source_snapshot_schema=REPLAY_PERFORMANCE_REVIEW_SNAPSHOT_SCHEMA_VERSION,
+            ),
+        ]
+        blocking = [
+            row["reason"]
+            for row in _records(expected_reasons.get("pending_reasons"))
+            if row.get("blocking")
+        ]
+        expected_status = "PASS" if not blocking else "PASS_WITH_WARNINGS"
+        if not inventory_rows and not replay_events and not outcome_rows:
+            expected_status = "INSUFFICIENT_DATA"
+        expected_manifest_fields = {
+            "generated_at": snapshot.get("generated_at"),
+            "inventory_id": ids["inventory"],
+            "replay_id": ids["replay"],
+            "backfill_id": ids["backfill"],
+            "sim_id": ids["sim"],
+            "review_id": ids["review"],
+            "status": expected_status,
+            "blocking_pending_reasons": blocking,
+            "can_enter_variant_comparison": review_manifest.get("directional_evidence_ready")
+            is True,
+            "variant_comparison_evidence_status": (
+                "READY_FOR_DIRECTIONAL_REVIEW"
+                if review_manifest.get("directional_evidence_ready") is True
+                else "INSUFFICIENT_DIRECTIONAL_EVIDENCE"
+            ),
+        }
+        lineage_valid = all(
+            (
+                replay_manifest.get("inventory_id") == ids["inventory"],
+                backfill_manifest.get("replay_id") == ids["replay"],
+                sim_manifest.get("replay_id") == ids["replay"],
+                review_manifest.get("replay_id") == ids["replay"],
+                review_manifest.get("backfill_id") == ids["backfill"],
+                review_manifest.get("sim_id") == ids["sim"],
+            )
+        )
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_reasons, expected_coverage, expected_health = {}, {}, []
+        expected_manifest_fields, lineage_valid = {}, False
+        recompute_error = str(exc)
+    expected_report = render_replay_diagnosis_report(
+        manifest,
+        expected_coverage,
+        expected_reasons,
+        expected_health,
+    )
+    bundles_match = all(_review_bundle_matches(_mapping(bundles.get(name))) for name in ids)
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION,
+            REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "diagnosis source snapshot",
+        ),
+        _check(
+            "all_source_validations_pass",
+            all(payload.get("status") == "PASS" for payload in source_validations.values()),
+            "inventory/replay/backfill/sim/review",
+        ),
+        _check("source_lineage_matches", lineage_valid, ids["replay"]),
+        _check("source_bundles_unchanged", bundles_match, "five source bundles"),
+        _check("coverage_recomputed", coverage == expected_coverage, recompute_error),
+        _check("pending_reasons_recomputed", reasons == expected_reasons, recompute_error),
+        _check("artifact_health_recomputed", health == expected_health, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            "manifest",
+        ),
+        _check(
+            "report_recomputed",
+            (diagnosis_dir / "replay_diagnosis_report.md").is_file()
+            and (diagnosis_dir / "replay_diagnosis_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
         ),
     ]
     return _validation_payload(
@@ -2645,6 +3055,7 @@ def run_backfill_repair(
         prices=prices,
         price_dates=price_dates,
         generated_date=generated.date(),
+        cost_rate=_float(backfill_manifest.get("cost_rate")),
     )
     before = _availability_counts(original_rows)
     after = _availability_counts(repaired_rows)
@@ -3526,6 +3937,8 @@ def render_replay_diagnosis_report(
             "",
             f"- diagnosis_status：{manifest.get('status')}",
             f"- can_enter_variant_comparison：{manifest.get('can_enter_variant_comparison')}",
+            f"- variant_comparison_evidence_status："
+            f"{manifest.get('variant_comparison_evidence_status')}",
             f"- top_pending_reasons：{top_reasons or 'MISSING'}",
             "",
             "## 覆盖率",
@@ -3540,6 +3953,9 @@ def render_replay_diagnosis_report(
             f"{backfill.get('available_windows')} / {backfill.get('pending_windows')} / "
             f"{backfill.get('insufficient_data_windows')}",
             f"- review_status：{review.get('review_status')}",
+            "- pending reason counts按inventory event、outcome variant-window和chain状态"
+            "分别披露单位，不把不同样本单位解释为同一失败率。",
+            "- artifact health要求五条source validator PASS、snapshot schema与manifest checksum。",
             "",
             "## Artifact Health",
             "",
@@ -3840,33 +4256,41 @@ def _replay_pending_reason_summary(
     review_manifest: Mapping[str, Any],
 ) -> dict[str, Any]:
     counter: Counter[str] = Counter()
+    units: dict[str, Counter[str]] = defaultdict(Counter)
     for row in inventory_rows:
         limitations = set(_texts(row.get("replay_limitations")))
         if row.get("pit_safety_status") == "PIT_UNSAFE":
             counter["pit_unsafe"] += 1
+            units["pit_unsafe"]["inventory_event"] += 1
         if "MISSING_TARGET_WEIGHTS" in limitations:
             counter["missing_target_weights"] += 1
+            units["missing_target_weights"]["inventory_event"] += 1
         if "MISSING_PRICE_DATA" in limitations:
             counter["missing_price_data"] += 1
+            units["missing_price_data"]["inventory_event"] += 1
     if _int(replay_summary.get("replay_event_count")) == 0:
         counter["insufficient_replay_events"] += 1
+        units["insufficient_replay_events"]["replay_chain"] += 1
     for row in outcome_rows:
         status = _text(row.get("outcome_status"))
         if status == "PENDING":
             counter["future_window_not_reached"] += 1
+            units["future_window_not_reached"]["outcome_variant_window"] += 1
         elif status == "INSUFFICIENT_DATA":
             counter["missing_price_data"] += 1
+            units["missing_price_data"]["outcome_variant_window"] += 1
     if _int(backfill_manifest.get("available_count")) == 0:
         counter["no_available_outcome_windows"] += 1
+        units["no_available_outcome_windows"]["backfill_chain"] += 1
     if _text(sim_summary.get("simulation_status")) == "INSUFFICIENT_DATA":
         counter["paper_sim_insufficient_data"] += 1
+        units["paper_sim_insufficient_data"]["simulation_chain"] += 1
     if (
         _text(review_manifest.get("status")) in {"PENDING", "INSUFFICIENT_DATA"}
         and _int(backfill_manifest.get("available_count")) == 0
     ):
         counter["review_waiting_for_backfill"] += 1
-    if not counter:
-        counter["unknown"] += 1
+        units["review_waiting_for_backfill"]["review_chain"] += 1
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_replay_pending_reason_summary",
@@ -3874,6 +4298,7 @@ def _replay_pending_reason_summary(
             {
                 "reason": reason,
                 "count": count,
+                "count_units": dict(sorted(units[reason].items())),
                 "blocking": reason
                 in {
                     "missing_price_data",
@@ -3900,6 +4325,9 @@ def _artifact_health_row(
     path: Path,
     payload: Mapping[str, Any],
     record_count: int,
+    *,
+    validation_status: str,
+    source_snapshot_schema: str,
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -3909,6 +4337,16 @@ def _artifact_health_row(
         "exists": path.exists(),
         "status": payload.get("status", "MISSING"),
         "record_count": record_count,
+        "record_count_unit": {
+            "replay_inventory": "inventory_event",
+            "historical_replay": "replay_event",
+            "backfilled_outcome": "outcome_variant_window",
+            "historical_paper_sim": "simulation_state",
+            "replay_performance_review": "recommendation",
+        }.get(artifact_type, "record"),
+        "validation_status": validation_status,
+        "source_snapshot_schema": source_snapshot_schema,
+        "manifest_checksum": _sha256_file(path) if path.is_file() else "",
         "production_effect": payload.get("production_effect", "none"),
         "broker_action_allowed": payload.get("broker_action_allowed", False),
         "broker_action_taken": payload.get("broker_action_taken", False),
@@ -3932,6 +4370,7 @@ def _repair_outcome_rows(
     prices: pd.DataFrame,
     price_dates: Sequence[date],
     generated_date: date,
+    cost_rate: float,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     recomputed: dict[tuple[str, int, str], Mapping[str, Any]] = {}
     for replay_event_id, event in event_map.items():
@@ -3948,6 +4387,7 @@ def _repair_outcome_rows(
             prices=prices,
             price_dates=price_dates,
             generated_date=generated_date,
+            cost_rate=cost_rate,
         ):
             key = (
                 _text(row.get("replay_event_id")),

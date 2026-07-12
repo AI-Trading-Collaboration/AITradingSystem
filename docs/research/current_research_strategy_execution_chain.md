@@ -705,6 +705,21 @@ Replay Performance Review只负责把已经验证的historical replay outcome与
 
 当前fixture只有1个具备5日comparator的distinct replay event，因此`directional_evidence_ready=false`，首要建议为`continue_forward_tracking`；这正是预期结果，不应为了产出“可调优结论”降低门槛或把缺失写0。当前结果证明review链可审计、样本不足会诚实降级、建议不会自动落地；并不证明limited adjustment、no_trade或其他variant有效。后续优化顺序应是：增加PIT-safe独立event与真实forward windows，完成same-cohort/cost/regime/missingness统计，再预注册policy版本并由owner复核，最后才讨论是否调整advisory rules。
 
+#### Replay Diagnosis 链（TRADING-146_to_150 / G2.4AW）
+
+Replay Diagnosis回答“整条historical replay证据为什么仍受限”，而不是重新计算策略或自动修复数据。它把Inventory、Replay、Backfill、Simulation和Performance Review五层已有事实放入同一不可变诊断快照，先证明每层有效且lineage一致，再汇总coverage、pending reasons和health；这样避免旧实现仅凭manifest/file exists把篡改或错链source写成健康。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| 五源preflight | 五类显式ids/roots、timezone-aware diagnosis time | 各source full validator必须PASS；`inventory→replay→backfill/sim→review` ids严格一致；diagnosis time不早于任一source | validation/lineage/time evidence | 任一legacy、tamper、cross-chain或time travel在创建output前阻断。后续采用content-addressed chain root与atomic publish |
+| Immutable bundle | 五类source snapshots/manifests/rows/summaries/reports | 冻结每个path、content、checksum和validation status到`replay_diagnosis_source_snapshot.json` | 可离线重放的five-source bundle | live/embedded source drift FAIL；后续最小证据包、签名、retention lock |
+| Coverage | validated manifests/rows | 分别计inventory events/PIT、replay events/generated variants、outcome variant-windows、simulation states/date range、review recommendations | `replay_coverage_breakdown.json` | 不把event/window/state当同一种sample。后续加same-cohort coverage、market-regime/session分层 |
+| Pending reasons | inventory limitations、replay summary、outcome rows、sim/review status | 每个reason带`count_units`；future-window、missing-price、insufficient chain分别计数；完全健康时reason列表为空，不制造blocking unknown | `replay_pending_reason_summary.json` | 同一根因可能影响多个单位，count不是概率。后续增加root-cause DAG、dedup impact和owner/action routing |
+| Comparison readiness | AV review manifest及reviewed policy结果 | 只有`directional_evidence_ready=true`才标记可进入方向性comparison；任意单个AVAILABLE window不解锁 | readiness/status | readiness仍只表示证据门槛，不是显著性、promotion或calibration批准。后续要求independent holdout/CI/regime/cost gates |
+| Health/validator | source bundles与全部derived views | health记录validator PASS、snapshot schema、manifest checksum、record unit；validator重验live sources并重算coverage/reasons/health/manifest/Markdown | content-derived PASS/FAIL | snapshot/coverage/report/source tamper FAIL；legacy只读warning。后续统一ArtifactEnvelope/validation refs |
+
+当前fixture的Inventory/Replay只有1个可用distinct event，Simulation也因此为INSUFFICIENT；Diagnosis会保留这些阻断，同时即使Backfill已有部分AVAILABLE windows，`can_enter_variant_comparison=false`。这说明“有若干收益数字”与“证据足以做方向性比较”已被正确区分。后续优化应先扩大PIT-safe独立event和forward evidence，再改进诊断root-cause图与same-cohort统计；不得通过把单window、重复variant rows或unknown默认值当作额外样本来解除门槛。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

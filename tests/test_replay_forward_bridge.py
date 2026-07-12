@@ -28,7 +28,7 @@ def test_replay_forward_bridge_feeds_reader_brief_without_policy_or_broker_effec
     paths = prepare_replay_test_environment(tmp_path, monkeypatch)
     chain = build_replay_review_chain(
         paths,
-        backfill_generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+        backfill_generated_at=datetime(2026, 6, 30, tzinfo=UTC),
     )
     diagnosis = run_replay_diagnosis(
         inventory_id=chain["inventory"]["inventory_id"],
@@ -106,9 +106,7 @@ def test_replay_forward_bridge_feeds_reader_brief_without_policy_or_broker_effec
             if row["report_id"] != "etf_dynamic_v3_parameter_sweep_leaderboard"
         ],
     }
-    replay_only_summary = reader_brief._etf_dynamic_v3_parameter_research_summary(
-        replay_only_index
-    )
+    replay_only_summary = reader_brief._etf_dynamic_v3_parameter_research_summary(replay_only_index)
     assert replay_only_summary["replay_forward_bridge_status"] == bridge["manifest"]["status"]
     assert replay_only_summary["replay_forward_focus"] == focus_items[0]["item"]
     assert replay_only_summary["replay_forward_next_action"] == bridge["manifest"]["next_action"]

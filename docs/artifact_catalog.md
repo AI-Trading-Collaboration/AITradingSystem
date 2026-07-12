@@ -22,6 +22,12 @@
 |---|---|---|---|---|---|---|
 |`reports/etf_portfolio/dynamic_v3_rescue/replay_performance_review/<review_id>/replay_performance_review_source_snapshot.json`<br/>`replay_performance_manifest.json`<br/>`advisory_rule_effectiveness.json`<br/>`calibration_recommendations.json`<br/>`replay_performance_review.md`<br/>`reader_brief_section.md`|`aits etf dynamic-v3-rescue replay-performance-review run --backfill-id <id> --sim-id <id>`、`report --latest`、`validate-replay-performance-review --review-id <id>`|同一replay lineage的full-PASS Backfilled Outcome与Historical Paper Simulation、reviewed `replay_performance_review_v1.yaml`|snapshot冻结全部source/policy；null不转0；relative sign仅形成positive/nonpositive rate，unsupported false-alarm/missed-opportunity为null；distinct-event/window/sim门槛未满足只允许continue tracking；validator重算全部views；`production_effect=none`|历史证据质量与人工规则复核材料|否，manual proposal only|Directional ready也不是统计显著、owner批准或自动calibration；不得据此自动改config、promotion、weights、portfolio、production或broker|
 
+## ARCH-004G2.4AW Replay Diagnosis 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/<diagnosis_id>/replay_diagnosis_source_snapshot.json`及manifest/coverage/pending-reasons/health-matrix/Markdown|`aits etf dynamic-v3-rescue replay-diagnosis run ...`、`report --latest`、`validate-replay-diagnosis`|full-PASS且完整lineage的Inventory/Replay/Backfill/Sim/Review|冻结五类source；event/window/chain count units分离；无reason不造unknown；comparison readiness绑定AV evidence gate；validator重算全部views；`production_effect=none`|解释覆盖与阻断原因，为后续人工repair/comparison排序|否，diagnosis only|PASS只证明诊断可重放；available window、health PASS或readiness都不授权repair、calibration、policy或execution|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

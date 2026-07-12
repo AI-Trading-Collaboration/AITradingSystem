@@ -6501,6 +6501,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue replay-diagnosis report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_diagnosis_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_diagnosis_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_coverage_breakdown.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_pending_reason_summary.json
@@ -6508,9 +6509,10 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_diagnosis_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-146_to_150 diagnosis explains why historical replay remains
-      PARTIAL, PENDING, or INSUFFICIENT_DATA before any variant comparison or
-      calibration proposal is interpreted.
+      TRADING-146_to_150 diagnosis freezes and revalidates the complete
+      inventory-to-review lineage, preserves event/window/chain count units,
+      and applies the reviewed directional-evidence gate before any variant
+      comparison or calibration proposal is interpreted.
     owner_action: review_replay_pending_reasons_before_backfill_repair_or_calibration
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

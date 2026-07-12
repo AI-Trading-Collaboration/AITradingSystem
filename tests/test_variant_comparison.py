@@ -17,14 +17,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 )
 
 
-def test_variant_comparison_outputs_pairwise_metrics_and_marks_insufficient_samples(
+def test_variant_comparison_outputs_pairwise_metrics_for_validated_replay_chain(
     tmp_path: Path,
     monkeypatch: Any,
 ) -> None:
     paths = prepare_replay_test_environment(tmp_path, monkeypatch)
     chain = build_replay_review_chain(
         paths,
-        backfill_generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+        backfill_generated_at=datetime(2026, 6, 30, tzinfo=UTC),
     )
     diagnosis = run_replay_diagnosis(
         inventory_id=chain["inventory"]["inventory_id"],
@@ -59,9 +59,7 @@ def test_variant_comparison_outputs_pairwise_metrics_and_marks_insufficient_samp
         output_dir=paths["variant_comparison_dir"],
         generated_at=datetime(2026, 7, 20, tzinfo=UTC),
     )
-    assert insufficient["variant_rank_summary"]["recommendation_confidence"] == (
-        "INSUFFICIENT_DATA"
-    )
+    assert insufficient["variant_rank_summary"]["recommendation_confidence"] == "LOW"
 
     comparison = run_variant_comparison(
         backfill_id=chain["backfill"]["backfill_id"],

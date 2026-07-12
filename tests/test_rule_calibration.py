@@ -25,7 +25,7 @@ def test_rule_calibration_generates_manual_only_policy_proposals(
     paths = prepare_replay_test_environment(tmp_path, monkeypatch)
     chain = build_replay_review_chain(
         paths,
-        backfill_generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+        backfill_generated_at=datetime(2026, 6, 30, tzinfo=UTC),
     )
     diagnosis = run_replay_diagnosis(
         inventory_id=chain["inventory"]["inventory_id"],

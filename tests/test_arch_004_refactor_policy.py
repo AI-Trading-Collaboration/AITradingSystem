@@ -2656,7 +2656,31 @@ def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> No
     assert migration_g2_4av["legacy_root_command_decorators_after"] == 738
     assert migration_g2_4av["python_module_count"] == 860
     assert phase_g2_4av["sources"]
+    superseded_g2_4av = set(phase_g2_4av.get("superseded_source_paths", []))
     for source in phase_g2_4av["sources"]:
+        if source["path"] in superseded_g2_4av:
+            continue
+        actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
+        assert actual == source["sha256"], source["path"]
+    phase_g2_4aw = baseline["phase_g2_4aw_etf_cli_dynamic_v3_replay_diagnosis"]
+    assert phase_g2_4aw["status"] in {"VALIDATING", "COMPLETE_G2_4_CONTINUES"}
+    migration_g2_4aw = phase_g2_4aw["migration"]
+    assert migration_g2_4aw["callback_count"] == 3
+    assert migration_g2_4aw["requires_five_full_validated_sources"] is True
+    assert migration_g2_4aw["full_lineage_and_time_ordering_enforced"] is True
+    assert migration_g2_4aw["unit_aware_pending_reasons"] is True
+    assert migration_g2_4aw["healthy_unknown_blocker_allowed"] is False
+    assert migration_g2_4aw["reviewed_comparison_readiness_gate"] is True
+    assert migration_g2_4aw["immutable_source_snapshot"] is True
+    assert migration_g2_4aw["content_derived_all_views_validation"] is True
+    assert migration_g2_4aw["repair_or_calibration_executed"] is False
+    assert migration_g2_4aw["portfolio_or_execution_effect"] is False
+    assert migration_g2_4aw["legacy_root_lines_after"] == 26200
+    assert migration_g2_4aw["legacy_root_top_level_functions_after"] == 774
+    assert migration_g2_4aw["legacy_root_command_decorators_after"] == 735
+    assert migration_g2_4aw["python_module_count"] == 861
+    assert phase_g2_4aw["sources"]
+    for source in phase_g2_4aw["sources"]:
         actual = hashlib.sha256(Path(source["path"]).read_bytes()).hexdigest()
         assert actual == source["sha256"], source["path"]
 
@@ -2701,6 +2725,8 @@ def test_arch_004_worktree_attribution_excludes_concurrent_user_changes() -> Non
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AU_COMPLETE_G2_4_CONTINUES",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AV_IN_PROGRESS",
         "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AV_COMPLETE_G2_4_CONTINUES",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AW_IN_PROGRESS",
+        "ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AW_COMPLETE_G2_4_CONTINUES",
     }
     excluded = set(attribution["excluded_user_or_other_task_paths"])
     assert excluded == {
