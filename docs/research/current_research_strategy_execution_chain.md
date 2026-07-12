@@ -839,6 +839,21 @@ Outcome Dashboard回答“当前冻结证据中，forward、historical replay与
 
 当前empty-source fixture产生paired=0、available=0、recommendation=`insufficient_data`，四个window的avg/median/win/drawdown/turnover全部null，regime status=`UNAVAILABLE`。这证明系统不再把“没有数据”解释成0收益或0风险。优化应先获得真实paired AVAILABLE cohort与canonical regime labels，再校准confidence floors和估计置信区间；不得通过放宽pair gate、复用paper return、填0或自动修改policy来制造方向结论。
 
+#### Consensus Risk 链（TRADING-155 / G2.4BF）
+
+这一链回答“明确的consensus target在独立决策日期上的风险资产/半导体暴露如何，same-lineage paired outcomes是否显示更差drawdown，以及每个独立决策事件的turnover是否过高”。它只输出人工风险观察，不回答是否应默认执行consensus target。旧实现会在Daily缺consensus weights时借candidate target替代，把同一historical event的turnover按多个window重复累计，并把missing CASH、drawdown和turnover分别解释成100% risk asset或0风险；这些都会改变风险语义。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source gate | generated cutoff、Daily Advisory、Historical Replay、Repair/Backfill roots | Daily逐个content-derived PASS且id/as-of唯一；Replay与Outcome各取semantic latest唯一PASS；Outcome必须与Replay共享replay id；future/tie/invalid阻断 | selected full bundles | 后续由RunLedger显式source ids替代latest选择 |
+| Exposure identity | Daily consensus CSV、Replay consensus variant | 只接受明确consensus weights，要求explicit CASH与unit simplex；按decision as-of去重；同日Daily/Replay weights与turnover相同才合并，否则阻断 | distinct-date exposure samples、coverage | 后续增加canonical decision id，避免仅靠日期合并 |
+| Drawdown pairs | outcome event×window×variant | 同event/window的consensus_target/no_trade各恰好一行；双方AVAILABLE且drawdown finite才计算delta，unpaired进coverage，其他状态metric=null | paired drawdown rows、per-window risk | 后续增加path-level tail metrics、CI与regime-conditioned paired analysis |
+| Turnover | distinct exposure samples | 每个decision date最多一个turnover，不从四个outcome windows重复取值；missing保持null | average/max turnover、status | 后续统一one-way/full-L1定义和cost sensitivity |
+| Policy/status | reviewed sample floors、required 5d/20d windows、exposure/drawdown/turnover levels与precedence | REVIEW_REQUIRED优先；没有完整exposure/turnover/required-window证据则INSUFFICIENT；证据完整后才PASS/PASS_WITH_WARNINGS | overall consensus risk status | pilot thresholds不是promotion gate；后续按真实cohort、effective sample size与false-negative cost校准 |
+| Validator | immutable source/policy snapshot、live inputs和全部views | 重跑source validators/policy equality，从snapshot重算exposure/coverage/drawdown/turnover/manifest/Markdown | PASS/FAIL；legacy warning | source/snapshot/policy/output drift FAIL；不推荐default execution |
+
+当前empty-source fixture产生distinct exposure=0、paired drawdown=0、turnover sample=0，overall=`INSUFFICIENT_DATA`；exposure min/mean/max、四window drawdown和turnover aggregate均为null。Positive frozen fixture用5个distinct dates、5d/20d各5个paired outcomes验证required windows PASS且turnover只计5次；这只是计算契约证明，不是当前策略的真实风险结论。优化应先积累validated same-lineage真实cohort、统一turnover定义并增加regime/tail/CI，再复核pilot thresholds；不得用candidate target fallback、重复window turnover、填0或放宽lineage来制造PASS。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

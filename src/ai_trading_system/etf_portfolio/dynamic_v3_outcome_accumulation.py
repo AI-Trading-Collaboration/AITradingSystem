@@ -32,6 +32,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     validate_backfill_outcome_artifact,
     validate_backfill_repair_artifact,
     validate_historical_paper_sim_artifact,
+    validate_historical_replay_artifact,
     validate_replay_diagnosis_artifact,
     validate_replay_inventory_artifact,
 )
@@ -88,6 +89,10 @@ LIMITED_VS_NOTRADE_SNAPSHOT_SCHEMA_VERSION = "limited_vs_notrade_source_snapshot
 DEFAULT_LIMITED_VS_NOTRADE_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade_v1.yaml"
 )
+CONSENSUS_RISK_SNAPSHOT_SCHEMA_VERSION = "consensus_risk_source_snapshot.v2"
+DEFAULT_CONSENSUS_RISK_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/consensus_risk_v1.yaml"
+)
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -122,12 +127,6 @@ REPLAY_VARIANTS = {
 # production, or broker action.
 FOCUSED_MEDIUM_CONFIDENCE_SAMPLE_FLOOR = 5
 FOCUSED_HIGH_CONFIDENCE_SAMPLE_FLOOR = 20
-CONSENSUS_RISK_REVIEW_SAMPLE_FLOOR = 5
-CONSENSUS_SEMICONDUCTOR_EXPOSURE_REVIEW_LEVEL = 0.50
-CONSENSUS_RISK_ASSET_EXPOSURE_REVIEW_LEVEL = 0.95
-CONSENSUS_DRAWDOWN_REVIEW_DELTA = -0.02
-CONSENSUS_TURNOVER_REVIEW_LEVEL = 0.50
-
 SEMICONDUCTOR_SYMBOLS = {
     "AMD",
     "AMAT",
@@ -1645,45 +1644,44 @@ def run_consensus_risk_review(
     historical_replay_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
     backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
     repair_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+    policy_path: Path = DEFAULT_CONSENSUS_RISK_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    exposure_samples = _consensus_exposure_samples(
+    generated = _aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    policy = _load_consensus_risk_policy(policy_path)
+    snapshot = _build_consensus_risk_snapshot(
+        generated=generated,
         daily_advisory_dir=daily_advisory_dir,
         historical_replay_dir=historical_replay_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        policy_path=policy_path,
+        policy=policy,
     )
-    exposure = _consensus_exposure_summary(exposure_samples)
-    outcome_rows = _historical_outcome_rows(backfill_dir=backfill_dir, repair_dir=repair_dir)
-    drawdown = _consensus_drawdown_risk(outcome_rows)
-    turnover = _consensus_turnover_risk(exposure_samples, outcome_rows)
-    risk_status = _consensus_overall_risk_status(exposure, drawdown, turnover)
+    exposure_samples, coverage, outcome_pairs = _consensus_risk_views_from_snapshot(snapshot)
+    exposure = _consensus_exposure_summary_v2(exposure_samples, policy, coverage)
+    drawdown = _consensus_drawdown_risk_v2(outcome_pairs, policy)
+    turnover = _consensus_turnover_risk_v2(exposure_samples, policy)
+    risk_status = _consensus_overall_risk_status_v2(exposure, drawdown, turnover, policy)
     risk_id = _stable_id("consensus-risk", generated.isoformat())
     risk_dir = _unique_dir(output_dir / risk_id)
     risk_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_consensus_risk_manifest",
-        "risk_id": risk_dir.name,
-        "generated_at": generated.isoformat(),
-        "status": risk_status,
-        "consensus_target_risk": risk_status,
-        "sample_count": exposure["sample_count"],
-        "consensus_risk_manifest_path": str(risk_dir / "consensus_risk_manifest.json"),
-        "consensus_exposure_summary_path": str(risk_dir / "consensus_exposure_summary.json"),
-        "consensus_drawdown_risk_path": str(risk_dir / "consensus_drawdown_risk.json"),
-        "consensus_turnover_risk_path": str(risk_dir / "consensus_turnover_risk.json"),
-        "consensus_risk_report_path": str(risk_dir / "consensus_risk_report.md"),
-        "consensus_target_default_execution_recommended": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
+    snapshot["risk_id"] = risk_dir.name
+    snapshot_path = risk_dir / "consensus_risk_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
+    manifest = _consensus_risk_manifest(
+        risk_dir=risk_dir,
+        generated_at=generated.isoformat(),
+        risk_status=risk_status,
+        exposure=exposure,
+        drawdown=drawdown,
+        coverage=coverage,
+        policy=policy,
+        source_snapshot_checksum=_file_sha256(snapshot_path),
+    )
     _write_json(risk_dir / "consensus_risk_manifest.json", manifest)
+    _write_jsonl(risk_dir / "consensus_exposure_samples.jsonl", exposure_samples)
+    _write_jsonl(risk_dir / "consensus_drawdown_pairs.jsonl", outcome_pairs)
     _write_json(risk_dir / "consensus_exposure_summary.json", exposure)
     _write_json(risk_dir / "consensus_drawdown_risk.json", drawdown)
     _write_json(risk_dir / "consensus_turnover_risk.json", turnover)
@@ -1700,9 +1698,12 @@ def run_consensus_risk_review(
         "risk_id": risk_dir.name,
         "risk_dir": risk_dir,
         "manifest": manifest,
+        "consensus_exposure_samples": exposure_samples,
+        "consensus_drawdown_pairs": outcome_pairs,
         "consensus_exposure_summary": exposure,
         "consensus_drawdown_risk": drawdown,
         "consensus_turnover_risk": turnover,
+        "source_snapshot": snapshot,
     }
 
 
@@ -1732,6 +1733,87 @@ def validate_consensus_risk_artifact(
     risk_dir = output_dir / risk_id
     manifest = _read_optional_json(risk_dir / "consensus_risk_manifest.json") or {}
     exposure = _read_optional_json(risk_dir / "consensus_exposure_summary.json") or {}
+    drawdown = _read_optional_json(risk_dir / "consensus_drawdown_risk.json") or {}
+    turnover = _read_optional_json(risk_dir / "consensus_turnover_risk.json") or {}
+    exposure_samples = _read_jsonl(risk_dir / "consensus_exposure_samples.jsonl")
+    drawdown_pairs = _read_jsonl(risk_dir / "consensus_drawdown_pairs.jsonl")
+    snapshot_path = risk_dir / "consensus_risk_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = [
+            _check(
+                "manifest_exists",
+                (risk_dir / "consensus_risk_manifest.json").is_file(),
+                risk_id,
+            ),
+            _check(
+                "no_default_consensus_execution",
+                manifest.get("consensus_target_default_execution_recommended") is False
+                and manifest.get("auto_policy_apply") is False,
+                "legacy shallow validation",
+            ),
+        ]
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_consensus_risk_validation",
+            artifact_id_key="risk_id",
+            artifact_id=risk_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    recompute_error = ""
+    try:
+        expected_samples, expected_coverage, expected_pairs = (
+            _consensus_risk_views_from_snapshot(snapshot)
+        )
+        policy = _mapping(snapshot.get("policy"))
+        expected_exposure = _consensus_exposure_summary_v2(
+            expected_samples, policy, expected_coverage
+        )
+        expected_drawdown = _consensus_drawdown_risk_v2(expected_pairs, policy)
+        expected_turnover = _consensus_turnover_risk_v2(expected_samples, policy)
+        expected_status = _consensus_overall_risk_status_v2(
+            expected_exposure, expected_drawdown, expected_turnover, policy
+        )
+        expected_manifest = _consensus_risk_manifest(
+            risk_dir=risk_dir,
+            generated_at=_text(snapshot.get("generated_at")),
+            risk_status=expected_status,
+            exposure=expected_exposure,
+            drawdown=expected_drawdown,
+            coverage=expected_coverage,
+            policy=policy,
+            source_snapshot_checksum=_file_sha256(snapshot_path),
+        )
+        expected_report = render_consensus_risk_report(
+            expected_manifest,
+            expected_exposure,
+            expected_drawdown,
+            expected_turnover,
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_samples, expected_pairs = [], []
+        expected_exposure, expected_drawdown, expected_turnover = {}, {}, {}
+        expected_manifest, expected_report = {}, ""
+    bundles = (
+        _records(snapshot.get("daily_sources"))
+        + _records(snapshot.get("historical_replay_sources"))
+        + _records(snapshot.get("outcome_sources"))
+    )
+    source_bundles_match = all(_source_bundle_matches(bundle) for bundle in bundles)
+    policy_path = Path(_text(snapshot.get("policy_path")))
+    try:
+        policy_matches = (
+            _file_sha256(policy_path) == snapshot.get("policy_checksum")
+            and _load_consensus_risk_policy(policy_path) == snapshot.get("policy")
+        )
+        live_source_validation_passes = _consensus_risk_live_source_validation(snapshot)
+    except Exception:  # noqa: BLE001
+        policy_matches = False
+        live_source_validation_passes = False
     checks = [
         _check("manifest_exists", (risk_dir / "consensus_risk_manifest.json").exists(), risk_id),
         _check(
@@ -1739,17 +1821,69 @@ def validate_consensus_risk_artifact(
             (risk_dir / "consensus_exposure_summary.json").exists(),
             risk_id,
         ),
+        _check(
+            "exposure_samples_exist",
+            (risk_dir / "consensus_exposure_samples.jsonl").exists(),
+            risk_id,
+        ),
+        _check(
+            "drawdown_pairs_exist",
+            (risk_dir / "consensus_drawdown_pairs.jsonl").exists(),
+            risk_id,
+        ),
         _check("drawdown_exists", (risk_dir / "consensus_drawdown_risk.json").exists(), risk_id),
         _check("turnover_exists", (risk_dir / "consensus_turnover_risk.json").exists(), risk_id),
         _check("report_exists", (risk_dir / "consensus_risk_report.md").exists(), risk_id),
         _check("risk_id_matches", manifest.get("risk_id") == risk_id, risk_id),
         _check(
-            "insufficient_sample_not_pass",
-            not (
-                _int(exposure.get("sample_count")) < CONSENSUS_RISK_REVIEW_SAMPLE_FLOOR
-                and manifest.get("consensus_target_risk") == "PASS"
+            "source_snapshot_schema",
+            snapshot.get("schema_version") == CONSENSUS_RISK_SNAPSHOT_SCHEMA_VERSION,
+            "v2 source snapshot",
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _file_sha256(snapshot_path),
+            "source snapshot",
+        ),
+        _check("source_files_unchanged", source_bundles_match, "selected source bundles"),
+        _check(
+            "live_source_validation_passes",
+            live_source_validation_passes,
+            "daily/replay/outcome validators",
+        ),
+        _check("policy_snapshot_matches", policy_matches, "reviewed risk policy"),
+        _check(
+            "exposure_samples_recomputed",
+            exposure_samples == expected_samples,
+            recompute_error,
+        ),
+        _check("drawdown_pairs_recomputed", drawdown_pairs == expected_pairs, recompute_error),
+        _check("exposure_recomputed", exposure == expected_exposure, recompute_error),
+        _check("drawdown_recomputed", drawdown == expected_drawdown, recompute_error),
+        _check("turnover_recomputed", turnover == expected_turnover, recompute_error),
+        _check("manifest_recomputed", manifest == expected_manifest, recompute_error),
+        _check(
+            "report_recomputed",
+            (risk_dir / "consensus_risk_report.md").is_file()
+            and (risk_dir / "consensus_risk_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            recompute_error,
+        ),
+        _check(
+            "missing_metrics_are_null",
+            all(
+                row.get("avg_drawdown") is not None
+                or (
+                    row.get("max_drawdown") is None
+                    and row.get("drawdown_delta_vs_no_trade") is None
+                )
+                for row in _records(drawdown.get("window_results"))
+            )
+            and (
+                turnover.get("avg_turnover") is not None
+                or turnover.get("max_turnover") is None
             ),
-            "sample floor must block PASS",
+            "missing risk metrics must remain null",
         ),
         _check(
             "no_default_consensus_execution",
@@ -5561,107 +5695,556 @@ def _limited_regime_breakdown(samples: Sequence[Mapping[str, Any]]) -> dict[str,
     }
 
 
-def _consensus_exposure_samples(
-    *, daily_advisory_dir: Path, historical_replay_dir: Path
-) -> list[dict[str, Any]]:
-    samples = []
-    for path in sorted(daily_advisory_dir.glob("*/daily_advisory_manifest.json")):
-        advisory_dir = path.parent
-        manifest = _read_optional_json(path) or {}
-        weights = _daily_consensus_weights(advisory_dir) or _daily_target_weights(advisory_dir)
-        if weights:
-            samples.append(
-                {
-                    "source": "daily_advisory",
-                    "as_of": _text(manifest.get("as_of")),
-                    "weights": _normalize_weights(weights),
-                    "turnover": _daily_turnover(advisory_dir),
-                }
+def _load_consensus_risk_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3OutcomeAccumulationError(f"consensus risk policy not found: {path}")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    policy = dict(payload) if isinstance(payload, Mapping) else {}
+    required_text = (
+        "schema_version",
+        "policy_id",
+        "version",
+        "status",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "validation_plan",
+        "review_condition",
+        "exposure_sample_identity",
+        "daily_replay_overlap_behavior",
+    )
+    if any(not _text(policy.get(key)) for key in required_text):
+        raise DynamicV3OutcomeAccumulationError("consensus risk policy metadata is incomplete")
+    windows = [_int(value) for value in _records_or_values(policy.get("tracked_windows"))]
+    required_windows = [
+        _int(value)
+        for value in _records_or_values(policy.get("required_drawdown_windows_for_pass"))
+    ]
+    if tuple(windows) != OUTCOME_WINDOWS or not required_windows or not set(
+        required_windows
+    ).issubset(windows):
+        raise DynamicV3OutcomeAccumulationError("consensus risk window policy invalid")
+    for key in (
+        "minimum_distinct_exposure_samples",
+        "minimum_distinct_drawdown_pairs_per_window",
+    ):
+        value = policy.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise DynamicV3OutcomeAccumulationError(f"consensus risk sample floor invalid: {key}")
+    numeric_keys = (
+        "semiconductor_exposure_review_level",
+        "risk_asset_exposure_review_level",
+        "drawdown_delta_review_threshold",
+        "average_turnover_review_level",
+        "single_sample_turnover_warning_level",
+        "single_sample_turnover_review_level",
+    )
+    if any(
+        isinstance(policy.get(key), bool)
+        or not isinstance(policy.get(key), int | float)
+        or not math.isfinite(float(policy[key]))
+        for key in numeric_keys
+    ):
+        raise DynamicV3OutcomeAccumulationError("consensus risk thresholds must be finite numbers")
+    if not (
+        0 <= _float(policy.get("semiconductor_exposure_review_level")) <= 1
+        and 0 <= _float(policy.get("risk_asset_exposure_review_level")) <= 1
+        and _float(policy.get("drawdown_delta_review_threshold")) <= 0
+        and 0
+        <= _float(policy.get("single_sample_turnover_warning_level"))
+        <= _float(policy.get("single_sample_turnover_review_level"))
+        and 0 <= _float(policy.get("average_turnover_review_level"))
+    ):
+        raise DynamicV3OutcomeAccumulationError("consensus risk threshold ordering invalid")
+    precedence = _texts(policy.get("overall_status_precedence"))
+    if precedence != [
+        "REVIEW_REQUIRED",
+        "INSUFFICIENT_DATA",
+        "PASS_WITH_WARNINGS",
+        "PASS",
+    ]:
+        raise DynamicV3OutcomeAccumulationError("consensus risk status precedence invalid")
+    if (
+        policy.get("exposure_sample_identity") != "decision_as_of"
+        or policy.get("daily_replay_overlap_behavior") != "require_equal_then_merge"
+        or policy.get("consensus_target_default_execution_recommended") is not False
+        or policy.get("auto_policy_apply") is not False
+        or policy.get("production_effect") != "none"
+    ):
+        raise DynamicV3OutcomeAccumulationError("consensus risk policy safety boundary invalid")
+    policy["tracked_windows"] = windows
+    policy["required_drawdown_windows_for_pass"] = required_windows
+    policy["overall_status_precedence"] = precedence
+    return policy
+
+
+def _build_consensus_risk_snapshot(
+    *,
+    generated: datetime,
+    daily_advisory_dir: Path,
+    historical_replay_dir: Path,
+    backfill_dir: Path,
+    repair_dir: Path,
+    policy_path: Path,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    daily_sources: list[dict[str, Any]] = []
+    daily_ids: set[str] = set()
+    daily_dates: set[str] = set()
+    for child in _artifact_children(daily_advisory_dir):
+        manifest = _read_optional_json(child / "daily_advisory_manifest.json")
+        if manifest is None:
+            raise DynamicV3OutcomeAccumulationError(f"daily advisory invalid: {child}")
+        advisory_id = _text(manifest.get("daily_advisory_id"), child.name)
+        as_of = _text(manifest.get("as_of"))
+        if (
+            not advisory_id
+            or not as_of
+            or not _consensus_daily_time_within_cutoff(manifest, generated)
+            or advisory_id in daily_ids
+            or as_of in daily_dates
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                "daily advisory time/id/as-of invalid for consensus risk"
             )
-    for child in _artifact_children(historical_replay_dir):
-        for event in _read_jsonl(child / "replay_events.jsonl"):
-            for variant in _records(event.get("variants")):
-                if _text(variant.get("variant")) == "consensus_target":
-                    samples.append(
-                        {
-                            "source": "historical_replay",
-                            "as_of": _text(event.get("as_of")),
-                            "weights": _normalize_weights(_mapping(variant.get("weights"))),
-                            "turnover": _float(variant.get("turnover")),
-                        }
-                    )
-    return samples
+        if (
+            validate_position_advisory_daily_artifact(
+                daily_advisory_id=advisory_id, output_dir=daily_advisory_dir
+            ).get("status")
+            != "PASS"
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                f"daily advisory validation must PASS: {advisory_id}"
+            )
+        daily_ids.add(advisory_id)
+        daily_dates.add(as_of)
+        daily_sources.append(_immutable_source_bundle(child))
+    replay_sources = _latest_dashboard_source_bundle(
+        root=historical_replay_dir,
+        manifest_name="historical_replay_manifest.json",
+        id_field="replay_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_historical_replay_artifact(
+            replay_id=artifact_id, output_dir=historical_replay_dir
+        ),
+    )
+    repair_sources = _latest_dashboard_source_bundle(
+        root=repair_dir,
+        manifest_name="backfill_repair_manifest.json",
+        id_field="repair_id",
+        generated=generated,
+        validator=lambda artifact_id: validate_backfill_repair_artifact(
+            repair_id=artifact_id, output_dir=repair_dir
+        ),
+    )
+    backfill_sources: list[dict[str, Any]] = []
+    if not repair_sources:
+        backfill_sources = _latest_dashboard_source_bundle(
+            root=backfill_dir,
+            manifest_name="backfill_manifest.json",
+            id_field="backfill_id",
+            generated=generated,
+            validator=lambda artifact_id: validate_backfill_outcome_artifact(
+                backfill_id=artifact_id, output_dir=backfill_dir
+            ),
+        )
+    outcome_sources = repair_sources or backfill_sources
+    if outcome_sources and not replay_sources:
+        raise DynamicV3OutcomeAccumulationError(
+            "consensus risk outcome source requires selected historical replay lineage"
+        )
+    if outcome_sources:
+        replay_manifest = _mapping(
+            _source_bundle_content(replay_sources[0], "historical_replay_manifest.json")
+        )
+        outcome_manifest_name = (
+            "backfill_repair_manifest.json" if repair_sources else "backfill_manifest.json"
+        )
+        outcome_manifest = _mapping(
+            _source_bundle_content(outcome_sources[0], outcome_manifest_name)
+        )
+        if _text(replay_manifest.get("replay_id")) != _text(
+            outcome_manifest.get("replay_id")
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                "consensus risk replay and outcome lineage mismatch"
+            )
+    return {
+        "schema_version": CONSENSUS_RISK_SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": generated.isoformat(),
+        "generated_cutoff": generated.isoformat(),
+        "daily_advisory_dir": str(daily_advisory_dir),
+        "daily_sources": daily_sources,
+        "historical_replay_dir": str(historical_replay_dir),
+        "historical_replay_sources": replay_sources,
+        "backfill_dir": str(backfill_dir),
+        "repair_dir": str(repair_dir),
+        "outcome_source_type": "repair" if repair_sources else "backfill",
+        "outcome_sources": outcome_sources,
+        "policy_path": str(policy_path),
+        "policy_checksum": _file_sha256(policy_path),
+        "policy": dict(policy),
+        "production_effect": "none",
+    }
 
 
-def _consensus_exposure_summary(samples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    risk_asset = []
-    cash = []
-    semiconductor = []
-    warnings = []
+def _consensus_weights_from_daily_bundle(bundle: Mapping[str, Any]) -> dict[str, float]:
+    content = _source_bundle_content(bundle, "daily_consensus_weights.csv")
+    if not isinstance(content, str) or not content.strip():
+        return {}
+    weights: dict[str, float] = {}
+    for row in csv.DictReader(io.StringIO(content)):
+        symbol = _text(row.get("symbol"))
+        value = _optional_finite(row.get("median_target_weight"))
+        if symbol and value is not None:
+            if symbol in weights:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate daily consensus weight symbol"
+                )
+            weights[symbol] = value
+    return _validated_consensus_weights(weights)
+
+
+def _consensus_daily_time_within_cutoff(
+    manifest: Mapping[str, Any], generated: datetime
+) -> bool:
+    explicit = manifest.get("updated_at") or manifest.get("generated_at")
+    if explicit:
+        parsed = _datetime_from_any(explicit)
+        return parsed is not None and parsed <= generated
+    as_of = _date_from_any(manifest.get("as_of"))
+    return as_of is not None and as_of <= generated.date()
+
+
+def _validated_consensus_weights(weights: Mapping[str, Any]) -> dict[str, float]:
+    parsed: dict[str, float] = {}
+    for symbol, raw in weights.items():
+        value = _optional_finite(raw)
+        if not _text(symbol) or value is None or value < 0:
+            raise DynamicV3OutcomeAccumulationError("consensus weights contain invalid value")
+        parsed[_text(symbol)] = value
+    if not parsed:
+        return {}
+    if "CASH" not in parsed or abs(sum(parsed.values()) - 1.0) > 1e-6:
+        raise DynamicV3OutcomeAccumulationError(
+            "consensus weights require explicit CASH and unit simplex"
+        )
+    return {key: round(value, 6) for key, value in sorted(parsed.items())}
+
+
+def _daily_turnover_from_bundle(bundle: Mapping[str, Any]) -> float | None:
+    values: list[float] = []
+    for row in _records(_source_bundle_content(bundle, "daily_position_deltas.jsonl")):
+        deltas = _mapping(row.get("deltas"))
+        if not deltas:
+            continue
+        parsed = [_optional_finite(value) for value in deltas.values()]
+        if any(value is None for value in parsed):
+            raise DynamicV3OutcomeAccumulationError("daily turnover delta is non-finite")
+        values.append(sum(abs(value) for value in parsed if value is not None))
+    return round(max(values), 6) if values else None
+
+
+def _merge_consensus_exposure_sample(
+    by_as_of: dict[str, dict[str, Any]], sample: Mapping[str, Any]
+) -> None:
+    as_of = _text(sample.get("as_of"))
+    existing = by_as_of.get(as_of)
+    if existing is None:
+        by_as_of[as_of] = dict(sample)
+        return
+    if existing.get("weights") != sample.get("weights"):
+        raise DynamicV3OutcomeAccumulationError(
+            "daily and replay consensus weights conflict for one decision date"
+        )
+    left_turnover = _optional_finite(existing.get("turnover"))
+    right_turnover = _optional_finite(sample.get("turnover"))
+    if (
+        left_turnover is not None
+        and right_turnover is not None
+        and abs(left_turnover - right_turnover) > 1e-6
+    ):
+        raise DynamicV3OutcomeAccumulationError(
+            "daily and replay turnover conflict for one decision date"
+        )
+    existing["turnover"] = (
+        left_turnover if left_turnover is not None else right_turnover
+    )
+    existing["source_mode"] = "DAILY_AND_HISTORICAL_REPLAY"
+    existing["source_ids"] = sorted(
+        set(_texts(existing.get("source_ids"))) | set(_texts(sample.get("source_ids")))
+    )
+
+
+def _consensus_risk_views_from_snapshot(
+    snapshot: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]]]:
+    generated = _datetime_from_any(snapshot.get("generated_cutoff"))
+    if generated is None:
+        raise DynamicV3OutcomeAccumulationError("consensus risk snapshot cutoff invalid")
+    by_as_of: dict[str, dict[str, Any]] = {}
+    daily_row_count = 0
+    replay_row_count = 0
+    missing_consensus_weight_count = 0
+    for bundle in _records(snapshot.get("daily_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "daily_advisory_manifest.json"))
+        advisory_id = _text(manifest.get("daily_advisory_id"))
+        as_of = _text(manifest.get("as_of"))
+        if (
+            not advisory_id
+            or not as_of
+            or not _consensus_daily_time_within_cutoff(manifest, generated)
+        ):
+            raise DynamicV3OutcomeAccumulationError("daily exposure escaped consensus cutoff")
+        daily_row_count += 1
+        weights = _consensus_weights_from_daily_bundle(bundle)
+        if not weights:
+            missing_consensus_weight_count += 1
+            continue
+        _merge_consensus_exposure_sample(
+            by_as_of,
+            {
+                "sample_id": _stable_id("consensus-exposure", as_of),
+                "source_mode": "DAILY_ADVISORY",
+                "source_ids": [advisory_id],
+                "as_of": as_of,
+                "weights": weights,
+                "turnover": _daily_turnover_from_bundle(bundle),
+            },
+        )
+    replay_event_ids: set[str] = set()
+    replay_dates: set[str] = set()
+    for bundle in _records(snapshot.get("historical_replay_sources")):
+        for event in _records(_source_bundle_content(bundle, "replay_events.jsonl")):
+            replay_row_count += 1
+            event_id = _text(event.get("replay_event_id") or event.get("daily_advisory_id"))
+            as_of = _text(event.get("as_of"))
+            if (
+                not event_id
+                or not as_of
+                or event_id in replay_event_ids
+                or as_of in replay_dates
+            ):
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate or invalid replay consensus exposure identity"
+                )
+            replay_event_ids.add(event_id)
+            replay_dates.add(as_of)
+            variants = [
+                row
+                for row in _records(event.get("variants"))
+                if _text(row.get("variant")) == "consensus_target"
+            ]
+            if len(variants) > 1:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate consensus_target variant in replay event"
+                )
+            if not variants:
+                missing_consensus_weight_count += 1
+                continue
+            weights = _validated_consensus_weights(_mapping(variants[0].get("weights")))
+            if not weights:
+                missing_consensus_weight_count += 1
+                continue
+            turnover = _optional_finite(variants[0].get("turnover"))
+            if turnover is not None and turnover < 0:
+                raise DynamicV3OutcomeAccumulationError("replay turnover cannot be negative")
+            _merge_consensus_exposure_sample(
+                by_as_of,
+                {
+                    "sample_id": _stable_id("consensus-exposure", as_of),
+                    "source_mode": "HISTORICAL_REPLAY",
+                    "source_ids": [event_id],
+                    "as_of": as_of,
+                    "weights": weights,
+                    "turnover": round(turnover, 6) if turnover is not None else None,
+                },
+            )
+    outcome_type = _text(snapshot.get("outcome_source_type"))
+    if outcome_type not in {"repair", "backfill"}:
+        raise DynamicV3OutcomeAccumulationError("consensus outcome source type invalid")
+    outcome_filename = (
+        "repaired_outcome_windows.jsonl"
+        if outcome_type == "repair"
+        else "replay_outcome_windows.jsonl"
+    )
+    grouped: dict[tuple[str, int], dict[str, Mapping[str, Any]]] = defaultdict(dict)
+    outcome_row_count = 0
+    for bundle in _records(snapshot.get("outcome_sources")):
+        for row in _records(_source_bundle_content(bundle, outcome_filename)):
+            outcome_row_count += 1
+            variant = _text(row.get("variant"))
+            if variant not in {"consensus_target", "no_trade"}:
+                continue
+            key = (
+                _text(row.get("replay_event_id") or row.get("daily_advisory_id")),
+                _int(row.get("window_days")),
+            )
+            if not key[0] or key[1] not in OUTCOME_WINDOWS:
+                raise DynamicV3OutcomeAccumulationError(
+                    "consensus outcome comparison identity invalid"
+                )
+            if variant in grouped[key]:
+                raise DynamicV3OutcomeAccumulationError(
+                    "duplicate consensus outcome event/window/variant"
+                )
+            status = _text(row.get("outcome_status"))
+            if status not in OUTCOME_WINDOW_STATUSES:
+                raise DynamicV3OutcomeAccumulationError("consensus outcome status invalid")
+            grouped[key][variant] = row
+    outcome_pairs: list[dict[str, Any]] = []
+    unpaired_outcome_row_count = 0
+    for (event_id, window), variants in sorted(grouped.items()):
+        consensus = variants.get("consensus_target")
+        no_trade = variants.get("no_trade")
+        if consensus is None or no_trade is None:
+            unpaired_outcome_row_count += len(variants)
+            continue
+        status = _paired_status(consensus, no_trade)
+        consensus_drawdown = _optional_finite(consensus.get("max_drawdown"))
+        no_trade_drawdown = _optional_finite(no_trade.get("max_drawdown"))
+        if status == "AVAILABLE" and (
+            consensus_drawdown is None or no_trade_drawdown is None
+        ):
+            raise DynamicV3OutcomeAccumulationError(
+                "AVAILABLE consensus drawdown pair missing finite metrics"
+            )
+        as_of_left = _text(consensus.get("as_of"))
+        as_of_right = _text(no_trade.get("as_of"))
+        if as_of_left and as_of_right and as_of_left != as_of_right:
+            raise DynamicV3OutcomeAccumulationError("consensus outcome pair as-of conflict")
+        outcome_pairs.append(
+            {
+                "pair_id": _stable_id("consensus-drawdown", event_id, str(window)),
+                "event_id": event_id,
+                "as_of": as_of_left or as_of_right or None,
+                "window_days": window,
+                "sample_status": status,
+                "consensus_drawdown": (
+                    consensus_drawdown if status == "AVAILABLE" else None
+                ),
+                "no_trade_drawdown": no_trade_drawdown if status == "AVAILABLE" else None,
+                "drawdown_delta_vs_no_trade": (
+                    round(consensus_drawdown - no_trade_drawdown, 6)
+                    if status == "AVAILABLE"
+                    and consensus_drawdown is not None
+                    and no_trade_drawdown is not None
+                    else None
+                ),
+            }
+        )
+    samples = sorted(by_as_of.values(), key=lambda row: _text(row.get("as_of")))
+    coverage = {
+        "daily_source_row_count": daily_row_count,
+        "historical_replay_event_count": replay_row_count,
+        "distinct_exposure_sample_count": len(samples),
+        "merged_daily_replay_date_count": sum(
+            1 for row in samples if row.get("source_mode") == "DAILY_AND_HISTORICAL_REPLAY"
+        ),
+        "missing_consensus_weight_count": missing_consensus_weight_count,
+        "outcome_source_row_count": outcome_row_count,
+        "paired_outcome_sample_count": len(outcome_pairs),
+        "available_paired_outcome_sample_count": sum(
+            1 for row in outcome_pairs if row.get("sample_status") == "AVAILABLE"
+        ),
+        "unpaired_outcome_row_count": unpaired_outcome_row_count,
+        "production_effect": "none",
+    }
+    return samples, coverage, outcome_pairs
+
+
+def _nullable_min_mean_max(values: Sequence[float]) -> dict[str, float | None]:
+    if not values:
+        return {"min": None, "mean": None, "max": None}
+    return {
+        "min": round(min(values), 6),
+        "mean": round(_avg(values), 6),
+        "max": round(max(values), 6),
+    }
+
+
+def _consensus_exposure_summary_v2(
+    samples: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+) -> dict[str, Any]:
+    risk_asset: list[float] = []
+    cash: list[float] = []
+    semiconductor: list[float] = []
+    warnings: set[str] = set()
+    semi_level = _float(policy.get("semiconductor_exposure_review_level"))
+    risk_level = _float(policy.get("risk_asset_exposure_review_level"))
     for sample in samples:
         weights = _mapping(sample.get("weights"))
-        cash_weight = _float(weights.get("CASH"))
-        risk_asset_weight = round(max(0.0, 1.0 - cash_weight), 6)
-        semi_weight = round(sum(_float(weights.get(symbol)) for symbol in SEMICONDUCTOR_SYMBOLS), 6)
+        cash_weight = _optional_finite(weights.get("CASH"))
+        if cash_weight is None:
+            raise DynamicV3OutcomeAccumulationError("consensus exposure missing CASH")
+        risk_asset_weight = round(1.0 - cash_weight, 6)
+        semi_weight = round(
+            sum(_float(weights.get(symbol)) for symbol in SEMICONDUCTOR_SYMBOLS), 6
+        )
         cash.append(cash_weight)
         risk_asset.append(risk_asset_weight)
         semiconductor.append(semi_weight)
-        if semi_weight > CONSENSUS_SEMICONDUCTOR_EXPOSURE_REVIEW_LEVEL:
-            warnings.append("semiconductor_exposure_review_required")
-        if risk_asset_weight > CONSENSUS_RISK_ASSET_EXPOSURE_REVIEW_LEVEL:
-            warnings.append("risk_asset_exposure_review_required")
+        if semi_weight > semi_level:
+            warnings.add("semiconductor_exposure_review_required")
+        if risk_asset_weight > risk_level:
+            warnings.add("risk_asset_exposure_review_required")
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_consensus_exposure_summary",
         "sample_count": len(samples),
-        "risk_asset_exposure": _min_mean_max(risk_asset),
-        "cash_exposure": _min_mean_max(cash),
-        "semiconductor_exposure": _min_mean_max(semiconductor),
-        "concentration_warnings": sorted(set(warnings)),
+        "sample_identity": policy.get("exposure_sample_identity"),
+        "risk_asset_exposure": _nullable_min_mean_max(risk_asset),
+        "cash_exposure": _nullable_min_mean_max(cash),
+        "semiconductor_exposure": _nullable_min_mean_max(semiconductor),
+        "concentration_warnings": sorted(warnings),
+        "coverage": dict(coverage),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
-def _consensus_drawdown_risk(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    grouped: dict[tuple[str, int], dict[str, Mapping[str, Any]]] = defaultdict(dict)
-    for row in rows:
-        key = (
-            _text(row.get("replay_event_id") or row.get("daily_advisory_id")),
-            _int(row.get("window_days")),
-        )
-        grouped[key][_text(row.get("variant"))] = row
-    results = []
-    for window in OUTCOME_WINDOWS:
-        drawdowns = []
-        deltas = []
-        for (event_id, row_window), variants in grouped.items():
-            _ = event_id
-            if row_window != window:
-                continue
-            consensus = variants.get("consensus_target")
-            no_trade = variants.get("no_trade")
-            if not consensus or not no_trade:
-                continue
-            if _paired_status(consensus, no_trade) != "AVAILABLE":
-                continue
-            drawdowns.append(_float(consensus.get("max_drawdown")))
-            deltas.append(
-                _float(consensus.get("max_drawdown")) - _float(no_trade.get("max_drawdown"))
-            )
-        count = len(drawdowns)
-        delta = round(_avg(deltas), 6)
+def _consensus_drawdown_risk_v2(
+    pairs: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    floor = _int(policy.get("minimum_distinct_drawdown_pairs_per_window"))
+    threshold = _float(policy.get("drawdown_delta_review_threshold"))
+    required_windows = set(_records_or_values(policy.get("required_drawdown_windows_for_pass")))
+    results: list[dict[str, Any]] = []
+    for window in _records_or_values(policy.get("tracked_windows")):
+        rows = [
+            row
+            for row in pairs
+            if _int(row.get("window_days")) == _int(window)
+            and row.get("sample_status") == "AVAILABLE"
+        ]
+        drawdowns = [
+            value
+            for row in rows
+            if (value := _optional_finite(row.get("consensus_drawdown"))) is not None
+        ]
+        deltas = [
+            value
+            for row in rows
+            if (value := _optional_finite(row.get("drawdown_delta_vs_no_trade"))) is not None
+        ]
+        if len(drawdowns) != len(rows) or len(deltas) != len(rows):
+            raise DynamicV3OutcomeAccumulationError("available drawdown pair projection invalid")
         status = "INSUFFICIENT_DATA"
-        if count >= CONSENSUS_RISK_REVIEW_SAMPLE_FLOOR:
-            status = "REVIEW_REQUIRED" if delta < CONSENSUS_DRAWDOWN_REVIEW_DELTA else "PASS"
-        elif count:
-            status = "INSUFFICIENT_DATA"
+        delta = round(_avg(deltas), 6) if deltas else None
+        if len(rows) >= floor:
+            status = "REVIEW_REQUIRED" if delta is not None and delta < threshold else "PASS"
         results.append(
             {
-                "window_days": window,
-                "available_count": count,
-                "avg_drawdown": round(_avg(drawdowns), 6),
-                "max_drawdown": round(min(drawdowns), 6) if drawdowns else 0.0,
+                "window_days": _int(window),
+                "required_for_pass": _int(window) in required_windows,
+                "available_count": len(rows),
+                "distinct_event_count": len(rows),
+                "avg_drawdown": round(_avg(drawdowns), 6) if drawdowns else None,
+                "max_drawdown": round(min(drawdowns), 6) if drawdowns else None,
                 "drawdown_delta_vs_no_trade": delta,
                 "risk_status": status,
             }
@@ -5670,33 +6253,42 @@ def _consensus_drawdown_risk(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_consensus_drawdown_risk",
         "window_results": results,
+        "required_windows": sorted(required_windows),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
-def _consensus_turnover_risk(
-    exposure_samples: Sequence[Mapping[str, Any]], outcome_rows: Sequence[Mapping[str, Any]]
+def _consensus_turnover_risk_v2(
+    exposure_samples: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]
 ) -> dict[str, Any]:
     values = [
-        _float(row.get("turnover")) for row in exposure_samples if row.get("turnover") is not None
+        value
+        for row in exposure_samples
+        if (value := _optional_finite(row.get("turnover"))) is not None
     ]
-    values.extend(
-        _float(row.get("turnover"))
-        for row in outcome_rows
-        if _text(row.get("variant")) == "consensus_target"
-        and row.get("outcome_status") == "AVAILABLE"
-    )
-    values = [value for value in values if math.isfinite(value)]
-    avg_turnover = round(_avg(values), 6)
-    max_turnover = round(max(values), 6) if values else 0.0
-    warnings = []
+    if any(value < 0 for value in values):
+        raise DynamicV3OutcomeAccumulationError("consensus turnover cannot be negative")
+    avg_turnover = round(_avg(values), 6) if values else None
+    max_turnover = round(max(values), 6) if values else None
+    warnings: list[str] = []
     status = "INSUFFICIENT_DATA"
-    if len(values) >= CONSENSUS_RISK_REVIEW_SAMPLE_FLOOR:
-        if avg_turnover > CONSENSUS_TURNOVER_REVIEW_LEVEL or max_turnover > 1.0:
+    floor = _int(policy.get("minimum_distinct_exposure_samples"))
+    if len(values) >= floor:
+        if (
+            avg_turnover is not None
+            and avg_turnover > _float(policy.get("average_turnover_review_level"))
+        ) or (
+            max_turnover is not None
+            and max_turnover > _float(policy.get("single_sample_turnover_review_level"))
+        ):
             status = "REVIEW_REQUIRED"
             warnings.append("turnover_review_required")
-        elif max_turnover > CONSENSUS_TURNOVER_REVIEW_LEVEL:
+        elif max_turnover is not None and max_turnover > _float(
+            policy.get("single_sample_turnover_warning_level")
+        ):
             status = "PASS_WITH_WARNINGS"
             warnings.append("high_single_sample_turnover")
         else:
@@ -5704,31 +6296,132 @@ def _consensus_turnover_risk(
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_consensus_turnover_risk",
+        "sample_count": len(values),
+        "sample_identity": policy.get("exposure_sample_identity"),
         "avg_turnover": avg_turnover,
         "max_turnover": max_turnover,
         "turnover_status": status,
         "warnings": warnings,
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
-def _consensus_overall_risk_status(
+def _consensus_overall_risk_status_v2(
     exposure: Mapping[str, Any],
     drawdown: Mapping[str, Any],
     turnover: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> str:
-    if _int(exposure.get("sample_count")) < CONSENSUS_RISK_REVIEW_SAMPLE_FLOOR:
-        return "INSUFFICIENT_DATA"
-    statuses = [_text(row.get("risk_status")) for row in _records(drawdown.get("window_results"))]
+    rows = _records(drawdown.get("window_results"))
+    statuses = [_text(row.get("risk_status")) for row in rows]
     statuses.append(_text(turnover.get("turnover_status")))
     if "REVIEW_REQUIRED" in statuses:
         return "REVIEW_REQUIRED"
+    required_rows = [row for row in rows if row.get("required_for_pass") is True]
+    evidence_complete = (
+        _int(exposure.get("sample_count"))
+        >= _int(policy.get("minimum_distinct_exposure_samples"))
+        and _text(turnover.get("turnover_status"))
+        in {"PASS", "PASS_WITH_WARNINGS"}
+        and bool(required_rows)
+        and all(row.get("risk_status") == "PASS" for row in required_rows)
+    )
+    if not evidence_complete:
+        return "INSUFFICIENT_DATA"
     if _texts(exposure.get("concentration_warnings")) or "PASS_WITH_WARNINGS" in statuses:
         return "PASS_WITH_WARNINGS"
-    if all(status == "PASS" for status in statuses if status):
-        return "PASS"
-    return "INSUFFICIENT_DATA"
+    return "PASS"
+
+
+def _consensus_risk_manifest(
+    *,
+    risk_dir: Path,
+    generated_at: str,
+    risk_status: str,
+    exposure: Mapping[str, Any],
+    drawdown: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    source_snapshot_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_consensus_risk_manifest",
+        "risk_id": risk_dir.name,
+        "generated_at": generated_at,
+        "status": risk_status,
+        "consensus_target_risk": risk_status,
+        "sample_count": exposure.get("sample_count"),
+        "paired_outcome_sample_count": coverage.get("paired_outcome_sample_count"),
+        "required_drawdown_windows": drawdown.get("required_windows"),
+        "source_snapshot_path": str(risk_dir / "consensus_risk_source_snapshot.json"),
+        "source_snapshot_checksum": source_snapshot_checksum,
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy.get("version"),
+        "consensus_risk_manifest_path": str(risk_dir / "consensus_risk_manifest.json"),
+        "consensus_exposure_samples_path": str(
+            risk_dir / "consensus_exposure_samples.jsonl"
+        ),
+        "consensus_drawdown_pairs_path": str(risk_dir / "consensus_drawdown_pairs.jsonl"),
+        "consensus_exposure_summary_path": str(risk_dir / "consensus_exposure_summary.json"),
+        "consensus_drawdown_risk_path": str(risk_dir / "consensus_drawdown_risk.json"),
+        "consensus_turnover_risk_path": str(risk_dir / "consensus_turnover_risk.json"),
+        "consensus_risk_report_path": str(risk_dir / "consensus_risk_report.md"),
+        "consensus_target_default_execution_recommended": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _consensus_risk_live_source_validation(snapshot: Mapping[str, Any]) -> bool:
+    daily_root = Path(_text(snapshot.get("daily_advisory_dir")))
+    for bundle in _records(snapshot.get("daily_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "daily_advisory_manifest.json"))
+        if (
+            validate_position_advisory_daily_artifact(
+                daily_advisory_id=_text(manifest.get("daily_advisory_id")),
+                output_dir=daily_root,
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    replay_root = Path(_text(snapshot.get("historical_replay_dir")))
+    for bundle in _records(snapshot.get("historical_replay_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, "historical_replay_manifest.json"))
+        if (
+            validate_historical_replay_artifact(
+                replay_id=_text(manifest.get("replay_id")), output_dir=replay_root
+            ).get("status")
+            != "PASS"
+        ):
+            return False
+    outcome_type = _text(snapshot.get("outcome_source_type"))
+    root = Path(_text(snapshot.get("repair_dir" if outcome_type == "repair" else "backfill_dir")))
+    manifest_name = (
+        "backfill_repair_manifest.json" if outcome_type == "repair" else "backfill_manifest.json"
+    )
+    for bundle in _records(snapshot.get("outcome_sources")):
+        manifest = _mapping(_source_bundle_content(bundle, manifest_name))
+        if outcome_type == "repair":
+            status = validate_backfill_repair_artifact(
+                repair_id=_text(manifest.get("repair_id")), output_dir=root
+            ).get("status")
+        else:
+            status = validate_backfill_outcome_artifact(
+                backfill_id=_text(manifest.get("backfill_id")), output_dir=root
+            ).get("status")
+        if status != "PASS":
+            return False
+    return True
 
 
 def _paired_status(left: Mapping[str, Any], right: Mapping[str, Any]) -> str:

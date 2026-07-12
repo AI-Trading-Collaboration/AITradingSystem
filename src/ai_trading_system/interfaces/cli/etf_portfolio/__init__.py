@@ -35,6 +35,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_consensus_drift as dynamic_v3_consensus_drift_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_consensus_risk as dynamic_v3_consensus_risk_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_data_audit as dynamic_v3_data_audit_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -204,6 +207,7 @@ __all__ = [
     "dynamic_v3_injection_audit_commands",
     "dynamic_v3_legacy_validation_commands",
     "dynamic_v3_limited_vs_notrade_commands",
+    "dynamic_v3_consensus_risk_commands",
     "dynamic_v3_manual_execution_review_commands",
     "dynamic_v3_observation_lifecycle_commands",
     "dynamic_v3_outcome_dashboard_commands",

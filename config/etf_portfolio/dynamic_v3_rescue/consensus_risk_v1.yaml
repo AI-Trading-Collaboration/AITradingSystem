@@ -1,0 +1,39 @@
+schema_version: consensus_risk_policy.v1
+policy_id: dynamic_v3_consensus_risk
+version: v1
+status: pilot
+owner: research_governance
+rationale: >-
+  Consensus-target risk may only be interpreted from validated, cutoff-bound, uniquely identified
+  decision exposures and same-lineage paired outcome evidence. Missing risk metrics must remain
+  explicit and candidate targets must never substitute for consensus weights.
+intended_effect: >-
+  Govern manual exposure, drawdown, turnover, and evidence-readiness labels without recommending
+  default execution or changing portfolio state.
+validation_plan: >-
+  Recompute empty, validated daily, daily/replay overlap, duplicate/conflict, replay-lineage,
+  paired drawdown, distinct-event turnover, policy, source, and output-tamper fixtures before each
+  policy-version change.
+review_condition: >-
+  Recalibrate sample floors and risk levels after preregistered distinct decision dates and paired
+  outcome cohorts cover multiple regimes and transaction-cost conditions.
+tracked_windows: [1, 5, 10, 20]
+required_drawdown_windows_for_pass: [5, 20]
+minimum_distinct_exposure_samples: 5
+minimum_distinct_drawdown_pairs_per_window: 5
+semiconductor_exposure_review_level: 0.50
+risk_asset_exposure_review_level: 0.95
+drawdown_delta_review_threshold: -0.02
+average_turnover_review_level: 0.50
+single_sample_turnover_warning_level: 0.50
+single_sample_turnover_review_level: 1.00
+exposure_sample_identity: decision_as_of
+daily_replay_overlap_behavior: require_equal_then_merge
+overall_status_precedence:
+  - REVIEW_REQUIRED
+  - INSUFFICIENT_DATA
+  - PASS_WITH_WARNINGS
+  - PASS
+consensus_target_default_execution_recommended: false
+auto_policy_apply: false
+production_effect: none

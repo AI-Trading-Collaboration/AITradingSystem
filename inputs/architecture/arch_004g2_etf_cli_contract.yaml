@@ -1,7 +1,7 @@
 schema_version: arch_004g2_cli_contract.v1
 source:
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 32ea0e686fc29c58ef5c65f5644e0816a280873aa602196a1efe0d65ac4e2375
+  sha256: 17de69e74fdb150d091fbfc101cd01003aeeaa276adb8bfe3668871637c2ea01
 counts:
   root_command_count: 41
   group_count: 291
@@ -9,7 +9,7 @@ counts:
   registered_leaf_count: 993
   unique_path_count: 1284
   duplicate_path_count: 0
-tree_sha256: 707e80286aeab5a94d8529b89d2448b156d266e343b53e60f119e973abf6ed15
+tree_sha256: c46f54c3b3bd6afb2a2234bc898ba6f28f2a2a2584d2ac4f702209c9dd364070
 nodes:
 - path: <root>
   kind: group
@@ -713,8 +713,8 @@ nodes:
   contract_sha256: dd5dd4deaee5972473e84e928e1631b24dd7b689fb967c45a1967159cbcc2221
 - path: dynamic-v3-rescue consensus-risk run
   kind: command
-  parameter_count: 5
-  contract_sha256: f9713cb47f282638563463e402cc4c94dd228dcde636bd746e62d84a805897e6
+  parameter_count: 6
+  contract_sha256: 7f4ecde5ec6a134365c700759b48bf198020bbf72e99ae799e0e30b0ecfaf0e8
 - path: dynamic-v3-rescue cost-sensitivity-metrics-materialization
   kind: group
   parameter_count: 0

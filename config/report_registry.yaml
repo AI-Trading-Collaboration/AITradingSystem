@@ -6717,14 +6717,18 @@ reports:
     command: aits etf dynamic-v3-rescue consensus-risk report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_risk_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_exposure_samples.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_drawdown_pairs.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_exposure_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_drawdown_risk.json
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_turnover_risk.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_risk_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_risk_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-155 reviews consensus target exposure, drawdown, and turnover risk
-      without generating a default consensus execution or broker action.
+      TRADING-155 reviews distinct-date consensus exposure, same-lineage paired drawdown, and
+      distinct-event turnover from validated immutable source/policy evidence. Missing metrics
+      remain null and no default consensus execution or broker action is generated.
     owner_action: review_consensus_risk_before_any_manual_consensus_or_position_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
