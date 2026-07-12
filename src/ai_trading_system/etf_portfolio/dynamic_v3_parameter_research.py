@@ -57,6 +57,9 @@ from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_PRICE_PATH,
     load_etf_config_bundle,
 )
+from ai_trading_system.etf_portfolio.owner_review_privacy import (
+    owner_notes_sensitive_issues,
+)
 from ai_trading_system.trading_calendar import is_us_equity_trading_day, us_equity_market_session
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -386,6 +389,12 @@ OWNER_REVIEW_DECISIONS = {
     "manual_adjustment",
     "reject_advisory",
     "needs_more_data",
+}
+OWNER_REVIEW_EVENT_CREATED = "OWNER_REVIEW_CREATED"
+OWNER_REVIEW_EVENT_DECISION_RECORDED = "OWNER_REVIEW_DECISION_RECORDED"
+OWNER_REVIEW_EVENT_TYPES = {
+    OWNER_REVIEW_EVENT_CREATED,
+    OWNER_REVIEW_EVENT_DECISION_RECORDED,
 }
 CONSENSUS_DRIFT_STATUSES = {
     "CONSENSUS",
@@ -7368,114 +7377,259 @@ def validate_manual_execution_review_artifact(
     }
 
 
-def create_owner_review(
+def _owner_review_daily_source_paths(
     *,
     daily_advisory_id: str,
-    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
-    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
-    generated_at: datetime | None = None,
+    daily_advisory_dir: Path,
+) -> dict[str, str]:
+    source_dir = daily_advisory_dir / daily_advisory_id
+    return {
+        "daily_advisory_manifest": str(source_dir / "daily_advisory_manifest.json"),
+        "daily_candidate_targets": str(source_dir / "daily_candidate_targets.jsonl"),
+        "daily_consensus_weights": str(source_dir / "daily_consensus_weights.csv"),
+        "daily_position_deltas": str(source_dir / "daily_position_deltas.jsonl"),
+        "daily_advisory_actions": str(source_dir / "daily_advisory_actions.json"),
+        "daily_position_advisory_report": str(
+            source_dir / "daily_position_advisory_report.md"
+        ),
+        "daily_reader_brief": str(source_dir / "reader_brief_section.md"),
+    }
+
+
+def _validated_owner_review_daily_source(
+    *,
+    daily_advisory_id: str,
+    daily_advisory_dir: Path,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
-    advisory_dir = daily_advisory_dir / daily_advisory_id
-    manifest = _read_json(advisory_dir / "daily_advisory_manifest.json")
-    actions = _read_json(advisory_dir / "daily_advisory_actions.json")
-    review_id = _stable_id("owner-review", daily_advisory_id, generated.isoformat())
-    record = {
+    validation = validate_position_advisory_daily_artifact(
+        daily_advisory_id=daily_advisory_id,
+        output_dir=daily_advisory_dir,
+    )
+    if validation.get("status") != "PASS":
+        raise DynamicV3ParameterResearchError(
+            "daily position advisory validation must PASS before owner review"
+        )
+    source_dir = daily_advisory_dir / daily_advisory_id
+    manifest = _read_json(source_dir / "daily_advisory_manifest.json")
+    actions = _read_json(source_dir / "daily_advisory_actions.json")
+    if (
+        manifest.get("daily_advisory_id") != daily_advisory_id
+        or actions.get("daily_advisory_id") != daily_advisory_id
+    ):
+        raise DynamicV3ParameterResearchError(
+            "daily advisory manifest/actions id must match requested id"
+        )
+    source_paths = _owner_review_daily_source_paths(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    source_checksums = {
+        key: _file_sha256_path(Path(path)) for key, path in source_paths.items()
+    }
+    if not all(source_checksums.values()):
+        raise DynamicV3ParameterResearchError("daily advisory source files must all exist")
+    return {
+        "manifest": manifest,
+        "actions": actions,
+        "source_paths": source_paths,
+        "source_checksums": source_checksums,
+        "validation_status": validation.get("status"),
+    }
+
+
+def _owner_review_event_checksum(event: Mapping[str, Any]) -> str:
+    payload = dict(event)
+    payload.pop("event_checksum", None)
+    return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _build_owner_review_event(
+    *,
+    events: Sequence[Mapping[str, Any]],
+    review_id: str,
+    event_type: str,
+    event_at: datetime,
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    sequence = len(events) + 1
+    event_id = _stable_id(
+        "owner-review-event",
+        sequence,
+        review_id,
+        event_type,
+        event_at.isoformat(),
+    )
+    event = {
         "schema_version": SCHEMA_VERSION,
+        "event_id": event_id,
+        "event_sequence": sequence,
+        "event_type": event_type,
         "review_id": review_id,
-        "daily_advisory_id": daily_advisory_id,
-        "as_of": manifest.get("as_of", ""),
-        "recommended_action": actions.get("recommended_action", ""),
-        "owner_decision": "pending",
+        "event_at": event_at.isoformat(),
+        "previous_event_checksum": (
+            _text(events[-1].get("event_checksum")) if events else "GENESIS"
+        ),
+        **dict(payload),
         "broker_action_allowed": False,
         "broker_action_taken": False,
-        "paper_action": {"enabled": False, "notes": ""},
-        "manual_notes": "",
-        "created_at": generated.isoformat(),
-        "updated_at": generated.isoformat(),
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "production_effect": "none",
     }
-    output_dir.mkdir(parents=True, exist_ok=True)
-    _append_jsonl(output_dir / "owner_review_journal.jsonl", record)
-    _write_json(output_dir / "latest_owner_review.json", record)
-    _write_text(
-        output_dir / "owner_review_report.md",
-        render_owner_review_report_markdown(owner_review_summary(output_dir=output_dir)),
-    )
-    _update_latest_pointer(
-        "latest_owner_review",
-        review_id,
-        output_dir / "latest_owner_review.json",
-    )
-    return {"review_id": review_id, "review": record, "journal_dir": output_dir}
+    event["event_checksum"] = _owner_review_event_checksum(event)
+    return event
 
 
-def record_owner_review_decision(
-    *,
-    review_id: str,
-    decision: str,
-    manual_notes: str = "",
-    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
-    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
-    generated_at: datetime | None = None,
-) -> dict[str, Any]:
-    if decision not in OWNER_REVIEW_DECISIONS:
-        raise DynamicV3ParameterResearchError(f"unsupported owner decision: {decision}")
-    generated = generated_at or datetime.now(UTC)
-    journal_path = output_dir / "owner_review_journal.jsonl"
-    records = _read_jsonl(journal_path)
-    updated: dict[str, Any] | None = None
-    for row in records:
-        if row.get("review_id") != review_id:
+def _replay_owner_review_events(
+    events: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    errors: list[str] = []
+    records: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    previous_checksum = "GENESIS"
+    seen_event_ids: set[str] = set()
+    for index, raw_event in enumerate(events, start=1):
+        event = dict(raw_event)
+        event_id = _text(event.get("event_id"))
+        review_id = _text(event.get("review_id"))
+        event_type = _text(event.get("event_type"))
+        event_at = _text(event.get("event_at"))
+        if event.get("event_sequence") != index:
+            errors.append(f"event_sequence_mismatch:{index}")
+        if event_type not in OWNER_REVIEW_EVENT_TYPES:
+            errors.append(f"event_type_invalid:{index}")
+        if not review_id:
+            errors.append(f"review_id_missing:{index}")
+        expected_event_id = _stable_id(
+            "owner-review-event",
+            index,
+            review_id,
+            event_type,
+            event_at,
+        )
+        if event_id != expected_event_id or event_id in seen_event_ids:
+            errors.append(f"event_id_invalid_or_duplicate:{index}")
+        seen_event_ids.add(event_id)
+        if event.get("previous_event_checksum") != previous_checksum:
+            errors.append(f"previous_event_checksum_mismatch:{index}")
+        expected_checksum = _owner_review_event_checksum(event)
+        if event.get("event_checksum") != expected_checksum:
+            errors.append(f"event_checksum_mismatch:{index}")
+        previous_checksum = _text(event.get("event_checksum"))
+        if event_type == OWNER_REVIEW_EVENT_CREATED:
+            if review_id in records:
+                errors.append(f"duplicate_review_create:{review_id}")
+                continue
+            if event.get("owner_decision") != "pending":
+                errors.append(f"created_decision_not_pending:{review_id}")
+            order.append(review_id)
+            records[review_id] = {
+                "schema_version": SCHEMA_VERSION,
+                "review_id": review_id,
+                "daily_advisory_id": event.get("daily_advisory_id"),
+                "source_daily_advisory_root": event.get("source_daily_advisory_root"),
+                "source_daily_advisory_validation_status": event.get(
+                    "source_daily_advisory_validation_status"
+                ),
+                "source_artifact_paths": event.get("source_artifact_paths"),
+                "source_artifact_checksums": event.get("source_artifact_checksums"),
+                "as_of": event.get("as_of"),
+                "recommended_action": event.get("recommended_action"),
+                "owner_decision": "pending",
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+                "paper_action": {"enabled": False, "notes": ""},
+                "manual_notes": "",
+                "created_at": event_at,
+                "updated_at": event_at,
+                "event_chain_status": "PASS",
+                "last_event_id": event_id,
+                "last_event_checksum": event.get("event_checksum"),
+                "official_target_weights_generated": False,
+                "portfolio_mutated": False,
+                "order_ticket_generated": False,
+                "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+                **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+            }
             continue
-        row["owner_decision"] = decision
-        row["manual_notes"] = manual_notes
-        row["updated_at"] = generated.isoformat()
-        row["broker_action_allowed"] = False
-        row["broker_action_taken"] = False
+        record = records.get(review_id)
+        if record is None:
+            errors.append(f"decision_without_create:{review_id}")
+            continue
+        decision = _text(event.get("owner_decision"))
+        if record.get("owner_decision") != "pending":
+            errors.append(f"duplicate_final_decision:{review_id}")
+            continue
+        if decision not in OWNER_REVIEW_DECISIONS:
+            errors.append(f"owner_decision_invalid:{review_id}")
+        notes = _text(event.get("manual_notes"))
+        if owner_notes_sensitive_issues(notes):
+            errors.append(f"manual_notes_sensitive:{review_id}")
+        paper_action_record = _mapping(event.get("paper_action_record"))
         if decision == "paper_adjustment":
-            paper = _paper_action_record(
-                review=row,
-                output_dir=output_dir,
-                daily_advisory_dir=daily_advisory_dir,
-                generated_at=generated,
-            )
-            row["paper_action"] = {
+            if not paper_action_record:
+                errors.append(f"paper_action_missing:{review_id}")
+            paper_action = {
                 "enabled": True,
-                "paper_action_id": paper["paper_action_id"],
+                "paper_action_id": paper_action_record.get("paper_action_id", ""),
                 "notes": "Paper only, no broker action",
             }
-        updated = dict(row)
-        break
-    if updated is None:
-        raise DynamicV3ParameterResearchError(f"owner review not found: {review_id}")
-    _write_jsonl(journal_path, records)
-    _write_json(output_dir / "latest_owner_review.json", updated)
-    _write_text(
-        output_dir / "owner_review_report.md",
-        render_owner_review_report_markdown(owner_review_summary(output_dir=output_dir)),
-    )
-    _update_latest_pointer(
-        "latest_owner_review",
-        review_id,
-        output_dir / "latest_owner_review.json",
-    )
-    return {"review_id": review_id, "review": updated, "journal_dir": output_dir}
+        else:
+            if paper_action_record:
+                errors.append(f"unexpected_paper_action:{review_id}")
+            paper_action = {"enabled": False, "notes": ""}
+        record.update(
+            {
+                "owner_decision": decision,
+                "manual_notes": notes,
+                "paper_action": paper_action,
+                "updated_at": event_at,
+                "last_event_id": event_id,
+                "last_event_checksum": event.get("event_checksum"),
+                "broker_action_allowed": False,
+                "broker_action_taken": False,
+            }
+        )
+    return [records[review_id] for review_id in order], sorted(set(errors))
 
 
-def owner_review_summary(
+def _owner_review_state(
     *,
-    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    output_dir: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str]:
+    events = _read_jsonl(output_dir / "owner_review_events.jsonl")
+    if events:
+        records, errors = _replay_owner_review_events(events)
+        if errors:
+            raise DynamicV3ParameterResearchError(
+                "owner review event chain invalid: " + ", ".join(errors)
+            )
+        return events, records, "PASS"
+    legacy_records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    return [], legacy_records, "LEGACY_UNCHAINED" if legacy_records else "MISSING"
+
+
+def _owner_review_summary_from_records(
+    *,
+    records: Sequence[Mapping[str, Any]],
+    paper_actions: Sequence[Mapping[str, Any]],
+    event_chain_status: str,
+    output_dir: Path,
 ) -> dict[str, Any]:
-    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
-    paper_actions = _read_jsonl(output_dir / "paper_action_log.jsonl")
-    latest = records[-1] if records else {}
+    latest = _mapping(records[-1]) if records else {}
+    status = (
+        "MISSING"
+        if not records
+        else "PASS" if event_chain_status == "PASS" else "PASS_WITH_WARNINGS"
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_owner_review_summary",
-        "status": "PASS" if records else "MISSING",
+        "status": status,
+        "event_chain_status": event_chain_status,
         "review_count": len(records),
+        "event_count": sum(1 for _ in _read_jsonl(output_dir / "owner_review_events.jsonl")),
         "pending_owner_review_count": sum(
             1 for row in records if row.get("owner_decision") == "pending"
         ),
@@ -7499,13 +7653,214 @@ def owner_review_summary(
     }
 
 
+def _write_owner_review_materialized_views(
+    *,
+    output_dir: Path,
+    events: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    records, errors = _replay_owner_review_events(events)
+    if errors:
+        raise DynamicV3ParameterResearchError(
+            "owner review event chain invalid: " + ", ".join(errors)
+        )
+    paper_actions = _read_jsonl(output_dir / "paper_action_log.jsonl")
+    summary = _owner_review_summary_from_records(
+        records=records,
+        paper_actions=paper_actions,
+        event_chain_status="PASS",
+        output_dir=output_dir,
+    )
+    _write_jsonl(output_dir / "owner_review_journal.jsonl", records)
+    _write_json(output_dir / "latest_owner_review.json", records[-1] if records else {})
+    _write_text(
+        output_dir / "owner_review_report.md",
+        render_owner_review_report_markdown(summary),
+    )
+    return records
+
+
+def create_owner_review(
+    *,
+    daily_advisory_id: str,
+    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    source = _validated_owner_review_daily_source(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    events, records, event_chain_status = _owner_review_state(output_dir=output_dir)
+    if event_chain_status == "LEGACY_UNCHAINED":
+        raise DynamicV3ParameterResearchError(
+            "legacy owner review journal requires explicit event-chain migration before mutation"
+        )
+    if any(row.get("daily_advisory_id") == daily_advisory_id for row in records):
+        raise DynamicV3ParameterResearchError(
+            f"owner review already exists for daily advisory: {daily_advisory_id}"
+        )
+    review_id = _stable_id("owner-review", daily_advisory_id, generated.isoformat())
+    event = _build_owner_review_event(
+        events=events,
+        review_id=review_id,
+        event_type=OWNER_REVIEW_EVENT_CREATED,
+        event_at=generated,
+        payload={
+            "daily_advisory_id": daily_advisory_id,
+            "source_daily_advisory_root": str(daily_advisory_dir),
+            "source_daily_advisory_validation_status": source["validation_status"],
+            "source_artifact_paths": source["source_paths"],
+            "source_artifact_checksums": source["source_checksums"],
+            "as_of": source["manifest"].get("as_of", ""),
+            "recommended_action": source["actions"].get("recommended_action", ""),
+            "owner_decision": "pending",
+            "manual_notes": "",
+            "paper_action_record": {},
+        },
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    _append_jsonl(output_dir / "owner_review_events.jsonl", event)
+    updated_events = [*events, event]
+    updated_records = _write_owner_review_materialized_views(
+        output_dir=output_dir,
+        events=updated_events,
+    )
+    record = next(row for row in updated_records if row.get("review_id") == review_id)
+    _update_latest_pointer(
+        "latest_owner_review",
+        _text(updated_records[-1].get("review_id")),
+        output_dir / "latest_owner_review.json",
+    )
+    return {"review_id": review_id, "review": record, "journal_dir": output_dir}
+
+
+def record_owner_review_decision(
+    *,
+    review_id: str,
+    decision: str,
+    manual_notes: str = "",
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if decision not in OWNER_REVIEW_DECISIONS:
+        raise DynamicV3ParameterResearchError(f"unsupported owner decision: {decision}")
+    sensitive_issues = owner_notes_sensitive_issues(manual_notes)
+    if sensitive_issues:
+        raise DynamicV3ParameterResearchError(
+            "manual owner notes contain sensitive account data: "
+            + ",".join(sensitive_issues)
+        )
+    generated = generated_at or datetime.now(UTC)
+    generated = generated if generated.tzinfo else generated.replace(tzinfo=UTC)
+    events, records, event_chain_status = _owner_review_state(output_dir=output_dir)
+    if event_chain_status == "LEGACY_UNCHAINED":
+        raise DynamicV3ParameterResearchError(
+            "legacy owner review journal requires explicit event-chain migration before mutation"
+        )
+    current = next((row for row in records if row.get("review_id") == review_id), None)
+    if current is None:
+        raise DynamicV3ParameterResearchError(f"owner review not found: {review_id}")
+    if current.get("owner_decision") != "pending":
+        raise DynamicV3ParameterResearchError(
+            f"owner review already has a final decision: {review_id}"
+        )
+    daily_advisory_id = _text(current.get("daily_advisory_id"))
+    source_root = Path(_text(current.get("source_daily_advisory_root")))
+    if source_root != daily_advisory_dir:
+        raise DynamicV3ParameterResearchError(
+            "daily advisory root must match the owner review creation source"
+        )
+    source = _validated_owner_review_daily_source(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    if (
+        _mapping(current.get("source_artifact_paths")) != source["source_paths"]
+        or _mapping(current.get("source_artifact_checksums")) != source["source_checksums"]
+    ):
+        raise DynamicV3ParameterResearchError(
+            "daily advisory source changed after owner review creation"
+        )
+    matching_paper_actions = [
+        row
+        for row in _read_jsonl(output_dir / "paper_action_log.jsonl")
+        if row.get("review_id") == review_id
+    ]
+    if matching_paper_actions:
+        raise DynamicV3ParameterResearchError(
+            f"owner review already has paper action evidence: {review_id}"
+        )
+    next_sequence = len(events) + 1
+    decision_event_id = _stable_id(
+        "owner-review-event",
+        next_sequence,
+        review_id,
+        OWNER_REVIEW_EVENT_DECISION_RECORDED,
+        generated.isoformat(),
+    )
+    paper_record = (
+        _paper_action_record_payload(
+            review=current,
+            daily_advisory_dir=daily_advisory_dir,
+            generated_at=generated,
+            decision_event_id=decision_event_id,
+        )
+        if decision == "paper_adjustment"
+        else {}
+    )
+    event = _build_owner_review_event(
+        events=events,
+        review_id=review_id,
+        event_type=OWNER_REVIEW_EVENT_DECISION_RECORDED,
+        event_at=generated,
+        payload={
+            "daily_advisory_id": daily_advisory_id,
+            "owner_decision": decision,
+            "manual_notes": manual_notes,
+            "paper_action_record": paper_record,
+        },
+    )
+    _append_jsonl(output_dir / "owner_review_events.jsonl", event)
+    if paper_record:
+        _append_jsonl(output_dir / "paper_action_log.jsonl", paper_record)
+    updated_events = [*events, event]
+    updated_records = _write_owner_review_materialized_views(
+        output_dir=output_dir,
+        events=updated_events,
+    )
+    updated = next(row for row in updated_records if row.get("review_id") == review_id)
+    _update_latest_pointer(
+        "latest_owner_review",
+        _text(updated_records[-1].get("review_id")),
+        output_dir / "latest_owner_review.json",
+    )
+    return {"review_id": review_id, "review": updated, "journal_dir": output_dir}
+
+
+def owner_review_summary(
+    *,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> dict[str, Any]:
+    _, records, event_chain_status = _owner_review_state(output_dir=output_dir)
+    paper_actions = _read_jsonl(output_dir / "paper_action_log.jsonl")
+    return _owner_review_summary_from_records(
+        records=records,
+        paper_actions=paper_actions,
+        event_chain_status=event_chain_status,
+        output_dir=output_dir,
+    )
+
+
 def owner_review_report_payload(
     *,
     latest: bool = False,
     review_id: str | None = None,
     output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
 ) -> dict[str, Any]:
-    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    _, records, _ = _owner_review_state(output_dir=output_dir)
     selected = records[-1] if latest and records else {}
     if review_id:
         selected = next((row for row in records if row.get("review_id") == review_id), {})
@@ -7520,15 +7875,176 @@ def validate_owner_review_artifact(
     review_id: str,
     output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
 ) -> dict[str, Any]:
-    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    events = _read_jsonl(output_dir / "owner_review_events.jsonl")
+    records, event_errors = _replay_owner_review_events(events)
     record = next((row for row in records if row.get("review_id") == review_id), {})
+    journal_records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    latest = _read_optional_json(output_dir / "latest_owner_review.json") or {}
+    paper_actions = _read_jsonl(output_dir / "paper_action_log.jsonl")
+    create_event = next(
+        (
+            event
+            for event in events
+            if event.get("review_id") == review_id
+            and event.get("event_type") == OWNER_REVIEW_EVENT_CREATED
+        ),
+        {},
+    )
+    decision_event = next(
+        (
+            event
+            for event in events
+            if event.get("review_id") == review_id
+            and event.get("event_type") == OWNER_REVIEW_EVENT_DECISION_RECORDED
+        ),
+        {},
+    )
+    source_validation_status = "FAIL"
+    source_paths_match = False
+    source_checksums_match = False
+    source_derived_fields_match = False
+    recomputation_error = ""
+    try:
+        daily_advisory_id = _text(create_event.get("daily_advisory_id"))
+        daily_advisory_root = Path(_text(create_event.get("source_daily_advisory_root")))
+        source = _validated_owner_review_daily_source(
+            daily_advisory_id=daily_advisory_id,
+            daily_advisory_dir=daily_advisory_root,
+        )
+        source_validation_status = _text(source.get("validation_status"), "FAIL")
+        source_paths_match = (
+            _mapping(create_event.get("source_artifact_paths")) == source["source_paths"]
+        )
+        source_checksums_match = (
+            _mapping(create_event.get("source_artifact_checksums"))
+            == source["source_checksums"]
+        )
+        source_derived_fields_match = (
+            create_event.get("as_of") == source["manifest"].get("as_of")
+            and create_event.get("recommended_action")
+            == source["actions"].get("recommended_action")
+            and create_event.get("source_daily_advisory_validation_status") == "PASS"
+        )
+    except Exception as exc:  # noqa: BLE001
+        recomputation_error = str(exc)
+    expected_latest = records[-1] if records else {}
+    event_chain_status = "PASS" if events and not event_errors else "FAIL"
+    expected_summary = _owner_review_summary_from_records(
+        records=records,
+        paper_actions=paper_actions,
+        event_chain_status=event_chain_status,
+        output_dir=output_dir,
+    )
+    expected_report = render_owner_review_report_markdown(expected_summary)
+    matching_paper_actions = [
+        row for row in paper_actions if row.get("review_id") == review_id
+    ]
+    recorded_event_paper_action = _mapping(decision_event.get("paper_action_record"))
+    expected_paper_action: dict[str, Any] = {}
+    paper_recomputation_error = ""
+    if record.get("owner_decision") == "paper_adjustment":
+        try:
+            decision_at = _parse_datetime(_text(decision_event.get("event_at")))
+            if decision_at is None:
+                raise DynamicV3ParameterResearchError(
+                    "owner review decision event_at must be ISO datetime"
+                )
+            expected_paper_action = _paper_action_record_payload(
+                review=record,
+                daily_advisory_dir=Path(
+                    _text(create_event.get("source_daily_advisory_root"))
+                ),
+                generated_at=decision_at,
+                decision_event_id=_text(decision_event.get("event_id")),
+            )
+        except Exception as exc:  # noqa: BLE001
+            paper_recomputation_error = str(exc)
+    note_issues = sorted(
+        {
+            *owner_notes_sensitive_issues(_text(record.get("manual_notes"))),
+            *owner_notes_sensitive_issues(_text(decision_event.get("manual_notes"))),
+        }
+    )
     checks = [
+        _check(
+            "owner_review_events_exists",
+            (output_dir / "owner_review_events.jsonl").exists(),
+            str(output_dir),
+        ),
         _check(
             "owner_review_journal_exists",
             (output_dir / "owner_review_journal.jsonl").exists(),
             str(output_dir),
         ),
+        _check(
+            "latest_owner_review_exists",
+            (output_dir / "latest_owner_review.json").exists(),
+            str(output_dir),
+        ),
+        _check(
+            "owner_review_report_exists",
+            (output_dir / "owner_review_report.md").exists(),
+            str(output_dir),
+        ),
+        _check("event_chain_valid", not event_errors and bool(events), ",".join(event_errors)),
         _check("review_record_present", bool(record), review_id),
+        _check("review_create_event_present", bool(create_event), review_id),
+        _check(
+            "source_recomputation_succeeds",
+            not recomputation_error,
+            recomputation_error or "daily advisory source recomputed",
+        ),
+        _check(
+            "source_daily_advisory_validation_passes",
+            source_validation_status == "PASS",
+            source_validation_status,
+        ),
+        _check("source_paths_match", source_paths_match, review_id),
+        _check("source_checksums_match", source_checksums_match, review_id),
+        _check("source_derived_fields_match", source_derived_fields_match, review_id),
+        _check(
+            "materialized_journal_matches_event_replay",
+            journal_records == records,
+            f"journal={len(journal_records)} replay={len(records)}",
+        ),
+        _check(
+            "latest_view_matches_event_replay",
+            latest == expected_latest,
+            _text(latest.get("review_id")),
+        ),
+        _check(
+            "report_matches_event_replay",
+            (output_dir / "owner_review_report.md").is_file()
+            and (output_dir / "owner_review_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            str(output_dir / "owner_review_report.md"),
+        ),
+        _check(
+            "manual_notes_redaction_safe",
+            not note_issues,
+            ",".join(note_issues),
+        ),
+        _check(
+            "paper_action_recomputation_succeeds",
+            not paper_recomputation_error,
+            paper_recomputation_error or "paper action content recomputed",
+        ),
+        _check(
+            "paper_action_matches_decision_event",
+            (
+                record.get("owner_decision") == "paper_adjustment"
+                and len(matching_paper_actions) == 1
+                and recorded_event_paper_action == expected_paper_action
+                and matching_paper_actions[0] == expected_paper_action
+            )
+            or (
+                record.get("owner_decision") != "paper_adjustment"
+                and not matching_paper_actions
+                and not recorded_event_paper_action
+                and not expected_paper_action
+            ),
+            f"matching_paper_actions={len(matching_paper_actions)}",
+        ),
         _check(
             "broker_action_forbidden",
             record.get("broker_action_allowed") is False,
@@ -7544,6 +8060,13 @@ def validate_owner_review_artifact(
             record.get("owner_decision") == "pending"
             or record.get("owner_decision") in OWNER_REVIEW_DECISIONS,
             _text(record.get("owner_decision")),
+        ),
+        _check(
+            "no_execution_effect",
+            record.get("official_target_weights_generated") is False
+            and record.get("portfolio_mutated") is False
+            and record.get("order_ticket_generated") is False,
+            "owner review records intent only",
         ),
     ]
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -16863,6 +17386,8 @@ def render_owner_review_report_markdown(summary: Mapping[str, Any]) -> str:
     lines = [
         "# Dynamic Rescue Owner Review Journal",
         "",
+        f"- event_chain_status: `{summary.get('event_chain_status')}`",
+        f"- event_count: `{summary.get('event_count')}`",
         f"- review_count: `{summary.get('review_count')}`",
         f"- pending_owner_review_count: `{summary.get('pending_owner_review_count')}`",
         f"- latest_daily_advisory_id: `{summary.get('latest_daily_advisory_id')}`",
@@ -18598,15 +19123,16 @@ def _top_delta_summary(delta_rows: Sequence[Mapping[str, Any]]) -> str:
     return f"{row.get('candidate_id')}:{row.get('total_abs_adjustment')}"
 
 
-def _paper_action_record(
+def _paper_action_record_payload(
     *,
     review: Mapping[str, Any],
-    output_dir: Path,
     daily_advisory_dir: Path,
     generated_at: datetime,
+    decision_event_id: str,
 ) -> dict[str, Any]:
     daily_advisory_id = _text(review.get("daily_advisory_id"))
-    delta_rows = _read_jsonl(daily_advisory_dir / daily_advisory_id / "daily_position_deltas.jsonl")
+    delta_path = daily_advisory_dir / daily_advisory_id / "daily_position_deltas.jsonl"
+    delta_rows = _read_jsonl(delta_path)
     proposed = {
         _text(row.get("candidate_id")): _mapping(row.get("deltas"))
         for row in delta_rows
@@ -18617,15 +19143,23 @@ def _paper_action_record(
         "schema_version": SCHEMA_VERSION,
         "paper_action_id": paper_action_id,
         "review_id": review.get("review_id"),
+        "decision_event_id": decision_event_id,
+        "daily_advisory_id": daily_advisory_id,
         "as_of": review.get("as_of"),
         "action_type": "paper_adjustment",
         "proposed_deltas": proposed,
         "paper_portfolio_after": {},
+        "source_daily_position_deltas_path": str(delta_path),
+        "source_daily_position_deltas_checksum": _file_sha256_path(delta_path),
+        "official_target_weights_generated": False,
+        "portfolio_mutated": False,
+        "order_ticket_generated": False,
+        "broker_action_allowed": False,
         "broker_action_taken": False,
+        "production_effect": "none",
         "notes": "Paper only, no broker action",
         "created_at": generated_at.isoformat(),
     }
-    _append_jsonl(output_dir / "paper_action_log.jsonl", record)
     return record
 
 

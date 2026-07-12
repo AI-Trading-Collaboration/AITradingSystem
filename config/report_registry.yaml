@@ -6236,14 +6236,16 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue owner-review create --daily-advisory-id <daily_advisory_id>
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/owner_review_events.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/latest_owner_review.json
       - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/owner_review_journal.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/paper_action_log.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/owner_review_report.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-135 records owner decision and paper-only actions for daily
-      advisory while keeping broker_action_taken=false.
+      TRADING-135 validates and binds daily advisory sources, records one final
+      owner decision in a checksum-chained append-only event log, and derives
+      compatibility views and paper-only evidence with broker action forbidden.
     owner_action: record_owner_decision_for_daily_position_advisory
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

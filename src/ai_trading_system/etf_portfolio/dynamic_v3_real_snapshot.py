@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from hashlib import sha256
@@ -33,6 +32,10 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_manual_portfolio_artifact,
     validate_position_drift_artifact,
     write_manual_portfolio_snapshot_artifact,
+)
+from ai_trading_system.etf_portfolio.owner_review_privacy import (
+    ACCOUNT_NUMBER_RE,
+    owner_notes_sensitive_issues,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -81,16 +84,6 @@ SENSITIVE_KEY_PATTERNS = {
     ),
 }
 FORBIDDEN_PATH_KEYS = {"broker_statement_path", "statement_path", "trade_confirmation_path"}
-ACCOUNT_NUMBER_RE = re.compile(r"\b\d{5,}\b")
-OWNER_NOTE_SENSITIVE_TOKEN_RE = re.compile(
-    r"\b(?:account[_\s-]*(?:number|no|id)|broker[_\s-]*account|"
-    r"order[_\s-]*id|broker[_\s-]*order|tax[_\s-]*lot|ssn|passport|"
-    r"national[_\s-]*id|personal[_\s-]*identifier|"
-    r"(?:broker[_\s-]*)?statement[_\s-]*path|trade[_\s-]*confirmation[_\s-]*path)\b",
-    re.IGNORECASE,
-)
-
-
 class RealSnapshotError(ValueError):
     """Raised when real manual snapshot dry-run artifacts are invalid."""
 
@@ -645,7 +638,7 @@ def record_real_execution_owner_decision(
 ) -> dict[str, Any]:
     if decision not in OWNER_DECISIONS - {"pending"}:
         raise RealSnapshotError(f"unsupported owner decision: {decision}")
-    sensitive_issues = _owner_notes_sensitive_issues(owner_notes)
+    sensitive_issues = owner_notes_sensitive_issues(owner_notes)
     if sensitive_issues:
         raise RealSnapshotError(
             "owner notes contain sensitive account data: " + ",".join(sensitive_issues)
@@ -726,13 +719,13 @@ def validate_real_execution_owner_review(
         {
             *(
                 f"manifest:{issue}"
-                for issue in _owner_notes_sensitive_issues(
+                for issue in owner_notes_sensitive_issues(
                     _text(manifest.get("owner_notes"))
                 )
             ),
             *(
                 f"decision:{issue}"
-                for issue in _owner_notes_sensitive_issues(
+                for issue in owner_notes_sensitive_issues(
                     _text(decision.get("owner_notes"))
                 )
             ),
@@ -1732,16 +1725,6 @@ def _redaction_check(
         "production_effect": PRODUCTION_EFFECT,
         **_safety(),
     }
-
-
-def _owner_notes_sensitive_issues(owner_notes: str) -> list[str]:
-    issues: list[str] = []
-    if ACCOUNT_NUMBER_RE.search(owner_notes):
-        issues.append("long_numeric_identifier")
-    token_match = OWNER_NOTE_SENSITIVE_TOKEN_RE.search(owner_notes)
-    if token_match:
-        issues.append(f"sensitive_token:{token_match.group(0).lower()}")
-    return issues
 
 
 def _walk_payload(value: Any, prefix: str = "") -> list[tuple[str, str, Any]]:

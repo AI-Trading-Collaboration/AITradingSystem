@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 8c544b42e0655d32be4116d4b12cac3c647ee30a83206c5645caefca8857d608
 source_root: src/ai_trading_system
-module_count: 848
+module_count: 850
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -939,7 +939,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.etf_portfolio
   path: src/ai_trading_system/cli_commands/etf_portfolio.py
-  sha256: 65969486cf787190d9d89be7024bd8a5ac0442d995c939b0caf2c3a702ad82c3
+  sha256: 627b9fb0c98eb2a8c94c0962db3e55f8dc179da29798d5e4627917be6e2dd8cc
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -5805,7 +5805,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_parameter_research
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
-  sha256: 750b39626ad77bca4c0126d29b14325f70329f5df84fba4499d23f4b10b86710
+  sha256: 936c78ac55ec0d5ea76614f35cba86e655bc4f88674f1f8ecf356d380488d943
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -5915,7 +5915,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.etf_portfolio.dynamic_v3_real_snapshot
   path: src/ai_trading_system/etf_portfolio/dynamic_v3_real_snapshot.py
-  sha256: 671c09a200951becdb6e629bf304ddda2f351666bb7f39986b6415d0b73b34b2
+  sha256: 2bbf89ec2e830527b85d241e102d6b99fe356e5c8df46f3a99a2678a4199b176
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -6268,6 +6268,28 @@ modules:
 - module_id: src.ai_trading_system.etf_portfolio.operations
   path: src/ai_trading_system/etf_portfolio/operations.py
   sha256: e74dc0fa919974da1829f524e4af2c40a99d0b79102132a8dba8499bcf71e2db
+  rule_id: etf_portfolio
+  owner_profile: portfolio
+  owners:
+    code_owner: portfolio_engineering
+    policy_owner: investment_policy_governance
+    data_owner: portfolio_data_governance
+    artifact_owner: portfolio_reporting
+    runtime_owner: portfolio_operations
+  layer: domain
+  category: portfolio_research
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_etf*.py
+  - tests/trading_engine/test_portfolio*.py
+  validation_tiers:
+  - slow-research-regression
+  - integration
+  shared_integration: false
+- module_id: src.ai_trading_system.etf_portfolio.owner_review_privacy
+  path: src/ai_trading_system/etf_portfolio/owner_review_privacy.py
+  sha256: b78d6ca7c71dcdcfaf57c4c7b7b5bf57bd0d1078db9e403dac24433f44c43d31
   rule_id: etf_portfolio
   owner_profile: portfolio
   owners:
@@ -9388,7 +9410,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.__init__
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/__init__.py
-  sha256: b4edfd1109efe559763273e0ca4266d8f0470b44369d79808726df960c64872f
+  sha256: 58aa55ce84fb5ce66bae8930ea72806efe2799349628a3b4872c72e1fba4d15f
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -9809,6 +9831,26 @@ modules:
 - module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_observation_lifecycle
   path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_observation_lifecycle.py
   sha256: 1c416b3a94566889a7ec958ad1d4355b701c25385d4cb2963b98de4e3653b228
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.interfaces.cli.etf_portfolio.dynamic_v3_owner_review_journal
+  path: src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_owner_review_journal.py
+  sha256: 4b07e13520dc003778fde1b13a98c7b0df80166aef6eae483d156bb67123be6b
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
