@@ -1303,6 +1303,8 @@ production 参数或 promotion criteria。
 
 ARCH-004G2.4BS 补充：`backtest_sim_forward_bridge/<bridge_id>/` 必须包含 `forward_bridge_input_snapshot.json`（schema=`backtest_sim_forward_bridge_input_snapshot.v2`），冻结validated Calibration full bundle/validation/lineage、reviewed forward policy及governance metadata。`forward_confirmation_targets.json`只能表达`TRACKING_REQUIRED`/`TRACKING_PLAN_ONLY`，阈值和windows不得fallback或硬编码；`validate-backtest-sim-forward-bridge`重验live Calibration并逐字节重算全部JSON/Markdown/Reader Brief，PASS不代表forward success或production readiness。
 
+ARCH-004G2.4BT 补充：`sim_interpretation/<interpretation_id>/` 必须包含`sim_interpretation_input_snapshot.json`（schema=`sim_interpretation_input_snapshot.v2`），冻结validated same-lineage Outcome/Calibration/Forward Bridge full bundles/validations。Matrix只对同event/window AVAILABLE finite variant/no_trade pairs解释，missing为null/`INSUFFICIENT_DATA`；key findings confidence由真实证据推导，tracking plan不是forward success。`validate-sim-interpretation`重验live三source并逐字节重算全views，PASS不表示defensive proof、policy approval或production readiness。
+
 ## Trading engine / paper trading 产物
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

@@ -7061,11 +7061,13 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/sim_interpretation_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/variant_interpretation_matrix.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/key_findings.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/sim_interpretation_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/sim_interpretation_report.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-169 translates backtest simulation raw metrics into variant
-      role/risk/usage interpretation while preserving BACKTEST_SIMULATION_NOT_PIT.
+      TRADING-169 validates and freezes same-lineage Outcome, Calibration and
+      Forward Bridge evidence, then interprets only paired finite cohorts while
+      preserving missing evidence and BACKTEST_SIMULATION_NOT_PIT.
     owner_action: review_variant_interpretation_before_any_rule_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

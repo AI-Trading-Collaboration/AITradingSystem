@@ -946,7 +946,10 @@ Forward bridge 在写入前必须要求Calibration validator PASS，并以
 lineage与reviewed policy；targets仅为`TRACKING_REQUIRED`，不是forward success或
 production candidate。
 TRADING-169 到 TRADING-173 在上述 simulation 结果之上新增 interpretation / advisory
-review 层。CLI 包括 `sim-interpretation run/report`、`sim-risk-return run/report`、
+review 层。`sim-interpretation` 只接受validated且same-Outcome lineage的
+Outcome/Calibration/Forward Bridge，并冻结`sim_interpretation_input_snapshot.v2`；
+只比较同event/window的AVAILABLE finite pairs，missing保持
+`INSUFFICIENT_DATA`。CLI 包括 `sim-interpretation run/report`、`sim-risk-return run/report`、
 `sim-defensive-validation run/report`、`advisory-proposal-review run/report` 和
 `forward-confirmation-plan run/report`，验证入口为 `validate-sim-interpretation`、
 `validate-sim-risk-return`、`validate-sim-defensive-validation`、

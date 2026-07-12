@@ -70,6 +70,8 @@ aits etf dynamic-v3-rescue forward-confirmation-plan run --proposal-review-id <p
 
 ## 7. 进展记录
 
+- 2026-07-13：ARCH-004G2.4BT `COMPLETE`。TRADING-169的3 callback迁canonical；validated/cutoff/same-lineage Outcome/Calibration/Bridge、`sim_interpretation_input_snapshot.v2` full bundle/validation、paired finite/null-preserving matrix、evidence-derived findings/confidence与全view/live-source byte validator通过475 focused、255 architecture-fitness、203 contract-validation。G2.4继续，Risk Return及后续链仍为独立slice。
+- 2026-07-13：ARCH-004G2.4BT 对TRADING-169冻结Simulation Interpretation迁移合同并进入`IN_PROGRESS`。3 callback迁canonical；producer要求Outcome/Calibration/Forward Bridge三source content-derived PASS/time cutoff/same-Outcome lineage，冻结三个full bundle/validation。Matrix/findings只用AVAILABLE finite same-cohort metrics，missing保持null/INSUFFICIENT_DATA，confidence从真实可用证据推导；Forward Bridge仅`TRACKING_PLAN_ONLY`，不表示forward success。Validator重验live sources并逐字节重算全views；Risk Return及后续链保持独立slice。
 - 2026-06-10：新增需求文档和 task register 入口，状态为 IN_PROGRESS；开始实现 TRADING-169 to TRADING-173 的 generation/report/validation CLI、artifacts、Reader Brief integration 和 focused tests。
 - 2026-06-10：baseline 实现完成并进入 VALIDATING。真实 artifact IDs：interpretation `a629c036f1ea3129`、risk_return `c61b1b9ca357cba1`、defensive_validation `b79486b62042b702`、proposal_review `f5dc442131f3740c`、confirmation_plan `808e55a74ca6951f`。
 - 2026-06-10：关键结论保持 manual review only：`defensive_limited_adjustment_status=PARTIALLY_DEFENSIVE`，proposal review `auto_apply=false`、`owner_approval_required=true`，confirmation plan 输出 `limited_adjustment_vs_no_trade`、`defensive_limited_adjustment_drawdown`、`consensus_target_risk` 三个 forward targets。

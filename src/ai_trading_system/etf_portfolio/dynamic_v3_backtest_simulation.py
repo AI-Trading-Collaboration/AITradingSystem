@@ -96,6 +96,7 @@ BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_calibration_inp
 BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = (
     "backtest_sim_forward_bridge_input_snapshot.v2"
 )
+SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION = "sim_interpretation_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -3719,16 +3720,44 @@ def run_sim_interpretation(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
-    outcome_summary = _read_json(outcome_dir / outcome_id / "simulated_variant_summary.json")
-    calibration_evidence = _read_json(
-        calibration_dir / calibration_id / "simulation_evidence_summary.json"
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dirs = {
+        "outcome": outcome_dir / outcome_id,
+        "calibration": calibration_dir / calibration_id,
+        "bridge": bridge_dir / bridge_id,
+    }
+    validations = _sim_interpretation_source_validations(
+        outcome_id=outcome_id,
+        calibration_id=calibration_id,
+        bridge_id=bridge_id,
+        source_dirs=source_dirs,
     )
-    bridge_manifest = _read_json(bridge_dir / bridge_id / "sim_forward_bridge_manifest.json")
-    bridge_targets = _read_json(bridge_dir / bridge_id / "forward_confirmation_targets.json")
-    matrix = _variant_interpretation_matrix(outcome_summary)
+    if any(payload.get("status") != "PASS" for payload in validations.values()):
+        raise DynamicV3BacktestSimulationError("simulation interpretation source validation failed")
+    bundles = _sim_interpretation_source_bundles(source_dirs)
+    (
+        outcome_manifest,
+        outcome_summary,
+        outcome_windows,
+        calibration_manifest,
+        calibration_evidence,
+        bridge_manifest,
+        bridge_targets,
+    ) = _sim_interpretation_source_views(bundles)
+    _validate_sim_interpretation_lineage_and_time(
+        generated=generated,
+        outcome_id=outcome_id,
+        calibration_id=calibration_id,
+        bridge_id=bridge_id,
+        outcome_manifest=outcome_manifest,
+        calibration_manifest=calibration_manifest,
+        bridge_manifest=bridge_manifest,
+    )
+    matrix = _variant_interpretation_matrix(outcome_summary, outcome_windows)
     findings = _sim_key_findings(
-        outcome_summary=outcome_summary,
+        interpretation_matrix=matrix,
         calibration_evidence=calibration_evidence,
         bridge_targets=bridge_targets,
     )
@@ -3740,8 +3769,66 @@ def run_sim_interpretation(
         generated.isoformat(),
     )
     interpretation_dir = _unique_dir(output_dir / interpretation_id)
+    input_snapshot = {
+        "schema_version": SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_interpretation_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+        "source_bundles": bundles,
+        "source_validations": validations,
+        "lineage": {
+            "outcome_id": outcome_id,
+            "calibration_id": calibration_id,
+            "bridge_id": bridge_id,
+        },
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _sim_interpretation_manifest(
+        interpretation_dir=interpretation_dir,
+        generated=generated,
+        outcome_id=outcome_id,
+        calibration_id=calibration_id,
+        bridge_id=bridge_id,
+        outcome_manifest=outcome_manifest,
+        calibration_evidence=calibration_evidence,
+        bridge_manifest=bridge_manifest,
+    )
+    report = render_sim_interpretation_report(manifest, matrix, findings)
     interpretation_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
+    _write_json(interpretation_dir / "sim_interpretation_manifest.json", manifest)
+    _write_json(interpretation_dir / "variant_interpretation_matrix.json", matrix)
+    _write_json(interpretation_dir / "key_findings.json", findings)
+    _write_json(interpretation_dir / "sim_interpretation_input_snapshot.json", input_snapshot)
+    _write_text(interpretation_dir / "sim_interpretation_report.md", report)
+    _update_latest_pointer(
+        "latest_sim_interpretation",
+        interpretation_dir.name,
+        interpretation_dir / "sim_interpretation_manifest.json",
+    )
+    return {
+        "interpretation_id": interpretation_dir.name,
+        "interpretation_dir": interpretation_dir,
+        "manifest": manifest,
+        "variant_interpretation_matrix": matrix,
+        "key_findings": findings,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _sim_interpretation_manifest(
+    *,
+    interpretation_dir: Path,
+    generated: datetime,
+    outcome_id: str,
+    calibration_id: str,
+    bridge_id: str,
+    outcome_manifest: Mapping[str, Any],
+    calibration_evidence: Mapping[str, Any],
+    bridge_manifest: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_sim_interpretation_manifest",
         "interpretation_id": interpretation_dir.name,
@@ -3765,6 +3852,9 @@ def run_sim_interpretation(
             interpretation_dir / "variant_interpretation_matrix.json"
         ),
         "key_findings_path": str(interpretation_dir / "key_findings.json"),
+        "sim_interpretation_input_snapshot_path": str(
+            interpretation_dir / "sim_interpretation_input_snapshot.json"
+        ),
         "sim_interpretation_report_path": str(interpretation_dir / "sim_interpretation_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -3775,25 +3865,106 @@ def run_sim_interpretation(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
-    _write_json(interpretation_dir / "sim_interpretation_manifest.json", manifest)
-    _write_json(interpretation_dir / "variant_interpretation_matrix.json", matrix)
-    _write_json(interpretation_dir / "key_findings.json", findings)
-    _write_text(
-        interpretation_dir / "sim_interpretation_report.md",
-        render_sim_interpretation_report(manifest, matrix, findings),
-    )
-    _update_latest_pointer(
-        "latest_sim_interpretation",
-        interpretation_dir.name,
-        interpretation_dir / "sim_interpretation_manifest.json",
-    )
+
+
+def _sim_interpretation_source_validations(
+    *,
+    outcome_id: str,
+    calibration_id: str,
+    bridge_id: str,
+    source_dirs: Mapping[str, Path],
+) -> dict[str, Any]:
     return {
-        "interpretation_id": interpretation_dir.name,
-        "interpretation_dir": interpretation_dir,
-        "manifest": manifest,
-        "variant_interpretation_matrix": matrix,
-        "key_findings": findings,
+        "outcome": validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=outcome_id, output_dir=source_dirs["outcome"].parent
+        ),
+        "calibration": validate_backtest_sim_calibration_artifact(
+            calibration_pack_id=calibration_id,
+            output_dir=source_dirs["calibration"].parent,
+        ),
+        "bridge": validate_backtest_sim_forward_bridge_artifact(
+            bridge_id=bridge_id, output_dir=source_dirs["bridge"].parent
+        ),
     }
+
+
+def _sim_interpretation_source_bundles(
+    source_dirs: Mapping[str, Path],
+) -> dict[str, Any]:
+    return {
+        "outcome": _backtest_sim_outcome_bundle(source_dirs["outcome"]),
+        "calibration": _backtest_sim_forward_bridge_source_bundle(
+            source_dirs["calibration"]
+        ),
+        "bridge": _backtest_sim_calibration_source_bundle(
+            source_dirs["bridge"],
+            json_files=(
+                "sim_forward_bridge_manifest.json",
+                "forward_confirmation_targets.json",
+                "weekly_review_questions.json",
+                "forward_bridge_input_snapshot.json",
+            ),
+            text_files=("sim_forward_bridge_report.md", "reader_brief_section.md"),
+        ),
+    }
+
+
+def _sim_interpretation_source_views(
+    bundles: Mapping[str, Any],
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+]:
+    outcome = _mapping(bundles.get("outcome"))
+    calibration_json = _mapping(_mapping(bundles.get("calibration")).get("json"))
+    bridge_json = _mapping(_mapping(bundles.get("bridge")).get("json"))
+    return (
+        dict(_mapping(outcome.get("manifest"))),
+        dict(_mapping(outcome.get("summary"))),
+        [dict(row) for row in _records(outcome.get("windows"))],
+        dict(_mapping(calibration_json.get("sim_calibration_manifest.json"))),
+        dict(_mapping(calibration_json.get("simulation_evidence_summary.json"))),
+        dict(_mapping(bridge_json.get("sim_forward_bridge_manifest.json"))),
+        dict(_mapping(bridge_json.get("forward_confirmation_targets.json"))),
+    )
+
+
+def _validate_sim_interpretation_lineage_and_time(
+    *,
+    generated: datetime,
+    outcome_id: str,
+    calibration_id: str,
+    bridge_id: str,
+    outcome_manifest: Mapping[str, Any],
+    calibration_manifest: Mapping[str, Any],
+    bridge_manifest: Mapping[str, Any],
+) -> None:
+    manifests = (outcome_manifest, calibration_manifest, bridge_manifest)
+    if any(
+        (source_generated := _datetime_from_any(item.get("generated_at"))) is None
+        or source_generated > generated
+        for item in manifests
+    ):
+        raise DynamicV3BacktestSimulationError(
+            "simulation interpretation source generated after cutoff"
+        )
+    if (
+        outcome_manifest.get("sim_outcome_id") != outcome_id
+        or calibration_manifest.get("calibration_pack_id") != calibration_id
+        or calibration_manifest.get("sim_outcome_id") != outcome_id
+        or bridge_manifest.get("bridge_id") != bridge_id
+        or bridge_manifest.get("calibration_pack_id") != calibration_id
+        or bridge_manifest.get("sim_outcome_id") != outcome_id
+        or bridge_manifest.get("bridge_semantics") != "TRACKING_PLAN_ONLY"
+    ):
+        raise DynamicV3BacktestSimulationError(
+            "simulation interpretation source lineage/semantics mismatch"
+        )
 
 
 def sim_interpretation_report_payload(
@@ -3813,6 +3984,9 @@ def sim_interpretation_report_payload(
             interpretation_dir / "variant_interpretation_matrix.json"
         ),
         "key_findings": _read_json(interpretation_dir / "key_findings.json"),
+        "sim_interpretation_input_snapshot": _read_json(
+            interpretation_dir / "sim_interpretation_input_snapshot.json"
+        ),
         "interpretation_dir": str(interpretation_dir),
     }
 
@@ -3824,6 +3998,109 @@ def validate_sim_interpretation_artifact(
     manifest = _read_optional_json(interpretation_dir / "sim_interpretation_manifest.json") or {}
     matrix = _read_optional_json(interpretation_dir / "variant_interpretation_matrix.json") or {}
     findings = _read_optional_json(interpretation_dir / "key_findings.json") or {}
+    snapshot = (
+        _read_optional_json(interpretation_dir / "sim_interpretation_input_snapshot.json") or {}
+    )
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        source_dirs = {
+            name: Path(_text(path))
+            for name, path in _mapping(snapshot.get("source_dirs")).items()
+        }
+        lineage = _mapping(snapshot.get("lineage"))
+        if (
+            snapshot.get("schema_version") != SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION
+            or generated is None
+            or set(source_dirs) != {"outcome", "calibration", "bridge"}
+        ):
+            raise DynamicV3BacktestSimulationError(
+                "simulation interpretation snapshot identity/time invalid"
+            )
+        outcome_id = _text(lineage.get("outcome_id"))
+        calibration_id = _text(lineage.get("calibration_id"))
+        bridge_id = _text(lineage.get("bridge_id"))
+        if (
+            source_dirs["outcome"].name != outcome_id
+            or source_dirs["calibration"].name != calibration_id
+            or source_dirs["bridge"].name != bridge_id
+        ):
+            raise DynamicV3BacktestSimulationError(
+                "simulation interpretation source ids invalid"
+            )
+        live_validations = _sim_interpretation_source_validations(
+            outcome_id=outcome_id,
+            calibration_id=calibration_id,
+            bridge_id=bridge_id,
+            source_dirs=source_dirs,
+        )
+        if any(payload.get("status") != "PASS" for payload in live_validations.values()):
+            source_errors.append("source_validation_failed")
+        if live_validations != snapshot.get("source_validations"):
+            source_errors.append("source_validations_changed")
+        live_bundles = _sim_interpretation_source_bundles(source_dirs)
+        if live_bundles != snapshot.get("source_bundles"):
+            source_errors.append("source_bundles_changed")
+        (
+            outcome_manifest,
+            outcome_summary,
+            outcome_windows,
+            calibration_manifest,
+            calibration_evidence,
+            bridge_manifest,
+            bridge_targets,
+        ) = _sim_interpretation_source_views(live_bundles)
+        try:
+            _validate_sim_interpretation_lineage_and_time(
+                generated=generated,
+                outcome_id=outcome_id,
+                calibration_id=calibration_id,
+                bridge_id=bridge_id,
+                outcome_manifest=outcome_manifest,
+                calibration_manifest=calibration_manifest,
+                bridge_manifest=bridge_manifest,
+            )
+        except DynamicV3BacktestSimulationError as exc:
+            source_errors.append(str(exc))
+        expected_matrix = _variant_interpretation_matrix(outcome_summary, outcome_windows)
+        expected_findings = _sim_key_findings(
+            interpretation_matrix=expected_matrix,
+            calibration_evidence=calibration_evidence,
+            bridge_targets=bridge_targets,
+        )
+        expected_snapshot = {
+            "schema_version": SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_sim_interpretation_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+            "source_bundles": live_bundles,
+            "source_validations": live_validations,
+            "lineage": dict(lineage),
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _sim_interpretation_manifest(
+            interpretation_dir=interpretation_dir,
+            generated=generated,
+            outcome_id=outcome_id,
+            calibration_id=calibration_id,
+            bridge_id=bridge_id,
+            outcome_manifest=outcome_manifest,
+            calibration_evidence=calibration_evidence,
+            bridge_manifest=bridge_manifest,
+        )
+        expected_report = render_sim_interpretation_report(
+            expected_manifest, expected_matrix, expected_findings
+        )
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_matrix = {}
+        expected_findings = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
     variants = _records(matrix.get("variants"))
     checks = [
         _check(
@@ -3838,6 +4115,11 @@ def validate_sim_interpretation_artifact(
         ),
         _check("findings_exists", (interpretation_dir / "key_findings.json").exists(), ""),
         _check(
+            "snapshot_exists",
+            (interpretation_dir / "sim_interpretation_input_snapshot.json").exists(),
+            "",
+        ),
+        _check(
             "report_exists",
             (interpretation_dir / "sim_interpretation_report.md").exists(),
             "",
@@ -3847,6 +4129,37 @@ def validate_sim_interpretation_artifact(
             manifest.get("interpretation_id") == interpretation_id,
             "",
         ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources"),
+        _check("matrix_recomputed", matrix == expected_matrix, "snapshot"),
+        _check("findings_recomputed", findings == expected_findings, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (
+                        interpretation_dir / "sim_interpretation_input_snapshot.json",
+                        expected_snapshot,
+                    ),
+                    (interpretation_dir / "variant_interpretation_matrix.json", expected_matrix),
+                    (interpretation_dir / "key_findings.json", expected_findings),
+                    (interpretation_dir / "sim_interpretation_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            (interpretation_dir / "sim_interpretation_report.md").is_file()
+            and (interpretation_dir / "sim_interpretation_report.md").read_text(
+                encoding="utf-8"
+            )
+            == expected_report,
+            "Markdown",
+        ),
         _check(
             "all_variants_interpreted",
             {row.get("variant") for row in variants} >= set(BACKTEST_SIM_VARIANTS),
@@ -3855,7 +4168,10 @@ def validate_sim_interpretation_artifact(
         _check(
             "variant_fields_present",
             all(
-                row.get("role") and row.get("risk_profile") and row.get("recommended_usage")
+                row.get("role")
+                and row.get("risk_profile")
+                and row.get("recommended_usage")
+                and row.get("evidence_status") in {"AVAILABLE", "INSUFFICIENT_DATA"}
                 for row in variants
             ),
             "role/risk/recommended usage",
@@ -3875,6 +4191,25 @@ def validate_sim_interpretation_artifact(
             manifest.get("auto_policy_apply") is False
             and manifest.get("production_effect") == "none",
             "no policy apply",
+        ),
+        _check(
+            "missing_metrics_not_zero_filled",
+            all(
+                profile.get(key) is None or _finite_number(profile.get(key))
+                for row in variants
+                for profile in (_mapping(row.get("return_profile")),)
+                for key in (
+                    "avg_1d_return",
+                    "avg_5d_return",
+                    "avg_10d_return",
+                    "avg_20d_return",
+                )
+            )
+            and all(
+                row.get("confidence") != "HIGH"
+                for row in _records(findings.get("findings"))
+            ),
+            "null/finite evidence and no synthetic HIGH confidence",
         ),
         _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
     ]
@@ -5081,15 +5416,19 @@ def render_forward_confirmation_plan_report(
     )
 
 
-def _variant_interpretation_matrix(outcome_summary: Mapping[str, Any]) -> dict[str, Any]:
-    no_trade = _variant_summary_row(outcome_summary, "no_trade")
+def _variant_interpretation_matrix(
+    outcome_summary: Mapping[str, Any], outcome_windows: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
     variants = []
     for variant in BACKTEST_SIM_VARIANTS:
-        row = _variant_summary_row(outcome_summary, variant)
+        row, no_trade = _paired_interpretation_metrics(outcome_windows, variant)
         variants.append(
             {
                 "variant": variant,
                 "role": _variant_role(variant),
+                "evidence_status": row.get("evidence_status"),
+                "paired_event_count": row.get("paired_event_count"),
+                "paired_window_count": row.get("paired_window_count"),
                 "return_profile": _variant_return_profile(row, no_trade),
                 "risk_profile": _variant_risk_profile(row, no_trade),
                 "interpretation": _variant_interpretation_text(variant, row, no_trade),
@@ -5109,6 +5448,63 @@ def _variant_interpretation_matrix(outcome_summary: Mapping[str, Any]) -> dict[s
     }
 
 
+def _paired_interpretation_metrics(
+    outcome_windows: Sequence[Mapping[str, Any]], variant: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    available = {
+        (
+            _text(row.get("sim_event_id")),
+            _int(row.get("window_days")),
+            _text(row.get("variant")),
+        ): row
+        for row in outcome_windows
+        if row.get("outcome_status") == "AVAILABLE"
+    }
+    pairs: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+    for (event_id, window_days, row_variant), row in available.items():
+        if row_variant != variant:
+            continue
+        baseline = available.get((event_id, window_days, "no_trade"))
+        if baseline is not None:
+            pairs.append((row, baseline))
+
+    def metric(payload_index: int, key: str, window_days: int | None = None) -> float | None:
+        values = [
+            pair[payload_index].get(key)
+            for pair in pairs
+            if (window_days is None or pair[0].get("window_days") == window_days)
+            and _finite_number(pair[payload_index].get(key))
+        ]
+        return _nullable_avg(values)
+
+    pair_events = {_text(pair[0].get("sim_event_id")) for pair in pairs}
+    pair_windows = {
+        (_text(pair[0].get("sim_event_id")), _int(pair[0].get("window_days")))
+        for pair in pairs
+    }
+    status = "AVAILABLE" if pairs else "INSUFFICIENT_DATA"
+    common = {
+        "variant": variant,
+        "evidence_status": status,
+        "paired_event_count": len(pair_events),
+        "paired_window_count": len(pair_windows),
+    }
+    row = {
+        **common,
+        **{f"avg_{day}d_return": metric(0, "return", day) for day in (1, 5, 10, 20)},
+        "avg_max_drawdown_20d": metric(0, "max_drawdown", 20),
+        "avg_turnover": metric(0, "turnover"),
+    }
+    baseline = {
+        **common,
+        "variant": "no_trade",
+        **{f"avg_{day}d_return": metric(1, "return", day) for day in (1, 5, 10, 20)},
+        "avg_max_drawdown_20d": metric(1, "max_drawdown", 20),
+        "avg_turnover": metric(1, "turnover"),
+    }
+    return row, baseline
+
+
 def _variant_role(variant: str) -> str:
     return {
         "no_trade": "passive_reference",
@@ -5126,10 +5522,10 @@ def _variant_return_profile(
     return {
         "one_day": _return_compare(row, no_trade, "avg_1d_return"),
         "five_to_twenty_days": _medium_horizon_compare(row, no_trade),
-        "avg_1d_return": row.get("avg_1d_return", 0.0),
-        "avg_5d_return": row.get("avg_5d_return", 0.0),
-        "avg_10d_return": row.get("avg_10d_return", 0.0),
-        "avg_20d_return": row.get("avg_20d_return", 0.0),
+        "avg_1d_return": row.get("avg_1d_return"),
+        "avg_5d_return": row.get("avg_5d_return"),
+        "avg_10d_return": row.get("avg_10d_return"),
+        "avg_20d_return": row.get("avg_20d_return"),
     }
 
 
@@ -5140,8 +5536,8 @@ def _variant_risk_profile(
     return {
         "drawdown": _drawdown_compare(row, no_trade),
         "turnover": _turnover_compare(row, no_trade),
-        "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d", 0.0),
-        "avg_turnover": row.get("avg_turnover", 0.0),
+        "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d"),
+        "avg_turnover": row.get("avg_turnover"),
     }
 
 
@@ -5164,8 +5560,12 @@ def _variant_interpretation_text(
             "defensive_limited_adjustment requires regime-specific proof before it can be "
             "called defensive."
         )
+    if not _finite_number(row.get("avg_20d_return")) or not _finite_number(
+        no_trade.get("avg_20d_return")
+    ):
+        return "simulation reference variant; paired 20d evidence is insufficient."
     delta = _float(row.get("avg_20d_return")) - _float(no_trade.get("avg_20d_return"))
-    return f"simulation reference variant; 20d delta vs no_trade={round(delta, 6)}."
+    return f"simulation reference variant; paired 20d delta vs no_trade={round(delta, 6)}."
 
 
 def _variant_recommended_usage(variant: str) -> str:
@@ -5189,6 +5589,8 @@ def _variant_not_recommended_usage(variant: str) -> str:
 
 
 def _return_compare(row: Mapping[str, Any], baseline: Mapping[str, Any], key: str) -> str:
+    if not _finite_number(row.get(key)) or not _finite_number(baseline.get(key)):
+        return "INSUFFICIENT_DATA"
     delta = _float(row.get(key)) - _float(baseline.get(key))
     if abs(delta) <= 0.000001:
         return "similar_to_no_trade"
@@ -5196,9 +5598,15 @@ def _return_compare(row: Mapping[str, Any], baseline: Mapping[str, Any], key: st
 
 
 def _medium_horizon_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    keys = ("avg_5d_return", "avg_10d_return", "avg_20d_return")
+    if any(
+        not _finite_number(row.get(key)) or not _finite_number(baseline.get(key))
+        for key in keys
+    ):
+        return "INSUFFICIENT_DATA"
     comparisons = [
         _float(row.get(key)) - _float(baseline.get(key))
-        for key in ("avg_5d_return", "avg_10d_return", "avg_20d_return")
+        for key in keys
     ]
     positive = sum(1 for value in comparisons if value > 0.000001)
     negative = sum(1 for value in comparisons if value < -0.000001)
@@ -5212,6 +5620,10 @@ def _medium_horizon_compare(row: Mapping[str, Any], baseline: Mapping[str, Any])
 
 
 def _drawdown_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    if not _finite_number(row.get("avg_max_drawdown_20d")) or not _finite_number(
+        baseline.get("avg_max_drawdown_20d")
+    ):
+        return "INSUFFICIENT_DATA"
     delta = _float(row.get("avg_max_drawdown_20d")) - _float(baseline.get("avg_max_drawdown_20d"))
     if abs(delta) <= 0.000001:
         return "similar_to_no_trade"
@@ -5219,6 +5631,10 @@ def _drawdown_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> st
 
 
 def _turnover_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    if not _finite_number(row.get("avg_turnover")) or not _finite_number(
+        baseline.get("avg_turnover")
+    ):
+        return "INSUFFICIENT_DATA"
     delta = _float(row.get("avg_turnover")) - _float(baseline.get("avg_turnover"))
     if abs(delta) <= 0.000001:
         return "similar_to_no_trade"
@@ -5227,23 +5643,32 @@ def _turnover_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> st
 
 def _sim_key_findings(
     *,
-    outcome_summary: Mapping[str, Any],
+    interpretation_matrix: Mapping[str, Any],
     calibration_evidence: Mapping[str, Any],
     bridge_targets: Mapping[str, Any],
 ) -> dict[str, Any]:
-    no_trade = _variant_summary_row(outcome_summary, "no_trade")
-    active_rows = [
-        _variant_summary_row(outcome_summary, variant) for variant in ACTIVE_SIM_VARIANTS
-    ]
+    matrix_rows = {
+        _text(row.get("variant")): row
+        for row in _records(interpretation_matrix.get("variants"))
+    }
+    active_rows = [matrix_rows.get(variant, {}) for variant in ACTIVE_SIM_VARIANTS]
     medium_positive = [
         row
         for row in active_rows
-        if _float(row.get("avg_20d_return")) > _float(no_trade.get("avg_20d_return"))
+        if _mapping(row.get("return_profile")).get("five_to_twenty_days")
+        in {"stronger_than_no_trade", "mixed_but_positive_medium_horizon"}
     ]
     drawdown_worse = [
         row
         for row in active_rows
-        if _float(row.get("avg_max_drawdown_20d")) < _float(no_trade.get("avg_max_drawdown_20d"))
+        if _mapping(row.get("risk_profile")).get("drawdown") == "worse_than_no_trade"
+    ]
+    consensus = matrix_rows.get("consensus_target", {})
+    defensive_metric = calibration_evidence.get("defensive_limited_avg_drawdown_20d")
+    tracking_targets = [
+        row
+        for row in _records(bridge_targets.get("targets"))
+        if row.get("tracking_status") == "TRACKING_REQUIRED"
     ]
     findings = [
         {
@@ -5255,12 +5680,12 @@ def _sim_key_findings(
             "evidence": [
                 {
                     "variant": row.get("variant"),
-                    "avg_20d_return": row.get("avg_20d_return"),
-                    "no_trade_avg_20d_return": no_trade.get("avg_20d_return"),
+                    "paired_event_count": row.get("paired_event_count"),
+                    "return_profile": row.get("return_profile"),
                 }
                 for row in medium_positive
             ],
-            "confidence": "MEDIUM" if medium_positive else "LOW",
+            "confidence": "MEDIUM" if medium_positive else "INSUFFICIENT_DATA",
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "drawdown may worsen"],
         },
         {
@@ -5269,12 +5694,12 @@ def _sim_key_findings(
             "evidence": [
                 {
                     "variant": row.get("variant"),
-                    "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d"),
-                    "no_trade_avg_max_drawdown_20d": no_trade.get("avg_max_drawdown_20d"),
+                    "paired_event_count": row.get("paired_event_count"),
+                    "risk_profile": row.get("risk_profile"),
                 }
                 for row in drawdown_worse
             ],
-            "confidence": "HIGH" if drawdown_worse else "MEDIUM",
+            "confidence": "MEDIUM" if drawdown_worse else "INSUFFICIENT_DATA",
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION],
         },
         {
@@ -5283,8 +5708,12 @@ def _sim_key_findings(
                 "consensus_target should be read as an upper-bound reference "
                 "rather than default execution."
             ),
-            "evidence": [_variant_summary_row(outcome_summary, "consensus_target")],
-            "confidence": "MEDIUM",
+            "evidence": [consensus] if consensus.get("evidence_status") == "AVAILABLE" else [],
+            "confidence": (
+                "MEDIUM"
+                if consensus.get("evidence_status") == "AVAILABLE"
+                else "INSUFFICIENT_DATA"
+            ),
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "turnover and drawdown risk"],
         },
         {
@@ -5294,22 +5723,27 @@ def _sim_key_findings(
             ),
             "evidence": [
                 {
-                    "best_variant": outcome_summary.get("best_variant"),
-                    "defensive_drawdown_20d": calibration_evidence.get(
-                        "defensive_limited_avg_drawdown_20d"
+                    "defensive_drawdown_20d": (
+                        defensive_metric if _finite_number(defensive_metric) else None
+                    ),
+                    "source_calibration_readiness": calibration_evidence.get(
+                        "calibration_readiness"
                     ),
                 }
             ],
-            "confidence": "MEDIUM",
+            "confidence": (
+                "MEDIUM" if _finite_number(defensive_metric) else "INSUFFICIENT_DATA"
+            ),
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "pressure regime sample required"],
         },
         {
             "finding_id": "requires_forward_confirmation",
             "summary": (
-                "BACKTEST_SIMULATION_NOT_PIT requires forward confirmation before rule calibration."
+                "BACKTEST_SIMULATION_NOT_PIT defines a tracking plan; "
+                "forward success is not claimed."
             ),
-            "evidence": _records(bridge_targets.get("targets")),
-            "confidence": "HIGH",
+            "evidence": tracking_targets,
+            "confidence": "INSUFFICIENT_DATA",
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "not PIT evidence"],
         },
     ]

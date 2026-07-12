@@ -185,6 +185,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_shadow_registry as dynamic_v3_shadow_registry_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_sim_interpretation as dynamic_v3_sim_interpretation_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_sweep_config as dynamic_v3_sweep_config_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -280,6 +283,7 @@ __all__ = [
     "dynamic_v3_backtest_sim_variants_commands",
     "dynamic_v3_historical_paper_sim_commands",
     "dynamic_v3_shadow_registry_commands",
+    "dynamic_v3_sim_interpretation_commands",
     "dynamic_v3_shadow_aging_commands",
     "dynamic_v3_sweep_config_commands",
     "dynamic_v3_sweep_runtime_commands",
