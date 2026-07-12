@@ -20,6 +20,9 @@ from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_advisory_outcome as dynamic_v3_advisory_outcome_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
+    dynamic_v3_backfilled_outcome as dynamic_v3_backfilled_outcome_commands,
+)
+from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_candidate_evidence as dynamic_v3_candidate_evidence_commands,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import (
@@ -178,6 +181,7 @@ __all__ = [
     "dynamic_v3_position_advisory_daily_commands",
     "dynamic_v3_replay_inventory_commands",
     "dynamic_v3_historical_replay_commands",
+    "dynamic_v3_backfilled_outcome_commands",
     "dynamic_v3_shadow_registry_commands",
     "dynamic_v3_shadow_aging_commands",
     "dynamic_v3_sweep_config_commands",

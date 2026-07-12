@@ -54,6 +54,7 @@ DEFAULT_REPLAY_FORWARD_BRIDGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_f
 DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
 REPLAY_INVENTORY_SNAPSHOT_SCHEMA_VERSION = "replay_inventory_source_snapshot.v2"
 HISTORICAL_REPLAY_SNAPSHOT_SCHEMA_VERSION = "historical_replay_source_snapshot.v2"
+BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backfilled_outcome_source_snapshot.v2"
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
@@ -1009,12 +1010,54 @@ def run_backfill_outcome(
     enforce_data_quality_gate: bool = True,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
+    source_dir = replay_dir / replay_id
+    source_validation = validate_historical_replay_artifact(
+        replay_id=replay_id,
+        output_dir=replay_dir,
+    )
+    if source_validation.get("status") != "PASS":
+        raise DynamicV3HistoricalReplayError(
+            "backfill outcome requires a fully validated snapshotted replay"
+        )
+    replay_manifest = _read_json(source_dir / "historical_replay_manifest.json")
+    replay_generated = _datetime_from_any(replay_manifest.get("generated_at"))
+    if replay_generated is None or generated < replay_generated:
+        raise DynamicV3HistoricalReplayError(
+            "backfill generated_at cannot precede historical replay generated_at"
+        )
+    replay_events = _read_jsonl(source_dir / "replay_events.jsonl")
     config = load_paper_portfolio_config(config_path)
     windows = _configured_outcome_windows(config)
-    source_dir = replay_dir / replay_id
-    replay_manifest = _read_json(source_dir / "historical_replay_manifest.json")
-    replay_events = _read_jsonl(source_dir / "replay_events.jsonl")
+    cost_rate = _backfill_cost_rate(config)
+    policy_metadata = _mapping(config.get("policy_metadata"))
+    quality = None
+    if enforce_data_quality_gate:
+        quality = _validate_cached_data_quality(
+            as_of=generated.date(),
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+        if not quality.passed:
+            raise DynamicV3HistoricalReplayError(
+                f"backfill outcome data quality gate failed: {quality.status}"
+            )
+    prices = _load_prices_for_replay(prices_path, replay_events)
+    price_rows = _frozen_replay_price_rows(prices, generated_date=generated.date())
+    frozen_prices = pd.DataFrame(
+        price_rows,
+        columns=["symbol", "date", "adj_close"],
+    ).rename(
+        columns={"date": "_date", "adj_close": "_adj_close"}
+    )
+    frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+    rows, summary, rollup, status = _backfill_views(
+        replay_events,
+        windows=windows,
+        prices=frozen_prices,
+        generated_date=generated.date(),
+        cost_rate=cost_rate,
+    )
     backfill_id = _stable_id("backfill-outcome", replay_id, generated.isoformat())
     backfill_dir = _unique_dir(output_dir / backfill_id)
     backfill_dir.mkdir(parents=True, exist_ok=False)
@@ -1022,36 +1065,42 @@ def run_backfill_outcome(
     quality_report_path = ""
     if enforce_data_quality_gate:
         quality_report = backfill_dir / "validate_data_quality_report.md"
-        quality = _run_cached_data_quality_gate(
-            as_of=generated.date(),
-            prices_path=prices_path,
-            rates_path=rates_path,
-            report_path=quality_report,
-        )
+        assert quality is not None
+        write_data_quality_report(quality, quality_report)
         quality_status = quality.status
         quality_report_path = str(quality_report)
-        if not quality.passed:
-            raise DynamicV3HistoricalReplayError(
-                f"backfill outcome data quality gate failed: {quality.status}"
-            )
-    prices = _load_prices_for_replay(prices_path, replay_events)
-    price_dates = _available_price_dates(prices)
-    rows = []
-    for event in replay_events:
-        rows.extend(
-            _backfilled_outcome_rows(
-                event=event,
-                windows=windows,
-                prices=prices,
-                price_dates=price_dates,
-                generated_date=generated.date(),
-            )
-        )
-    summary = _variant_performance_summary(rows)
-    rollup = Counter(row["outcome_status"] for row in rows)
-    status = "AVAILABLE" if rollup.get("AVAILABLE") else "INSUFFICIENT_DATA"
-    if rollup.get("PENDING") and not rollup.get("AVAILABLE"):
-        status = "PENDING"
+    source_snapshot = {
+        "schema_version": BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+        "replay_id": replay_id,
+        "replay_root": str(source_dir),
+        "replay_manifest_checksum": _sha256_file(source_dir / "historical_replay_manifest.json"),
+        "replay_source_snapshot_checksum": _sha256_file(
+            source_dir / "historical_replay_source_snapshot.json"
+        ),
+        "replay_manifest": replay_manifest,
+        "replay_events": replay_events,
+        "generated_at": generated.isoformat(),
+        "config_path": str(config_path),
+        "config_checksum": _sha256_file(config_path),
+        "config": config,
+        "windows": windows,
+        "session_source": "validated_price_cache_dates",
+        "cost_rate": cost_rate,
+        "cost_role": "initial_turnover_deduction_from_return",
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
+        "prices_path": str(prices_path),
+        "prices_checksum": _sha256_file(prices_path),
+        "rates_path": str(rates_path),
+        "rates_checksum": _sha256_file(rates_path),
+        "price_rows": price_rows,
+        "data_quality_status": quality_status,
+        "data_quality_gate_skipped_for_test": not enforce_data_quality_gate,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    source_snapshot_path = backfill_dir / "backfilled_outcome_source_snapshot.json"
+    _write_json(source_snapshot_path, source_snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backfill_outcome_manifest",
@@ -1061,6 +1110,11 @@ def run_backfill_outcome(
         "status": status,
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
         "tracked_windows": windows,
+        "session_source": "validated_price_cache_dates",
+        "cost_rate": cost_rate,
+        "cost_role": "initial_turnover_deduction_from_return",
+        "policy_id": _text(policy_metadata.get("policy_id")),
+        "policy_version": _text(policy_metadata.get("version")),
         "replay_event_count": replay_manifest.get("replay_event_count", len(replay_events)),
         "available_count": rollup.get("AVAILABLE", 0),
         "pending_count": rollup.get("PENDING", 0),
@@ -1070,6 +1124,9 @@ def run_backfill_outcome(
         "data_quality_report_path": quality_report_path,
         "prices_path": str(prices_path),
         "source_replay_path": str(source_dir / "historical_replay_manifest.json"),
+        "source_replay_validation_status": "PASS",
+        "source_snapshot_path": str(source_snapshot_path),
+        "source_snapshot_checksum": _sha256_file(source_snapshot_path),
         "backfill_manifest_path": str(backfill_dir / "backfill_manifest.json"),
         "replay_outcome_windows_path": str(backfill_dir / "replay_outcome_windows.jsonl"),
         "variant_performance_summary_path": str(backfill_dir / "variant_performance_summary.json"),
@@ -1133,15 +1190,227 @@ def validate_backfill_outcome_artifact(
     backfill_dir = output_dir / backfill_id
     manifest = _read_optional_json(backfill_dir / "backfill_manifest.json") or {}
     rows = _read_jsonl(backfill_dir / "replay_outcome_windows.jsonl")
+    summary = _read_optional_json(backfill_dir / "variant_performance_summary.json") or {}
+    snapshot_path = backfill_dir / "backfilled_outcome_source_snapshot.json"
+    if not snapshot_path.is_file():
+        legacy_checks = _backfill_shallow_checks(
+            backfill_id=backfill_id,
+            backfill_dir=backfill_dir,
+            manifest=manifest,
+            rows=rows,
+        )
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_backfill_outcome_validation",
+            artifact_id_key="backfill_id",
+            artifact_id=backfill_id,
+            checks=legacy_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    source_root = Path(_text(snapshot.get("replay_root")))
+    source_replay_id = _text(snapshot.get("replay_id"))
+    source_manifest_path = source_root / "historical_replay_manifest.json"
+    source_snapshot_path = source_root / "historical_replay_source_snapshot.json"
+    config_path = Path(_text(snapshot.get("config_path")))
+    prices_path = Path(_text(snapshot.get("prices_path")))
+    rates_path = Path(_text(snapshot.get("rates_path")))
+    generated = None
+    try:
+        frozen_prices = pd.DataFrame(
+            _records(snapshot.get("price_rows")),
+            columns=["symbol", "date", "adj_close"],
+        ).rename(columns={"date": "_date", "adj_close": "_adj_close"})
+        frozen_prices["_date"] = pd.to_datetime(frozen_prices["_date"]).dt.date
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        if generated is None:
+            raise DynamicV3HistoricalReplayError("backfill snapshot generated_at is invalid")
+        expected_rows, expected_summary, expected_rollup, expected_status = _backfill_views(
+            _records(snapshot.get("replay_events")),
+            windows=[_int(value) for value in snapshot.get("windows", [])],
+            prices=frozen_prices,
+            generated_date=generated.date(),
+            cost_rate=_float(snapshot.get("cost_rate")),
+        )
+        replay_error = ""
+    except Exception as exc:  # noqa: BLE001
+        expected_rows, expected_summary, expected_rollup, expected_status = [], {}, Counter(), ""
+        replay_error = str(exc)
+    try:
+        source_validation = validate_historical_replay_artifact(
+            replay_id=source_replay_id,
+            output_dir=source_root.parent,
+        )
+    except Exception as exc:  # noqa: BLE001
+        source_validation = {"status": "FAIL", "error": str(exc)}
+    source_files_match = (
+        source_manifest_path.is_file()
+        and source_snapshot_path.is_file()
+        and config_path.is_file()
+        and prices_path.is_file()
+        and rates_path.is_file()
+        and snapshot.get("replay_manifest_checksum") == _sha256_file(source_manifest_path)
+        and snapshot.get("replay_source_snapshot_checksum")
+        == _sha256_file(source_snapshot_path)
+        and snapshot.get("config_checksum") == _sha256_file(config_path)
+        and snapshot.get("prices_checksum") == _sha256_file(prices_path)
+        and snapshot.get("rates_checksum") == _sha256_file(rates_path)
+    )
+    dq_skipped = snapshot.get("data_quality_gate_skipped_for_test") is True
+    dq_valid = snapshot.get("data_quality_status") == "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    if not dq_skipped and source_files_match:
+        quality = _validate_cached_data_quality(
+            as_of=generated.date() if generated is not None else date.min,
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+        dq_valid = quality.passed and quality.status == snapshot.get("data_quality_status")
+    try:
+        embedded_source_matches = (
+            source_manifest_path.is_file()
+            and config_path.is_file()
+            and snapshot.get("replay_manifest") == _read_json(source_manifest_path)
+            and snapshot.get("replay_events")
+            == _read_jsonl(source_root / "replay_events.jsonl")
+            and snapshot.get("config") == load_paper_portfolio_config(config_path)
+            and snapshot.get("price_rows")
+            == _frozen_replay_price_rows(
+                _load_prices_for_replay(
+                    prices_path,
+                    _records(snapshot.get("replay_events")),
+                ),
+                generated_date=generated.date() if generated is not None else date.min,
+            )
+        )
+    except Exception:  # noqa: BLE001
+        embedded_source_matches = False
+    snapshot_config = _mapping(snapshot.get("config"))
+    snapshot_policy = _mapping(snapshot_config.get("policy_metadata"))
+    try:
+        snapshot_policy_matches = all(
+            (
+                snapshot.get("windows") == _configured_outcome_windows(snapshot_config),
+                _float(snapshot.get("cost_rate")) == _backfill_cost_rate(snapshot_config),
+                snapshot.get("cost_role") == "initial_turnover_deduction_from_return",
+                snapshot.get("session_source") == "validated_price_cache_dates",
+                snapshot.get("policy_id") == _text(snapshot_policy.get("policy_id")),
+                snapshot.get("policy_version") == _text(snapshot_policy.get("version")),
+            )
+        )
+    except Exception:  # noqa: BLE001
+        snapshot_policy_matches = False
+    expected_report = render_backfill_outcome_report(manifest, expected_summary)
+    report_path = backfill_dir / "backfill_outcome_report.md"
+    derived_manifest_matches = all(
+        (
+            manifest.get("replay_id") == source_replay_id,
+            manifest.get("generated_at") == snapshot.get("generated_at"),
+            manifest.get("tracked_windows") == snapshot.get("windows"),
+            manifest.get("session_source") == snapshot.get("session_source"),
+            _float(manifest.get("cost_rate")) == _float(snapshot.get("cost_rate")),
+            manifest.get("cost_role") == snapshot.get("cost_role"),
+            manifest.get("policy_id") == snapshot.get("policy_id"),
+            manifest.get("policy_version") == snapshot.get("policy_version"),
+            manifest.get("status") == expected_status,
+            _int(manifest.get("replay_event_count"))
+            == len(_records(snapshot.get("replay_events"))),
+            _int(manifest.get("available_count")) == expected_rollup.get("AVAILABLE", 0),
+            _int(manifest.get("pending_count")) == expected_rollup.get("PENDING", 0),
+            _int(manifest.get("insufficient_data_count"))
+            == expected_rollup.get("INSUFFICIENT_DATA", 0),
+            manifest.get("best_variant") == expected_summary.get("best_variant", "MISSING"),
+            manifest.get("data_quality_status") == snapshot.get("data_quality_status"),
+            manifest.get("source_replay_validation_status") == "PASS",
+        )
+    )
     checks = [
-        _check("manifest_exists", (backfill_dir / "backfill_manifest.json").exists(), backfill_id),
-        _check("outcome_rows_exists", (backfill_dir / "replay_outcome_windows.jsonl").exists(), ""),
+        *_backfill_shallow_checks(
+            backfill_id=backfill_id,
+            backfill_dir=backfill_dir,
+            manifest=manifest,
+            rows=rows,
+        ),
         _check(
-            "summary_exists",
-            (backfill_dir / "variant_performance_summary.json").exists(),
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+            BACKFILLED_OUTCOME_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "backfill source snapshot",
+        ),
+        _check(
+            "source_replay_validation_passes",
+            source_validation.get("status") == "PASS",
+            source_replay_id,
+        ),
+        _check("source_files_unchanged", source_files_match, source_replay_id),
+        _check(
+            "embedded_replay_and_config_match_source",
+            embedded_source_matches,
+            source_replay_id,
+        ),
+        _check(
+            "snapshot_policy_inputs_recomputed",
+            snapshot_policy_matches,
+            "windows, cost, sessions, policy metadata",
+        ),
+        _check("data_quality_evidence_valid", dq_valid, _text(snapshot.get("data_quality_status"))),
+        _check("outcome_rows_recomputed", not replay_error and rows == expected_rows, replay_error),
+        _check("summary_recomputed", summary == expected_summary, "variant summary"),
+        _check("manifest_derived_fields_match", derived_manifest_matches, "manifest"),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown report",
+        ),
+        _check(
+            "non_available_metrics_are_null",
+            all(
+                row.get(field) is None
+                for row in rows
+                if row.get("outcome_status") != "AVAILABLE"
+                for field in (
+                    "gross_return",
+                    "estimated_cost",
+                    "return",
+                    "relative_to_no_trade",
+                    "relative_to_consensus_target",
+                    "relative_to_limited_adjustment",
+                    "max_drawdown",
+                    "realized_volatility",
+                )
+            ),
+            "PENDING/INSUFFICIENT metrics must be null",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_backfill_outcome_validation",
+        artifact_id_key="backfill_id",
+        artifact_id=backfill_id,
+        checks=checks,
+    )
+
+
+def _backfill_shallow_checks(
+    *,
+    backfill_id: str,
+    backfill_dir: Path,
+    manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        _check("manifest_exists", (backfill_dir / "backfill_manifest.json").is_file(), ""),
+        _check(
+            "outcome_rows_exists",
+            (backfill_dir / "replay_outcome_windows.jsonl").is_file(),
             "",
         ),
-        _check("report_exists", (backfill_dir / "backfill_outcome_report.md").exists(), ""),
+        _check("summary_exists", (backfill_dir / "variant_performance_summary.json").is_file(), ""),
+        _check("report_exists", (backfill_dir / "backfill_outcome_report.md").is_file(), ""),
         _check("backfill_id_matches", manifest.get("backfill_id") == backfill_id, backfill_id),
         _check(
             "window_status_valid",
@@ -1160,12 +1429,6 @@ def validate_backfill_outcome_artifact(
             "broker action forbidden",
         ),
     ]
-    return _validation_payload(
-        report_type="etf_dynamic_v3_backfill_outcome_validation",
-        artifact_id_key="backfill_id",
-        artifact_id=backfill_id,
-        checks=checks,
-    )
 
 
 def run_historical_paper_sim(
@@ -2541,6 +2804,17 @@ def render_backfill_outcome_report(manifest: Mapping[str, Any], summary: Mapping
             f"- limited_adjustment_vs_no_trade_5d："
             f"{summary.get('limited_adjustment_vs_no_trade_5d')}",
             f"- data_quality_status：{manifest.get('data_quality_status')}",
+            f"- source_replay_validation_status："
+            f"{manifest.get('source_replay_validation_status')}",
+            "- sample_unit：event × variant × configured trading-session window。",
+            f"- cost_rate：{manifest.get('cost_rate')}；cost_role："
+            f"{manifest.get('cost_role')}。",
+            f"- policy：{manifest.get('policy_id')}@{manifest.get('policy_version')}；"
+            f"session_source：{manifest.get('session_source')}。",
+            "- return = gross fixed-share return - initial one-way L1 turnover cost；"
+            "max_drawdown / realized_volatility来自gross price path，未逐日摊销成本。",
+            "- PENDING / INSUFFICIENT_DATA 的gross/net return、relative、drawdown、"
+            "volatility均为null，不以0伪装可观测结果。",
             "- 价格只用于 outcome calculation，不进入 replay decision input。",
             "- production_effect=none；broker_action_taken=false。",
             "",
@@ -3729,6 +4003,35 @@ def _historical_replay_event(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _backfill_views(
+    replay_events: Sequence[Mapping[str, Any]],
+    *,
+    windows: Sequence[int],
+    prices: pd.DataFrame,
+    generated_date: date,
+    cost_rate: float,
+) -> tuple[list[dict[str, Any]], dict[str, Any], Counter[str], str]:
+    price_dates = _available_price_dates(prices)
+    rows = []
+    for event in replay_events:
+        rows.extend(
+            _backfilled_outcome_rows(
+                event=event,
+                windows=windows,
+                prices=prices,
+                price_dates=price_dates,
+                generated_date=generated_date,
+                cost_rate=cost_rate,
+            )
+        )
+    summary = _variant_performance_summary(rows)
+    rollup = Counter(_text(row.get("outcome_status")) for row in rows)
+    status = "AVAILABLE" if rollup.get("AVAILABLE") else "INSUFFICIENT_DATA"
+    if rollup.get("PENDING") and not rollup.get("AVAILABLE"):
+        status = "PENDING"
+    return rows, summary, rollup, status
+
+
 def _backfilled_outcome_rows(
     *,
     event: Mapping[str, Any],
@@ -3736,6 +4039,7 @@ def _backfilled_outcome_rows(
     prices: pd.DataFrame,
     price_dates: Sequence[date],
     generated_date: date,
+    cost_rate: float,
 ) -> list[dict[str, Any]]:
     start = _date_from_any(event.get("as_of"))
     if start is None:
@@ -3755,13 +4059,31 @@ def _backfilled_outcome_rows(
                         start=start,
                         end=end,
                         turnover=_float(_mapping(variant).get("turnover")),
+                        cost_rate=cost_rate,
                     )
                 )
             continue
-        returns = {
-            name: _portfolio_metrics(prices, weights, start, end)
-            for name, weights in variant_weights.items()
-        }
+        returns = {}
+        for variant in variants:
+            name = _text(variant.get("variant"))
+            metrics = _portfolio_metrics(prices, variant_weights.get(name, {}), start, end)
+            turnover = _float(_mapping(variant).get("turnover"))
+            if metrics.get("status") == "AVAILABLE":
+                gross_return = _float(metrics.get("return"))
+                estimated_cost = round(turnover * cost_rate, 6)
+                metrics = {
+                    **metrics,
+                    "gross_return": gross_return,
+                    "estimated_cost": estimated_cost,
+                    "return": round(gross_return - estimated_cost, 6),
+                }
+            else:
+                metrics = {
+                    **metrics,
+                    "gross_return": None,
+                    "estimated_cost": None,
+                }
+            returns[name] = metrics
         for variant in variants:
             name = _text(variant.get("variant"))
             metrics = returns.get(name, _missing_metrics())
@@ -3779,6 +4101,8 @@ def _backfilled_outcome_rows(
                     "window_days": window,
                     "start_date": start.isoformat(),
                     "end_date": end.isoformat(),
+                    "gross_return": metrics["gross_return"],
+                    "estimated_cost": metrics["estimated_cost"],
                     "return": metrics["return"],
                     "relative_to_no_trade": (
                         round(
@@ -3787,7 +4111,8 @@ def _backfilled_outcome_rows(
                             6,
                         )
                         if status == "AVAILABLE"
-                        else 0.0
+                        and returns.get("no_trade", {}).get("status") == "AVAILABLE"
+                        else None
                     ),
                     "relative_to_consensus_target": (
                         round(
@@ -3796,7 +4121,8 @@ def _backfilled_outcome_rows(
                             6,
                         )
                         if status == "AVAILABLE"
-                        else 0.0
+                        and returns.get("consensus_target", {}).get("status") == "AVAILABLE"
+                        else None
                     ),
                     "relative_to_limited_adjustment": (
                         round(
@@ -3805,12 +4131,22 @@ def _backfilled_outcome_rows(
                             6,
                         )
                         if status == "AVAILABLE"
-                        else 0.0
+                        and returns.get("limited_adjustment", {}).get("status") == "AVAILABLE"
+                        else None
                     ),
                     "max_drawdown": metrics["max_drawdown"],
                     "realized_volatility": metrics["realized_volatility"],
                     "turnover": _float(_mapping(variant).get("turnover")),
+                    "turnover_convention": "one_way_l1_weight_change",
+                    "cost_rate": cost_rate,
+                    "cost_role": "initial_turnover_deduction_from_return",
+                    "risk_metric_cost_role": "gross_price_path_cost_not_applied",
                     "outcome_status": status,
+                    "outcome_reason": (
+                        "required_symbol_price_path_incomplete"
+                        if status == "INSUFFICIENT_DATA"
+                        else ""
+                    ),
                     "broker_action_taken": False,
                 }
             )
@@ -4461,6 +4797,7 @@ def _pending_outcome_row(
     start: date,
     end: date | None,
     turnover: float,
+    cost_rate: float,
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -4474,14 +4811,21 @@ def _pending_outcome_row(
         "window_days": window,
         "start_date": start.isoformat(),
         "end_date": "" if end is None else end.isoformat(),
-        "return": 0.0,
-        "relative_to_no_trade": 0.0,
-        "relative_to_consensus_target": 0.0,
-        "relative_to_limited_adjustment": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        "gross_return": None,
+        "estimated_cost": None,
+        "return": None,
+        "relative_to_no_trade": None,
+        "relative_to_consensus_target": None,
+        "relative_to_limited_adjustment": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
         "turnover": turnover,
+        "turnover_convention": "one_way_l1_weight_change",
+        "cost_rate": cost_rate,
+        "cost_role": "initial_turnover_deduction_from_return",
+        "risk_metric_cost_role": "gross_price_path_cost_not_applied",
         "outcome_status": "PENDING",
+        "outcome_reason": "future_window_not_reached",
         "broker_action_taken": False,
     }
 
@@ -4503,18 +4847,44 @@ def _portfolio_metrics(
 
 def _missing_metrics() -> dict[str, Any]:
     return {
-        "return": 0.0,
-        "max_drawdown": 0.0,
-        "realized_volatility": 0.0,
+        "return": None,
+        "max_drawdown": None,
+        "realized_volatility": None,
         "status": "INSUFFICIENT_DATA",
     }
+
+
+def _backfill_cost_rate(config: Mapping[str, Any]) -> float:
+    simulation = _mapping(config.get("simulation"))
+    transaction_cost_bps = _float(simulation.get("transaction_cost_bps"))
+    slippage_bps = _float(simulation.get("slippage_bps"))
+    if (
+        not math.isfinite(transaction_cost_bps)
+        or not math.isfinite(slippage_bps)
+        or transaction_cost_bps < 0
+        or slippage_bps < 0
+    ):
+        raise DynamicV3HistoricalReplayError(
+            "backfill transaction_cost_bps and slippage_bps must be finite and non-negative"
+        )
+    return round((transaction_cost_bps + slippage_bps) / 10_000.0, 8)
 
 
 def _run_cached_data_quality_gate(
     *, as_of: date, prices_path: Path, rates_path: Path, report_path: Path
 ) -> Any:
+    quality = _validate_cached_data_quality(
+        as_of=as_of,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    write_data_quality_report(quality, report_path)
+    return quality
+
+
+def _validate_cached_data_quality(*, as_of: date, prices_path: Path, rates_path: Path) -> Any:
     universe = load_universe()
-    quality = validate_data_cache(
+    return validate_data_cache(
         prices_path=prices_path,
         rates_path=rates_path,
         expected_price_tickers=configured_price_tickers(universe),
@@ -4525,8 +4895,6 @@ def _run_cached_data_quality_gate(
         secondary_prices_path=_marketstack_prices_path(prices_path),
         require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
-    write_data_quality_report(quality, report_path)
-    return quality
 
 
 def _load_prices_for_replay(prices_path: Path, events: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
@@ -4548,6 +4916,22 @@ def _load_prices_for_replay(prices_path: Path, events: Sequence[Mapping[str, Any
     prices["_date"] = pd.to_datetime(prices["date"], errors="coerce").dt.date
     prices["_adj_close"] = pd.to_numeric(prices["adj_close"], errors="coerce")
     return prices.dropna(subset=["_date", "_adj_close"])
+
+
+def _frozen_replay_price_rows(
+    prices: pd.DataFrame,
+    *,
+    generated_date: date,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "symbol": _text(row.get("symbol")),
+            "date": row["_date"].isoformat(),
+            "adj_close": float(row["_adj_close"]),
+        }
+        for row in prices[["symbol", "_date", "_adj_close"]].to_dict(orient="records")
+        if row["_date"] <= generated_date
+    ]
 
 
 def _available_price_dates(prices: pd.DataFrame) -> list[date]:

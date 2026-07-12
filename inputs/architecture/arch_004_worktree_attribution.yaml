@@ -1,6 +1,6 @@
 schema_version: arch_004_worktree_attribution.v1
 task_id: ARCH-004
-status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AS_COMPLETE_G2_4_CONTINUES
+status: ATTRIBUTABLE_ISOLATION_PROVEN_PHASE_G2_4AT_COMPLETE_G2_4_CONTINUES
 as_of: 2026-07-12
 base_commit: 3bb5cd52
 production_effect: none
@@ -221,6 +221,7 @@ arch_004_owned_paths:
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_weekly_advisory_review.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_replay_inventory.py
   - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_historical_replay.py
+  - src/ai_trading_system/interfaces/cli/etf_portfolio/dynamic_v3_backfilled_outcome.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_parameter_research.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_paper_tracking.py
   - src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py
@@ -238,6 +239,7 @@ arch_004_owned_paths:
   - tests/test_weekly_advisory_review.py
   - tests/test_replay_inventory.py
   - tests/test_dynamic_v3_historical_replay.py
+  - tests/test_backfill_outcome.py
   - tests/dynamic_v3_historical_replay_helpers.py
   - tests/test_outcome_update.py
   - tests/dynamic_v3_outcome_loop_helpers.py

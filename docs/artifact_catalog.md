@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## ARCH-004G2.4AT Backfilled Outcome 增量
+
+|产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
+|---|---|---|---|---|---|---|
+|`reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/<backfill_id>/backfilled_outcome_source_snapshot.json`<br/>`backfill_manifest.json`<br/>`replay_outcome_windows.jsonl`<br/>`variant_performance_summary.json`<br/>`backfill_outcome_report.md`<br/>真实运行另含`validate_data_quality_report.md`|`aits etf dynamic-v3-rescue backfill-outcome run --replay-id <replay_id>`、`report --latest`、`validate-backfill-outcome --backfill-id <backfill_id>`|full-PASS snapshotted Historical Replay、reviewed `paper_portfolio_v1.yaml`、cached ETF prices/rates与统一DQ gate|snapshot冻结replay/config/window/session/cost/price-row bindings与checksums；sample unit=`event×variant×window`；AVAILABLE输出fixed-share gross return、initial one-way L1 turnover cost和net return，risk metrics标为gross path；PENDING/INSUFFICIENT收益/relative/risk/cost均null+reason；validator重验live replay/DQ/source并重算全部derived views；`production_effect=none`|历史variant结果评价、后续人工performance review输入|否，仅historical evaluation evidence|Backfill PASS不是策略有效、best variant不是promotion，gross risk也不是cost-adjusted risk；测试DQ skip不能作为投资证据，price不能回流为decision input，任何artifact均不授权policy/weights/portfolio/order/broker变化|
+
 ## ARCH-004F2 Research Lifecycle and Execution Chain
 
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|

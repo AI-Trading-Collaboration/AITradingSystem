@@ -6430,15 +6430,18 @@ reports:
     command: aits etf dynamic-v3-rescue backfill-outcome report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/backfilled_outcome_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/replay_outcome_windows.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/variant_performance_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/backfill_outcome_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/backfilled_outcome/*/validate_data_quality_report.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-143 backfilled outcome artifacts disclose AVAILABLE, PENDING, and
-      INSUFFICIENT_DATA windows plus cached data quality status before historical
-      replay performance is interpreted.
+      TRADING-143 freezes the full-PASS replay binding, reviewed window/cost
+      policy, validated price-cache sessions and required price rows. Derived
+      views disclose AVAILABLE, PENDING, and INSUFFICIENT_DATA with null missing
+      metrics, cached data-quality status, and gross/net/cost roles before any
+      historical replay performance is interpreted.
     owner_action: review_backfilled_outcome_and_data_quality_before_performance_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
