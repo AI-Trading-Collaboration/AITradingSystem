@@ -7013,12 +7013,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/simulation_evidence_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/proposed_advisory_rule_changes.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/simulation_limitations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/calibration_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/backtest_sim_calibration_report.md
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-167 calibration pack is owner-review-only and must remain visible
-      with auto_apply=false and production_effect=none.
+      TRADING-167 calibration pack binds four validated same-lineage sources,
+      preserves null missing metrics and remains owner-review-only with
+      auto_apply=false and production_effect=none.
     owner_action: review_simulation_calibration_pack_before_any_manual_policy_edit
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

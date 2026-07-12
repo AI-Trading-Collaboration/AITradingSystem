@@ -92,6 +92,7 @@ BACKTEST_SIM_OUTCOME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_outcome_input_snaps
 BACKTEST_SIM_PAPER_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_paper_input_snapshot.v2"
 BACKTEST_SIM_REGIME_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_regime_input_snapshot.v2"
 BACKTEST_SIM_SENSITIVITY_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_sensitivity_input_snapshot.v2"
+BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_calibration_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -1635,6 +1636,23 @@ def _backtest_sim_outcome_bundle(outcome_dir: Path) -> dict[str, Any]:
     }
 
 
+def _backtest_sim_calibration_source_bundle(
+    source_dir: Path,
+    *,
+    json_files: Sequence[str],
+    jsonl_files: Sequence[str] = (),
+    text_files: Sequence[str] = (),
+) -> dict[str, Any]:
+    files = tuple(json_files) + tuple(jsonl_files) + tuple(text_files)
+    return {
+        "source_dir": str(source_dir),
+        "json": {name: _read_json(source_dir / name) for name in json_files},
+        "jsonl": {name: _read_jsonl(source_dir / name) for name in jsonl_files},
+        "text": {name: _read_text(source_dir / name) for name in text_files},
+        "file_contents": {name: _read_text(source_dir / name) for name in files},
+    }
+
+
 def run_backtest_sim_paper(
     *,
     variant_set_id: str,
@@ -2813,12 +2831,109 @@ def run_backtest_sim_calibration_pack(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
-    outcome_manifest = _read_json(outcome_dir / sim_outcome_id / "sim_outcome_manifest.json")
-    outcome_summary = _read_json(outcome_dir / sim_outcome_id / "simulated_variant_summary.json")
-    paper_summary = _read_json(paper_dir / sim_paper_id / "sim_paper_performance_summary.json")
-    regime_summary = _read_json(regime_dir / regime_review_id / "regime_review_summary.json")
-    sensitivity_summary = _read_json(
-        sensitivity_dir / sensitivity_id / "overfit_warning_summary.json"
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
+    source_dirs = {
+        "outcome": outcome_dir / sim_outcome_id,
+        "paper": paper_dir / sim_paper_id,
+        "regime": regime_dir / regime_review_id,
+        "sensitivity": sensitivity_dir / sensitivity_id,
+    }
+    validations = {
+        "outcome": validate_backtest_sim_outcome_artifact(
+            sim_outcome_id=sim_outcome_id, output_dir=outcome_dir
+        ),
+        "paper": validate_backtest_sim_paper_artifact(
+            sim_paper_id=sim_paper_id, output_dir=paper_dir
+        ),
+        "regime": validate_backtest_sim_regime_artifact(
+            regime_review_id=regime_review_id, output_dir=regime_dir
+        ),
+        "sensitivity": validate_backtest_sim_sensitivity_artifact(
+            sensitivity_id=sensitivity_id, output_dir=sensitivity_dir
+        ),
+    }
+    if any(payload.get("status") != "PASS" for payload in validations.values()):
+        raise DynamicV3BacktestSimulationError("calibration source validation failed")
+    bundles = {
+        "outcome": _backtest_sim_outcome_bundle(source_dirs["outcome"]),
+        "paper": _backtest_sim_calibration_source_bundle(
+            source_dirs["paper"],
+            json_files=(
+                "sim_paper_manifest.json",
+                "sim_paper_performance_summary.json",
+                "paper_input_snapshot.json",
+            ),
+            jsonl_files=("sim_paper_state_history.jsonl", "sim_trade_ledger.jsonl"),
+            text_files=("backtest_sim_paper_report.md",),
+        ),
+        "regime": _backtest_sim_calibration_source_bundle(
+            source_dirs["regime"],
+            json_files=(
+                "sim_regime_manifest.json",
+                "regime_window_inventory.json",
+                "regime_review_summary.json",
+                "regime_input_snapshot.json",
+            ),
+            jsonl_files=("variant_regime_metrics.jsonl",),
+            text_files=("backtest_sim_regime_report.md",),
+        ),
+        "sensitivity": _backtest_sim_calibration_source_bundle(
+            source_dirs["sensitivity"],
+            json_files=(
+                "sim_sensitivity_manifest.json",
+                "threshold_sensitivity.json",
+                "shortlist_sensitivity.json",
+                "adjustment_limit_sensitivity.json",
+                "event_frequency_sensitivity.json",
+                "overfit_warning_summary.json",
+                "sensitivity_input_snapshot.json",
+            ),
+            text_files=("backtest_sim_sensitivity_report.md",),
+        ),
+    }
+    source_manifests = {
+        "outcome": _mapping(_mapping(bundles["outcome"]).get("manifest")),
+        "paper": _mapping(
+            _mapping(_mapping(bundles["paper"]).get("json")).get("sim_paper_manifest.json")
+        ),
+        "regime": _mapping(
+            _mapping(_mapping(bundles["regime"]).get("json")).get("sim_regime_manifest.json")
+        ),
+        "sensitivity": _mapping(
+            _mapping(_mapping(bundles["sensitivity"]).get("json")).get(
+                "sim_sensitivity_manifest.json"
+            )
+        ),
+    }
+    if any(
+        (source_generated := _datetime_from_any(source_manifest.get("generated_at"))) is None
+        or source_generated > generated
+        for source_manifest in source_manifests.values()
+    ):
+        raise DynamicV3BacktestSimulationError("calibration source generated after cutoff")
+    outcome_manifest = source_manifests["outcome"]
+    variant_set_id = _text(outcome_manifest.get("variant_set_id"))
+    event_set_id = _text(outcome_manifest.get("event_set_id"))
+    if (
+        source_manifests["paper"].get("variant_set_id") != variant_set_id
+        or source_manifests["regime"].get("sim_outcome_id") != sim_outcome_id
+        or source_manifests["regime"].get("variant_set_id") != variant_set_id
+        or source_manifests["sensitivity"].get("sim_outcome_id") != sim_outcome_id
+        or source_manifests["sensitivity"].get("variant_set_id") != variant_set_id
+        or source_manifests["sensitivity"].get("event_set_id") != event_set_id
+    ):
+        raise DynamicV3BacktestSimulationError("calibration source lineage mismatch")
+    outcome_summary = _mapping(_mapping(bundles["outcome"]).get("summary"))
+    paper_summary = _mapping(
+        _mapping(_mapping(bundles["paper"]).get("json")).get("sim_paper_performance_summary.json")
+    )
+    regime_summary = _mapping(
+        _mapping(_mapping(bundles["regime"]).get("json")).get("regime_review_summary.json")
+    )
+    sensitivity_summary = _mapping(
+        _mapping(_mapping(bundles["sensitivity"]).get("json")).get("overfit_warning_summary.json")
     )
     evidence = _calibration_evidence(
         outcome_summary, paper_summary, regime_summary, sensitivity_summary
@@ -2837,47 +2952,39 @@ def run_backtest_sim_calibration_pack(
         generated.isoformat(),
     )
     calibration_dir = _unique_dir(output_dir / calibration_id)
-    calibration_dir.mkdir(parents=True, exist_ok=False)
-    manifest = {
-        "schema_version": SCHEMA_VERSION,
-        "report_type": "etf_dynamic_v3_backtest_sim_calibration_manifest",
-        "calibration_pack_id": calibration_dir.name,
-        "sim_outcome_id": sim_outcome_id,
-        "sim_paper_id": sim_paper_id,
-        "regime_review_id": regime_review_id,
-        "sensitivity_id": sensitivity_id,
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_calibration_input_snapshot",
         "generated_at": generated.isoformat(),
-        "status": "PASS",
+        "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+        "source_bundles": bundles,
+        "source_validations": validations,
+        "lineage": {
+            "sim_outcome_id": sim_outcome_id,
+            "sim_paper_id": sim_paper_id,
+            "regime_review_id": regime_review_id,
+            "sensitivity_id": sensitivity_id,
+            "variant_set_id": variant_set_id,
+            "event_set_id": event_set_id,
+        },
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
         "not_for_production": True,
-        "sim_calibration_manifest_path": str(calibration_dir / "sim_calibration_manifest.json"),
-        "simulation_evidence_summary_path": str(
-            calibration_dir / "simulation_evidence_summary.json"
-        ),
-        "proposed_advisory_rule_changes_path": str(
-            calibration_dir / "proposed_advisory_rule_changes.json"
-        ),
-        "simulation_limitations_path": str(calibration_dir / "simulation_limitations.json"),
-        "backtest_sim_calibration_report_path": str(
-            calibration_dir / "backtest_sim_calibration_report.md"
-        ),
-        "reader_brief_section_path": str(calibration_dir / "reader_brief_section.md"),
-        "auto_apply": False,
-        "can_trigger_production": False,
-        "broker_action_allowed": False,
-        "broker_action_taken": False,
-        "auto_policy_apply": False,
-        "production_effect": "none",
-        "production_candidate_generated": False,
-        "manual_review_required": True,
-        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
-        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+    manifest = _backtest_sim_calibration_manifest(
+        calibration_dir=calibration_dir,
+        generated=generated,
+        sim_outcome_id=sim_outcome_id,
+        sim_paper_id=sim_paper_id,
+        regime_review_id=regime_review_id,
+        sensitivity_id=sensitivity_id,
+    )
+    calibration_dir.mkdir(parents=True, exist_ok=False)
     _write_json(calibration_dir / "sim_calibration_manifest.json", manifest)
     _write_json(calibration_dir / "simulation_evidence_summary.json", evidence)
     _write_json(calibration_dir / "proposed_advisory_rule_changes.json", proposals)
     _write_json(calibration_dir / "simulation_limitations.json", limitations)
+    _write_json(calibration_dir / "calibration_input_snapshot.json", input_snapshot)
     _write_text(
         calibration_dir / "backtest_sim_calibration_report.md",
         render_calibration_report(manifest, evidence, proposals),
@@ -2898,6 +3005,55 @@ def run_backtest_sim_calibration_pack(
         "simulation_evidence_summary": evidence,
         "proposed_advisory_rule_changes": proposals,
         "simulation_limitations": limitations,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_calibration_manifest(
+    *,
+    calibration_dir: Path,
+    generated: datetime,
+    sim_outcome_id: str,
+    sim_paper_id: str,
+    regime_review_id: str,
+    sensitivity_id: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_calibration_manifest",
+        "calibration_pack_id": calibration_dir.name,
+        "sim_outcome_id": sim_outcome_id,
+        "sim_paper_id": sim_paper_id,
+        "regime_review_id": regime_review_id,
+        "sensitivity_id": sensitivity_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+        "sim_calibration_manifest_path": str(calibration_dir / "sim_calibration_manifest.json"),
+        "simulation_evidence_summary_path": str(
+            calibration_dir / "simulation_evidence_summary.json"
+        ),
+        "proposed_advisory_rule_changes_path": str(
+            calibration_dir / "proposed_advisory_rule_changes.json"
+        ),
+        "simulation_limitations_path": str(calibration_dir / "simulation_limitations.json"),
+        "calibration_input_snapshot_path": str(calibration_dir / "calibration_input_snapshot.json"),
+        "backtest_sim_calibration_report_path": str(
+            calibration_dir / "backtest_sim_calibration_report.md"
+        ),
+        "reader_brief_section_path": str(calibration_dir / "reader_brief_section.md"),
+        "auto_apply": False,
+        "can_trigger_production": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -2921,6 +3077,9 @@ def backtest_sim_calibration_report_payload(
             calibration_dir / "proposed_advisory_rule_changes.json"
         ),
         "simulation_limitations": _read_json(calibration_dir / "simulation_limitations.json"),
+        "calibration_input_snapshot": _read_json(
+            calibration_dir / "calibration_input_snapshot.json"
+        ),
         "reader_brief_section": _read_text(calibration_dir / "reader_brief_section.md"),
         "calibration_pack_dir": str(calibration_dir),
     }
@@ -2931,8 +3090,176 @@ def validate_backtest_sim_calibration_artifact(
 ) -> dict[str, Any]:
     calibration_dir = output_dir / calibration_pack_id
     manifest = _read_optional_json(calibration_dir / "sim_calibration_manifest.json") or {}
+    evidence = _read_optional_json(calibration_dir / "simulation_evidence_summary.json") or {}
     proposals = _read_optional_json(calibration_dir / "proposed_advisory_rule_changes.json") or {}
     limitations = _read_optional_json(calibration_dir / "simulation_limitations.json") or {}
+    snapshot = _read_optional_json(calibration_dir / "calibration_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        source_dirs = {
+            name: Path(_text(path)) for name, path in _mapping(snapshot.get("source_dirs")).items()
+        }
+        lineage = _mapping(snapshot.get("lineage"))
+        if (
+            snapshot.get("schema_version") != BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION
+            or generated is None
+            or set(source_dirs) != {"outcome", "paper", "regime", "sensitivity"}
+        ):
+            raise DynamicV3BacktestSimulationError("calibration snapshot identity/time invalid")
+        sim_outcome_id = _text(lineage.get("sim_outcome_id"))
+        sim_paper_id = _text(lineage.get("sim_paper_id"))
+        regime_review_id = _text(lineage.get("regime_review_id"))
+        sensitivity_id = _text(lineage.get("sensitivity_id"))
+        if (
+            source_dirs["outcome"].name != sim_outcome_id
+            or source_dirs["paper"].name != sim_paper_id
+            or source_dirs["regime"].name != regime_review_id
+            or source_dirs["sensitivity"].name != sensitivity_id
+        ):
+            raise DynamicV3BacktestSimulationError("calibration source ids invalid")
+        live_validations = {
+            "outcome": validate_backtest_sim_outcome_artifact(
+                sim_outcome_id=sim_outcome_id, output_dir=source_dirs["outcome"].parent
+            ),
+            "paper": validate_backtest_sim_paper_artifact(
+                sim_paper_id=sim_paper_id, output_dir=source_dirs["paper"].parent
+            ),
+            "regime": validate_backtest_sim_regime_artifact(
+                regime_review_id=regime_review_id, output_dir=source_dirs["regime"].parent
+            ),
+            "sensitivity": validate_backtest_sim_sensitivity_artifact(
+                sensitivity_id=sensitivity_id, output_dir=source_dirs["sensitivity"].parent
+            ),
+        }
+        if any(payload.get("status") != "PASS" for payload in live_validations.values()):
+            source_errors.append("source_validation_failed")
+        if live_validations != snapshot.get("source_validations"):
+            source_errors.append("source_validations_changed")
+        live_bundles = {
+            "outcome": _backtest_sim_outcome_bundle(source_dirs["outcome"]),
+            "paper": _backtest_sim_calibration_source_bundle(
+                source_dirs["paper"],
+                json_files=(
+                    "sim_paper_manifest.json",
+                    "sim_paper_performance_summary.json",
+                    "paper_input_snapshot.json",
+                ),
+                jsonl_files=("sim_paper_state_history.jsonl", "sim_trade_ledger.jsonl"),
+                text_files=("backtest_sim_paper_report.md",),
+            ),
+            "regime": _backtest_sim_calibration_source_bundle(
+                source_dirs["regime"],
+                json_files=(
+                    "sim_regime_manifest.json",
+                    "regime_window_inventory.json",
+                    "regime_review_summary.json",
+                    "regime_input_snapshot.json",
+                ),
+                jsonl_files=("variant_regime_metrics.jsonl",),
+                text_files=("backtest_sim_regime_report.md",),
+            ),
+            "sensitivity": _backtest_sim_calibration_source_bundle(
+                source_dirs["sensitivity"],
+                json_files=(
+                    "sim_sensitivity_manifest.json",
+                    "threshold_sensitivity.json",
+                    "shortlist_sensitivity.json",
+                    "adjustment_limit_sensitivity.json",
+                    "event_frequency_sensitivity.json",
+                    "overfit_warning_summary.json",
+                    "sensitivity_input_snapshot.json",
+                ),
+                text_files=("backtest_sim_sensitivity_report.md",),
+            ),
+        }
+        if live_bundles != snapshot.get("source_bundles"):
+            source_errors.append("source_bundles_changed")
+        source_manifests = {
+            "outcome": _mapping(live_bundles["outcome"].get("manifest")),
+            "paper": _mapping(
+                _mapping(live_bundles["paper"].get("json")).get("sim_paper_manifest.json")
+            ),
+            "regime": _mapping(
+                _mapping(live_bundles["regime"].get("json")).get("sim_regime_manifest.json")
+            ),
+            "sensitivity": _mapping(
+                _mapping(live_bundles["sensitivity"].get("json")).get(
+                    "sim_sensitivity_manifest.json"
+                )
+            ),
+        }
+        if any(
+            (source_generated := _datetime_from_any(item.get("generated_at"))) is None
+            or source_generated > generated
+            for item in source_manifests.values()
+        ):
+            source_errors.append("source_after_cutoff")
+        variant_set_id = _text(source_manifests["outcome"].get("variant_set_id"))
+        event_set_id = _text(source_manifests["outcome"].get("event_set_id"))
+        if (
+            lineage.get("variant_set_id") != variant_set_id
+            or lineage.get("event_set_id") != event_set_id
+            or source_manifests["paper"].get("variant_set_id") != variant_set_id
+            or source_manifests["regime"].get("sim_outcome_id") != sim_outcome_id
+            or source_manifests["regime"].get("variant_set_id") != variant_set_id
+            or source_manifests["sensitivity"].get("sim_outcome_id") != sim_outcome_id
+            or source_manifests["sensitivity"].get("variant_set_id") != variant_set_id
+            or source_manifests["sensitivity"].get("event_set_id") != event_set_id
+        ):
+            source_errors.append("source_lineage_changed")
+        outcome_summary = _mapping(live_bundles["outcome"].get("summary"))
+        paper_summary = _mapping(
+            _mapping(live_bundles["paper"].get("json")).get("sim_paper_performance_summary.json")
+        )
+        regime_summary = _mapping(
+            _mapping(live_bundles["regime"].get("json")).get("regime_review_summary.json")
+        )
+        sensitivity_summary = _mapping(
+            _mapping(live_bundles["sensitivity"].get("json")).get("overfit_warning_summary.json")
+        )
+        expected_evidence = _calibration_evidence(
+            outcome_summary, paper_summary, regime_summary, sensitivity_summary
+        )
+        expected_evidence["forward_confirmation_policy"] = _mapping(
+            source_manifests["outcome"].get("forward_confirmation_policy")
+        )
+        expected_proposals = _calibration_proposals(expected_evidence, sensitivity_summary)
+        expected_limitations = _simulation_limitations()
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_CALIBRATION_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_calibration_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "source_dirs": {name: str(path) for name, path in source_dirs.items()},
+            "source_bundles": live_bundles,
+            "source_validations": live_validations,
+            "lineage": dict(lineage),
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_manifest = _backtest_sim_calibration_manifest(
+            calibration_dir=calibration_dir,
+            generated=generated,
+            sim_outcome_id=sim_outcome_id,
+            sim_paper_id=sim_paper_id,
+            regime_review_id=regime_review_id,
+            sensitivity_id=sensitivity_id,
+        )
+        expected_report = render_calibration_report(
+            expected_manifest, expected_evidence, expected_proposals
+        )
+        expected_reader = render_calibration_reader_brief(expected_evidence, expected_proposals)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_evidence = {}
+        expected_proposals = {}
+        expected_limitations = {}
+        expected_snapshot = {}
+        expected_manifest = {}
+        expected_report = ""
+        expected_reader = ""
     checks = [
         _check("manifest_exists", (calibration_dir / "sim_calibration_manifest.json").exists(), ""),
         _check(
@@ -2949,6 +3276,9 @@ def validate_backtest_sim_calibration_artifact(
             "limitations_exists", (calibration_dir / "simulation_limitations.json").exists(), ""
         ),
         _check(
+            "snapshot_exists", (calibration_dir / "calibration_input_snapshot.json").exists(), ""
+        ),
+        _check(
             "report_exists", (calibration_dir / "backtest_sim_calibration_report.md").exists(), ""
         ),
         _check("reader_brief_exists", (calibration_dir / "reader_brief_section.md").exists(), ""),
@@ -2956,6 +3286,60 @@ def validate_backtest_sim_calibration_artifact(
             "calibration_pack_id_matches",
             manifest.get("calibration_pack_id") == calibration_pack_id,
             "",
+        ),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live sources"),
+        _check("evidence_recomputed", evidence == expected_evidence, "snapshot"),
+        _check("proposals_recomputed", proposals == expected_proposals, "snapshot"),
+        _check("limitations_recomputed", limitations == expected_limitations, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "all_json_bytes_recomputed",
+            all(
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                for path, payload in (
+                    (calibration_dir / "calibration_input_snapshot.json", expected_snapshot),
+                    (calibration_dir / "simulation_evidence_summary.json", expected_evidence),
+                    (calibration_dir / "proposed_advisory_rule_changes.json", expected_proposals),
+                    (calibration_dir / "simulation_limitations.json", expected_limitations),
+                    (calibration_dir / "sim_calibration_manifest.json", expected_manifest),
+                )
+            ),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            (calibration_dir / "backtest_sim_calibration_report.md").is_file()
+            and (calibration_dir / "backtest_sim_calibration_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (calibration_dir / "reader_brief_section.md").is_file()
+            and (calibration_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+            == expected_reader,
+            "Reader Brief",
+        ),
+        _check(
+            "missing_metrics_are_null",
+            evidence.get("finite_metric_count", 0) + evidence.get("missing_metric_count", 0) == 7
+            and all(
+                value is None or _finite_number(value)
+                for key, value in evidence.items()
+                if key
+                in {
+                    "limited_adjustment_vs_no_trade_5d",
+                    "limited_adjustment_win_rate_5d",
+                    "consensus_target_avg_drawdown_20d",
+                    "defensive_limited_avg_drawdown_20d",
+                    "paper_total_return",
+                    "paper_max_drawdown",
+                    "paper_turnover",
+                }
+            ),
+            "null/finite evidence metrics",
         ),
         _check(
             "auto_apply_false",
@@ -5990,17 +6374,26 @@ def _calibration_evidence(
     readiness = "REVIEW_ONLY"
     if overfit in {"HIGH_RISK", "INSUFFICIENT_DATA"}:
         readiness = "FORWARD_CONFIRMATION_REQUIRED"
+    metric_values = {
+        "limited_adjustment_vs_no_trade_5d": limited.get("avg_relative_to_no_trade_5d"),
+        "limited_adjustment_win_rate_5d": limited.get("win_rate_vs_no_trade_5d"),
+        "consensus_target_avg_drawdown_20d": consensus.get("avg_max_drawdown_20d"),
+        "defensive_limited_avg_drawdown_20d": defensive.get("avg_max_drawdown_20d"),
+        "paper_total_return": paper_summary.get("total_return"),
+        "paper_max_drawdown": paper_summary.get("max_drawdown"),
+        "paper_turnover": paper_summary.get("turnover"),
+    }
+    metric_values = {
+        key: (round(_float(value), 6) if _finite_number(value) else None)
+        for key, value in metric_values.items()
+    }
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_evidence_summary",
         "best_variant": outcome_summary.get("best_variant", "MISSING"),
-        "limited_adjustment_vs_no_trade_5d": limited.get("avg_relative_to_no_trade_5d", 0.0),
-        "limited_adjustment_win_rate_5d": limited.get("win_rate_vs_no_trade_5d", 0.0),
-        "consensus_target_avg_drawdown_20d": consensus.get("avg_max_drawdown_20d", 0.0),
-        "defensive_limited_avg_drawdown_20d": defensive.get("avg_max_drawdown_20d", 0.0),
-        "paper_total_return": paper_summary.get("total_return", 0.0),
-        "paper_max_drawdown": paper_summary.get("max_drawdown", 0.0),
-        "paper_turnover": paper_summary.get("turnover", 0.0),
+        **metric_values,
+        "finite_metric_count": sum(value is not None for value in metric_values.values()),
+        "missing_metric_count": sum(value is None for value in metric_values.values()),
         "best_variant_by_regime": regime_summary.get("best_variant_by_regime", {}),
         "simulation_overfit_status": overfit,
         "calibration_readiness": readiness,
@@ -6028,7 +6421,8 @@ def _calibration_proposals(
             "risks": ["not_pit_safe", "overfit_possible"],
         }
     ]
-    if _float(evidence.get("limited_adjustment_vs_no_trade_5d")) > 0 and overfit != "HIGH_RISK":
+    limited_relative = evidence.get("limited_adjustment_vs_no_trade_5d")
+    if overfit == "LOW_RISK" and _finite_number(limited_relative) and _float(limited_relative) > 0:
         proposals.insert(
             0,
             {

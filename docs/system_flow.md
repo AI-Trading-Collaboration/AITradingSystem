@@ -4180,6 +4180,10 @@ flowchart TD
 
 `backtest-sim sensitivity-run`只接受content-derived PASS且不晚于generated cutoff的Outcome；`sensitivity_input_snapshot.json`（schema=`backtest_sim_sensitivity_input_snapshot.v2`）冻结完整Outcome bundle/validation及唯一variant/event binding。Frequency、adjustment-limit、shortlist、threshold四类grid由冻结reviewed policy exact驱动；counterfactual只计算到Outcome requested-end，threshold从冻结event读取finite dispersion。AVAILABLE finite以外的avg/spread为null，event/window/available/excluded/result-row单位分别披露；缺dispersion不默认通过。Overfit status从可复算grid和policy产生，只有`LOW_RISK`可标记strong calibration allowed，仍不自动apply。Validator重验live Outcome并逐字节重算snapshot、四类diagnostics、warnings、manifest和Markdown；任一drift阻断calibration。固定non-PIT/no-production/no-broker。
 
+### Backtest Simulation Calibration Pack 可复算边界（TRADING-167 / ARCH-004G2.4BR）
+
+`backtest-sim calibration-pack`只接受content-derived PASS且不晚于generated cutoff的Outcome/Paper/Regime/Sensitivity；`calibration_input_snapshot.json`（schema=`backtest_sim_calibration_input_snapshot.v2`）冻结四份full bundle/validation并要求同一Outcome/variant/event lineage。Evidence只保留finite metrics，missing为null并披露计数；positive keep-rule proposal只在Sensitivity=`LOW_RISK`且metric finite/positive时出现，其他状态仅保留forward-confirmation/manual-review。所有proposal均`auto_apply=false`、`can_trigger_production=false`。Validator重验四个live source并逐字节重算snapshot、evidence、proposals、limitations、manifest、Markdown和Reader Brief；任一drift阻断Forward Bridge。固定non-PIT/no-production/no-broker。
+
 ## 文件和命令责任表
 
 |层级|命令或文件|责任|当前状态|
