@@ -6889,11 +6889,14 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_set_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/simulated_variant_weights.jsonl
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_action_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_input_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_generation_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-162 variants record no_trade, consensus, limited, defensive, and
-      equal-weight shadow candidate simulation paths without broker action.
+      equal-weight shadow candidate simulation paths without broker action. The
+      input snapshot binds a content-validated event bundle and every output is
+      deterministically recomputed before downstream use.
     owner_action: review_variant_weights_before_simulated_outcome_or_calibration
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

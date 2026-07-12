@@ -87,6 +87,7 @@ OUTCOME_MODE_BACKTEST_SIMULATION = "BACKTEST_SIMULATION"
 PIT_SAFETY_SIMULATION = "SIMULATION_NOT_PIT"
 REPORT_LABEL_BACKTEST_SIMULATION = "BACKTEST_SIMULATION_NOT_PIT"
 BACKTEST_SIM_EVENT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_event_input_snapshot.v2"
+BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION = "backtest_sim_variant_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -779,21 +780,88 @@ def generate_backtest_sim_variants(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    if generated.tzinfo is None or generated.utcoffset() is None:
+        raise DynamicV3BacktestSimulationError("generated_at must be timezone-aware")
+    generated = generated.astimezone(UTC)
     source_dir = event_dir / event_set_id
-    event_manifest = _read_json(source_dir / "backtest_sim_event_manifest.json")
-    events = _read_jsonl(source_dir / "simulated_advisory_events.jsonl")
-    config = _mapping(_read_json(source_dir / "simulation_input_snapshot.json").get("config"))
+    event_validation = validate_backtest_sim_events_artifact(
+        event_set_id=event_set_id, output_dir=event_dir
+    )
+    if event_validation.get("status") != "PASS":
+        raise DynamicV3BacktestSimulationError(
+            "backtest simulation event artifact validation failed"
+        )
+    event_bundle = _backtest_sim_event_bundle(source_dir)
+    event_manifest = _mapping(event_bundle.get("manifest"))
+    event_generated = _datetime_from_any(event_manifest.get("generated_at"))
+    if event_generated is None or event_generated > generated:
+        raise DynamicV3BacktestSimulationError("event source generated after variant cutoff")
+    events = _records(event_bundle.get("events"))
+    event_snapshot = _mapping(event_bundle.get("input_snapshot"))
+    config = _mapping(event_snapshot.get("config"))
     enabled = _texts(_mapping(config.get("variants")).get("enabled"))
-    variant_set_id = _stable_id("backtest-sim-variants", event_set_id, generated.isoformat())
-    variant_dir = _unique_dir(output_dir / variant_set_id)
-    variant_dir.mkdir(parents=True, exist_ok=False)
     rows, ledger = _variant_rows(events=events, config=config, enabled=enabled)
     counts = Counter(_text(row.get("variant_status")) for row in rows)
-    variants_generated = sorted({row["variant"] for row in rows})
     status = "PASS" if counts.get("READY") else "INSUFFICIENT_DATA"
     if counts.get("INSUFFICIENT_DATA") and counts.get("READY"):
         status = "PASS_WITH_WARNINGS"
-    manifest = {
+    variant_set_id = _stable_id("backtest-sim-variants", event_set_id, generated.isoformat())
+    variant_dir = _unique_dir(output_dir / variant_set_id)
+    input_snapshot = {
+        "schema_version": BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backtest_sim_variant_input_snapshot",
+        "generated_at": generated.isoformat(),
+        "event_set_id": event_set_id,
+        "event_set_dir": str(source_dir),
+        "event_bundle": event_bundle,
+        "event_validation": event_validation,
+        "config": config,
+        "enabled_variants": enabled,
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "not_for_production": True,
+    }
+    manifest = _backtest_sim_variant_manifest(
+        variant_dir=variant_dir,
+        generated=generated,
+        status=status,
+        event_set_id=event_set_id,
+        event_manifest=event_manifest,
+        rows=rows,
+    )
+    variant_dir.mkdir(parents=True, exist_ok=False)
+    _write_json(variant_dir / "variant_set_manifest.json", manifest)
+    _write_jsonl(variant_dir / "simulated_variant_weights.jsonl", rows)
+    _write_jsonl(variant_dir / "variant_action_ledger.jsonl", ledger)
+    _write_json(variant_dir / "variant_input_snapshot.json", input_snapshot)
+    _write_text(variant_dir / "variant_generation_report.md", render_variant_report(manifest, rows))
+    _update_latest_pointer(
+        "latest_backtest_sim_variants",
+        variant_dir.name,
+        variant_dir / "variant_set_manifest.json",
+    )
+    return {
+        "variant_set_id": variant_dir.name,
+        "variant_set_dir": variant_dir,
+        "manifest": manifest,
+        "variant_rows": rows,
+        "variant_action_ledger": ledger,
+        "input_snapshot": input_snapshot,
+    }
+
+
+def _backtest_sim_variant_manifest(
+    *,
+    variant_dir: Path,
+    generated: datetime,
+    status: str,
+    event_set_id: str,
+    event_manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    counts = Counter(_text(row.get("variant_status")) for row in rows)
+    variants_generated = sorted({_text(row.get("variant")) for row in rows})
+    return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_backtest_sim_variant_set_manifest",
         "variant_set_id": variant_dir.name,
@@ -811,6 +879,7 @@ def generate_backtest_sim_variants(
         "variant_set_manifest_path": str(variant_dir / "variant_set_manifest.json"),
         "simulated_variant_weights_path": str(variant_dir / "simulated_variant_weights.jsonl"),
         "variant_action_ledger_path": str(variant_dir / "variant_action_ledger.jsonl"),
+        "variant_input_snapshot_path": str(variant_dir / "variant_input_snapshot.json"),
         "variant_generation_report_path": str(variant_dir / "variant_generation_report.md"),
         "broker_action_allowed": False,
         "broker_action_taken": False,
@@ -820,22 +889,6 @@ def generate_backtest_sim_variants(
         "manual_review_required": True,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
-    }
-    _write_json(variant_dir / "variant_set_manifest.json", manifest)
-    _write_jsonl(variant_dir / "simulated_variant_weights.jsonl", rows)
-    _write_jsonl(variant_dir / "variant_action_ledger.jsonl", ledger)
-    _write_text(variant_dir / "variant_generation_report.md", render_variant_report(manifest, rows))
-    _update_latest_pointer(
-        "latest_backtest_sim_variants",
-        variant_dir.name,
-        variant_dir / "variant_set_manifest.json",
-    )
-    return {
-        "variant_set_id": variant_dir.name,
-        "variant_set_dir": variant_dir,
-        "manifest": manifest,
-        "variant_rows": rows,
-        "variant_action_ledger": ledger,
     }
 
 
@@ -854,6 +907,7 @@ def backtest_sim_variant_report_payload(
         **_read_json(variant_dir / "variant_set_manifest.json"),
         "simulated_variant_weights": _read_jsonl(variant_dir / "simulated_variant_weights.jsonl"),
         "variant_action_ledger": _read_jsonl(variant_dir / "variant_action_ledger.jsonl"),
+        "variant_input_snapshot": _read_json(variant_dir / "variant_input_snapshot.json"),
         "variant_set_dir": str(variant_dir),
     }
 
@@ -864,37 +918,125 @@ def validate_backtest_sim_variants_artifact(
     variant_dir = output_dir / variant_set_id
     manifest = _read_optional_json(variant_dir / "variant_set_manifest.json") or {}
     rows = _read_jsonl(variant_dir / "simulated_variant_weights.jsonl")
-    ready_events = {
-        _text(row.get("sim_event_id"))
-        for row in rows
-        if row.get("event_status") == "READY" or row.get("variant_status") == "READY"
-    }
-    variants_by_event: dict[str, set[str]] = defaultdict(set)
-    for row in rows:
-        variants_by_event[_text(row.get("sim_event_id"))].add(_text(row.get("variant")))
+    ledger = _read_jsonl(variant_dir / "variant_action_ledger.jsonl")
+    snapshot = _read_optional_json(variant_dir / "variant_input_snapshot.json") or {}
+    source_errors: list[str] = []
+    recompute_error = ""
+    try:
+        if snapshot.get("schema_version") != BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION:
+            source_errors.append("snapshot_schema_invalid")
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        event_set_id = _text(snapshot.get("event_set_id"))
+        event_set_dir = Path(_text(snapshot.get("event_set_dir")))
+        if generated is None or not event_set_id or event_set_dir.name != event_set_id:
+            raise DynamicV3BacktestSimulationError("variant source identity/time invalid")
+        live_validation = validate_backtest_sim_events_artifact(
+            event_set_id=event_set_id,
+            output_dir=event_set_dir.parent,
+        )
+        if live_validation.get("status") != "PASS":
+            source_errors.append("event_validation_failed")
+        if live_validation != snapshot.get("event_validation"):
+            source_errors.append("event_validation_changed")
+        live_bundle = _backtest_sim_event_bundle(event_set_dir)
+        if live_bundle != snapshot.get("event_bundle"):
+            source_errors.append("event_bundle_changed")
+        frozen_bundle = _mapping(snapshot.get("event_bundle"))
+        event_manifest = _mapping(frozen_bundle.get("manifest"))
+        events = _records(frozen_bundle.get("events"))
+        event_snapshot = _mapping(frozen_bundle.get("input_snapshot"))
+        config = _mapping(snapshot.get("config"))
+        if config != _mapping(event_snapshot.get("config")):
+            source_errors.append("config_binding_changed")
+        enabled = _texts(snapshot.get("enabled_variants"))
+        if enabled != _texts(_mapping(config.get("variants")).get("enabled")):
+            source_errors.append("enabled_variants_changed")
+        expected_snapshot = {
+            "schema_version": BACKTEST_SIM_VARIANT_SNAPSHOT_SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_backtest_sim_variant_input_snapshot",
+            "generated_at": generated.isoformat(),
+            "event_set_id": event_set_id,
+            "event_set_dir": str(event_set_dir),
+            "event_bundle": live_bundle,
+            "event_validation": live_validation,
+            "config": config,
+            "enabled_variants": enabled,
+            "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            "pit_safety_status": PIT_SAFETY_SIMULATION,
+            "not_for_production": True,
+        }
+        expected_rows, expected_ledger = _variant_rows(
+            events=events, config=config, enabled=enabled
+        )
+        counts = Counter(_text(row.get("variant_status")) for row in expected_rows)
+        expected_status = "PASS" if counts.get("READY") else "INSUFFICIENT_DATA"
+        if counts.get("INSUFFICIENT_DATA") and counts.get("READY"):
+            expected_status = "PASS_WITH_WARNINGS"
+        expected_manifest = _backtest_sim_variant_manifest(
+            variant_dir=variant_dir,
+            generated=generated,
+            status=expected_status,
+            event_set_id=event_set_id,
+            event_manifest=event_manifest,
+            rows=expected_rows,
+        )
+        expected_report = render_variant_report(expected_manifest, expected_rows)
+    except Exception as exc:  # noqa: BLE001
+        recompute_error = str(exc)
+        expected_rows = []
+        expected_ledger = []
+        expected_manifest = {}
+        expected_snapshot = {}
+        expected_report = ""
+    report_path = variant_dir / "variant_generation_report.md"
     checks = [
         _check("manifest_exists", (variant_dir / "variant_set_manifest.json").exists(), ""),
         _check("weights_exists", (variant_dir / "simulated_variant_weights.jsonl").exists(), ""),
         _check("ledger_exists", (variant_dir / "variant_action_ledger.jsonl").exists(), ""),
+        _check("snapshot_exists", (variant_dir / "variant_input_snapshot.json").exists(), ""),
         _check("report_exists", (variant_dir / "variant_generation_report.md").exists(), ""),
         _check("variant_set_id_matches", manifest.get("variant_set_id") == variant_set_id, ""),
+        _check("source_snapshot_valid", not source_errors, ",".join(source_errors)),
+        _check("views_recomputed", not recompute_error, recompute_error),
+        _check("snapshot_recomputed", snapshot == expected_snapshot, "live source"),
+        _check("rows_recomputed", rows == expected_rows, "snapshot"),
+        _check("ledger_recomputed", ledger == expected_ledger, "snapshot"),
+        _check("manifest_recomputed", manifest == expected_manifest, "snapshot"),
+        _check(
+            "snapshot_bytes_recomputed",
+            (variant_dir / "variant_input_snapshot.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_snapshot),
+            "canonical JSON",
+        ),
+        _check(
+            "rows_bytes_recomputed",
+            (variant_dir / "simulated_variant_weights.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_rows),
+            "canonical JSONL",
+        ),
+        _check(
+            "ledger_bytes_recomputed",
+            (variant_dir / "variant_action_ledger.jsonl").read_text(encoding="utf-8")
+            == _canonical_jsonl_text(expected_ledger),
+            "canonical JSONL",
+        ),
+        _check(
+            "manifest_bytes_recomputed",
+            (variant_dir / "variant_set_manifest.json").read_text(encoding="utf-8")
+            == _canonical_json_text(expected_manifest),
+            "canonical JSON",
+        ),
+        _check(
+            "report_recomputed",
+            report_path.is_file() and report_path.read_text(encoding="utf-8") == expected_report,
+            "Markdown",
+        ),
         _check(
             "variant_status_valid",
             all(row.get("variant_status") in VARIANT_STATUSES for row in rows),
             "variant statuses",
         ),
-        _check(
-            "ready_events_have_required_variants",
-            (
-                all(
-                    {"no_trade", "limited_adjustment"} <= variants
-                    for variants in variants_by_event.values()
-                )
-                if ready_events
-                else True
-            ),
-            "no_trade and limited_adjustment",
-        ),
+        _check("variant_contract_valid", _variant_rows_contract_valid(rows), "rows"),
         _check(
             "broker_action_forbidden",
             manifest.get("broker_action_taken") is False
@@ -913,6 +1055,74 @@ def validate_backtest_sim_variants_artifact(
         artifact_id_key="variant_set_id",
         artifact_id=variant_set_id,
         checks=checks,
+    )
+
+
+def _backtest_sim_event_bundle(event_dir: Path) -> dict[str, Any]:
+    quality_path = event_dir / "validate_data_quality_report.md"
+    manifest_path = event_dir / "backtest_sim_event_manifest.json"
+    events_path = event_dir / "simulated_advisory_events.jsonl"
+    snapshot_path = event_dir / "simulation_input_snapshot.json"
+    report_path = event_dir / "event_generation_report.md"
+    return {
+        "event_set_dir": str(event_dir),
+        "manifest": _read_json(manifest_path),
+        "events": _read_jsonl(events_path),
+        "input_snapshot": _read_json(snapshot_path),
+        "event_generation_report": _read_text(report_path),
+        "data_quality_report": _read_text(quality_path) if quality_path.is_file() else "",
+        "file_contents": {
+            "backtest_sim_event_manifest.json": _read_text(manifest_path),
+            "simulated_advisory_events.jsonl": _read_text(events_path),
+            "simulation_input_snapshot.json": _read_text(snapshot_path),
+            "event_generation_report.md": _read_text(report_path),
+            "validate_data_quality_report.md": (
+                _read_text(quality_path) if quality_path.is_file() else ""
+            ),
+        },
+    }
+
+
+def _canonical_json_text(payload: Mapping[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def _canonical_jsonl_text(rows: Sequence[Mapping[str, Any]]) -> str:
+    return "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows)
+
+
+def _variant_rows_contract_valid(rows: Sequence[Mapping[str, Any]]) -> bool:
+    identities: set[tuple[str, str]] = set()
+    previous_by_variant: dict[str, Mapping[str, Any]] = {}
+    for row in sorted(
+        rows, key=lambda item: (_text(item.get("as_of")), _text(item.get("variant")))
+    ):
+        identity = (_text(row.get("sim_event_id")), _text(row.get("variant")))
+        if not all(identity) or identity in identities:
+            return False
+        identities.add(identity)
+        before = _mapping(row.get("before_weights"))
+        after = _mapping(row.get("after_weights"))
+        deltas = _mapping(row.get("deltas"))
+        if not _normalized_finite_weights(before) or not _normalized_finite_weights(after):
+            return False
+        if _weight_deltas(before, after) != deltas:
+            return False
+        turnover = sum(abs(_float(value)) for value in deltas.values())
+        if not math.isclose(turnover, _float(row.get("turnover")), abs_tol=0.000001):
+            return False
+        variant = identity[1]
+        if variant in previous_by_variant and before != previous_by_variant[variant]:
+            return False
+        previous_by_variant[variant] = after
+    return True
+
+
+def _normalized_finite_weights(weights: Mapping[str, Any]) -> bool:
+    return (
+        bool(weights)
+        and all(_finite_number(value, minimum=0.0) for value in weights.values())
+        and math.isclose(sum(float(value) for value in weights.values()), 1.0, abs_tol=0.000001)
     )
 
 

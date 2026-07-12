@@ -1084,6 +1084,8 @@ ExperimentSpec
 
 设计理由：历史模拟最危险的失真不是“算错一个收益”，而是 mutable source 变化后仍把旧输出当作可复现事实，或把 non-PIT simulation 当成 forward evidence。因此这里优先冻结输入语义、cutoff 与 DQ 证据，并用重算 validator 建立 fail-closed 边界。当前结果只证明事件生成链可审计和可复算，不证明任何 advisory variant 有投资有效性。
 
+TRADING-162 variant层在此基础上再加一道边界：只接受BL event validator PASS且generated不晚于本次variant cutoff的source，冻结event全bundle、validation、config和exact enabled variants；每个event×variant按时间顺序维护独立state，计算before/target/after、delta、L1 turnover、risk/semiconductor/cash exposure与action ledger。Validator重验live event后逐字节重算所有JSON/JSONL/Markdown；这证明variant路径可复现，不证明某个variant优于no_trade，收益、回撤与cost结论必须等待独立outcome/paper slice。
+
 ## 6. 真实 reference trace：growth-tilt closure
 
 | 环节 | 实际内容 |
