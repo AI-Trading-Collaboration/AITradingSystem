@@ -1,0 +1,50 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_replay_forward_bridge_v1
+  owner: project_owner
+  version: 2026-07-12-pilot
+  status: pilot_baseline
+  rationale: >
+    Convert validated replay evidence gaps into an auditable forward-observation
+    plan without treating observation work as a policy proposal.
+  intended_effect: >
+    Preserve source lineage and route insufficient replay evidence into explicit
+    forward collection and weekly review questions.
+  validation_evidence: ARCH-004G2.4BA source, lineage, policy, and tamper tests
+  review_condition: >
+    Recalibrate after at least eight owner-reviewed forward weeks span multiple
+    market regimes; do not lower the event target to manufacture readiness.
+
+tracking:
+  required_future_events: 10
+  windows_trading_days: [1, 5, 10, 20]
+  fallback_next_action: continue_forward_tracking
+  focus_items:
+    - item: limited_adjustment_vs_no_trade
+      priority: HIGH
+      reason: historical replay needs forward confirmation for limited adjustment edge
+    - item: pending_reason_resolution
+      priority: MEDIUM
+      reason: resolve any explicitly reported replay diagnosis reason
+    - item: consensus_target_risk
+      priority: MEDIUM
+      reason: consensus target return and drawdown need weekly review visibility
+
+weekly_review:
+  add_sections:
+    - Historical Replay Performance
+    - Replay Calibration Watchlist
+    - Forward Confirmation Targets
+  recommended_questions:
+    - Did limited_adjustment outperform no_trade in new forward outcomes?
+    - Did high consensus remain predictive?
+    - Did manual_review frequency decrease?
+    - Were prior PENDING or INSUFFICIENT_DATA replay reasons resolved?
+
+safety:
+  policy_change_allowed: false
+  automatic_policy_apply: false
+  automatic_candidate_promotion: false
+  production_effect: none
+  broker_action_taken: false

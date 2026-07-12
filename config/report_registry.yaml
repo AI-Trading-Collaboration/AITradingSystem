@@ -6598,6 +6598,7 @@ reports:
     owner: system
     command: aits etf dynamic-v3-rescue replay-forward-bridge report --latest
     artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/replay_forward_bridge_source_snapshot.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/bridge_manifest.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/forward_tracking_focus.json
       - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/weekly_review_updates.json
@@ -6605,8 +6606,9 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/reader_brief_section.md
     freshness_sla_days: 14
     freshness_rationale: >
-      TRADING-150 bridges replay diagnosis and calibration proposals back to
-      forward tracking focus and weekly review questions without policy mutation.
+      TRADING-150 freezes and revalidates diagnosis, comparison, calibration,
+      and reviewed bridge policy before mapping proposals or non-policy evidence
+      actions into forward tracking focus and weekly review questions.
     owner_action: review_forward_focus_before_next_weekly_advisory_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

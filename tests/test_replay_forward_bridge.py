@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
 from dynamic_v3_historical_replay_helpers import (
     build_replay_review_chain,
     prepare_replay_test_environment,
@@ -11,6 +12,8 @@ from dynamic_v3_historical_replay_helpers import (
 )
 
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
+    DEFAULT_REPLAY_FORWARD_BRIDGE_POLICY_PATH,
+    DynamicV3HistoricalReplayError,
     run_backfill_repair,
     run_replay_diagnosis,
     run_replay_forward_bridge,
@@ -70,6 +73,8 @@ def test_replay_forward_bridge_feeds_reader_brief_without_policy_or_broker_effec
         output_dir=paths["rule_calibration_dir"],
         generated_at=datetime(2026, 7, 21, tzinfo=UTC),
     )
+    policy_path = tmp_path / "replay_forward_bridge_v1.yaml"
+    policy_path.write_bytes(DEFAULT_REPLAY_FORWARD_BRIDGE_POLICY_PATH.read_bytes())
 
     bridge = run_replay_forward_bridge(
         diagnosis_id=diagnosis["diagnosis_id"],
@@ -79,12 +84,16 @@ def test_replay_forward_bridge_feeds_reader_brief_without_policy_or_broker_effec
         comparison_dir=paths["variant_comparison_dir"],
         calibration_dir=paths["rule_calibration_dir"],
         output_dir=paths["replay_forward_bridge_dir"],
+        policy_path=policy_path,
         generated_at=datetime(2026, 7, 21, tzinfo=UTC),
     )
 
     focus_items = bridge["forward_tracking_focus"]["focus_items"]
     assert focus_items
     assert focus_items[0]["required_future_events"] == 10
+    assert bridge["manifest"]["status"] == "INSUFFICIENT_DATA"
+    assert bridge["manifest"]["next_action"] == "require_more_forward_data"
+    assert bridge["manifest"]["policy_change_allowed"] is False
     assert bridge["manifest"]["broker_action_allowed"] is False
     assert bridge["manifest"]["baseline_config_mutated"] is False
     assert "Dynamic Rescue Replay-to-Forward Bridge" in (
@@ -115,4 +124,45 @@ def test_replay_forward_bridge_feeds_reader_brief_without_policy_or_broker_effec
         bridge_id=bridge["bridge_id"],
         output_dir=paths["replay_forward_bridge_dir"],
     )
+    failed_checks = [check for check in validation["checks"] if not check["passed"]]
+    assert not failed_checks, failed_checks
     assert validation["status"] == "PASS"
+
+    with pytest.raises(
+        DynamicV3HistoricalReplayError,
+        match="must not precede sources",
+    ):
+        run_replay_forward_bridge(
+            diagnosis_id=diagnosis["diagnosis_id"],
+            comparison_id=comparison["comparison_id"],
+            calibration_id=calibration["calibration_id"],
+            diagnosis_dir=paths["diagnosis_dir"],
+            comparison_dir=paths["variant_comparison_dir"],
+            calibration_dir=paths["rule_calibration_dir"],
+            output_dir=paths["replay_forward_bridge_dir"],
+            policy_path=policy_path,
+            generated_at=datetime(2026, 7, 20, tzinfo=UTC),
+        )
+
+    tamper_cases = (
+        (bridge["bridge_dir"] / "replay_forward_bridge_source_snapshot.json", b"\n"),
+        (policy_path, b"\n"),
+        (diagnosis["diagnosis_dir"] / "replay_diagnosis_report.md", b"\n"),
+        (bridge["bridge_dir"] / "forward_tracking_focus.json", b"{}\n"),
+        (bridge["bridge_dir"] / "replay_forward_bridge_report.md", b"\n"),
+        (bridge["bridge_dir"] / "reader_brief_section.md", b"\n"),
+    )
+    for path, tampered_bytes in tamper_cases:
+        original = path.read_bytes()
+        replacement = (
+            tampered_bytes
+            if path.name == "forward_tracking_focus.json"
+            else original + tampered_bytes
+        )
+        path.write_bytes(replacement)
+        tampered = validate_replay_forward_bridge_artifact(
+            bridge_id=bridge["bridge_id"],
+            output_dir=paths["replay_forward_bridge_dir"],
+        )
+        assert tampered["status"] == "FAIL", path
+        path.write_bytes(original)

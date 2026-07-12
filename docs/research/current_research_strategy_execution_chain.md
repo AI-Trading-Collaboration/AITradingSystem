@@ -765,6 +765,21 @@ Rule Calibration回答的是“经审计的comparison证据是否已经足以提
 
 当前fixture的comparison技术校验PASS，但只有1个独立event，ranking为MISSING/INSUFFICIENT_DATA；因此校准manifest正确为INSUFFICIENT_DATA，proposal_count=0，只要求继续forward data，且明确`policy_change_allowed=false`。这说明审计链可工作，不说明规则已被校准。下一步优化应先扩充PIT-safe common cohort并完成跨regime/成本/holdout验证，再校准proposal逻辑的effect-size、置信区间、expiry和rollback；不能通过把evidence action改名为proposal、用0替代missing或绕过owner approval加速结论。
 
+#### Replay-to-Forward Bridge 链（TRADING-150 / G2.4BA）
+
+Replay-to-Forward Bridge回答“历史链已经确认了什么证据缺口，forward observation与weekly review接下来应追踪什么”，不是重新计算策略表现、自动排任务或批准policy。旧链直接拼接三类mutable artifacts，既不验证lineage/time，也只读取calibration proposal；AZ把`require_more_forward_data`移出proposal后，旧bridge反而会丢失真正的下一步并回落`continue_forward_tracking`。BA因此把完整source验证、证据动作传播和reviewed observation policy放在Reader Brief投影之前。
+
+| 环节 | 输入 | 计算/校验逻辑 | 输出 | Fail-closed与优化空间 |
+|---|---|---|---|---|
+| Source preflight | 显式diagnosis/comparison/calibration ids与roots；timezone-aware bridge time | 三个content-derived validators必须PASS；comparison backfill/replay绑定diagnosis；calibration comparison id绑定显式comparison；bridge time不早于三源 | validation/lineage/time evidence | invalid/legacy drift/cross-chain/time travel在创建目录前阻断。后续统一chain root、trusted time和签名 |
+| Immutable bridge input | 三源全部snapshot/manifest/views/reports；`replay_forward_bridge_v1.yaml` | 冻结每个path/content/checksum和完整policy；policy metadata必须有owner/version/status/rationale/intended effect/review condition | `replay_forward_bridge_source_snapshot.json` | live source或policy byte drift FAIL。后续content-addressed archive、retention lock与supersede/revoke |
+| Action routing | Calibration manifest、manual proposals、`evidence_collection_actions.json`、comparison rank | policy proposal与evidence action分别读取；evidence action优先成为next action；source/校准INSUFFICIENT时bridge保持INSUFFICIENT_DATA；`policy_change_allowed`只继承校准事实 | manifest status/next action | `require_more_forward_data`不会被丢失或改名为proposal；missing best/confidence保持MISSING/INSUFFICIENT_DATA。后续为多个action增加reviewed precedence和completion criteria |
+| Forward focus | diagnosis pending reasons；policy focus items/windows/required events | 每个focus从policy物化；pending reason只使用真实首项，无reason写none并说明未报告；10 events和1/5/10/20d只是pilot observation target | `forward_tracking_focus.json` | 不制造unknown blocker，10不是统计显著性或promotion floor。后续按regime/effective sample size/CI校准，并记录due/owner/cadence |
+| Weekly projection | policy sections/questions与forward status | 确定性生成weekly review增补项，不运行weekly scheduler或上游任务 | `weekly_review_updates.json`、Reader Brief section | projection不重算投资结论。后续接typed ReportSpec/Knowledge Object和date-gated run ledger |
+| Validator/report | snapshot与全部derived views | 重验live三源/policy，重算focus/weekly/manifest/Markdown/Reader Brief | content-derived PASS/FAIL | source/snapshot/policy/view/report/Reader Brief任一tamper FAIL；不改policy/portfolio/order/broker |
+
+当前fixture三源技术完整，但comparison与calibration均明确INSUFFICIENT_DATA；bridge因此保持INSUFFICIENT_DATA，best=MISSING，next action=`require_more_forward_data`且`policy_change_allowed=false`。这表示forward链路知道该收集什么，不表示10个未来event一定足以校准。优化顺序应先把每个evidence action变成带due、样本单位、regime覆盖和completion criteria的可审计observation plan，再用真实forward结果复核pilot event target，最后才考虑与统一scheduler/ReportSpec集成；不得让bridge自动运行上游、降低证据门槛或把Reader Brief投影误作policy批准。
+
 #### Portfolio intake 链
 
 Portfolio intake把“owner提供的当前组合描述”转换成后续exposure、drift和guardrail可消费的、可审计的快照，但不负责产生交易建议。G2.4AA把该入口与后续风险计算拆开，避免同一个CLI callback既解释输入、又计算目标差异、又被误解为执行授权。

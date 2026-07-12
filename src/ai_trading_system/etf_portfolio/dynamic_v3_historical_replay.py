@@ -63,6 +63,7 @@ REPLAY_DIAGNOSIS_SNAPSHOT_SCHEMA_VERSION = "replay_diagnosis_source_snapshot.v2"
 BACKFILL_REPAIR_SNAPSHOT_SCHEMA_VERSION = "backfill_repair_source_snapshot.v2"
 VARIANT_COMPARISON_SNAPSHOT_SCHEMA_VERSION = "variant_comparison_source_snapshot.v2"
 RULE_CALIBRATION_SNAPSHOT_SCHEMA_VERSION = "rule_calibration_source_snapshot.v2"
+REPLAY_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = "replay_forward_bridge_source_snapshot.v2"
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/replay_performance_review_v1.yaml"
 )
@@ -71,6 +72,9 @@ DEFAULT_VARIANT_COMPARISON_POLICY_PATH = Path(
 )
 DEFAULT_RULE_CALIBRATION_POLICY_PATH = Path(
     "config/etf_portfolio/dynamic_v3_rescue/rule_calibration_v1.yaml"
+)
+DEFAULT_REPLAY_FORWARD_BRIDGE_POLICY_PATH = Path(
+    "config/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge_v1.yaml"
 )
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
@@ -107,9 +111,6 @@ PENDING_REASON_ACTIONS = {
     "review_waiting_for_backfill": "complete_backfill_before_review",
     "unknown": "manual_investigation_required",
 }
-# Pilot baseline from docs/requirements/TRADING-146_to_150_*.md; it only sizes
-# forward confirmation watchlists and does not authorize policy or broker action.
-FORWARD_CONFIRMATION_REQUIRED_EVENTS = 10
 
 
 class DynamicV3HistoricalReplayError(ValueError):
@@ -1955,6 +1956,59 @@ def _load_rule_calibration_policy(path: Path) -> dict[str, Any]:
         or safety.get("broker_action_taken") is not False
     ):
         raise DynamicV3HistoricalReplayError("calibration policy safety boundary is invalid")
+    return loaded
+
+
+def _load_replay_forward_bridge_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise DynamicV3HistoricalReplayError(f"bridge policy is missing: {path}")
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(loaded, dict):
+        raise DynamicV3HistoricalReplayError("bridge policy must be a mapping")
+    metadata = _mapping(loaded.get("policy_metadata"))
+    tracking = _mapping(loaded.get("tracking"))
+    weekly = _mapping(loaded.get("weekly_review"))
+    safety = _mapping(loaded.get("safety"))
+    focus_items = _records(tracking.get("focus_items"))
+    windows = tuple(_int(value) for value in _texts(tracking.get("windows_trading_days")))
+    if (
+        any(
+            not _text(metadata.get(field))
+            for field in (
+                "policy_id",
+                "owner",
+                "version",
+                "status",
+                "rationale",
+                "intended_effect",
+                "review_condition",
+            )
+        )
+        or metadata.get("status") != "pilot_baseline"
+    ):
+        raise DynamicV3HistoricalReplayError("bridge policy metadata is incomplete")
+    if (
+        _int(tracking.get("required_future_events")) <= 0
+        or windows != OUTCOME_WINDOWS
+        or not _text(tracking.get("fallback_next_action"))
+        or not focus_items
+        or any(
+            not _text(row.get(field))
+            for row in focus_items
+            for field in ("item", "priority", "reason")
+        )
+        or not _texts(weekly.get("add_sections"))
+        or not _texts(weekly.get("recommended_questions"))
+    ):
+        raise DynamicV3HistoricalReplayError("bridge tracking policy is invalid")
+    if (
+        safety.get("policy_change_allowed") is not False
+        or safety.get("automatic_policy_apply") is not False
+        or safety.get("automatic_candidate_promotion") is not False
+        or safety.get("production_effect") != "none"
+        or safety.get("broker_action_taken") is not False
+    ):
+        raise DynamicV3HistoricalReplayError("bridge policy safety boundary is invalid")
     return loaded
 
 
@@ -4371,27 +4425,102 @@ def run_replay_forward_bridge(
     comparison_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
     calibration_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
     output_dir: Path = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+    policy_path: Path = DEFAULT_REPLAY_FORWARD_BRIDGE_POLICY_PATH,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    generated = generated_at or datetime.now(UTC)
+    generated = _require_aware_utc(generated_at or datetime.now(UTC), "generated_at")
     source_diagnosis_dir = diagnosis_dir / diagnosis_id
     source_comparison_dir = comparison_dir / comparison_id
     source_calibration_dir = calibration_dir / calibration_id
+    validations = {
+        "diagnosis": validate_replay_diagnosis_artifact(
+            diagnosis_id=diagnosis_id, output_dir=diagnosis_dir
+        ),
+        "comparison": validate_variant_comparison_artifact(
+            comparison_id=comparison_id, output_dir=comparison_dir
+        ),
+        "calibration": validate_rule_calibration_artifact(
+            calibration_id=calibration_id, output_dir=calibration_dir
+        ),
+    }
+    failed = [name for name, payload in validations.items() if payload.get("status") != "PASS"]
+    if failed:
+        raise DynamicV3HistoricalReplayError(
+            f"bridge source validation must PASS: {','.join(failed)}"
+        )
     diagnosis_manifest = _read_json(source_diagnosis_dir / "replay_diagnosis_manifest.json")
     pending_reasons = _read_json(source_diagnosis_dir / "replay_pending_reason_summary.json")
     comparison_manifest = _read_json(source_comparison_dir / "variant_comparison_manifest.json")
+    comparison_snapshot = _read_json(
+        source_comparison_dir / "variant_comparison_source_snapshot.json"
+    )
     ranking = _read_json(source_comparison_dir / "variant_rank_summary.json")
     calibration_manifest = _read_json(source_calibration_dir / "rule_calibration_manifest.json")
     proposals = _read_json(source_calibration_dir / "proposed_policy_adjustments.json")
+    evidence_actions = _read_json(source_calibration_dir / "evidence_collection_actions.json")
+    if (
+        comparison_manifest.get("backfill_id") != diagnosis_manifest.get("backfill_id")
+        or comparison_snapshot.get("replay_id") != diagnosis_manifest.get("replay_id")
+        or calibration_manifest.get("comparison_id") != comparison_id
+    ):
+        raise DynamicV3HistoricalReplayError("bridge source lineage is inconsistent")
+    source_times = [
+        _datetime_from_any(manifest.get("generated_at"))
+        for manifest in (diagnosis_manifest, comparison_manifest, calibration_manifest)
+    ]
+    if any(value is None for value in source_times) or any(
+        generated < value for value in source_times if value is not None
+    ):
+        raise DynamicV3HistoricalReplayError("bridge generated_at must not precede sources")
+    policy = _load_replay_forward_bridge_policy(policy_path)
+    source_bundles = {
+        "diagnosis": _review_source_bundle(
+            source_diagnosis_dir,
+            (
+                "replay_diagnosis_source_snapshot.json",
+                "replay_diagnosis_manifest.json",
+                "replay_coverage_breakdown.json",
+                "replay_pending_reason_summary.json",
+                "replay_artifact_health_matrix.jsonl",
+                "replay_diagnosis_report.md",
+            ),
+        ),
+        "comparison": _review_source_bundle(
+            source_comparison_dir,
+            (
+                "variant_comparison_source_snapshot.json",
+                "variant_comparison_manifest.json",
+                "variant_window_metrics.jsonl",
+                "variant_pairwise_comparison.json",
+                "variant_rank_summary.json",
+                "variant_comparison_report.md",
+            ),
+        ),
+        "calibration": _review_source_bundle(
+            source_calibration_dir,
+            (
+                "rule_calibration_source_snapshot.json",
+                "rule_calibration_manifest.json",
+                "advisory_rule_diagnostics.json",
+                "proposed_policy_adjustments.json",
+                "evidence_collection_actions.json",
+                "calibration_safety_checks.json",
+                "rule_calibration_report.md",
+            ),
+        ),
+    }
 
     focus = _forward_tracking_focus_from_replay(
         diagnosis_manifest=diagnosis_manifest,
         pending_reasons=pending_reasons,
         comparison_manifest=comparison_manifest,
         ranking=ranking,
+        calibration_manifest=calibration_manifest,
         proposals=proposals,
+        evidence_actions=evidence_actions,
+        policy=policy,
     )
-    weekly_updates = _weekly_review_updates_from_focus(focus)
+    weekly_updates = _weekly_review_updates_from_focus(focus, policy=policy)
     bridge_id = _stable_id(
         "replay-forward-bridge",
         diagnosis_id,
@@ -4402,6 +4531,23 @@ def run_replay_forward_bridge(
     bridge_dir = _unique_dir(output_dir / bridge_id)
     bridge_dir.mkdir(parents=True, exist_ok=False)
     next_action = focus["next_actions"][0] if focus["next_actions"] else "continue_forward_tracking"
+    metadata = _mapping(policy.get("policy_metadata"))
+    snapshot = {
+        "schema_version": REPLAY_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION,
+        "bridge_id": bridge_dir.name,
+        "diagnosis_id": diagnosis_id,
+        "comparison_id": comparison_id,
+        "calibration_id": calibration_id,
+        "generated_at": generated.isoformat(),
+        "source_bundles": source_bundles,
+        "source_validation_statuses": {name: "PASS" for name in validations},
+        "policy_path": str(policy_path),
+        "policy_checksum": _sha256_file(policy_path),
+        "policy": policy,
+        "production_effect": "none",
+    }
+    snapshot_path = bridge_dir / "replay_forward_bridge_source_snapshot.json"
+    _write_json(snapshot_path, snapshot)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_replay_forward_bridge_manifest",
@@ -4412,12 +4558,17 @@ def run_replay_forward_bridge(
         "generated_at": generated.isoformat(),
         "status": focus["forward_tracking_status"],
         "historical_replay_status": diagnosis_manifest.get("status", "MISSING"),
-        "best_variant": comparison_manifest.get("best_variant", "MISSING"),
-        "calibration_confidence": comparison_manifest.get(
-            "recommendation_confidence",
-            "INSUFFICIENT_DATA",
+        "best_variant": ranking.get("best_variant", "MISSING"),
+        "calibration_confidence": ranking.get(
+            "recommendation_confidence", "INSUFFICIENT_DATA"
         ),
         "next_action": next_action,
+        "policy_change_allowed": calibration_manifest.get("policy_change_allowed") is True,
+        "policy_id": metadata.get("policy_id"),
+        "policy_version": metadata.get("version"),
+        "source_validation_statuses": {name: "PASS" for name in validations},
+        "source_snapshot_path": str(snapshot_path),
+        "source_snapshot_checksum": _sha256_file(snapshot_path),
         "source_diagnosis_path": str(source_diagnosis_dir / "replay_diagnosis_manifest.json"),
         "source_comparison_path": str(source_comparison_dir / "variant_comparison_manifest.json"),
         "source_calibration_path": str(source_calibration_dir / "rule_calibration_manifest.json"),
@@ -4442,7 +4593,9 @@ def run_replay_forward_bridge(
     _write_json(bridge_dir / "weekly_review_updates.json", weekly_updates)
     _write_text(
         bridge_dir / "replay_forward_bridge_report.md",
-        render_replay_forward_bridge_report(manifest, focus, weekly_updates, proposals),
+        render_replay_forward_bridge_report(
+            manifest, focus, weekly_updates, proposals, evidence_actions
+        ),
     )
     _write_text(
         bridge_dir / "reader_brief_section.md",
@@ -4460,6 +4613,7 @@ def run_replay_forward_bridge(
         "forward_tracking_focus": focus,
         "weekly_review_updates": weekly_updates,
         "calibration_manifest": calibration_manifest,
+        "evidence_collection_actions": evidence_actions,
     }
 
 
@@ -4490,7 +4644,8 @@ def validate_replay_forward_bridge_artifact(
     bridge_dir = output_dir / bridge_id
     manifest = _read_optional_json(bridge_dir / "bridge_manifest.json") or {}
     focus = _read_optional_json(bridge_dir / "forward_tracking_focus.json") or {}
-    checks = [
+    weekly_updates = _read_optional_json(bridge_dir / "weekly_review_updates.json") or {}
+    shallow_checks = [
         _check("manifest_exists", (bridge_dir / "bridge_manifest.json").exists(), ""),
         _check("focus_exists", (bridge_dir / "forward_tracking_focus.json").exists(), ""),
         _check("weekly_updates_exists", (bridge_dir / "weekly_review_updates.json").exists(), ""),
@@ -4509,6 +4664,192 @@ def validate_replay_forward_bridge_artifact(
             and manifest.get("broker_action_allowed") is False
             and manifest.get("broker_action_taken") is False,
             "bridge is observation-only",
+        ),
+    ]
+    snapshot_path = bridge_dir / "replay_forward_bridge_source_snapshot.json"
+    if not snapshot_path.is_file():
+        payload = _validation_payload(
+            report_type="etf_dynamic_v3_replay_forward_bridge_validation",
+            artifact_id_key="bridge_id",
+            artifact_id=bridge_id,
+            checks=shallow_checks,
+        )
+        if payload["status"] == "PASS":
+            payload["status"] = "PASS_WITH_WARNINGS"
+        payload["source_snapshot_status"] = "LEGACY_UNSNAPSHOTTED"
+        return payload
+    snapshot = _read_optional_json(snapshot_path) or {}
+    bundles = _mapping(snapshot.get("source_bundles"))
+    try:
+        diagnosis_bundle = _mapping(bundles.get("diagnosis"))
+        comparison_bundle = _mapping(bundles.get("comparison"))
+        calibration_bundle = _mapping(bundles.get("calibration"))
+        diagnosis_manifest_path = Path(
+            _text(_mapping(diagnosis_bundle.get("replay_diagnosis_manifest.json")).get("path"))
+        )
+        comparison_manifest_path = Path(
+            _text(_mapping(comparison_bundle.get("variant_comparison_manifest.json")).get("path"))
+        )
+        calibration_manifest_path = Path(
+            _text(_mapping(calibration_bundle.get("rule_calibration_manifest.json")).get("path"))
+        )
+        source_validations = {
+            "diagnosis": validate_replay_diagnosis_artifact(
+                diagnosis_id=_text(snapshot.get("diagnosis_id")),
+                output_dir=diagnosis_manifest_path.parent.parent,
+            ),
+            "comparison": validate_variant_comparison_artifact(
+                comparison_id=_text(snapshot.get("comparison_id")),
+                output_dir=comparison_manifest_path.parent.parent,
+            ),
+            "calibration": validate_rule_calibration_artifact(
+                calibration_id=_text(snapshot.get("calibration_id")),
+                output_dir=calibration_manifest_path.parent.parent,
+            ),
+        }
+        diagnosis_manifest = _mapping(
+            _review_bundle_content(diagnosis_bundle, "replay_diagnosis_manifest.json")
+        )
+        pending_reasons = _mapping(
+            _review_bundle_content(diagnosis_bundle, "replay_pending_reason_summary.json")
+        )
+        comparison_manifest = _mapping(
+            _review_bundle_content(comparison_bundle, "variant_comparison_manifest.json")
+        )
+        comparison_snapshot = _mapping(
+            _review_bundle_content(comparison_bundle, "variant_comparison_source_snapshot.json")
+        )
+        ranking = _mapping(
+            _review_bundle_content(comparison_bundle, "variant_rank_summary.json")
+        )
+        calibration_manifest = _mapping(
+            _review_bundle_content(calibration_bundle, "rule_calibration_manifest.json")
+        )
+        proposals = _mapping(
+            _review_bundle_content(calibration_bundle, "proposed_policy_adjustments.json")
+        )
+        evidence_actions = _mapping(
+            _review_bundle_content(calibration_bundle, "evidence_collection_actions.json")
+        )
+        policy_path = Path(_text(snapshot.get("policy_path")))
+        policy = _load_replay_forward_bridge_policy(policy_path)
+        expected_focus = _forward_tracking_focus_from_replay(
+            diagnosis_manifest=diagnosis_manifest,
+            pending_reasons=pending_reasons,
+            comparison_manifest=comparison_manifest,
+            ranking=ranking,
+            calibration_manifest=calibration_manifest,
+            proposals=proposals,
+            evidence_actions=evidence_actions,
+            policy=policy,
+        )
+        expected_weekly = _weekly_review_updates_from_focus(expected_focus, policy=policy)
+        metadata = _mapping(policy.get("policy_metadata"))
+        next_action = expected_focus["next_actions"][0]
+        expected_manifest_fields = {
+            "bridge_id": bridge_id,
+            "diagnosis_id": snapshot.get("diagnosis_id"),
+            "comparison_id": snapshot.get("comparison_id"),
+            "calibration_id": snapshot.get("calibration_id"),
+            "generated_at": snapshot.get("generated_at"),
+            "status": expected_focus["forward_tracking_status"],
+            "historical_replay_status": diagnosis_manifest.get("status", "MISSING"),
+            "best_variant": ranking.get("best_variant", "MISSING"),
+            "calibration_confidence": ranking.get(
+                "recommendation_confidence", "INSUFFICIENT_DATA"
+            ),
+            "next_action": next_action,
+            "policy_change_allowed": calibration_manifest.get("policy_change_allowed") is True,
+            "policy_id": metadata.get("policy_id"),
+            "policy_version": metadata.get("version"),
+            "source_validation_statuses": {name: "PASS" for name in source_validations},
+        }
+        expected_report = render_replay_forward_bridge_report(
+            {**manifest, **expected_manifest_fields},
+            expected_focus,
+            expected_weekly,
+            proposals,
+            evidence_actions,
+        )
+        expected_reader = render_replay_forward_bridge_reader_brief(
+            {**manifest, **expected_manifest_fields}, expected_focus
+        )
+        generated = _datetime_from_any(snapshot.get("generated_at"))
+        source_times = [
+            _datetime_from_any(item.get("generated_at"))
+            for item in (diagnosis_manifest, comparison_manifest, calibration_manifest)
+        ]
+        lineage_matches = (
+            comparison_manifest.get("backfill_id") == diagnosis_manifest.get("backfill_id")
+            and comparison_snapshot.get("replay_id") == diagnosis_manifest.get("replay_id")
+            and calibration_manifest.get("comparison_id") == snapshot.get("comparison_id")
+        )
+        time_ordered = generated is not None and all(
+            value is not None and generated >= value for value in source_times
+        )
+        recompute_error = ""
+    except Exception as exc:  # noqa: BLE001
+        source_validations = {}
+        diagnosis_bundle, comparison_bundle, calibration_bundle = {}, {}, {}
+        policy_path, policy = Path("."), {}
+        expected_focus, expected_weekly, expected_manifest_fields = {}, {}, {}
+        expected_report, expected_reader = "", ""
+        lineage_matches = time_ordered = False
+        recompute_error = str(exc)
+    checks = [
+        *shallow_checks,
+        _check(
+            "source_snapshot_schema_valid",
+            snapshot.get("schema_version") == REPLAY_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION,
+            REPLAY_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION,
+        ),
+        _check(
+            "source_snapshot_checksum_matches",
+            manifest.get("source_snapshot_checksum") == _sha256_file(snapshot_path),
+            "bridge source snapshot",
+        ),
+        _check(
+            "source_validations_pass",
+            bool(source_validations)
+            and all(payload.get("status") == "PASS" for payload in source_validations.values()),
+            recompute_error,
+        ),
+        _check(
+            "source_files_unchanged",
+            _review_bundle_matches(diagnosis_bundle)
+            and _review_bundle_matches(comparison_bundle)
+            and _review_bundle_matches(calibration_bundle),
+            "diagnosis/comparison/calibration bundles",
+        ),
+        _check("source_lineage_matches", lineage_matches, "diagnosis to calibration"),
+        _check("source_time_ordered", time_ordered, "bridge generated after sources"),
+        _check(
+            "policy_unchanged",
+            policy_path.is_file()
+            and snapshot.get("policy_checksum") == _sha256_file(policy_path)
+            and snapshot.get("policy") == policy,
+            "bridge policy",
+        ),
+        _check("focus_recomputed", focus == expected_focus, recompute_error),
+        _check("weekly_updates_recomputed", weekly_updates == expected_weekly, recompute_error),
+        _check(
+            "manifest_derived_fields_match",
+            all(manifest.get(key) == value for key, value in expected_manifest_fields.items()),
+            recompute_error,
+        ),
+        _check(
+            "report_recomputed",
+            (bridge_dir / "replay_forward_bridge_report.md").is_file()
+            and (bridge_dir / "replay_forward_bridge_report.md").read_text(encoding="utf-8")
+            == expected_report,
+            "Markdown report",
+        ),
+        _check(
+            "reader_brief_recomputed",
+            (bridge_dir / "reader_brief_section.md").is_file()
+            and (bridge_dir / "reader_brief_section.md").read_text(encoding="utf-8")
+            == expected_reader,
+            "Reader Brief section",
         ),
     ]
     return _validation_payload(
@@ -4966,9 +5307,15 @@ def render_replay_forward_bridge_report(
     focus: Mapping[str, Any],
     weekly_updates: Mapping[str, Any],
     proposals: Mapping[str, Any],
+    evidence_actions: Mapping[str, Any],
 ) -> str:
     proposal_types = ", ".join(
         row.get("change_type", "") for row in _records(proposals.get("proposals"))
+    )
+    action_types = ", ".join(
+        _text(row.get("action_type"))
+        for row in _records(evidence_actions.get("actions"))
+        if _text(row.get("action_type"))
     )
     return "\n".join(
         [
@@ -4980,6 +5327,8 @@ def render_replay_forward_bridge_report(
             f"- forward_tracking_status：{focus.get('forward_tracking_status')}",
             f"- next_action：{manifest.get('next_action')}",
             f"- calibration_proposals：{proposal_types or 'MISSING'}",
+            f"- evidence_collection_actions：{action_types or 'none'}",
+            f"- policy_change_allowed：{manifest.get('policy_change_allowed')}",
             "",
             "## Forward Focus",
             "",
@@ -5746,71 +6095,74 @@ def _forward_tracking_focus_from_replay(
     pending_reasons: Mapping[str, Any],
     comparison_manifest: Mapping[str, Any],
     ranking: Mapping[str, Any],
+    calibration_manifest: Mapping[str, Any],
     proposals: Mapping[str, Any],
+    evidence_actions: Mapping[str, Any],
+    policy: Mapping[str, Any],
 ) -> dict[str, Any]:
-    confidence = _text(
-        comparison_manifest.get("recommendation_confidence"),
-        _text(ranking.get("recommendation_confidence"), "INSUFFICIENT_DATA"),
-    )
+    confidence = _text(ranking.get("recommendation_confidence"), "INSUFFICIENT_DATA")
     proposal_types = [_text(row.get("change_type")) for row in _records(proposals.get("proposals"))]
+    action_rows = _records(evidence_actions.get("actions"))
+    action_types = [_text(row.get("action_type")) for row in action_rows]
     status = "CONTINUE"
-    if confidence == "INSUFFICIENT_DATA":
+    if (
+        confidence == "INSUFFICIENT_DATA"
+        or comparison_manifest.get("status") == "INSUFFICIENT_DATA"
+        or calibration_manifest.get("status") == "INSUFFICIENT_DATA"
+    ):
         status = "INSUFFICIENT_DATA"
-    elif "require_more_forward_data" in proposal_types:
+    elif "require_more_forward_data" in action_types:
         status = "INCREASE_FOCUS"
     top_reason = _records(pending_reasons.get("pending_reasons"))
-    reason_text = top_reason[0]["reason"] if top_reason else "unknown"
-    next_actions = proposal_types or ["continue_forward_tracking"]
+    reason_text = _text(top_reason[0].get("reason")) if top_reason else "none"
+    tracking = _mapping(policy.get("tracking"))
+    required_future_events = _int(tracking.get("required_future_events"))
+    tracking_windows = [_int(value) for value in _texts(tracking.get("windows_trading_days"))]
+    focus_items = []
+    for configured in _records(tracking.get("focus_items")):
+        reason = _text(configured.get("reason"))
+        priority = _text(configured.get("priority"))
+        if configured.get("item") == "pending_reason_resolution":
+            reason = (
+                f"top replay diagnosis reason is {reason_text}"
+                if top_reason
+                else "no pending replay diagnosis reason was reported"
+            )
+            if top_reason and diagnosis_manifest.get("status") != "PASS":
+                priority = "HIGH"
+        focus_items.append(
+            {
+                "item": configured.get("item"),
+                "priority": priority,
+                "reason": reason,
+                "tracking_windows": tracking_windows,
+                "required_future_events": required_future_events,
+            }
+        )
+    next_actions = action_types or proposal_types or [
+        _text(tracking.get("fallback_next_action"))
+    ]
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_forward_tracking_focus",
-        "focus_items": [
-            {
-                "item": "limited_adjustment_vs_no_trade",
-                "priority": "HIGH",
-                "reason": (
-                    "historical replay needs forward confirmation for limited adjustment edge"
-                ),
-                "tracking_windows": list(OUTCOME_WINDOWS),
-                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
-            },
-            {
-                "item": "pending_reason_resolution",
-                "priority": "HIGH" if diagnosis_manifest.get("status") != "PASS" else "MEDIUM",
-                "reason": f"top replay diagnosis reason is {reason_text}",
-                "tracking_windows": list(OUTCOME_WINDOWS),
-                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
-            },
-            {
-                "item": "consensus_target_risk",
-                "priority": "MEDIUM",
-                "reason": "consensus_target return and drawdown need weekly review visibility",
-                "tracking_windows": list(OUTCOME_WINDOWS),
-                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
-            },
-        ],
+        "focus_items": focus_items,
         "forward_tracking_status": status,
         "next_actions": next_actions,
+        "policy_change_allowed": calibration_manifest.get("policy_change_allowed") is True,
         "production_effect": "none",
         "broker_action_taken": False,
     }
 
 
-def _weekly_review_updates_from_focus(focus: Mapping[str, Any]) -> dict[str, Any]:
+def _weekly_review_updates_from_focus(
+    focus: Mapping[str, Any], *, policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    weekly = _mapping(policy.get("weekly_review"))
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_weekly_review_updates",
-        "add_sections": [
-            "Historical Replay Performance",
-            "Replay Calibration Watchlist",
-            "Forward Confirmation Targets",
-        ],
-        "recommended_weekly_questions": [
-            "Did limited_adjustment outperform no_trade in new forward outcomes?",
-            "Did high consensus remain predictive?",
-            "Did manual_review frequency decrease?",
-            "Were prior PENDING or INSUFFICIENT_DATA replay reasons resolved?",
-        ],
+        "add_sections": _texts(weekly.get("add_sections")),
+        "recommended_weekly_questions": _texts(weekly.get("recommended_questions")),
         "forward_tracking_status": focus.get("forward_tracking_status", "MISSING"),
         "production_effect": "none",
         "broker_action_taken": False,
